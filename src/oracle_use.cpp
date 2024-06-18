@@ -105,18 +105,18 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     bool early_aborted = false;
     uint32_t bin_added = 0;
     uint32_t equiv_added = 0;
+    int64_t mems = conf.global_timeout_multiplier * 540LL*1000LL*1000LL;
+    if (fast > 0) mems /= (3*fast);
+    int64_t mems2 =  conf.global_timeout_multiplier*160LL*1000LL*1000LL;
+    if (fast > 0) mems2 /= (3*fast);
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            int64_t mems = 1600LL*1000LL*1000LL;
-            if (fast > 0) mems /= (3*fast);
             if (oracle.getStats().mems > mems) {
                 early_aborted = true;
                 goto end;
             }
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
-            int64_t mems2 =  500LL*1000LL*1000LL;
-            if (fast > 0) mems2 /= (3*fast);
             auto ret = oracle.Solve(assump, true,mems2);
             if (ret.isUnknown()) {
                 early_aborted = true;
@@ -139,7 +139,7 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     }
 
     // Do equiv check
-    if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
+    if (conf.oracle_find_bins && nVars() < conf.global_timeout_multiplier*3ULL*1000ULL) {
         oracle.reset_mems();
         vector<vector<char>> pg(nVars());
         for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), false);
@@ -152,8 +152,10 @@ bool Solver::oracle_vivif(int fast, bool& finished)
                 }
             }
         }
-        const int64_t mems_each = conf.oracle_find_bins*1000ULL*1000ULL;
-        int64_t mems_total = (int64_t)conf.oracle_find_bins*10LL*1000LL*1000LL;
+        const int64_t mems_each = conf.global_timeout_multiplier*
+            conf.oracle_find_bins*300ULL*1000ULL;
+        int64_t mems_total = (int64_t)conf.global_timeout_multiplier*
+            conf.oracle_find_bins*3LL*1000LL*1000LL;
         for(uint32_t run = 0; run < 2; run++) {
             // do more in case we have time left
             if (run == 1) mems_total/=3;
@@ -412,6 +414,10 @@ bool Solver::oracle_sparsify(bool fast)
     }
 
     // Now try to remove clauses one-by-one
+    int64_t mems = conf.global_timeout_multiplier*200LL*1000LL*1000LL;
+    if (fast) mems /= 3;
+    int64_t mems2 = conf.global_timeout_multiplier*1000LL*1000LL*1000LL;
+    if (fast) mems2 /= 3;
     uint32_t last_printed = 0;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
@@ -433,8 +439,6 @@ bool Solver::oracle_sparsify(bool fast)
             tmp.push_back(orclit(~(c.bin.l2)));
         }
 
-        int64_t mems = 600LL*1000LL*1000LL;
-        if (fast) mems /= 3;
         auto ret = oracle.Solve(tmp, false, mems);
         if (ret.isUnknown()) { /*out of time*/ goto fin; }
 
@@ -459,8 +463,6 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
 
-        int64_t mems2 = 2500LL*1000LL*1000LL;
-        if (fast) mems2 /= 3;
         if (oracle.getStats().mems > mems2) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
