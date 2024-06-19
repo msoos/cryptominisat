@@ -148,53 +148,61 @@ bool Solver::oracle_vivif(int fast, bool& finished)
                 }
             }
         }
-        for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
-            for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
-                if (!pg[v1][v2]) continue;
-                if (oracle.getStats().mems > (int64_t)conf.oracle_find_bins*20LL*1000LL*1000LL) {
-                    early_aborted = true;
-                    goto end;
+
+        auto tot_mems = (int64_t)conf.oracle_find_bins*20LL*1000LL*1000LL;
+        auto mem = conf.oracle_find_bins*1000ULL*1000ULL;
+        for(uint32_t run = 0; run < 2; run++) {
+            if (run == 1) tot_mems /= 2;
+            for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
+                if (varData[v1].removed != Removed::none) continue;
+                if (value(v1) != l_Undef) continue;
+                for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
+                    if (varData[v2].removed != Removed::none) continue;
+                    if (value(v2) != l_Undef) continue;
+                    if (run == 0 && !pg[v1][v2]) continue;
+                    if (run == 1 && pg[v1][v2]) continue;
+                    if (oracle.getStats().mems > tot_mems) goto end;
+                    TriState ret;
+                    TriState ret2;
+                    Clause* clptr;
+                    ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, mem);
+                    if (ret.isUnknown()) goto end;
+                    if (ret.isTrue()) goto next;
+                    clptr = add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+
+                    ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, mem);
+                    if (ret2.isUnknown()) goto end;
+                    if (ret2.isTrue()) goto next;
+                    assert(ret.isFalse() && ret2.isFalse());
+                    clptr = add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+                    equiv_added++;
+                    continue;
+
+                    next:
+                    ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, mem);
+                    if (ret.isUnknown()) goto end;
+                    if (ret.isTrue()) continue;
+                    clptr = add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+
+                    ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, mem);
+                    if (ret2.isUnknown()) goto end;
+                    if (ret2.isTrue()) continue;
+                    assert(ret.isFalse() && ret2.isFalse());
+                    clptr = add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+                    equiv_added++;
                 }
-                TriState ret;
-                TriState ret2;
-                Clause* clptr;
-                ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
-                if (ret.isUnknown()) goto end;
-                if (ret.isTrue()) goto next;
-                clptr = add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
-
-                ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
-                if (ret2.isUnknown()) goto end;
-                if (ret2.isTrue()) goto next;
-                assert(ret.isFalse() && ret2.isFalse());
-                clptr = add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
-                equiv_added++;
-                continue;
-
-                next:
-                ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
-                if (ret.isUnknown()) goto end;
-                if (ret.isTrue()) continue;
-                clptr = add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
-
-                ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
-                if (ret2.isUnknown()) goto end;
-                if (ret2.isTrue()) continue;
-                assert(ret.isFalse() && ret2.isFalse());
-                clptr = add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
-                equiv_added++;
             }
         }
     }
