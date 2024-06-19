@@ -20,9 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "constants.h"
 #include "solver.h"
 #include "solvertypesmini.h"
+#include <cstdint>
+extern "C" {
+#include "mpicosat/mpicosat.h"
+}
 #include "cryptominisat.h"
 #include "varreplacer.h"
 #include "../cadiback/cadiback.h"
@@ -32,7 +35,6 @@ using namespace CMSat;
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
         const vector<uint32_t>& only_over, bool& backbone_done)
 {
-    if (!okay()) return false;
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
 
@@ -80,57 +82,24 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
         }
     }
 
-    vector<int> learned_units;
-    vector<int> learned_bins;
-    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, learned_bins, learned_units);
-    uint32_t num_units_added = 0;
-    uint32_t num_bins_added = 0;
+    vector<int> ret;
+    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, ret);
     if (res == 10) {
         vector<Lit> tmp;
-        for(const auto& l: learned_units) {
+        for(const auto& l: ret) {
             if (l == 0) continue;
             const Lit lit = Lit(abs(l)-1, l < 0);
             if (value(lit.var()) != l_Undef) continue;
             if (varData[lit.var()].removed != Removed::none) continue;
             tmp.clear();
             tmp.push_back(lit);
+            if (!okay()) break;
             add_clause_int(tmp);
-            num_units_added++;
-            if (!okay()) goto end;
-        }
-        bool ignore = false;
-
-        tmp.clear();
-        for(const auto& l: learned_bins) {
-            if (l == 0) {
-                if (ignore) {
-                    ignore = false;
-                    tmp.clear();
-                    continue;
-                }
-                assert(tmp.size() == 2);
-                auto ret = add_clause_int(tmp, true);
-                assert(ret == nullptr);
-                num_bins_added++;
-                if (!okay()) goto end;
-                ignore = false;
-                tmp.clear();
-                continue;
-            }
-            const Lit lit = Lit(abs(l)-1, l < 0);
-            if (varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
-            if (value(lit.var()) != l_Undef) {ignore = true; continue;}
-            tmp.push_back(lit);
         }
         backbone_done = true;
     } else {
         ok = false;
     }
-end:
-    verb_print(1, "[backbone-simpl] res: " << res
-            <<  " num units: " << num_units_added
-            <<  " num bins: " << num_bins_added
-            << " T: " << std::fixed << std::setprecision(2) << cpuTime());
     return res == 10;
 }
 
