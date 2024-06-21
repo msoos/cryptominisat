@@ -35,6 +35,7 @@ using namespace CMSat;
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
         const vector<uint32_t>& only_over, bool& backbone_done)
 {
+    if (!okay()) return false;
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
 
@@ -93,8 +94,8 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
             if (varData[lit.var()].removed != Removed::none) continue;
             tmp.clear();
             tmp.push_back(lit);
-            if (!okay()) break;
             add_clause_int(tmp);
+            if (!okay()) break;
         }
         backbone_done = true;
     } else {
