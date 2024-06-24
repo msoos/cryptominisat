@@ -327,6 +327,7 @@ bool OccSimplifier::clean_clause(
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.get_removed());
     assert(!cl.freed());
+
     (*solver->frat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
@@ -648,6 +649,7 @@ void OccSimplifier::add_back_to_solver() {
             if (cl->red()) solver->litStats.redLits -= cl->size();
             else solver->litStats.irredLits -= cl->size();
             *solver->frat << del << *cl << fin;
+
             solver->free_cl(cl);
             continue;
         }
@@ -2992,7 +2994,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
         Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
             if (is_xor) solver->add_xor_clause_outside(lits, true);
-            else solver->add_clause_outside(lits);
+            else solver->add_clause_outside(lits, false, true);
             if (!solver->okay()) return false;
             lits.clear();
         } else {
@@ -3022,7 +3024,7 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
             if (l == lit_Undef) {
                 const int32_t id = newly_elimed_cls_IDs[at_ID++];
                 if (elimed_cls[i].is_xor) *solver->frat << delx << id << lits << fin;
-                else *solver->frat << del << id << lits << fin;
+                else *solver->frat << weakencl << id << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));
@@ -3284,7 +3286,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
 
                     lits.resize(cl.size());
                     std::copy(cl.begin(), cl.end(), lits.begin());
-                    add_clause_to_blck(lits, cl.stats.ID);
+		    add_clause_to_blck(lits, cl.stats.ID);
                 } else {
                     red = true;
                 }
@@ -3317,13 +3319,14 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
             } else {
                 //If redundant, delayed elimed-based FRAT deletion will not work
                 //so delete explicitly
-                (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
+	      (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
             }
 
             //Remove
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
             solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
+
         } else {
             // IDX for XOR elimination
         }

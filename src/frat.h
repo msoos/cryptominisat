@@ -48,7 +48,8 @@ using std::vector;
 
 namespace CMSat {
 
-enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc, implyclfromx, implyxfromcls};
+  enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc, implyclfromx, implyxfromcls, weakencl, restorecl, assump, unsatcore, modelF};
+  enum FratOutcome{satisfiable, unsatisfiable, unknown};
 
 class Frat
 {
@@ -68,9 +69,11 @@ public:
     virtual Frat& operator<<(const vector<Lit>&) { return *this; }
     virtual Frat& operator<<(const char*) { return *this; }
     virtual Frat& operator<<(const FratFlag) { return *this; }
+    virtual Frat& operator<<(const FratOutcome) { return *this; }
     virtual void setFile(FILE*) { }
     virtual FILE* getFile() { return nullptr; }
     virtual void flush();
+    virtual bool incremental() {return false;}
 
     int buf_len;
     unsigned char* drup_buf = nullptr;
@@ -106,7 +109,6 @@ public:
     virtual void setFile(FILE* _file) override { drup_file = _file; }
     virtual bool something_delayed() override { return delete_filled; }
     virtual bool enabled() override { return true; }
-
     virtual Frat& operator<<(const int32_t clauseID) override
     {
         assert(clauseID != 0);
@@ -275,6 +277,7 @@ public:
                 }
                 break;
 
+            case FratFlag::weakencl:
             case FratFlag::del:
                 adding = false;
                 buf_add('d');
@@ -327,6 +330,10 @@ public:
                 buf_add('x');
                 buf_nonbin_move();
                 break;
+
+          default:
+	    __builtin_unreachable();
+            break;
         }
 
         return *this;

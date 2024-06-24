@@ -55,6 +55,12 @@ struct MySolver {
 
 extern "C" {
 
+  DLL_PUBLIC void  ipasir_trace_proof (void * solver, FILE *f)
+  {
+    
+    MySolver* s = (MySolver*)solver;
+    s->solver->set_idrup(f);
+  }
 DLL_PUBLIC const char * ipasir_signature ()
 {
     static char tmp[200];
@@ -257,6 +263,38 @@ DLL_PUBLIC void ipasir_set_terminate (void * /*solver*/, void * /*state*/, int (
 DLL_PUBLIC void ipasir_set_learn (void * /*solver*/, void * /*state*/, int /*max_length*/, void (* /*learn*/)(void * state, int * clause))
 {
     //this is complicated
+}
+
+DLL_PUBLIC int ipasir_simplify (void * solver)
+{
+    MySolver* s = (MySolver*)solver;
+
+    //Cleanup last_conflict
+    for(auto x: s->last_conflict) {
+        s->conflict_cl_map[x.toInt()] = 0;
+    }
+    s->last_conflict.clear();
+
+    //solve
+    lbool ret = s->solver->simplify(&(s->assumptions), nullptr);
+    s->assumptions.clear();
+
+    if (ret == l_True) {
+        return 10;
+    }
+    if (ret == l_False) {
+        s->conflict_cl_map.resize(s->solver->nVars()*2, 0);
+        s->last_conflict = s->solver->get_conflict();
+        for(auto x: s->last_conflict) {
+            s->conflict_cl_map[x.toInt()] = 1;
+        }
+        return 20;
+    }
+    if (ret == l_Undef) {
+        return 0;
+    }
+    assert(false);
+    exit(-1);
 }
 
 }

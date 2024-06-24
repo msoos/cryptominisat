@@ -589,7 +589,8 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
             }
 
             *frat << add << ID << p << fin;
-            *frat << implyxfromcls << XID << p << fratchain << ID << fin;
+	    if (frat && !frat->incremental())
+              *frat << implyxfromcls << XID << p << fratchain << ID << fin;
 
             assert(unit_cl_IDs[v] == 0);
             assert(unit_cl_XIDs[v] == 0);

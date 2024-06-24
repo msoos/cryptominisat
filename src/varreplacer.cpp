@@ -291,9 +291,10 @@ end:
 
 void VarReplacer::delete_frat_cls()
 {
-    for(const auto& f: bins_for_frat) {
-        *solver->frat << del << std::get<0>(f) << std::get<1>(f) << std::get<2>(f) << fin;
-    }
+    if (!solver->frat->incremental()) // for incremental we need to keep the reason for equivalences
+      for(const auto& f: bins_for_frat) {
+	  *solver->frat << del << std::get<0>(f) << std::get<1>(f) << std::get<2>(f) << fin;
+      }
     bins_for_frat.clear();
 }
 
@@ -414,7 +415,7 @@ inline void VarReplacer::updateBin(
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->frat) << del << i->get_ID() << origLit1 << origLit2 << fin;
+            (*solver->frat) << "updateBin del\n" << del << i->get_ID() << origLit1 << origLit2 << fin;
         }
 
         return;
@@ -913,8 +914,8 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
     int32_t ID = ++solver->clauseID;
     int32_t ID2 = ++solver->clauseID;
     (*solver->frat)
-    << add << ID << ~lit1 << lit2 << fin
-    << add << ID2 << lit1 << ~lit2 << fin;
+    << "equivalence learning\n" << add << ID << ~lit1 << lit2 << fin
+    << "equivalence learning\n" << add << ID2 << lit1 << ~lit2 << fin;
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID2, lit1, ~lit2});
 
