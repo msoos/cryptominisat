@@ -24,8 +24,9 @@ Everything that is needed to build by default is MIT licensed. If you specifical
 
 Compiling in Linux
 -----
+First download the tarball you want to use from the releases section.
 
-To build and install, issue:
+Then, To build and install, issue:
 
 ```
 sudo apt-get install build-essential cmake
