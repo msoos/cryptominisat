@@ -712,13 +712,14 @@ void OccSimplifier::eliminate_xor_vars()
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
+    assert(solver->watches.get_smudged_list().empty());
+    assert(cl_to_free_later.empty());
+    SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
 
     double my_time = cpuTime();
     const int64_t orig_xor_varelim_time_limit = xor_varelim_time_limit;
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &xor_varelim_time_limit;
-    assert(cl_to_free_later.empty());
-    assert(solver->watches.get_smudged_list().empty());
     uint32_t elimed = 0;
     vector<Lit> lits;
 
@@ -807,6 +808,7 @@ void OccSimplifier::eliminate_xor_vars()
         solver->sqlStats->time_passed( solver , "xor-bve" , time_used , time_out , time_remain);
     limit_to_decrease = old_limit_to_decrease;
     assert(solver->okay());
+    SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
 }
 
 void OccSimplifier::eliminate_empty_resolvent_vars()
@@ -2242,6 +2244,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
     std::istringstream ss(strategy);
     std::string token;
 
+    SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
     while(std::getline(ss, token, ',')) {
         if (cpuTime() > solver->conf.maxTime
             || solver->must_interrupt_asap()
@@ -2254,6 +2257,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         assert(solver->prop_at_head());
         assert(solver->decisionLevel() == 0);
         assert(cl_to_free_later.empty());
+        assert(solver->watches.get_smudged_list().empty());
         set_limits();
 
         #ifdef SLOW_DEBUG
@@ -2336,6 +2340,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
         CHECK_N_OCCUR_DO(check_n_occur());
         SLOW_DEBUG_DO(check_cls_sanity());
+        SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
     }
 
     if (solver->okay()) assert(solver->prop_at_head());
@@ -2466,6 +2471,8 @@ bool OccSimplifier::ternary_res()
     assert(cl_to_add_ternary.empty());
     assert(solver->prop_at_head());
     assert(cl_to_free_later.empty());
+    assert(solver->watches.get_smudged_list().empty());
+    SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
     if (clauses.empty()) return solver->okay();
 
     double my_time = cpuTime();

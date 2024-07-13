@@ -430,18 +430,7 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
         clear_one_occur_from_removed_clauses(watches[l]);
     }
     watches.clear_smudged();
-
-    #ifdef SLOW_DEBUG
-    for(const auto& ws: watches) {
-        for(const auto& w: ws) {
-            if (!w.isClause()) {
-                continue;
-            }
-            Clause* cl = cl_alloc.ptr(w.get_offset());
-            assert(!cl->isRemoved);
-        }
-    }
-    #endif
+    SLOW_DEBUG_DO( check_no_removed_or_freed_cl_in_watch());
 }
 
 inline void CNF::clean_occur_from_idx_types_only_smudged()
