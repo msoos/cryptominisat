@@ -19,10 +19,6 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 17)
-
-enable_language( CXX )
 
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
@@ -60,8 +56,6 @@ endif()
 # -----------------------------------------------------------------------------
 set(CRYPTOMS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 
-include (GenerateExportHeader)
-include (GNUInstallDirs)
 
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
@@ -99,6 +93,12 @@ foreach (build_config ${build_types})
 endforeach()
 
 PROJECT(cryptominisat5)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 17)
+enable_language( CXX )
+include (GNUInstallDirs)
+include (GenerateExportHeader)
 
 # contains some library search cmake scripts
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
