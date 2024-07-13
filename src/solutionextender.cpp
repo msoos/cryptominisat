@@ -164,7 +164,7 @@ bool SolutionExtender::add_xor_cl(const vector<Lit>& lits, const uint32_t elimed
         }
     }
     assert(actual_lit != lit_Undef);
-    lbool val = boolToLBool(!rhs);
+    lbool val = boolToLBool(actual_lit.sign() ^ !rhs);
     solver->model[elimed_on] = val;
 
     verb_print(10,"Extending VELIM cls (xor). -- setting model for var "
