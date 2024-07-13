@@ -3299,7 +3299,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
 
             //Remove -- only FRAT the ones that are redundant
             //The irred will be removed thanks to 'elimed' system
-            unlink_clause(offset, cl.red(), true, true);
+            unlink_clause(offset, cl.red(), true, false);
         } else if (watch.isBin()) {
             //Update stats
             if (!watch.red()) {
