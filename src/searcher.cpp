@@ -2418,6 +2418,7 @@ bool Searcher::intree_if_needed()
         sumConflicts > next_intree
     ) {
         if (ret) ret &= solver->intree->intree_probe();
+        if (ret) rebuildOrderHeap(); // Needed because intree may have replaced variables
         next_intree = sumConflicts + 65000.0*conf.global_next_multiplier;
     }
 
