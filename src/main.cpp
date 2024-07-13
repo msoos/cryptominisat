@@ -1242,9 +1242,9 @@ int Main::solve()
     if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
     if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));
 
+    parse_sampling_vars();
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
-    parse_sampling_vars();
     if (sql != 0) solver->set_sqlite(sqlite_filename);
 
     //Print command line used to execute the solver: for options and inputs
