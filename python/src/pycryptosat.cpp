@@ -252,6 +252,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
+
 template <typename T>
 static int _add_clauses_from_array(Solver *self, const size_t array_length, const T *array)
 {

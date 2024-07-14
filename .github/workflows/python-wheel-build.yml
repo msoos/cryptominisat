@@ -15,6 +15,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Checkout CaDiCaL
+        uses: actions/checkout@v3
+        with:
+          repository: meelgroup/cadical
+          ref: 'add_dynamic_lib'
+          path: python/cadical
+
+      - name: Checkout Cadiback
+        uses: actions/checkout@v3
+        with:
+          repository: meelgroup/cadiback
+          ref: 'mate'
+          path: python/cadiback
 
       # Used to host cibuildwheel
       - uses: actions/setup-python@v3
