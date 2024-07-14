@@ -46,7 +46,7 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         # to supply options, put them in 'env', like:
         env:
-          CIBW_BEFORE_ALL_LINUX: yum install -y boost-devel zlib-devel gmp-devel
+          CIBW_BEFORE_ALL_LINUX: yum install -y gmp-devel
           CIBW_SKIP: "*musl*"
           CIBW_ARCHS: "auto64"
 
