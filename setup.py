@@ -61,7 +61,6 @@ def gen_modules(version):
         include_dirs = ["src/"],
         sources = ["python/src/pycryptosat.cpp",
                    "python/src/GitSHA1.cpp",
-                   "src/bva.cpp",
                    "src/cardfinder.cpp",
                    "src/ccnr_cms.cpp",
                    "src/ccnr.cpp",

@@ -215,6 +215,17 @@ static int parse_xor_clause(
     return 1;
 }
 
+static int _add_clause(Solver *self, PyObject *clause)
+{
+    self->tmp_cl_lits.clear();
+    if (!parse_clause(self, clause, self->tmp_cl_lits)) {
+        return 0;
+    }
+    self->cmsat->add_clause(self->tmp_cl_lits);
+
+    return 1;
+}
+
 PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
 Add a clause to the solver.\n\
