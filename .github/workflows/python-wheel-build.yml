@@ -30,12 +30,11 @@ jobs:
           ref: 'mate'
           path: python/cadiback
 
-      - name: configure CaDiCaL
-        run: cd python/cadical && CXXFLAGS=-fPIC ./configure --competition
+      - name: configure and build CaDiCaL
+        run: cd python/cadical && CXXFLAGS=-fPIC ./configure --competition && make -j4
 
-      - name: Configure Cadiback
-        run: cd python/cadiback && ./configure
-
+      - name: Configure and build Cadiback
+        run: cd python/cadiback && ./configure && make -j4
 
       # Used to host cibuildwheel
       - uses: actions/setup-python@v3
