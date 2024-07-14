@@ -22,7 +22,6 @@ jobs:
           repository: meelgroup/cadical
           ref: 'add_dynamic_lib'
           path: python/cadical
-        run: CXXFLAGS=-fPIC ./configure --competition
 
       - name: Checkout Cadiback
         uses: actions/checkout@v3
@@ -30,7 +29,13 @@ jobs:
           repository: meelgroup/cadiback
           ref: 'mate'
           path: python/cadiback
-        run: ./configure
+
+      - name: configure CaDiCaL
+        run: cd python/cadical && CXXFLAGS=-fPIC ./configure --competition
+
+      - name: Configure Cadiback
+        run: cd python/cadiback && ./configure
+
 
       # Used to host cibuildwheel
       - uses: actions/setup-python@v3
