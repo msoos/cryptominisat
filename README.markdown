@@ -24,12 +24,10 @@ Everything that is needed to build by default is MIT licensed. If you specifical
 
 Compiling in Linux
 -----
-First download the tarball you want to use from the releases section.
-
-Then, To build and install, issue:
+Then, To build and install, run:
 
 ```
-sudo apt-get install build-essential cmake
+sudo apt-get install build-essential cmake libgmp-dev
 
 # not required but very useful
 sudo apt-get install zlib1g-dev
@@ -48,8 +46,8 @@ git checkout mate
 make
 cd ..
 
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
+git clone https://github.com/msoos/cryptominisat
+cd cryptominisat
 mkdir build && cd build
 cmake ..
 make
