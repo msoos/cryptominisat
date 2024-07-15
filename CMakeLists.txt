@@ -19,11 +19,6 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 20)
-
-enable_language( CXX )
-enable_language( C )
 
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
@@ -61,8 +56,6 @@ endif()
 # -----------------------------------------------------------------------------
 set(CRYPTOMS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 
-include (GenerateExportHeader)
-include (GNUInstallDirs)
 
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
@@ -100,6 +93,13 @@ foreach (build_config ${build_types})
 endforeach()
 
 PROJECT(cryptominisat5)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 20)
+enable_language( CXX )
+enable_language( C )
+include (GNUInstallDirs)
+include (GenerateExportHeader)
 
 # contains some library search cmake scripts
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -424,7 +424,7 @@ else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
 
-set(CMS_FULL_VERSION "5.11.21")
+set(CMS_FULL_VERSION "5.11.23")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})

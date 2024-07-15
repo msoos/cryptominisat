@@ -321,7 +321,6 @@ class Tester:
             cmd += ",".join(["%s" % x for x in self.sampling_vars]) + " "
 
         if random.choice([True, False]):
-            cmd += "--varsperxorcut %d " % random.randint(4, 6)
             cmd += "--tern %d " % random.choice([0, 1])
             cmd += "--terntimelim %d " % random.choice([1, 10, 100])
             cmd += "--ternkeep %d " % random.choice([0, 0.001, 0.5, 300])

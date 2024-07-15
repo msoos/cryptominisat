@@ -7611,7 +7611,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 	  assert (res == 20);
 	  if (ps->verbosity > 1)
 	     fprintf (ps->out,
-		     "%ssuceeded to drop %d%s assumption %d\n",
+		     "%ssucceeded to drop %d%s assumption %d\n",
 		     ps->prefix, i, enumstr (i), work[i]);
 	  redundant[i] = 1;
 	  for (j = 0; j < nwork; j++)
@@ -7628,7 +7628,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 		  redundant[j] = -1;
 		  if (ps->verbosity > 1)
 		     fprintf (ps->out,
-			     "%salso suceeded to drop %d%s assumption %d\n",
+			     "%salso succeeded to drop %d%s assumption %d\n",
 			     ps->prefix, j, enumstr (j), work[j]);
 		}
 	    }
@@ -8294,7 +8294,7 @@ picosat_stats (PS * ps)
 #else
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/unistd.h>
+#include <unistd.h>
 #endif
 
 double

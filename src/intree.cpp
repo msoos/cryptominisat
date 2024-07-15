@@ -150,7 +150,7 @@ bool InTree::intree_probe() {
         }
         solver->use_depth_trick = true;
         solver->perform_transitive_reduction = true;
-        return true;
+        return solver->okay();
     }
 
     double my_time = cpuTime();

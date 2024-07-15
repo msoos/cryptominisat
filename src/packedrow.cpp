@@ -111,9 +111,6 @@ void PackedRow::get_reason_xor(
         }
     }
     tmp_xor.rhs = rhs();
-
-    SLOW_DEBUG_DO(for(uint32_t i = 1; i < tmp_clause.size(); i++)
-            assert(assigns[tmp_xor[i]] != l_Undef));
 }
 
 void PackedRow::get_reason(

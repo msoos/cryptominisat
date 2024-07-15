@@ -27,7 +27,7 @@ import sys
 import os
 from setuptools import Extension, setup
 import sysconfig
-import toml
+import tomli as toml
 import pathlib
 from sys import platform
 
@@ -61,7 +61,7 @@ def gen_modules(version):
         include_dirs = ["src/"],
         sources = ["python/src/pycryptosat.cpp",
                    "python/src/GitSHA1.cpp",
-                   "src/bva.cpp",
+                   "src/backbone.cpp",
                    "src/cardfinder.cpp",
                    "src/ccnr_cms.cpp",
                    "src/ccnr.cpp",
@@ -98,6 +98,7 @@ def gen_modules(version):
                    "src/str_impl_w_impl.cpp",
                    "src/subsumeimplicit.cpp",
                    "src/subsumestrengthen.cpp",
+                   "src/vardistgen.cpp",
                    "src/varreplacer.cpp",
                    "src/xorfinder.cpp",
                    "src/oracle/oracle.cpp",

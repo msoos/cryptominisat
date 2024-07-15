@@ -3646,28 +3646,17 @@ void Solver::detach_clauses_in_xors() {
     // Go through watchlist
     uint32_t deleted = 0;
     vector<ClOffset> delayed_clause_free;
-    for(uint32_t x = 0; x < nVars()*2; x++) {
-        Lit l = Lit::toLit(x);
-        for(const auto& w : watches[l]) {
-            if (w.isBin() || w.isBNN() || w.isIdx()) continue;
-            assert(w.isClause());
-            ClOffset offs = w.get_offset();
-            Clause* cl = cl_alloc.ptr(offs);
-            assert(!cl->freed());
-
-            //We have already went through this clause, and set it to be removed/detached
-            if (cl->red()) goto next;
-            if (cl->get_removed()) continue;
-            if (cl->size() <= maxsize_xor &&
-                    xor_hashes.count(hash_xcl(*cl)) &&
-                    check_clause_represented_by_xor(*cl)) {
-                cl->set_removed();
-                delayed_clause_free.push_back(offs);
-                deleted++;
-                continue;
-            }
-            next:
-            ;
+    for(auto offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        cl->stats.marked_clause = false;
+        assert(!cl->freed());
+        assert(!cl->get_removed());
+        if (cl->size() <= maxsize_xor &&
+                xor_hashes.count(hash_xcl(*cl)) &&
+                check_clause_represented_by_xor(*cl)) {
+            detachClause(*cl);
+            cl->stats.marked_clause = true;
+            deleted++;
         }
     }
 
@@ -3676,8 +3665,7 @@ void Solver::detach_clauses_in_xors() {
         for(uint32_t i = 0; i < longIrredCls.size(); i++) {
             ClOffset offs = longIrredCls[i];
             Clause* cl = cl_alloc.ptr(offs);
-            if (cl->get_removed()) detachClause(*cl);
-            else longIrredCls[j++] = offs;
+            if (!cl->stats.marked_clause) longIrredCls[j++] = offs;
         }
         longIrredCls.resize(j);
 

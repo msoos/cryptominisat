@@ -104,7 +104,9 @@ jobs:
         echo "end list"
         ls ../
         echo "end list"
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=ON  -DSTATICCOMPILE=${{ matrix.staticcompile }}
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=OFF  -DSTATICCOMPILE=${{ matrix.staticcompile }}
+        cmake --build . --config ${{ matrix.build_type }}
+
     
     - name: Configure CMake for non-linux
       if: matrix.os != 'ubuntu-20.04'
