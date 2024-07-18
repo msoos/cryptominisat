@@ -33,7 +33,7 @@ jobs:
             make -j4 &&
             cd .. &&
             git clone https://github.com/meelgroup/cadiback.git &&
-            cd cadical &&
+            cd cadiback &&
             git checkout mate &&
             ./configure &&
             make -j4 &&
