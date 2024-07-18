@@ -45,7 +45,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BEFORE_BUILD: >
+          CIBW_BEFORE_ALL: >
             yum install -y gmp-devel glibc-devel &&
             git clone https://github.com/meelgroup/cadical.git &&
             cd cadical &&
