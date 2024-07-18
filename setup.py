@@ -58,7 +58,7 @@ def gen_modules(version):
 
     modules = Extension(
         name = "pycryptosat",
-        include_dirs = ["src/"],
+        include_dirs = ["src/", "./"],
         sources = ["python/src/pycryptosat.cpp",
                    "python/src/GitSHA1.cpp",
                    "src/backbone.cpp",
@@ -102,6 +102,7 @@ def gen_modules(version):
                    "src/varreplacer.cpp",
                    "src/xorfinder.cpp",
                    "src/oracle/oracle.cpp",
+                   "src/oracle_use.cpp",
                ],
         extra_compile_args = extra_compile_args_val,
         define_macros=define_macros_val,
