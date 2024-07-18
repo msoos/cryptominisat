@@ -16,25 +16,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Checkout CaDiCaL
-        uses: actions/checkout@v3
-        with:
-          repository: meelgroup/cadical
-          ref: 'add_dynamic_lib'
-          path: python/cadical
+      # - name: Checkout CaDiCaL
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: meelgroup/cadical
+      #     ref: 'add_dynamic_lib'
+      #     path: python/cadical
 
-      - name: Checkout Cadiback
-        uses: actions/checkout@v3
-        with:
-          repository: meelgroup/cadiback
-          ref: 'mate'
-          path: python/cadiback
+      # - name: Checkout Cadiback
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: meelgroup/cadiback
+      #     ref: 'mate'
+      #     path: python/cadiback
 
-      - name: configure and build CaDiCaL
-        run: cd python/cadical && CXXFLAGS=-fPIC ./configure --competition && make -j4
+      # - name: configure and build CaDiCaL
+      #   run: cd python/cadical && CXXFLAGS=-fPIC ./configure --competition && make -j4
 
-      - name: Configure and build Cadiback
-        run: cd python/cadiback && ./configure && make -j4 && sudo make install
+      # - name: Configure and build Cadiback
+      #   run: cd python/cadiback && ./configure && make -j4 && sudo make install
 
       # Used to host cibuildwheel
       - uses: actions/setup-python@v3
@@ -45,6 +45,20 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
+          CIBW_BEFORE_BUILD: >
+            git clone https://github.com/meelgroup/cadical.git &&
+            cd cadical &&
+            git checkout add_dynamic_lib &&
+            ./configure &&
+            make -j4 &&
+            cd .. &&
+            git clone https://github.com/meelgroup/cadiback.git &&
+            cd cadical &&
+            git checkout mate &&
+            ./configure &&
+            make -j4 &&
+            sudo make install &&
+            cd ..
           CIBW_BEFORE_ALL_LINUX: yum install -y gmp-devel
           CIBW_SKIP: "*musl*"
           CIBW_ARCHS: "auto64"
