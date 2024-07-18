@@ -103,6 +103,7 @@ def gen_modules(version):
                    "src/xorfinder.cpp",
                    "src/oracle/oracle.cpp",
                    "src/oracle_use.cpp",
+                   "src/probe.cpp",
                ],
         depends = [
             "python/cadiback/cadiback.h",
