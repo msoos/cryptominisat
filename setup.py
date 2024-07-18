@@ -104,6 +104,9 @@ def gen_modules(version):
                    "src/oracle/oracle.cpp",
                    "src/oracle_use.cpp",
                ],
+        depends = [
+            "python/cadiback/cadiback.h",
+        ],
         extra_compile_args = extra_compile_args_val,
         define_macros=define_macros_val,
         language = "c++",
