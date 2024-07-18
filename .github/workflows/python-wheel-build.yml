@@ -46,6 +46,7 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BEFORE_BUILD: >
+            yum install -y gmp-devel glibc-devel &&
             git clone https://github.com/meelgroup/cadical.git &&
             cd cadical &&
             git checkout add_dynamic_lib &&
@@ -59,7 +60,6 @@ jobs:
             make -j4 &&
             sudo make install &&
             cd ..
-          CIBW_BEFORE_ALL_LINUX: yum install -y gmp-devel
           CIBW_SKIP: "*musl*"
           CIBW_ARCHS: "auto64"
 
