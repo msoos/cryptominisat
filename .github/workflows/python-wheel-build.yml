@@ -37,7 +37,7 @@ jobs:
             git checkout mate &&
             ./configure &&
             make -j4 &&
-            sudo make install &&
+            make install &&
             cd ..
           CIBW_SKIP: "*musl*"
           CIBW_ARCHS: "auto64"
