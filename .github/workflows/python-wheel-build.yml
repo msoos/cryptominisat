@@ -48,6 +48,7 @@ jobs:
             cd ..
           CIBW_SKIP: "*musl*"
           CIBW_ARCHS: "auto64"
+          CIBW_REPAIR_WHEEL_COMMAND: 'auditwheel repair -w {dest_dir} {wheel}'
 
       - uses: actions/upload-artifact@v3
         with:
