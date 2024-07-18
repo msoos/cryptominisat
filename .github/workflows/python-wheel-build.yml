@@ -24,8 +24,15 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
+          # yum install -y gmp-devel glibc-devel &&
           CIBW_BEFORE_ALL: >
-            yum install -y gmp-devel glibc-devel &&
+            wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz &&
+            tar xf gmp-6.3.0.tar.xz &&
+            cd gmp-6.3.0 &&
+            ./configure --enable-static -enable-cxx --enable-shared &&
+            make -j8 &&
+            make install &&
+            cd ..
             git clone https://github.com/meelgroup/cadical.git &&
             cd cadical &&
             git checkout add_dynamic_lib &&
