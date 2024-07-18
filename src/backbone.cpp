@@ -21,7 +21,11 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "solver.h"
+#ifdef INSTALLED_CADIBACK
+#include <cadiback.h>
+#else
 #include "../cadiback/cadiback.h"
+#endif
 
 using namespace CMSat;
 
