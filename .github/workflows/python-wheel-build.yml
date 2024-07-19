@@ -24,7 +24,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          # yum install -y gmp-devel glibc-devel &&
+          CIBW_BEFORE_ALL_LINUX: yum install -y wget
           CIBW_BEFORE_ALL: >
             wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz &&
             tar xf gmp-6.3.0.tar.xz &&
