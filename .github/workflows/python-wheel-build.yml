@@ -33,7 +33,7 @@ jobs:
             # make install &&
             # cd .. &&
           CIBW_BEFORE_ALL_LINUX: >
-            yum install -y gmp-devel glibc-devel &&
+            yum install -y gmp-devel &&
             git clone https://github.com/meelgroup/cadical.git &&
             cd cadical &&
             git checkout add_dynamic_lib &&
