@@ -108,6 +108,7 @@ def gen_modules(version):
         depends = [
             "python/cadiback/cadiback.h",
         ],
+        libraries = ['/usr/lib/libcadiback.so'], #, 'libgmpxx.so', 'libgmp.so'
         extra_compile_args = extra_compile_args_val,
         define_macros=define_macros_val,
         language = "c++",
@@ -118,6 +119,7 @@ if __name__ == '__main__':
     pyproject_path = pathlib.Path('pyproject.toml')
     version = _parse_toml(pyproject_path)
     modules = gen_modules(version)
+    # package_data = {'pycryptosat': ['*.so', '*.dll', '*.dylib']}
     setup(
         ext_modules =  [modules],
         libraries = [picosatlib],
