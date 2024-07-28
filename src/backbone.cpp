@@ -101,7 +101,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
             num_units_added++;
             if (!okay()) goto end;
         }
-        bool ignore = false;
+        /* bool ignore = false; */
 
         /* tmp.clear(); */
         /* for(const auto& l: learned_bins) { */
@@ -134,7 +134,7 @@ end:
             <<  " num units: " << num_units_added
             <<  " num bins: " << num_bins_added
             << " T: " << std::fixed << std::setprecision(2) << cpuTime());
-    return res == 10;
+    return okay();
 }
 
 void Solver::detach_and_free_all_irred_cls()
