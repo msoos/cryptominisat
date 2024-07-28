@@ -254,6 +254,40 @@ public:
             << std::endl;
             return false;
         }
+
+        if (value() == 'e' || value() == 'E') {
+            if (rational) {
+                std::cerr
+                << "PARSE ERROR! You can't have BOTH rational AND exponent"
+                << " At line " << lineNum
+                << " Probably looks like 1/2e-4"
+                << std::endl;
+                return false;
+            }
+            advance();
+            int64_t ex;
+            int len = 0;
+            rc = parseInt<int64_t>(ex, lineNum, &len);
+            if (!rc) return false;
+            mpz_class x(1);
+            if (ex < 0) {
+                ex *=-1;
+                mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
+                ret /= x;
+            } else {
+                mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
+                ret *=x;
+            }
+        } else if (value() == ' ') {
+            // OK
+        } else {
+            std::cerr
+            << "PARSE ERROR! Unexpected char (dec: '" << value() << ")"
+            << " At line " << lineNum
+            << " we expected a weight like 1.5 or 4/5 or 4e-2"
+            << std::endl;
+            return false;
+        }
         return true;
     }
 
