@@ -163,6 +163,7 @@ public:
         mpq_class head;
         bool rc = parseInt<mpq_class>(head, lineNum);
         if (!rc) return false;
+        bool rational = false;
         if (value() == '.') {
             advance();
             mpz_class tail;
@@ -175,14 +176,49 @@ public:
             mpq_class tailq(tail);
             ret = head + tailq/tenq;
         } else if (value() == '/') {
+            rational = true;
             advance();
             mpq_class tail;
             int len = 0;
             rc = parseInt<mpq_class>(tail, lineNum, &len);
             if (!rc) return false;
             ret = head/tail;
+        }
+
+        if (value() == 'e' || value() == 'E') {
+            if (rational) {
+                std::cerr
+                << "PARSE ERROR! You can't have BOTH rational AND exponent"
+                << " At line " << lineNum
+                << " Probably looks like 1/2e-4"
+                << std::endl;
+                return false;
+            }
+            advance();
+            int64_t ex;
+            int len = 0;
+            rc = parseInt<int64_t>(ex, lineNum, &len);
+            if (!rc) return false;
+            mpz_class x(1);
+            if (ex < 0) {
+                ex *=-1;
+                mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
+                ret /= x;
+                std::cout << "ret: " << ret << std::endl;
+            } else {
+                mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
+                ret *=x;
+                std::cout << "ret: " << ret << std::endl;
+            }
+        } else if (value() == ' ') {
+            // OK
         } else {
-            ret = head;
+            std::cerr
+            << "PARSE ERROR! Unexpected char (dec: '" << value() << ")"
+            << " At line " << lineNum
+            << " we expected a weight like 1.5 or 4/5 or 4e-2"
+            << std::endl;
+            return false;
         }
         return true;
     }
