@@ -239,6 +239,7 @@ bool DimacsParser<C, S>::parseWeight(C& in) {
         uint32_t var = std::abs(slit)-1;
         bool sign = slit < 0;
         Lit lit = Lit(var, sign);
+        /* cout << "weight parsed for lit: " << lit << " weight: " << weight << endl; */
         solver->set_lit_weight(lit, weight);
         return true;
     } else {

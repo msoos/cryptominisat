@@ -101,7 +101,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
     } else {
         ok = false;
     }
-    return res == 10;
+    return okay();
 }
 
 void Solver::detach_and_free_all_irred_cls()
