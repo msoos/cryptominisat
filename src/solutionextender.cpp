@@ -90,15 +90,15 @@ inline bool SolutionExtender::xor_satisfied(const vector< Lit >& lits) const {
     return rhs == true;
 }
 
-//called with _outer_ variable in "elimedOn"
+//called with _outer_ variable in "elimed_on"
 void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout << "dummy elimed lit (outer) " << elimedOn + 1 << endl;
+    cout << "dummy elimed lit (outer) " << elimed_on + 1 << endl;
     #endif
 
     #ifdef SLOW_DEBUG
-    const uint32_t elimedOn_inter = solver->map_outer_to_inter(elimedOn);
+    const uint32_t elimedOn_inter = solver->map_outer_to_inter(elimed_on);
     assert(solver->varData[elimedOn_inter].removed == Removed::elimed);
     #endif
 
@@ -119,9 +119,9 @@ void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t el
     #endif
 
     #ifdef SLOW_DEBUG
-    const uint32_t elimed_on_inter = solver->map_outer_to_inter(elimedOn);
+    const uint32_t elimed_on_inter = solver->map_outer_to_inter(elimed_on);
     assert(solver->varData[elimed_on_inter].removed == Removed::elimed);
-    assert(contains_var(lits, elimedOn));
+    assert(contains_var(lits, elimed_on));
     #endif
 
     if (solver->conf.verbosity >= 10) {
@@ -164,7 +164,7 @@ bool SolutionExtender::add_xor_cl(const vector<Lit>& lits, const uint32_t elimed
         }
     }
     assert(actual_lit != lit_Undef);
-    lbool val = boolToLBool(!rhs);
+    lbool val = boolToLBool(actual_lit.sign() ^ !rhs);
     solver->model[elimed_on] = val;
 
     verb_print(10,"Extending VELIM cls (xor). -- setting model for var "

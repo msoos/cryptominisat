@@ -11,7 +11,11 @@ pip install pycryptosat
 ```
 
 ## Compiling
-If you don't want to use the pip package, you can compile it as:
+If you don't want to use the pip package, you can compile it locally.
+
+You must first build and install CryptoMiniSat using the instructions in the root README.
+
+Then you can compile the python package from the root directory (the one with setup.py) as:
 
 ```
 apt-get install python-dev

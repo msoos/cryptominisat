@@ -27,7 +27,7 @@ import sys
 import os
 from setuptools import Extension, setup
 import sysconfig
-import toml
+import tomli as toml
 import pathlib
 from sys import platform
 
@@ -49,19 +49,19 @@ picosatlib = ('picosatlib', {
 def gen_modules(version):
 
     if platform == "win32" or platform == "cygwin":
-        extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DCMS_FULL_VERSION=\""+version+"\""]
-        define_macros_val = [("TRACE", "")]
+        extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DINSTALLED_CADIBACK", "/DCMS_FULL_VERSION=\""+version+"\""]
+        define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", "")]
 
     else:
-        extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17']
-        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
+        extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17', "-DINSTALLED_CADIBACK"]
+        define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
 
     modules = Extension(
         name = "pycryptosat",
-        include_dirs = ["src/"],
+        include_dirs = ["src/", "./"],
         sources = ["python/src/pycryptosat.cpp",
                    "python/src/GitSHA1.cpp",
-                   "src/bva.cpp",
+                   "src/backbone.cpp",
                    "src/cardfinder.cpp",
                    "src/ccnr_cms.cpp",
                    "src/ccnr.cpp",
@@ -98,10 +98,17 @@ def gen_modules(version):
                    "src/str_impl_w_impl.cpp",
                    "src/subsumeimplicit.cpp",
                    "src/subsumestrengthen.cpp",
+                   "src/vardistgen.cpp",
                    "src/varreplacer.cpp",
                    "src/xorfinder.cpp",
                    "src/oracle/oracle.cpp",
+                   "src/oracle_use.cpp",
+                   "src/probe.cpp",
                ],
+        depends = [
+            "python/cadiback/cadiback.h",
+        ],
+        libraries = ['/usr/lib/libcadiback.so'], #, 'libgmpxx.so', 'libgmp.so'
         extra_compile_args = extra_compile_args_val,
         define_macros=define_macros_val,
         language = "c++",
@@ -112,6 +119,7 @@ if __name__ == '__main__':
     pyproject_path = pathlib.Path('pyproject.toml')
     version = _parse_toml(pyproject_path)
     modules = gen_modules(version)
+    # package_data = {'pycryptosat': ['*.so', '*.dll', '*.dylib']}
     setup(
         ext_modules =  [modules],
         libraries = [picosatlib],

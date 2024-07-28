@@ -215,75 +215,6 @@ static int parse_xor_clause(
     return 1;
 }
 
-PyDoc_STRVAR(start_getting_small_clauses_doc,
-"EXPERIMENTAL\n\
-Start getting clauses."
-);
-static PyObject* start_getting_small_clauses(Solver *self, PyObject *args, PyObject *kwds)
-{
-    static char const* kwlist[] = {"max_len", "max_glue", NULL};
-
-    unsigned max_len;
-    unsigned max_glue;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "II", const_cast<char**>(kwlist), &max_len, &max_glue)) {
-        return NULL;
-    }
-
-    self->cmsat->start_getting_small_clauses(max_len, max_glue);
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyDoc_STRVAR(get_next_small_clause_doc,
-"EXPERIMENTAL\n\
-Start getting clauses."
-);
-static PyObject* get_next_small_clause(Solver *self, PyObject *args, PyObject *kwds)
-{
-    static char const* kwlist[] = {NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", const_cast<char**>(kwlist))) {
-        return NULL;
-    }
-
-    std::vector<Lit> lits;
-    bool ret = self->cmsat->get_next_small_clause(lits);
-    if (!ret) {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-
-
-    PyObject* list = PyList_New(lits.size());
-    for(size_t i = 0; i < lits.size(); i++) {
-        Lit l = lits[i];
-        long ll = l.var()+1;
-        if (l.sign()) {
-            ll *= -1;
-        }
-
-        PyList_SetItem(list, i, PyLong_FromLong(ll));
-    }
-    return list;
-}
-
-
-PyDoc_STRVAR(end_getting_small_clauses_doc,
-"EXPERIMENTAL\n\
-End getting clauses."
-);
-static PyObject* end_getting_small_clauses(Solver *self, PyObject *args, PyObject *kwds)
-{
-    static char const* kwlist[] = {NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", const_cast<char**>(kwlist))) {
-        return NULL;
-    }
-    self->cmsat->end_getting_small_clauses();
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
 static int _add_clause(Solver *self, PyObject *clause)
 {
     self->tmp_cl_lits.clear();
@@ -320,6 +251,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     Py_INCREF(Py_None);
     return Py_None;
 }
+
 
 template <typename T>
 static int _add_clauses_from_array(Solver *self, const size_t array_length, const T *array)
@@ -789,10 +721,6 @@ static PyMethodDef Solver_methods[] = {
     //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
     {"get_conflict", (PyCFunction) get_conflict, METH_VARARGS | METH_KEYWORDS, get_conflict_doc},
-
-    {"start_getting_small_clauses", (PyCFunction) start_getting_small_clauses, METH_VARARGS | METH_KEYWORDS, start_getting_small_clauses_doc},
-    {"get_next_small_clause", (PyCFunction) get_next_small_clause, METH_VARARGS | METH_KEYWORDS, get_next_small_clause_doc},
-    {"end_getting_small_clauses", (PyCFunction) end_getting_small_clauses, METH_VARARGS | METH_KEYWORDS, end_getting_small_clauses_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 

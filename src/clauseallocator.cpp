@@ -198,7 +198,7 @@ ClOffset ClauseAllocator::move_cl(
     ClOffset* newDataStart
     , ClOffset*& new_ptr
     , Clause* old
-) const {
+) {
     uint64_t bytesNeeded = sizeof(Clause) + old->size()*sizeof(Lit);
     uint64_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
     memcpy(new_ptr, old, sizeNeeded*sizeof(BASE_DATA_TYPE));
@@ -209,6 +209,7 @@ ClOffset ClauseAllocator::move_cl(
     (*old)[1] = Lit::toLit((new_offset>>32) & 0xFFFFFFFF);
     #endif
     old->reloced = true;
+    new_sz_while_moving += sizeNeeded;
 
     new_ptr += sizeNeeded;
     return new_offset;
@@ -262,6 +263,7 @@ void ClauseAllocator::consolidate(
         return;
     }
     const double my_time = cpuTime();
+    new_sz_while_moving = 0;
 
     //Pointers that will be moved along
     BASE_DATA_TYPE * const newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
@@ -305,7 +307,7 @@ void ClauseAllocator::consolidate(
     const uint64_t old_size = size;
     size = new_ptr-newDataStart;
     capacity = currentlyUsedSize;
-    currentlyUsedSize = size;
+    currentlyUsedSize = new_sz_while_moving;
     free(dataStart);
     dataStart = newDataStart;
 

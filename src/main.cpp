@@ -955,6 +955,8 @@ void Main::add_supported_options() {
         .flag()
         .action([&](const auto&) {only_sampl_solution = true;})
         .help("Print and ban(!) solutions' vars only in 'c ind' or as --sampling '...'");
+    program.add_argument("--sampling")
+        .help("Set sampling vars such as '1,84,44'");
     program.add_argument("--assump")
         .action([&](const auto& a) {assump_filename = a;})
         .default_value(assump_filename)
@@ -1075,6 +1077,28 @@ void Main::parse_polarity_type()
     else if (mode == "stable") conf.polarity_mode = PolarityMode::polarmode_best;
     else if (mode == "weight") conf.polarity_mode = PolarityMode::polarmode_weighted;
     else throw WrongParam(mode, "unknown polarity-mode");
+}
+
+void Main::parse_sampling_vars()
+{
+    if (program.is_used("sampling") && !program.is_used("onlysampling")) {
+        cerr << "ERROR: you MUST have both '--sampling' and '--onlysampling' at the same time" << endl;
+        exit(-1);
+    }
+    if (!program.is_used("sampling")) return;
+
+    string str_vars = program.get<string>("sampling");
+    std::vector<uint32_t> vect;
+    std::stringstream ss(str_vars);
+    for (int32_t i; ss >> i;) {
+        if (i <= 0) {
+           cerr << "Sampling variables must be positive (i.e. larger than 0)" << endl;
+           exit(-1);
+        }
+        vect.push_back(i-1);
+        if (ss.peek() == ',') ss.ignore();
+    }
+    solver->set_sampl_vars(vect);
 }
 
 void Main::manually_parse_some_options()
@@ -1218,6 +1242,7 @@ int Main::solve()
     if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
     if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));
 
+    parse_sampling_vars();
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
     if (sql != 0) solver->set_sqlite(sqlite_filename);

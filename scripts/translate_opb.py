@@ -103,7 +103,7 @@ class Constr:
                 c.lhs[i][0] = -c.lhs[i][0]
             leq_translate(c)
         else:
-            print("ERRROR")
+            print("ERROR")
             exit(-1)
 
 

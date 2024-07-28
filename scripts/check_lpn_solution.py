@@ -54,7 +54,7 @@ with open(satout, "r") as f:
                 sol[var] = lit > 0
 
 if sat is None:
-    print("ERRROR could not recover solution from SAT output")
+    print("ERROR could not recover solution from SAT output")
     exit(-1)
 
 # print("Recovered SAT: ", sat)

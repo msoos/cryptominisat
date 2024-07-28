@@ -571,7 +571,6 @@ void CNF::check_watchlist(watch_subarray_const ws) const {
             }
             assert(found);
         }
-
     }
 }
 

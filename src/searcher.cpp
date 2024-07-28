@@ -2418,6 +2418,7 @@ bool Searcher::intree_if_needed()
         sumConflicts > next_intree
     ) {
         if (ret) ret &= solver->intree->intree_probe();
+        if (ret) rebuildOrderHeap(); // Needed because intree may have replaced variables
         next_intree = sumConflicts + 65000.0*conf.global_next_multiplier;
     }
 
@@ -3419,7 +3420,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
     return data;
 }
 
-inline bool Searcher::check_order_heap_sanity() {
+bool Searcher::check_order_heap_sanity() {
     if (conf.sampling_vars_set) {
         for(uint32_t outer_var: conf.sampling_vars) {
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
@@ -3465,7 +3466,7 @@ bool Searcher::attach_xorclauses() {
 
     uint32_t j = 0;
     for(auto &x : xorclauses) {
-        SLOW_DEBUG_DO(for(const auto& v: xorclauses[i]) assert(varData[v].removed == Removed::none));
+        SLOW_DEBUG_DO(for(const auto& v: x) assert(varData[v].removed == Removed::none));
         if (x.trivial()) {
             assert(x.reason_cl_ID == 0);
             continue;

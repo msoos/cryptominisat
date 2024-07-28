@@ -62,7 +62,7 @@ void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
     simplified = _simplified;
     if (simplified) {
         if (solver->get_num_bva_vars() != 0) {
-            cout << "ERRROR! You must not have BVA variables for simplified CNF getting" << endl;
+            cout << "ERROR! You must not have BVA variables for simplified CNF getting" << endl;
             exit(-1);
         }
         release_assert(solver->get_num_bva_vars() == 0);

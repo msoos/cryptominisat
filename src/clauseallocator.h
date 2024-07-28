@@ -100,8 +100,9 @@ class ClauseAllocator {
             ClOffset* newDataStart
             , ClOffset*& new_ptr
             , Clause* old
-        ) const;
+        );
 
+        uint32_t new_sz_while_moving;
         BASE_DATA_TYPE* dataStart; ///<Stack starts at these positions
         uint64_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
         /**
