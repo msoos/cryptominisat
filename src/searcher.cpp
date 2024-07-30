@@ -2417,8 +2417,14 @@ bool Searcher::intree_if_needed()
     if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
         sumConflicts > next_intree
     ) {
+
+        auto repl = solver->varReplacer->get_num_replaced_vars();
         if (ret) ret &= solver->intree->intree_probe();
-        if (ret) rebuildOrderHeap(); // Needed because intree may have replaced variables
+        if (ret) {
+            auto repl2 = solver->varReplacer->get_num_replaced_vars();
+            // Needed because replaced variables
+            if (repl != repl2) rebuildOrderHeap();
+        }
         next_intree = sumConflicts + 65000.0*conf.global_next_multiplier;
     }
 
