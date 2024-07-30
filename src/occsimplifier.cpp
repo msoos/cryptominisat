@@ -3251,7 +3251,7 @@ void OccSimplifier::clean_elimed_cls()
     can_remove_elimed_clauses = false;
 }
 
-void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_to_block) {
+void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit) {
     elimed_map_built = false;
 
     //Copy&clear i.e. MOVE
@@ -3270,17 +3270,15 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
             assert(!cl.freed());
 
             //Put clause into elimed status
-            if (add_to_block) {
-                if (!cl.red()) {
-                    bvestats.clauses_elimed_long++;
-                    bvestats.clauses_elimed_sumsize += cl.size();
+            if (!cl.red()) {
+                bvestats.clauses_elimed_long++;
+                bvestats.clauses_elimed_sumsize += cl.size();
 
-                    lits.resize(cl.size());
-                    std::copy(cl.begin(), cl.end(), lits.begin());
-                    add_clause_to_blck(lits, cl.stats.ID);
-                } else {
-                    red = true;
-                }
+                lits.resize(cl.size());
+                std::copy(cl.begin(), cl.end(), lits.begin());
+                add_clause_to_blck(lits, cl.stats.ID);
+            } else {
+                red = true;
             }
 
             //Remove -- only FRAT the ones that are redundant
@@ -3300,7 +3298,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
             lits[0] = lit;
             lits[1] = watch.lit2();
             if (!watch.red()) {
-                if (add_to_block) add_clause_to_blck(lits, watch.get_ID());
+                add_clause_to_blck(lits, watch.get_ID());
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
                 removed_cl_with_var.touch(lits[0]);
