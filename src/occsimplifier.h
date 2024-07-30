@@ -373,7 +373,7 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    void        rem_cls_from_watch_due_to_varelim(const Lit lit);
+    void        rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_set_is_removed = true);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const vector<Lit>& lits, const int32_t ID);

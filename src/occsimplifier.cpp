@@ -783,8 +783,8 @@ void OccSimplifier::eliminate_xor_vars()
             }
             deleted[at] = 1;
         }
-        rem_cls_from_watch_due_to_varelim(lit);
-        rem_cls_from_watch_due_to_varelim(~lit);
+        rem_cls_from_watch_due_to_varelim(lit, false);
+        rem_cls_from_watch_due_to_varelim(~lit, false);
     }
     solver->clean_occur_from_idx_types_only_smudged();
 
@@ -3251,7 +3251,7 @@ void OccSimplifier::clean_elimed_cls()
     can_remove_elimed_clauses = false;
 }
 
-void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit) {
+void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_set_is_removed) {
     elimed_map_built = false;
 
     //Copy&clear i.e. MOVE
@@ -3283,7 +3283,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit) {
 
             //Remove -- only FRAT the ones that are redundant
             //The irred will be removed thanks to 'elimed' system
-            unlink_clause(offset, cl.red(), true, true);
+            unlink_clause(offset, cl.red(), true, only_set_is_removed);
         } else if (watch.isBin()) {
             //Update stats
             if (!watch.red()) {
