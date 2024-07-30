@@ -1024,8 +1024,10 @@ void Solver::set_assumptions() {
     vector<Lit> tmp;
     tmp = assumptions;
     add_clause_helper(tmp); // unelimininates, sanity checks
-    fill_assumptions_set();
-    SLOW_DEBUG_DO(check_assumptions_sanity());
+    if (okay()) {
+        fill_assumptions_set();
+        SLOW_DEBUG_DO(check_assumptions_sanity());
+    }
 }
 
 void Solver::uneliminate_sampling_set() {
