@@ -1721,6 +1721,7 @@ lbool Solver::execute_inprocess_strategy(
         check_stats();
         check_no_duplicate_lits_anywhere();
         check_assumptions_sanity();
+        check_all_clause_propagated();
         #endif
 
         token = trim(token);
@@ -2549,6 +2550,7 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 
 
 void Solver::check_clause_propagated(const Xor& x) const {
+    if (x.trivial()) return;
     uint32_t num_undef = 0;
     uint32_t num_false = 0;
     for(const auto& v: x) {

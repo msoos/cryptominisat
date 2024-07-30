@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "distillerlongwithimpl.h"
 #include "clausecleaner.h"
+#include "constants.h"
 #include "time_mem.h"
 #include "solver.h"
 #include "watchalgos.h"
@@ -335,9 +336,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
         ; i++
     ) {
         //Timeout?
-        if (timeAvailable <= 0
-            || !solver->okay()
-        ) {
+        if (timeAvailable <= 0 || !solver->okay()) {
             need_to_finish = true;
             tmpStats.ranOutOfTime++;
         }

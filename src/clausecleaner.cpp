@@ -348,9 +348,7 @@ void ClauseCleaner::clean_clauses_pre()
 
 void ClauseCleaner::clean_clauses_post()
 {
-    for(ClOffset off: delayed_free) {
-        solver->free_cl(off);
-    }
+    for(ClOffset off: delayed_free) solver->free_cl(off);
     delayed_free.clear();
 }
 
@@ -373,7 +371,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     frat_func_start();
 
     size_t last_trail = numeric_limits<size_t>::max();
-    while(last_trail != solver->trail_size()) {
+    while(solver->okay() && last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
         solver->ok = solver->propagate<false>().isnullptr();
         if (!solver->okay()) break;
