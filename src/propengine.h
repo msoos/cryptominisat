@@ -356,7 +356,7 @@ protected:
     }
 
 protected:
-    template<bool inprocess, bool red_also = true, bool use_disable = false>
+    template<bool inprocess, bool red_also = true, bool distill_use = false>
     PropBy propagate_any_order();
     template<bool bin_only=true> PropBy propagate_light();
     template<bool inprocess>

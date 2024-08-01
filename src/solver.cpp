@@ -2551,15 +2551,15 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 
 void Solver::check_clause_propagated(const Xor& x) const {
     if (x.trivial()) return;
-    bool rhs = x.rhs;
+    bool rhs = false;
     uint32_t num_undef = 0;
     for(const auto& v: x) {
         if (value(v) == l_True)  rhs ^= true;
         if (value(v) == l_Undef) num_undef++;
         if (num_undef > 1) return;
     }
-    if (num_undef == 0 && rhs) return;
-    if (num_undef == 0 && !rhs) {
+    if (num_undef == 0 && rhs == x.rhs) return;
+    if (num_undef == 0 && rhs != x.rhs) {
         cout << "ERROR: xor clause " << x << " is UNSAT!" << endl;
         assert(false);
         exit(-1);

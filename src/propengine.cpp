@@ -759,13 +759,13 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (confl.isnullptr() && !distill_use) confl = gauss_jordan_elim(p, currLevel);
+        if (confl.isnullptr()) confl = gauss_jordan_elim(p, currLevel);
 
         qhead++;
     }
 
     #ifdef SLOW_DEBUG
-    if (confl.isnullptr() && !distill_use) {
+    if (confl.isnullptr()) {
         for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].disabled) continue;
             gmatrices[g]->check_invariants();
