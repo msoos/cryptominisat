@@ -2551,17 +2551,20 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 
 void Solver::check_clause_propagated(const Xor& x) const {
     if (x.trivial()) return;
+    bool rhs = x.rhs;
     uint32_t num_undef = 0;
-    uint32_t num_false = 0;
     for(const auto& v: x) {
-        if (value(v) == l_True) return;
+        if (value(v) == l_True)  rhs ^= true;
         if (value(v) == l_Undef) num_undef++;
-        if (value(v) == l_False) num_false++;
         if (num_undef > 1) return;
     }
-
+    if (num_undef == 0 && rhs) return;
+    if (num_undef == 0 && !rhs) {
+        cout << "ERROR: xor clause " << x << " is UNSAT!" << endl;
+        assert(false);
+        exit(-1);
+    }
     assert(num_undef == 1);
-    assert(num_false == x.size()-1);
     cout << "ERROR: xor clause " << x << " should have propagated already!" << endl;
     assert(false);
     exit(-1);
@@ -2590,6 +2593,13 @@ void Solver::check_all_clause_propagated() const {
     for(const auto& c: longIrredCls) check_clause_propagated(c);
     for(const auto& cs: longRedCls) for(const auto& c: cs) check_clause_propagated(c);
     for(const auto& x: xorclauses) check_clause_propagated(x);
+}
+
+
+void Solver::check_all_nonxor_clause_propagated() const {
+    check_implicit_propagated();
+    for(const auto& c: longIrredCls) check_clause_propagated(c);
+    for(const auto& cs: longRedCls) for(const auto& c: cs) check_clause_propagated(c);
 }
 
 void Solver::check_implicit_propagated() const

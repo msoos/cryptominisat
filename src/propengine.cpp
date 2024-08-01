@@ -751,7 +751,6 @@ PropBy PropEngine::propagate_any_order()
             //propagate normal clause
             assert(i->isClause());
             prop_long_cl_any_order<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
-            continue;
         }
         while (i != end) {
             *j++ = *i++;

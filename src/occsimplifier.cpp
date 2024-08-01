@@ -713,6 +713,7 @@ void OccSimplifier::eliminate_xor_vars()
     assert(solver->watches.get_smudged_list().empty());
     assert(cl_to_free_later.empty());
     SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
+    SLOW_DEBUG_DO(solver->check_all_nonxor_clause_propagated());
 
     double my_time = cpuTime();
     const int64_t orig_xor_varelim_time_limit = xor_varelim_time_limit;
@@ -2265,7 +2266,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
         #endif
         solver->check_implicit_propagated();
-        solver->check_all_clause_propagated();
+        solver->check_all_nonxor_clause_propagated();
         solver->check_implicit_stats(true);
         solver->check_assumptions_sanity();
         check_no_marked_clauses();
@@ -3079,7 +3080,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
         solver->check_wrong_attach();
         solver->check_stats();
         solver->check_implicit_propagated();
-        solver->check_all_clause_propagated();
+        solver->check_all_nonxor_clause_propagated();
         #endif
     }
 

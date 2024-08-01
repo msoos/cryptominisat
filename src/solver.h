@@ -168,6 +168,7 @@ class Solver : public Searcher
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_implicit_propagated() const;
         void check_all_clause_propagated() const;
+        void check_all_nonxor_clause_propagated() const;
         void check_clause_propagated(const ClOffset& offs) const;
         void check_clause_propagated(const Xor& x) const;
         void check_stats(const bool allowFreed = false) const;
