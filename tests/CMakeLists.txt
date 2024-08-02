@@ -22,23 +22,6 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-sign-compare")
 endif()
 
-set (LIT_TOOL "${Python3_EXECUTABLE} -m lit.main")
-execute_process(
-    COMMAND "${Python3_EXECUTABLE}" "-m" "lit.main" "--version"
-    OUTPUT_VARIABLE LIT_VER_OUT
-    ERROR_VARIABLE  LIT_VER_ERR
-    RESULT_VARIABLE RES
-)
-
-if(NOT("${RES}" STREQUAL "0"))
-    message(STATUS "Output of LIT stdout: '${LIT_VER_OUT}'")
-    message(STATUS "Output of LIT stderr: '${LIT_VER_ERR}'")
-    message(STATUS "LIT result val is: '${RES}'")
-    message(FATAL_ERROR "Could not find 'lit' tool for Python executable ${Python3_EXECUTABLE}. You need to install it for this Python version by running '${Python3_EXECUTABLE} -m pip install lit'. If it's already installed, set LIT_TOOL to the full path for lit")
-endif()
-
-set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")
-
 # -----------------------------------------------------------------------------
 # Find GTest library which will be used to drive tests
 # -----------------------------------------------------------------------------
