@@ -202,7 +202,7 @@ void Main::printResultFunc(
                 }
             };
 
-            if (!solver->get_sampl_vars_set() || !only_sampl_solution) {
+            if (!solver->get_sampl_vars_set()) {
                 for (uint32_t var = 0; var < solver->nVars(); var++) {
                     fun(var);
                 }
@@ -215,7 +215,7 @@ void Main::printResultFunc(
             *os << "0" << endl;
         } else {
             uint32_t num_undef;
-            if (!solver->get_sampl_vars_set() || !only_sampl_solution) {
+            if (!solver->get_sampl_vars_set()) {
                 num_undef = print_model(solver, os);
             } else {
                 num_undef = print_model(solver, os, &solver->get_sampl_vars());
@@ -951,12 +951,8 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.simulate_frat = std::atoi(a.c_str());})
         .default_value(conf.simulate_frat)
         .help("Simulate FRAT");
-    program.add_argument("--onlysampling")
-        .flag()
-        .action([&](const auto&) {only_sampl_solution = true;})
-        .help("Print and ban(!) solutions' vars only in 'c ind' or as --sampling '...'");
     program.add_argument("--sampling")
-        .help("Set sampling vars such as '1,84,44'");
+        .help("Set sampling vars such as '1,84,44'. Can also be set via CNF using 'c p show 1 84 44 0'");
     program.add_argument("--assump")
         .action([&](const auto& a) {assump_filename = a;})
         .default_value(assump_filename)
@@ -1081,10 +1077,6 @@ void Main::parse_polarity_type()
 
 void Main::parse_sampling_vars()
 {
-    if (program.is_used("sampling") && !program.is_used("onlysampling")) {
-        cerr << "ERROR: you MUST have both '--sampling' and '--onlysampling' at the same time" << endl;
-        exit(-1);
-    }
     if (!program.is_used("sampling")) return;
 
     string str_vars = program.get<string>("sampling");
@@ -1330,7 +1322,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(&assumps, only_sampl_solution);
+        ret = solver->solve(&assumps, true);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
@@ -1346,9 +1338,7 @@ lbool Main::multi_solutions()
                 << endl;
             }
 
-            if (!dont_ban_solutions) {
-                ban_found_solution();
-            }
+            if (!dont_ban_solutions) ban_found_solution();
         }
     }
     return ret;
@@ -1356,7 +1346,7 @@ lbool Main::multi_solutions()
 
 void Main::ban_found_solution() {
     vector<Lit> lits;
-    if (solver->get_sampl_vars_set()) {
+    if (!solver->get_sampl_vars_set()) {
         //all of the solution
         for (uint32_t var = 0; var < solver->nVars(); var++) {
             if (solver->get_model()[var] != l_Undef) {
