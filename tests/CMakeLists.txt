@@ -36,10 +36,9 @@ endif()
 # everyone uses the same version of GTest.
 set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
 message(STATUS "NOTE: if adding the 'gtest' subdirectory fails, you need to issue 'git submodule init' and 'git submodule update'")
-add_subdirectory(${GTEST_PREFIX} gtest)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 
-include_directories(${GTEST_PREFIX}/include)
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 add_definitions( -DCMS_TESTING_ENABLED )
 
 # Add handy macros/functions

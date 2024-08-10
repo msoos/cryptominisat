@@ -650,7 +650,6 @@ foreach( d ${DirDefs} )
 endforeach()
 message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
 
-add_subdirectory(src cmsat5-src)
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
@@ -669,6 +668,7 @@ add_custom_target(uninstall
 # Testing
 # -----------------------------------------------------------------------------
 if (ENABLE_TESTING)
+    add_subdirectory(utils/gtest)
     enable_testing()
 
     #use valgrind
@@ -680,11 +680,6 @@ if (ENABLE_TESTING)
       set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
     endif()
 
-    # too unstable to add (depends on CPU)
-    #if (NOT STATS AND NOT SLOW_DEBUG)
-        #add_test (NAME library_speed_test COMMAND tests/library_speed_test)
-    #endif()
-
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
     add_subdirectory(tests)
@@ -695,6 +690,7 @@ if (ENABLE_TESTING)
 else()
     message(WARNING "Testing is disabled")
 endif()
+add_subdirectory(src cmsat5-src)
 
 # -----------------------------------------------------------------------------
 # Export our targets so that other CMake based projects can interface with

@@ -50,9 +50,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if (ENABLE_TESTING)
     add_definitions( -DCMS_TESTING_ENABLED )
-    set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
-    include_directories(${GTEST_PREFIX}/include)
-    message(STATUS "Including gtest dir ${GTEST_PREFIX}/include")
+    include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+    message(STATUS "Including gtest dir ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}")
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
