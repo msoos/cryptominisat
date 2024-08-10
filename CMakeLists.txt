@@ -665,20 +665,14 @@ add_custom_target(uninstall
 )
 
 # -----------------------------------------------------------------------------
-# Testing
+# Subdirectories
 # -----------------------------------------------------------------------------
 if (ENABLE_TESTING)
     add_subdirectory(utils/gtest)
+endif()
+add_subdirectory(src cmsat5-src)
+if (ENABLE_TESTING)
     enable_testing()
-
-    #use valgrind
-    find_program(MEMORYCHECK_COMMAND valgrind)
-    if(MEMORYCHECK_COMMAND-NOTFOUND)
-      message(WARNING "Valgrind not found. Test will be run without valgrind.")
-    else()
-      message(STATUS "Valgrind found: ${MEMORYCHECK_COMMAND}. Running test using it.")
-      set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
-    endif()
 
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
@@ -686,11 +680,9 @@ if (ENABLE_TESTING)
     add_subdirectory(scripts/fuzz)
     add_subdirectory(utils/minimal_cms)
     add_subdirectory(utils/lingeling-ala)
-
 else()
     message(WARNING "Testing is disabled")
 endif()
-add_subdirectory(src cmsat5-src)
 
 # -----------------------------------------------------------------------------
 # Export our targets so that other CMake based projects can interface with
