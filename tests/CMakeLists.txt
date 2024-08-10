@@ -22,18 +22,6 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-sign-compare")
 endif()
 
-# -----------------------------------------------------------------------------
-# Find GTest library which will be used to drive tests
-# -----------------------------------------------------------------------------
-# GoogleTest devs don't recommend using a pre-built GTest library
-# ( https://code.google.com/p/googletest/wiki/FAQ#Why_is_it_not_recommended_to_install_a_pre-compiled_copy_of_Goog ).
-# Because of this, distros like Ubuntu don't provide a pre-built GTest library
-# so ``find_package(GTest REQUIRED)`` fails.
-#
-# Instead it is recommended that projects build their own copy of GTest. Detecting
-# the location of GTest source code is probably error prone so using a copy in the
-# repository seems like the easiest thing to do. This also has the added benefit that
-# everyone uses the same version of GTest.
 set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
 message(STATUS "NOTE: if adding the 'gtest' subdirectory fails, you need to issue 'git submodule init' and 'git submodule update'")
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
@@ -44,9 +32,6 @@ add_definitions( -DCMS_TESTING_ENABLED )
 # Add handy macros/functions
 include(AddSTPGTest)
 include(AddGTestSuite)
-
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
 
 # Tests that drive cryptominisat by using cnf files (e.g. smt2, smt and cvc files)
 add_subdirectory(${PROJECT_SOURCE_DIR}/tests/cnf-files)
@@ -62,7 +47,6 @@ add_sanitize_flags()
 #     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
 #     add_subdirectory(simp-checks)
 # endif()
-
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories(
