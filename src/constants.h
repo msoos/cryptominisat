@@ -147,11 +147,11 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 //#define VERBOSE_DEBUG
 
 #ifdef DEBUG_FRAT
-#define frat_func_start *solver->frat << __PRETTY_FUNCTION__ << " start\n"
-#define frat_func_start_raw *frat << __PRETTY_FUNCTION__ << " start\n"
-#define frat_func_end *solver->frat << __PRETTY_FUNCTION__ << " end\n"
-#define frat_func_end_with(txt) *solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n"
-#define frat_func_end_raw *frat << __PRETTY_FUNCTION__ << " end\n"
+#define frat_func_start() do {*solver->frat << __PRETTY_FUNCTION__ << " start\n";} while (0)
+#define frat_func_start_raw() do {*frat << "" << __PRETTY_FUNCTION__ << " start\n";} while (0)
+#define frat_func_end() do {*solver->frat << __PRETTY_FUNCTION__ << " end\n";} while (0)
+#define frat_func_end_with(txt) do {*solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n";} while (0)
+#define frat_func_end_raw() do {*frat << __PRETTY_FUNCTION__ << " end\n";} while (0)
 #else
 #define frat_func_start() do { } while (0)
 #define frat_func_start_raw() do { } while (0)

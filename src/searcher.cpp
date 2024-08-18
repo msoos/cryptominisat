@@ -3012,12 +3012,12 @@ PropBy Searcher::propagate() {
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
         if (!ret.isnullptr()) {
-            int32_t ID;
+            int32_t id;
             for(size_t i = last_trail; i < trail.size(); i++) {
                 const auto propby = varData[trail[i].lit.var()].reason;
-                if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, ID);
+                if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, id);
             }
-            if (ret.getType() == PropByType::xor_t) get_xor_reason(ret, ID);
+            if (ret.getType() == PropByType::xor_t) get_xor_reason(ret, id);
             // We need this check, because apparently GJ can set unsat during prop
             if (unsat_cl_ID == 0) {
                 *frat << add << ++clauseID << fin;
