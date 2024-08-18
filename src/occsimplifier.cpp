@@ -248,8 +248,6 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
                     [[maybe_unused]] bool var_set;
                     if (!it->is_xor) var_set = extender->add_cl(lits, elimed_on.var());
                     else var_set =extender->add_xor_cl(lits, elimed_on.var());
-
-
                     #ifndef DEBUG_VARELIM
                     //all should be satisfied in fact
                     //no need to go any further
@@ -4662,9 +4660,11 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var)
     bvestats_global.numVarsElimed++;
 }
 
-void OccSimplifier::create_dummy_elimed_clause(const Lit lit, bool is_xor)
+void OccSimplifier::create_dummy_elimed_clause(Lit lit, bool is_xor)
 {
-    elimed_cls_lits.push_back(solver->map_inter_to_outer(lit));
+    lit = solver->map_inter_to_outer(lit);
+    verb_print(3, "Eliminating outer var: " << lit << " is_xor: " << is_xor);
+    elimed_cls_lits.push_back(lit);
     elimed_cls.push_back(ElimedClauses(elimed_cls_lits.size()-1, elimed_cls_lits.size(), is_xor));
     elimed_map_built = false;
 }

@@ -2505,7 +2505,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     }
     num_search_called++;
     SLOW_DEBUG_DO(check_no_removed_or_freed_cl_in_watch());
-    verb_print(6, "Searcher::solve() called");
+    verb_print(6, __func__ << " called");
 
     resetStats();
     lbool status = l_Undef;
@@ -2732,15 +2732,13 @@ void Searcher::print_solution_varreplace_status() const
 
 void Searcher::print_solution_type(const lbool status) const
 {
-    if (conf.verbosity >= 6) {
-        if (status == l_True) {
-            cout << "Solution from Searcher is SAT" << endl;
-        } else if (status == l_False) {
-            cout << "Solution from Searcher is UNSAT" << endl;
-            cout << "OK is: " << okay() << endl;
-        } else {
-            cout << "Solutions from Searcher is UNKNOWN" << endl;
-        }
+    if (status == l_True) {
+        verb_print(6, "Solution from Searcher is SAT");
+    } else if (status == l_False) {
+        verb_print(6, "Solution from Searcher is UNSAT");
+        verb_print(6, "OK is: " << okay());
+    } else {
+        verb_print(6, "Solutions from Searcher is UNKNOWN");
     }
 }
 

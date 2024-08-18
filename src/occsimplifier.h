@@ -423,7 +423,7 @@ private:
     void clean_from_red_or_removed(
         const vec<Watched>& in,
         vec<Watched>& out);
-    void  create_dummy_elimed_clause(const Lit lit, bool is_xor = false);
+    void  create_dummy_elimed_clause(Lit lit, bool is_xor = false);
     vector<OccurClause> tmp_subs;
     bool        test_elim_and_fill_resolvents(uint32_t var);
     void        get_gate(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);

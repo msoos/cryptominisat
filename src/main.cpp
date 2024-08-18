@@ -221,7 +221,8 @@ void Main::printResultFunc(
                 num_undef = print_model(solver, os, &solver->get_sampl_vars());
             }
             if (num_undef && !toFile && conf.verbosity) {
-                cout << "c NOTE: " << num_undef << " variables are NOT set." << endl;
+                cout << "c NOTE: " << num_undef << " variables are UNDEF. Sampling vars set:"
+                    << solver->get_sampl_vars_set() << endl;
             }
         }
     }
@@ -1080,17 +1081,17 @@ void Main::parse_sampling_vars()
     if (!program.is_used("sampling")) return;
 
     string str_vars = program.get<string>("sampling");
-    std::vector<uint32_t> vect;
+    std::vector<uint32_t> sampl_vars;
     std::stringstream ss(str_vars);
     for (int32_t i; ss >> i;) {
         if (i <= 0) {
            cerr << "Sampling variables must be positive (i.e. larger than 0)" << endl;
            exit(-1);
         }
-        vect.push_back(i-1);
+        sampl_vars.push_back(i-1);
         if (ss.peek() == ',') ss.ignore();
     }
-    solver->set_sampl_vars(vect);
+    solver->set_sampl_vars(sampl_vars);
 }
 
 void Main::manually_parse_some_options()
@@ -1322,7 +1323,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(&assumps, true);
+        ret = solver->solve(&assumps, solver->get_sampl_vars_set());
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {

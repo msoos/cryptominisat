@@ -1604,7 +1604,7 @@ lbool Solver::iterate_until_solved() {
             status = l_False;
             goto end;
         }
-        status = Searcher::solve(num_confl);
+        status = solve(num_confl);
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1674,6 +1674,7 @@ void Solver::check_too_many_in_tier0()
 }
 
 void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution) {
+    verb_print(10, __func__ << " called with status: " << status);
     double mytime = cpuTime();
     if (status == l_True) {
         extend_solution(only_sampling_solution);
