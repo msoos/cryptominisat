@@ -40,7 +40,7 @@ class Clause;
 class DistillerLongWithImpl {
     public:
         DistillerLongWithImpl(Solver* solver);
-        bool distill_long_with_implicit(bool alsoStrengthen);
+        bool distill_long_with_implicit(bool also_strengthen);
 
         struct Stats
         {
@@ -102,12 +102,12 @@ class DistillerLongWithImpl {
 
         bool remove_or_shrink_clause(Clause& cl, ClOffset& offset);
         void strsub_with_watch(
-            bool alsoStrengthen
+            bool also_strengthen
             , Clause& cl
         );
         void dump_stats_for_sub_str_all_cl_with_watch(
             bool red
-            , bool alsoStrengthen
+            , bool also_strengthen
             , double my_time
             , double orig_time_available
         );
@@ -127,7 +127,7 @@ class DistillerLongWithImpl {
         void str_and_sub_using_watch(
             Clause& cl
             , const Lit lit
-            , const bool alsoStrengthen
+            , const bool also_strengthen
         );
         void strengthen_clause_with_watch(
             const Lit lit
@@ -142,18 +142,18 @@ class DistillerLongWithImpl {
         //bool needToFinish;
         bool sub_str_cl_with_watch(
             ClOffset& offset
-            , const bool alsoStrengthen
+            , const bool also_strengthen
         );
         void randomise_order_of_clauses(vector<ClOffset>& clauses);
         uint64_t calc_time_available(
-            const bool alsoStrengthen
+            const bool also_strengthen
             , const bool red
         ) const;
 
         bool sub_str_all_cl_with_watch(
             vector<ClOffset>& clauses
             , bool red
-            , bool alsoStrengthen
+            , bool also_strengthen
         );
         int64_t timeAvailable;
 
