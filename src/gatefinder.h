@@ -39,7 +39,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 {
     os << " gate " << " lits: ";
     for(auto const& l: gate.lits) os << l << ",";
-    os << " rhs: " << gate.rhs << " ID: " << gate.ID;
+    os << " rhs: " << gate.rhs << " ID: " << gate.id;
     return os;
 }
 

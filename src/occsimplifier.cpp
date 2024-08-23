@@ -2003,7 +2003,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
             Clause* cl1 = solver->cl_alloc.ptr(w.get_offset());
             if (cl1->get_removed() || cl1->red()) continue;
             if (cl1->size() <= 3) continue; // we could mess with definition of gates
-            if (cl1->stats.id == g.ID) continue;
+            if (cl1->stats.id == g.id) continue;
 
             bool found = false;
             for(auto const&l: *cl1) {
@@ -2018,7 +2018,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
                 Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
                 if (cl1->get_removed()) continue; // COULD HAVE BEEN REMOVED BELOW
                 if (cl2->get_removed() || cl2->red()) continue;
-                if (cl2->stats.id == g.ID) continue;
+                if (cl2->stats.id == g.id) continue;
                 if (cl2->size() != cl1->size()) continue;
                 auto myabst1 = cl1->abst | abst_var(g.lits[1].var());
                 auto myabst2 = cl2->abst | abst_var(g.lits[0].var());
@@ -2134,7 +2134,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             assert(w.isClause());
             const auto off = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->stats.id == gate.ID || //the gate definition, skip
+            if (cl->stats.id == gate.id || //the gate definition, skip
                 cl->red() || //no need, slow
                 cl->get_removed())
             {

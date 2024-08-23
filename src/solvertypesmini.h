@@ -198,7 +198,7 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 class OrGate {
     public:
         OrGate(const Lit& _rhs, const std::vector<Lit>& _lits, int32_t _ID) :
-            lits(_lits), rhs(_rhs), ID(_ID)
+            lits(_lits), rhs(_rhs), id(_ID)
 
         {
             std::sort(lits.begin(), lits.end());
@@ -220,7 +220,7 @@ class OrGate {
         Lit rhs;
 
         //ID of long clause
-        int32_t ID;
+        int32_t id;
 };
 
 class ITEGate {
