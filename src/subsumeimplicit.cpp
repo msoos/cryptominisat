@@ -56,7 +56,7 @@ void SubsumeImplicit::try_subsume_bin(
         assert(i->lit2().var() != lit.var());
         *timeAvail -= 30;
         *timeAvail -= solver->watches[i->lit2()].size();
-        removeWBin(solver->watches, i->lit2(), lit, i->red(), i->get_ID());
+        removeWBin(solver->watches, i->lit2(), lit, i->red(), i->get_id());
         if (touched) {
             touched->touch(i->lit2());
         }
@@ -65,7 +65,7 @@ void SubsumeImplicit::try_subsume_bin(
         } else {
             solver->binTri.irredBins--;
         }
-        (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
+        (*solver->frat) << del << i->get_id() << lit << i->lit2() << fin;
 
         return;
     } else {

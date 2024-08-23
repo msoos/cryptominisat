@@ -726,8 +726,8 @@ size_t SubsumeStrengthen::mem_used() const
 
 void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
 {
-    solver->detach_bin_clause(cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_ID());
-    (*solver->frat) << del << cl.ws.get_ID() << cl.lit << cl.ws.lit2() << fin;
+    solver->detach_bin_clause(cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_id());
+    (*solver->frat) << del << cl.ws.get_id() << cl.lit << cl.ws.lit2() << fin;
     if (!cl.ws.red()) {
         simplifier->n_occurs[cl.lit.toInt()]--;
         simplifier->n_occurs[cl.ws.lit2().toInt()]--;
@@ -777,8 +777,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 }
                 //this binary is definitely satisfied
                 solver->detach_bin_clause(
-                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
-                (*solver->frat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
+                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_id());
+                (*solver->frat) << del << subs[j].ws.get_id() << subs[j].lit << subs[j].ws.lit2() << fin;
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
@@ -897,9 +897,9 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
                 simplifier->added_cl_to_var.touch(tmpLits[0]);
                 simplifier->added_cl_to_var.touch(tmpLits[1]);
                 findWatchedOfBin(
-                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_ID()).setRed(false);
+                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_id()).setRed(false);
                 findWatchedOfBin(
-                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_ID()).setRed(false);
+                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_id()).setRed(false);
             }
             continue;
         }

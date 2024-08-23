@@ -141,14 +141,14 @@ public:
     Frat& operator<<(const Xor& x) override
     {
         if (must_delete_next) {
-            byteDRUPdID(x.XID);
+            byteDRUPdID(x.xid);
             for(uint32_t i = 0; i < x.size(); i++) {
                 Lit l = Lit(x[i], false);
                 if (i == 0 && !x.rhs) l ^= true;
                 byteDRUPd(l);
             }
         } else {
-            byteDRUPaID(x.XID);
+            byteDRUPaID(x.xid);
             for(uint32_t i = 0; i < x.size(); i++) {
                 Lit l = Lit(x[i], false);
                 if (i == 0 && !x.rhs) l ^= true;
@@ -162,10 +162,10 @@ public:
     Frat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
-            byteDRUPdID(cl.stats.ID);
+            byteDRUPdID(cl.stats.id);
             for(const Lit l: cl) byteDRUPd(l);
         } else {
-            byteDRUPaID(cl.stats.ID);
+            byteDRUPaID(cl.stats.id);
             for(const Lit l: cl) byteDRUPa(l);
         }
 

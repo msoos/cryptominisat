@@ -212,7 +212,7 @@ class Solver : public Searcher
             const vector< Lit >& lits
             , bool rhs
             , bool attach
-            , int32_t XID
+            , int32_t xid
         );
         void new_var(
             const bool bva = false,

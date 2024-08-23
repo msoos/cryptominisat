@@ -67,7 +67,7 @@ inline void removeWBin(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
-        || i->get_ID() != ID
+        || i->get_id() != ID
     ); i++);
 
     assert(i != end);
@@ -90,7 +90,7 @@ inline void removeWBin_change_order(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
-        || i->get_ID() != ID
+        || i->get_id() != ID
     ); i++);
 
     assert(i != end);
@@ -111,7 +111,7 @@ inline bool removeWBin_except_marked(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
-        || i->get_ID() != ID
+        || i->get_id() != ID
     ); i++);
     assert(i != end);
 
@@ -136,7 +136,7 @@ inline const Watched& findWatchedOfBin(
 ) {
     watch_subarray_const ws = wsFull[lit1];
     for (const Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
             return *i;
     }
 
@@ -153,7 +153,7 @@ inline Watched& findWatchedOfBin(
 ) {
     watch_subarray ws = wsFull[lit1];
     for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
             return *i;
     }
 
@@ -170,7 +170,7 @@ inline Watched* findWatchedOfBinMaybe(
 ) {
     watch_subarray ws = wsFull[lit1];
     for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
             return i;
     }
     return nullptr;

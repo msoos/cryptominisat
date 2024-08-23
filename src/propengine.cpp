@@ -580,9 +580,9 @@ inline bool PropEngine::prop_bin_cl(
 ) {
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
-        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_ID()));
+        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_id()));
     } else if (val == l_False) {
-        confl = PropBy(~p, i->red(), i->get_ID());
+        confl = PropBy(~p, i->red(), i->get_id());
         failBinLit = i->lit2();
         qhead = trail.size();
         return false;
@@ -1131,7 +1131,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
 
         if (frat->enabled()) {
             x.reason_cl_ID = ++clauseID;
-            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
+            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.xid << fin;
             ID = x.reason_cl_ID;
         }
         frat_func_end();

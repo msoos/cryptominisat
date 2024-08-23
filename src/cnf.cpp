@@ -825,10 +825,10 @@ void CNF::check_no_zero_ID_bins() const
         for(const auto& w: watches[l]) {
             //only do once per binary
             if (w.isBin()) {
-                if (w.get_ID() == 0) {
-                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_ID() << endl;
+                if (w.get_id() == 0) {
+                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_id() << endl;
                 }
-                assert(w.get_ID() > 0);
+                assert(w.get_id() > 0);
             }
         }
     }

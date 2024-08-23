@@ -26,14 +26,8 @@ THE SOFTWARE.
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
-#include <set>
 #include <algorithm>
-#include <fstream>
-#include <set>
 #include <iostream>
-#include <limits>
-#include <cmath>
-#include <functional>
 
 #include "occsimplifier.h"
 #include "clause.h"
@@ -388,7 +382,7 @@ bool OccSimplifier::clean_clause(
         }
 
         case 2: {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.id);
             if (!cl.red()) {
                 std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
                 added_irred_bin.push_back(tmp);
@@ -447,7 +441,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     switch (cl.size()) {
         case 0: {
-            set_unsat_cl_id(cl.stats.ID);
+            set_unsat_cl_id(cl.stats.id);
             solver->ok = false;
             return false;
         }
@@ -458,7 +452,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             return false;
         }
         case 2:
-            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.id);
             return false;
 
         default:
@@ -487,7 +481,7 @@ struct sort_smallest_first {
             if (first.lit2() != second.lit2()) {
                 return first.lit2() < second.lit2();
             }
-            return first.get_ID() < second.get_ID();
+            return first.get_id() < second.get_id();
         }
 
         if (first.isClause() && second.isClause()) {
@@ -769,7 +763,7 @@ void OccSimplifier::eliminate_xor_vars()
             lits.clear();
             for(const auto& v: *x) lits.push_back(Lit(v, false));
             lits[0] ^= !x->rhs;
-            add_clause_to_blck(lits, x->XID);
+            add_clause_to_blck(lits, x->xid);
             set_var_as_eliminated(var);
             for(const auto& v: x->vars) {
                 (*limit_to_decrease)--;
@@ -958,7 +952,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
         for (uint32_t i = 0; i < ws.size(); i ++) {
             Watched& w = ws[i];
             if (w.isBin()) {
-                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_ID());
+                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_id());
                 if (w.red()) {
                     solver->binTri.redBins--;
                 } else {
@@ -967,7 +961,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                *(solver->frat) << del << w.get_ID() << l << w.lit2() << fin;
+                *(solver->frat) << del << w.get_id() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -993,7 +987,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             Watched& w = ws2[i];
             if (w.isBin()) {
                 assert(solver->value(w.lit2()) == l_True); //we propagate and it'd be UNSAT otherwise
-                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_ID());
+                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_id());
                 if (w.red()) {
                     solver->binTri.redBins--;
                 } else {
@@ -1002,7 +996,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                *(solver->frat) << del << w.get_ID() << l << w.lit2() << fin;
+                *(solver->frat) << del << w.get_id() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -1148,18 +1142,18 @@ void OccSimplifier::subs_with_resolvent_clauses()
 
         const auto& tmp_poss = solver->watches[lit];
         const auto& tmp_negs = solver->watches[~lit];
-        int32_t ID1;
-        int32_t ID2;
+        int32_t id1;
+        int32_t id2;
         for (auto const& pos: tmp_poss) {
             *limit_to_decrease -= 3;
             if (pos.isBin()) {
                 if (pos.red()) continue;
-                ID1 = pos.get_ID();
+                id1 = pos.get_id();
             }
             else if (pos.isClause()) {
                 const Clause *cl = solver->cl_alloc.ptr(pos.get_offset());
                 if (cl->get_removed() || cl->red()) continue;
-                ID1 = cl->stats.ID;
+                id1 = cl->stats.id;
             } else { assert(false); }
 
             for (auto const& neg: tmp_negs) {
@@ -1167,11 +1161,11 @@ void OccSimplifier::subs_with_resolvent_clauses()
                 if (*limit_to_decrease < 0) goto end;
                 if (neg.isBin()) {
                     if (neg.red()) continue;
-                    ID2 = neg.get_ID();
+                    id2 = neg.get_id();
                 } else if (neg.isClause()) {
                     const Clause *cl = solver->cl_alloc.ptr(neg.get_offset());
                     if (cl->get_removed() || cl->red()) continue;
-                    ID2 = cl->stats.ID;
+                    id2 = cl->stats.id;
                 } else { assert(false); }
 
                 //Resolve the two clauses
@@ -1189,7 +1183,6 @@ void OccSimplifier::subs_with_resolvent_clauses()
                 resolvents_checked++;
                 tmp_subs.clear();
                 std::sort(dummy.begin(), dummy.end());
-//                 strengthen_dummy_with_bins(true); //too expensive
 
                 sub_str->find_subsumed(
                     CL_OFFSET_MAX,
@@ -1200,14 +1193,14 @@ void OccSimplifier::subs_with_resolvent_clauses()
                 );
                 for(const auto& sub: tmp_subs) {
                     if (sub.ws.isBin()) {
-                        const auto ID3 = sub.ws.get_ID();
-                        if (ID3 == ID1 || ID3 == ID2 || sub.ws.red()) continue;
+                        const auto id3 = sub.ws.get_id();
+                        if (id3 == id1 || id3 == id2 || sub.ws.red()) continue;
                         sub_str->remove_binary_cl(sub);
                         removed++;
                     } else if (sub.ws.isClause()) {
                         const Clause* cl = solver->cl_alloc.ptr(sub.ws.get_offset());
-                        const auto ID3 = cl->stats.ID;
-                        if (ID3 == ID1 || ID3 == ID2 || cl->red()) continue;
+                        const auto id3 = cl->stats.id;
+                        if (id3 == id1 || id3 == id2 || cl->red()) continue;
                         unlink_clause(sub.ws.get_offset(), true, false, true);
                         removed++;
                     }
@@ -2010,7 +2003,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
             Clause* cl1 = solver->cl_alloc.ptr(w.get_offset());
             if (cl1->get_removed() || cl1->red()) continue;
             if (cl1->size() <= 3) continue; // we could mess with definition of gates
-            if (cl1->stats.ID == g.ID) continue;
+            if (cl1->stats.id == g.ID) continue;
 
             bool found = false;
             for(auto const&l: *cl1) {
@@ -2025,7 +2018,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
                 Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
                 if (cl1->get_removed()) continue; // COULD HAVE BEEN REMOVED BELOW
                 if (cl2->get_removed() || cl2->red()) continue;
-                if (cl2->stats.ID == g.ID) continue;
+                if (cl2->stats.id == g.ID) continue;
                 if (cl2->size() != cl1->size()) continue;
                 auto myabst1 = cl1->abst | abst_var(g.lits[1].var());
                 auto myabst2 = cl2->abst | abst_var(g.lits[0].var());
@@ -2141,7 +2134,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             assert(w.isClause());
             const auto off = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->stats.ID == gate.ID || //the gate definition, skip
+            if (cl->stats.id == gate.ID || //the gate definition, skip
                 cl->red() || //no need, slow
                 cl->get_removed())
             {
@@ -2747,7 +2740,7 @@ void OccSimplifier::delete_component_unconnected_to_assumps()
             if (w.isBin()) {
                 if (w.red()) continue;
                 if (!seen[w.lit2().var()]) {
-                    solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_ID(), false, true);
+                    solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_id(), false, true);
                     removed++;
                 }
             } else if (w.isClause()) {
@@ -3275,7 +3268,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_s
 
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
-                add_clause_to_blck(lits, cl.stats.ID);
+                add_clause_to_blck(lits, cl.stats.id);
             } else {
                 red = true;
             }
@@ -3297,7 +3290,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_s
             lits[0] = lit;
             lits[1] = watch.lit2();
             if (!watch.red()) {
-                add_clause_to_blck(lits, watch.get_ID());
+                add_clause_to_blck(lits, watch.get_id());
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
                 removed_cl_with_var.touch(lits[0]);
@@ -3307,13 +3300,13 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_s
             } else {
                 //If redundant, delayed elimed-based FRAT deletion will not work
                 //so delete explicitly
-                (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
+                (*solver->frat) << del << watch.get_id() << lits[0] << lits[1] << fin;
             }
 
             //Remove
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
-            solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
+            solver->detach_bin_clause(lits[0], lits[1], red, watch.get_id(), true, true);
         } else {
             // IDX for XOR elimination
         }
@@ -3441,7 +3434,7 @@ bool OccSimplifier::find_or_gate(
     for(const Watched w: a) {
         if (w.isBin()) {
             SLOW_DEBUG_DO(assert(!w.red()));
-            seen[(~w.lit2()).toInt()] = w.get_ID();
+            seen[(~w.lit2()).toInt()] = w.get_id();
             toClear.push_back(~w.lit2());
         }
     }
@@ -3727,7 +3720,7 @@ bool OccSimplifier::find_equivalence_gate(
     for(const Watched& w: a) {
         if (w.isBin()) {
             SLOW_DEBUG_DO(assert(!w.red()));
-            seen[w.lit2().toInt()] = w.get_ID();
+            seen[w.lit2().toInt()] = w.get_id();
             toClear.push_back(w.lit2());
         }
     }

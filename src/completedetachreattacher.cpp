@@ -183,7 +183,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     switch (ps.size()) {
         case 0:
-            set_unsat_cl_id(cl->stats.ID);
+            set_unsat_cl_id(cl->stats.id);
             solver->ok = false;
             return false;
 
@@ -193,7 +193,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
             return false;
 
         case 2: {
-            solver->attach_bin_clause(ps[0], ps[1], ps.red(), cl->stats.ID);
+            solver->attach_bin_clause(ps[0], ps[1], ps.red(), cl->stats.id);
             return false;
         }
 

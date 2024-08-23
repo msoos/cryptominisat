@@ -271,7 +271,7 @@ public:
     void check_all_clause_attached(const vector<ClOffset>& offsets) const;
     bool check_xor_attached(const Xor& x, const uint32_t i) const;
     void check_wrong_attach() const;
-    int32_t clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID);
+    int32_t clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t xid);
     inline void clean_xor_vars_no_prop(Xor& x);
     void check_watchlist(watch_subarray_const ws) const;
     template<class T> bool satisfied(const T& cl) const;
@@ -611,7 +611,7 @@ inline size_t CNF::get_num_long_cls() const { return longIrredCls.size() + longR
 inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     frat_func_start_raw();
     if (x.trivial()) {
-        assert(x.XID == 0);
+        assert(x.xid == 0);
         frat_func_end_raw();
         return;
     }
@@ -619,7 +619,7 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     std::sort(x.vars.begin(), x.vars.end());
     uint32_t p;
     uint32_t i, j;
-    chain = {x.XID};
+    chain = {x.xid};
     for (i = j = 0, p = var_Undef; i != x.vars.size(); i++) {
         if (x[i] == p) {
             //same twice in XOR, removing
@@ -640,11 +640,11 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     if (j < x.size()) {
         x.resize(j);
         if (j == 0 && x.rhs == false) {
-            // in case it's trivial, we set XID 0
+            // in case it's trivial, we set xid 0
             *frat << findelay;
-            x.XID = 0;
+            x.xid = 0;
         } else {
-            x.XID = ++clauseXID;
+            x.xid = ++clauseXID;
             if (frat->enabled()) { *frat << addx << x; add_chain(); *frat << fin << findelay;}
         }
     }
@@ -652,16 +652,16 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     frat_func_end_raw();
 }
 
-inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID) {
+inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t xid) {
     frat_func_start_raw();
     if (!ps.empty()) ps[0] ^= !rhs;
-    *frat << deldelayx << XID << ps << fin;
+    *frat << deldelayx << xid << ps << fin;
     if (!ps.empty()) ps[0] ^= !rhs;
 
     std::sort(ps.begin(), ps.end());
     Lit p;
     uint32_t i, j;
-    chain = {XID};
+    chain = {xid};
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
         if (ps[i].var() == p.var()) {
             //same twice in XOR, removing
@@ -693,15 +693,15 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
         }
         ps.resize(j);
         if (j > 0) ps[0] ^= !rhs;
-        const auto XID2 = ++clauseXID;
-        if (frat->enabled()) { *frat << addx << XID2 << ps; add_chain(); *frat << fin << findelay;}
+        const auto xid2 = ++clauseXID;
+        if (frat->enabled()) { *frat << addx << xid2 << ps; add_chain(); *frat << fin << findelay;}
         if (j > 0) ps[0] ^= !rhs;
         frat_func_end_raw();
-        return XID2;
+        return xid2;
     }
     frat->forget_delay();
     frat_func_end_raw();
-    return XID;
+    return xid;
 }
 
 #ifdef ARJUN_SERIALIZE
