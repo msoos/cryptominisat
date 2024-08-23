@@ -56,7 +56,7 @@ void ClauseCleaner::clean_binary_implicit(
     if (satisfied(*i, lit)) {
         //Only delete once
         if (lit < i->lit2()) {
-            (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
+            (*solver->frat) << del << i->get_id() << lit << i->lit2() << fin;
         }
 
         if (i->red()) impl_data.remLBin++;
@@ -281,7 +281,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     }
 
     if (i != j) {
-        const auto orig_ID = cl.stats.ID;
+        const auto orig_ID = cl.stats.id;
         INC_ID(cl);
         cl.shrink(i-j);
         *solver->frat << add << cl << fratchain << orig_ID;
@@ -309,7 +309,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     if (i != j) {
         cl.set_strengthened();
         if (cl.size() == 2) {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.id);
             return true;
         } else {
             if (cl.red()) {
@@ -331,7 +331,7 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
         solver->attach_bin_clause(bincl.getLit1(),
                                   bincl.getLit2(),
                                   bincl.isRed(),
-                                  bincl.getID());
+                                  bincl.get_id());
     }
 
     assert(remNonLBin % 2 == 0);
@@ -348,9 +348,7 @@ void ClauseCleaner::clean_clauses_pre()
 
 void ClauseCleaner::clean_clauses_post()
 {
-    for(ClOffset off: delayed_free) {
-        solver->free_cl(off);
-    }
+    for(ClOffset off: delayed_free) solver->free_cl(off);
     delayed_free.clear();
 }
 
@@ -373,7 +371,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     frat_func_start();
 
     size_t last_trail = numeric_limits<size_t>::max();
-    while(last_trail != solver->trail_size()) {
+    while(solver->okay() && last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
         solver->ok = solver->propagate<false>().isnullptr();
         if (!solver->okay()) break;
@@ -422,7 +420,7 @@ bool ClauseCleaner::remove_and_clean_all() {
 
 
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
-    if (solver->frat->enabled()) assert(x.XID != 0);
+    if (solver->frat->enabled()) assert(x.xid != 0);
     frat_func_start();
     del_xor_reason(x);
     *solver->frat << deldelayx << x << fin;
@@ -436,7 +434,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     i = 0;
     j = 0;
     solver->chain.clear();
-    solver->chain.push_back(x.XID);
+    solver->chain.push_back(x.xid);
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
         if (solver->value(var) != l_Undef) {
@@ -449,7 +447,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         x.rhs = rhs;
         x.resize(j);
         if (!(j == 0 && rhs == false)) {
-            x.XID = ++solver->clauseXID;
+            x.xid = ++solver->clauseXID;
             *solver->frat << addx << x; solver->add_chain(); *solver->frat << fin;
         } else {
             // empty satisfied XOR should simply be removed
@@ -474,7 +472,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         case 0:
             if (x.rhs == true) {
                 solver->ok = false;
-                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
+                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.xid << fin;
                 set_unsat_cl_id(solver->clauseID);
             }
             frat_func_end();
@@ -482,7 +480,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         case 1:
         case 2:{
             assert(solver->okay());
-            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
+            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.xid);
             frat_func_end();
             return false;
         }
@@ -528,7 +526,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
         for(uint32_t i = 0; i < xors.size(); i++) {
             if (xors[i].trivial()) {
                 del_xor_reason(xors[i]);
-                if (xors[i].XID != 0) *solver->frat << delx << xors[i] << fin;
+                if (xors[i].xid != 0) *solver->frat << delx << xors[i] << fin;
                 continue;
             }
             xors[j++] = xors[i];
@@ -566,7 +564,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 0) {
-        set_unsat_cl_id(cl.stats.ID);
+        set_unsat_cl_id(cl.stats.id);
         solver->ok = false;
         return true;
     }
@@ -578,7 +576,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 2) {
-        solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
+        solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.id);
         return true;
     }
 

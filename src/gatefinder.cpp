@@ -179,7 +179,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
         }
         if (!ok) continue;
         SLOW_DEBUG_DO(assert(std::is_sorted(tmp_lhs.begin(), tmp_lhs.end())));
-        add_gate_if_not_already_inside(lit, tmp_lhs, cl.stats.ID);
+        add_gate_if_not_already_inside(lit, tmp_lhs, cl.stats.id);
     }
 
     *simplifier->limit_to_decrease -= toClear.size();

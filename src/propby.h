@@ -209,7 +209,7 @@ class PropBy
             return red_step;
         }
 
-        int32_t getID() const
+        int32_t get_id() const
         {
             return ID;
         }

@@ -559,7 +559,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
     const lbool val = value(lit);
     if (val == l_Undef) {
         //Never propagated before
-        enqueue_with_acestor_info(lit, p, k->red(), k->get_ID());
+        enqueue_with_acestor_info(lit, p, k->red(), k->get_id());
         return PROP_SOMETHING;
 
     } else if (val == l_False) {
@@ -569,7 +569,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
         #endif
 
         failBinLit = lit;
-        confl = PropBy(~p, k->red(), k->get_ID());
+        confl = PropBy(~p, k->red(), k->get_id());
         return PROP_FAIL;
 
     } else if (varData[lit.var()].level != 0 && perform_transitive_reduction) {
@@ -584,16 +584,16 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
         //Remove this one
         if (remove == p) {
             const Lit origAnc = varData[lit.var()].reason.getAncestor();
-            const int32_t origID = varData[lit.var()].reason.getID();
+            const int32_t origID = varData[lit.var()].reason.get_id();
             assert(origAnc != lit_Undef);
             #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "ID of k: " << k->get_ID() << " ID of orig: " << origID << " removing latter, origAnc: " << origAnc << endl;
+            cout << "ID of k: " << k->get_id() << " ID of orig: " << origID << " removing latter, origAnc: " << origAnc << endl;
             #endif
 
             remove_bin_clause(lit, origID);
 
             //Update data indicating what lead to lit
-            varData[lit.var()].reason = PropBy(~p, k->red(), false, false, k->get_ID());
+            varData[lit.var()].reason = PropBy(~p, k->red(), false, false, k->get_id());
             assert(varData[p.var()].level != 0);
             depth[lit.var()] = depth[p.var()] + 1;
             //NOTE: we don't update the levels of other literals... :S
@@ -603,10 +603,10 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Removing this bin clause, ID: " << k->get_ID() << endl;
+            cout << "Removing this bin clause, ID: " << k->get_id() << endl;
             #endif
             propStats.otfHyperTime += 2;
-            uselessBin.insert(BinaryClause(~p, lit, k->red(), k->get_ID()));
+            uselessBin.insert(BinaryClause(~p, lit, k->red(), k->get_id()));
         }
     }
 

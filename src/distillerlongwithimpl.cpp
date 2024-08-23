@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "distillerlongwithimpl.h"
 #include "clausecleaner.h"
+#include "constants.h"
 #include "time_mem.h"
 #include "solver.h"
 #include "watchalgos.h"
@@ -119,7 +120,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_ID()).setRed(false);
+            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_id()).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }
@@ -335,9 +336,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
         ; i++
     ) {
         //Timeout?
-        if (timeAvailable <= 0
-            || !solver->okay()
-        ) {
+        if (timeAvailable <= 0 || !solver->okay()) {
             need_to_finish = true;
             tmpStats.ranOutOfTime++;
         }

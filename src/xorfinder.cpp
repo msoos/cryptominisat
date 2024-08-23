@@ -245,7 +245,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
             auto cl = *solver->cl_alloc.ptr(off);
             assert(!cl.freed());
             assert(!cl.get_removed());
-            solver->chain.push_back(cl.stats.ID);
+            solver->chain.push_back(cl.stats.id);
         }
         *solver->frat << implyxfromcls << added; solver->add_chain(); *solver->frat << fin;
     }

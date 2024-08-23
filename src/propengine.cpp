@@ -580,9 +580,9 @@ inline bool PropEngine::prop_bin_cl(
 ) {
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
-        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_ID()));
+        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_id()));
     } else if (val == l_False) {
-        confl = PropBy(~p, i->red(), i->get_ID());
+        confl = PropBy(~p, i->red(), i->get_id());
         failBinLit = i->lit2();
         qhead = trail.size();
         return false;
@@ -751,7 +751,6 @@ PropBy PropEngine::propagate_any_order()
             //propagate normal clause
             assert(i->isClause());
             prop_long_cl_any_order<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
-            continue;
         }
         while (i != end) {
             *j++ = *i++;
@@ -760,13 +759,13 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (confl.isnullptr() && !distill_use) confl = gauss_jordan_elim(p, currLevel);
+        if (!distill_use && confl.isnullptr()) confl = gauss_jordan_elim(p, currLevel);
 
         qhead++;
     }
 
     #ifdef SLOW_DEBUG
-    if (confl.isnullptr() && !distill_use) {
+    if (confl.isnullptr()) {
         for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].disabled) continue;
             gmatrices[g]->check_invariants();
@@ -1132,7 +1131,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
 
         if (frat->enabled()) {
             x.reason_cl_ID = ++clauseID;
-            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
+            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.xid << fin;
             ID = x.reason_cl_ID;
         }
         frat_func_end();

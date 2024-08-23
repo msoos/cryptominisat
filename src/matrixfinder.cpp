@@ -214,10 +214,10 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     for (Xor& x : solver->xorclauses) {
         if (x.trivial()) {
             del_xor_reason(x);
-            if (x.XID != 0) *solver->frat << delx << x << fin;
+            if (x.xid != 0) *solver->frat << delx << x << fin;
             continue;
         }
-        if (solver->frat->enabled()) assert(x.XID != 0);
+        if (solver->frat->enabled()) assert(x.xid != 0);
 
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];

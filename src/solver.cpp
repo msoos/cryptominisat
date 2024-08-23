@@ -23,19 +23,13 @@ THE SOFTWARE.
 #include "solver.h"
 
 #include <cstdint>
-#include <fstream>
 #include <cmath>
 #include <fcntl.h>
-#include <functional>
 #include <gmpxx.h>
 #include <limits>
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <complex>
-#include <locale>
-#include <random>
-#include <unordered_map>
 #include "constants.h"
 #include "solvertypes.h"
 #include "solvertypesmini.h"
@@ -52,7 +46,6 @@ THE SOFTWARE.
 #include "varupdatehelper.h"
 #include "completedetachreattacher.h"
 #include "subsumestrengthen.h"
-#include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
@@ -183,7 +176,7 @@ void Solver::set_shared_data(SharedData* shared_data) { datasync->set_shared_dat
 void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t id) {
     assert(cl.size() <= 2);
     ClauseStats s;
-    s.ID = id;
+    s.id = id;
     Clause* c = solver->add_clause_int(
             cl,
             false, //red
@@ -201,7 +194,7 @@ bool Solver::add_xor_clause_inter(
     const vector<Lit>& lits
     , bool rhs
     , const bool attach
-    , const int32_t XID
+    , const int32_t xid
 ) {
     frat_func_start_raw();
     VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
@@ -210,39 +203,39 @@ bool Solver::add_xor_clause_inter(
     assert(decisionLevel() == 0);
 
     auto ps = lits;
-    auto XID2 = clean_xor_vars_no_prop(ps, rhs, XID);
+    auto xid2 = clean_xor_vars_no_prop(ps, rhs, xid);
     if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
         if (rhs) {
-            *frat << implyclfromx << ++clauseID << fratchain << XID2 << fin;
+            *frat << implyclfromx << ++clauseID << fratchain << xid2 << fin;
             set_unsat_cl_id(clauseID);
             ok = false;
-        } else assert(XID2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
+        } else assert(xid2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
         return okay();
     } else if (ps.size() == 1) {
         ps[0] ^= !rhs;
         const auto ID = ++clauseID;
-        *frat << implyclfromx << ID << ps << fratchain << XID2 << fin;
-        *frat << delx << XID2 << fin;
+        *frat << implyclfromx << ID << ps << fratchain << xid2 << fin;
+        *frat << delx << xid2 << fin;
         add_clause_int_frat(ps, ID);
     } else if (ps.size() == 2) {
         ps[0] ^= !rhs;
-        const auto ID1 = ++clauseID;
-        *frat << implyclfromx << ID1 << ps << fratchain << XID2 << fin;
-        add_clause_int_frat(ps, ID1);
+        const auto id1 = ++clauseID;
+        *frat << implyclfromx << id1 << ps << fratchain << xid2 << fin;
+        add_clause_int_frat(ps, id1);
         ps[0] ^= true; ps[1] ^= true;
-        const auto ID2 = ++clauseID;
-        *frat << implyclfromx << ID2 << ps << fratchain << XID2 << fin;
-        add_clause_int_frat(ps, ID2);
+        const auto id2 = ++clauseID;
+        *frat << implyclfromx << id2 << ps << fratchain << xid2 << fin;
+        add_clause_int_frat(ps, id2);
         ps[0] ^= true; ps[1] ^= true;
-        *frat << delx << XID2 << fin;
+        *frat << delx << xid2 << fin;
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
         xorclauses.emplace_back(ps, rhs);
         Xor& x = xorclauses.back();
-        x.XID = XID2;
+        x.xid = xid2;
         attach_xor_clause(xorclauses.size()-1);
     }
     frat_func_end_raw();
@@ -326,7 +319,7 @@ Clause* Solver::add_clause_int(
     vector<Lit>& ps = add_clause_int_tmp_cl;
     if (!sort_and_clean_clause(ps, lits, red, sorted)) {
         if (finalLits) finalLits->clear();
-        if (remove_frat) *frat << del << cl_stats->ID << lits << fin;
+        if (remove_frat) *frat << del << cl_stats->id << lits << fin;
         return nullptr;
     }
     VERBOSE_PRINT("add_clause_int final clause: " << ps);
@@ -339,11 +332,11 @@ Clause* Solver::add_clause_int(
         assert(cl_stats);
         assert(frat_first == lit_Undef);
         assert(add_frat);
-        ID = cl_stats->ID;
+        ID = cl_stats->id;
         if (ps != lits) {
             ID = ++clauseID;
             *frat << add << ID << ps << fin;
-            *frat << del << cl_stats->ID << lits << fin;
+            *frat << del << cl_stats->id << lits << fin;
         }
     } else {
         ID = ++clauseID;
@@ -392,7 +385,7 @@ Clause* Solver::add_clause_int(
                 c->stats = *cl_stats;
                 STATS_DO(if (ID != c->stats.ID && sqlStats && c->stats.is_tracked)
                         sqlStats->update_id(c->stats.ID, ID));
-                c->stats.ID = ID;
+                c->stats.id = ID;
             }
             if (red && cl_stats == nullptr) {
                 assert(false && "does this happen at all? should it happen??");
@@ -734,15 +727,15 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
 bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 {
     ClauseStats clstats;
-    clstats.ID = ++clauseID;
-    *frat << origcl << clstats.ID << ps << fin;
+    clstats.id = ++clauseID;
+    *frat << origcl << clstats.id << ps << fin;
     if (red) clstats.which_red_array = 2;
 
     VERBOSE_PRINT("Adding clause " << ps);
     const size_t origTrailSize = trail.size();
 
     if (!add_clause_helper(ps)) {
-        *frat << del << clstats.ID << ps << fin;
+        *frat << del << clstats.id << ps << fin;
         return false;
     }
 
@@ -1024,8 +1017,10 @@ void Solver::set_assumptions() {
     vector<Lit> tmp;
     tmp = assumptions;
     add_clause_helper(tmp); // unelimininates, sanity checks
-    fill_assumptions_set();
-    SLOW_DEBUG_DO(check_assumptions_sanity());
+    if (okay()) {
+        fill_assumptions_set();
+        SLOW_DEBUG_DO(check_assumptions_sanity());
+    }
 }
 
 void Solver::uneliminate_sampling_set() {
@@ -1438,8 +1433,8 @@ void Solver::write_final_frat_clauses() {
     for(auto& x: xorclauses) {
         if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
         x.reason_cl_ID = 0;
-        if (x.XID != 0) *frat << finalx << x.XID << fin;
-        x.XID = 0;
+        if (x.xid != 0) *frat << finalx << x.xid << fin;
+        x.xid = 0;
     }
 
     *frat << "finalization of unit clauses next\n";
@@ -1459,7 +1454,7 @@ void Solver::write_final_frat_clauses() {
         for(const auto& w: watches[l]) {
             //only do once per binary
             if (w.isBin() && w.lit2() < l) {
-                *frat << finalcl << w.get_ID() << l << w.lit2() << fin;
+                *frat << finalcl << w.get_id() << l << w.lit2() << fin;
             }
         }
     }
@@ -1602,7 +1597,7 @@ lbool Solver::iterate_until_solved() {
             status = l_False;
             goto end;
         }
-        status = Searcher::solve(num_confl);
+        status = solve(num_confl);
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1672,6 +1667,7 @@ void Solver::check_too_many_in_tier0()
 }
 
 void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution) {
+    verb_print(10, __func__ << " called with status: " << status);
     double mytime = cpuTime();
     if (status == l_True) {
         extend_solution(only_sampling_solution);
@@ -1719,6 +1715,7 @@ lbool Solver::execute_inprocess_strategy(
         check_stats();
         check_no_duplicate_lits_anywhere();
         check_assumptions_sanity();
+        check_all_clause_propagated();
         #endif
 
         token = trim(token);
@@ -1869,7 +1866,7 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "breakid") {
             if (conf.doBreakid
-                && frat->enabled()
+                && !frat->enabled()
                 && !conf.simulate_frat
                 && (solveStats.num_simplify == 0 ||
                    (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
@@ -2547,17 +2544,21 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 
 
 void Solver::check_clause_propagated(const Xor& x) const {
+    if (x.trivial()) return;
+    bool rhs = false;
     uint32_t num_undef = 0;
-    uint32_t num_false = 0;
     for(const auto& v: x) {
-        if (value(v) == l_True) return;
+        if (value(v) == l_True)  rhs ^= true;
         if (value(v) == l_Undef) num_undef++;
-        if (value(v) == l_False) num_false++;
         if (num_undef > 1) return;
     }
-
+    if (num_undef == 0 && rhs == x.rhs) return;
+    if (num_undef == 0 && rhs != x.rhs) {
+        cout << "ERROR: xor clause " << x << " is UNSAT!" << endl;
+        assert(false);
+        exit(-1);
+    }
     assert(num_undef == 1);
-    assert(num_false == x.size()-1);
     cout << "ERROR: xor clause " << x << " should have propagated already!" << endl;
     assert(false);
     exit(-1);
@@ -2586,6 +2587,13 @@ void Solver::check_all_clause_propagated() const {
     for(const auto& c: longIrredCls) check_clause_propagated(c);
     for(const auto& cs: longRedCls) for(const auto& c: cs) check_clause_propagated(c);
     for(const auto& x: xorclauses) check_clause_propagated(x);
+}
+
+
+void Solver::check_all_nonxor_clause_propagated() const {
+    check_implicit_propagated();
+    for(const auto& c: longIrredCls) check_clause_propagated(c);
+    for(const auto& cs: longRedCls) for(const auto& c: cs) check_clause_propagated(c);
 }
 
 void Solver::check_implicit_propagated() const
@@ -2731,12 +2739,12 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
     if (rhs == false && lits_out.empty()) return okay();
 
     vector<Lit> lits = lits_out;
-    const int32_t XID = ++clauseXID;
-    *frat << origclx << XID << lits << fin;
+    const int32_t xid = ++clauseXID;
+    *frat << origclx << xid << lits << fin;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     add_clause_helper(lits);
-    add_xor_clause_inter(lits, rhs, true, XID);
+    add_xor_clause_inter(lits, rhs, true, xid);
 
     frat_func_end();
     return okay();
@@ -2749,13 +2757,13 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
 
     vector<Lit> lits = vars_to_lits(vars);
     if (!vars.empty()) lits[0] ^= !rhs;
-    const int32_t XID = ++clauseXID;
-    *frat << origclx << XID << lits << fin;
+    const int32_t xid = ++clauseXID;
+    *frat << origclx << xid << lits << fin;
     if (!vars.empty()) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     add_clause_helper(lits);
-    add_xor_clause_inter(lits, rhs, true, XID);
+    add_xor_clause_inter(lits, rhs, true, xid);
 
     frat_func_end();
     return okay();
@@ -2933,8 +2941,8 @@ void Solver::check_implicit_stats(const bool onlypairs) const
                 lits[0] = Lit::toLit(wsLit);
                 lits[1] = w.lit2();
                 std::sort(lits, lits + 2);
-                findWatchedOfBin(watches, lits[0], lits[1], w.red(), w.get_ID());
-                findWatchedOfBin(watches, lits[1], lits[0], w.red(), w.get_ID());
+                findWatchedOfBin(watches, lits[0], lits[1], w.red(), w.get_id());
+                findWatchedOfBin(watches, lits[1], lits[0], w.red(), w.get_id());
                 #endif
 
                 if (w.red()) thisNumRedBins++;

@@ -325,23 +325,23 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     //      and so is this binary XOR reconstruction
                     vector<Lit> bin(2);
                     bin[0] = Lit(origv, false); bin[1] = l2 ^ true;
-                    const auto ID1 = ++solver->clauseID;
-                    *solver->frat << add << ID1 << bin << fin;
-                    const auto ID2 = ++solver->clauseID;
+                    const auto id1 = ++solver->clauseID;
+                    *solver->frat << add << id1 << bin << fin;
+                    const auto id2 = ++solver->clauseID;
                     bin[0] ^= true; bin[1] ^= true;
-                    *solver->frat << add << ID2 << bin << fin;
+                    *solver->frat << add << id2 << bin << fin;
                     const auto bin_XID = ++solver->clauseXID;
                     //     Yes, "1 2 0"  && "-1 -2 0" is the same as "x 1 2 0"
                     // And Yes, "1 -2 0" && "-1  2 0" is the same as "x 1 -2 0"
-                    *solver->frat << implyxfromcls << bin_XID << bin << fratchain << ID1 << ID2 << fin;
+                    *solver->frat << implyxfromcls << bin_XID << bin << fratchain << id1 << id2 << fin;
                     INC_XID(x);
-                    *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
+                    *solver->frat << addx << x << fratchain << old_x->xid << bin_XID << fin;
                     *solver->frat << delx << *old_x << fin;
                     delete old_x;
                     *solver->frat << delx << bin_XID << bin << fin;
-                    *solver->frat << del << ID2 << bin << fin;
+                    *solver->frat << del << id2 << bin << fin;
                     bin[0] ^= true; bin[1] ^= true;
-                    *solver->frat << del << ID1 << bin << fin;
+                    *solver->frat << del << id1 << bin << fin;
                 }
                 go_again = true;
                 break;
@@ -353,7 +353,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
     switch (x.size()) {
         case 0:
             if (x.rhs == true && solver->okay()) {
-                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
+                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.xid << fin;
                 set_unsat_cl_id(solver->clauseID);
                 solver->ok = false;
             }
@@ -363,7 +363,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
         case 1: {
             Lit l(x[0], !x.rhs);
             const auto ID = ++solver->clauseID;
-            *solver->frat << implyclfromx << ID << l << fratchain << x.XID << fin;
+            *solver->frat << implyclfromx << ID << l << fratchain << x.xid << fin;
             delayedEnqueue.push_back(make_tuple(l, ID));
             frat_func_end_with("1-len");
             return false;
@@ -382,7 +382,7 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
         Xor& x = xors[i];
         if (replace_one_xor_clause(x)) xors[j++] = xors[i];
         else {
-            if (x.XID != 0) *solver->frat << delx << x << fin;
+            if (x.xid != 0) *solver->frat << delx << x << fin;
             del_xor_reason(x);
         }
     }
@@ -414,7 +414,7 @@ inline void VarReplacer::updateBin(
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->frat) << del << i->get_ID() << origLit1 << origLit2 << fin;
+            (*solver->frat) << del << i->get_id() << origLit1 << origLit2 << fin;
         }
 
         return;
@@ -427,11 +427,11 @@ inline void VarReplacer::updateBin(
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc
-        const int32_t orig_ID = i->get_ID();
+        const int32_t orig_ID = i->get_id();
         const int32_t ID = ++solver->clauseID;
         /* cout << "orig ID: " << orig_ID << " origl1, l2: " << origLit1 << "," << origLit2 << " lit1, lit2: " << lit1 << "," << lit2 << " new ID: " << ID << endl; */
         *solver->frat<< add << ID << lit1 << lit2 << fin;
-        *solver->frat<< del << i->get_ID() << origLit1 << origLit2 << fin;
+        *solver->frat<< del << i->get_id() << origLit1 << origLit2 << fin;
         Watched* i2 = findWatchedOfBinMaybe(solver->watches, origLit2, origLit1, i->red(), orig_ID);
         if (i2) i2->set_ID(ID);
         else findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
@@ -519,7 +519,7 @@ bool VarReplacer::replaceImplicit()
 
     for(const BinaryClause& bincl : delayed_attach_bin) {
         solver->attach_bin_clause(
-            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.getID());
+            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.get_id());
     }
     delayed_attach_bin.clear();
 
@@ -695,14 +695,14 @@ bool VarReplacer::handleUpdatedClause(
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
-        set_unsat_cl_id(c.stats.ID);
+        set_unsat_cl_id(c.stats.id);
         solver->ok = false;
         return true;
     case 1 :
         c.set_removed();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
-        delayedEnqueue.push_back(make_tuple(c[0], c.stats.ID));
+        delayedEnqueue.push_back(make_tuple(c[0], c.stats.id));
         runStats.removedLongLits += origSize;
         return true;
     case 2:
@@ -710,7 +710,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
-        solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.ID);
+        solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.id);
         runStats.removedLongLits += origSize;
         return true;
 
@@ -911,12 +911,12 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
     }
 
     int32_t ID = ++solver->clauseID;
-    int32_t ID2 = ++solver->clauseID;
+    int32_t id2 = ++solver->clauseID;
     (*solver->frat)
     << add << ID << ~lit1 << lit2 << fin
-    << add << ID2 << lit1 << ~lit2 << fin;
+    << add << id2 << lit1 << ~lit2 << fin;
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
-    bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID2, lit1, ~lit2});
+    bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id2, lit1, ~lit2});
 
     //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none);

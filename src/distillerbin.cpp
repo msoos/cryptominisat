@@ -164,8 +164,8 @@ bool DistillerBin::go_through_bins(
         maxNumProps -= 2;
 
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
-            solver->detach_bin_clause(lit1, lit2, w.red(), w.get_ID());
-            (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
+            solver->detach_bin_clause(lit1, lit2, w.red(), w.get_id());
+            (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
             continue;
         }
 
@@ -197,8 +197,8 @@ bool DistillerBin::try_distill_bin(
     if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);
 
     //Disable this clause
-    findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID()).mark_bin_cl();
-    findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_ID()).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_id()).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_id()).mark_bin_cl();
 
     solver->new_decision_level();
     PropBy confl;
@@ -215,8 +215,8 @@ bool DistillerBin::try_distill_bin(
             vector<Lit> x(1);
             x[0] = lit1;
             solver->add_clause_int(x);
-            solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
-            (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
+            solver->detach_bin_clause(lit1, lit2, false, w.get_id());
+            (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
             runStats.numClShorten++;
             return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
@@ -227,19 +227,19 @@ bool DistillerBin::try_distill_bin(
 
     if (!confl.isnullptr()) {
         solver->cancelUntil<false, true>(0);
-        solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
-        (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
+        solver->detach_bin_clause(lit1, lit2, false, w.get_id());
+        (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
         runStats.clRemoved++;
         return true;
     }
 
     //Nothing happened
     solver->cancelUntil<false, true>(0);
-    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID());
+    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_id());
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();
 
-    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_ID());
+    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_id());
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
 

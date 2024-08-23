@@ -220,7 +220,7 @@ bool Solver::oracle_vivif(int fast, bool& finished)
             for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
             ClauseStats s;
             s.which_red_array = 2;
-            s.ID = ++clauseID;
+            s.id = ++clauseID;
             s.glue = cl.size();
             Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
             if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
@@ -339,7 +339,7 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
                     assert(edgew[v1][v2] >= 1);
                     if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
                 } else ww[0] = 2;
-                cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
+                cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_id())));
             }
         }
     }

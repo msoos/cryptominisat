@@ -99,7 +99,6 @@ class Main: public MainCommon
         uint64_t maxconfl;
 
         //Sampling vars
-        bool only_sampl_solution = false;
         std::string assump_filename;
         vector<Lit> assumps;
 
