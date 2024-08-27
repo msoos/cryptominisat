@@ -1645,8 +1645,8 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = ++clauseID;
-    if (frat->enabled() && !frat->incremental()) {
-        *frat << add << ID << learnt_clause;
+    if (frat->enabled()) {
+        *frat << "communities\n" << add << ID << learnt_clause;
         add_chain();
         *frat << fin;
     }

@@ -1153,7 +1153,10 @@ DLL_PUBLIC void SATSolver::set_idrup(FILE* os)
         exit(-1);
     }
     data->solvers[0]->conf.doBreakid = false;
+    data->solvers[0]->conf.doFindXors = false;
     data->solvers[0]->add_idrup(os);
+    data->solvers[0]->conf.gaussconf.max_matrix_rows = 0;
+    data->solvers[0]->conf.gaussconf.max_matrix_columns = 0;
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 

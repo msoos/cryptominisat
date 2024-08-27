@@ -2740,7 +2740,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red, bool restore)
       return false;
     };
 
-    if (restore && frat->incremental())
+    if (restore && frat->incremental() && !lits.empty())
       *frat << restorecl << lits << fin;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     vector<Lit> tmp(lits);
