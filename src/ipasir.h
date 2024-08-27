@@ -27,7 +27,7 @@ IN THE SOFTWARE.
  */
 #ifndef ipasir_h_INCLUDED
 #define ipasir_h_INCLUDED
-
+#include <stdio.h>
 /*------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
@@ -155,6 +155,11 @@ void ipasir_set_terminate (void * solver, void * state, int (*terminate)(void * 
  */
 void ipasir_set_learn (void * solver, void * state, int max_length, void (*learn)(void * state, int * clause));
 
+int ipasir_simplify (void * solver);
+/*
+ * Sets the proof file
+ */
+void  ipasir_trace_proof(void *s, FILE *f);
 /*------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
