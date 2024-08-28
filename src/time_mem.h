@@ -174,16 +174,14 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
        //   but we'd need to parse it, etc.
        //   see man(5) proc for details
        //   This note is related to issue #629 in CryptoMiniSat
-       ifstream stat_stream2("/proc/self/status",ios_base::in);
+       ifstream stat_stream2("/proc/self/status", ios_base::in);
        string tp;
-       while(getline(stat_stream2, tp)){
-           if (tp.size() > 7 && tp.find("VmHWM:") != std::string::npos) {
-               tp.erase(0, 7);
-               tp.erase(tp.begin(),
-                        std::find_if(tp.begin(), tp.end(), std::bind1st(std::not_equal_to<char>(), '\t')));
-               tp.erase(tp.begin(),
-                        std::find_if(tp.begin(), tp.end(), std::bind1st(std::not_equal_to<char>(), ' ')));
+       while (std::getline(stat_stream2, tp)) {
+           if (tp.rfind("VmHWM:", 0) == 0) {
+               tp.erase(0, tp.find_first_of('\t') + 1);
+               tp.erase(0, tp.find_first_not_of(' '));
                *max_mem_usage = tp;
+               break;
            }
       }
    }
