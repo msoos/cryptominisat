@@ -68,7 +68,7 @@ namespace CMSat {
             signed cutoff,
             Lit out = lit_Undef
         );
-        template<class T> void set_lit_weight(Lit lit, const T&) {}
+        template<class T> void set_lit_weight([[maybe_unused]] Lit lit, const T&) {}
 
         ////////////////////////////
         // Solving and simplifying
