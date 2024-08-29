@@ -93,7 +93,7 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
-        bool add_clause_outside(const vector<Lit>& lits, bool red = false);
+        bool add_clause_outside(const vector<Lit>& lits, bool red = false, bool restore = false);
         bool add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs);
         bool add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs);
         bool add_bnn_clause_outside(
@@ -113,6 +113,9 @@ class Solver : public Searcher
         vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
+        //frat for SAT problems
+        void add_empty_cl_to_frat();
+        void conclude_idrup (lbool);
         void changed_sampling_vars();
 
         //Querying model
@@ -462,7 +465,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool add_clause_helper(vector<Lit>& ps);
-        bool add_clause_outer(vector<Lit>& ps, bool red = false);
+        bool add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool red = false, bool restore = false);
 
         /////////////////
         // Debug
@@ -540,6 +543,7 @@ inline void Solver::copy_assumptions(const vector<Lit>* assumps) {
             }
             assumptions.push_back(lit);
         }
+        if (frat->incremental()) { *frat << assump << *assumps << fin; }
     }
 }
 

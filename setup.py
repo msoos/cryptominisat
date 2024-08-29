@@ -81,6 +81,7 @@ def gen_modules(version):
                    "src/gaussian.cpp",
                    "src/get_clause_query.cpp",
                    "src/hyperengine.cpp",
+                   "src/idrup.cpp",
                    "src/intree.cpp",
                    "src/lucky.cpp",
                    "src/matrixfinder.cpp",
