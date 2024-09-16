@@ -3721,6 +3721,28 @@ map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
     return ret;
 }
 
+map<uint32_t, pair<Lit, lbool>> Solver::update_var_mapping(
+        const map<uint32_t, pair<Lit, lbool>>& vmap) {
+    assert(get_clause_query);
+    map<uint32_t, pair<Lit, lbool>> ret;
+    for(const auto&m : vmap) {
+        if(m.second.first == lit_Undef) {
+            // This is a variable has been set in another round/system
+            assert(m.second.second != l_Undef);
+            ret[m.first] = m.second;
+        } else {
+            assert(m.second.first.var() < nVarsOuter());
+            Lit l = varReplacer->get_lit_replaced_with_outer(m.second.first);
+            l = map_outer_to_inter(l);
+            if (value(l) != l_Undef) {
+                ret[m.first] = std::make_pair(lit_Undef, value(l));
+            } else {
+                ret[m.first] = std::make_pair(l, l_Undef);
+            }
+        }
+    }
+    return ret;
+}
 
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()

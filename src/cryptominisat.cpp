@@ -1326,7 +1326,6 @@ void DLL_PUBLIC SATSolver::end_getting_constraints()
     data->solvers[0]->end_getting_constraints();
 }
 
-
 DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     const vector<uint32_t>& sampl_set, bool also_removed)
 {
@@ -1336,6 +1335,12 @@ DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
 DLL_PUBLIC std::map<Lit, mpq_class> SATSolver::translate_weights(const std::map<Lit, mpq_class>& ws)
 {
     return data->solvers[0]->translate_weights(ws);
+}
+
+DLL_PUBLIC map<uint32_t, std::pair<Lit, lbool>> SATSolver::update_var_mapping(
+        const std::map<uint32_t, std::pair<Lit, lbool>>& vmap)
+{
+    return data->solvers[0]->update_var_mapping(vmap);
 }
 
 DLL_PUBLIC void SATSolver::reverse_bce() {

@@ -263,6 +263,8 @@ namespace CMSat {
         std::vector<uint32_t> translate_sampl_set(
                 const std::vector<uint32_t>& sampl_set, bool also_removed);
         std::map<Lit, mpq_class> translate_weights(const std::map<Lit, mpq_class>& ws);
+        std::map<uint32_t, std::pair<Lit, lbool>> update_var_mapping(
+            const std::map<uint32_t, std::pair<Lit, lbool>>& vmap);
         void reverse_bce();
 
         // Solution reconstruction after minimization
