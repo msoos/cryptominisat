@@ -3196,7 +3196,6 @@ vector<uint32_t> Solver::translate_sampl_set(
     return get_clause_query->translate_sampl_set(sampl_set, also_removed);
 }
 
-
 void Solver::check_assigns_for_assumptions() const {
     for (Lit p: assumptions) {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
@@ -3742,6 +3741,23 @@ map<uint32_t, pair<Lit, lbool>> Solver::update_var_mapping(
         }
     }
     return ret;
+}
+
+vector<uint32_t> Solver::get_elimed_vars() const {
+    assert(get_clause_query);
+    vector<uint32_t> ret;
+    for(uint32_t i = 0; i < nVarsOuter(); i++) {
+        if (varData[i].removed == Removed::elimed) {
+            ret.push_back(map_inter_to_outer(i));
+        }
+    }
+    return ret;
+}
+
+std::vector<std::vector<Lit>> Solver::get_cls_defining_var(uint32_t outer_v) const {
+    assert(get_clause_query);
+    assert(varData[outer_v].removed == Removed::elimed);
+    return occsimplifier->get_elimed_clauses_for(outer_v);
 }
 
 #ifdef STATS_NEEDED

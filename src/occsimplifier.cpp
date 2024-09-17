@@ -180,6 +180,33 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
     return num_cls;
 }
 
+vector<vector<Lit>> OccSimplifier::get_elimed_clauses_for(uint32_t outer_v) {
+    if (!elimed_map_built) {
+        clean_elimed_cls();
+        build_elimed_map();
+    }
+
+    uint32_t at_elimed_cls = blk_var_to_cls[outer_v];
+    if (at_elimed_cls == numeric_limits<uint32_t>::max()) return {};
+
+    assert(!elimed_cls[at_elimed_cls].is_xor);
+
+    vector<vector<Lit>> ret;
+    vector<Lit> lits;
+    size_t bat = 1;
+    while(bat < elimed_cls[at_elimed_cls].size()) {
+        Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
+        if (l == lit_Undef) {
+            ret.push_back(lits);
+            lits.clear();
+        } else {
+            lits.push_back(l);
+        }
+        bat++;
+    }
+    return ret;
+}
+
 bool OccSimplifier::get_elimed_clause_at(uint32_t& at,uint32_t& at2,
         vector<Lit>& out, bool& is_xor) const {
     out.clear();

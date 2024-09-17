@@ -147,6 +147,7 @@ public:
     size_t mem_used() const;
     uint32_t dump_elimed_clauses(std::ostream* outfile) const;
     bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out, bool& is_xor) const;
+    vector<vector<Lit>> get_elimed_clauses_for(uint32_t outer_v);
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_component_unconnected_to_assumps(); //for arjun

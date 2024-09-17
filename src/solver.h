@@ -135,7 +135,9 @@ class Solver : public Searcher
         vector<uint32_t> translate_sampl_set(
                 const vector<uint32_t>& sampl_set, bool also_removed);
         map<Lit, mpq_class> translate_weights(const map<Lit, mpq_class>& ws);
-        map<uint32_t, std::pair<Lit, lbool>> update_var_mapping(const map<uint32_t, std::pair<Lit, lbool>>& vmap);
+        map<uint32_t, pair<Lit, lbool>> update_var_mapping(const map<uint32_t, std::pair<Lit, lbool>>& vmap);
+        vector<uint32_t> get_elimed_vars() const;
+        vector<vector<Lit>> get_cls_defining_var(uint32_t outer_v) const;
         void reverse_bce();
 
         //Version

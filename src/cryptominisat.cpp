@@ -1343,6 +1343,14 @@ DLL_PUBLIC map<uint32_t, std::pair<Lit, lbool>> SATSolver::update_var_mapping(
     return data->solvers[0]->update_var_mapping(vmap);
 }
 
+DLL_PUBLIC vector<uint32_t> SATSolver::get_elimed_vars() const {
+    return data->solvers[0]->get_elimed_vars();
+}
+
+DLL_PUBLIC std::vector<std::vector<Lit>> SATSolver::get_cls_defining_var(uint32_t outer_v) const {
+    return data->solvers[0]->get_cls_defining_var(outer_v);
+}
+
 DLL_PUBLIC void SATSolver::reverse_bce() {
     return data->solvers[0]->reverse_bce();
 
