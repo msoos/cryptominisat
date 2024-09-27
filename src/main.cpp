@@ -1356,9 +1356,7 @@ lbool Main::multi_solutions()
                 << endl;
             }
 
-            if (!dont_ban_solutions) {
-                ban_found_solution();
-            }
+            if (!dont_ban_solutions) ban_found_solution();
         }
     }
     return ret;
@@ -1366,7 +1364,7 @@ lbool Main::multi_solutions()
 
 void Main::ban_found_solution() {
     vector<Lit> lits;
-    if (solver->get_sampl_vars_set()) {
+    if (!solver->get_sampl_vars_set()) {
         //all of the solution
         for (uint32_t var = 0; var < solver->nVars(); var++) {
             if (solver->get_model()[var] != l_Undef) {
