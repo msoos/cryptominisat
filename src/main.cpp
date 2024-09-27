@@ -226,7 +226,7 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.verbosity = std::atoi(a.c_str());})
         .default_value(conf.verbosity)
         .help("[0-10] Verbosity of solver. 0 = only solution");
-    program.add_argument("--version")
+    program.add_argument("--version", "-v")
         .action([&](const auto ) {printVersionInfo();})
         .flag()
         .help("Print version information");
