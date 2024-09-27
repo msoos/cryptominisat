@@ -26,7 +26,6 @@ THE SOFTWARE.
 #define _GNU_SOURCE
 #endif
 
-#include <fenv.h>
 #endif
 
 #define DEBUG_DIMACSPARSER_CMS
@@ -38,17 +37,12 @@ THE SOFTWARE.
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <map>
-#include <set>
 #include <fstream>
 #include <sys/stat.h>
-#include <string.h>
-#include <list>
-#include <array>
+#include <cstring>
 #include <thread>
 
 #include "main.h"
-#include "main_common.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
 #include "cryptominisat.h"
@@ -60,7 +54,6 @@ using namespace CMSat;
 using std::cout;
 using std::cerr;
 using std::endl;
-using std::map;
 double wallclock_time_started = 0.0;
 
 struct WrongParam {
@@ -234,6 +227,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.verbosity = std::atoi(a.c_str());})
         .default_value(conf.verbosity)
         .help("[0-10] Verbosity of solver. 0 = only solution");
+    program.add_argument("--version", "-v")
+        .action([&](const auto ) {printVersionInfo();})
+        .flag()
+        .help("Print version information");
     program.add_argument("--maxtime")
         .help("Stop solving after this much time (s)")
         .scan<'g', double>();
