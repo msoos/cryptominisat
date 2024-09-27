@@ -3744,7 +3744,6 @@ map<uint32_t, pair<Lit, lbool>> Solver::update_var_mapping(
 }
 
 vector<uint32_t> Solver::get_elimed_vars() const {
-    assert(get_clause_query);
     vector<uint32_t> ret;
     for(uint32_t i = 0; i < nVarsOuter(); i++) {
         if (varData[i].removed == Removed::elimed) {
