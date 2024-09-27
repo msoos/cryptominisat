@@ -135,7 +135,7 @@ public:
     bool delete_filled = false;
     bool must_delete_next = false;
 
-    virtual Frat& operator<<(const int32_t) override
+    Frat& operator<<(const int32_t) override
     {
 #if 0 // clauseID
         if (must_delete_next) {
@@ -151,10 +151,10 @@ public:
     {
         if (skipnextclause) return *this;
         if (must_delete_next) {
-            byteDRUPdID(cl.stats.ID);
+            byteDRUPdID(cl.stats.id);
             for(const Lit l: cl) byteDRUPd(l);
         } else {
-            byteDRUPaID(cl.stats.ID);
+            byteDRUPaID(cl.stats.id);
             for(const Lit l: cl) byteDRUPa(l);
         }
 

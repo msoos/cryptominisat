@@ -743,7 +743,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
     }
 
     if (frat->incremental()) // import the "inner version with duplicates removed"
-      *frat << "learning renumbered\n" << add << clstats.ID << ps << fin;
+      *frat << "learning renumbered\n" << add << clstats.id << ps << fin;
 
     std::sort(ps.begin(), ps.end());
     if (red) assert(!frat->enabled() && "Cannot have both FRAT and adding of redundant clauses");
@@ -763,9 +763,9 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
       if (cl) {
 	*frat << "learning renumbered clause\n" << add << *cl << fin;
       }
-      *frat << "deleting old\n" << del << clstats.ID << ps << fin;
+      *frat << "deleting old\n" << del << clstats.id << ps << fin;
       if (!restore)
-	*frat << "deleting old i\n" << del << clstats.ID << outer_ps << fin;
+	*frat << "deleting old i\n" << del << clstats.id << outer_ps << fin;
     }
 
     if (cl != nullptr) {
