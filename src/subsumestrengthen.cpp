@@ -51,16 +51,9 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.get_removed());
     assert(!cl.freed());
+    VERBOSE_PRINT("subsume-ing with clause: " << cl);
 
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume-ing with clause: " << cl << endl;
-    #endif
-
-    Sub0Ret ret = subsume_and_unlink(
-        offset
-        , cl
-        , cl.abst
-    );
+    Sub0Ret ret = subsume_and_unlink( offset , cl , cl.abst);
 
     //If irred is subsumed by redundant, make the redundant into irred
     if (cl.red() && ret.subsumedIrred) {
@@ -236,22 +229,15 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     ) {
         *simplifier->limit_to_decrease -= 3;
         wenThrough++;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
+        if (solver->conf.verbosity >= 5 && wenThrough % 10000 == 0)
             cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
-        }
 
         const size_t at = wenThrough % simplifier->clauses.size();
         const ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
-        if (cl->freed() || cl->get_removed())
-            continue;
-
+        if (cl->freed() || cl->get_removed()) continue;
 
         *simplifier->limit_to_decrease -= 10;
         sub0ret += backw_sub_with_long(offset);

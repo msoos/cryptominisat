@@ -3776,3 +3776,11 @@ void Solver::dump_clauses_at_finishup_as_last()
     }
 }
 #endif
+
+void Solver::set_outer_lit_weight(const Lit lit, const float weight) {
+    assert(weight <= 1.0F);
+    assert(weight >= 0.0F);
+    auto l = varReplacer->get_lit_replaced_with_outer(lit);
+    l = map_outer_to_inter(l);
+    varData[l.var()].weight = l.sign() ? 1.0F-weight : weight;
+}

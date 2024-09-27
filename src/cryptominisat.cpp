@@ -1363,6 +1363,14 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
     }
 }
 
+void DLL_PUBLIC SATSolver::set_lit_weight_internal(const Lit lit, const double val)
+{
+    for (auto & solver : data->solvers) {
+        solver->set_outer_lit_weight(lit, val);
+    }
+}
+
+
 void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restart)
 {
     for (auto & solver : data->solvers) {
@@ -1377,7 +1385,7 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
         conf.do_distill_clauses = false;
         conf.doFindXors = false;
         conf.fixed_restart_num_confl = fixed_restart;
-        conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_weighted;
 
         solver->setConf(conf);
     }

@@ -83,11 +83,14 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
         }
     }
 
-    vector<int> ret;
-    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, ret);
+    vector<int> learned_units;
+    /* vector<int> learned_bins; */
+    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, /*learned_bins,*/ learned_units);
+    uint32_t num_units_added = 0;
+    uint32_t num_bins_added = 0;
     if (res == 10) {
         vector<Lit> tmp;
-        for(const auto& l: ret) {
+        for(const auto& l: learned_units) {
             if (l == 0) continue;
             const Lit lit = Lit(abs(l)-1, l < 0);
             if (value(lit.var()) != l_Undef) continue;
@@ -95,12 +98,42 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
             tmp.clear();
             tmp.push_back(lit);
             add_clause_int(tmp);
-            if (!okay()) break;
+            num_units_added++;
+            if (!okay()) goto end;
         }
+        /* bool ignore = false; */
+
+        /* tmp.clear(); */
+        /* for(const auto& l: learned_bins) { */
+        /*     if (l == 0) { */
+        /*         if (ignore) { */
+        /*             ignore = false; */
+        /*             tmp.clear(); */
+        /*             continue; */
+        /*         } */
+        /*         assert(tmp.size() == 2); */
+        /*         auto ret = add_clause_int(tmp, true); */
+        /*         assert(ret == nullptr); */
+        /*         num_bins_added++; */
+        /*         if (!okay()) goto end; */
+        /*         ignore = false; */
+        /*         tmp.clear(); */
+        /*         continue; */
+        /*     } */
+        /*     const Lit lit = Lit(abs(l)-1, l < 0); */
+        /*     if (varData[lit.var()].removed != Removed::none) {ignore = true; continue;} */
+        /*     if (value(lit.var()) != l_Undef) {ignore = true; continue;} */
+        /*     tmp.push_back(lit); */
+        /* } */
         backbone_done = true;
     } else {
         ok = false;
     }
+end:
+    verb_print(1, "[backbone-simpl] res: " << res
+            <<  " num units: " << num_units_added
+            <<  " num bins: " << num_bins_added
+            << " T: " << std::fixed << std::setprecision(2) << cpuTime());
     return okay();
 }
 
