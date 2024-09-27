@@ -3002,7 +3002,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
         Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
             if (is_xor) solver->add_xor_clause_outside(lits, true);
-            else solver->add_clause_outside(lits);
+            else solver->add_clause_outside(lits, false, true);
             if (!solver->okay()) return false;
             lits.clear();
         } else {
@@ -3032,7 +3032,7 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
             if (l == lit_Undef) {
                 const int32_t id = newly_elimed_cls_IDs[at_ID++];
                 if (elimed_cls[i].is_xor) *solver->frat << delx << id << lits << fin;
-                else *solver->frat << del << id << lits << fin;
+                else *solver->frat << weakencl << id << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));

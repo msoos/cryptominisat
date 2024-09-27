@@ -569,7 +569,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
 
     if (level == 0 && frat->enabled())
     {   if (do_unit_frat) {
-            const auto ID = ++clauseID;
+            const auto id = ++clauseID;
             const auto xid = ++clauseXID;
             /* chain.clear(); */
             if (from.getType() == PropByType::binary_t) {
@@ -588,12 +588,13 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
                 get_xor_reason(from, tmp_ID);
             }
 
-            *frat << add << ID << p << fin;
-            *frat << implyxfromcls << xid << p << fratchain << ID << fin;
+            *frat << add << id << p << fin;
+            if (frat && !frat->incremental())
+              *frat << implyxfromcls << xid << p << fratchain << id << fin;
 
             assert(unit_cl_IDs[v] == 0);
             assert(unit_cl_XIDs[v] == 0);
-            unit_cl_IDs[v] = ID;
+            unit_cl_IDs[v] = id;
             unit_cl_XIDs[v] = xid;
         } else {
             assert(unit_cl_IDs[v] != 0);

@@ -1443,7 +1443,8 @@ void Searcher::attach_and_enqueue_learnt_clause(
                     assert(ID != 0);
                     unit_cl_IDs[v] = ID;
                     const auto xid = ++clauseXID;
-                    *frat << implyxfromcls << xid << learnt_clause[0] << fratchain << ID << fin;
+                    if (!frat->incremental())
+                      *frat << implyxfromcls << xid << learnt_clause[0] << fratchain << ID << fin;
                     unit_cl_XIDs[v] = xid;
                 }
                 enqueue<false>(learnt_clause[0], level, PropBy(), false);

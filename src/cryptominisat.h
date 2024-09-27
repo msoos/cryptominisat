@@ -217,6 +217,7 @@ namespace CMSat {
 
         void print_stats(double wallclock_time_started = 0) const; //print solving stats. Call after solve()/simplify()
         void set_frat(FILE* os); //set frat to ostream, e.g. stdout or a file
+        void set_idrup(FILE* os); //set idrup to ostream, e.g. stdout or a file
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.
 

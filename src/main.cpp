@@ -952,6 +952,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.simulate_frat = std::atoi(a.c_str());})
         .default_value(conf.simulate_frat)
         .help("Simulate FRAT");
+    program.add_argument("--idrup")
+        .action([&](const auto& a) {conf.idrup = std::atoi(a.c_str());})
+        .default_value(conf.idrup)
+        .help("idrup");
     program.add_argument("--sampling")
         .help("Set sampling vars such as '1,84,44'. Can also be set via CNF using 'c p show 1 84 44 0'");
     program.add_argument("--assump")
@@ -1170,12 +1174,17 @@ void Main::manually_parse_some_options()
 #endif
             fileNamePresent = true;
         } else assert(false && "The try() should not have succeeded");
-        if (files.size() > 1 || conf.simulate_frat) {
+        if ((files.size() > 1 || conf.simulate_frat) && !conf.idrup) {
             if (files.size() > 1) {
                 assert(!conf.simulate_frat && "You can't have both simulation of FRAT and frat");
                 frat_fname = files[1];
             }
             handle_frat_option();
+        } else {
+            if (files.size() > 1 && conf.idrup) {
+                idrup_fname = files[1];
+            }
+            handle_idrup_option();
         }
     } catch (std::logic_error& e) {
         fileNamePresent = false;
@@ -1232,6 +1241,7 @@ int Main::solve()
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (fratf) solver->set_frat(fratf);
+    if (idrupf) solver->set_idrup(idrupf);
     if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
     if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));
 
