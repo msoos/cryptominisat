@@ -20,14 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#if defined(__GNUC__) && defined(__linux__)
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#endif
-
 #define DEBUG_DIMACSPARSER_CMS
 
 #include <ctime>
