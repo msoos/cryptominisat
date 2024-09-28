@@ -1162,6 +1162,7 @@ void Main::manually_parse_some_options()
                 "the input file and the output FRAT file" << endl;
             exit(-1);
         }
+
         if (!files.empty()) {
             input_file = files[0];
 #ifdef USE_SQLITE3
@@ -1170,16 +1171,15 @@ void Main::manually_parse_some_options()
 #endif
             fileNamePresent = true;
         } else assert(false && "The try() should not have succeeded");
+
         if ((files.size() > 1 || conf.simulate_frat) && !conf.idrup) {
             if (files.size() > 1) {
                 assert(!conf.simulate_frat && "You can't have both simulation of FRAT and frat");
                 frat_fname = files[1];
             }
             handle_frat_option();
-        } else {
-            if (files.size() > 1 && conf.idrup) {
-                idrup_fname = files[1];
-            }
+        } else if (files.size() > 1 && conf.idrup) {
+            idrup_fname = files[1];
             handle_idrup_option();
         }
     } catch (std::logic_error& e) {
