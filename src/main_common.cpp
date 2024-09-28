@@ -32,19 +32,17 @@ using namespace CMSat;
 
 void MainCommon::handle_frat_option()
 {
-    if (!conf.simulate_frat) {
-        FILE* fratfTmp = fopen(frat_fname.c_str(), "wb");
-        if (fratfTmp == nullptr) {
-            std::cerr
-            << "ERROR: Could not open FRAT file "
-            << frat_fname
-            << " for writing"
-            << endl;
+    if (conf.simulate_frat) return;
 
-            std::exit(-1);
-        }
-        fratf = fratfTmp;
+    FILE* fratfTmp = fopen(frat_fname.c_str(), "wb");
+    if (fratfTmp == nullptr) {
+        std::cerr
+        << "ERROR: Could not open FRAT file '" << frat_fname << "' for writing"
+        << endl;
+
+        std::exit(-1);
     }
+    fratf = fratfTmp;
 }
 
 void MainCommon::handle_idrup_option()
@@ -53,9 +51,7 @@ void MainCommon::handle_idrup_option()
         FILE* idrupfTmp = fopen(idrup_fname.c_str(), "w");
         if (idrupfTmp == NULL) {
             std::cerr
-            << "ERROR: Could not open IDRUP file "
-            << idrup_fname
-            << " for writing"
+            << "ERROR: Could not open IDRUP file '" << idrup_fname << "' for writing"
             << endl;
 
             std::exit(-1);
