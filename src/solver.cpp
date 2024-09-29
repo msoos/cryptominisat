@@ -3763,7 +3763,6 @@ map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
 
 map<uint32_t, pair<Lit, lbool>> Solver::update_var_mapping(
         const map<uint32_t, pair<Lit, lbool>>& vmap) {
-    assert(get_clause_query);
     map<uint32_t, pair<Lit, lbool>> ret;
     for(const auto&m : vmap) {
         if(m.second.first == lit_Undef) {
