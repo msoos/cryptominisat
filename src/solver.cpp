@@ -3771,7 +3771,8 @@ map<uint32_t, pair<Lit, lbool>> Solver::update_var_mapping(
             assert(m.second.second != l_Undef);
             ret[m.first] = m.second;
         } else {
-            assert(m.second.first.var() < nVarsOuter());
+            assert(m.second.second == l_Undef && "Must be unset");
+            assert(m.second.first.var() < nVarsOuter() && "Must have been inserted, since it has't been set");
             Lit l = varReplacer->get_lit_replaced_with_outer(m.second.first);
             l = map_outer_to_inter(l);
             if (value(l) != l_Undef) {
