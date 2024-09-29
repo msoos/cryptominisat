@@ -25,3 +25,4 @@ web/jquery-1.11.3.min.js
 *.bak
 /.vs
 tags
+.cache
