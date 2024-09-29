@@ -26,3 +26,6 @@ web/jquery-1.11.3.min.js
 /.vs
 tags
 .cache
+.ccls-cache
+dist
+jni
