@@ -23,10 +23,7 @@
 # THE SOFTWARE.
 
 
-import sys
-import os
 from setuptools import Extension, setup
-import sysconfig
 import tomli as toml
 import pathlib
 from sys import platform
@@ -47,7 +44,7 @@ picosatlib = ('picosatlib', {
 
 
 def gen_modules(version):
-
+    define_macros_val : list[tuple[str, str | None]] | None
     if platform == "win32" or platform == "cygwin":
         extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DINSTALLED_CADIBACK", "/DCMS_FULL_VERSION=\""+version+"\""]
         define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", "")]
@@ -106,9 +103,6 @@ def gen_modules(version):
                    "src/oracle_use.cpp",
                    "src/probe.cpp",
                ],
-        depends = [
-            "python/cadiback/cadiback.h",
-        ],
         libraries = ['/usr/lib/libcadiback.so'], #, 'libgmpxx.so', 'libgmp.so'
         extra_compile_args = extra_compile_args_val,
         define_macros=define_macros_val,
