@@ -85,6 +85,7 @@ extern "C" {
 using namespace CMSat;
 using std::cout;
 using std::endl;
+using std::setw;
 
 #ifdef USE_SQLITE3
 #include "sqlitestats.h"
@@ -3771,11 +3772,20 @@ map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vm
             ret[m.first] = m.second;
         } else {
             assert(m.second.val == l_Undef && "Must be unset");
+            /* cout << "m.first:" << setw(4) << m.first +1 */
+            /*     << " m.second.lit: " << setw(4) */
+            /*     << m.second.lit << " nVarsOuter(): " << nVarsOuter() << endl; */
             assert(m.second.lit.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
             Lit l = varReplacer->get_lit_replaced_with_outer(m.second.lit);
             l = map_outer_to_inter(l);
+            if (varData[l.var()].removed == Removed::elimed) {
+                // This cannot be mapped anywhere, it's been eliminated
+                // the AIG will define it
+                continue;
+            }
             if (value(l) != l_Undef) ret[m.first] = VarMap(value(l));
             else ret[m.first] = VarMap(l);
+            /* cout << "ret[m.first]: " << setw(4) << ret[m.first] << endl; */
         }
     }
     return ret;

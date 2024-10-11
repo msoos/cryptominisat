@@ -404,6 +404,17 @@ struct VarMap {
     lbool val = l_Undef;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const VarMap& v)
+{
+    assert(v.invariant());
+    if (v.lit != lit_Undef) {
+        os << "VarMap lit:" << v.lit;
+        return os;
+    } else {
+        os << "VarMap val: " << v.val;
+        return os;
+    }
+    return os;
 }
 
 #endif //SOLVERTYPESMINI_H
