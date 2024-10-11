@@ -417,4 +417,6 @@ inline std::ostream& operator<<(std::ostream& os, const VarMap& v)
     return os;
 }
 
+}
+
 #endif //SOLVERTYPESMINI_H
