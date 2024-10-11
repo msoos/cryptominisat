@@ -31,7 +31,6 @@ THE SOFTWARE.
 #include <iomanip>
 #include <string>
 #include <cassert>
-#include <limits>
 #include "solverconf.h"
 #include "solvertypesmini.h"
 
