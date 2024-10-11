@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <cstdint>
 
 using namespace CCNR;
 
