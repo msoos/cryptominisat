@@ -395,13 +395,9 @@ struct VarMap {
     bool operator!=(const VarMap& other) const { return !(*this == other); }
     bool invariant() const {
         // Must be at least one of them
-        if (lit == lit_Undef && val == l_Undef) {
-            return false;
-        }
+        if (lit == lit_Undef && val == l_Undef) return false;
         // Can't be both
-        if (lit != lit_Undef && val != l_Undef) {
-            return false;
-        }
+        if (lit != lit_Undef && val != l_Undef) return false;
         return true;
     }
     Lit lit = lit_Undef;

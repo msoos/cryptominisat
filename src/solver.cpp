@@ -3771,7 +3771,7 @@ map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vm
             ret[m.first] = m.second;
         } else {
             assert(m.second.val == l_Undef && "Must be unset");
-            assert(m.second.lit.var() < nVarsOuter() && "Must have been inserted, since it has't been set");
+            assert(m.second.lit.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
             Lit l = varReplacer->get_lit_replaced_with_outer(m.second.lit);
             l = map_outer_to_inter(l);
             if (value(l) != l_Undef) ret[m.first] = VarMap(value(l));
