@@ -23,16 +23,13 @@ THE SOFTWARE.
 #include "solver.h"
 #include "solvertypesmini.h"
 #include <cstdint>
-extern "C" {
-#include "mpicosat/mpicosat.h"
-}
 #include "cryptominisat.h"
 #include "varreplacer.h"
 #include "../cadiback/cadiback.h"
 
 using namespace CMSat;
 
-bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
+bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
         const vector<uint32_t>& only_over, bool& backbone_done)
 {
     if (!okay()) return false;

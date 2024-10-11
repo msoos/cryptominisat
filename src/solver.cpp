@@ -3761,24 +3761,21 @@ map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
     return ret;
 }
 
-map<uint32_t, pair<Lit, lbool>> Solver::update_var_mapping(
-        const map<uint32_t, pair<Lit, lbool>>& vmap) {
-    map<uint32_t, pair<Lit, lbool>> ret;
+map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vmap) {
+    map<uint32_t, VarMap> ret;
     for(const auto&m : vmap) {
-        if(m.second.first == lit_Undef) {
+        assert(m.second.invariant());
+        if(m.second.lit == lit_Undef) {
             // This is a variable has been set in another round/system
-            assert(m.second.second != l_Undef);
+            assert(m.second.val != l_Undef);
             ret[m.first] = m.second;
         } else {
-            assert(m.second.second == l_Undef && "Must be unset");
-            assert(m.second.first.var() < nVarsOuter() && "Must have been inserted, since it has't been set");
-            Lit l = varReplacer->get_lit_replaced_with_outer(m.second.first);
+            assert(m.second.val == l_Undef && "Must be unset");
+            assert(m.second.lit.var() < nVarsOuter() && "Must have been inserted, since it has't been set");
+            Lit l = varReplacer->get_lit_replaced_with_outer(m.second.lit);
             l = map_outer_to_inter(l);
-            if (value(l) != l_Undef) {
-                ret[m.first] = std::make_pair(lit_Undef, value(l));
-            } else {
-                ret[m.first] = std::make_pair(l, l_Undef);
-            }
+            if (value(l) != l_Undef) ret[m.first] = VarMap(value(l));
+            else ret[m.first] = VarMap(l);
         }
     }
     return ret;

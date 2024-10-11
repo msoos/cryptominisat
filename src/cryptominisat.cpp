@@ -1356,8 +1356,8 @@ DLL_PUBLIC std::map<Lit, mpq_class> SATSolver::translate_weights(const std::map<
     return data->solvers[0]->translate_weights(ws);
 }
 
-DLL_PUBLIC map<uint32_t, std::pair<Lit, lbool>> SATSolver::update_var_mapping(
-        const std::map<uint32_t, std::pair<Lit, lbool>>& vmap)
+DLL_PUBLIC map<uint32_t, VarMap> SATSolver::update_var_mapping(
+        const std::map<uint32_t, VarMap>& vmap)
 {
     return data->solvers[0]->update_var_mapping(vmap);
 }
