@@ -20,21 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-
-#ifndef SOLVERTYPES_H
-#define SOLVERTYPES_H
+#pragma once
 
 #include "constants.h"
 
 #include <sstream>
 #include <algorithm>
-#include <limits>
 #include <vector>
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <limits>
 #include <cassert>
+#include <limits>
 #include "solverconf.h"
 #include "solvertypesmini.h"
 
@@ -501,6 +498,3 @@ namespace std {
   };
 
 }
-
-
-#endif //SOLVERTYPES_H
