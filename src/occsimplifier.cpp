@@ -67,7 +67,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 using std::unique;
-using std::make_pair;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER
@@ -86,8 +85,6 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
-    , gateFinder(nullptr)
-    , elimed_map_built(false)
 {
     sub_str = new SubsumeStrengthen(this, solver);
 
@@ -180,20 +177,19 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
     return num_cls;
 }
 
-vector<vector<Lit>> OccSimplifier::get_elimed_clauses_for(uint32_t outer_v) {
-    if (!elimed_map_built) {
-        clean_elimed_cls();
-        build_elimed_map();
-    }
+vector<vector<Lit>> OccSimplifier::get_elimed_clauses_for(const uint32_t outer_v) {
+    build_elimed_map();
+    const uint32_t inter_v = solver->map_outer_to_inter(outer_v);
+    assert(solver->varData[inter_v].removed == Removed::elimed && "Variable must be eliminated");
 
-    uint32_t at_elimed_cls = blk_var_to_cls[outer_v];
+    const uint32_t at_elimed_cls = blk_var_to_cls[outer_v];
     if (at_elimed_cls == numeric_limits<uint32_t>::max()) return {};
 
     assert(!elimed_cls[at_elimed_cls].is_xor);
 
     vector<vector<Lit>> ret;
     vector<Lit> lits;
-    size_t bat = 1;
+    size_t bat = 1; // 0th is marker
     while(bat < elimed_cls[at_elimed_cls].size()) {
         Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
@@ -2947,8 +2943,9 @@ bool OccSimplifier::fill_occur() {
     return true;
 }
 
-//This must NEVER be called during solve. Only JUST BEFORE Solver::solve() is called
-//otherwise, uneliminated_vars_since_last_solve will be wrong
+// This must NEVER be called during solve. Only JUST BEFORE Solver::solve() is called
+//   otherwise, uneliminated_vars_since_last_solve<T> will be wrong
+// Takes INTERNAL var
 bool OccSimplifier::uneliminate(uint32_t var)
 {
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
@@ -2961,10 +2958,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     assert(solver->varData[var].removed == Removed::elimed);
     assert(solver->value(var) == l_Undef);
 
-    if (!elimed_map_built) {
-        clean_elimed_cls();
-        build_elimed_map();
-    }
+    build_elimed_map();
 
     //Uneliminate it in theory
     bvestats_global.numVarsElimed--;
@@ -2997,7 +2991,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     #endif
 
     vector<Lit> lits;
-    size_t bat = 1;
+    size_t bat = 1; // 0th is marker
     while(bat < elimed_cls[at_elimed_cls].size()) {
         Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
@@ -3043,8 +3037,10 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
     newly_elimed_cls_IDs.clear();
 }
 
-void OccSimplifier::build_elimed_map()
-{
+void OccSimplifier::build_elimed_map() {
+    if (elimed_map_built) return;
+
+    clean_elimed_cls();
     blk_var_to_cls.clear();
     blk_var_to_cls.resize(solver->nVarsOuter(), numeric_limits<uint32_t>::max());
     for(size_t i = 0; i < elimed_cls.size(); i++) {

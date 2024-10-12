@@ -553,15 +553,15 @@ private:
     /////////////////////
     //Helpers
     friend class GateFinder;
-    GateFinder *gateFinder;
+    GateFinder *gateFinder = nullptr;
 
     /////////////////////
     //Elimed clause elimination
     vector<Lit> elimed_cls_lits;
     vector<ElimedClauses> elimed_cls; ///<maps var(outer!!) to postion in elimedClauses
-    vector<uint32_t> blk_var_to_cls;
+    vector<uint32_t> blk_var_to_cls; //< indexed by OUTER var
     vector<int32_t> newly_elimed_cls_IDs; // temporary storage for newly elimed cls' IDs
-    bool elimed_map_built;
+    bool elimed_map_built = false;
     void build_elimed_map();
     void clean_elimed_cls();
     bool can_remove_elimed_clauses = false;

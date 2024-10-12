@@ -662,7 +662,7 @@ void Solver::detach_modified_clause(
     PropEngine::detach_modified_clause(lit1, lit2, address);
 }
 
-//Takes OUTSIDE variables and makes them INTERNAL, replaces them, etc.
+//Takes OUTER variables and makes them INTERNAL, replaces them, etc.
 bool Solver::add_clause_helper(vector<Lit>& ps) {
     if (!ok) return false;
 
@@ -3803,7 +3803,9 @@ vector<uint32_t> Solver::get_elimed_vars() const {
 
 std::vector<std::vector<Lit>> Solver::get_cls_defining_var(uint32_t outer_v) const {
     assert(get_clause_query);
-    assert(varData[outer_v].removed == Removed::elimed);
+    Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
+    Lit l_inter  = map_outer_to_inter(l);
+    assert(varData[l_inter.var()].removed == Removed::elimed);
     return occsimplifier->get_elimed_clauses_for(outer_v);
 }
 
