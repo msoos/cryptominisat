@@ -312,6 +312,25 @@ class Solver : public Searcher
         void detach_clauses_in_xors();
         vector<Lit> tmp_repr;
         bool check_clause_represented_by_xor(const Clause& cl);
+        void hash_uint32_t(const uint32_t v, uint32_t& hash) const {
+            uint8_t* s = (uint8_t*)(&v);
+            for(uint32_t i = 0; i < 4; i++, s++) { hash += *s; }
+            s = (uint8_t*)(&v);
+            for(uint32_t i = 0; i < 4; i++, s++) { hash ^= *s; }
+        }
+
+        uint32_t hash_xcl(const Xor& x) const {
+            uint32_t hash = 0;
+            for(const auto& v: x) hash_uint32_t(v, hash);
+            return hash;
+        }
+
+        uint32_t hash_xcl(const Clause* cl) const {
+            uint32_t hash = 0;
+            for(const auto& l: *cl) hash_uint32_t(l.var(), hash);
+            return hash;
+        }
+
 
         //assumptions
         void set_assumptions();

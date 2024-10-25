@@ -3615,27 +3615,6 @@ void Solver::copy_to_simp(SATSolver* s2)
     end_getting_constraints();
 }
 
-void hash_uint32_t(const uint32_t v, uint32_t& hash) {
-    uint8_t* s = (uint8_t*)(&v);
-    for(uint32_t i = 0; i < 4; i++, s++) { hash += *s; }
-    for(uint32_t i = 0; i < 4; i++, s++) { hash ^= *s; }
-}
-
-uint32_t hash_xcl(const Xor& x)
-{
-    uint32_t hash = 0;
-    for(const auto& v: x) hash_uint32_t(v, hash);
-    return hash;
-}
-
-
-uint32_t hash_xcl(const Clause& cl)
-{
-    uint32_t hash = 0;
-    for(const auto& l: cl) hash_uint32_t(l.var(), hash);
-    return hash;
-}
-
 bool Solver::check_clause_represented_by_xor(const Clause& cl) {
     for(const auto& l: cl) if (!seen[l.var()]) return false;
 
@@ -3689,7 +3668,7 @@ void Solver::detach_clauses_in_xors() {
         assert(!cl->freed());
         assert(!cl->get_removed());
         if (cl->size() <= maxsize_xor &&
-                xor_hashes.count(hash_xcl(*cl)) &&
+                xor_hashes.count(hash_xcl(cl)) &&
                 check_clause_represented_by_xor(*cl)) {
             detachClause(*cl);
             cl->stats.marked_clause = true;
