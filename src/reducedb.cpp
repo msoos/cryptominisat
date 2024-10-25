@@ -38,6 +38,7 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+namespace CMSat {
 inline double safe_div(double a, double b) {
     if (b == 0) {
         assert(a == 0);
@@ -65,21 +66,6 @@ struct SortRedClsGlue
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
         return x->stats.glue < y->stats.glue;
-    }
-};
-
-struct SortRedClsSize
-{
-    explicit SortRedClsSize(ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
-    {}
-    ClauseAllocator& cl_alloc;
-
-    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
-    {
-        const Clause* x = cl_alloc.ptr(xOff);
-        const Clause* y = cl_alloc.ptr(yOff);
-        return x->size() < y->size();
     }
 };
 
@@ -189,7 +175,7 @@ struct SortRedClsPredForever
     }
 };
 #endif
-
+}
 
 ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
