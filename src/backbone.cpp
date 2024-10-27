@@ -37,10 +37,10 @@ namespace CMSat {
         {}
         ClauseAllocator& cl_alloc;
 
-        inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
+        inline bool operator () (const ClOffset x_off, const ClOffset y_off) const
         {
-            const Clause* x = cl_alloc.ptr(xOff);
-            const Clause* y = cl_alloc.ptr(yOff);
+            const Clause* x = cl_alloc.ptr(x_off);
+            const Clause* y = cl_alloc.ptr(y_off);
             return x->size() < y->size();
         }
     };
