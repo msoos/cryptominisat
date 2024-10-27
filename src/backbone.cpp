@@ -29,6 +29,24 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+namespace CMSat {
+    struct SortClsSize
+    {
+        explicit SortClsSize(ClauseAllocator& _cl_alloc) :
+            cl_alloc(_cl_alloc)
+        {}
+        ClauseAllocator& cl_alloc;
+
+        inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
+        {
+            const Clause* x = cl_alloc.ptr(xOff);
+            const Clause* y = cl_alloc.ptr(yOff);
+            return x->size() < y->size();
+        }
+    };
+}
+
+
 bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
         const vector<uint32_t>& only_over, bool& backbone_done)
 {
@@ -36,11 +54,9 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
 
-    for(auto const& off: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(off);
-        for(auto const& l1: *cl) {
-            cnf.push_back(PICOLIT(l1));
-        }
+    for(uint32_t i = 0; i < nVars(); i++) {
+        if (value(i) == l_Undef) continue;
+        cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
         cnf.push_back(0);
     }
     for(uint32_t i = 0; i < nVars()*2; i++) {
@@ -55,9 +71,14 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             cnf.push_back(0);
         }
     }
-    for(uint32_t i = 0; i < nVars(); i++) {
-        if (value(i) == l_Undef) continue;
-        cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
+    std::sort(longIrredCls.begin(), longIrredCls.end(), SortClsSize(cl_alloc));
+    for(auto const& off: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(off);
+        vector<Lit> tmp(cl->begin(), cl->end());
+        std::shuffle(tmp.begin(), tmp.end(), mtrand);
+        for(auto const& l1: tmp) {
+            cnf.push_back(PICOLIT(l1));
+        }
         cnf.push_back(0);
     }
 
