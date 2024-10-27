@@ -29,24 +29,6 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-namespace CMSat {
-    struct SortClsSize
-    {
-        explicit SortClsSize(ClauseAllocator& _cl_alloc) :
-            cl_alloc(_cl_alloc)
-        {}
-        ClauseAllocator& cl_alloc;
-
-        inline bool operator () (const ClOffset x_off, const ClOffset y_off) const
-        {
-            const Clause* x = cl_alloc.ptr(x_off);
-            const Clause* y = cl_alloc.ptr(y_off);
-            return x->size() < y->size();
-        }
-    };
-}
-
-
 bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
         const vector<uint32_t>& only_over, bool& backbone_done)
 {
@@ -71,7 +53,6 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             cnf.push_back(0);
         }
     }
-    std::sort(longIrredCls.begin(), longIrredCls.end(), SortClsSize(cl_alloc));
     for(auto const& off: longIrredCls) {
         Clause* cl = cl_alloc.ptr(off);
         vector<Lit> tmp(cl->begin(), cl->end());
