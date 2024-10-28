@@ -36,9 +36,11 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
 
-    for(uint32_t i = 0; i < nVars(); i++) {
-        if (value(i) == l_Undef) continue;
-        cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
+    for(auto const& off: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(off);
+        for(auto const& l1: *cl) {
+            cnf.push_back(PICOLIT(l1));
+        }
         cnf.push_back(0);
     }
     for(uint32_t i = 0; i < nVars()*2; i++) {
@@ -53,13 +55,9 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             cnf.push_back(0);
         }
     }
-    for(auto const& off: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(off);
-        vector<Lit> tmp(cl->begin(), cl->end());
-        std::shuffle(tmp.begin(), tmp.end(), mtrand);
-        for(auto const& l1: tmp) {
-            cnf.push_back(PICOLIT(l1));
-        }
+    for(uint32_t i = 0; i < nVars(); i++) {
+        if (value(i) == l_Undef) continue;
+        cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
         cnf.push_back(0);
     }
 
