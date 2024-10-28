@@ -20,15 +20,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "solver.h"
 #include "oracle/oracle.h"
+#include "solvertypes.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
 #include "occsimplifier.h"
+#include "time_mem.h"
 #include "varreplacer.h"
 #include "distillerbin.h"
 
 using namespace CMSat;
+
+namespace CMSat {
+    struct VarPair {
+        uint32_t v1;
+        uint32_t v2;
+        uint32_t score;
+    };
+}
 
 inline vector<int> negate(vector<int> vec) {
 	for (int& lit : vec) lit = sspp::Neg(lit);
@@ -90,34 +101,29 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
-    double my_time = cpuTime();
+    double start_vivif_time = cpuTime();
 
     auto clauses = get_irred_cls_for_oracle();
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
-    bool sat = false;
-    bool early_aborted = false;
+
+
+    int64_t tot_vivif_mems = 1600LL*1000LL*1000LL;
+    if (fast > 0) tot_vivif_mems /= (3*fast);
+    bool early_aborted_vivif = true;
     uint32_t bin_added = 0;
     uint32_t equiv_added = 0;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            int64_t mems = 1600LL*1000LL*1000LL;
-            if (fast > 0) mems /= (3*fast);
-            if (oracle.getStats().mems > mems) {
-                early_aborted = true;
-                goto end;
-            }
+            if (oracle.getStats().mems > tot_vivif_mems) goto end1;
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
             int64_t mems2 =  500LL*1000LL*1000LL;
             if (fast > 0) mems2 /= (3*fast);
             auto ret = oracle.Solve(assump, true,mems2);
-            if (ret.isUnknown()) {
-                early_aborted = true;
-                goto end;
-            }
+            if (ret.isUnknown()) goto end1;
             if (ret.isFalse()) {
                 sort(assump.begin(), assump.end());
                 auto clause = negate(assump);
@@ -128,83 +134,100 @@ bool Solver::oracle_vivif(int fast, bool& finished)
                     ok = false;
                     return false;
                 }
-            } else if(!sat) {
-                sat = true;
             }
         }
     }
+    early_aborted_vivif = false;
+    finished = true;
 
     // Do equiv check
+    end1:
+    const auto oracle_vivif_mems_used = oracle.getStats().mems;
+    const double end_vivif_time = cpuTime();
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*20LL*1000LL*1000LL;
+    bool early_aborted_bin = true;
+    oracle.reset_mems();
+    double start_bin_time = cpuTime();
     if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
-        oracle.reset_mems();
-        vector<vector<char>> pg(nVars());
-        for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), false);
+        vector<vector<uint32_t>> pg(nVars());
+        for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), 0);
         for (const auto& clause : clauses) {
             for (auto l1 : clause) {
                 for (auto l2 : clause) {
                     uint32_t v1 = orc_to_lit(l1).var();
                     uint32_t v2 = orc_to_lit(l2).var();
-                    if (v1 < v2) pg[v1][v2] = true;
+                    if (v1 < v2) pg[v1][v2]++;
                 }
             }
         }
+        vector<VarPair> varp;
+        for (uint32_t v1 = 0; v1 < nVars(); v1++)
+            for (uint32_t v2 = 0; v2 < nVars(); v2++)
+                if (v1 < v2 && pg[v1][v2] > 0) varp.push_back({v1, v2, pg[v1][v2]});
+        pg.clear();
+        pg.shrink_to_fit();
 
-        auto tot_mems = (int64_t)conf.oracle_find_bins*20LL*1000LL*1000LL;
+        // Actually seems to slow it down. Strange. TODO
+        /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
+        /*         return a.score > b.score;}); */
+        verb_print(1, "[oracle-bin] potential pairs: " << varp.size());
+
         auto mem = 1000LL*1000LL;
-        for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
-            if (varData[v1].removed != Removed::none) continue;
-            if (value(v1) != l_Undef) continue;
-            for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
-                if (varData[v2].removed != Removed::none) continue;
-                if (value(v2) != l_Undef) continue;
-                if (!pg[v1][v2]) continue;
-                if (oracle.getStats().mems > tot_mems) goto end;
-                TriState ret;
-                TriState ret2;
-                Clause* clptr;
-                ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, mem);
-                if (ret.isUnknown()) goto end;
-                if (ret.isTrue()) goto next;
-                clptr = add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
+        for (const auto& vp: varp) {
+            if (varData[vp.v1].removed != Removed::none) continue;
+            if (varData[vp.v2].removed != Removed::none) continue;
+            if (value(vp.v1) != l_Undef) continue;
+            if (value(vp.v2) != l_Undef) continue;
+            if (oracle.getStats().mems > tot_bin_mems) goto end2;
 
-                ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, mem);
-                if (ret2.isUnknown()) goto end;
-                if (ret2.isTrue()) goto next;
-                assert(ret.isFalse() && ret2.isFalse());
-                clptr = add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
-                equiv_added++;
-                continue;
+            TriState ret;
+            Clause* cl;
+            const Lit l1 = Lit(vp.v1, false);
+            const Lit l2 = Lit(vp.v2, false);
+            ret = oracle.Solve({orclit(l1), orclit(l2)}, true, mem);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) goto next;
+            cl = add_clause_int({~l1, ~l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
 
-                next:
-                ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, mem);
-                if (ret.isUnknown()) goto end;
-                if (ret.isTrue()) continue;
-                clptr = add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
+            ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) goto next;
+            assert(ret.isFalse() && ret.isFalse());
+            cl = add_clause_int({l1, l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+            equiv_added++;
+            continue;
 
-                ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, mem);
-                if (ret2.isUnknown()) goto end;
-                if (ret2.isTrue()) continue;
-                assert(ret.isFalse() && ret2.isFalse());
-                clptr = add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
-                assert(!clptr);
-                if (!okay()) return false;
-                bin_added++;
-                equiv_added++;
-            }
+            next:
+            ret = oracle.Solve({orclit(~l1), orclit(l2)}, true, mem);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) continue;
+            cl = add_clause_int({l1, ~l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+
+            ret = oracle.Solve({orclit(l1), orclit(~l2)}, true, mem);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) continue;
+            cl = add_clause_int({~l1, l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+            equiv_added++;
         }
     }
+    early_aborted_bin = false;
 
-    end:
-    if (!early_aborted) finished = true;
+    end2:
+    const double end_bin_tme = cpuTime();
+    const auto oracle_bin_mems_used = oracle.getStats().mems;
+
     vector<Lit> tmp2;
     for(const auto& cl: clauses) {
         tmp2.clear();
@@ -229,13 +252,24 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     }
     execute_inprocess_strategy(false, "must-scc-vrepl");
     if (!okay()) return okay();
+
     verb_print(1, "[oracle-vivif]"
+            << " learnt-units: " << oracle.getStats().learned_units
+            << " T-out: " << (early_aborted_vivif ? "Y" : "N")
+            << " T-remain: " << stats_line_percent(tot_vivif_mems-oracle_vivif_mems_used, tot_vivif_mems) << "%"
+            << " T: " << std::setprecision(2) << (end_vivif_time-start_vivif_time));
+
+    verb_print(1, "[oracle-bin]"
             << " bin-added: " << bin_added
             << " equiv-added: " << equiv_added
+            << " T-out: " << (early_aborted_bin ? "Y" : "N")
+            << " T-remain: " << stats_line_percent(tot_bin_mems-oracle_bin_mems_used, tot_bin_mems) << "%"
+            << " T: " << std::setprecision(2) << (end_bin_tme - start_bin_time));
+
+    verb_print(1, "[oracle-vivif-bin]"
             << " cache-used: " << oracle.getStats().cache_useful
             << " cache-added: " << oracle.getStats().cache_added
-            << " learnt-units: " << oracle.getStats().learned_units
-            << " T: " << std::setprecision(2) << (cpuTime()-my_time));
+            << " total T: " << std::setprecision(2) << (cpuTime() - start_vivif_time));
     return solver->okay();
 }
 
