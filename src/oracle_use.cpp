@@ -63,16 +63,13 @@ inline Lit orc_to_lit(int x) {
     return Lit(var, neg);
 }
 
-vector<vector<int>> Solver::get_irred_cls_for_oracle() const
-{
+vector<vector<int>> Solver::get_irred_cls_for_oracle() const {
     vector<vector<int>> clauses;
     vector<int> tmp;
     for (const auto& off: longIrredCls) {
         const Clause& cl = *cl_alloc.ptr(off);
         tmp.clear();
-        for (auto const& l: cl) {
-            tmp.push_back(orclit(l));
-        }
+        for (auto const& l: cl) tmp.push_back(orclit(l));
         clauses.push_back(tmp);
     }
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -90,8 +87,7 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
     return clauses;
 }
 
-bool Solver::oracle_vivif(int fast, bool& finished)
-{
+bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     using sspp::PosLit;
     using sspp::NegLit;
     using sspp::oracle::TriState;
@@ -104,11 +100,12 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     double start_vivif_time = cpuTime();
 
     auto clauses = get_irred_cls_for_oracle();
+    std::shuffle(clauses.begin(), clauses.end(), mtrand);
+    for(auto& cl: clauses) std::shuffle(cl.begin(), cl.end(), mtrand);
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
-
 
     int64_t tot_vivif_mems = 1600LL*1000LL*1000LL;
     if (fast > 0) tot_vivif_mems /= (3*fast);
@@ -116,6 +113,10 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     uint32_t bin_added = 0;
     uint32_t equiv_added = 0;
     for (int i = 0; i < (int)clauses.size(); i++) {
+        if (backbone_found && clauses[i].size() == 2) {
+            // Backbone has been found, this will never be shorter
+            continue;
+        }
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             if (oracle.getStats().mems > tot_vivif_mems) goto end1;
             auto assump = negate(clauses[i]);
@@ -138,7 +139,7 @@ bool Solver::oracle_vivif(int fast, bool& finished)
         }
     }
     early_aborted_vivif = false;
-    finished = true;
+    backbone_found = true;
 
     // Do equiv check
     end1:
