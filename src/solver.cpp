@@ -1762,24 +1762,24 @@ lbool Solver::execute_inprocess_strategy(
                     std::floor((double)get_num_free_vars()*0.001));
             }
         } else if (token == "oracle-vivif-sparsify") {
-            bool finished = false;
-            if (nVars() > 10 && oracle_vivif(0, finished)) {
+            bool backbone_found = true;
+            if (nVars() > 10 && oracle_vivif(0, backbone_found)) {
                 oracle_sparsify();
             }
         } else if (token == "oracle-vivif-sparsify-mustfinish") {
-            bool finished = false;
-            if (nVars() > 10 && oracle_vivif(0, finished)) {
-                if (finished) oracle_sparsify();
+            bool backbone_found = false;
+            if (nVars() > 10 && oracle_vivif(0, backbone_found)) {
+                if (backbone_found) oracle_sparsify();
             }
         } else if (token == "oracle-vivif") {
-            bool finished = false;
-            if (nVars() > 10) oracle_vivif(0, finished);
+            bool backbone_found = false;
+            if (nVars() > 10) oracle_vivif(0, backbone_found);
         } else if (token == "oracle-vivif-fast") {
-            bool finished = false;
-            if (nVars() > 10) oracle_vivif(1, finished);
+            bool backbone_found = true;
+            if (nVars() > 10) oracle_vivif(1, backbone_found);
         } else if (token == "oracle-vivif-veryfast") {
-            bool finished = false;
-            if (nVars() > 10) oracle_vivif(2, finished);
+            bool backbone_found = false;
+            if (nVars() > 10) oracle_vivif(2, backbone_found);
         } else if (token == "oracle-sparsify") {
             if (nVars() > 10) { oracle_sparsify();
             }
@@ -1787,9 +1787,9 @@ lbool Solver::execute_inprocess_strategy(
             if (nVars() > 10) { oracle_sparsify(true);
             }
         } else if (token == "backbone") {
-            bool finished = false;
+            bool backbone_found = false;
             vector<uint32_t> vars;
-            backbone_simpl(30LL*1000LL, true, vars, finished);
+            backbone_simpl(30LL*1000LL, true, vars, backbone_found);
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
