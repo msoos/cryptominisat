@@ -197,7 +197,8 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 
 class OrGate {
     public:
-        OrGate(const Lit& _rhs, const std::vector<Lit>& _lits, int32_t _ID) :
+        template<typename T>
+        OrGate(const Lit& _rhs, const T& _lits, int32_t _ID) :
             lits(_lits), rhs(_rhs), id(_ID)
 
         {

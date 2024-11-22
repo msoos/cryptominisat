@@ -1649,7 +1649,7 @@ int OccSimplifier::lit_to_picolit(const Lit l) {
 }
 
 uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
-    assert(seen[wsLit.var()] == 1);
+    /* assert(seen[wsLit.var()] == 1); */
 
     uint32_t added = 0;
     for(const auto& w: solver->watches[wsLit]) {
@@ -1659,7 +1659,7 @@ uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
             assert(!cl.red());
             bool only_sampl = true;
             for(const auto& l: cl) {
-                if (!seen[l.var()]) {
+                if (l.var() != wsLit.var() && !seen[l.var()]) {
                     only_sampl = false;
                     break;
                 }
@@ -1750,6 +1750,78 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
 
     end:
     return solver->okay();
+}
+
+vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint32_t>& vars)
+{
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    assert(picovars_used.empty());
+    var_to_picovar.clear();
+    var_to_picovar.resize(solver->nVars(), 0);
+
+    auto orig_trail_sz = solver->trail_size();
+
+    startup = false;
+    double backup = solver->conf.maxOccurRedMB;
+    solver->conf.maxOccurRedMB = 0;
+    if (!setup()) return vars;
+    assert(picosat == nullptr);
+
+    uint32_t unsat = 0;
+    uint32_t picosat_ran = 0;
+    uint32_t too_many_occ = 0;
+    for(const auto& v: vars) seen[v] = 1;
+    auto ret = vars;
+
+    for(uint32_t v = 0; v < solver->nVars(); v++) {
+        assert(solver->varData[v].removed == Removed::none);
+        if (seen[v] == 1) continue;
+        const Lit l = Lit(v, false);
+
+        uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
+        bool empty_occ = total == 0 ||
+            (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l));
+        if (empty_occ) continue;
+
+        // too expensive?
+        if (total > 500) {
+            too_many_occ++;
+            continue;
+        }
+
+        if (picosat == nullptr) picosat = picosat_init();
+        assert(picovars_used.empty());
+        uint32_t added = add_cls_to_picosat_definable(l);
+        added += add_cls_to_picosat_definable(~l);
+        for(const auto x: picovars_used) var_to_picovar[x] = 0;
+        picovars_used.clear();
+
+        if (added == 0) continue;
+
+        int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
+        picosat_ran++;
+        if (picoret == PICOSAT_UNSATISFIABLE) {
+            unsat++;
+            seen[v] = 1;
+            ret.push_back(v);
+        }
+        picosat_reset(picosat);
+        picosat = nullptr;
+    }
+    if (picosat) {
+        picosat_reset(picosat);
+        picosat = nullptr;
+    }
+    for(const uint32_t v: ret) seen[v] = 0;
+
+    verb_print(1, "[irreg-gate-extend]"
+               << " pico ran: " << picosat_ran << " unsat: " << unsat
+               << " too-many-occ: " << too_many_occ);
+
+    solver->conf.maxOccurRedMB = backup;
+    finish_up(orig_trail_sz);
+    return ret;
 }
 
 // Returns new set that doesn't contain variables that are definable
