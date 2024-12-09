@@ -456,7 +456,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         }
     } else if (str == "ind") {
         if (!parseIndependentSet(in, ind_vars)) return false;
-        ind_vars_set = true
+        ind_vars_set = true;
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
