@@ -73,6 +73,8 @@ class DimacsParser
         std::string stringify(uint32_t x) const;
         bool check_var(const uint32_t var);
         bool parseWeight(C& in);
+        vector<uint32_t> ind_vars;
+        bool ind_vars_set = false;
 
         #ifdef DEBUG_DIMACSPARSER_CMS
         bool parse_solve_simp_comment(C& in, const bool solve);
@@ -453,22 +455,33 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
     } else if (str == "ind") {
-        vector<uint32_t> sampl_vars;
-        if (!parseIndependentSet(in, sampl_vars)) return false;
-        solver->set_sampl_vars(sampl_vars);
+        if (!parseIndependentSet(in, ind_vars)) return false;
+        ind_vars_set = true
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
         in.parseString(str2);
         if (str2 == "weight") {
+            if (ind_vars_set) {
+                cout << "ERROR: 'ind' and weights cannot be used together, you have to set independent support via 'c p show' " << endl;
+                exit(-1);
+            }
             solver->set_weighted(true);
             if (!parseWeight(in)) return false;
         } else if (str2 == "show") {
+            if (ind_vars_set) {
+                cout << "ERROR: 'c ind' and 'c p show' cannot be used together" << endl;
+                exit(-1);
+            }
             in.skipWhitespace();
             vector<uint32_t> sampl_vars;
             if (!parseIndependentSet(in, sampl_vars)) { return false; }
             solver->set_sampl_vars(sampl_vars);
         } else if (str2 == "optshow") {
+            if (ind_vars_set) {
+                cout << "ERROR: 'c ind' and 'c p optshow' cannot be used together" << endl;
+                exit(-1);
+            }
             in.skipWhitespace();
             vector<uint32_t> opt_sampl_vars;
             if (!parseIndependentSet(in, opt_sampl_vars)) { return false; }
@@ -591,6 +604,7 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
         in.skipWhitespace();
         switch (*in) {
         case EOF:
+            if (ind_vars_set) solver->set_sampl_vars(ind_vars);
             return true;
         case 'p':
             if (!parse_header(in)) {
