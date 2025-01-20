@@ -3676,9 +3676,8 @@ void Solver::detach_clauses_in_xors() {
 
     if (deleted > 0) {
         uint32_t j = 0;
-        for(uint32_t i = 0; i < longIrredCls.size(); i++) {
-            ClOffset offs = longIrredCls[i];
-            Clause* cl = cl_alloc.ptr(offs);
+        for(unsigned int offs : longIrredCls) {
+             Clause* cl = cl_alloc.ptr(offs);
             if (!cl->stats.marked_clause) longIrredCls[j++] = offs;
         }
         longIrredCls.resize(j);
