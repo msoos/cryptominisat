@@ -936,10 +936,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.max_scc_depth = std::atoi(a.c_str());})
         .default_value(conf.max_scc_depth)
         .help("The maximum for scc search depth");
-    program.add_argument("--simfrat")
-        .action([&](const auto& a) {conf.simulate_frat = std::atoi(a.c_str());})
-        .default_value(conf.simulate_frat)
-        .help("Simulate FRAT");
     program.add_argument("--idrup")
         .action([&](const auto& a) {conf.idrup = std::atoi(a.c_str());})
         .default_value(conf.idrup)
@@ -1172,11 +1168,8 @@ void Main::manually_parse_some_options()
             fileNamePresent = true;
         } else assert(false && "The try() should not have succeeded");
 
-        if ((files.size() > 1 || conf.simulate_frat) && !conf.idrup) {
-            if (files.size() > 1) {
-                assert(!conf.simulate_frat && "You can't have both simulation of FRAT and frat");
-                frat_fname = files[1];
-            }
+        if ((files.size() > 1) && !conf.idrup) {
+            if (files.size() > 1) frat_fname = files[1];
             handle_frat_option();
         } else if (files.size() > 1 && conf.idrup) {
             idrup_fname = files[1];
@@ -1320,7 +1313,6 @@ lbool Main::multi_solutions()
 {
     if (max_nr_of_solutions == 1
         && fratf == nullptr
-        && !conf.simulate_frat
         && debugLib.empty()
     ) {
         solver->set_single_run();

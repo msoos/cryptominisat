@@ -400,9 +400,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         throw std::runtime_error(err);
     }
 
-    if (data->solvers[0]->frat->enabled() ||
-        data->solvers[0]->conf.simulate_frat
-    ) {
+    if (data->solvers[0]->frat->enabled()) {
         const char err[] = "ERROR: FRAT cannot be used in multi-threaded mode";
         std::cerr << err << endl;
         throw std::runtime_error(err);
@@ -938,7 +936,6 @@ lbool calc(
         }
         data->okay = data->solvers[0]->okay();
         data->cpu_times[0] = cpuTime();
-	data->solvers[0]->conclude_idrup(ret);
         return ret;
     }
 

@@ -615,10 +615,4 @@ inline void Solver::free_cl(
     cl_alloc.clauseFree(offs);
 }
 
-inline bool Solver::removed_var_ext(uint32_t var) const
-{
-    var = map_outer_to_inter(var);
-    return value(var) != l_Undef || varData[var].removed != Removed::none;
-}
-
 } //end namespace

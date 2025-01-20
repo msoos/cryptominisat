@@ -20,17 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __IDRUP_H__
-#define __IDRUP_H__
+#pragma once
 
-#include "constants.h"
 #include "clause.h"
 #include "frat.h"
 #include "sqlstats.h"
 
 #include <vector>
-#include <iostream>
-#include <stdio.h>
+#include <cstdio>
 
 using std::vector;
 #define DEBUG_IDRUP
@@ -67,24 +64,23 @@ public:
         del_len = 0;
     }
 
-    virtual ~IdrupFile()
-    {
+    ~IdrupFile() override {
         flush();
         delete[] drup_buf;
         delete[] del_buf;
     }
 
-    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts) override
+    void set_sumconflicts_ptr(uint64_t* _sumConflicts) override
     {
         sumConflicts = _sumConflicts;
     }
 
-    virtual void set_sqlstats_ptr(SQLStats* _sqlStats) override
+    void set_sqlstats_ptr(SQLStats* _sqlStats) override
     {
         sqlStats = _sqlStats;
     }
 
-    virtual FILE* getFile() override
+    FILE* getFile() override
     {
         return drup_file;
     }
@@ -510,5 +506,3 @@ private:
 };
 
 }
-
-#endif //__IDRUP_H__
