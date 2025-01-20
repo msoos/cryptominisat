@@ -1241,7 +1241,7 @@ void Solver::check_and_upd_config_parameters()
         exit(-1);
     }
 
-    if ((frat->enabled() || conf.simulate_frat))  {
+    if ((frat->enabled()))  {
         if (!conf.do_hyperbin_and_transred) {
             if (conf.verbosity) {
                 cout
@@ -1424,7 +1424,7 @@ lbool Solver::solve_with_assumptions(
     }
 
     write_final_frat_clauses();
-
+    conclude_idrup(status);
     return status;
 }
 
@@ -1884,7 +1884,6 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "breakid") {
             if (conf.doBreakid
                 && !frat->enabled()
-                && !conf.simulate_frat
                 && (solveStats.num_simplify == 0 ||
                    (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
@@ -3710,8 +3709,8 @@ void Solver::reverse_bce() {
     occsimplifier->reverse_blocked_clause_elim();
 }
 
-void Solver::conclude_idrup (lbool result)
-{
+void Solver::conclude_idrup (lbool result) {
+    if (!conf.idrup) return;
     if (result == l_True) {
       *frat << satisfiable;
       *frat << modelF;

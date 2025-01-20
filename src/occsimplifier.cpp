@@ -297,7 +297,7 @@ void OccSimplifier::unlink_clause(
     , bool only_set_is_removed
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    if (do_frat && (solver->frat->enabled() || solver->conf.simulate_frat)) {
+    if (do_frat && (solver->frat->enabled())) {
        (*solver->frat) << del << cl << fin;
     }
 
@@ -3082,7 +3082,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
 void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize)
 {
-    if (! (solver->frat->enabled() || solver->conf.simulate_frat) ) {
+    if (!solver->frat->enabled()) {
         newly_elimed_cls_IDs.clear();
         return;
     }

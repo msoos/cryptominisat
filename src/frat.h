@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include <vector>
 #include <cstdio>
 
-#include "constants.h"
 #include "clause.h"
 #include "sqlstats.h"
 #include "xor.h"
@@ -42,7 +41,6 @@ using std::vector;
 #else
 #define FRAT_PRINT(...) do {} while (0)
 #endif
-
 
 namespace CMSat {
 

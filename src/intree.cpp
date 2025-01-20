@@ -90,11 +90,9 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 bool InTree::check_timeout_due_to_hyperbin()
 {
     assert(!(solver->timedOutPropagateFull && solver->frat->enabled()));
-    assert(!(solver->timedOutPropagateFull && solver->conf.simulate_frat));
+    assert(!(solver->timedOutPropagateFull));
 
-    if (solver->timedOutPropagateFull
-        && !(solver->frat->enabled() || solver->conf.simulate_frat)
-    ) {
+    if (solver->timedOutPropagateFull && !solver->frat->enabled()) {
         verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
         return true;
@@ -307,9 +305,7 @@ bool InTree::handle_lit_popped_from_queue(
         bool ok;
         if (solver->conf.do_hyperbin_and_transred) {
             uint64_t max_hyper_time = numeric_limits<uint64_t>::max();
-            if (!solver->frat->enabled() &&
-                !solver->conf.simulate_frat
-            ) {
+            if (!solver->frat->enabled()) {
                 max_hyper_time =
                 solver->propStats.otfHyperTime
                 + solver->propStats.bogoProps

@@ -3010,7 +3010,7 @@ PropBy Searcher::propagate() {
     PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
-    if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
+    if (decisionLevel() == 0 && (frat->enabled())) {
         if (!ret.isnullptr()) {
             int32_t id;
             for(size_t i = last_trail; i < trail.size(); i++) {

@@ -375,7 +375,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //misc
         , origSeed(0)
-        , simulate_frat(false)
         , prefix("c ")
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
