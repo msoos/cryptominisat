@@ -73,7 +73,6 @@ def gen_modules(version):
                    "src/distillerlitrem.cpp",
                    "src/distillerlong.cpp",
                    "src/distillerlongwithimpl.cpp",
-                   "src/frat.cpp",
                    "src/gatefinder.cpp",
                    "src/gaussian.cpp",
                    "src/get_clause_query.cpp",

@@ -44,7 +44,8 @@ using std::vector;
 
 namespace CMSat {
 
-  enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc, implyclfromx, implyxfromcls, weakencl, restorecl, assump, unsatcore, modelF};
+  enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc,
+      implyclfromx, implyxfromcls, weakencl, restorecl, assump, unsatcore, modelF};
   enum FratOutcome{satisfiable, unsatisfiable, unknown};
 
 class Frat
@@ -68,7 +69,7 @@ public:
     virtual Frat& operator<<(const FratFlag) { return *this; }
     virtual void setFile(FILE*) { }
     virtual FILE* getFile() { return nullptr; }
-    virtual void flush();
+    virtual void flush() {}
     virtual bool incremental() {return false;}
 
     int buf_len;

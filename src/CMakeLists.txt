@@ -106,7 +106,6 @@ set(cryptoms_lib_files
     probe.cpp
     oracle_use.cpp
     backbone.cpp
-    frat.cpp
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
