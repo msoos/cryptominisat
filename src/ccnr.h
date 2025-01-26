@@ -150,7 +150,6 @@ class ls_solver
     int _avg_clause_weight;
     //-------------------
     bool _aspiration;
-    float _up_ratio; //control how much variables need to be delete and assigned by up
 
     //=================
     long long _delta_total_clause_weight;

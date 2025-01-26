@@ -47,7 +47,6 @@ ls_solver::ls_solver(const bool aspiration)
     _swt_p = 0.3;
     _swt_q = 0.7;
     _aspiration = aspiration;
-    _up_ratio = 0.3; //delete _up_ratio percents varibles
     verbosity = 0;
 }
 
