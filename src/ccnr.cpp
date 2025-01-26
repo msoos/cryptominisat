@@ -144,6 +144,7 @@ bool ls_solver::local_search(
         }
     }
     _end_step = _step;
+    /* if (result) print_solution(true); */
     return result;
 }
 
@@ -513,7 +514,7 @@ void ls_solver::print_solution(bool need_verify)
                 return;
             }
         }
-        cout << "c Verified." << endl;
+        cout << "c Verified " << _num_clauses << " clauses " << endl;
     }
     if (verbosity > 0) {
         cout << "v";

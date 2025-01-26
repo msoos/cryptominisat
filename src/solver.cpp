@@ -1808,6 +1808,10 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "sls") {
             assert(false && "unsupported");
+            /* if (conf.doSLS) { */
+            /*     SLS sls(this); */
+            /*     sls.run(0); */
+            /* } */
         } else if (token == "lucky") {
             assert(false && "unsupported");
 //             Lucky lucky(solver);
