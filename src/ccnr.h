@@ -133,7 +133,6 @@ class ls_solver
     long long _step;
     long long _max_steps;
     int _max_tries;
-    int _time_limit;
 
     //aiding data structure
     Mersenne _random_gen; //random generator

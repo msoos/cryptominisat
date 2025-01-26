@@ -43,7 +43,6 @@ ls_solver::ls_solver(const bool aspiration)
     _max_tries = 100;
     _max_steps = 1*1000 * 1000;
     _random_seed = 1;
-    _time_limit = 3000;
     _swt_threshold = 50;
     _swt_p = 0.3;
     _swt_q = 0.7;
