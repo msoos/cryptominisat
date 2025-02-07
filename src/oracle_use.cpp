@@ -437,7 +437,7 @@ bool Solver::oracle_sparsify(bool fast)
         oracle.AddClause(tmp, false);
         cls.push_back(tmp);
     }
-    vector<uint8_t> assumps_map(nVars()+tot_cls+1, 2);
+    vector<int8_t> assumps_map(nVars()+tot_cls+1, 2);
     CCNROraclePre ccnr(conf.verbosity);
     ccnr.init(cls, nVars()+tot_cls, &assumps_map);
     const double build_time = cpuTime() - my_time;
@@ -448,7 +448,7 @@ bool Solver::oracle_sparsify(bool fast)
     for (uint32_t i = 0; i < tot_cls; i++) {
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
         assumps_map[nVars()+i+1] = 0;
-        assumps_changed.push_back(i);
+        assumps_changed.push_back(nVars()+i+1);
     }
 
     // Now try to remove clauses one-by-one
@@ -464,12 +464,12 @@ bool Solver::oracle_sparsify(bool fast)
         // Try removing this clause, making its indicator TRUE (i.e. removed)
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
         assumps_map[nVars()+i+1] = 1;
-        assumps_changed.push_back(i);
+        assumps_changed.push_back(nVars()+i+1);
         ccnr.adjust_assumps(assumps_changed);
         if (ccnr.run()) {
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
             assumps_map[nVars()+i+1] = 0;
-            assumps_changed.push_back(i);
+            assumps_changed.push_back(nVars()+i+1);
             continue;
         }
 
@@ -491,6 +491,8 @@ bool Solver::oracle_sparsify(bool fast)
         if (ret.isTrue()) {
             // We need this clause, can't remove
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
+            assumps_map[nVars()+i+1] = 0;
+            assumps_changed.push_back(nVars()+i+1);
         } else {
             assert(ret.isFalse());
             // We can freeze(!) this clause to be disabled.

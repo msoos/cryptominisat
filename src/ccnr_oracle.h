@@ -102,8 +102,8 @@ class OracleLS {
                                   //
     vector<int> unsat_vars; // clauses are UNSAT due to these vars
     vector<int> idx_in_unsat_vars;
-    vector<uint8_t>* assump_map = nullptr; // always num_vars+1 size, if 2, it's a variable to flip, otherwise 1/0 for fixed vars
-    vector<uint8_t> sol; //solution information. 0 = false, 1 = true, 3 = unset
+    vector<int8_t>* assump_map = nullptr; // always num_vars+1 size, if 2, it's a variable to flip, otherwise 1/0 for fixed vars
+    vector<int8_t> sol; //solution information. 0 = false, 1 = true, 3 = unset
 
     //functions for building data structure
     bool make_space();

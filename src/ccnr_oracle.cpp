@@ -83,6 +83,7 @@ bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
               cout << prefix << "[ccnr] no var to flip, restart" << endl;
               break;
             }
+            assert(assump_map != nullptr && (*assump_map)[flipv] == 2);
 
             flip(flipv);
             if (mems > mems_limit) {
@@ -106,17 +107,19 @@ bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
 
 void OracleLS::initialize() {
     assert(assump_map != nullptr);
+    assert((int)assump_map->size() == num_vars+1);
     unsat_cls.clear();
     unsat_vars.clear();
     for (auto &i: idx_in_unsat_cls) i = 0;
     for (auto &i: idx_in_unsat_vars) i = 0;
     for (int v = 1; v <= num_vars; v++) {
       if ((*assump_map)[v] == 2) {
-          sol[v] = random_gen.next(2);
-        } else {
-          sol[v] = (*assump_map)[v];
-        }
+        sol[v] = random_gen.next(2);
+      } else {
+        sol[v] = (*assump_map)[v];
       }
+      cout << "sol[" << v << "]: " << (int)sol[v] << endl;
+     }
 
     //unsat_appears, will be updated when calling unsat_a_clause function.
     for (int v = 1; v <= num_vars; v++) vars[v].unsat_appear = 0;
@@ -167,8 +170,10 @@ void OracleLS::initialize_variable_datas() {
 
 void OracleLS::adjust_assumps(const vector<int>& assumps_changed) {
     for(const auto& v: assumps_changed) {
+        cout << "adjust v: " << (int)v << " sol[v]:" << (int)sol[v] << endl;
         int val = (*assump_map)[v];
         assert(val != 2);
+        assert(sol[v]  != 2);
         if (sol[v] == val) continue;
         flip(v);
     }
@@ -207,7 +212,7 @@ int OracleLS::pick_var() {
     int best_score = std::numeric_limits<int>::min();
     for (auto& l: cl.lits) {
         int v = l.var_num;
-        if ((*assump_map)[v] == 2) continue;
+        if ((*assump_map)[v] != 2) continue;
 
         int score = vars[v].score;
         if (sol[v] == 2 && score > 0) score *= 0.8;
@@ -251,7 +256,7 @@ void OracleLS::check_clause(int cid) {
 }
 
 void OracleLS::flip(int v) {
-    assert(assump_map != nullptr && (*assump_map)[v] == 2);
+    assert(assump_map != nullptr);
 #ifdef SLOW_DEBUG
     for (uint32_t i = 0; i < cls.size(); i++) check_clause(i);
     for(uint32_t i = 0; i < unsat_cls.size(); i++) {

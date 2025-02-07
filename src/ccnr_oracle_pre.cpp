@@ -45,7 +45,8 @@ CCNROraclePre::CCNROraclePre(uint32_t _verb) {
 
 CCNROraclePre::~CCNROraclePre() { delete ls; }
 
-void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars, vector<uint8_t>* _assump_map) {
+void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars,
+        vector<int8_t>* _assump_map) {
     num_vars = _num_vars;
     ls->assump_map = _assump_map;
 
@@ -70,7 +71,7 @@ void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_var
 }
 
 void CCNROraclePre::adjust_assumps(const vector<int>& assumps_changed) {
-    ls->assumps_changed(assumps_changed);
+    ls->adjust_assumps(assumps_changed);
 }
 
 bool CCNROraclePre::run() {
