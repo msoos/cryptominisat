@@ -71,13 +71,11 @@ void OracleLS::build_neighborhood() {
 }
 
 bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
-    bool result = false;
-    for (int t = 0; t < max_tries && !result; t++) {
-        for (step = 0; step < max_steps && !result; step++) {
+    for (int t = 0; t < max_tries; t++) {
+        for (step = 0; step < max_steps; step++) {
             if (unsat_cls.empty()) {
                 cout << "YAY" << endl;
-                result = true;
-                break;
+                return true;
             }
 
             int flipv = pick_var();
@@ -103,7 +101,7 @@ bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
         }
         initialize();
     }
-    return result;
+    return false;
 }
 
 void OracleLS::initialize() {
