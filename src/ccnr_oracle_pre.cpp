@@ -38,15 +38,14 @@ using std::cout;
 using std::endl;
 
 CCNROraclePre::CCNROraclePre(uint32_t _verb) {
-    ls_s = new OracleLS();
-    ls_s->set_verbosity(1);
+    ls = new OracleLS();
+    ls->set_verbosity(1);
 }
 
-CCNROraclePre::~CCNROraclePre() { delete ls_s; }
+CCNROraclePre::~CCNROraclePre() { delete ls; }
 
 void CCNROraclePre::init(const vector<vector<Lit>>& cls, uint32_t _num_vars) {
     num_vars = _num_vars;
-    num_clauses = cls.size();
 
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
@@ -55,24 +54,25 @@ void CCNROraclePre::init(const vector<vector<Lit>>& cls, uint32_t _num_vars) {
         return;
     }
 
-    ls_s->num_vars = num_vars;
-    ls_s->num_cls = cls.size();
-    ls_s->assump_map.clear();
-    ls_s->assump_map.resize(num_vars, 0);
-    ls_s->make_space();
+    ls->num_vars = num_vars;
+    ls->num_cls = cls.size();
+    ls->assump_map.clear();
+    ls->assump_map.resize(num_vars, 0);
+    ls->make_space();
     for(auto& cl: cls) add_this_clause(cl);
 
-    for (int c=0; c < ls_s->num_cls; c++) {
-        for(auto& l: ls_s->cls[c].lits) {
-            ls_s->vars[l.var_num].lits.push_back(l);
+    for (int c=0; c < ls->num_cls; c++) {
+        for(auto& l: ls->cls[c].lits) {
+            ls->vars[l.var_num].lits.push_back(l);
         }
     }
-    ls_s->build_neighborhood();
+    ls->build_neighborhood();
+    ls->initialize();
 }
 
 void CCNROraclePre::run(vector<uint8_t>& assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat) {
     double start_time = cpuTime();
-    int res = ls_s->local_search(30LL*1000LL, "c o");
+    int res = ls->local_search(30LL*1000LL, "c o");
     double time_used = cpuTime()-start_time;
     cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl;
 }
@@ -90,7 +90,7 @@ void CCNROraclePre::add_this_clause(const T& cl) {
     assert(sz > 0);
 
     for(auto& lit: yals_lits) {
-        ls_s->cls[cl_num].lits.push_back(Olit(lit, cl_num));
+        ls->cls[cl_num].lits.push_back(Olit(lit, cl_num));
     }
     cl_num++;
 }

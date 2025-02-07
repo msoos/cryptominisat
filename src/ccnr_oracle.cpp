@@ -73,7 +73,6 @@ void OracleLS::build_neighborhood() {
 bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
     bool result = false;
     for (int t = 0; t < max_tries && !result; t++) {
-        initialize();
         for (step = 0; step < max_steps && !result; step++) {
             if (unsat_cls.empty()) {
                 cout << "YAY" << endl;
@@ -102,6 +101,7 @@ bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
                 << endl;
             }
         }
+        initialize();
     }
     return result;
 }
@@ -112,10 +112,10 @@ void OracleLS::initialize() {
     for (auto &i: idx_in_unsat_cls) i = 0;
     for (auto &i: idx_in_unsat_vars) i = 0;
     for (int v = 1; v <= num_vars; v++) {
-      if (assump_map[v] == 2) {
+      if (assump_map == nullptr || (*assump_map)[v] == 2) {
           sol[v] = random_gen.next(2);
         } else {
-          sol[v] = assump_map[v];
+          sol[v] = (*assump_map)[v];
         }
       }
 
@@ -183,7 +183,7 @@ int OracleLS::pick_var() {
 
       const auto& cl = cls[cid];
       for (auto& l: cl.lits) {
-        if (assump_map[l.var_num] == 2) {
+        if (assump_map == nullptr || (*assump_map)[l.var_num] == 2) {
           ok = true;
           break;
         }
@@ -199,7 +199,7 @@ int OracleLS::pick_var() {
     int best_score = std::numeric_limits<int>::min();
     for (auto& l: cl.lits) {
         int v = l.var_num;
-        if (assump_map[v] == 2) continue;
+        if (assump_map != nullptr && (*assump_map)[v] == 2) continue;
 
         int score = vars[v].score;
         if (sol[v] == 2 && score > 0) score *= 0.8;
@@ -229,8 +229,8 @@ void OracleLS::check_clause(int cid) {
 
   if (sat_cnt == 0) {
     bool found = false;
-    for(uint32_t i = 0; i < unsat_cls.size(); i++) {
-      if (unsat_cls[i] == cid) {
+    for(int unsat_cl : unsat_cls) {
+      if (unsat_cl == cid) {
         found = true;
         break;
       }
@@ -243,7 +243,7 @@ void OracleLS::check_clause(int cid) {
 }
 
 void OracleLS::flip(int v) {
-    assert(assump_map[v] == 2);
+    assert(assump_map == nullptr || (*assump_map)[v] == 2);
 #ifdef SLOW_DEBUG
     for (uint32_t i = 0; i < cls.size(); i++) check_clause(i);
     for(uint32_t i = 0; i < unsat_cls.size(); i++) {
@@ -253,8 +253,7 @@ void OracleLS::flip(int v) {
     }
 #endif
 
-    bool touch = false;
-    assert(sol[v] != 2);
+    assert(sol[v] == 0 || sol[v] == 1);
     sol[v] = 1 - sol[v];
 
     const int orig_score = vars[v].score;
@@ -439,4 +438,3 @@ void OracleLS::print_solution(bool need_verify) {
         cout << endl;
     }
 }
-

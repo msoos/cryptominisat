@@ -44,13 +44,12 @@ public:
    ~CCNROraclePre();
 
 private:
-    OracleLS* ls_s = nullptr;
+    OracleLS* ls = nullptr;
     uint32_t cl_num = 0;
 
     template<class T> void add_this_clause(const T& cl);
     vector<int> yals_lits;
     uint32_t num_vars = 0;
-    uint32_t num_clauses = 0;
 };
 
 }

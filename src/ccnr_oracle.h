@@ -102,13 +102,14 @@ class OracleLS {
                                   //
     vector<int> unsat_vars; // clauses are UNSAT due to these vars
     vector<int> idx_in_unsat_vars;
-    vector<int> assump_map; // always num_vars+1 size, contains 0/1 if it's indep or not
+    vector<int>* assump_map = nullptr; // always num_vars+1 size, if 2, it's a variable to flip, otherwise 1/0 for fixed vars
     vector<uint8_t> sol; //solution information. 0 = false, 1 = true, 3 = unset
 
     //functions for building data structure
     bool make_space();
     void build_neighborhood();
     int get_cost() { return unsat_cls.size(); }
+    void initialize();
 
   private:
     CCNR::Mersenne random_gen;
@@ -128,7 +129,6 @@ class OracleLS {
     long long delta_tot_cl_weight;
 
     //main functions
-    void initialize();
     void initialize_variable_datas();
     int pick_var();
     void flip(int flipv);
