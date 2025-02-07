@@ -448,7 +448,7 @@ bool Solver::oracle_sparsify(bool fast)
     for (uint32_t i = 0; i < tot_cls; i++) {
         auto l = orclit(Lit(nVars()+i, true));
         oracle.SetAssumpLit(l, false);
-        assumps_map[sspp::VarOf(l)] = 0;
+        assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
         assumps_changed.push_back(sspp::VarOf(l));
     }
 
@@ -456,7 +456,7 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t last_printed = 0;
     uint32_t ccnr_useful = 0;
     uint32_t unknown = 0;
-    int64_t mems = 100LL*1000LL*1000LL;
+    int64_t mems = 300LL*1000LL*1000LL;
     if (fast) mems /= 3;
     sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
@@ -492,7 +492,13 @@ bool Solver::oracle_sparsify(bool fast)
         }
         ccnr.adjust_assumps(assumps_changed);
         assumps_changed.clear();
-        if (ccnr.run(1000000)) {
+        int ret_ccnr = ccnr.run(10000);
+        /* int ret_ccnr = false; */
+        for(const auto& l: tmp) {
+            assumps_map[sspp::VarOf(l)] = 2;
+            assumps_changed.push_back(sspp::VarOf(l));
+        }
+        if (ret_ccnr) {
             verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT");
             ccnr_useful++;
             goto need;
@@ -517,7 +523,8 @@ bool Solver::oracle_sparsify(bool fast)
         } else {
             assert(ret.isFalse());
             // We can freeze(!) this clause to be disabled.
-            oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
+            auto l = orclit(Lit(nVars()+i, false));
+            oracle.SetAssumpLit(l, true);
             removed++;
             if (!c.binary) {
                 Clause& cl = *cl_alloc.ptr(c.off);

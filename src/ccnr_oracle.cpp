@@ -38,7 +38,7 @@ using std::string;
 
 OracleLS::OracleLS(Solver* _solver) : solver(_solver) {
     max_tries = 10LL;
-    max_steps = 10 * 1000;
+    max_steps = 1000 * 1000;
     random_gen.seed(1337);
 }
 
@@ -78,8 +78,8 @@ bool OracleLS::local_search(int64_t mems_limit) {
     for (t = 0; t < max_tries; t++) {
         for (step = 0; step < max_steps; step++) {
             if (unsat_cls.empty()) {
-                cout <<  "[ccnr] YAY, mems: " << mems << " steps: " << step << endl;
-                /* verb_print(1, "[ccnr] YAY, mems: " << mems << " steps: " << step); */
+                /* cout <<  "[ccnr] YAY, mems: " << mems << " steps: " << step << endl; */
+                verb_print(3, "[ccnr] YAY, mems: " << mems << " steps: " << step);
                 check_solution();
                 return true;
             }
@@ -93,8 +93,10 @@ bool OracleLS::local_search(int64_t mems_limit) {
 
             flip(flipv);
             if (mems > mems_limit) {
-              cout << "mems limit reached, try: " << t << " step: " << setw(8) << step
-                  << " unsat cls: " <<  unsat_cls.size() << endl;
+              /* cout << "mems limit reached, try: " << t << " step: " << setw(8) << step */
+              /*     << " unsat cls: " <<  unsat_cls.size() << endl; */
+              verb_print(3, "[ccnr] mems limit reached, try: " << t << " step: " << setw(8) << step
+                  << " unsat cls: " <<  unsat_cls.size());
               return false;
             }
             /* cout << "num unsat cls: " << unsat_cls.size() << endl; */
@@ -179,10 +181,13 @@ void OracleLS::adjust_assumps(const vector<int>& assumps_changed) {
     for(const auto& v: assumps_changed) {
         /* cout << "adjust v: " << (int)v << " sol[v]:" << (int)sol[v] << endl; */
         int val = (*assump_map)[v];
-        assert(val != 2);
-        assert(sol[v] != 2);
-        if (sol[v] == val) continue;
-        flip(v);
+        if (val == 2) {
+            assert(sol[v] == 0 || sol[v] == 1);
+            /* if (random_gen.next(2)) flip(v); */
+        } else {
+            if (sol[v] == val) continue;
+            flip(v);
+        }
     }
 }
 
