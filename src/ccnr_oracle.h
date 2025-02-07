@@ -34,6 +34,7 @@ using std::abs;
 using std::ostream;
 
 namespace CMSat {
+class Solver;
 
 struct Olit {
     int var_num;             //variable num, begin with 1
@@ -80,15 +81,17 @@ struct Oclause {
     long long weight;
 };
 
+struct Oconf {
+    int verb;
+    string prefix;
+};
+
 class OracleLS {
  public:
-    OracleLS();
-    bool local_search(
-        long long int _mems_limit = 100*1000*1000
-        , const char* prefix = "c "
-    );
-    void print_solution(bool need_verify = 0);
-    void set_verbosity(uint32_t _verb) { verb = _verb; }
+    OracleLS(Solver* _solver);
+    bool local_search(int64_t mems_limit);
+    void print_solution();
+    void check_solution();
 
     //formula
     vector<Ovariable> vars;
@@ -113,12 +116,13 @@ class OracleLS {
     void adjust_assumps(const vector<int>& assumps_changed);
 
   private:
+    Solver* solver;
     CCNR::Mersenne random_gen;
+    Oconf conf;
 
     // Config
     long long max_steps;
     int64_t max_tries;
-    uint32_t verb = 0;
     float swt_p = 0.3;
     float swt_q = 0.7;
     int swt_thresh = 50;

@@ -26,18 +26,20 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <iostream>
 #include <cassert>
+#include "constants.h"
+#include "solver.h"
 
 using namespace CMSat;
 
 using std::cout;
 using std::endl;
+using std::setw;
 using std::string;
 
-OracleLS::OracleLS() {
-    max_tries = 1000LL*1000LL;
-    max_steps = 1*1000 * 1000;
+OracleLS::OracleLS(Solver* _solver) : solver(_solver) {
+    max_tries = 10LL;
+    max_steps = 10 * 1000;
     random_gen.seed(1337);
-    verb = 0;
 }
 
 bool OracleLS::make_space() {
@@ -70,38 +72,43 @@ void OracleLS::build_neighborhood() {
     }
 }
 
-bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
-    for (int t = 0; t < max_tries; t++) {
+bool OracleLS::local_search(int64_t mems_limit) {
+    mems = 0;
+    int t;
+    for (t = 0; t < max_tries; t++) {
         for (step = 0; step < max_steps; step++) {
             if (unsat_cls.empty()) {
-                cout << "YAY" << endl;
+                cout <<  "[ccnr] YAY, mems: " << mems << " steps: " << step;
+                verb_print(1, "[ccnr] YAY, mems: " << mems << " steps: " << step);
+                check_solution();
                 return true;
             }
 
             int flipv = pick_var();
             if (flipv == -1) {
-              cout << prefix << "[ccnr] no var to flip, restart" << endl;
+              verb_print(1, "[ccnr] no var to flip, restart");
               break;
             }
             assert(assump_map != nullptr && (*assump_map)[flipv] == 2);
 
             flip(flipv);
             if (mems > mems_limit) {
-              cout << "mems limit reached" << endl;
+              cout << "mems limit reached, try: " << t << " step: " << setw(8) << step
+                  << " unsat cls: " <<  unsat_cls.size() << endl;
               return false;
             }
-            cout << "num unsat cls: " << unsat_cls.size() << endl;
+            /* cout << "num unsat cls: " << unsat_cls.size() << endl; */
 
             int u_cost = unsat_cls.size();
-            if (verb && (step & 0x3ffff) == 0x3ffff) {
-                cout << prefix << "[ccnr] tries: "
-                << t << " steps: " << step
-                << " unsat found: " << u_cost
-                << endl;
+            if ((step & 0x3ffff) == 0x3ffff) {
+                verb_print(3, "[ccnr] tries: " << t << " steps: " << step
+                        << " unsat found: " << u_cost);
             }
         }
         initialize();
     }
+    cout << "restart&steps limit reached, try: " << t << " step: " << setw(8) << step
+        << " unsat cls: " <<  unsat_cls.size() << endl;
     return false;
 }
 
@@ -118,7 +125,7 @@ void OracleLS::initialize() {
       } else {
         sol[v] = (*assump_map)[v];
       }
-      cout << "sol[" << v << "]: " << (int)sol[v] << endl;
+      /* cout << "sol[" << v << "]: " << (int)sol[v] << endl; */
      }
 
     //unsat_appears, will be updated when calling unsat_a_clause function.
@@ -170,10 +177,10 @@ void OracleLS::initialize_variable_datas() {
 
 void OracleLS::adjust_assumps(const vector<int>& assumps_changed) {
     for(const auto& v: assumps_changed) {
-        cout << "adjust v: " << (int)v << " sol[v]:" << (int)sol[v] << endl;
+        /* cout << "adjust v: " << (int)v << " sol[v]:" << (int)sol[v] << endl; */
         int val = (*assump_map)[v];
         assert(val != 2);
-        assert(sol[v]  != 2);
+        assert(sol[v] != 2);
         if (sol[v] == val) continue;
         flip(v);
     }
@@ -204,7 +211,6 @@ int OracleLS::pick_var() {
       tries++;
     }
     if (!ok) return -1;
-    /* cout << " ---------  " << endl; */
     /* cout << "decided on cl_id: " << cid << " -- "; print_cl(cid); */
 
     const auto& cl = cls[cid];
@@ -215,8 +221,6 @@ int OracleLS::pick_var() {
         if ((*assump_map)[v] != 2) continue;
 
         int score = vars[v].score;
-        if (sol[v] == 2 && score > 0) score *= 0.8;
-
         if (score > best_score) {
             best_var = v;
             best_score = score;
@@ -417,37 +421,40 @@ void OracleLS::smooth_clause_weights() {
     }
 }
 
-void OracleLS::print_solution(bool need_verify) {
+void OracleLS::check_solution() {
+    assert(assump_map != nullptr);
+    assert((int)assump_map->size() == num_vars+1);
+    for(int i = 1; i <= num_vars; i++) {
+        if ((*assump_map)[i] != 2) {
+            assert(sol[i] == (*assump_map)[i]);
+        }
+    }
+
+    for (int cid = 0; cid < num_cls; cid++) {
+        bool sat_flag = false;
+        for (const auto& l: cls[cid].lits) {
+            if (sol[l.var_num] == l.sense) {
+                sat_flag = true;
+                break;
+            }
+        }
+        if (!sat_flag) {
+            cout << "c Error: verify error in cl_id : " << cid << " -- "; print_cl(cid);
+            exit(-1);
+            return;
+        }
+    }
+}
+
+void OracleLS::print_solution() {
     if (0 == get_cost()) cout << "s SATISFIABLE" << endl;
     else cout << "s UNKNOWN" << endl;
-
-    assert(need_verify);
-    if (need_verify) {
-        for (int cid = 0; cid < num_cls; cid++) {
-            bool sat_flag = false;
-            for (const auto& l: cls[cid].lits) {
-                if (sol[l.var_num] == l.sense) {
-                    sat_flag = true;
-                    break;
-                }
-            }
-            if (!sat_flag) {
-                cout << "c Error: verify error in cl_id : " << cid << " -- "; print_cl(cid);
-                exit(-1);
-                return;
-            }
-        }
-        cout << "c Verified." << endl;
+    cout << "v";
+    for (int v = 1; v <= num_vars; v++) {
+        cout << ' ';
+        if (sol[v] == 0)
+            cout << '-';
+        cout << v;
     }
-
-    if (verb > 0) {
-        cout << "v";
-        for (int v = 1; v <= num_vars; v++) {
-            cout << ' ';
-            if (sol[v] == 0)
-                cout << '-';
-            cout << v;
-        }
-        cout << endl;
-    }
+    cout << endl;
 }

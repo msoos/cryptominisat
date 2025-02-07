@@ -38,16 +38,14 @@ using std::fixed;
 using std::cout;
 using std::endl;
 
-CCNROraclePre::CCNROraclePre(uint32_t _verb) {
-    ls = new OracleLS();
-    ls->set_verbosity(1);
+CCNROraclePre::CCNROraclePre(Solver* solver) {
+    ls = new OracleLS(solver);
 }
 
 CCNROraclePre::~CCNROraclePre() { delete ls; }
 
-void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars,
+void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t num_vars,
         vector<int8_t>* _assump_map) {
-    num_vars = _num_vars;
     ls->assump_map = _assump_map;
 
     //It might not work well with few number of variables
@@ -59,10 +57,11 @@ void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_var
     ls->num_vars = num_vars;
     ls->num_cls = cls.size();
     ls->make_space();
-    for(auto& cl: cls) add_this_clause(cl);
+    uint32_t cl_num = 0;
+    for(auto& cl: cls) add_this_clause(cl, cl_num++);
 
-    for (int c=0; c < ls->num_cls; c++) {
-        for(auto& l: ls->cls[c].lits) {
+    for (const auto& c: ls->cls) {
+        for(auto& l: c.lits) {
             ls->vars[l.var_num].lits.push_back(l);
         }
     }
@@ -74,15 +73,15 @@ void CCNROraclePre::adjust_assumps(const vector<int>& assumps_changed) {
     ls->adjust_assumps(assumps_changed);
 }
 
-bool CCNROraclePre::run() {
+bool CCNROraclePre::run(int64_t mems_limit) {
     double start_time = cpuTime();
-    bool res = ls->local_search(30LL*1000LL, "c o");
+    bool res = ls->local_search(mems_limit);
     double time_used = cpuTime()-start_time;
-    cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl;
+    /* cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl; */
     return res;
 }
 
-void CCNROraclePre::add_this_clause(const vector<sspp::Lit>& cl) {
+void CCNROraclePre::add_this_clause(const vector<sspp::Lit>& cl, int cl_num) {
     uint32_t sz = 0;
     yals_lits.clear();
     for(const sspp::Lit& lit: cl) {
@@ -93,8 +92,7 @@ void CCNROraclePre::add_this_clause(const vector<sspp::Lit>& cl) {
     }
     assert(sz > 0);
 
-    for(auto& lit: yals_lits) {
-        ls->cls[cl_num].lits.push_back(Olit(lit, cl_num));
+    for(auto& l: yals_lits) {
+        ls->cls[cl_num].lits.push_back(Olit(l, cl_num));
     }
-    cl_num++;
 }

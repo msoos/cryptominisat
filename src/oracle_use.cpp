@@ -438,7 +438,7 @@ bool Solver::oracle_sparsify(bool fast)
         cls.push_back(tmp);
     }
     vector<int8_t> assumps_map(nVars()+tot_cls+1, 2);
-    CCNROraclePre ccnr(conf.verbosity);
+    CCNROraclePre ccnr(solver);
     ccnr.init(cls, nVars()+tot_cls, &assumps_map);
     const double build_time = cpuTime() - my_time;
 
@@ -453,10 +453,13 @@ bool Solver::oracle_sparsify(bool fast)
 
     // Now try to remove clauses one-by-one
     uint32_t last_printed = 0;
+    uint32_t ccnr_useful = 0;
+    uint32_t unknown = 0;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
                 << " oracle mems: " << print_value_kilo_mega(oracle.getStats().mems)
+                << " ccnr useful: " << (double)ccnr_useful/(double)i*100.0 << "%"
                 << " T: " << (cpuTime()-my_time));
             last_printed = (10*i)/(tot_cls);
         }
@@ -466,12 +469,16 @@ bool Solver::oracle_sparsify(bool fast)
         assumps_map[nVars()+i+1] = 1;
         assumps_changed.push_back(nVars()+i+1);
         ccnr.adjust_assumps(assumps_changed);
-        if (ccnr.run()) {
-            oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
-            assumps_map[nVars()+i+1] = 0;
-            assumps_changed.push_back(nVars()+i+1);
-            continue;
-        }
+        /* if (ccnr.run(1000)) { */
+        /*     verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT"); */
+        /*     oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true); */
+        /*     assumps_map[nVars()+i+1] = 0; */
+        /*     assumps_changed.push_back(nVars()+i+1); */
+        /*     ccnr_useful++; */
+        /*     continue; */
+        /* } else { */
+        /*     verb_print(3, "[oracle-sparsify] ccnr-oracle UNKNOWN"); */
+        /* } */
 
         tmp.clear();
         const auto& c = cs[i];
@@ -483,12 +490,17 @@ bool Solver::oracle_sparsify(bool fast)
             tmp.push_back(orclit(~(c.bin.l2)));
         }
 
-        int64_t mems = 600LL*1000LL*1000LL;
+        int64_t mems = 100LL*1000LL*1000LL;
         if (fast) mems /= 3;
         auto ret = oracle.Solve(tmp, false, mems);
-        if (ret.isUnknown()) { /*out of time*/ goto fin; }
+        if (ret.isUnknown()) {
+            /*out of time*/
+            unknown++;
+            goto need;
+        }
 
         if (ret.isTrue()) {
+            need:
             // We need this clause, can't remove
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
             assumps_map[nVars()+i+1] = 0;
@@ -511,7 +523,7 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
 
-        int64_t mems2 = 2500LL*1000LL*1000LL;
+        int64_t mems2 = 1000LL*1000LL*1000LL;
         if (fast) mems2 /= 3;
         if (oracle.getStats().mems > mems2) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
@@ -580,6 +592,8 @@ bool Solver::oracle_sparsify(bool fast)
     verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls
+        << " ccnr useful: " << ccnr_useful
+        << " oracle uknown: " << unknown
         << " cache-used: " << oracle.getStats().cache_useful
         << " cache-added: " << oracle.getStats().cache_added
         << " learnt-units: " << oracle.getStats().learned_units
