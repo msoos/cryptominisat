@@ -138,6 +138,8 @@ set(cryptoms_lib_files
     vardistgen.cpp
     ccnr.cpp
     ccnr_cms.cpp
+    ccnr_oracle.cpp
+    ccnr_oracle_pre.cpp
     lucky.cpp
     get_clause_query.cpp
     gaussian.cpp

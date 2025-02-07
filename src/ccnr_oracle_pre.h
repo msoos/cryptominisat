@@ -26,11 +26,11 @@ THE SOFTWARE.
 #include <cstdio>
 #include <utility>
 #include <vector>
+#include "solvertypes.h"
 
 using std::pair;
 using std::make_pair;
 using std::vector;
-
 
 namespace CMSat  {
 
@@ -38,7 +38,7 @@ class OracleLS;
 
 class CCNROraclePre {
 public:
-   void init(const vector<int>& cls, uint32_t num_vars);
+   void init(const vector<vector<Lit>>& cls, uint32_t _num_vars);
    void run(vector<uint8_t>& assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat);
    CCNROraclePre (uint32_t verb);
    ~CCNROraclePre();

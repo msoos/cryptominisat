@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "ccnr_cms.h"
 #include "constants.h"
 #include "solver.h"
 #include "oracle/oracle.h"
@@ -435,9 +436,11 @@ bool Solver::oracle_sparsify(bool fast)
     const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
+    vector<uint8_t> assumps(tot_cls, 0);
     for (uint32_t i = 0; i < tot_cls; i++) {
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
     }
+
 
     // Now try to remove clauses one-by-one
     uint32_t last_printed = 0;

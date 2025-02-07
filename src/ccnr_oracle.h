@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <ostream>
 #include <vector>
-#include "ccnr_mersenne.hpp"
+#include "ccnr_mersenne.h"
 #include "ccnr_oracle_pre.h"
 
 using std::vector;
@@ -60,7 +60,7 @@ struct Olit {
     }
 };
 
-ostream& operator<<(ostream& os, const Olit& l) {
+inline ostream& operator<<(ostream& os, const Olit& l) {
     os << (l.sense ? "" : "-") << l.var_num;
     return os;
 }

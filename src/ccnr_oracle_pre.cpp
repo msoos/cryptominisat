@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "time_mem.h"
 #include <iostream>
+#include "solvertypes.h"
 
 using namespace CMSat;
 using std::setprecision;
