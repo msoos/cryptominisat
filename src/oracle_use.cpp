@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "ccnr_cms.h"
 #include "ccnr_oracle_pre.h"
 #include "constants.h"
+#include "frat.h"
 #include "solver.h"
 #include "oracle/oracle.h"
 #include "solvertypes.h"
@@ -411,7 +412,6 @@ bool Solver::oracle_sparsify(bool fast)
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
     //dump_cls_oracle("debug.xt", cs);
-    CCNROraclePre ccnr(conf.verbosity);
 
     // The "+tot_cls" is for indicator variables
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
@@ -437,13 +437,18 @@ bool Solver::oracle_sparsify(bool fast)
         oracle.AddClause(tmp, false);
         cls.push_back(tmp);
     }
-    ccnr.init(cls, nVars()+tot_cls);
+    vector<uint8_t> assumps_map(nVars()+tot_cls+1, 2);
+    CCNROraclePre ccnr(conf.verbosity);
+    ccnr.init(cls, nVars()+tot_cls, &assumps_map);
     const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
     vector<uint8_t> assumps(tot_cls, 0);
+    vector<int> assumps_changed;
     for (uint32_t i = 0; i < tot_cls; i++) {
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
+        assumps_map[nVars()+i+1] = 0;
+        assumps_changed.push_back(i);
     }
 
     // Now try to remove clauses one-by-one
@@ -458,6 +463,16 @@ bool Solver::oracle_sparsify(bool fast)
 
         // Try removing this clause, making its indicator TRUE (i.e. removed)
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
+        assumps_map[nVars()+i+1] = 1;
+        assumps_changed.push_back(i);
+        ccnr.adjust_assumps(assumps_changed);
+        if (ccnr.run()) {
+            oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
+            assumps_map[nVars()+i+1] = 0;
+            assumps_changed.push_back(i);
+            continue;
+        }
+
         tmp.clear();
         const auto& c = cs[i];
         if (!c.binary) {

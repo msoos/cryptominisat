@@ -39,8 +39,9 @@ class OracleLS;
 
 class CCNROraclePre {
 public:
-   void init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars);
-   void run(vector<uint8_t>* assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat);
+   void init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars, vector<uint8_t>* _assump_map);
+   void adjust_assumps(const vector<int>& assumps_changed);
+   bool run();
    CCNROraclePre (uint32_t verb);
    ~CCNROraclePre();
 

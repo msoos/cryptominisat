@@ -105,12 +105,13 @@ bool OracleLS::local_search(long long int mems_limit , const char* prefix) {
 }
 
 void OracleLS::initialize() {
+    assert(assump_map != nullptr);
     unsat_cls.clear();
     unsat_vars.clear();
     for (auto &i: idx_in_unsat_cls) i = 0;
     for (auto &i: idx_in_unsat_vars) i = 0;
     for (int v = 1; v <= num_vars; v++) {
-      if (assump_map == nullptr || (*assump_map)[v] == 2) {
+      if ((*assump_map)[v] == 2) {
           sol[v] = random_gen.next(2);
         } else {
           sol[v] = (*assump_map)[v];
@@ -164,6 +165,15 @@ void OracleLS::initialize_variable_datas() {
     vp.last_flip_step = 0;
 }
 
+void OracleLS::adjust_assumps(const vector<int>& assumps_changed) {
+    for(const auto& v: assumps_changed) {
+        int val = (*assump_map)[v];
+        assert(val != 2);
+        if (sol[v] == val) continue;
+        flip(v);
+    }
+}
+
 void OracleLS::print_cl(int cid) {
     for(auto& l: cls[cid].lits) {
       cout << l << " ";
@@ -181,7 +191,7 @@ int OracleLS::pick_var() {
 
       const auto& cl = cls[cid];
       for (auto& l: cl.lits) {
-        if (assump_map == nullptr || (*assump_map)[l.var_num] == 2) {
+        if ((*assump_map)[l.var_num] == 2) {
           ok = true;
           break;
         }
@@ -197,7 +207,7 @@ int OracleLS::pick_var() {
     int best_score = std::numeric_limits<int>::min();
     for (auto& l: cl.lits) {
         int v = l.var_num;
-        if (assump_map != nullptr && (*assump_map)[v] == 2) continue;
+        if ((*assump_map)[v] == 2) continue;
 
         int score = vars[v].score;
         if (sol[v] == 2 && score > 0) score *= 0.8;
@@ -241,7 +251,7 @@ void OracleLS::check_clause(int cid) {
 }
 
 void OracleLS::flip(int v) {
-    assert(assump_map == nullptr || (*assump_map)[v] == 2);
+    assert(assump_map != nullptr && (*assump_map)[v] == 2);
 #ifdef SLOW_DEBUG
     for (uint32_t i = 0; i < cls.size(); i++) check_clause(i);
     for(uint32_t i = 0; i < unsat_cls.size(); i++) {

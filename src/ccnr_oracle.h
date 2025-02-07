@@ -110,6 +110,7 @@ class OracleLS {
     void build_neighborhood();
     int get_cost() { return unsat_cls.size(); }
     void initialize();
+    void adjust_assumps(const vector<int>& assumps_changed);
 
   private:
     CCNR::Mersenne random_gen;

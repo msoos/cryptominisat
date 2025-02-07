@@ -45,8 +45,9 @@ CCNROraclePre::CCNROraclePre(uint32_t _verb) {
 
 CCNROraclePre::~CCNROraclePre() { delete ls; }
 
-void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars) {
+void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars, vector<uint8_t>* _assump_map) {
     num_vars = _num_vars;
+    ls->assump_map = _assump_map;
 
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
@@ -68,14 +69,16 @@ void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_var
     ls->initialize();
 }
 
-void CCNROraclePre::run(vector<uint8_t>* assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat) {
-    assert(assump_map != nullptr && assump_map->size() == num_vars+1);
-    ls->assump_map = assump_map;
+void CCNROraclePre::adjust_assumps(const vector<int>& assumps_changed) {
+    ls->assumps_changed(assumps_changed);
+}
 
+bool CCNROraclePre::run() {
     double start_time = cpuTime();
-    int res = ls->local_search(30LL*1000LL, "c o");
+    bool res = ls->local_search(30LL*1000LL, "c o");
     double time_used = cpuTime()-start_time;
     cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl;
+    return res;
 }
 
 void CCNROraclePre::add_this_clause(const vector<sspp::Lit>& cl) {
