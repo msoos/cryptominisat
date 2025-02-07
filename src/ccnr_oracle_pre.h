@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <utility>
 #include <vector>
 #include "solvertypes.h"
+#include "oracle/utils.h"
 
 using std::pair;
 using std::make_pair;
@@ -38,8 +39,8 @@ class OracleLS;
 
 class CCNROraclePre {
 public:
-   void init(const vector<vector<Lit>>& cls, uint32_t _num_vars);
-   void run(vector<uint8_t>& assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat);
+   void init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars);
+   void run(vector<uint8_t>* assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat);
    CCNROraclePre (uint32_t verb);
    ~CCNROraclePre();
 
@@ -47,7 +48,7 @@ private:
     OracleLS* ls = nullptr;
     uint32_t cl_num = 0;
 
-    template<class T> void add_this_clause(const T& cl);
+    void add_this_clause(const vector<sspp::Lit>& cl);
     vector<int> yals_lits;
     uint32_t num_vars = 0;
 };

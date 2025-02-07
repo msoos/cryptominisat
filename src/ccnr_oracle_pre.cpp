@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "ccnr_oracle.h"
 #include <iomanip>
 #include "constants.h"
+#include "oracle/utils.h"
 #include "time_mem.h"
 #include <iostream>
 #include "solvertypes.h"
@@ -44,7 +45,7 @@ CCNROraclePre::CCNROraclePre(uint32_t _verb) {
 
 CCNROraclePre::~CCNROraclePre() { delete ls; }
 
-void CCNROraclePre::init(const vector<vector<Lit>>& cls, uint32_t _num_vars) {
+void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars) {
     num_vars = _num_vars;
 
     //It might not work well with few number of variables
@@ -53,11 +54,8 @@ void CCNROraclePre::init(const vector<vector<Lit>>& cls, uint32_t _num_vars) {
         release_assert(false);
         return;
     }
-
     ls->num_vars = num_vars;
     ls->num_cls = cls.size();
-    ls->assump_map.clear();
-    ls->assump_map.resize(num_vars, 0);
     ls->make_space();
     for(auto& cl: cls) add_this_clause(cl);
 
@@ -70,20 +68,22 @@ void CCNROraclePre::init(const vector<vector<Lit>>& cls, uint32_t _num_vars) {
     ls->initialize();
 }
 
-void CCNROraclePre::run(vector<uint8_t>& assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat) {
+void CCNROraclePre::run(vector<uint8_t>* assump_map, vector<uint8_t>& lit_set, vector<uint8_t>& lit_unsat) {
+    assert(assump_map != nullptr && assump_map->size() == num_vars+1);
+    ls->assump_map = assump_map;
+
     double start_time = cpuTime();
     int res = ls->local_search(30LL*1000LL, "c o");
     double time_used = cpuTime()-start_time;
     cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl;
 }
 
-template<class T>
-void CCNROraclePre::add_this_clause(const T& cl) {
+void CCNROraclePre::add_this_clause(const vector<sspp::Lit>& cl) {
     uint32_t sz = 0;
     yals_lits.clear();
-    for(auto& lit: cl) {
-        int l = lit.var()+1;
-        l *= lit.sign() ? -1 : 1;
+    for(const sspp::Lit& lit: cl) {
+        int l = sspp::VarOf(lit);
+        l *= sspp::IsNeg(lit) ? -1 : 1;
         yals_lits.push_back(l);
         sz++;
     }

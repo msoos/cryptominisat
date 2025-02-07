@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "ccnr_cms.h"
+#include "ccnr_oracle_pre.h"
 #include "constants.h"
 #include "solver.h"
 #include "oracle/oracle.h"
@@ -410,11 +411,13 @@ bool Solver::oracle_sparsify(bool fast)
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
     //dump_cls_oracle("debug.xt", cs);
+    CCNROraclePre ccnr(conf.verbosity);
 
     // The "+tot_cls" is for indicator variables
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
     oracle.SetVerbosity(conf.verbosity);
     vector<sspp::Lit> tmp;
+    vector<vector<sspp::Lit>> cls;
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         tmp.clear();
@@ -432,7 +435,9 @@ bool Solver::oracle_sparsify(bool fast)
         // Indicator variable
         tmp.push_back(orclit(Lit(nVars()+i, false)));
         oracle.AddClause(tmp, false);
+        cls.push_back(tmp);
     }
+    ccnr.init(cls, nVars()+tot_cls);
     const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
@@ -440,7 +445,6 @@ bool Solver::oracle_sparsify(bool fast)
     for (uint32_t i = 0; i < tot_cls; i++) {
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
     }
-
 
     // Now try to remove clauses one-by-one
     uint32_t last_printed = 0;
