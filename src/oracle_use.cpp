@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "ccnr_oracle_pre.h"
 #include "constants.h"
 #include "frat.h"
+#include "oracle/utils.h"
 #include "solver.h"
 #include "oracle/oracle.h"
 #include "solvertypes.h"
@@ -443,18 +444,21 @@ bool Solver::oracle_sparsify(bool fast)
     const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
-    vector<uint8_t> assumps(tot_cls, 0);
     vector<int> assumps_changed;
     for (uint32_t i = 0; i < tot_cls; i++) {
-        oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
-        assumps_map[nVars()+i+1] = 0;
-        assumps_changed.push_back(nVars()+i+1);
+        auto l = orclit(Lit(nVars()+i, true));
+        oracle.SetAssumpLit(l, false);
+        assumps_map[sspp::VarOf(l)] = 0;
+        assumps_changed.push_back(sspp::VarOf(l));
     }
 
     // Now try to remove clauses one-by-one
     uint32_t last_printed = 0;
     uint32_t ccnr_useful = 0;
     uint32_t unknown = 0;
+    int64_t mems = 100LL*1000LL*1000LL;
+    if (fast) mems /= 3;
+    sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
@@ -465,20 +469,12 @@ bool Solver::oracle_sparsify(bool fast)
         }
 
         // Try removing this clause, making its indicator TRUE (i.e. removed)
-        oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
-        assumps_map[nVars()+i+1] = 1;
-        assumps_changed.push_back(nVars()+i+1);
-        ccnr.adjust_assumps(assumps_changed);
-        /* if (ccnr.run(1000)) { */
-        /*     verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT"); */
-        /*     oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true); */
-        /*     assumps_map[nVars()+i+1] = 0; */
-        /*     assumps_changed.push_back(nVars()+i+1); */
-        /*     ccnr_useful++; */
-        /*     continue; */
-        /* } else { */
-        /*     verb_print(3, "[oracle-sparsify] ccnr-oracle UNKNOWN"); */
-        /* } */
+        {
+            auto l = orclit(Lit(nVars()+i, false));
+            oracle.SetAssumpLit(l, false);
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
+        }
 
         tmp.clear();
         const auto& c = cs[i];
@@ -490,9 +486,21 @@ bool Solver::oracle_sparsify(bool fast)
             tmp.push_back(orclit(~(c.bin.l2)));
         }
 
-        int64_t mems = 100LL*1000LL*1000LL;
-        if (fast) mems /= 3;
-        auto ret = oracle.Solve(tmp, false, mems);
+        for(const auto& l: tmp) {
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
+        }
+        ccnr.adjust_assumps(assumps_changed);
+        assumps_changed.clear();
+        if (ccnr.run(1000000)) {
+            verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT");
+            ccnr_useful++;
+            goto need;
+        } else {
+            verb_print(3, "[oracle-sparsify] ccnr-oracle UNKNOWN");
+        }
+
+        ret = oracle.Solve(tmp, false, mems);
         if (ret.isUnknown()) {
             /*out of time*/
             unknown++;
@@ -502,9 +510,10 @@ bool Solver::oracle_sparsify(bool fast)
         if (ret.isTrue()) {
             need:
             // We need this clause, can't remove
-            oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
-            assumps_map[nVars()+i+1] = 0;
-            assumps_changed.push_back(nVars()+i+1);
+            auto l = orclit(Lit(nVars()+i, true));
+            oracle.SetAssumpLit(l, true);
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
         } else {
             assert(ret.isFalse());
             // We can freeze(!) this clause to be disabled.

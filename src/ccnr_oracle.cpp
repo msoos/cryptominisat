@@ -78,8 +78,8 @@ bool OracleLS::local_search(int64_t mems_limit) {
     for (t = 0; t < max_tries; t++) {
         for (step = 0; step < max_steps; step++) {
             if (unsat_cls.empty()) {
-                cout <<  "[ccnr] YAY, mems: " << mems << " steps: " << step;
-                verb_print(1, "[ccnr] YAY, mems: " << mems << " steps: " << step);
+                cout <<  "[ccnr] YAY, mems: " << mems << " steps: " << step << endl;
+                /* verb_print(1, "[ccnr] YAY, mems: " << mems << " steps: " << step); */
                 check_solution();
                 return true;
             }
@@ -87,7 +87,7 @@ bool OracleLS::local_search(int64_t mems_limit) {
             int flipv = pick_var();
             if (flipv == -1) {
               verb_print(1, "[ccnr] no var to flip, restart");
-              break;
+              continue;
             }
             assert(assump_map != nullptr && (*assump_map)[flipv] == 2);
 
@@ -239,9 +239,9 @@ void OracleLS::check_clause(int cid) {
   for (const auto& l: cls[cid].lits) {
     if (sol[l.var_num] == l.sense) sat_cnt++;
   }
-  cout << "Checking cl_id: " << cid << " -- "; print_cl(cid);
-  cout << "sat_cnt: " << sat_cnt << endl;
-  cout << "cls[cid].sat_count: " << cls[cid].sat_count << endl;
+  /* cout << "Checking cl_id: " << cid << " -- "; print_cl(cid); */
+  /* cout << "sat_cnt: " << sat_cnt << endl; */
+  /* cout << "cls[cid].sat_count: " << cls[cid].sat_count << endl; */
   assert(cls[cid].sat_count == sat_cnt);
 
   if (sat_cnt == 0) {
@@ -252,7 +252,7 @@ void OracleLS::check_clause(int cid) {
         break;
       }
     }
-    if (!found) { cout << "NOT found in unsat cls" << endl; }
+    /* if (!found) { cout << "NOT found in unsat cls" << endl; } */
     assert(idx_in_unsat_cls[cid] < (int)unsat_cls.size());
     assert(unsat_cls[idx_in_unsat_cls[cid]] == cid);
     assert(found);
@@ -315,7 +315,7 @@ void OracleLS::flip(int v) {
           }
         }
 #ifdef SLOW_DEBUG
-        cout << "Effect on cl_id: " << l.cl_num << " -- "; print_cl(l.cl_num);
+        /* cout << "Effect on cl_id: " << l.cl_num << " -- "; print_cl(l.cl_num); */
         check_clause(l.cl_num);
         for(uint32_t i = 0; i < unsat_cls.size(); i++) {
           uint32_t clid = unsat_cls[i];
@@ -331,7 +331,7 @@ void OracleLS::flip(int v) {
     vars[v].last_flip_step = step;
 
 #ifdef SLOW_DEBUG
-    cout << "Done flip(). Checking all clauses" << endl;
+    /* cout << "Done flip(). Checking all clauses" << endl; */
     for (uint32_t i = 0; i < cls.size(); i++) check_clause(i);
 #endif
 }
