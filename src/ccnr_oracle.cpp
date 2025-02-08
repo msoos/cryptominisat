@@ -37,7 +37,7 @@ using std::setw;
 using std::string;
 
 OracleLS::OracleLS(Solver* _solver) : solver(_solver) {
-    max_tries = 10LL;
+    max_tries = 100LL;
     max_steps = 1000 * 1000;
     random_gen.seed(1337);
 }

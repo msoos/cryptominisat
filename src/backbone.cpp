@@ -20,6 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "ccnr_oracle_pre.h"
+#include "constants.h"
 #include "solver.h"
 #include "solvertypesmini.h"
 #include <cstdint>
@@ -29,19 +31,38 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+inline int orclit(const Lit x) {
+    return (x.sign() ? ((x.var()+1)*2+1) : (x.var()+1)*2);
+}
+
+inline Lit orc_to_lit(int x) {
+    uint32_t var = x/2-1;
+    bool neg = x&1;
+    return Lit(var, neg);
+}
+
 bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
-        const vector<uint32_t>& only_over, bool& backbone_done)
+        bool& backbone_done)
 {
-    if (!okay()) return false;
+    if (!okay()) return okay();
+    if (nVars() == 0) return okay();
+    double my_time = cpuTime();
+
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
+    CCNROraclePre ccnr(this);
+    vector<vector<sspp::Lit>> cls;
+    vector<sspp::Lit> cctmp;
 
     for(auto const& off: longIrredCls) {
+        cctmp.clear();
         Clause* cl = cl_alloc.ptr(off);
         for(auto const& l1: *cl) {
             cnf.push_back(PICOLIT(l1));
+            cctmp.push_back(orclit(l1));
         }
         cnf.push_back(0);
+        cls.push_back(cctmp);
     }
     for(uint32_t i = 0; i < nVars()*2; i++) {
         Lit l1 = Lit::toLit(i);
@@ -53,37 +74,57 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             cnf.push_back(PICOLIT(l1));
             cnf.push_back(PICOLIT(l2));
             cnf.push_back(0);
+
+            cctmp.clear();
+            cctmp.push_back(orclit(l1));
+            cctmp.push_back(orclit(l2));
+            cls.push_back(cctmp);
         }
     }
     for(uint32_t i = 0; i < nVars(); i++) {
         if (value(i) == l_Undef) continue;
-        cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
+        auto l = Lit(i, value(i) == l_False);
+        cnf.push_back(PICOLIT(l));
         cnf.push_back(0);
+        cls.push_back({orclit(l)});
     }
-
-    vector<int> drop_cands;
-    if (!only_over.empty()) {
-        set<int> only_over_int;
-        for(const auto& v: only_over) {
-            Lit l = Lit(v, false);
-            l = varReplacer->get_lit_replaced_with_outer(l);
-            l = map_outer_to_inter(l);
-            if (l.var() >= nVars()) continue;
-            only_over_int.insert(l.var());
-        }
-
-        for(uint32_t i = 0; i < nVars(); i++) {
-            if (value(i) != l_Undef) continue;
-            if (varData[i].removed != Removed::none) continue;
-            if (only_over_int.count(i)) continue;
-            drop_cands.push_back(i+1);
+    vector<int8_t> assump_map(nVars()+1, 2);
+    ccnr.init(cls, nVars(), &assump_map);
+    vector<int> sols_found(nVars()+1, 0);
+    uint32_t sols = 0;
+    double ccnr_time = cpuTime();
+    for(uint32_t i = 0; i < 20; i++) {
+        ccnr.reinit();
+        bool ret = ccnr.run(100LL*1000LL*1000LL);
+        verb_print(3, "[backbone-ccnr] sol found: " << ret);
+        if (!ret) continue;
+        sols++;
+        const auto& sol = ccnr.get_sol();
+        for(uint32_t v = 1; v <= nVars(); v++) {
+            if (sols_found[v] == -1) {
+                sols_found[v] = sol[v];
+                continue;
+            }
+            if (sols_found[v] == sol[v]) continue;
+            sols_found[v] = 2;
         }
     }
+    cls.clear();
+
+    vector<int> drop_cands; // off by one, as in cadiback (i.e. vars start with 1)
+    for(uint32_t i = 1; i <= nVars(); i++) {
+        if (sols_found[i] == 2) {
+            drop_cands.push_back(i);
+        }
+    }
+    verb_print(1, "[backbone-simpl] ccnr sols: " << sols << " drop_cands: " << drop_cands.size()
+            << " T: " << std::fixed << std::setprecision(2)
+            << cpuTime()-ccnr_time);
 
     vector<int> learned_units;
     /* vector<int> learned_bins; */
     int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, /*learned_bins,*/ learned_units);
-    uint32_t num_units_added = 0;
+    uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     if (res == 10) {
         vector<Lit> tmp;
@@ -95,7 +136,6 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             tmp.clear();
             tmp.push_back(lit);
             add_clause_int(tmp);
-            num_units_added++;
             if (!okay()) goto end;
         }
         /* bool ignore = false; */
@@ -128,9 +168,10 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     }
 end:
     verb_print(1, "[backbone-simpl] res: " << res
-            <<  " num units: " << num_units_added
+            <<  " num units added: " << trail_size() - num_units
             <<  " num bins: " << num_bins_added
-            << " T: " << std::fixed << std::setprecision(2) << cpuTime());
+            << " T: " << std::fixed << std::setprecision(2)
+            << cpuTime() - my_time);
     return okay();
 }
 

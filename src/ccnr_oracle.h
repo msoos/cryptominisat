@@ -119,6 +119,7 @@ class OracleLS {
     int get_cost() { return unsat_cls.size(); }
     void initialize();
     void adjust_assumps(const vector<int>& assumps_changed);
+    const auto& get_sol() const { return sol; }
 
   private:
     Solver* solver;

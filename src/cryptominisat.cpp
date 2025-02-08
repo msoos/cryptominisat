@@ -1872,11 +1872,11 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 }
 
 
-DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, const std::vector<uint32_t>& only_over, bool& finished)
+DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool& finished)
 {
     Solver& s = *data->solvers[0];
     actually_add_clauses_to_threads(data);
-    return s.backbone_simpl(max_confl, true, only_over, finished);
+    return s.backbone_simpl(max_confl, true, finished);
 }
 
 DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{

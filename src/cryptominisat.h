@@ -245,7 +245,7 @@ namespace CMSat {
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
-        bool backbone_simpl(int64_t max_confl, const std::vector<uint32_t>& only_over, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool& finished);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT

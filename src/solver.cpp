@@ -1788,8 +1788,7 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "backbone") {
             bool backbone_found = false;
-            vector<uint32_t> vars;
-            backbone_simpl(30LL*1000LL, true, vars, backbone_found);
+            backbone_simpl(30LL*1000LL, true, backbone_found);
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();

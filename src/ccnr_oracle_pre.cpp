@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include <cstdint>
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
@@ -50,10 +51,6 @@ void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t num_vars
 
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
-    if (num_vars == 0 || cls.size() == 0) {
-        release_assert(false);
-        return;
-    }
     ls->num_vars = num_vars;
     ls->num_cls = cls.size();
     ls->make_space();
@@ -73,12 +70,21 @@ void CCNROraclePre::adjust_assumps(const vector<int>& assumps_changed) {
     ls->adjust_assumps(assumps_changed);
 }
 
+
+void CCNROraclePre::reinit() {
+    ls->initialize();
+}
+
 bool CCNROraclePre::run(int64_t mems_limit) {
     /* double start_time = cpuTime(); */
     bool res = ls->local_search(mems_limit);
     /* double time_used = cpuTime()-start_time; */
     /* cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl; */
     return res;
+}
+
+const vector<int8_t>& CCNROraclePre::get_sol () const {
+    return ls->get_sol();
 }
 
 void CCNROraclePre::add_this_clause(const vector<sspp::Lit>& cl, int cl_num) {
