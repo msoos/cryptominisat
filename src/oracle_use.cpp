@@ -111,7 +111,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
 
-    int64_t tot_vivif_mems = 1600LL*1000LL*1000LL;
+    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*533LL*1000LL*1000LL;
     if (fast > 0) tot_vivif_mems /= (3*fast);
     bool early_aborted_vivif = true;
     uint32_t bin_added = 0;
@@ -149,7 +149,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
     const double end_vivif_time = cpuTime();
-    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*20LL*1000LL*1000LL;
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*7LL*1000LL*1000LL;
     bool early_aborted_bin = true;
     oracle.reset_mems();
     double start_bin_time = cpuTime();
@@ -177,7 +177,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         /*         return a.score > b.score;}); */
         verb_print(1, "[oracle-bin] potential pairs: " << varp.size());
 
-        auto mem = 1000LL*1000LL;
+        auto mem = solver->conf.global_timeout_multiplier*333LL*1000LL;
         for (const auto& vp: varp) {
             if (varData[vp.v1].removed != Removed::none) continue;
             if (varData[vp.v2].removed != Removed::none) continue;
@@ -458,6 +458,8 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t unknown = 0;
     int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL;
     if (fast) mems /= 3;
+    int64_t mems2 = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
+    if (fast) mems2 /= 3;
     sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
@@ -539,8 +541,6 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
 
-        int64_t mems2 = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
-        if (fast) mems2 /= 3;
         if (oracle.getStats().mems > mems2) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
