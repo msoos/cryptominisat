@@ -72,6 +72,9 @@ struct Ovariable {
     long long score;
     long long last_flip_step;
     int unsat_appear; //how many unsat clauses it appears in
+                      //
+    bool cc_value;
+    bool is_in_ccd_vars;
 };
 
 struct Oclause {
@@ -107,6 +110,8 @@ class OracleLS {
     vector<int> idx_in_unsat_vars;
     vector<int8_t>* assump_map = nullptr; // always num_vars+1 size, if 2, it's a variable to flip, otherwise 1/0 for fixed vars
     vector<int8_t> sol; //solution information. 0 = false, 1 = true, 3 = unset
+    vector<int> ccd_vars;
+    long long delta_tot_cl_weight;
 
     //functions for building data structure
     bool make_space();
@@ -131,7 +136,6 @@ class OracleLS {
     int64_t step;
     int64_t mems = 0;
     int avg_cl_weight;
-    long long delta_tot_cl_weight;
 
     //main functions
     void initialize_variable_datas();
@@ -139,6 +143,7 @@ class OracleLS {
     void flip(int flipv);
     void update_clause_weights();
     void smooth_clause_weights();
+    void update_cc_after_flip(int flipv);
 
     //funcitons for basic operations
     void sat_a_clause(int the_clause);

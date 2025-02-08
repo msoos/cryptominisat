@@ -47,6 +47,7 @@ bool OracleLS::make_space() {
     vars.resize(num_vars+1);
     sol.resize(num_vars+1, 2);
     idx_in_unsat_vars.resize(num_vars+1);
+    ccd_vars.clear();
 
     cls.resize(num_cls);
     idx_in_unsat_cls.resize(num_cls);
@@ -159,6 +160,7 @@ void OracleLS::initialize_variable_datas() {
     for (int v = 1; v <= num_vars; v++) {
         auto & vp = vars[v];
         vp.score = 0;
+        vp.cc_value = 1;
         for (const auto& l: vp.lits) {
             int c = l.cl_num;
             if (cls[c].sat_count == 0) {
@@ -172,9 +174,11 @@ void OracleLS::initialize_variable_datas() {
     for (int v = 1; v <= num_vars; v++) vars[v].last_flip_step = 0;
 
     //the virtual var 0
-    auto& vp = vars[0];
-    vp.score = 0;
-    vp.last_flip_step = 0;
+    auto vp = &(vars[0]);
+    vp->score = 0;
+    vp->cc_value = 0;
+    vp->is_in_ccd_vars = 0;
+    vp->last_flip_step = 0;
 }
 
 void OracleLS::adjust_assumps(const vector<int>& assumps_changed) {
@@ -198,11 +202,32 @@ void OracleLS::print_cl(int cid) {
 }
 
 int OracleLS::pick_var() {
+    //First, try to get the var with the highest score from ccd_vars if any
+    //----------------------------------------
+    int best_var = -1;
+    int best_score = std::numeric_limits<int>::min();
+    mems += ccd_vars.size()/8;
+    if (!ccd_vars.empty()) {
+        for (int v: ccd_vars) {
+            if (assump_map->at(v) != 2) continue;
+
+            if (vars[v].score > best_score) {
+                best_var = v;
+                best_score = vars[v].score;
+            } else if (vars[v].score == vars[best_var].score &&
+                       vars[v].last_flip_step < vars[best_var].last_flip_step) {
+                best_var = v;
+                best_score = vars[v].score;
+            }
+        }
+        if (best_var != -1) return best_var;
+    }
+
     update_clause_weights();
     uint32_t tries = 0;
     bool ok = false;
     int cid;
-    while (!ok && tries < 100) {
+    while (!ok && tries < 10) {
       cid = unsat_cls[random_gen.next(unsat_cls.size())];
       assert(cid < (int)cls.size());
 
@@ -218,9 +243,8 @@ int OracleLS::pick_var() {
     if (!ok) return -1;
     /* cout << "decided on cl_id: " << cid << " -- "; print_cl(cid); */
 
+    best_score = std::numeric_limits<int>::min();
     const auto& cl = cls[cid];
-    int best_var = -1;
-    int best_score = std::numeric_limits<int>::min();
     for (auto& l: cl.lits) {
         int v = l.var_num;
         if ((*assump_map)[v] != 2) continue;
@@ -334,11 +358,39 @@ void OracleLS::flip(int v) {
     }
     vars[v].score = -orig_score;
     vars[v].last_flip_step = step;
+    update_cc_after_flip(v);
 
 #ifdef SLOW_DEBUG
     /* cout << "Done flip(). Checking all clauses" << endl; */
     for (uint32_t i = 0; i < cls.size(); i++) check_clause(i);
 #endif
+}
+
+
+void OracleLS::update_cc_after_flip(int flipv) {
+    int last_item;
+    Ovariable *vp = &(vars[flipv]);
+    vp->cc_value = 0;
+    mems += ccd_vars.size()/4;
+    for (int index = ccd_vars.size() - 1; index >= 0; index--) {
+        int v = ccd_vars[index];
+        if (vars[v].score <= 0) {
+            last_item = ccd_vars.back();
+            ccd_vars.pop_back();
+            if (index < (int)ccd_vars.size()) ccd_vars[index] = last_item;
+            vars[v].is_in_ccd_vars = 0;
+        }
+    }
+
+    //update all flipv's neighbor's cc to be 1
+    mems += vp->neighbor_vars.size()/4;
+    for (int v: vp->neighbor_vars) {
+        vars[v].cc_value = 1;
+        if (vars[v].score > 0 && !(vars[v].is_in_ccd_vars)) {
+            ccd_vars.push_back(v);
+            vars[v].is_in_ccd_vars = 1;
+        }
+    }
 }
 
 void OracleLS::sat_a_clause(int cl_id) {
@@ -389,8 +441,13 @@ void OracleLS::unsat_a_clause(int cl_id) {
 
 void OracleLS::update_clause_weights() {
     for (int c: unsat_cls) cls[c].weight++;
-    for (int v: unsat_vars) vars[v].score += vars[v].unsat_appear;
-
+    for (int v: unsat_vars) {
+        vars[v].score += vars[v].unsat_appear;
+        if (vars[v].score > 0 && 1 == vars[v].cc_value && !(vars[v].is_in_ccd_vars)) {
+            ccd_vars.push_back(v);
+            vars[v].is_in_ccd_vars = 1;
+        }
+    }
     delta_tot_cl_weight += unsat_cls.size();
     if (delta_tot_cl_weight >= num_cls) {
         avg_cl_weight += 1;
