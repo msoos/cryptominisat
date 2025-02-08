@@ -456,7 +456,7 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t last_printed = 0;
     uint32_t ccnr_useful = 0;
     uint32_t unknown = 0;
-    int64_t mems = 300LL*1000LL*1000LL;
+    int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL;
     if (fast) mems /= 3;
     sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
@@ -539,7 +539,7 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
 
-        int64_t mems2 = 1000LL*1000LL*1000LL;
+        int64_t mems2 = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
         if (fast) mems2 /= 3;
         if (oracle.getStats().mems > mems2) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
