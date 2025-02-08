@@ -93,9 +93,9 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     vector<int> sols_found(nVars()+1, 0);
     uint32_t sols = 0;
     double ccnr_time = cpuTime();
-    for(uint32_t i = 0; i < 20; i++) {
+    for(uint32_t i = 0; i < 10; i++) {
         ccnr.reinit();
-        bool ret = ccnr.run(100LL*1000LL*1000LL);
+        bool ret = ccnr.run(30LL*1000LL*1000LL);
         verb_print(3, "[backbone-ccnr] sol found: " << ret);
         if (!ret) continue;
         sols++;
@@ -113,9 +113,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
 
     vector<int> drop_cands; // off by one, as in cadiback (i.e. vars start with 1)
     for(uint32_t i = 1; i <= nVars(); i++) {
-        if (sols_found[i] == 2) {
-            drop_cands.push_back(i);
-        }
+        if (sols_found[i] == 2) drop_cands.push_back(i);
     }
     verb_print(1, "[backbone-simpl] ccnr sols: " << sols << " drop_cands: " << drop_cands.size()
             << " T: " << std::fixed << std::setprecision(2)

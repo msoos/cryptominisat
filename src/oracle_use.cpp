@@ -482,7 +482,7 @@ bool Solver::oracle_sparsify(bool fast)
         }
         ccnr.adjust_assumps(assumps_changed);
         assumps_changed.clear();
-        int ret_ccnr = ccnr.run(10000);
+        int ret_ccnr = ccnr.run(6000);
         /* int ret_ccnr = false; */
         for(const auto& l: tmp) {
             assumps_map[sspp::VarOf(l)] = 2;
