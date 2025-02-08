@@ -418,7 +418,7 @@ bool Solver::oracle_sparsify(bool fast)
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
     oracle.SetVerbosity(conf.verbosity);
     vector<sspp::Lit> tmp;
-    vector<vector<sspp::Lit>> cls;
+    /* vector<vector<sspp::Lit>> cls; */
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         tmp.clear();
@@ -436,11 +436,11 @@ bool Solver::oracle_sparsify(bool fast)
         // Indicator variable
         tmp.push_back(orclit(Lit(nVars()+i, false)));
         oracle.AddClause(tmp, false);
-        cls.push_back(tmp);
+        /* cls.push_back(tmp); */
     }
-    vector<int8_t> assumps_map(nVars()+tot_cls+1, 2);
-    CCNROraclePre ccnr(solver);
-    ccnr.init(cls, nVars()+tot_cls, &assumps_map);
+    /* vector<int8_t> assumps_map(nVars()+tot_cls+1, 2); */
+    /* CCNROraclePre ccnr(solver); */
+    /* ccnr.init(cls, nVars()+tot_cls, &assumps_map); */
     const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
@@ -448,8 +448,8 @@ bool Solver::oracle_sparsify(bool fast)
     for (uint32_t i = 0; i < tot_cls; i++) {
         auto l = orclit(Lit(nVars()+i, true));
         oracle.SetAssumpLit(l, false);
-        assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
-        assumps_changed.push_back(sspp::VarOf(l));
+        /* assumps_map[sspp::VarOf(l)] = sspp::IsPos(l); */
+        /* assumps_changed.push_back(sspp::VarOf(l)); */
     }
 
     // Now try to remove clauses one-by-one
@@ -472,8 +472,8 @@ bool Solver::oracle_sparsify(bool fast)
         {
             auto l = orclit(Lit(nVars()+i, false));
             oracle.SetAssumpLit(l, false);
-            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
-            assumps_changed.push_back(sspp::VarOf(l));
+            /* assumps_map[sspp::VarOf(l)] = sspp::IsPos(l); */
+            /* assumps_changed.push_back(sspp::VarOf(l)); */
         }
 
         tmp.clear();
@@ -486,25 +486,25 @@ bool Solver::oracle_sparsify(bool fast)
             tmp.push_back(orclit(~(c.bin.l2)));
         }
 
-        for(const auto& l: tmp) {
-            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
-            assumps_changed.push_back(sspp::VarOf(l));
-        }
-        ccnr.adjust_assumps(assumps_changed);
-        assumps_changed.clear();
-        int ret_ccnr = ccnr.run(10000);
+        /* for(const auto& l: tmp) { */
+        /*     assumps_map[sspp::VarOf(l)] = sspp::IsPos(l); */
+        /*     assumps_changed.push_back(sspp::VarOf(l)); */
+        /* } */
+        /* ccnr.adjust_assumps(assumps_changed); */
+        /* assumps_changed.clear(); */
+        /* int ret_ccnr = ccnr.run(10000); */
         /* int ret_ccnr = false; */
-        for(const auto& l: tmp) {
-            assumps_map[sspp::VarOf(l)] = 2;
-            assumps_changed.push_back(sspp::VarOf(l));
-        }
-        if (ret_ccnr) {
-            verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT");
-            ccnr_useful++;
-            goto need;
-        } else {
-            verb_print(3, "[oracle-sparsify] ccnr-oracle UNKNOWN");
-        }
+        /* for(const auto& l: tmp) { */
+        /*     assumps_map[sspp::VarOf(l)] = 2; */
+        /*     assumps_changed.push_back(sspp::VarOf(l)); */
+        /* } */
+        /* if (ret_ccnr) { */
+        /*     verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT"); */
+        /*     ccnr_useful++; */
+        /*     goto need; */
+        /* } else { */
+        /*     verb_print(3, "[oracle-sparsify] ccnr-oracle UNKNOWN"); */
+        /* } */
 
         ret = oracle.Solve(tmp, false, mems);
         if (ret.isUnknown()) {
@@ -518,8 +518,8 @@ bool Solver::oracle_sparsify(bool fast)
             // We need this clause, can't remove
             auto l = orclit(Lit(nVars()+i, true));
             oracle.SetAssumpLit(l, true);
-            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
-            assumps_changed.push_back(sspp::VarOf(l));
+            /* assumps_map[sspp::VarOf(l)] = sspp::IsPos(l); */
+            /* assumps_changed.push_back(sspp::VarOf(l)); */
         } else {
             assert(ret.isFalse());
             // We can freeze(!) this clause to be disabled.
