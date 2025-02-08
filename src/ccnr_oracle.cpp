@@ -87,7 +87,7 @@ bool OracleLS::local_search(int64_t mems_limit) {
 
             int flipv = pick_var();
             if (flipv == -1) {
-              verb_print(1, "[ccnr] no var to flip, restart");
+              verb_print(3, "[ccnr] no var to flip, restart");
               continue;
             }
             assert(assump_map != nullptr && (*assump_map)[flipv] == 2);
