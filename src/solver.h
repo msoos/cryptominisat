@@ -361,6 +361,7 @@ class Solver : public Searcher
         bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
         bool backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finished);
         bool removed_var_ext(uint32_t var) const;
+        vector<vector<uint8_t>> many_sls(int64_t mems, uint32_t num);
 
     private:
         friend class ClauseDumper;

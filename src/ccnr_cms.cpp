@@ -48,6 +48,31 @@ CMS_ccnr::~CMS_ccnr()
     delete ls_s;
 }
 
+lbool CMS_ccnr::main_alter(int64_t mems, vector<uint8_t>& ret)
+{
+    //It might not work well with few number of variables
+    //rnovelty could also die/exit(-1), etc.
+    if (solver->nVars() < 50 ||
+        solver->binTri.irredBins + solver->longIrredCls.size() < 10
+    ) {
+        verb_print(1, "[ccnr] too few variables & clauses");
+        return l_Undef;
+    }
+
+    if (!init_problem()) {
+        verb_print(1, "[ccnr] problem UNSAT under assumptions, returning to main solver");
+        return l_Undef;
+    }
+
+    int res = ls_s->local_search(nullptr, mems, solver->conf.prefix.c_str(), 50LL*1000);
+    if (res) {
+      ret.clear();
+      ret.resize(solver->nVars());
+      for(uint32_t i = 0; i < solver->nVars(); i++) ret[i] = ls_s->_solution[i+1];
+    }
+    return res == 1 ? l_True : l_Undef;
+}
+
 lbool CMS_ccnr::main(const uint32_t num_sls_called)
 {
     //It might not work well with few number of variables

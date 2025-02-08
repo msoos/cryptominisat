@@ -246,6 +246,7 @@ namespace CMSat {
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
         bool backbone_simpl(int64_t max_confl, bool& finished);
+        std::vector<std::vector<uint8_t>> many_sls(int64_t mems, uint32_t num);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT

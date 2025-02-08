@@ -41,7 +41,6 @@ using std::string;
 ls_solver::ls_solver(const bool aspiration)
 {
     _max_tries = 100;
-    _max_steps = 1*1000 * 1000;
     _random_seed = 1;
     _swt_threshold = 50;
     _swt_p = 0.3;
@@ -93,6 +92,7 @@ bool ls_solver::local_search(
     const vector<bool> *init_solution
     , long long int _mems_limit
     , const char* prefix
+    , int64_t _max_steps
 ) {
     bool result = false;
     _random_gen.seed(_random_seed);

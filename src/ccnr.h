@@ -95,6 +95,7 @@ class ls_solver
         const vector<bool> *init_solution = 0
         , long long int _mems_limit = 100*1000*1000
         , const char* prefix = "c "
+        , int64_t _max_steps = 1*1000 * 1000
     );
     void print_solution(bool need_verify = 0);
     void simple_print();
@@ -131,7 +132,6 @@ class ls_solver
     int _best_found_cost;
     long long _mems = 0;
     long long _step;
-    long long _max_steps;
     int _max_tries;
 
     //aiding data structure

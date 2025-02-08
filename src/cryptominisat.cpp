@@ -1872,6 +1872,12 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 }
 
 
+DLL_PUBLIC std::vector<std::vector<uint8_t>> SATSolver::many_sls(int64_t mems, uint32_t num) {
+    Solver& s = *data->solvers[0];
+    actually_add_clauses_to_threads(data);
+    return s.many_sls(mems, num);
+}
+
 DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool& finished)
 {
     Solver& s = *data->solvers[0];

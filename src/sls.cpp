@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "sls.h"
 #include "solver.h"
 #include "ccnr_cms.h"
+#include "solvertypesmini.h"
 
 using namespace CMSat;
 
@@ -30,12 +31,20 @@ SLS::SLS(Solver* _solver) :
     solver(_solver)
 {}
 
-SLS::~SLS()
-{}
-
 lbool SLS::run(const uint32_t num_sls_called)
 {
     return run_ccnr(num_sls_called);
+}
+
+vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num) {
+    vector<vector<uint8_t>> sols;
+    for(uint32_t i = 0; i < num; i++) {
+      CMS_ccnr ccnr(solver);
+      vector<uint8_t> sol;
+      auto ret = ccnr.main_alter(mems, sol);
+      if (ret == l_True) sols.push_back(sol);
+    }
+    return sols;
 }
 
 lbool SLS::run_ccnr(const uint32_t num_sls_called)

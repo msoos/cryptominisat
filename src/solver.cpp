@@ -3820,3 +3820,8 @@ void Solver::set_outer_lit_weight(const Lit lit, const float weight) {
     l = map_outer_to_inter(l);
     varData[l.var()].weight = l.sign() ? 1.0F-weight : weight;
 }
+
+vector<vector<uint8_t>> Solver::many_sls(int64_t mems, uint32_t num) {
+    SLS sls(this);
+    return sls.run_alter(mems, num);
+}
