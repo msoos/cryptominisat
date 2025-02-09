@@ -91,6 +91,8 @@ bool InTree::check_timeout_due_to_hyperbin()
 {
     assert(!(solver->timedOutPropagateFull && solver->frat->enabled()));
 
+    // Can turn it off ONLY if frat is not enabled
+    // otherwise proofs don't go through
     if (solver->timedOutPropagateFull && !solver->frat->enabled()) {
         verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
