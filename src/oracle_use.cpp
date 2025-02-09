@@ -500,7 +500,7 @@ bool Solver::oracle_sparsify(bool fast)
         if (ret.isUnknown()) {
             /*out of time*/
             unknown++;
-            goto need;
+            goto fin;
         }
 
         if (ret.isTrue()) {
@@ -508,8 +508,8 @@ bool Solver::oracle_sparsify(bool fast)
             // We need this clause, can't remove
             auto l = orclit(Lit(nVars()+i, true));
             oracle.SetAssumpLit(l, true);
-            /* assumps_map[sspp::VarOf(l)] = sspp::IsPos(l); */
-            /* assumps_changed.push_back(sspp::VarOf(l)); */
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
         } else {
             assert(ret.isFalse());
             // We can freeze(!) this clause to be disabled.
