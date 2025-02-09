@@ -90,7 +90,8 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 bool InTree::check_timeout_due_to_hyperbin()
 {
     assert(!(solver->timedOutPropagateFull && solver->frat->enabled()));
-    if (solver->timedOutPropagateFull) {
+
+    if (solver->timedOutPropagateFull && !solver->frat->enabled()) {
         verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
         return true;
