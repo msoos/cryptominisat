@@ -111,8 +111,10 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
 
-    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*533LL*1000LL*1000LL;
+    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL;
     if (fast > 0) tot_vivif_mems /= (3*fast);
+    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL;
+    if (fast > 0) mems_per_call /= (3*fast);
     bool early_aborted_vivif = true;
     uint32_t bin_added = 0;
     uint32_t equiv_added = 0;
@@ -125,9 +127,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (oracle.getStats().mems > tot_vivif_mems) goto end1;
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
-            int64_t mems2 =  500LL*1000LL*1000LL;
-            if (fast > 0) mems2 /= (3*fast);
-            auto ret = oracle.Solve(assump, true,mems2);
+            auto ret = oracle.Solve(assump, true,mems_per_call);
             if (ret.isUnknown()) goto end1;
             if (ret.isFalse()) {
                 sort(assump.begin(), assump.end());
@@ -149,7 +149,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
     const double end_vivif_time = cpuTime();
-    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*7LL*1000LL*1000LL;
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL;
     bool early_aborted_bin = true;
     oracle.reset_mems();
     double start_bin_time = cpuTime();
@@ -177,7 +177,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         /*         return a.score > b.score;}); */
         verb_print(1, "[oracle-bin] potential pairs: " << varp.size());
 
-        auto mem = solver->conf.global_timeout_multiplier*333LL*1000LL;
+        auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL;
         for (const auto& vp: varp) {
             if (varData[vp.v1].removed != Removed::none) continue;
             if (varData[vp.v2].removed != Removed::none) continue;
@@ -189,7 +189,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             Clause* cl;
             const Lit l1 = Lit(vp.v1, false);
             const Lit l2 = Lit(vp.v2, false);
-            ret = oracle.Solve({orclit(l1), orclit(l2)}, true, mem);
+            ret = oracle.Solve({orclit(l1), orclit(l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
             if (ret.isTrue()) goto next;
             cl = add_clause_int({~l1, ~l2}, true);
@@ -197,7 +197,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (!okay()) return false;
             bin_added++;
 
-            ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem);
+            ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
             if (ret.isTrue()) goto next;
             assert(ret.isFalse() && ret.isFalse());
@@ -209,7 +209,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             continue;
 
             next:
-            ret = oracle.Solve({orclit(~l1), orclit(l2)}, true, mem);
+            ret = oracle.Solve({orclit(~l1), orclit(l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
             if (ret.isTrue()) continue;
             cl = add_clause_int({l1, ~l2}, true);
@@ -217,7 +217,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (!okay()) return false;
             bin_added++;
 
-            ret = oracle.Solve({orclit(l1), orclit(~l2)}, true, mem);
+            ret = oracle.Solve({orclit(l1), orclit(~l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
             if (ret.isTrue()) continue;
             cl = add_clause_int({~l1, l2}, true);
@@ -446,8 +446,8 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t unknown = 0;
     int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL;
     if (fast) mems /= 3;
-    int64_t mems2 = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
-    if (fast) mems2 /= 3;
+    int64_t mems_per_call = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
+    if (fast) mems_per_call /= 3;
     sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
@@ -529,7 +529,7 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
 
-        if (oracle.getStats().mems > mems2) {
+        if (oracle.getStats().mems > mems_per_call) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
         }

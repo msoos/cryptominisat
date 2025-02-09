@@ -53,11 +53,12 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     CCNROraclePre ccnr(this);
     vector<vector<sspp::Lit>> cls;
     vector<sspp::Lit> cctmp;
-
+    uint64_t num_lits = 0;
     for(auto const& off: longIrredCls) {
         cctmp.clear();
         Clause* cl = cl_alloc.ptr(off);
         for(auto const& l1: *cl) {
+            num_lits++;
             cnf.push_back(PICOLIT(l1));
             cctmp.push_back(orclit(l1));
         }
@@ -71,6 +72,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             const Lit l2 = w.lit2();
             if (l1 > l2) continue;
 
+            num_lits+=2;
             cnf.push_back(PICOLIT(l1));
             cnf.push_back(PICOLIT(l2));
             cnf.push_back(0);
@@ -88,6 +90,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
         cnf.push_back(0);
         cls.push_back({orclit(l)});
     }
+    uint64_t num_cls = cls.size();
     vector<int8_t> assump_map(nVars()+1, 2);
     ccnr.init(cls, nVars(), &assump_map);
     vector<int> sols_found(nVars()+1, 0);
@@ -121,6 +124,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
 
     vector<int> learned_units;
     /* vector<int> learned_bins; */
+    verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits << " num cls: " << num_cls << " num vars: " << nVars());
     int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, /*learned_bins,*/ learned_units);
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
