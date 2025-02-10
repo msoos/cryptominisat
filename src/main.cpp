@@ -187,7 +187,7 @@ void Main::printResultFunc(
                 }
             };
 
-            if (!solver->get_sampl_vars_set() || !only_sampl_solution) {
+            if (!solver->get_sampl_vars_set()) {
                 for (uint32_t var = 0; var < solver->nVars(); var++) {
                     fun(var);
                 }
@@ -200,7 +200,7 @@ void Main::printResultFunc(
             *os << "0" << endl;
         } else {
             uint32_t num_undef;
-            if (!solver->get_sampl_vars_set() || !only_sampl_solution) {
+            if (!solver->get_sampl_vars_set()) {
                 num_undef = print_model(solver, os);
             } else {
                 num_undef = print_model(solver, os, &solver->get_sampl_vars());
@@ -940,10 +940,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.idrup = std::atoi(a.c_str());})
         .default_value(conf.idrup)
         .help("idrup");
-    program.add_argument("--onlysampling")
-        .flag()
-        .action([&](const auto&) {only_sampl_solution = true;})
-        .help("Print and ban(!) solutions' vars only in 'c ind' or as --sampling '...'");
     program.add_argument("--sampling")
         .help("Set sampling vars such as '1,84,44'");
     program.add_argument("--assump")
@@ -1321,7 +1317,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(&assumps, only_sampl_solution);
+        ret = solver->solve(&assumps);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
