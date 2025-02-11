@@ -37,13 +37,14 @@ cd cadical
 git checkout mate-only-libraries-1.8.0
 ./configure
 make
+sudo cp build/libcadical.so /usr/lib
 cd ..
 
 git clone https://github.com/meelgroup/cadiback
 cd cadiback
 git checkout mate
 ./configure
-make
+make install
 cd ..
 
 git clone https://github.com/msoos/cryptominisat
