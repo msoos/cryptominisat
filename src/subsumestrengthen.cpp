@@ -955,7 +955,7 @@ void SubsumeStrengthen::finishedRun()
 
 void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
 {
-    cout << "c [occ-substr] long"
+    cout << solver->conf.prefix + "[occ-substr] long"
     << " subBySub: " << sub0.numSubsumed
     << " subByStr: " << sub1.sub
     << " lits-rem-str: " << sub1.str
@@ -963,22 +963,22 @@ void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
     << endl;
 }
 
-void SubsumeStrengthen::Stats::print() const
+void SubsumeStrengthen::Stats::print(const string& prefix) const
 {
     cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
-    print_stats_line("c cl-subs"
+    print_stats_line(prefix + "cl-subs"
         , sub0.numSubsumed + sub1.sub
         , " Clauses"
     );
-    print_stats_line("c cl-str rem lit"
+    print_stats_line(prefix + "cl-str rem lit"
         , sub1.str
         , " Lits"
     );
-    print_stats_line("c cl-sub T"
+    print_stats_line(prefix + "cl-sub T"
         , subsumeTime
         , " s"
     );
-    print_stats_line("c cl-str T"
+    print_stats_line(prefix + "cl-str T"
         , strengthenTime
         , " s"
     );

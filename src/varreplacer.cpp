@@ -265,7 +265,7 @@ end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
-            runStats.print(solver->nVarsOuter());
+            runStats.print(solver->nVarsOuter(), solver->conf.prefix);
         else
             runStats.print_short(solver);
     }
@@ -1130,63 +1130,63 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
     return num;
 }
 
-void VarReplacer::print_some_stats(const double global_cpu_time) const
+void VarReplacer::print_some_stats(const double global_cpu_time, const string& prefix) const
 {
-    print_stats_line("c vrep replace time"
+    print_stats_line(prefix + "vrep replace time"
         , globalStats.cpu_time
         , stats_line_percent(globalStats.cpu_time, global_cpu_time)
         , "% time"
     );
 
-    print_stats_line("c vrep tree roots"
+    print_stats_line(prefix + "vrep tree roots"
         , getNumTrees()
     );
 
-    print_stats_line("c vrep trees' crown"
+    print_stats_line(prefix + "vrep trees' crown"
         , get_num_replaced_vars()
         , float_div(get_num_replaced_vars(), getNumTrees())
         , "leafs/tree"
     );
 }
 
-void VarReplacer::Stats::print(const size_t nVars) const
+void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
 {
         cout << "c --------- VAR REPLACE STATS ----------" << endl;
-        print_stats_line("c time"
+        print_stats_line(prefix + "time"
             , cpu_time
             , float_div(cpu_time, numCalls)
             , "per call"
         );
 
-        print_stats_line("c trees' crown"
+        print_stats_line(prefix + "trees' crown"
             , actuallyReplacedVars
             , stats_line_percent(actuallyReplacedVars, nVars)
             , "% of vars"
         );
 
-        print_stats_line("c 0-depth assigns"
+        print_stats_line(prefix + "0-depth assigns"
             , zeroDepthAssigns
             , stats_line_percent(zeroDepthAssigns, nVars)
             , "% vars"
         );
 
-        print_stats_line("c lits replaced"
+        print_stats_line(prefix + "lits replaced"
             , replacedLits
         );
 
-        print_stats_line("c bin cls removed"
+        print_stats_line(prefix + "bin cls removed"
             , removedBinClauses
         );
 
-        print_stats_line("c long cls removed"
+        print_stats_line(prefix + "long cls removed"
             , removedLongClauses
         );
 
-        print_stats_line("c long lits removed"
+        print_stats_line(prefix + "long lits removed"
             , removedLongLits
         );
 
-         print_stats_line("c bogoprops"
+         print_stats_line(prefix + "bogoprops"
             , bogoprops
         );
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;

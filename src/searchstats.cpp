@@ -146,163 +146,163 @@ SearchStats SearchStats::operator-(const SearchStats& other) const
     return result;
 }
 
-void SearchStats::printCommon(uint64_t props, bool do_print_times) const
+void SearchStats::printCommon(uint64_t props, bool do_print_times, const string& prefix) const
 {
-    print_stats_line("c restarts"
+    print_stats_line(prefix + "restarts"
         , numRestarts
         , float_div(conflicts, numRestarts)
         , "confls per restart"
 
     );
-    print_stats_line("c blocked restarts"
+    print_stats_line(prefix + "blocked restarts"
         , blocked_restart
         , float_div(blocked_restart, numRestarts)
         , "per normal restart"
 
     );
     if (do_print_times)
-    print_stats_line("c time", cpu_time);
-    print_stats_line("c decisions", decisions
+    print_stats_line(prefix + "time", cpu_time);
+    print_stats_line(prefix + "decisions", decisions
         , stats_line_percent(decisionsRand, decisions)
         , "% random"
     );
 
-    print_stats_line("c propagations"
+    print_stats_line(prefix + "propagations"
                      , print_value_kilo_mega(props, false)
                      , print_value_kilo_mega(ratio_for_stat(props, cpu_time), false),
                      "props/s");
 
-    print_stats_line("c decisions/conflicts"
+    print_stats_line(prefix + "decisions/conflicts"
         , float_div(decisions, conflicts)
     );
 }
 
-void SearchStats::print_short(uint64_t props, bool do_print_times) const
+void SearchStats::print_short(uint64_t props, bool do_print_times, const string& prefix) const
 {
     //Restarts stats
-    printCommon(props, do_print_times);
-    print_stats_line("c conflicts", conflicts);
-    print_stats_line("c conf lits non-minim"
+    printCommon(props, do_print_times, prefix);
+    print_stats_line(prefix + "conflicts", conflicts);
+    print_stats_line(prefix + "conf lits non-minim"
         , litsRedNonMin
         , float_div(litsRedNonMin, conflicts)
         , "lit/confl"
     );
 
-    print_stats_line("c conf lits final"
+    print_stats_line(prefix + "conf lits final"
         , float_div(litsRedFinal, conflicts)
     );
 
-    print_stats_line("c red which0"
+    print_stats_line(prefix + "red which0"
         , red_cl_in_which0
         , stats_line_percent(red_cl_in_which0, conflicts)
         , "% of confl"
     );
 }
 
-void SearchStats::print(uint64_t props, bool do_print_times) const
+void SearchStats::print(uint64_t props, bool do_print_times, const string& prefix) const
 {
-    printCommon(props, do_print_times);
-    print_stats_line("c conflicts", conflicts);
+    printCommon(props, do_print_times, prefix);
+    print_stats_line(prefix + "conflicts", conflicts);
 
     /*assert(numConflicts
         == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
 
     cout << "c LEARNT stats" << endl;
-    print_stats_line("c units learnt"
+    print_stats_line(prefix + "units learnt"
         , learntUnits
         , stats_line_percent(learntUnits, conflicts)
         , "% of conflicts");
 
-    print_stats_line("c bins learnt"
+    print_stats_line(prefix + "bins learnt"
         , learntBins
         , stats_line_percent(learntBins, conflicts)
         , "% of conflicts");
 
-    print_stats_line("c long learnt"
+    print_stats_line(prefix + "long learnt"
         , learntLongs
         , stats_line_percent(learntLongs, conflicts)
         , "% of conflicts"
     );
 
-    print_stats_line("c red which0"
+    print_stats_line(prefix + "red which0"
         , red_cl_in_which0
         , stats_line_percent(red_cl_in_which0, conflicts)
         , "% of confl"
     );
 
     cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
-    print_stats_line("c advProp called"
+    print_stats_line(prefix + "advProp called"
         , advancedPropCalled
     );
-    print_stats_line("c hyper-bin add bin"
+    print_stats_line(prefix + "hyper-bin add bin"
         , hyperBinAdded
         , ratio_for_stat(hyperBinAdded, advancedPropCalled)
         , "bin/call"
     );
-    print_stats_line("c trans-red rem irred bin"
+    print_stats_line(prefix + "trans-red rem irred bin"
         , transReduRemIrred
         , ratio_for_stat(transReduRemIrred, advancedPropCalled)
         , "bin/call"
     );
-    print_stats_line("c trans-red rem red bin"
+    print_stats_line(prefix + "trans-red rem red bin"
         , transReduRemRed
         , ratio_for_stat(transReduRemRed, advancedPropCalled)
         , "bin/call"
     );
 
     cout << "c CONFL LITS stats" << endl;
-    print_stats_line("c orig "
+    print_stats_line(prefix + "orig "
         , litsRedNonMin
         , ratio_for_stat(litsRedNonMin, conflicts)
         , "lit/confl"
     );
 
-    print_stats_line("c recurs-min effective"
+    print_stats_line(prefix + "recurs-min effective"
         , recMinCl
         , stats_line_percent(recMinCl, conflicts)
         , "% attempt successful"
     );
 
-    print_stats_line("c recurs-min lits"
+    print_stats_line(prefix + "recurs-min lits"
         , recMinLitRem
         , stats_line_percent(recMinLitRem, litsRedNonMin)
         , "% less overall"
     );
 
-    print_stats_line("c permDiff call%"
+    print_stats_line(prefix + "permDiff call%"
         , stats_line_percent(permDiff_attempt, conflicts)
         , stats_line_percent(permDiff_success, permDiff_attempt)
         , "% attempt successful"
     );
 
-    print_stats_line("c permDiff lits-rem"
+    print_stats_line(prefix + "permDiff lits-rem"
         , permDiff_rem_lits
         , ratio_for_stat(permDiff_rem_lits, permDiff_attempt)
         , "less lits/cl on attempts"
      );
 
 
-    print_stats_line("c further-min call%"
+    print_stats_line(prefix + "further-min call%"
         , stats_line_percent(furtherShrinkAttempt, conflicts)
         , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
         , "% attempt successful"
     );
 
-    print_stats_line("c bintri-min lits"
+    print_stats_line(prefix + "bintri-min lits"
         , binTriShrinkedClause
         , stats_line_percent(binTriShrinkedClause, litsRedNonMin)
         , "% less overall"
     );
 
-    print_stats_line("c final avg"
+    print_stats_line(prefix + "final avg"
         , ratio_for_stat(litsRedFinal, conflicts)
     );
 
     //General stats
-    //print_stats_line("c Memory used", (double)mem_used / 1048576.0, " MB");
+    //print_stats_line(prefix + "Memory used", (double)mem_used / 1048576.0, " MB");
     #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
-    print_stats_line("c single-thread CPU time", cpu_time, " s");
+    print_stats_line(prefix + "single-thread CPU time", cpu_time, " s");
     #else
-    print_stats_line("c all-threads sum CPU time", cpu_time, " s");
+    print_stats_line(prefix + "all-threads sum CPU time", cpu_time, " s");
     #endif
 }

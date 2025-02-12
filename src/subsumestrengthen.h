@@ -68,7 +68,7 @@ public:
     {
         Stats& operator+=(const Stats& other);
         void print_short(const Solver* solver) const;
-        void print() const;
+        void print(const string& prefix) const;
 
         Sub0Ret sub0;
         Sub1Ret sub1;

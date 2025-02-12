@@ -1995,7 +1995,7 @@ void CMSat::Solver::print_stats(
 {
     verb_print(1, "------- FINAL TOTAL SEARCH STATS ---------");
     if (conf.do_print_times) {
-        print_stats_line("c UIP search time"
+        print_stats_line(conf.prefix + "UIP search time"
             , sumSearchStats.cpu_time
             , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
             , "% time"
@@ -2014,11 +2014,11 @@ void Solver::print_stats_time(
     const double wallclock_time_started) const
 {
     if (conf.do_print_times) {
-        print_stats_line("c Total time (this thread)", cpu_time);
+        print_stats_line(conf.prefix + "Total time (this thread)", cpu_time);
         if (cpu_time != cpu_time_total) {
-            print_stats_line("c Total time (all threads)", cpu_time_total);
+            print_stats_line(conf.prefix + "Total time (all threads)", cpu_time_total);
             if (wallclock_time_started != 0.0) {
-                print_stats_line("c Wall clock time: ", (real_time_sec() - wallclock_time_started));
+                print_stats_line(conf.prefix + "Wall clock time: ", (real_time_sec() - wallclock_time_started));
             }
         }
     }
@@ -2029,25 +2029,25 @@ void Solver::print_norm_stats(
     const double cpu_time_total,
     const double wallclock_time_started) const
 {
-    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
-    print_stats_line("c props/decision"
+    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times, conf.prefix);
+    print_stats_line(conf.prefix + "props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
-    print_stats_line("c props/conflict"
+    print_stats_line(conf.prefix + "props/conflict"
         , float_div(propStats.propagations, sumConflicts)
     );
 
-    print_stats_line("c 0-depth assigns", trail.size()
+    print_stats_line(conf.prefix + "0-depth assigns", trail.size()
         , stats_line_percent(trail.size(), nVars())
         , "% vars"
     );
-    print_stats_line("c 0-depth assigns by CNF"
+    print_stats_line(conf.prefix + "0-depth assigns by CNF"
         , zeroLevAssignsByCNF
         , stats_line_percent(zeroLevAssignsByCNF, nVars())
         , "% vars"
     );
 
-    print_stats_line("c reduceDB time"
+    print_stats_line(conf.prefix + "reduceDB time"
         , reduceDB->get_total_time()
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)
         , "% time"
@@ -2056,7 +2056,7 @@ void Solver::print_norm_stats(
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
-            print_stats_line("c OccSimplifier time"
+            print_stats_line(conf.prefix + "OccSimplifier time"
                 , occsimplifier->get_stats().total_time(occsimplifier)
                 , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
                 , "% time"
@@ -2064,32 +2064,32 @@ void Solver::print_norm_stats(
         occsimplifier->get_stats().print_extra_times(conf.prefix.c_str());
         occsimplifier->get_sub_str()->get_stats().print_short(this);
     }
-    print_stats_line("c SCC time"
+    print_stats_line(conf.prefix + "SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
         , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
         , "% time"
     );
     varReplacer->get_scc_finder()->get_stats().print_short(this);
-    varReplacer->print_some_stats(cpu_time);
+    varReplacer->print_some_stats(cpu_time, conf.prefix);
 
     //varReplacer->get_stats().print_short(nVars());
-    print_stats_line("c distill long time"
+    print_stats_line(conf.prefix + "distill long time"
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
-    print_stats_line("c distill bin time"
+    print_stats_line(conf.prefix + "distill bin time"
                     , distill_bin_cls->get_stats().time_used
                     , stats_line_percent(distill_bin_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
 
-    print_stats_line("c strength cache-irred time"
+    print_stats_line(conf.prefix + "strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredWatchBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().irredWatchBased.cpu_time, cpu_time)
                     , "% time"
     );
-    print_stats_line("c strength cache-red time"
+    print_stats_line(conf.prefix + "strength cache-red time"
                     , dist_long_with_impl->get_stats().redWatchBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().redWatchBased.cpu_time, cpu_time)
                     , "% time"
@@ -2098,7 +2098,7 @@ void Solver::print_norm_stats(
     if (sumConflicts > 0) {
         for(uint32_t i = 0; i < longRedCls.size(); i ++) {
             std::stringstream ss;
-            ss << "c avg cls in red " << i;
+            ss << conf.prefix + "avg cls in red " << i;
             print_stats_line(ss.str()
                 , (double)longRedClsSizes[i]/(double)sumConflicts
             );
@@ -2111,34 +2111,33 @@ void Solver::print_norm_stats(
     }
 
     #ifdef STATS_NEEDED
-    print_stats_line(
-        "c DB locked ratio",
+    print_stats_line(conf.prefix + "DB locked ratio",
         stats_line_percent(reduceDB->locked_for_data_gen_total, reduceDB->locked_for_data_gen_cls)
     );
     #endif
 
     if (conf.do_print_times) {
-        print_stats_line("c Conflicts in UIP"
+        print_stats_line(conf.prefix + "Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
             , "confl/time_this_thread"
         );
     } else {
-        print_stats_line("c Conflicts in UIP", sumConflicts);
+        print_stats_line(conf.prefix + "Conflicts in UIP", sumConflicts);
     }
     double vm_usage;
     std::string max_mem_usage;
     double max_rss_mem_mb = (double)memUsedTotal(vm_usage, &max_mem_usage)/(1024UL*1024UL);
     if (max_mem_usage.empty()) {
-        print_stats_line("c Mem used"
+        print_stats_line(conf.prefix + "Mem used"
             , max_rss_mem_mb
             , "MB"
         );
     } else {
-        print_stats_line("c Max Memory (rss) used"
+        print_stats_line(conf.prefix + "Max Memory (rss) used"
             , max_mem_usage
         );
-//      print_stats_line("c Virt mem used at exit"
+//      print_stats_line(conf.prefix + "Virt mem used at exit"
 //         , vm_usage/(1024UL*1024UL)
 //         , "MB"
 //     );
@@ -2152,14 +2151,14 @@ void Solver::print_full_stats(
     const double /*wallclock_time_started*/) const
 {
     cout << "c All times are for this thread only except if explicitly specified" << endl;
-    sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
+    sumSearchStats.print(sumPropStats.propagations, conf.do_print_times, conf.prefix);
     sumPropStats.print(sumSearchStats.cpu_time);
     //reduceDB->get_total_time().print(cpu_time);
 
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         occsimplifier->get_stats().print(nVarsOuter(), occsimplifier);
-        occsimplifier->get_sub_str()->get_stats().print();
+        occsimplifier->get_sub_str()->get_stats().print(conf.prefix);
     }
 
     //TODO after TRI to LONG conversion
@@ -2168,8 +2167,8 @@ void Solver::print_full_stats(
     }*/
 
     varReplacer->get_scc_finder()->get_stats().print();
-    varReplacer->get_stats().print(nVarsOuter());
-    varReplacer->print_some_stats(cpu_time);
+    varReplacer->get_stats().print(nVarsOuter(), conf.prefix);
+    varReplacer->print_some_stats(cpu_time, conf.prefix);
     distill_bin_cls->get_stats().print(nVarsOuter());
     dist_long_with_impl->get_stats().print();
 
@@ -2182,7 +2181,7 @@ void Solver::print_full_stats(
 uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
 {
     size_t alloc = watches.mem_used_alloc();
-    print_stats_line(solver->conf.prefix + "Mem for watch alloc"
+    print_stats_line(conf.prefix + "Mem for watch alloc"
         , alloc/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(alloc, rss_mem_used)
@@ -2222,7 +2221,7 @@ void Solver::print_mem_stats() const
 {
     double vm_mem_used = 0;
     const uint64_t rss_mem_used = memUsedTotal(vm_mem_used);
-    print_stats_line("c Mem used"
+    print_stats_line(conf.prefix + "Mem used"
         , rss_mem_used/(1024UL*1024UL)
         , "MB"
     );
@@ -2233,7 +2232,7 @@ void Solver::print_mem_stats() const
 
     size_t mem = 0;
     mem += mem_used_vardata();
-    print_stats_line("c Mem for assings&vardata"
+    print_stats_line(conf.prefix + "Mem for assings&vardata"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
@@ -2242,7 +2241,7 @@ void Solver::print_mem_stats() const
     account += mem;
 
     mem = mem_used();
-    print_stats_line("c Mem for search&solve"
+    print_stats_line(conf.prefix + "Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
@@ -2251,7 +2250,7 @@ void Solver::print_mem_stats() const
     account += mem;
 
     mem = CNF::mem_used_renumberer();
-    print_stats_line("c Mem for renumberer"
+    print_stats_line(conf.prefix + "Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
@@ -2261,7 +2260,7 @@ void Solver::print_mem_stats() const
 
     if (occsimplifier) {
         mem = occsimplifier->mem_used();
-        print_stats_line("c Mem for occsimplifier"
+        print_stats_line(conf.prefix + "Mem for occsimplifier"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem_used)
@@ -2271,7 +2270,7 @@ void Solver::print_mem_stats() const
     }
 
     mem = varReplacer->mem_used();
-    print_stats_line("c Mem for varReplacer&SCC"
+    print_stats_line(conf.prefix + "Mem for varReplacer&SCC"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
@@ -2281,7 +2280,7 @@ void Solver::print_mem_stats() const
 
     if (subsumeImplicit) {
         mem = subsumeImplicit->mem_used();
-        print_stats_line("c Mem for impl subsume"
+        print_stats_line(conf.prefix + "Mem for impl subsume"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem_used)
@@ -2294,7 +2293,7 @@ void Solver::print_mem_stats() const
     mem = distill_long_cls->mem_used();
     mem += dist_long_with_impl->mem_used();
     mem += dist_impl_with_impl->mem_used();
-    print_stats_line("c Mem for 3 distills"
+    print_stats_line(conf.prefix + "Mem for 3 distills"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
@@ -2302,11 +2301,11 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    print_stats_line("c Accounted for mem (rss)"
+    print_stats_line(conf.prefix + "Accounted for mem (rss)"
         , stats_line_percent(account, rss_mem_used)
         , "%"
     );
-    print_stats_line("c Accounted for mem (vm)"
+    print_stats_line(conf.prefix + "Accounted for mem (vm)"
         , stats_line_percent(account, vm_mem_used)
         , "%"
     );

@@ -2787,7 +2787,7 @@ void Searcher::print_iteration_solving_stats()
 {
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
-        stats.print(propStats.propagations, conf.do_print_times);
+        stats.print(propStats.propagations, conf.do_print_times, conf.prefix);
         propStats.print(stats.cpu_time);
         print_stats_line("c props/decision"
             , float_div(propStats.propagations, stats.decisions)
