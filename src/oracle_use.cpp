@@ -111,9 +111,9 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
 
-    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*733LL*1000LL*1000LL;
+    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL;
     if (fast > 0) tot_vivif_mems /= (3*fast);
-    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*300LL*1000LL*1000LL;
+    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL;
     if (fast > 0) mems_per_call /= (3*fast);
     bool early_aborted_vivif = true;
     uint32_t bin_added = 0;
