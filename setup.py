@@ -47,11 +47,11 @@ def gen_modules(version):
     define_macros_val : list[tuple[str, str | None]] | None
     if platform == "win32" or platform == "cygwin":
         extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DINSTALLED_CADIBACK", "/DCMS_FULL_VERSION=\""+version+"\""]
-        define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", "")]
+        define_macros_val = [("TRACE", "")]
 
     else:
         extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17', "-DINSTALLED_CADIBACK"]
-        define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
+        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
 
     modules = Extension(
         name = "pycryptosat",
