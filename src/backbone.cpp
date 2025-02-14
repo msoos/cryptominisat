@@ -91,18 +91,18 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
         cls.push_back({orclit(l)});
     }
     uint64_t num_cls = cls.size();
+
     vector<int8_t> assump_map(nVars()+1, 2);
     ccnr.init(cls, nVars(), &assump_map);
     vector<int> sols_found(nVars()+1, -1);
-    uint32_t sols = 0;
-
+    uint32_t ccnr_sols_found = 0;
     double ccnr_time = cpuTime();
-    for(uint32_t i = 0; i < 10; i++) {
+    for(uint32_t nsols = 0; nsols < 10; nsols++) {
         ccnr.reinit();
         bool ret = ccnr.run(30LL*1000LL*1000LL);
         verb_print(3, "[backbone-ccnr] sol found: " << ret);
         if (!ret) continue;
-        sols++;
+        ccnr_sols_found++;
         const auto& sol = ccnr.get_sol();
         for(uint32_t v = 1; v <= nVars(); v++) {
             if (sols_found[v] == -1) {
@@ -119,13 +119,14 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     for(uint32_t i = 1; i <= nVars(); i++) {
         if (sols_found[i] == 2) drop_cands.push_back(i);
     }
-    verb_print(1, "[backbone-simpl] ccnr sols: " << sols << " drop_cands: " << drop_cands.size()
+    verb_print(1, "[backbone-simpl] ccnr sols: " << ccnr_sols_found << " drop_cands: " << drop_cands.size()
             << " T: " << std::fixed << std::setprecision(2)
             << cpuTime()-ccnr_time);
 
     vector<int> learned_units;
     /* vector<int> learned_bins; */
-    verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits << " num cls: " << num_cls << " num vars: " << nVars());
+    verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits
+            << " num cls: " << num_cls << " num vars: " << nVars());
     int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, /*learned_bins,*/ learned_units);
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
