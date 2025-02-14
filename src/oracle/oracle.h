@@ -57,6 +57,14 @@ struct TriState {
     int val;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const TriState& ts) {
+    if (ts.isTrue()) os << "true";
+    else if (ts.isFalse()) os << "false";
+    else if (ts.isUnknown()) os << "unknown";
+    else assert(false);
+    return os;
+}
+
 struct Stats {
  	int64_t mems = 0;
  	int64_t decisions = 0;

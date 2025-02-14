@@ -26,18 +26,10 @@ THE SOFTWARE.
 #include <cstdlib>
 #include "ccnr_oracle_pre.h"
 #include "ccnr_oracle.h"
-#include <iomanip>
-#include "constants.h"
 #include "oracle/utils.h"
-#include "time_mem.h"
-#include <iostream>
 #include "solvertypes.h"
 
 using namespace CMSat;
-using std::setprecision;
-using std::fixed;
-using std::cout;
-using std::endl;
 
 CCNROraclePre::CCNROraclePre(Solver* solver) {
     ls = new OracleLS(solver);
@@ -48,9 +40,6 @@ CCNROraclePre::~CCNROraclePre() { delete ls; }
 void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t num_vars,
         vector<int8_t>* _assump_map) {
     ls->assump_map = _assump_map;
-
-    //It might not work well with few number of variables
-    //rnovelty could also die/exit(-1), etc.
     ls->num_vars = num_vars;
     ls->num_cls = cls.size();
     ls->make_space();
@@ -69,7 +58,6 @@ void CCNROraclePre::init(const vector<vector<sspp::Lit>>& cls, uint32_t num_vars
 void CCNROraclePre::adjust_assumps(const vector<int>& assumps_changed) {
     ls->adjust_assumps(assumps_changed);
 }
-
 
 void CCNROraclePre::reinit() {
     ls->initialize();
