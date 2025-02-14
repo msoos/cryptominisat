@@ -93,8 +93,9 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     uint64_t num_cls = cls.size();
     vector<int8_t> assump_map(nVars()+1, 2);
     ccnr.init(cls, nVars(), &assump_map);
-    vector<int> sols_found(nVars()+1, 0);
+    vector<int> sols_found(nVars()+1, -1);
     uint32_t sols = 0;
+
     double ccnr_time = cpuTime();
     for(uint32_t i = 0; i < 10; i++) {
         ccnr.reinit();
