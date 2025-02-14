@@ -812,7 +812,8 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 		}
 		if (Propagate(1)) {
 			unsat = true;
-			assert(sol.isFalse());
+			assert(sol.isFalse() || sol.isUnknown());
+            sol = TriState(false);
 		}
 	}
 	if (sol.isTrue()) {
