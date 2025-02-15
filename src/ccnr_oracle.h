@@ -69,8 +69,8 @@ inline ostream& operator<<(ostream& os, const Olit& l) {
 struct Ovariable {
     vector<Olit> lits;
     vector<int> neighbor_vars;
-    long long score;
-    long long last_flip_step;
+    int64_t score = 0;
+    int64_t last_flip_step;
     int unsat_appear; //how many unsat clauses it appears in
                       //
     bool cc_value;
@@ -81,7 +81,7 @@ struct Oclause {
     vector<Olit> lits;
     int sat_count; //no. of satisfied literals
     int sat_var; // the variable that makes the clause satisfied
-    long long weight;
+    int64_t weight;
 };
 
 struct Oconf {
@@ -111,7 +111,7 @@ class OracleLS {
     vector<int8_t>* assump_map = nullptr; // always num_vars+1 size, if 2, it's a variable to flip, otherwise 1/0 for fixed vars
     vector<int8_t> sol; //solution information. 0 = false, 1 = true, 3 = unset
     vector<int> ccd_vars;
-    long long delta_tot_cl_weight;
+    int64_t delta_tot_cl_weight;
 
     //functions for building data structure
     bool make_space();
@@ -127,7 +127,7 @@ class OracleLS {
     Oconf conf;
 
     // Config
-    long long max_steps;
+    int64_t max_steps;
     int64_t max_tries;
     float swt_p = 0.3;
     float swt_q = 0.7;

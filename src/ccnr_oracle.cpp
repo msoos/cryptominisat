@@ -205,13 +205,15 @@ int OracleLS::pick_var() {
     //First, try to get the var with the highest score from ccd_vars if any
     //----------------------------------------
     int best_var = -1;
-    int best_score = std::numeric_limits<int>::min();
+    int64_t best_score = std::numeric_limits<int64_t>::min();
     mems += ccd_vars.size()/8;
     if (!ccd_vars.empty()) {
         for (int v: ccd_vars) {
+            assert(v <= num_vars);
+            assert(v < (int)vars.size());
             if (assump_map->at(v) != 2) continue;
 
-            if (vars[v].score > best_score) {
+            if (vars[v].score >= best_score) {
                 best_var = v;
                 best_score = vars[v].score;
             } else if (vars[v].score == vars[best_var].score &&
@@ -243,14 +245,14 @@ int OracleLS::pick_var() {
     if (!ok) return -1;
     /* cout << "decided on cl_id: " << cid << " -- "; print_cl(cid); */
 
-    best_score = std::numeric_limits<int>::min();
+    best_score = std::numeric_limits<int64_t>::min();
     const auto& cl = cls[cid];
     for (auto& l: cl.lits) {
         int v = l.var_num;
         if ((*assump_map)[v] != 2) continue;
 
-        int score = vars[v].score;
-        if (score > best_score) {
+        int64_t score = vars[v].score;
+        if (score >= best_score) {
             best_var = v;
             best_score = score;
         } else if (score == best_score &&
@@ -302,7 +304,7 @@ void OracleLS::flip(int v) {
     assert(sol[v] == 0 || sol[v] == 1);
     sol[v] = 1 - sol[v];
 
-    const int orig_score = vars[v].score;
+    const int64_t orig_score = vars[v].score;
     mems += vars[v].lits.size();
 
     // Go through each clause the literal is in and update status
