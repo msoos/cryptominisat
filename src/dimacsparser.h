@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include <iomanip>
 #include <vector>
 #include <cassert>
+#include <complex>
 
 using std::vector;
 using std::cerr;
@@ -232,7 +233,7 @@ bool DimacsParser<C, S>::match(C& in, const char* str)
 template<class C, class S>
 bool DimacsParser<C, S>::parseWeight(C& in) {
     int32_t slit;
-    mpq_class weight;
+    std::complex<mpq_class> weight;
     if (in.parseInt(slit, lineNum) && in.parseDouble(weight, lineNum)) {
         if (slit == 0) {
             cerr << "ERROR: Cannot define weight of literal 0!" << endl;

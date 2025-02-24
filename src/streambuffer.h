@@ -19,6 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #pragma once
 
+#include <codecvt>
+#include <complex>
 #include <cstdio>
 #include <gmpxx.h>
 #include <iostream>
@@ -158,7 +160,23 @@ public:
         exit(-1);
     }
 
-    inline bool parseDouble(mpq_class& ret, size_t lineNum)
+    inline bool parseDouble(complex<mpq_class>& ret, size_t lineNum)
+    {
+        mpq_class real;
+        if (!parseDouble_part(real, lineNum)) return false;
+        skipWhitespace();
+        mpq_class imag;
+        if (value() == '+') {
+            advance();
+            if (!parseDouble_part(imag, lineNum)) return false;
+            skipWhitespace();
+            assert(value() == 'i');
+        }
+        ret = std::complex<mpq_class>(real, imag);
+        return true;
+    }
+
+    inline bool parseDouble_part(mpq_class& ret, size_t lineNum)
     {
         skipWhitespace();
         mpq_class head;
@@ -217,15 +235,6 @@ public:
                 mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
                 ret *=x;
             }
-        } else if (value() == ' ') {
-            // OK
-        } else {
-            std::cerr
-            << "PARSE ERROR! Unexpected char (dec: '" << value() << ")"
-            << " At line " << lineNum
-            << " we expected a weight like 1.5 or 4/5 or 4e-2"
-            << std::endl;
-            return false;
         }
         if (neg) ret *=-1;
         return true;
