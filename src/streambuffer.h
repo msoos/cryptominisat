@@ -19,8 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #pragma once
 
-#include <codecvt>
 #include <complex>
+#include <cassert>
 #include <cstdio>
 #include <gmpxx.h>
 #include <iostream>
@@ -160,7 +160,7 @@ public:
         exit(-1);
     }
 
-    inline bool parseDouble(complex<mpq_class>& ret, size_t lineNum)
+    inline bool parseDouble(std::complex<mpq_class>& ret, size_t lineNum)
     {
         mpq_class real;
         if (!parseDouble_part(real, lineNum)) return false;

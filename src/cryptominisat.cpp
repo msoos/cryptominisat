@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <fstream>
 #include <cstdint>
 #include <iomanip>
-#include <limits>
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -46,6 +45,8 @@ using std::vector;
 #endif
 
 using namespace CMSat;
+
+using std::complex;
 
 static bool print_thread_start_and_finish = false;
 
@@ -1348,7 +1349,7 @@ DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
 }
 
-DLL_PUBLIC std::map<Lit, mpq_class> SATSolver::translate_weights(const std::map<Lit, mpq_class>& ws)
+DLL_PUBLIC std::map<Lit, complex<mpq_class>> SATSolver::translate_weights(const std::map<Lit, complex<mpq_class>>& ws)
 {
     return data->solvers[0]->translate_weights(ws);
 }

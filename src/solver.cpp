@@ -3733,9 +3733,9 @@ void Solver::conclude_idrup (lbool result) {
 /* // This needs to be an AIG actually, with an order of what to calculate first. */
 /* void Solver::get_var_map(vector<Lit>& var_map, map<uint32_t, bool>& var_set) const { */
 
-map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
+map<Lit, complex<mpq_class>> Solver::translate_weights(const map<Lit, complex<mpq_class>>& ws) {
     assert(get_clause_query);
-    map<Lit, mpq_class> ret;
+    map<Lit, complex<mpq_class>> ret;
     for(const auto&w : ws) {
         Lit l = w.first;
         assert(l.var() < nVarsOuter());

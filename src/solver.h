@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <array>
 #include <utility>
 #include <string>
+#include <complex>
 
 #include "solvertypes.h"
 #include "propengine.h"
@@ -48,6 +49,7 @@ using std::vector;
 using std::pair;
 using std::string;
 using std::array;
+using std::complex;
 struct PicoSAT;
 
 namespace CMSat {
@@ -135,7 +137,7 @@ class Solver : public Searcher
         void end_getting_constraints();
         vector<uint32_t> translate_sampl_set(
                 const vector<uint32_t>& sampl_set, bool also_removed);
-        map<Lit, mpq_class> translate_weights(const map<Lit, mpq_class>& ws);
+        map<Lit, complex<mpq_class>> translate_weights(const map<Lit, complex<mpq_class>>& ws);
         map<uint32_t, VarMap> update_var_mapping(const map<uint32_t, VarMap>& vmap);
         vector<uint32_t> get_elimed_vars() const;
         vector<vector<Lit>> get_cls_defining_var(uint32_t outer_v) const;
