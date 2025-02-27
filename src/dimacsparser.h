@@ -29,18 +29,17 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <cmath>
 #include <map>
-#include <sstream>
 #include <iostream>
-#include <iomanip>
+#include <memory>
 #include <vector>
 #include <cassert>
-#include <complex>
 
 using std::vector;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::map;
+using std::unique_ptr;
 
 namespace CMSat {
 
@@ -48,18 +47,19 @@ template <class C, class S>
 class DimacsParser
 {
     public:
-        DimacsParser(S* solver, const std::string* debugLib, unsigned _verbosity);
+        DimacsParser(S* solver, const std::string* debugLib, unsigned _verbosity, const std::unique_ptr<FieldGen>& _fg);
 
         template <class T> bool parse_DIMACS(
             T input_stpeam,
             const bool strict_header,
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
-        map<int32_t, double> weights;
+        map<int32_t, std::unique_ptr<Field>> weights;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
 
     private:
+        std::unique_ptr<FieldGen> fg;
         bool parse_DIMACS_main(C& in);
         bool readClause(C& in);
         bool parse_and_add_clause(C& in);
@@ -89,7 +89,7 @@ class DimacsParser
         unsigned verbosity;
 
         //Stat
-        size_t lineNum;
+        size_t lineNum = 1;
 
         //Printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         uint32_t debugLibPart = 1;
@@ -113,18 +113,11 @@ class DimacsParser
 
 
 template<class C, class S>
-DimacsParser<C, S>::DimacsParser(
-    S* _solver
-    , const std::string* _debugLib
-    , unsigned _verbosity
-):
-    solver(_solver)
-    , verbosity(_verbosity)
-    , lineNum(0)
+DimacsParser<C, S>::DimacsParser( S* _solver, const std::string* _debugLib, unsigned _verbosity,
+        const std::unique_ptr<FieldGen>& _fg):
+    fg(_fg->duplicate()), solver(_solver), verbosity(_verbosity)
 {
-    if (_debugLib) {
-        debugLib = *_debugLib;
-    }
+    if (_debugLib) debugLib = *_debugLib;
 }
 
 template<class C, class S>
@@ -143,7 +136,7 @@ bool DimacsParser<C, S>::check_var(const uint32_t var)
         << "ERROR! "
         << "Variable requested is too large for DIMACS parser parameter: "
         << var << endl
-        << "--> At line " << lineNum+1
+        << "--> At line " << lineNum
         << please_read_dimacs
         << endl;
         return false;
@@ -153,7 +146,7 @@ bool DimacsParser<C, S>::check_var(const uint32_t var)
         std::cerr
         << "ERROR! "
         << "Variable requested is far too large: " << var + 1 << endl
-        << "--> At line " << lineNum+1
+        << "--> At line " << lineNum
         << please_read_dimacs
         << endl;
         return false;
@@ -172,7 +165,7 @@ bool DimacsParser<C, S>::check_var(const uint32_t var)
         << "Variable requested is larger than the header told us." << endl
         << " -> var is : " << var + 1 << endl
         << " -> header told us maximum will be : " << num_header_vars << endl
-        << " -> At line " << lineNum+1
+        << " -> At line " << lineNum
         << endl;
         return false;
     }
@@ -210,7 +203,7 @@ bool DimacsParser<C, S>::readClause(C& in)
             std::cerr
             << "ERROR! "
             << "After last element on the line must be 0" << endl
-            << "--> At line " << lineNum+1
+            << "--> At line " << lineNum
             << please_read_dimacs
             << endl
             << endl;
@@ -233,16 +226,16 @@ bool DimacsParser<C, S>::match(C& in, const char* str)
 template<class C, class S>
 bool DimacsParser<C, S>::parseWeight(C& in) {
     int32_t slit;
-    std::complex<mpq_class> weight;
-    if (in.parseInt(slit, lineNum) && in.parseDouble(weight, lineNum)) {
+    std::unique_ptr<Field> weight(fg->zero());
+    if (in.parseInt(slit, lineNum)) {
         if (slit == 0) {
             cerr << "ERROR: Cannot define weight of literal 0!" << endl;
             exit(-1);
         }
-        uint32_t var = std::abs(slit)-1;
-        bool sign = slit < 0;
-        Lit lit = Lit(var, sign);
-        /* cout << "weight parsed for lit: " << lit << " weight: " << weight << endl; */
+        std::string str = in.getRemain();
+        if (!weight->parse(str, lineNum)) return false;
+        const Lit lit = Lit(std::abs(slit)-1, slit < 0);
+        cout << "weight parsed for lit: " << lit << " weight: " << *weight << endl;
         solver->set_lit_weight(lit, weight);
         return true;
     } else {
@@ -297,7 +290,7 @@ bool DimacsParser<C, S>::parse_header(C& in)
         << std::setfill(' ')
         << std::dec
         << ")"
-        << " At line " << lineNum+1
+        << " At line " << lineNum
         << "' in the header"
         << please_read_dimacs
         << endl;
@@ -544,7 +537,7 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
         std::cerr
         << "ERROR! "
         << "BNN constraint has empty set of inputs" << endl
-        << "--> At line " << lineNum+1
+        << "--> At line " << lineNum
         << endl;
         return false;
     }
@@ -642,7 +635,7 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
         case '\n':
             if (verbosity) {
                 cout
-                << "c WARNING: Empty line at line number " << lineNum+1
+                << "c WARNING: Empty line at line number " << lineNum
                 << " -- this is not part of the DIMACS specifications ("
                 << dimacs_spec << "). Ignoring."
                 << endl;

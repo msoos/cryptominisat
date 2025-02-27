@@ -19,16 +19,15 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #pragma once
 
-#include <complex>
 #include <cassert>
 #include <cstdio>
-#include <gmpxx.h>
 #include <iostream>
 #include <iomanip>
 #include <limits>
 #include <string>
 #include <memory>
 #include <cmath>
+#include "solvertypesmini.h"
 
 using std::numeric_limits;
 
@@ -112,8 +111,7 @@ public:
         assureLookahead();
     }
 
-    void skipWhitespace()
-    {
+    void skipWhitespace() {
         char c = value();
         while (c == '\t' || c == '\r' || c == ' ') {
             advance();
@@ -121,8 +119,16 @@ public:
         }
     }
 
-    void skipLine()
-    {
+    std::string getRemain() {
+        std::string str;
+        for (;;) {
+            if (value() == EOF || value() == '\0' || value() == '\n') return str;
+            advance();
+            str.push_back(value());
+        }
+    }
+
+    void skipLine() {
         for (;;) {
             if (value() == EOF || value() == '\0') return;
             if (value() == '\n') {
@@ -133,8 +139,7 @@ public:
         }
     }
 
-    bool skipEOL(const size_t lineNum)
-    {
+    bool skipEOL(const size_t lineNum) {
         for (;;) {
             if (value() == EOF || value() == '\0') return true;
             if (value() == '\n') {
@@ -158,86 +163,6 @@ public:
             advance();
         }
         exit(-1);
-    }
-
-    inline bool parseDouble(std::complex<mpq_class>& ret, size_t lineNum)
-    {
-        mpq_class real;
-        if (!parseDouble_part(real, lineNum)) return false;
-        skipWhitespace();
-        mpq_class imag;
-        if (value() == '+') {
-            advance();
-            if (!parseDouble_part(imag, lineNum)) return false;
-            skipWhitespace();
-            assert(value() == 'i');
-        }
-        ret = std::complex<mpq_class>(real, imag);
-        return true;
-    }
-
-    inline bool parseDouble_part(mpq_class& ret, size_t lineNum)
-    {
-        skipWhitespace();
-        mpq_class head;
-        bool neg = false;
-        if (value() == '-') {
-            neg = true;
-            advance();
-        }
-        bool rc = parseInt<mpq_class>(head, lineNum);
-        if (!rc) return false;
-
-        bool rational = false;
-        if (value() == '.') {
-            advance();
-            mpz_class tail;
-            int len = 0;
-            rc = parseInt<mpz_class>(tail, lineNum, &len);
-            if (!rc) return false;
-            mpz_class ten(10);
-            mpz_ui_pow_ui(ten.get_mpz_t(), 10, len);
-            mpq_class tenq(ten);
-            mpq_class tailq(tail);
-            ret = head + tailq/tenq;
-        } else if (value() == '/') {
-            rational = true;
-            advance();
-            mpq_class tail;
-            int len = 0;
-            rc = parseInt<mpq_class>(tail, lineNum, &len);
-            if (!rc) return false;
-            ret = head/tail;
-        } else {
-            ret = head;
-        }
-
-        if (value() == 'e' || value() == 'E') {
-            if (rational) {
-                std::cerr
-                << "PARSE ERROR! You can't have BOTH rational AND exponent"
-                << " At line " << lineNum
-                << " Probably looks like 1/2e-4"
-                << std::endl;
-                return false;
-            }
-            advance();
-            int64_t ex;
-            int len = 0;
-            rc = parseInt<int64_t>(ex, lineNum, &len);
-            if (!rc) return false;
-            mpz_class x(1);
-            if (ex < 0) {
-                ex *=-1;
-                mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
-                ret /= x;
-            } else {
-                mpz_pow_ui(x.get_mpz_t(), mpz_class(10).get_mpz_t(), ex);
-                ret *=x;
-            }
-        }
-        if (neg) ret *=-1;
-        return true;
     }
 
     template<class T=int32_t>

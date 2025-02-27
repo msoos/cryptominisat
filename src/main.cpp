@@ -20,12 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include "solvertypesmini.h"
 #define DEBUG_DIMACSPARSER_CMS
 
 #include <ctime>
 #include <cstring>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -63,16 +64,16 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-void Main::readInAFile(SATSolver* solver2, const string& filename)
-{
+void Main::readInAFile(SATSolver* solver2, const string& filename) {
+    std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
     solver2->add_sql_tag("filename", filename);
     if (conf.verbosity) cout << "c Reading file '" << filename << "'" << endl;
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
 
     if (in == nullptr) {
@@ -99,6 +100,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
 void Main::readInStandardInput(SATSolver* solver2)
 {
     if (conf.verbosity) cout << "c Reading from standard input... Use '-h' or '--help' for help." << endl;
+    std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
 
     #ifndef USE_ZLIB
     FILE * in = stdin;
@@ -112,15 +114,12 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #else
-    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
 
-    if (!parser.parse_DIMACS(in, false)) {
-        exit(-1);
-    }
-
+    if (!parser.parse_DIMACS(in, false)) exit(-1);
     #ifdef USE_ZLIB
         gzclose(in);
     #endif

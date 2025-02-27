@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <cassert>
 #include <vector>
 #include <array>
+#include <gmpxx.h>
 #include <algorithm>
 
 namespace CMSat {
@@ -171,7 +172,6 @@ inline lbool toLbool(uint32_t v)
     l.value = v;
     return l;
 }
-
 
 constexpr inline uint32_t toInt  (lbool l)
 {
@@ -417,6 +417,280 @@ inline std::ostream& operator<<(std::ostream& os, const VarMap& v)
     }
     return os;
 }
+
+class Field {
+public:
+    virtual ~Field() = default;
+
+    // Virtual methods for field operations
+    virtual Field& operator=(const Field& other) = 0;
+    virtual Field& operator+=(const Field& other) = 0;
+    virtual Field& operator-=(const Field& other) = 0;
+    virtual Field& operator*=(const Field& other) = 0;
+    virtual Field& operator/=(const Field& other) = 0;
+    virtual bool is_zero() const = 0;
+    virtual bool is_one() const = 0;
+    virtual Field* duplicate() const = 0;
+    virtual bool parse(const std::string& str, uint32_t line_no) = 0;
+
+    // A method to display the value (for demonstration purposes)
+    virtual std::ostream& display(std::ostream& os) const = 0;
+
+
+    static void skip_whitespace(const std::string& str, uint32_t& at) {
+        char c = str[at];
+        while (c == '\t' || c == '\r' || c == ' ') {
+            at++;
+            c = str[at];
+        }
+    }
+
+    static mpz_class parse_sign(const std::string& str, uint32_t& at) {
+        mpz_class sign = 1;
+        if (str[at] == '-') {sign = -1; at++;}
+        else if (str[at] == '+') {sign = 1; at++;}
+        return sign;
+    }
+
+    static bool parse_int(mpz_class& ret, const std::string& str, size_t line_num, uint32_t& at, int* len = nullptr) {
+        mpz_class val = 0;
+        skip_whitespace(str, at);
+
+        char c = str[at];
+        if (c < '0' || c > '9') {
+            std::cerr
+            << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
+            << " At line " << line_num
+            << " we expected a number"
+            << std::endl;
+            return false;
+        }
+
+        while (c >= '0' && c <= '9') {
+            if (len) (*len)++;
+            mpz_class val2 = val*10 + (c - '0');
+            if (val2 < val) {
+                std::cerr << "PARSE ERROR! At line " << line_num
+                << " the variable number is to high"
+                << std::endl;
+                return false;
+            }
+            val = val2;
+            c = str[++at];
+        }
+        ret = val;
+        return true;
+    }
+
+    static bool check_end_of_weight(const std::string& str, uint32_t& at, uint32_t line_no) {
+        skip_whitespace(str, at);
+        if (str[at] != '0') {
+            std::cerr << "PARSE ERROR! expected 0 at the end of the weight. At line " << line_no << std::endl;
+            return false;
+        }
+        at++;
+        skip_whitespace(str, at);
+        if (str[at] != '\n') {
+            std::cerr << "PARSE ERROR! expected end of line at the end of the weight. At line " << line_no << std::endl;
+            return false;
+        }
+        return true;
+    }
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Field& f) {
+    return f.display(os);
+}
+
+class FieldGen {
+public:
+    virtual ~FieldGen() = default;
+    virtual Field* zero() const = 0;
+    virtual Field* one() const = 0;
+    virtual FieldGen* duplicate() const = 0;
+};
+
+class FDouble : public Field {
+private:
+    double val;
+
+public:
+    FDouble(const int _val) : val(_val) {}
+    FDouble(const FDouble& other) : val(other.val) {}
+
+    Field& operator=(const Field& other) override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        val = od.val;
+        return *this;
+    }
+
+    Field& operator+=(const Field& other) override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        val += od.val;
+        return *this;
+    }
+
+    Field& operator-=(const Field& other) override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        val -= od.val;
+        return *this;
+    }
+
+    Field& operator*=(const Field& other) override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        val *= od.val;
+        return *this;
+    }
+
+    Field& operator/=(const Field& other) override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        if (od.val == 0) throw std::runtime_error("Division by zero");
+        val /= od.val;
+        return *this;
+    }
+
+    std::ostream& display(std::ostream& os) const override {
+        os << val;
+        return os;
+    }
+
+    Field* duplicate() const override {
+        return new FDouble(val);
+    }
+
+    bool is_zero() const override {
+        return val == 0;
+    }
+
+    bool is_one() const override {
+        return val == 1;
+    }
+
+    bool parse(const std::string& str, uint32_t line_no) override {
+        mpz_class head;
+        mpz_class mult;
+        uint32_t at = 0;
+        auto sign = parse_sign(str, at);
+        parse_int(head, str, line_no, at);
+        mpq_class vald;
+        if (str[at] == '.') {
+            at++;
+            mpz_class tail;
+            int len = 0;
+            if (!parse_int(tail, str, line_no, at, &len)) return false;
+            mpz_class ten(10);
+            mpz_ui_pow_ui(ten.get_mpz_t(), 10, len);
+            mpq_class tenq(ten);
+            mpq_class tailq(tail);
+            vald = head + tailq/tenq;
+        } else {
+            vald = head;
+        }
+        vald *= sign;
+        val = vald.get_d();
+        return check_end_of_weight(str, at, line_no);
+    }
+};
+
+class FGenDouble : public FieldGen {
+public:
+    ~FGenDouble() override = default;
+    Field* zero() const override {
+        return new FDouble(0);
+    }
+
+    Field* one() const override {
+        return new FDouble(1.0);
+    }
+
+    FieldGen* duplicate() const override {
+        return new FGenDouble();
+    }
+};
+
+class FMpz : public Field {
+private:
+    mpz_class val;
+
+public:
+    FMpz(const int _val) : val(_val) {}
+    FMpz(const mpz_class& _val) : val(_val) {}
+    FMpz(const FMpz& other) : val(other.val) {}
+
+    Field& operator=(const Field& other) override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        val = od.val;
+        return *this;
+    }
+
+    Field& operator+=(const Field& other) override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        val += od.val;
+        return *this;
+    }
+
+    Field& operator-=(const Field& other) override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        val -= od.val;
+        return *this;
+    }
+
+    Field& operator*=(const Field& other) override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        val *= od.val;
+        return *this;
+    }
+
+    Field& operator/=(const Field& other) override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        if (od.val == 0) throw std::runtime_error("Division by zero");
+        val /= od.val;
+        return *this;
+    }
+
+    std::ostream& display(std::ostream& os) const override {
+        os << val;
+        return os;
+    }
+
+    Field* duplicate() const override {
+        return new FMpz(val);
+    }
+
+    bool is_zero() const override {
+        return val == 0;
+    }
+
+    bool is_one() const override {
+        return val == 1;
+    }
+
+    bool parse(const std::string& str, uint32_t line_no) override {
+        uint32_t at = 0;
+        skip_whitespace(str, at);
+        auto sign = parse_sign(str, at);
+        if (!parse_int(val, str, line_no, at)) return false;
+        val*=sign;
+        return check_end_of_weight(str, at, line_no);
+    }
+};
+
+class FGenMpz : public FieldGen {
+public:
+    ~FGenMpz() override = default;
+    Field* zero() const override {
+        return new FMpz(0);
+    }
+
+    Field* one() const override {
+        return new FMpz(1.0);
+    }
+
+    FieldGen* duplicate() const override {
+        return new FGenMpz();
+    }
+};
+
 
 }
 
