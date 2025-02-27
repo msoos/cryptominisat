@@ -452,7 +452,8 @@ public:
         return sign;
     }
 
-    static bool parse_int(mpz_class& ret, const std::string& str, size_t line_num, uint32_t& at, int* len = nullptr) {
+    static bool parse_int(mpz_class& ret, const std::string& str, uint32_t& at,
+            const size_t line_num, int* len = nullptr) {
         mpz_class val = 0;
         skip_whitespace(str, at);
 
@@ -566,18 +567,18 @@ public:
         return val == 1;
     }
 
-    bool parse(const std::string& str, uint32_t line_no) override {
+    bool parse(const std::string& str, const uint32_t line_no) override {
         mpz_class head;
         mpz_class mult;
         uint32_t at = 0;
         auto sign = parse_sign(str, at);
-        parse_int(head, str, line_no, at);
+        parse_int(head, str, at, line_no);
         mpq_class vald;
         if (str[at] == '.') {
             at++;
             mpz_class tail;
             int len = 0;
-            if (!parse_int(tail, str, line_no, at, &len)) return false;
+            if (!parse_int(tail, str, at, line_no, &len)) return false;
             mpz_class ten(10);
             mpz_ui_pow_ui(ten.get_mpz_t(), 10, len);
             mpq_class tenq(ten);
@@ -669,7 +670,7 @@ public:
         uint32_t at = 0;
         skip_whitespace(str, at);
         auto sign = parse_sign(str, at);
-        if (!parse_int(val, str, line_no, at)) return false;
+        if (!parse_int(val, str, at, line_no)) return false;
         val*=sign;
         return check_end_of_weight(str, at, line_no);
     }
