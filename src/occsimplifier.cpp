@@ -1310,9 +1310,7 @@ bool OccSimplifier::eliminate_vars()
         limit_to_decrease = &norm_varelim_time_limit;
         order_vars_for_elim();
         if (velim_order.size() < 400) {
-            for(auto& v: solver->varData) {
-                v.occ_simp_tried = 0;
-            }
+            for(auto& v: solver->varData) v.occ_simp_tried = 0;
         }
 
         added_cl_to_var.clear();
