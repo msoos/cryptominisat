@@ -430,8 +430,10 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             return false;
         }
         in.skipWhitespace();
-        in.parseString(str2);
-        solver->set_multiplier_weight(mpq_class(str2.c_str()));
+        str2 = in.getRemain();
+        std::unique_ptr<Field> f(fg->zero());
+        f->parse(str2, lineNum);
+        solver->set_multiplier_weight(f);
     }
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
