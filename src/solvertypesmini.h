@@ -431,7 +431,7 @@ public:
     virtual bool is_zero() const = 0;
     virtual bool is_one() const = 0;
     virtual Field* duplicate() const = 0;
-    virtual bool parse(const std::string& str, uint32_t line_no) = 0;
+    virtual bool parse(const std::string& str, const uint32_t line_no) = 0;
 
     // A method to display the value (for demonstration purposes)
     virtual std::ostream& display(std::ostream& os) const = 0;
@@ -483,7 +483,7 @@ public:
         return true;
     }
 
-    static bool check_end_of_weight(const std::string& str, uint32_t& at, uint32_t line_no) {
+    static bool check_end_of_weight(const std::string& str, uint32_t& at, const uint32_t line_no) {
         skip_whitespace(str, at);
         if (str[at] != '0') {
             std::cerr << "PARSE ERROR! expected 0 at the end of the weight. At line " << line_no << std::endl;
@@ -666,7 +666,7 @@ public:
         return val == 1;
     }
 
-    bool parse(const std::string& str, uint32_t line_no) override {
+    bool parse(const std::string& str, const uint32_t line_no) override {
         uint32_t at = 0;
         skip_whitespace(str, at);
         auto sign = parse_sign(str, at);
