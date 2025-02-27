@@ -1349,9 +1349,9 @@ DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
 }
 
-DLL_PUBLIC std::map<Lit, complex<mpq_class>> SATSolver::translate_weights(const std::map<Lit, complex<mpq_class>>& ws)
+DLL_PUBLIC std::vector<Lit> SATSolver::get_weight_translation() const
 {
-    return data->solvers[0]->translate_weights(ws);
+    return data->solvers[0]->get_weight_translation();
 }
 
 DLL_PUBLIC map<uint32_t, VarMap> SATSolver::update_var_mapping(

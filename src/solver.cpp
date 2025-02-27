@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <ranges>
 #include "constants.h"
 #include "solvertypes.h"
 #include "solvertypesmini.h"
@@ -3731,18 +3732,15 @@ void Solver::conclude_idrup (lbool result) {
 }
 
 /* // This needs to be an AIG actually, with an order of what to calculate first. */
-/* void Solver::get_var_map(vector<Lit>& var_map, map<uint32_t, bool>& var_set) const { */
-
-map<Lit, complex<mpq_class>> Solver::translate_weights(const map<Lit, complex<mpq_class>>& ws) {
+vector<Lit> Solver::get_weight_translation() const {
+    vector<Lit> ret(nVarsOuter()*2, lit_Undef);
     assert(get_clause_query);
-    map<Lit, complex<mpq_class>> ret;
-    for(const auto&w : ws) {
-        Lit l = w.first;
-        assert(l.var() < nVarsOuter());
+    for(const auto&i: iota(0u, nVarsOuter()*2)) {
+        Lit l = Lit(i/2, i%2);
         l = varReplacer->get_lit_replaced_with_outer(l);
         l = map_outer_to_inter(l);
         if (value(l) != l_Undef) continue;
-        ret[l] = w.second;
+        else ret[i] = l;
     }
     return ret;
 }

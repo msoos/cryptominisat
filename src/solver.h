@@ -137,7 +137,7 @@ class Solver : public Searcher
         void end_getting_constraints();
         vector<uint32_t> translate_sampl_set(
                 const vector<uint32_t>& sampl_set, bool also_removed);
-        map<Lit, complex<mpq_class>> translate_weights(const map<Lit, complex<mpq_class>>& ws);
+        vector<Lit> get_weight_translation() const;
         map<uint32_t, VarMap> update_var_mapping(const map<uint32_t, VarMap>& vmap);
         vector<uint32_t> get_elimed_vars() const;
         vector<vector<Lit>> get_cls_defining_var(uint32_t outer_v) const;
