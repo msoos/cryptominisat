@@ -669,9 +669,7 @@ bool DimacsParser<C, S>::parse_DIMACS(
     const uint32_t origNumVars = solver->nVars();
 
     C in(input_stream);
-    if ( !parse_DIMACS_main(in)) {
-        return false;
-    }
+    if ( !parse_DIMACS_main(in)) return false;
 
     if (verbosity) {
         cout
