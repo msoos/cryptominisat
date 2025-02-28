@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include <iostream>
 #include <cassert>
+#include <memory>
 #include <vector>
 #include <array>
 #include <gmpxx.h>
@@ -506,8 +507,8 @@ inline std::ostream& operator<<(std::ostream& os, const Field& f) {
 class FieldGen {
 public:
     virtual ~FieldGen() = default;
-    virtual Field* zero() const = 0;
-    virtual Field* one() const = 0;
+    virtual std::unique_ptr<Field> zero() const = 0;
+    virtual std::unique_ptr<Field> one() const = 0;
     virtual FieldGen* duplicate() const = 0;
 };
 
@@ -516,7 +517,7 @@ private:
     double val;
 
 public:
-    FDouble(const int _val) : val(_val) {}
+    FDouble(const double _val) : val(_val) {}
     FDouble(const FDouble& other) : val(other.val) {}
 
     Field& operator=(const Field& other) override {
@@ -596,12 +597,12 @@ public:
 class FGenDouble : public FieldGen {
 public:
     ~FGenDouble() override = default;
-    Field* zero() const override {
-        return new FDouble(0);
+    std::unique_ptr<Field> zero() const override {
+        return std::make_unique<FDouble>(0);
     }
 
-    Field* one() const override {
-        return new FDouble(1.0);
+    std::unique_ptr<Field> one() const override {
+        return std::make_unique<FDouble>(1.0);
     }
 
     FieldGen* duplicate() const override {
@@ -679,12 +680,12 @@ public:
 class FGenMpz : public FieldGen {
 public:
     ~FGenMpz() override = default;
-    Field* zero() const override {
-        return new FMpz(0);
+    std::unique_ptr<Field> zero() const override {
+        return std::make_unique<FMpz>(0);
     }
 
-    Field* one() const override {
-        return new FMpz(1.0);
+    std::unique_ptr<Field> one() const override {
+        return std::make_unique<FMpz>(1);
     }
 
     FieldGen* duplicate() const override {
