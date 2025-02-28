@@ -429,6 +429,7 @@ public:
     virtual Field& operator-=(const Field& other) = 0;
     virtual Field& operator*=(const Field& other) = 0;
     virtual Field& operator/=(const Field& other) = 0;
+    virtual bool operator==(const Field&) const = 0;
     virtual bool is_zero() const = 0;
     virtual bool is_one() const = 0;
     virtual void set_zero() = 0;
@@ -555,6 +556,11 @@ public:
         return *this;
     }
 
+    bool operator==(const Field& other) const override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        return od.val == val;
+    }
+
     std::ostream& display(std::ostream& os) const override {
         os << val;
         return os;
@@ -652,6 +658,11 @@ public:
         if (od.val == 0) throw std::runtime_error("Division by zero");
         val /= od.val;
         return *this;
+    }
+
+    bool operator==(const Field& other) const override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        return od.val == val;
     }
 
     std::ostream& display(std::ostream& os) const override {
