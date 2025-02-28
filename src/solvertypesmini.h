@@ -431,7 +431,7 @@ public:
     virtual Field& operator/=(const Field& other) = 0;
     virtual bool is_zero() const = 0;
     virtual bool is_one() const = 0;
-    virtual void reset() = 0;
+    virtual void set_zero() = 0;
     virtual uint64_t bytes_used() const = 0;
     virtual std::unique_ptr<Field> dup() const = 0;
     virtual bool parse(const std::string& str, const uint32_t line_no) = 0;
@@ -564,7 +564,7 @@ public:
 
     bool is_zero() const override { return val == 0; }
     bool is_one() const override { return val == 1; }
-    void reset() override { val = 0; }
+    void set_zero() override { val = 0; }
     uint64_t bytes_used() const override { return sizeof(val); }
 
     bool parse(const std::string& str, const uint32_t line_no) override {
@@ -657,7 +657,7 @@ public:
     std::unique_ptr<Field> dup() const override { return std::make_unique<FMpz>(val); }
     bool is_zero() const override { return val == 0; }
     bool is_one() const override { return val == 1; }
-    void reset() override { val = 0; }
+    void set_zero() override { val = 0; }
 
     bool parse(const std::string& str, const uint32_t line_no) override {
         uint32_t at = 0;
