@@ -431,7 +431,7 @@ public:
     virtual Field& operator/=(const Field& other) = 0;
     virtual bool is_zero() const = 0;
     virtual bool is_one() const = 0;
-    virtual std::unique_ptr<Field> duplicate() const = 0;
+    virtual std::unique_ptr<Field> dup() const = 0;
     virtual bool parse(const std::string& str, const uint32_t line_no) = 0;
 
     // A method to display the value (for demonstration purposes)
@@ -509,7 +509,7 @@ public:
     virtual ~FieldGen() = default;
     virtual std::unique_ptr<Field> zero() const = 0;
     virtual std::unique_ptr<Field> one() const = 0;
-    virtual std::unique_ptr<FieldGen> duplicate() const = 0;
+    virtual std::unique_ptr<FieldGen> dup() const = 0;
 };
 
 class FDouble : public Field {
@@ -556,7 +556,7 @@ public:
         return os;
     }
 
-    std::unique_ptr<Field> duplicate() const override {
+    std::unique_ptr<Field> dup() const override {
         return std::make_unique<FDouble>(val);
     }
 
@@ -605,7 +605,7 @@ public:
         return std::make_unique<FDouble>(1.0);
     }
 
-    std::unique_ptr<FieldGen> duplicate() const override {
+    std::unique_ptr<FieldGen> dup() const override {
         return std::make_unique<FGenDouble>();
     }
 };
@@ -655,7 +655,7 @@ public:
         return os;
     }
 
-    std::unique_ptr<Field> duplicate() const override {
+    std::unique_ptr<Field> dup() const override {
         return std::make_unique<FMpz>(val);
     }
 
@@ -688,7 +688,7 @@ public:
         return std::make_unique<FMpz>(1);
     }
 
-    std::unique_ptr<FieldGen> duplicate() const override {
+    std::unique_ptr<FieldGen> dup() const override {
         return std::make_unique<FGenMpz>();
     }
 };

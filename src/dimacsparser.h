@@ -115,7 +115,7 @@ class DimacsParser
 template<class C, class S>
 DimacsParser<C, S>::DimacsParser( S* _solver, const std::string* _debugLib, unsigned _verbosity,
         const std::unique_ptr<FieldGen>& _fg):
-    fg(_fg->duplicate()), solver(_solver), verbosity(_verbosity)
+    fg(_fg->dup()), solver(_solver), verbosity(_verbosity)
 {
     if (_debugLib) debugLib = *_debugLib;
 }
