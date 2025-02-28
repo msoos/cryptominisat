@@ -513,6 +513,7 @@ public:
     virtual std::unique_ptr<Field> zero() const = 0;
     virtual std::unique_ptr<Field> one() const = 0;
     virtual std::unique_ptr<FieldGen> dup() const = 0;
+    virtual bool weighted() const = 0;
 };
 
 class FDouble : public Field {
@@ -609,6 +610,8 @@ public:
     std::unique_ptr<FieldGen> dup() const override {
         return std::make_unique<FGenDouble>();
     }
+
+    bool weighted() const override { return true; }
 };
 
 class FMpz : public Field {
@@ -695,6 +698,8 @@ public:
     std::unique_ptr<FieldGen> dup() const override {
         return std::make_unique<FGenMpz>();
     }
+
+    bool weighted() const override { return false; }
 };
 
 
