@@ -235,7 +235,7 @@ bool DimacsParser<C, S>::parseWeight(C& in) {
         std::string str = in.getRemain();
         if (!weight->parse(str, lineNum)) return false;
         const Lit lit = Lit(std::abs(slit)-1, slit < 0);
-        cout << "weight parsed for lit: " << lit << " weight: " << *weight << endl;
+        /* cout << "weight parsed for lit: " << lit << " weight: " << *weight << endl; */
         solver->set_lit_weight(lit, weight);
         return true;
     } else {

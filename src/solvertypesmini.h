@@ -685,13 +685,12 @@ public:
         return check_end_of_weight(str, at, line_no);
     }
 
-    template<class T>
-    inline uint64_t helper(const T& v) const {
-      return v->_mp_alloc * sizeof(mp_limb_t);
+    inline uint64_t helper(const mpz_class& v) const {
+      return v.get_mpz_t()->_mp_alloc * sizeof(mp_limb_t);
     }
 
-    inline uint64_t bytes_used() const override {
-      return sizeof(mpz_class) + helper(val.get_mpz_t());
+    uint64_t bytes_used() const override {
+      return sizeof(mpz_class) + helper(val);
     }
 };
 
