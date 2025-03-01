@@ -518,10 +518,8 @@ public:
 };
 
 class FDouble : public Field {
-private:
-    double val;
-
 public:
+    double val;
     FDouble(const double _val) : val(_val) {}
     FDouble(const FDouble& other) : val(other.val) {}
 
@@ -621,10 +619,8 @@ public:
 };
 
 class FMpz : public Field {
-private:
-    mpz_class val;
-
 public:
+    mpz_class val;
     FMpz(const int _val) : val(_val) {}
     FMpz(const mpz_class& _val) : val(_val) {}
     FMpz(const FMpz& other) : val(other.val) {}
