@@ -426,6 +426,7 @@ public:
     // Virtual methods for field operations
     virtual Field& operator=(const Field& other) = 0;
     virtual Field& operator+=(const Field& other) = 0;
+    virtual std::unique_ptr<Field> add(const Field& other) = 0;
     virtual Field& operator-=(const Field& other) = 0;
     virtual Field& operator*=(const Field& other) = 0;
     virtual Field& operator/=(const Field& other) = 0;
@@ -535,6 +536,11 @@ public:
         return *this;
     }
 
+    std::unique_ptr<Field> add(const Field& other) override {
+        const auto& od = dynamic_cast<const FDouble&>(other);
+        return std::make_unique<FDouble>(val + od.val);
+    }
+
     Field& operator-=(const Field& other) override {
         const auto& od = dynamic_cast<const FDouble&>(other);
         val -= od.val;
@@ -635,6 +641,11 @@ public:
         const auto& od = dynamic_cast<const FMpz&>(other);
         val += od.val;
         return *this;
+    }
+
+    std::unique_ptr<Field> add(const Field& other) override {
+        const auto& od = dynamic_cast<const FMpz&>(other);
+        return std::make_unique<FMpz>(val + od.val);
     }
 
     Field& operator-=(const Field& other) override {
