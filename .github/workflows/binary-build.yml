@@ -69,7 +69,6 @@ jobs:
     - name: Build Cadical
       run: |
        cd cadical
-       CXX=c++ ./configure
        make -j8
        cd ..
 
