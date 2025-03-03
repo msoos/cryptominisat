@@ -1,33 +1,44 @@
-name: binary build
+name: build
 
 on:
   push:
-    branches:
-      - master
-
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
 
 jobs:
   build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#configuring-a-build-matrix
     runs-on: ${{ matrix.os }}
 
-
     strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
       matrix:
-        #os: [ubuntu-20.04, windows-2022, macos-13]
-        os: [ubuntu-20.04, macos-13]
-        build_type: ['Release']
-        staticcompile: ['ON', 'OFF']
+        os: [ubuntu-latest]
+        build_type: [Release]
+        staticcompile: [ON, OFF]
+        c_compiler: [gcc, clang, cl]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+        exclude:
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+          - os: ubuntu-latest
+            c_compiler: cl
 
     steps:
-
     
     # install dependencies
     - name: Install boost & help2man for Linux
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-serialization-dev libboost-program-options-dev help2man libgmp-dev
       
     - name: Install gmp for Mac
@@ -83,17 +94,11 @@ jobs:
   
     - name: Add git submodules for Linux only (not needed for non-testing)
       working-directory: cryptominisat
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-latest'
       run: git submodule update --init
 
-    - name: Configure CMake for linux
-      if: matrix.os == 'ubuntu-20.04'
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      #working-directory: ${{runner.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+    - name: Configure & build for linux
+      if: matrix.os == 'ubuntu-latest'
       run: |
         pwd
         echo "end pwd"
@@ -108,14 +113,8 @@ jobs:
         cmake --build . --config ${{ matrix.build_type }}
 
     
-    - name: Configure CMake for non-linux
-      if: matrix.os != 'ubuntu-20.04'
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      #working-directory: ${{runner.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+    - name: Configure & buidl for non-linux
+      if: matrix.os != 'ubuntu-latest'
       run: |
         pwd
         echo "end pwd"
@@ -131,7 +130,7 @@ jobs:
         ctest -C ${{ matrix.build_type }}
               
     - name: Upload Artifact - Linux
-      if: matrix.os == 'ubuntu-20.04' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'ubuntu-latest' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:     
         name: cryptominisat5-linux-amd64
