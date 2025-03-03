@@ -39,7 +39,7 @@ jobs:
     # install dependencies
     - name: Install boost & help2man for Linux
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-serialization-dev libboost-program-options-dev help2man libgmp-dev
+      run: sudo apt-get update && sudo apt-get install -yq help2man libgmp-dev
       
     - name: Install gmp for Mac
       if: matrix.os == 'macos-13'
@@ -69,6 +69,7 @@ jobs:
     - name: Build Cadical
       run: |
        cd cadical
+       CXXFLAGS=-fPIC ./configure --competition
        make -j8
        cd ..
 
