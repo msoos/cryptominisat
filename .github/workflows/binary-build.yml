@@ -130,21 +130,21 @@ jobs:
         ctest -C ${{ matrix.build_type }}
               
     - name: Upload Artifact - Linux
-      if: matrix.os == 'ubuntu-latest' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'ubuntu-latest' && matrix.staticcompile == 'ON' && matrix.c_compiler == 'clang'
       uses: actions/upload-artifact@v4
       with:     
         name: cryptominisat5-linux-amd64
         path: cryptominisat/cryptominisat5
     
     - name: Upload Artifact - Mac
-      if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON' && matrix.c_compiler == 'clang'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-mac-amd64
         path: cryptominisat/cryptominisat5
 
     - name: Upload Artifact - Windows
-      if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON' && matrix.c_compiler == 'clang'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-win64.exe
