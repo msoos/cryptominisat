@@ -293,14 +293,9 @@ else()
 endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
-option(COVERAGE "Build with coverage check" OFF)
-
-if (COVERAGE AND BUILD_SHARED_LIBS)
-    MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
-endif()
 
 if (NOT WIN32)
-    if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT COVERAGE)
+    if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_compile_options("-fPIC")
@@ -344,14 +339,7 @@ if (NOT WIN32)
     endif()
 endif()
 
-if (COVERAGE)
-    add_compile_options("--coverage")
-    SET(CMAKE_EXE_LINKER_FLAGS "--coverage")
-endif()
-
-
 option(IPASIR "Also build IPASIR" OFF)
-
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
     add_definitions(-DLIMITMEM)
