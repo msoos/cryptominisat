@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <vector>
 #include <array>
 #include <gmpxx.h>
-#include <algorithm>
 
 namespace CMSat {
 
