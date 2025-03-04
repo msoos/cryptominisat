@@ -11,33 +11,18 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-14]
         build_type: [Release]
         staticcompile: [ON, OFF]
         c_compiler: [gcc]
-        include:
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          # - os: ubuntu-latest
-          #   c_compiler: clang
-          #   cpp_compiler: clang++
-        # exclude:
-        #   - os: windows-latest
-        #     c_compiler: gcc
-        #   - os: windows-latest
-        #     c_compiler: clang
-        #   - os: ubuntu-latest
-        #     c_compiler: cl
+        cpp_compiler: [g++]
 
     steps:
     
-    # install dependencies
-    - name: Install boost & help2man for Linux
+    - name: Install help2man for Linux
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -yq help2man libgmp-dev
       
