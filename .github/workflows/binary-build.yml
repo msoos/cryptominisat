@@ -85,15 +85,7 @@ jobs:
     - name: Configure & build for linux
       if: matrix.os == 'ubuntu-latest'
       run: |
-        pwd
-        echo "end pwd"
         cd cryptominisat
-        pwd
-        echo "end pwd"
-        ls
-        echo "end list"
-        ls ../
-        echo "end list"
         cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=OFF  -DSTATICCOMPILE=${{ matrix.staticcompile }}
         cmake --build . --config ${{ matrix.build_type }}
 
@@ -101,36 +93,28 @@ jobs:
     - name: Configure & buidl for non-linux
       if: matrix.os != 'ubuntu-latest'
       run: |
-        pwd
-        echo "end pwd"
         cd cryptominisat
-        pwd
-        echo "end pwd"
-        ls
-        echo "end list"
-        ls ../
-        echo "end list"
         cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=OFF -DSTATICCOMPILE=${{ matrix.staticcompile }}
         cmake --build . --config ${{ matrix.build_type }}
         ctest -C ${{ matrix.build_type }}
-              
+
     - name: Upload Artifact - Linux
       if: matrix.os == 'ubuntu-latest' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:     
         name: cryptominisat5-linux-amd64
-        path: cryptominisat/cryptominisat5
+        path: build/cryptominisat5
     
     - name: Upload Artifact - Mac
-      if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'macos-14' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:
-        name: cryptominisat5-mac-amd64
-        path: cryptominisat/cryptominisat5
+        name: cryptominisat5-mac-arm64
+        path: build/cryptominisat5
 
     - name: Upload Artifact - Windows
       if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-win64.exe
-        path: cryptominisat\Release\cryptominisat5.exe
+        path: build\Release\cryptominisat5.exe
