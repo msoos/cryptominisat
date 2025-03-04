@@ -124,18 +124,18 @@ jobs:
       uses: actions/upload-artifact@v4
       with:     
         name: cryptominisat5-linux-amd64
-        path: build/cryptominisat5
+        path: cryptominisat5
     
     - name: Upload Artifact - Mac
       if: matrix.os == 'macos-14' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-mac-arm64
-        path: build/cryptominisat5
+        path: cryptominisat5
 
     - name: Upload Artifact - Windows
       if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-win64.exe
-        path: build\Release\cryptominisat5.exe
+        path: Release\cryptominisat5.exe
