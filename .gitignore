@@ -29,3 +29,9 @@ tags
 .ccls-cache
 dist
 jni
+build
+docs
+pycrypto.*egg-info
+node_modules
+ml-data
+fuzz
