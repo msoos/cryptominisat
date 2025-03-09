@@ -577,7 +577,7 @@ public:
     bool is_one() const override { return val == 1; }
     void set_zero() override { val = 0; }
     void set_one() override { val = 1; }
-    uint64_t bytes_used() const override { return sizeof(val); }
+    uint64_t bytes_used() const override { return sizeof(FDouble); }
 
     bool parse(const std::string& str, const uint32_t line_no) override {
         mpz_class head;
@@ -696,7 +696,7 @@ public:
     }
 
     uint64_t bytes_used() const override {
-      return sizeof(mpz_class) + helper(val);
+      return sizeof(FMpz) + helper(val);
     }
 };
 
