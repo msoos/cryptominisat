@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <sstream>
 
 using std::vector;
 using std::cerr;
