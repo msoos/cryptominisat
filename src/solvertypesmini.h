@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SOLVERTYPESMINI_H
-#define SOLVERTYPESMINI_H
+#ifndef SOLVERTYPESMINI__H
+#define SOLVERTYPESMINI__H
 
 #include <cstdint>
 #include <iostream>
@@ -441,7 +441,6 @@ public:
     // A method to display the value (for demonstration purposes)
     virtual std::ostream& display(std::ostream& os) const = 0;
 
-
     static void skip_whitespace(const std::string& str, uint32_t& at) {
         char c = str[at];
         while (c == '\t' || c == '\r' || c == ' ') {
@@ -514,6 +513,7 @@ public:
     virtual std::unique_ptr<Field> zero() const = 0;
     virtual std::unique_ptr<Field> one() const = 0;
     virtual std::unique_ptr<FieldGen> dup() const = 0;
+    virtual bool larger_than(const Field&, const Field&) const = 0;
     virtual bool weighted() const = 0;
 };
 
@@ -620,6 +620,12 @@ public:
         return std::make_unique<FGenDouble>();
     }
 
+    bool larger_than(const Field& a, const Field& b) const override {
+        const auto& ad = dynamic_cast<const FDouble&>(a);
+        const auto& bd = dynamic_cast<const FDouble&>(b);
+        return ad.val > bd.val;
+    }
+
     bool weighted() const override { return true; }
 };
 
@@ -715,10 +721,15 @@ public:
         return std::make_unique<FGenMpz>();
     }
 
+    bool larger_than(const Field& a, const Field& b) const override {
+        const auto& ad = dynamic_cast<const FMpz&>(a);
+        const auto& bd = dynamic_cast<const FMpz&>(b);
+        return ad.val > bd.val;
+    }
+
     bool weighted() const override { return false; }
 };
 
-
 }
 
-#endif //SOLVERTYPESMINI_H
+#endif
