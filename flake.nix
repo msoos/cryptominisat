@@ -3,11 +3,11 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     cadical = {
-      url = "github:itepastra/cadical/add-flake";
+      url = "github:meelgroup/cadical/add-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cadiback = {
-      url = "github:itepastra/cadiback/add-flake";
+      url = "github:meelgroup/cadiback/add-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
