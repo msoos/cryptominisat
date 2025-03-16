@@ -3,11 +3,11 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     cadical = {
-      url = "github:meelgroup/cadical/add-flake";
+      url = "github:meelgroup/cadical/add_dynamic_lib";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cadiback = {
-      url = "github:meelgroup/cadiback/add-flake";
+      url = "github:meelgroup/cadiback/synthesis";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
