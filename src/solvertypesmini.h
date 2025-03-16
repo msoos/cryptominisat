@@ -524,43 +524,43 @@ public:
     FDouble(const FDouble& other) : val(other.val) {}
 
     Field& operator=(const Field& other) override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         val = od.val;
         return *this;
     }
 
     Field& operator+=(const Field& other) override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         val += od.val;
         return *this;
     }
 
     std::unique_ptr<Field> add(const Field& other) override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         return std::make_unique<FDouble>(val + od.val);
     }
 
     Field& operator-=(const Field& other) override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         val -= od.val;
         return *this;
     }
 
     Field& operator*=(const Field& other) override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         val *= od.val;
         return *this;
     }
 
     Field& operator/=(const Field& other) override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         if (od.val == 0) throw std::runtime_error("Division by zero");
         val /= od.val;
         return *this;
     }
 
     bool operator==(const Field& other) const override {
-        const auto& od = dynamic_cast<const FDouble&>(other);
+        const auto& od = static_cast<const FDouble&>(other);
         return od.val == val;
     }
 
@@ -621,8 +621,8 @@ public:
     }
 
     bool larger_than(const Field& a, const Field& b) const override {
-        const auto& ad = dynamic_cast<const FDouble&>(a);
-        const auto& bd = dynamic_cast<const FDouble&>(b);
+        const auto& ad = static_cast<const FDouble&>(a);
+        const auto& bd = static_cast<const FDouble&>(b);
         return ad.val > bd.val;
     }
 
@@ -637,43 +637,43 @@ public:
     FMpz(const FMpz& other) : val(other.val) {}
 
     Field& operator=(const Field& other) override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         val = od.val;
         return *this;
     }
 
     Field& operator+=(const Field& other) override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         val += od.val;
         return *this;
     }
 
     std::unique_ptr<Field> add(const Field& other) override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         return std::make_unique<FMpz>(val + od.val);
     }
 
     Field& operator-=(const Field& other) override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         val -= od.val;
         return *this;
     }
 
     Field& operator*=(const Field& other) override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         val *= od.val;
         return *this;
     }
 
     Field& operator/=(const Field& other) override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         if (od.val == 0) throw std::runtime_error("Division by zero");
         val /= od.val;
         return *this;
     }
 
     bool operator==(const Field& other) const override {
-        const auto& od = dynamic_cast<const FMpz&>(other);
+        const auto& od = static_cast<const FMpz&>(other);
         return od.val == val;
     }
 
@@ -722,8 +722,8 @@ public:
     }
 
     bool larger_than(const Field& a, const Field& b) const override {
-        const auto& ad = dynamic_cast<const FMpz&>(a);
-        const auto& bd = dynamic_cast<const FMpz&>(b);
+        const auto& ad = static_cast<const FMpz&>(a);
+        const auto& bd = static_cast<const FMpz&>(b);
         return ad.val > bd.val;
     }
 
