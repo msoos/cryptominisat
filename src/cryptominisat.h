@@ -192,7 +192,7 @@ namespace CMSat {
         static const char* get_version(); //get solver version in string format
         static const char* get_version_sha1(); //get SHA1 version string of the solver
         static const char* get_compilation_env(); //get compilation environment string
-        static std::string get_text_version_info(const char* prefix = "c ");  //get printable version and copyright text
+        static std::string get_thanks_info(const char* prefix = "c ");  //get printable version and copyright text
 
 
         ////////////////////////////
