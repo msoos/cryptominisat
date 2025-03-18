@@ -1083,8 +1083,7 @@ DLL_PUBLIC std::string SATSolver::get_text_version_info(const char* prefix)
     ss << prefix << "CryptoMiniSat version " << get_version() << endl;
     ss << prefix << "CMS Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file" << endl;
     ss << prefix << "CMS SHA revision " << get_version_sha1() << endl;
-    ss << prefix << "Using VMTF code by Armin Biere from CaDiCaL" << endl;
-    ss << prefix << "Using Yalsat by Armin Biere, see Balint et al. Improving implementation of SLS solvers [...], SAT'14" << endl;
+    ss << prefix << "Using VMTF and picosat code by Armin Biere from CaDiCaL" << endl;
     ss << prefix << "Using WalkSAT by Henry Kautz, see Kautz and Selman Pushing the envelope: planning, propositional logic, and stochastic search, AAAI'96," << endl;
     #ifdef USE_BREAKID
     ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
@@ -1098,6 +1097,8 @@ DLL_PUBLIC std::string SATSolver::get_text_version_info(const char* prefix)
     ss << prefix << "      by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
     ss << prefix << "Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
     ss << prefix << "      by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
+    ss << prefix << "Using Oracle code from 'Integrating Tree Decompositions [...]" << endl;
+    ss << prefix << "      by Tuukaa Korhonen and Matti Jarvisalo, CP 2021" << endl;
     ss << prefix << "CMS compilation env " << get_compilation_env() << endl;
     #ifdef __GNUC__
     ss << prefix << "CMS compiled with gcc version " << __VERSION__ << endl;
