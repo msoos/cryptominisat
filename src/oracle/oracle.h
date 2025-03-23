@@ -77,7 +77,7 @@ struct Stats {
     int64_t restarts = 0;
     int64_t cache_useful = 0;
     int64_t cache_added = 0;
-  void Print() const;
+    void Print() const;
 };
 
 struct Watch {
@@ -102,23 +102,23 @@ struct CInfo {
 };
 
 class Oracle {
- public:
-  Oracle(int vars_, const vector<vector<Lit>>& clauses_);
-  Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_);
+public:
+    Oracle(int vars_, const vector<vector<Lit>>& clauses_);
+    Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_);
 
-  void SetAssumpLit(Lit lit, bool freeze);
-  void SetVerbosity(uint32_t _verb) { verb=_verb;}
-  TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
-  bool FreezeUnit(Lit unit);
-  bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
-  void AddClause(const vector<Lit>& clause, bool entailed);
-  void PrintStats() const;
-  vector<vector<Lit>> GetLearnedClauses() const;
+    void SetAssumpLit(Lit lit, bool freeze);
+    void SetVerbosity(uint32_t _verb) { verb=_verb;}
+    TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
+    bool FreezeUnit(Lit unit);
+    bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
+    void AddClause(const vector<Lit>& clause, bool entailed);
+    void PrintStats() const;
+    vector<vector<Lit>> GetLearnedClauses() const;
 
-  int CurLevel() const;
-  int LitVal(Lit lit) const;
-  const Stats& getStats() const {return stats;}
-  void reset_mems() {stats.mems = 0;}
+    int CurLevel() const;
+    int LitVal(Lit lit) const;
+    const Stats& getStats() const {return stats;}
+    void reset_mems() {stats.mems = 0;}
 
  private:
     uint32_t verb = 0;
