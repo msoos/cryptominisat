@@ -126,16 +126,6 @@ if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
 endif()
 
-option(RDB0ONLY "Use only RDB0 features only" ON)
-if (RDB0ONLY)
-    add_definitions(-DRDB0_ONLY_FEATURES)
-endif()
-
-option(EXTFEAT "Use extended features" OFF)
-if (EXTFEAT)
-    add_definitions(-DEXTENDED_FEATURES)
-endif()
-
 macro(add_sanitize_option flagname)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}" )
 endmacro()
