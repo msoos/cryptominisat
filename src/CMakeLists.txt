@@ -430,25 +430,3 @@ install(TARGETS cryptominisat5-bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
-
-if (FEEDBACKFUZZ)
-    add_executable(cms_feedback_fuzz
-        fuzz.cpp
-        libfuzz/FuzzerCrossOver.cpp
-        libfuzz/FuzzerDriver.cpp
-        libfuzz/FuzzerInterface.cpp
-        libfuzz/FuzzerIO.cpp
-        libfuzz/FuzzerLoop.cpp
-        libfuzz/FuzzerMain.cpp
-        libfuzz/FuzzerMutate.cpp
-        libfuzz/FuzzerSanitizerOptions.cpp
-        libfuzz/FuzzerSHA1.cpp
-        libfuzz/FuzzerTraceState.cpp
-        libfuzz/FuzzerUtil.cpp
-    )
-    target_link_libraries(cms_feedback_fuzz
-        ${cryptoms_exec_link_libs}
-    )
-
-    set_target_properties(cms_feedback_fuzz PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-endif()

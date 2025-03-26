@@ -49,7 +49,6 @@ if(POLICY CMP0104)
     cmake_policy(SET CMP0104 NEW)
 endif()
 
-
 # -----------------------------------------------------------------------------
 # Provide scripts dir for included cmakes to use
 # -----------------------------------------------------------------------------
@@ -114,7 +113,6 @@ endif()
 
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
-    set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
 else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -122,10 +120,6 @@ else()
 endif()
 
 option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
-option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
-if (FEEDBACKFUZZ)
-    set(SANITIZE ON)
-endif()
 
 option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offsets. Slower, but allows the solver to run for much longer." OFF)
 if (LARGEMEM)
