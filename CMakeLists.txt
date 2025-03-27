@@ -405,12 +405,6 @@ if (STATS)
     add_definitions( -DUSE_SQLITE3 )
 endif()
 
-option(NORMAL_CL_USE_STATS "Only prop and uip stats for NORM" OFF)
-if (NORMAL_CL_USE_STATS)
-    add_definitions( -DNORMAL_CL_USE_STATS )
-    MESSAGE(STATUS "Adding uip + props to normal run")
-endif()
-
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
     if (FINAL_PREDICTOR)
@@ -495,7 +489,6 @@ find_library(cadical
     PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../cadical/build/
     NAMES cadical
     REQUIRED)
-
 
 include(CheckFloatPrecision)
 check_float_precision()

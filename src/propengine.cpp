@@ -636,9 +636,6 @@ bool PropEngine::prop_long_cl_any_order(
         return false;
     } else {
         if (!inprocess) {
-            #if defined(NORMAL_CL_USE_STATS)
-            c.stats.props_made++;
-            #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
             c.stats.last_touched_any = sumConflicts;

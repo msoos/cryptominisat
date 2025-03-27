@@ -433,9 +433,6 @@ void Searcher::add_lits_to_learnt(
                 antec_data.longIrred++;
                 #endif
             }
-            #if defined(NORMAL_CL_USE_STATS)
-            cl->stats.uip1_used++;
-            #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
             if (!inprocess) cl->stats.uip1_used++;
@@ -2067,15 +2064,6 @@ void Searcher::reset_temp_cl_num()
 
 void Searcher::reduce_db_if_needed()
 {
-    #ifdef NORMAL_CL_USE_STATS
-    if (conf.every_pred_reduce != 0
-        && sumConflicts >= next_pred_reduce
-    ) {
-        solver->reduceDB->gather_normal_cl_use_stats();
-        next_pred_reduce = sumConflicts + conf.every_pred_reduce;
-    }
-    #endif
-
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     if (conf.every_pred_reduce != 0
         && sumConflicts >= next_pred_reduce

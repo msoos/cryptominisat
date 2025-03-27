@@ -224,26 +224,6 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
     }
 }
 
-#if defined(NORMAL_CL_USE_STATS)
-void ReduceDB::gather_normal_cl_use_stats()
-{
-    for(uint32_t i = 0; i < 3; i++) {
-        ClauseStats cl_stat;
-        for(const auto& offset: solver->longRedCls[i]) {
-            Clause* cl = solver->cl_alloc.ptr(offset);
-
-            assert(cl->stats.introduced_at_conflict <= solver->sumConflicts);
-            const uint64_t age = solver->sumConflicts - cl->stats.introduced_at_conflict;
-            cl_stat.add_in(*cl, age);
-            cl->stats.reset_rdb_stats();
-        }
-        cl_stat.print(i);
-        cl_stats[i] += cl_stat;
-    }
-}
-
-#endif
-
 //TODO maybe we chould count binary learnt clauses as well into the
 //kept no. of clauses as other solvers do
 void ReduceDB::handle_lev2()
@@ -1319,7 +1299,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     return *this;
 }
 
-#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
 void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age, const uint32_t orig_size)
 {
     total_cls++;

@@ -2104,7 +2104,7 @@ void Solver::print_norm_stats(
                 , (double)longRedClsSizes[i]/(double)sumConflicts
             );
         }
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         for(uint32_t i = 0; i < longRedCls.size(); i++) {
             reduceDB->cl_stats[i].print(i);
         }
