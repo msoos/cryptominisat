@@ -29,7 +29,6 @@ THE SOFTWARE.
 #include <string>
 #include <limits>
 #include <cstdio>
-#include <gmpxx.h>
 #include "solvertypesmini.h"
 
 namespace CMSat {

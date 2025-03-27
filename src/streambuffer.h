@@ -27,7 +27,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <string>
 #include <memory>
 #include <cmath>
-#include "solvertypesmini.h"
 
 using std::numeric_limits;
 
