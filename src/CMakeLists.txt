@@ -364,23 +364,6 @@ add_executable(cryptominisat5-bin
     signalcode.cpp
 )
 
-if (EMSCRIPTEN)
-    add_executable(cryptominisat5-bin
-        main_emscripten.cpp
-        main_common.cpp
-    )
-
-    set_target_properties(cryptominisat5-bin
-        PROPERTIES
-        OUTPUT_NAME cryptominisat5
-        LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1 --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/pre.js"
-    )
-
-    SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
-        PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
-    )
-endif()
-
 if (MPI_FOUND)
     add_executable(cryptominisat5_mpi-bin
         main_mpi.cpp
