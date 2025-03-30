@@ -400,10 +400,20 @@ if (MPI_FOUND)
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
 endif()
 
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+set_target_properties(cryptominisat5-bin PROPERTIES
+    OUTPUT_NAME cryptominisat5
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+    LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_RUNTIME_METHODS='[\"callMain\", \"ccall\", \"cwrap\", \"FS\", \"print\"]' -s FORCE_FILESYSTEM=1"
+)
+else()
 set_target_properties(cryptominisat5-bin PROPERTIES
     OUTPUT_NAME cryptominisat5
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
 
 target_link_libraries(cryptominisat5-bin
     ${cryptoms_exec_link_libs}
