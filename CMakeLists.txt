@@ -111,16 +111,10 @@ if (STATICCOMPILE)
     set(BUILD_SHARED_LIBS OFF)
 endif()
 
-option(EMSCRIPTEN "Generate only emscripten JS" OFF)
-if (EMSCRIPTEN)
-    set(NOZLIB ON)
-else()
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package (Threads REQUIRED)
-endif()
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package (Threads REQUIRED)
 
 option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
-
 option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offsets. Slower, but allows the solver to run for much longer." OFF)
 if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
@@ -218,7 +212,7 @@ else()
 
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
-    if (STATICCOMPILE)
+    if (NOT BUILD_SHARED_LIBS)
         # We statically link to reduce dependencies
         foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
             # /MD -- Causes the application to use the multithread-specific
