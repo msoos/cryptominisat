@@ -42,3 +42,5 @@ src/predict
 scripts/linpb*
 /result
 mldata
+html/cryptominisat5.js
+html/cryptominisat5.wasm
