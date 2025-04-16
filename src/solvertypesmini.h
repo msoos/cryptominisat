@@ -490,13 +490,18 @@ public:
     static bool check_end_of_weight(const std::string& str, uint32_t& at, const uint32_t line_no) {
         skip_whitespace(str, at);
         if (str[at] != '0') {
-            std::cerr << "PARSE ERROR! expected 0 at the end of the weight. At line " << line_no << std::endl;
+            std::cerr << "PARSE ERROR! expected 0 at the end of the weight."
+                << "At line " << line_no
+                << " -- did you forget to set the mode?" << std::endl;
             return false;
         }
         at++;
         skip_whitespace(str, at);
         if (str[at] != '\n') {
-            std::cerr << "PARSE ERROR! expected end of line at the end of the weight. At line " << line_no << std::endl;
+
+            std::cerr << "PARSE ERROR! expected end of line at the end of the weight."
+                << "At line " << line_no
+                << " -- did you forget to set the mode?" << std::endl;
             return false;
         }
         return true;
