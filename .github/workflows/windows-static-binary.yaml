@@ -1,0 +1,18 @@
+on: push
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ucrt64
+          update: true
+          install: mingw-w64-ucrt-x86_64-toolchain base-devel cmake git zlib gmp-devel msys2-runtime-devel ninja
+      - shell: msys2 {0}
+        run: ./scripts/build_static_Windows_binary.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptominisat5_Windows_binary
+          path: build/cryptominisat/build/cryptominisat5.exe
