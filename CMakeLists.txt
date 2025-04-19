@@ -370,7 +370,7 @@ else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
 
-set(CMS_FULL_VERSION "5.12.1")
+set(CMS_FULL_VERSION "5.13.0")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
