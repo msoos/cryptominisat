@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include "gtest/gtest.h"
 
-#include "cryptominisat5/cryptominisat.h"
 #include "src/solverconf.h"
 #include "test_helper.h"
 #include <vector>

@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "distillerlongwithimpl.h"
 #include "clausecleaner.h"
+#include "constants.h"
 #include "time_mem.h"
 #include "solver.h"
 #include "watchalgos.h"
@@ -47,7 +48,7 @@ DistillerLongWithImpl::DistillerLongWithImpl(Solver* _solver) :
     , numCalls(0)
 {}
 
-bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen)
+bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthen)
 {
     assert(solver->ok);
     numCalls++;
@@ -66,7 +67,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
         goto end;
     }
 
-    if (alsoStrengthen) {
+    if (also_strengthen) {
         if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, true))
             goto end;
 
@@ -119,7 +120,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_ID()).setRed(false);
+            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_id()).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }
@@ -143,7 +144,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
 void DistillerLongWithImpl::str_and_sub_using_watch(
     Clause& cl
     , const Lit lit
-    , const bool alsoStrengthen
+    , const bool also_strengthen
 ) {
     //Go through the watchlist
     watch_subarray thisW = solver->watches[lit];
@@ -153,25 +154,18 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
         ; wit++
     ) {
         //Can't do anything with a clause
-        if (!wit->isBin())
-            continue;
+        if (!wit->isBin()) continue;
 
         timeAvailable -= 5;
 
-        if (alsoStrengthen) {
-            strengthen_clause_with_watch(lit, wit);
-        }
+        if (also_strengthen) strengthen_clause_with_watch(lit, wit);
 
         const bool subsumed = subsume_clause_with_watch(lit, wit, cl);
-        if (subsumed)
-            return;
+        if (subsumed) return;
     }
 }
 
-void DistillerLongWithImpl::strsub_with_watch(
-    bool alsoStrengthen
-    , Clause& cl
-) {
+void DistillerLongWithImpl::strsub_with_watch( bool also_strengthen , Clause& cl) {
     //Go through each literal and subsume/strengthen with it
     Lit *lit2 = cl.begin();
     lit2++;
@@ -180,24 +174,16 @@ void DistillerLongWithImpl::strsub_with_watch(
         ; lit != end && !isSubsumed
         ; lit++, lit2++
     ) {
-        if (lit2 < end) {
-            solver->watches.prefetch(lit2->toInt());
-        }
-        str_and_sub_using_watch(cl, *lit, alsoStrengthen);
+        if (lit2 < end) solver->watches.prefetch(lit2->toInt());
+        str_and_sub_using_watch(cl, *lit, also_strengthen);
     }
     assert(lits2.size() > 1);
 }
 
-bool DistillerLongWithImpl::sub_str_cl_with_watch(
-    ClOffset& offset
-    , const bool alsoStrengthen
-) {
+bool DistillerLongWithImpl::sub_str_cl_with_watch( ClOffset& offset , const bool also_strengthen) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(cl.size() > 2);
-
-    if (solver->conf.verbosity >= 10) {
-        cout << "Examining str clause:" << cl << endl;
-    }
+    verb_print(10, "Examining str clause:" << cl);
 
     timeAvailable -= (long)cl.size()*2;
     tmpStats.totalLits += cl.size();
@@ -213,33 +199,23 @@ bool DistillerLongWithImpl::sub_str_cl_with_watch(
         lits2.push_back(lit);
     }
 
-    strsub_with_watch(alsoStrengthen, cl);
+    strsub_with_watch(also_strengthen, cl);
 
     //Clear 'seen2'
     timeAvailable -= (long)lits2.size()*3;
-    for (const Lit lit: lits2) {
-        seen2[lit.toInt()] = 0;
-    }
+    for (const Lit lit: lits2) seen2[lit.toInt()] = 0;
 
     //Clear 'seen' and fill new clause data
     lits.clear();
     timeAvailable -= (long)cl.size()*3;
     for (const Lit lit: cl) {
-        if (!isSubsumed
-            && seen[lit.toInt()]
-        ) {
-            lits.push_back(lit);
-        }
+        if (!isSubsumed && seen[lit.toInt()]) lits.push_back(lit);
         seen[lit.toInt()] = 0;
     }
-
-    if (isSubsumed)
-        return true;
+    if (isSubsumed) return true;
 
     //Nothing to do
-    if (lits.size() == cl.size()) {
-        return false;
-    }
+    if (lits.size() == cl.size()) return false;
 
     return remove_or_shrink_clause(cl, offset);
 }
@@ -274,7 +250,7 @@ void DistillerLongWithImpl::randomise_order_of_clauses(vector<ClOffset>& clauses
 }
 
 uint64_t DistillerLongWithImpl::calc_time_available(
-    const bool alsoStrengthen
+    const bool also_strengthen
     , const bool red
 ) const {
     //If it hasn't been to successful until now, don't do it so much
@@ -288,7 +264,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     uint64_t maxCountTime =
         solver->conf.watch_based_str_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
-    if (!alsoStrengthen) {
+    if (!also_strengthen) {
         maxCountTime *= 2;
     }
     if (stats->numCalled > 2
@@ -306,14 +282,14 @@ uint64_t DistillerLongWithImpl::calc_time_available(
 bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     vector<ClOffset>& clauses
     , bool red
-    , bool alsoStrengthen
+    , bool also_strengthen
 ) {
     assert(solver->ok);
 
     //Stats
     double my_time = cpuTime();
 
-    const int64_t orig_time_available = calc_time_available(alsoStrengthen, red);
+    const int64_t orig_time_available = calc_time_available(also_strengthen, red);
     timeAvailable = orig_time_available;
     tmpStats = Stats::WatchBased();
     tmpStats.totalCls = clauses.size();
@@ -330,14 +306,8 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     size_t j = i;
     ClOffset offset;
     const size_t end = clauses.size();
-    for (
-        ; i < end
-        ; i++
-    ) {
-        //Timeout?
-        if (timeAvailable <= 0
-            || !solver->okay()
-        ) {
+    for ( ; i < end ; i++) {
+        if (timeAvailable <= 0 || !solver->okay()) {
             need_to_finish = true;
             tmpStats.ranOutOfTime++;
         }
@@ -345,7 +315,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
         //Check status
         offset = clauses[i];
         if (need_to_finish) goto copy;
-        if (sub_str_cl_with_watch(offset, alsoStrengthen)) {
+        if (sub_str_cl_with_watch(offset, also_strengthen)) {
             solver->detachClause(offset);
             solver->free_cl(offset);
             continue;
@@ -360,7 +330,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     #endif
 
     dump_stats_for_sub_str_all_cl_with_watch(red
-        , alsoStrengthen
+        , also_strengthen
         , my_time
         , orig_time_available
     );
@@ -370,7 +340,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 
 void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     bool red
-    , bool alsoStrengthen
+    , bool also_strengthen
     , double my_time
     , double orig_time_available
 ) {
@@ -388,18 +358,16 @@ void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     }
     if (solver->conf.verbosity >= 2) {
         if (solver->conf.verbosity >= 10) {
-            cout << "red:" << red << " alsostrenghten:" << alsoStrengthen << endl;
+            cout << "red:" << red << " alsostrenghten:" << also_strengthen << endl;
         }
-        watch_based_data.print();
-
-        cout << "c [distill-with-bin-ext]"
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
+        watch_based_data.print(solver->conf.prefix.c_str());
+        verb_print(1, "[distill-with-bin-ext]"
+                << solver->conf.print_times(time_used, time_out, time_remain));
     }
     if (solver->sqlStats) {
         std::stringstream ss;
         ss << "shorten"
-        << (alsoStrengthen ? " and str" : "")
+        << (also_strengthen ? " and str" : "")
         << (red ? " red" : " irred")
         <<  " cls"
         ;
@@ -429,10 +397,9 @@ size_t DistillerLongWithImpl::WatchBasedData::get_lits_rem() const
     return remLitBin;
 }
 
-void DistillerLongWithImpl::WatchBasedData::print() const
+void DistillerLongWithImpl::WatchBasedData::print(const char* prefix) const
 {
-    cout
-    << "c [distill-with-bin-ext] bin-based"
+    cout << prefix << "[distill-with-bin-ext] bin-based"
     << " lit-rem: " << remLitBin
     << " cl-sub: " << subBin
     << endl;
@@ -464,17 +431,16 @@ void DistillerLongWithImpl::Stats::print() const
 
 
 void DistillerLongWithImpl::Stats::WatchBased::print_short(
-    const string& type, const Solver* _solver) const
+    const string& type, const Solver* solver) const
 {
-    cout << "c [distill] watch-based "
+    verb_print(1, "[distill] watch-based "
     << std::setw(5) << type
     << "-- "
     << " cl tried " << std::setw(8) << triedCls
     << " cl-sh " << std::setw(5) << shrinked
     << " cl-rem " << std::setw(4) << numClSubsumed
     << " lit-rem " << std::setw(6) << numLitsRem
-    << _solver->conf.print_times(cpu_time, ranOutOfTime)
-    << endl;
+    << solver->conf.print_times(cpu_time, ranOutOfTime));
 }
 
 void DistillerLongWithImpl::Stats::WatchBased::print() const

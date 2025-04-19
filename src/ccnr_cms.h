@@ -41,6 +41,7 @@ using std::make_pair;
 class CMS_ccnr {
 public:
     lbool main(const uint32_t num_sls_called);
+    lbool main_alter(int64_t mems, vector<uint8_t>& ret);
     CMS_ccnr(Solver* _solver);
     ~CMS_ccnr();
 

@@ -24,12 +24,11 @@ THE SOFTWARE.
 
 #include "constants.h"
 #include <vector>
-#include <fstream>
 #include <iostream>
 #include <array>
 #include <utility>
 #include <string>
-#include <algorithm>
+#include <complex>
 
 #include "solvertypes.h"
 #include "propengine.h"
@@ -44,12 +43,13 @@ THE SOFTWARE.
 #define ORACLE_DAT_SIZE 4
 
 namespace CMSat {
-    struct SATSolver;
+    class SATSolver;
 }
 using std::vector;
 using std::pair;
 using std::string;
 using std::array;
+using std::complex;
 struct PicoSAT;
 
 namespace CMSat {
@@ -100,10 +100,6 @@ class Solver : public Searcher
             const vector<Lit>& lits,
             const int32_t cutoff,
             Lit out);
-        void set_lit_weight(Lit lit, double weight);
-        void get_weights(map<Lit,double>& weights,
-                const vector<uint32_t>& sampling_vars,
-                const vector<uint32_t>& orig_sampl_vars) const;
 
         lbool solve_with_assumptions(
             const vector<Lit>* _assumptions = nullptr,
@@ -113,8 +109,8 @@ class Solver : public Searcher
         vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
+        void set_outer_lit_weight(const Lit lit, const float weight);
         //frat for SAT problems
-        void add_empty_cl_to_frat();
         void conclude_idrup (lbool);
         void changed_sampling_vars();
 
@@ -139,7 +135,13 @@ class Solver : public Searcher
                uint32_t max_glue = std::numeric_limits<uint32_t>::max());
         bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
         void end_getting_constraints();
-        vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
+        vector<uint32_t> translate_sampl_set(
+                const vector<uint32_t>& sampl_set, bool also_removed);
+        vector<Lit> get_weight_translation() const;
+        map<uint32_t, VarMap> update_var_mapping(const map<uint32_t, VarMap>& vmap);
+        vector<uint32_t> get_elimed_vars() const;
+        vector<vector<Lit>> get_cls_defining_var(uint32_t outer_v) const;
+        void reverse_bce();
 
         //Version
         static const char* get_version_tag();
@@ -172,6 +174,7 @@ class Solver : public Searcher
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_implicit_propagated() const;
         void check_all_clause_propagated() const;
+        void check_all_nonxor_clause_propagated() const;
         void check_clause_propagated(const ClOffset& offs) const;
         void check_clause_propagated(const Xor& x) const;
         void check_stats(const bool allowFreed = false) const;
@@ -215,7 +218,7 @@ class Solver : public Searcher
             const vector< Lit >& lits
             , bool rhs
             , bool attach
-            , int32_t XID
+            , int32_t xid
         );
         void new_var(
             const bool bva = false,
@@ -299,7 +302,8 @@ class Solver : public Searcher
         vector<ITEGate> get_recovered_ite_gates();
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-        void get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
+        vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
+        void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
         bool remove_and_clean_detached_xors(vector<Xor>& xors);
@@ -356,8 +360,10 @@ class Solver : public Searcher
         int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
         PicoSAT* build_picosat();
         void copy_to_simp(SATSolver* s2);
-        bool backbone_simpl(int64_t max_confl, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
+        bool backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finished);
         bool removed_var_ext(uint32_t var) const;
+        vector<vector<uint8_t>> many_sls(int64_t mems, uint32_t num);
 
     private:
         friend class ClauseDumper;
@@ -400,8 +406,8 @@ class Solver : public Searcher
         vector<OracleDat> order_clauses_for_oracle() const;
         void dump_cls_oracle(const string fname, const vector<OracleDat>& cs);
         bool find_equivs();
-        bool oracle_vivif(bool& finished);
-        bool oracle_sparsify();
+        bool oracle_vivif(int fast, bool& finished);
+        bool oracle_sparsify(bool fast = false);
         void print_cs_ordering(const vector<OracleDat>& cs) const;
         template<bool bin_only> bool probe_inter(const Lit l, uint32_t& min_props);
         void reset_for_solving();

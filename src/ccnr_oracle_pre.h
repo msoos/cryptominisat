@@ -1,4 +1,6 @@
 /******************************************
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file <soos.mate@gmail.com>
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -18,8 +20,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "frat.h"
+#pragma once
 
-namespace CMSat {
-    void Frat::flush() {}
+#include <cstdint>
+#include <cstdio>
+#include <utility>
+#include <vector>
+#include "solvertypes.h"
+#include "oracle/utils.h"
+
+using std::pair;
+using std::make_pair;
+using std::vector;
+
+namespace CMSat  {
+
+class Solver;
+
+class OracleLS;
+
+class CCNROraclePre {
+public:
+   CCNROraclePre (Solver* solver);
+   ~CCNROraclePre();
+
+   void init(const vector<vector<sspp::Lit>>& cls, uint32_t _num_vars, vector<int8_t>* _assump_map);
+   void adjust_assumps(const vector<int>& assumps_changed);
+   bool run(int64_t mems_limit = 30LL*1000LL);
+   void reinit();
+   const vector<int8_t>& get_sol() const;
+
+private:
+    OracleLS* ls = nullptr;
+
+    void add_this_clause(const vector<sspp::Lit>& cl, int cl_num);
+    vector<int> yals_lits;
+};
+
 }

@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "hyperengine.h"
 #include "searchstats.h"
 #include "searchhist.h"
+#include <random>
 
 #ifdef CMS_TESTING_ENABLED
 #include "gtest/gtest_prod.h"
@@ -589,12 +590,10 @@ inline bool Searcher::pick_polarity(const uint32_t var)
         case PolarityMode::polarmode_saved:
             return varData[var].saved_polarity;
 
-        #ifdef WEIGHTED_SAMPLING
         case PolarityMode::polarmode_weighted: {
-            double rnd = mtrand.randDblExc();
+            float rnd = std::uniform_real_distribution<float>(0,1)(mtrand);
             return rnd < varData[var].weight;
         }
-        #endif
 
         default:
             assert(false);

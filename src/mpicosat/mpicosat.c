@@ -36,10 +36,8 @@ IN THE SOFTWARE.
  */
 #define NADC
 
-/* By default we enable failed literals, since 'NFL' is undefined.
- *
+/* By default we enable failed literals, since 'NFL' is undefined.*/
 #define NFL
- */
 
 /* By default we 'detach satisfied (large) clauses', e.g. NDSC undefined.
  *
@@ -2274,6 +2272,15 @@ write_rup_header (PS * ps, FILE * file)
 
   fputc ('\n', file);
   fflush (file);
+}
+
+void alloc_enough(struct TraceData* dat) {
+    if (dat->capacity == dat->size) {
+        int* ret = realloc(dat->data, dat->capacity*2*sizeof(int));
+        assert(ret != 0);
+        dat->data = ret;
+        dat->capacity *= 2;
+    }
 }
 
 static Cls *
@@ -6181,10 +6188,35 @@ trace_lits (PS * ps, Cls * c, FILE * file)
   fputc ('0', file);
 }
 
+static void write_one(struct TraceData* dat, int x) {
+    alloc_enough(dat);
+    dat->data[dat->size++] = x;
+}
+
+
+static void
+trace_lits_dat (PS * ps, Cls * c, struct TraceData* dat)
+{
+  Lit **p, **eol = end_of_lits (c);
+
+  assert (c);
+  assert (c->core);
+
+  for (p = c->lits; p < eol; p++) write_one(dat, LIT2INT (*p));
+  write_one(dat, 0);
+}
+
 static void
 write_idx (PS * ps, unsigned idx, FILE * file)
 {
   fprintf (file, "%ld", EXPORTIDX (idx));
+}
+
+
+static void
+write_idx_dat (PS * ps, unsigned idx, struct TraceData* dat)
+{
+    write_one(dat, EXPORTIDX (idx));
 }
 
 static void
@@ -6207,6 +6239,20 @@ trace_clause (PS * ps, unsigned idx, Cls * c, FILE * file, int fmt)
     fputs (" 0", file);
 
   fputc ('\n', file);
+}
+
+
+static void
+trace_clause_dat (PS * ps, unsigned idx, Cls * c, struct TraceData* dat, int fmt)
+{
+  assert (c);
+  assert (c->core);
+  assert (fmt == RUP_TRACE_FMT || !c->learned);
+  assert (CLS2IDX (c) == idx);
+
+  write_idx_dat (ps, idx, dat);
+  trace_lits_dat (ps, c, dat);
+  write_one (dat, 0);
 }
 
 static void
@@ -6255,6 +6301,42 @@ trace_zhain (PS * ps, unsigned idx, Zhn * zhain, FILE * file, int fmt)
     }
 
   fputs (" 0\n", file);
+}
+
+static void
+trace_zhain_dat (PS * ps, unsigned idx, Zhn * zhain, struct TraceData* dat, int fmt)
+{
+  unsigned prev, this, delta, i;
+  Znt *p, byte;
+  Cls * c;
+
+  assert (zhain);
+  assert (zhain->core);
+
+  write_idx_dat (ps, idx, dat);
+  c = IDX2CLS (idx);
+  assert (c);
+  trace_lits_dat (ps, c, dat);
+
+  i = 0;
+  delta = 0;
+  prev = 0;
+
+  for (p = zhain->znt; (byte = *p); p++, i += 7)
+    {
+      delta |= (byte & 0x7f) << i;
+      if (byte & 0x80) continue;
+
+      this = prev + delta;
+
+      write_idx_dat (ps, this, dat);
+
+      prev = this;
+      delta = 0;
+      i = -7;
+    }
+  write_one (dat, 0);
+
 }
 
 static void
@@ -6337,6 +6419,43 @@ write_trace (PS * ps, FILE * file, int fmt)
     }
 #else
   (void) file;
+  (void) fmt;
+  (void) ps;
+#endif
+}
+
+
+static void
+write_trace_dat (PS * ps, struct TraceData* dat, int fmt)
+{
+#ifdef TRACE
+  Cls *c, ** p;
+  Zhn *zhain;
+  unsigned i;
+
+  core (ps);
+
+
+  for (p = SOC; p != EOC; p = NXC (p)) {
+      c = *p;
+
+    if (ps->oclauses <= p && p < ps->eoo)
+	{
+	  i = OIDX2IDX (p - ps->oclauses);
+	  assert (!c || CLS2IDX (c) == i);
+	} else {
+      assert (ps->lclauses <= p && p < ps->EOL);
+	  i = LIDX2IDX (p - ps->lclauses);
+	}
+
+    zhain = IDX2ZHN (i);
+    if (zhain) {
+	  if (zhain->core) trace_zhain_dat (ps, i, zhain, dat, fmt);
+	} else if (c) {
+	  if (c->core) trace_clause_dat (ps, i, c, dat, fmt);
+	}
+  }
+#else
   (void) fmt;
   (void) ps;
 #endif
@@ -6545,6 +6664,26 @@ check_trace_support_and_execute (PS * ps,
   leave (ps);
 #else
   (void) file;
+  (void) fmt;
+  (void) f;
+  ABORT ("compiled without trace support");
+#endif
+}
+
+
+static void
+check_trace_support_and_execute_dat (PS * ps,
+                                 struct TraceData* dat,
+				 void (*f)(PS*,struct TraceData*,int), int fmt)
+{
+  check_ready (ps);
+  check_unsat_state (ps);
+#ifdef TRACE
+  ABORTIF (!ps->trace, "API usage: tracing disabled");
+  enter (ps);
+  f (ps, dat, fmt);
+  leave (ps);
+#else
   (void) fmt;
   (void) f;
   ABORT ("compiled without trace support");
@@ -7937,6 +8076,13 @@ void
 picosat_write_extended_trace (PS * ps, FILE * file)
 {
   check_trace_support_and_execute (ps, file, write_trace,
+                                   EXTENDED_TRACECHECK_TRACE_FMT);
+}
+
+void
+picosat_write_extended_trace_data (PS *ps, struct TraceData* data)
+{
+  check_trace_support_and_execute_dat (ps, data, write_trace_dat,
                                    EXTENDED_TRACECHECK_TRACE_FMT);
 }
 

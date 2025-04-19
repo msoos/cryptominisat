@@ -36,7 +36,6 @@ THE SOFTWARE.
 #include <sstream>
 #include <cstddef>
 #include <cmath>
-#include <ratio>
 #include <utility>
 
 #include "sqlstats.h"
@@ -246,7 +245,7 @@ void Searcher::normalClMinim()
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
         Lit *lits = nullptr;
-        int32_t ID;
+        int32_t id;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
             //decision clause
@@ -257,19 +256,19 @@ void Searcher::normalClMinim()
         switch (type) {
             case binary_t:
                 size = 1;
-                ID = reason.getID();
+                id = reason.get_id();
                 break;
 
             case clause_t: {
                 Clause* cl2 = cl_alloc.ptr(reason.get_offset());
                 lits = cl2->begin();
                 size = cl2->size()-1;
-                ID = cl2->stats.ID;
+                id = cl2->stats.id;
                 break;
             }
 
             case xor_t: {
-                auto cl = get_xor_reason(reason, ID);
+                auto cl = get_xor_reason(reason, id);
                 lits = cl->data();
                 size = cl->size()-1;
                 sumAntecedentsLits += size;
@@ -308,7 +307,7 @@ void Searcher::normalClMinim()
                 break;
             } else {
                 VERBOSE_PRINT("Chain adding ID: " << ID << " due to normal CL minim, lit: " << p <<  " removed");
-                chain.push_back(ID);
+                chain.push_back(id);
             }
         }
     }
@@ -392,10 +391,10 @@ void Searcher::add_lits_to_learnt(
 
     Lit* lits = nullptr;
     size_t size = 0;
-    int32_t ID;
+    int32_t id;
     switch (confl.getType()) {
         case binary_t : {
-            ID = confl.getID();
+            id = confl.get_id();
             sumAntecedentsLits += 2;
             VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << ID);
 
@@ -415,7 +414,7 @@ void Searcher::add_lits_to_learnt(
 
         case clause_t : {
             Clause* cl = cl_alloc.ptr(confl.get_offset());
-            ID = cl->stats.ID;
+            id = cl->stats.id;
             assert(!cl->get_removed());
             lits = cl->begin();
             size = cl->size();
@@ -434,9 +433,6 @@ void Searcher::add_lits_to_learnt(
                 antec_data.longIrred++;
                 #endif
             }
-            #if defined(NORMAL_CL_USE_STATS)
-            cl->stats.uip1_used++;
-            #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
             if (!inprocess) cl->stats.uip1_used++;
@@ -469,7 +465,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case xor_t: {
-            auto cl = get_xor_reason(confl, ID);
+            auto cl = get_xor_reason(confl, id);
             lits = cl->data();
             size = cl->size();
             sumAntecedentsLits += size;
@@ -482,7 +478,7 @@ void Searcher::add_lits_to_learnt(
             lits = bnn_reason->data();
             size = bnn_reason->size();
             sumAntecedentsLits += size;
-            ID = 0; // so we don't get a warning, assert below
+            id = 0; // so we don't get a warning, assert below
             assert(!frat->enabled());
             break;
         }
@@ -491,7 +487,7 @@ void Searcher::add_lits_to_learnt(
         default: release_assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
     VERBOSE_PRINT("Chain adding ID: " << ID << " due to resolution on lit: " << p);
-    chain.push_back(ID);
+    chain.push_back(id);
 
     size_t i = 0;
     bool cont = true;
@@ -938,7 +934,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 Clause* cl = cl_alloc.ptr(reason.get_offset());
                 lits = cl->begin();
                 size = cl->size()-1;
-                ID = cl->stats.ID;
+                ID = cl->stats.id;
                 break;
             }
 
@@ -959,7 +955,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
             case binary_t:
                 size = 1;
-                ID = reason.getID();
+                ID = reason.get_id();
                 break;
 
             case null_clause_t:
@@ -1079,7 +1075,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                 switch(reason.getType()) {
                     case clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
-                        ID = cl.stats.ID;
+                        ID = cl.stats.id;
                         assert(value(cl[0]) == l_True);
                         for(const Lit lit: cl) {
                             if (varData[lit.var()].level > 0) {
@@ -1100,7 +1096,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                     case binary_t: {
                         const Lit lit = reason.lit2();
                         if (varData[lit.var()].level > 0) seen[lit.var()] = 1;
-                        ID = reason.getID();
+                        ID = reason.get_id();
                         break;
                     }
 
@@ -1443,10 +1439,10 @@ void Searcher::attach_and_enqueue_learnt_clause(
                     assert(unit_cl_XIDs[v] == 0);
                     assert(ID != 0);
                     unit_cl_IDs[v] = ID;
-                    const auto XID = ++clauseXID;
-		    if (!frat->incremental())
-                      *frat << implyxfromcls << XID << learnt_clause[0] << fratchain << ID << fin;
-                    unit_cl_XIDs[v] = XID;
+                    const auto xid = ++clauseXID;
+                    if (!frat->incremental())
+                      *frat << implyxfromcls << xid << learnt_clause[0] << fratchain << ID << fin;
+                    unit_cl_XIDs[v] = xid;
                 }
                 enqueue<false>(learnt_clause[0], level, PropBy(), false);
             }
@@ -1661,7 +1657,7 @@ Clause* Searcher::handle_last_confl(
         );
         cl->isRed = true;
         cl->stats.glue = glue;
-        cl->stats.ID = ID;
+        cl->stats.id = ID;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         red_stats_extra.push_back(ClauseStatsExtra());
         cl->stats.extra_pos = red_stats_extra.size()-1;
@@ -1976,7 +1972,7 @@ void Searcher::print_restart_stat_line() const
 
 void Searcher::print_restart_stats_base() const
 {
-    cout << "c rst "
+    cout << solver->conf.prefix << "rst "
          << " " << std::setw(4) << restart_type_to_short_string(params.rest_type)
          << " " << std::setw(4) << polarity_mode_to_short_string(polarity_mode)
          << " " << std::setw(4) << branch_strategy_str_short
@@ -2068,15 +2064,6 @@ void Searcher::reset_temp_cl_num()
 
 void Searcher::reduce_db_if_needed()
 {
-    #ifdef NORMAL_CL_USE_STATS
-    if (conf.every_pred_reduce != 0
-        && sumConflicts >= next_pred_reduce
-    ) {
-        solver->reduceDB->gather_normal_cl_use_stats();
-        next_pred_reduce = sumConflicts + conf.every_pred_reduce;
-    }
-    #endif
-
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     if (conf.every_pred_reduce != 0
         && sumConflicts >= next_pred_reduce
@@ -2418,8 +2405,14 @@ bool Searcher::intree_if_needed()
     if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
         sumConflicts > next_intree
     ) {
+
+        auto repl = solver->varReplacer->get_num_replaced_vars();
         if (ret) ret &= solver->intree->intree_probe();
-        if (ret) rebuildOrderHeap(); // Needed because intree may have replaced variables
+        if (ret) {
+            auto repl2 = solver->varReplacer->get_num_replaced_vars();
+            // Needed because replaced variables
+            if (repl != repl2) rebuildOrderHeap();
+        }
         next_intree = sumConflicts + 65000.0*conf.global_next_multiplier;
     }
 
@@ -2500,7 +2493,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     }
     num_search_called++;
     SLOW_DEBUG_DO(check_no_removed_or_freed_cl_in_watch());
-    verb_print(6, "Searcher::solve() called");
+    verb_print(6, __func__ << " called");
 
     resetStats();
     lbool status = l_Undef;
@@ -2659,7 +2652,7 @@ void Searcher::adjust_restart_strategy_cutoffs()
 inline void Searcher::print_local_restart_budget()
 {
     if (conf.verbosity >= 2 || conf.print_all_restarts) {
-        cout << "c [restart] at confl " << solver->sumConflicts << " -- "
+        cout << conf.prefix << "[restart] at confl " << solver->sumConflicts << " -- "
         << " local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_restart
@@ -2727,15 +2720,13 @@ void Searcher::print_solution_varreplace_status() const
 
 void Searcher::print_solution_type(const lbool status) const
 {
-    if (conf.verbosity >= 6) {
-        if (status == l_True) {
-            cout << "Solution from Searcher is SAT" << endl;
-        } else if (status == l_False) {
-            cout << "Solution from Searcher is UNSAT" << endl;
-            cout << "OK is: " << okay() << endl;
-        } else {
-            cout << "Solutions from Searcher is UNKNOWN" << endl;
-        }
+    if (status == l_True) {
+        verb_print(6, "Solution from Searcher is SAT");
+    } else if (status == l_False) {
+        verb_print(6, "Solution from Searcher is UNSAT");
+        verb_print(6, "OK is: " << okay());
+    } else {
+        verb_print(6, "Solutions from Searcher is UNKNOWN");
     }
 }
 
@@ -2784,7 +2775,7 @@ void Searcher::print_iteration_solving_stats()
 {
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
-        stats.print(propStats.propagations, conf.do_print_times);
+        stats.print(propStats.propagations, conf.do_print_times, conf.prefix);
         propStats.print(stats.cpu_time);
         print_stats_line("c props/decision"
             , float_div(propStats.propagations, stats.decisions)
@@ -2967,14 +2958,14 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             bool removed;
             if (except_marked) {
                 bool rem1 = removeWBin_except_marked(
-                    solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.getID());
+                    solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.get_id());
                 bool rem2 = removeWBin_except_marked(
-                    solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.getID());
+                    solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.get_id());
                 assert(rem1 == rem2);
                 removed = rem1;
             } else {
-                removeWBin(solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.getID());
-                removeWBin(solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.getID());
+                removeWBin(solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.get_id());
+                removeWBin(solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.get_id());
                 removed = true;
             }
             if (!removed) continue;
@@ -2987,7 +2978,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
-            *frat << del << b.getID() << b.getLit1() << b.getLit2() << fin;
+            *frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -3009,12 +3000,12 @@ PropBy Searcher::propagate() {
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled())) {
         if (!ret.isnullptr()) {
-            int32_t ID;
+            int32_t id;
             for(size_t i = last_trail; i < trail.size(); i++) {
                 const auto propby = varData[trail[i].lit.var()].reason;
-                if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, ID);
+                if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, id);
             }
-            if (ret.getType() == PropByType::xor_t) get_xor_reason(ret, ID);
+            if (ret.getType() == PropByType::xor_t) get_xor_reason(ret, id);
             // We need this check, because apparently GJ can set unsat during prop
             if (unsat_cl_ID == 0) {
                 *frat << add << ++clauseID << fin;
@@ -3083,14 +3074,9 @@ void Searcher::consolidate_watches(const bool full)
         watches.consolidate();
     }
     double time_used = cpuTime() - t;
-
-    if (conf.verbosity) {
-        cout
-        << "c [consolidate] "
-        << (full ? "full" : "mini")
-        << conf.print_times(time_used)
-        << endl;
-    }
+    verb_print(1, "[consolidate] "
+    << (full ? "full" : "mini")
+    << conf.print_times(time_used));
 
     std::stringstream ss;
     ss << "consolidate " << (full ? "full" : "mini") << " watches";
@@ -3363,7 +3349,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
         // we might want to swap here if highestID is not 0
         if (highestId != 0) {
             Lit back = pb.lit2();
-            pb = PropBy(failBinLit, pb.isRedStep(), pb.getID());
+            pb = PropBy(failBinLit, pb.isRedStep(), pb.get_id());
             failBinLit = back;
         }
     } else {
@@ -3375,7 +3361,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
                 Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
                 lits = conflCl.getData();
                 size = conflCl.size();
-                ID = conflCl.stats.ID;
+                ID = conflCl.stats.id;
                 break;
             }
 
@@ -3480,14 +3466,14 @@ bool Searcher::attach_xorclauses() {
         if (x.size() == 2) {
             vector<Lit> lits = vars_to_lits(x.vars);
             lits[0] ^= !x.rhs;
-            const auto i_d1 = ++clauseID;
-            *frat << implyclfromx << i_d1 << lits << fratchain << x.XID << fin;
-            solver->add_clause_int_frat(lits, i_d1);
+            const auto id1 = ++clauseID;
+            *frat << implyclfromx << id1 << lits << fratchain << x.xid << fin;
+            solver->add_clause_int_frat(lits, id1);
             if (!okay()) return false;
             lits[0] ^= true; lits[1] ^= true;
-            const auto i_d2 = ++clauseID;
-            *frat << implyclfromx << i_d2 << lits << fratchain << x.XID << fin;
-            solver->add_clause_int_frat(lits, i_d2);
+            const auto id2 = ++clauseID;
+            *frat << implyclfromx << id2 << lits << fratchain << x.xid << fin;
+            solver->add_clause_int_frat(lits, id2);
             if (!okay()) return false;
             continue;
         }

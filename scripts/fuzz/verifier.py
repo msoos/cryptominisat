@@ -501,7 +501,7 @@ class solution_parser:
                 break
 
             if abs(numlit) not in solution:
-                print("var %d in XOR clause not set" % abs(numlit))
+                print("var %d in clause not set" % abs(numlit))
 
         #print("Every other var set to FALSE")
         #print("Orig clause in DIMACS: ", lits)

@@ -19,7 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #pragma once
 
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 #include <iostream>
 #include <iomanip>
 #include <limits>
@@ -109,8 +110,7 @@ public:
         assureLookahead();
     }
 
-    void skipWhitespace()
-    {
+    void skipWhitespace() {
         char c = value();
         while (c == '\t' || c == '\r' || c == ' ') {
             advance();
@@ -118,8 +118,16 @@ public:
         }
     }
 
-    void skipLine()
-    {
+    std::string getRemain() {
+        std::string str;
+        for (;;) {
+            if (value() == EOF || value() == '\0' || value() == '\n') return str;
+            advance();
+            str.push_back(value());
+        }
+    }
+
+    void skipLine() {
         for (;;) {
             if (value() == EOF || value() == '\0') return;
             if (value() == '\n') {
@@ -130,8 +138,7 @@ public:
         }
     }
 
-    bool skipEOL(const size_t lineNum)
-    {
+    bool skipEOL(const size_t lineNum) {
         for (;;) {
             if (value() == EOF || value() == '\0') return true;
             if (value() == '\n') {
@@ -157,30 +164,8 @@ public:
         exit(-1);
     }
 
-    inline bool parseDouble(double& ret, size_t lineNum)
-    {
-        int32_t head;
-        bool rc = parseInt(head, lineNum);
-        if (!rc) {
-            return false;
-        }
-        if (value() == '.') {
-            advance();
-            int64_t tail;
-            rc = parseInt<int64_t>(tail, lineNum);
-            if (!rc) {
-                return false;
-            }
-            uint32_t num_10s = std::floor(std::log10(tail));
-            ret = head + tail/std::pow(10, num_10s+1);
-        } else {
-            ret = head;
-        }
-        return true;
-    }
-
     template<class T=int32_t>
-    inline bool parseInt(T& ret, size_t lineNum, bool allow_eol = false)
+    inline bool parseInt(T& ret, size_t lineNum, int* len = nullptr)
     {
         T val = 0;
         T mult = 1;
@@ -193,10 +178,6 @@ public:
         }
 
         char c = value();
-        if (allow_eol && c == '\n') {
-            ret = numeric_limits<T>::max();
-            return true;
-        }
         if (c < '0' || c > '9') {
             std::cerr
             << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
@@ -207,6 +188,7 @@ public:
         }
 
         while (c >= '0' && c <= '9') {
+            if (len) (*len)++;
             T val2 = val*10 + (c - '0');
             if (val2 < val) {
                 std::cerr << "PARSE ERROR! At line " << lineNum

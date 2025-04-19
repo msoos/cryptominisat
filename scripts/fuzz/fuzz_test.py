@@ -316,7 +316,6 @@ class Tester:
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.only_sampling:
-            cmd += "--onlysampling "
             cmd += "--sampling "
             cmd += ",".join(["%s" % x for x in self.sampling_vars]) + " "
 
@@ -590,24 +589,31 @@ class Tester:
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
+
+        fuzzers = list(fuzzers_noxor)
+        fuzzers.extend(fuzzers_xor)
+        fuzzer = random.choice(fuzzers)
+
         self.num_threads = random.choice([1]+[random.randint(2,4)])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        self.frat = self.num_threads == 1 and (random.randint(0, 10) < 10)
-
-
-        self.sqlitedbfname = None
-        self.only_sampling = random.choice([True, False, False, False, False]) and not self.frat
+        if self.num_threads == 1:
+            self.frat = random.randint(0, 10) < 5
+        else:
+            self.frat = False
 
         if options.only_sampling:
             self.frat = False
             self.only_sampling = True
 
-        fuzzers= fuzzers_noxor
-        fuzzers.extend(fuzzers_xor)
-        fuzzer = random.choice(fuzzers)
+        self.sqlitedbfname = None
+
+        if self.frat:
+            self.only_sampling = False
+        else:
+            self.only_sampling = random.choice([True, False, False, False, False])
 
         fname = unique_file("fuzzTest")
         fname_frat = None

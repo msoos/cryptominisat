@@ -195,6 +195,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_linkin_limit_MB(1000)
         , varelim_gate_find_limit(800)
         , picosat_gate_limitK(70)
+        , picosat_confl_limit(100)
         , varelim_check_resolvent_subs(false)
 
         //Subs, str limits for simplifier
@@ -322,7 +323,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , do_distill_bin_clauses(true)
-        , distill_long_cls_time_limitM(20ULL)
+        , distill_long_cls_time_limitM(200ULL)
         , watch_based_str_time_limitM(20LL)
         , distill_increase_conf_ratio(0.10)
         , distill_min_confl(10000)
@@ -347,6 +348,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doStrSubImplicit (true)
         , subsume_implicit_time_limitM(100LL)
         , distill_implicit_with_implicit_time_limitM(200LL)
+        , do_subs_with_resolvent_clauses(true)
 
         //Gates
         , doGateFind       (false)
@@ -369,9 +371,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // Oracle
         , oracle_get_learnts(false) // get oracle learnt clauses
         , oracle_removed_is_learnt(false) // clauses removed by Oracle should be learnt
+        , oracle_find_bins(0)
 
         //misc
         , origSeed(0)
+        , prefix("c ")
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
     ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.44;

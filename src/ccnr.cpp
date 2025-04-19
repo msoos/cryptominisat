@@ -41,25 +41,18 @@ using std::string;
 ls_solver::ls_solver(const bool aspiration)
 {
     _max_tries = 100;
-    _max_steps = 1*1000 * 1000;
     _random_seed = 1;
-    _time_limit = 3000;
     _swt_threshold = 50;
     _swt_p = 0.3;
     _swt_q = 0.7;
     _aspiration = aspiration;
-    _up_ratio = 0.3; //delete _up_ratio percents varibles
     verbosity = 0;
 }
 
 /**********************************build instance*******************************/
 bool ls_solver::make_space()
 {
-    if (0 == _num_vars || 0 == _num_clauses) {
-        cout << "c [ccnr] The formula size is zero."
-        "You may have forgotten to read the formula." << endl;
-        return false;
-    }
+    if (0 == _num_vars || 0 == _num_clauses) return false;
     _vars.resize(_num_vars+1);
     _clauses.resize(_num_clauses+1);
     _solution.resize(_num_vars+1);
@@ -98,6 +91,8 @@ void ls_solver::build_neighborhood()
 bool ls_solver::local_search(
     const vector<bool> *init_solution
     , long long int _mems_limit
+    , const char* prefix
+    , int64_t _max_steps
 ) {
     bool result = false;
     _random_gen.seed(_random_seed);
@@ -131,7 +126,7 @@ bool ls_solver::local_search(
             if (_verbosity &&
                 (_best_found_cost == 0 || (_step & 0x3ffff) == 0x3ffff)
             ) {
-                cout << "c [ccnr] tries: "
+                cout << prefix << "[ccnr] tries: "
                 << t << " steps: " << _step
                 << " best found: " << _best_found_cost
                 << endl;
@@ -149,6 +144,7 @@ bool ls_solver::local_search(
         }
     }
     _end_step = _step;
+    /* if (result) print_solution(true); */
     return result;
 }
 
@@ -518,7 +514,7 @@ void ls_solver::print_solution(bool need_verify)
                 return;
             }
         }
-        cout << "c Verified." << endl;
+        cout << "c Verified " << _num_clauses << " clauses " << endl;
     }
     if (verbosity > 0) {
         cout << "v";

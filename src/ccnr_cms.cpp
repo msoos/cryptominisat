@@ -48,6 +48,31 @@ CMS_ccnr::~CMS_ccnr()
     delete ls_s;
 }
 
+lbool CMS_ccnr::main_alter(int64_t mems, vector<uint8_t>& ret)
+{
+    //It might not work well with few number of variables
+    //rnovelty could also die/exit(-1), etc.
+    if (solver->nVars() < 50 ||
+        solver->binTri.irredBins + solver->longIrredCls.size() < 10
+    ) {
+        verb_print(1, "[ccnr] too few variables & clauses");
+        return l_Undef;
+    }
+
+    if (!init_problem()) {
+        verb_print(1, "[ccnr] problem UNSAT under assumptions, returning to main solver");
+        return l_Undef;
+    }
+
+    int res = ls_s->local_search(nullptr, mems, solver->conf.prefix.c_str(), 50LL*1000);
+    if (res) {
+      ret.clear();
+      ret.resize(solver->nVars());
+      for(uint32_t i = 0; i < solver->nVars(); i++) ret[i] = ls_s->_solution[i+1];
+    }
+    return res == 1 ? l_True : l_Undef;
+}
+
 lbool CMS_ccnr::main(const uint32_t num_sls_called)
 {
     //It might not work well with few number of variables
@@ -63,10 +88,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
     if (!init_problem()) {
         //it's actually l_False under assumptions
         //but we'll set the real SAT solver deal with that
-        if (solver->conf.verbosity) {
-            cout << "c [ccnr] problem UNSAT under assumptions, returning to main solver"
-            << endl;
-        }
+        verb_print(1, "[ccnr] problem UNSAT under assumptions, returning to main solver");
         return l_Undef;
     }
 
@@ -75,13 +97,12 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
         phases[i+1] = solver->varData[i].best_polarity;
     }
 
-    int res = ls_s->local_search(&phases, solver->conf.yalsat_max_mems*2*1000*1000);
+    int res = ls_s->local_search(&phases, solver->conf.yalsat_max_mems*2*1000*1000,
+            solver->conf.prefix.c_str());
     lbool ret = deal_with_solution(res, num_sls_called);
 
     double time_used = cpuTime()-startTime;
-    if (solver->conf.verbosity) {
-        cout << "c [ccnr] time: " << time_used << endl;
-    }
+    verb_print(1, "[ccnr] time: " << time_used);
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
@@ -126,9 +147,7 @@ CMS_ccnr::add_cl_ret CMS_ccnr::add_this_clause(const T& cl)
     }
     if (sz == 0) {
         //it's unsat because of assumptions
-        if (solver->conf.verbosity) {
-            cout << "c [walksat] UNSAT because of assumptions in clause: " << cl << endl;
-        }
+        verb_print(1,"[walksat] UNSAT because of assumptions in clause: " << cl);
         return add_cl_ret::unsat;
     }
 
@@ -267,9 +286,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_scores()
 
 vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_conflict_ct()
 {
-    if (solver->conf.verbosity) {
-        cout << "c [ccnr] bumping based on var unsat frequency: conflict_ct" << endl;
-    }
+    verb_print(1,"[ccnr] bumping based on var unsat frequency: conflict_ct");
 
     vector<pair<uint32_t, double>> tobump;
     int mymax = 0;
@@ -295,8 +312,7 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
 {
     if (solver->conf.sls_get_phase || res) {
         if (solver->conf.verbosity) {
-            cout
-            << "c [ccnr] saving best assignment phase to stable_polar";
+            cout << solver->conf.prefix << "[ccnr] saving best assignment phase to stable_polar";
             if (res) cout << " + best_polar";
             cout << endl;
         }

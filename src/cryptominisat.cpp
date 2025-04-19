@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <fstream>
 #include <cstdint>
 #include <iomanip>
-#include <limits>
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -46,6 +45,8 @@ using std::vector;
 #endif
 
 using namespace CMSat;
+
+using std::complex;
 
 static bool print_thread_start_and_finish = false;
 
@@ -537,6 +538,12 @@ DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
   }
 }
 
+DLL_PUBLIC void SATSolver::set_do_subs_with_resolvent_clauses(int subs) {
+  for (Solver* s : data->solvers) {
+      s->conf.do_subs_with_resolvent_clauses = subs;
+  }
+}
+
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
     for (auto & solver : data->solvers) {
@@ -602,6 +609,13 @@ DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
         s.conf.picosat_gate_limitK = lim;
+    }
+}
+DLL_PUBLIC void SATSolver::set_picosat_confl_limit(const uint32_t lim)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.picosat_confl_limit = lim;
     }
 }
 
@@ -1047,7 +1061,6 @@ DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::strin
     }
 }
 
-
 DLL_PUBLIC const char* SATSolver::get_version_sha1()
 {
     return Solver::get_version_sha1();
@@ -1063,34 +1076,23 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
     return Solver::get_compilation_env();
 }
 
-DLL_PUBLIC std::string SATSolver::get_text_version_info()
+DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
 {
     std::stringstream ss;
-    ss << "c CryptoMiniSat version " << get_version() << endl;
-    ss << "c CMS Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file" << endl;
-    ss << "c CMS SHA revision " << get_version_sha1() << endl;
-    ss << "c Using VMTF code by Armin Biere from CaDiCaL" << endl;
-    ss << "c Using Yalsat by Armin Biere, see Balint et al. Improving implementation of SLS solvers [...], SAT'14" << endl;
-    ss << "c Using WalkSAT by Henry Kautz, see Kautz and Selman Pushing the envelope: planning, propositional logic, and stochastic search, AAAI'96," << endl;
+    ss << prefix << "Using VMTF, picosat, CaDiCaL, and CadiBack code by Armin Biere" << endl;
     #ifdef USE_BREAKID
-    ss << "c Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
-    ss << "c Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
-    ss << "c CMS is GPL licensed due to Bliss being linked. Build without Bliss to get MIT version" << endl;
+    ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
+    ss << prefix << "Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
+    ss << prefix << "CMS is GPL licensed due to Bliss being linked. Build without Bliss to get MIT version" << endl;
     #else
-    ss << "c CMS is MIT licensed" << endl;
+    ss << prefix << "CMS is MIT licensed" << endl;
     #endif
-
-    ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
-    ss << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
-    ss << "c Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
-    ss << "c       by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
-    ss << "c CMS compilation env " << get_compilation_env() << endl;
-    #ifdef __GNUC__
-    ss << "c CMS compiled with gcc version " << __VERSION__ << endl;
-    #else
-    ss << "c CMS compiled with non-gcc compiler" << endl;
-    #endif
-
+    ss << prefix << "Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
+    ss << prefix << "      by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
+    ss << prefix << "Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
+    ss << prefix << "      by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
+    ss << prefix << "Using Oracle code from 'Integrating Tree Decompositions [...]'" << endl;
+    ss << prefix << "      by Tuukka Korhonen and Matti Jarvisalo, CP 2021";
     return ss.str();
 }
 
@@ -1329,11 +1331,34 @@ void DLL_PUBLIC SATSolver::end_getting_constraints()
     data->solvers[0]->end_getting_constraints();
 }
 
-
 DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
-    const vector<uint32_t>& sampl_set)
+    const vector<uint32_t>& sampl_set, bool also_removed)
 {
-    return data->solvers[0]->translate_sampl_set(sampl_set);
+    return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
+}
+
+DLL_PUBLIC std::vector<Lit> SATSolver::get_weight_translation() const
+{
+    return data->solvers[0]->get_weight_translation();
+}
+
+DLL_PUBLIC map<uint32_t, VarMap> SATSolver::update_var_mapping(
+        const std::map<uint32_t, VarMap>& vmap)
+{
+    return data->solvers[0]->update_var_mapping(vmap);
+}
+
+DLL_PUBLIC vector<uint32_t> SATSolver::get_elimed_vars() const {
+    return data->solvers[0]->get_elimed_vars();
+}
+
+DLL_PUBLIC std::vector<std::vector<Lit>> SATSolver::get_cls_defining_var(uint32_t outer_v) const {
+    return data->solvers[0]->get_cls_defining_var(outer_v);
+}
+
+DLL_PUBLIC void SATSolver::reverse_bce() {
+    return data->solvers[0]->reverse_bce();
+
 }
 
 void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
@@ -1342,6 +1367,14 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
         solver->conf.min_bva_gain = min_bva_gain;
     }
 }
+
+void DLL_PUBLIC SATSolver::set_lit_weight_internal(const Lit lit, const double val)
+{
+    for (auto & solver : data->solvers) {
+        solver->set_outer_lit_weight(lit, val);
+    }
+}
+
 
 void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restart)
 {
@@ -1357,7 +1390,7 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
         conf.do_distill_clauses = false;
         conf.doFindXors = false;
         conf.fixed_restart_num_confl = fixed_restart;
-        conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_weighted;
 
         solver->setConf(conf);
     }
@@ -1453,15 +1486,6 @@ DLL_PUBLIC void SATSolver::set_single_run()
     }
 }
 
-DLL_PUBLIC void SATSolver::set_lit_weight(Lit lit, double weight)
-{
-    actually_add_clauses_to_threads(data);
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.set_lit_weight(lit, weight);
-    }
-}
-
 DLL_PUBLIC std::vector<uint32_t> SATSolver::get_lit_incidence()
 {
     actually_add_clauses_to_threads(data);
@@ -1498,10 +1522,15 @@ DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(const
     return data->solvers[0]->remove_definable_by_irreg_gate(vars);
 }
 
-DLL_PUBLIC void SATSolver::get_empties(
+DLL_PUBLIC std::vector<uint32_t> SATSolver::extend_definable_by_irreg_gate(const vector<uint32_t>& vars)
+{
+    return data->solvers[0]->extend_definable_by_irreg_gate(vars);
+}
+
+DLL_PUBLIC void SATSolver::clean_sampl_get_empties(
     std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars)
 {
-    return data->solvers[0]->get_empties(sampl_vars, empty_vars);
+    return data->solvers[0]->clean_sampl_get_empties(sampl_vars, empty_vars);
 }
 
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
@@ -1618,6 +1647,14 @@ DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.varElimRatioPerIter = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_prefix(const char* prefix)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.prefix = prefix;
     }
 }
 
@@ -1824,11 +1861,17 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 }
 
 
+DLL_PUBLIC std::vector<std::vector<uint8_t>> SATSolver::many_sls(int64_t mems, uint32_t num) {
+    Solver& s = *data->solvers[0];
+    actually_add_clauses_to_threads(data);
+    return s.many_sls(mems, num);
+}
+
 DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool& finished)
 {
     Solver& s = *data->solvers[0];
     actually_add_clauses_to_threads(data);
-    return s.backbone_simpl(max_confl, finished);
+    return s.backbone_simpl(max_confl, true, finished);
 }
 
 DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
@@ -1843,30 +1886,14 @@ DLL_PUBLIC void SATSolver::set_oracle_get_learnts(bool val) {
     s.conf.oracle_get_learnts = val;
 }
 
+DLL_PUBLIC void SATSolver::set_oracle_find_bins(int val) {
+    Solver& s = *data->solvers[0];
+    s.conf.oracle_find_bins = val;
+}
+
 DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {
     Solver& s = *data->solvers[0];
     s.conf.oracle_removed_is_learnt = val;
-}
-
-// Weight stuff
-DLL_PUBLIC bool SATSolver::get_weighted() const {
-    const Solver& s = *data->solvers[0];
-    return s.get_weighted();
-}
-
-DLL_PUBLIC void SATSolver::set_weighted(const bool weighted) {
-    Solver& s = *data->solvers[0];
-    s.set_weighted(weighted);
-}
-
-DLL_PUBLIC void SATSolver::set_multiplier_weight(const mpz_class mult) {
-    Solver& s = *data->solvers[0];
-    s.set_multiplier_weight(mult);
-}
-
-DLL_PUBLIC mpz_class SATSolver::get_multiplier_weight() const {
-    Solver& s = *data->solvers[0];
-    return s.get_multiplier_weight();
 }
 
 DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_sampl_vars() const {
@@ -1904,13 +1931,3 @@ DLL_PUBLIC bool SATSolver::get_opt_sampl_vars_set() const {
     Solver& s = *data->solvers[0];
     return s.conf.opt_sampling_vars_set;
 }
-
-
-#ifdef WEIGHTED
-DLL_PUBLIC void SATSolver::get_weights(std::map<Lit, double>& weights,
-        const std::vector<uint32_t>& sampl_vars,
-        const std::vector<uint32_t>& orig_sampl_vars) const {
-    const Solver& s = *data->solvers[0];
-    s.get_weights(weights, sampl_vars, orig_sampl_vars);
-}
-#endif

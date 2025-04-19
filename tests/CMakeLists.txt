@@ -22,49 +22,16 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-sign-compare")
 endif()
 
-set (LIT_TOOL "${Python3_EXECUTABLE} -m lit.main")
-execute_process(
-    COMMAND "${Python3_EXECUTABLE}" "-m" "lit.main" "--version"
-    OUTPUT_VARIABLE LIT_VER_OUT
-    ERROR_VARIABLE  LIT_VER_ERR
-    RESULT_VARIABLE RES
-)
-
-if(NOT("${RES}" STREQUAL "0"))
-    message(STATUS "Output of LIT stdout: '${LIT_VER_OUT}'")
-    message(STATUS "Output of LIT stderr: '${LIT_VER_ERR}'")
-    message(STATUS "LIT result val is: '${RES}'")
-    message(FATAL_ERROR "Could not find 'lit' tool for Python executable ${Python3_EXECUTABLE}. You need to install it for this Python version by running '${Python3_EXECUTABLE} -m pip install lit'. If it's already installed, set LIT_TOOL to the full path for lit")
-endif()
-
-set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")
-
-# -----------------------------------------------------------------------------
-# Find GTest library which will be used to drive tests
-# -----------------------------------------------------------------------------
-# GoogleTest devs don't recommend using a pre-built GTest library
-# ( https://code.google.com/p/googletest/wiki/FAQ#Why_is_it_not_recommended_to_install_a_pre-compiled_copy_of_Goog ).
-# Because of this, distros like Ubuntu don't provide a pre-built GTest library
-# so ``find_package(GTest REQUIRED)`` fails.
-#
-# Instead it is recommended that projects build their own copy of GTest. Detecting
-# the location of GTest source code is probably error prone so using a copy in the
-# repository seems like the easiest thing to do. This also has the added benefit that
-# everyone uses the same version of GTest.
 set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
 message(STATUS "NOTE: if adding the 'gtest' subdirectory fails, you need to issue 'git submodule init' and 'git submodule update'")
-add_subdirectory(${GTEST_PREFIX} gtest)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 
-include_directories(${GTEST_PREFIX}/include)
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 add_definitions( -DCMS_TESTING_ENABLED )
 
 # Add handy macros/functions
 include(AddSTPGTest)
 include(AddGTestSuite)
-
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
 
 # Tests that drive cryptominisat by using cnf files (e.g. smt2, smt and cvc files)
 add_subdirectory(${PROJECT_SOURCE_DIR}/tests/cnf-files)
@@ -76,11 +43,10 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat minisat)
 
 add_sanitize_flags()
 # below is expensive tests, let's not run it
-# if (Python3_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED)
+# if (Python3_EXECUTABLE AND ZLIB_FOUND AND NOT STATS)
 #     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
 #     add_subdirectory(simp-checks)
 # endif()
-
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories(

@@ -20,15 +20,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SOLVERTYPESMINI_H
-#define SOLVERTYPESMINI_H
+#ifndef SOLVERTYPESMINI__H
+#define SOLVERTYPESMINI__H
 
 #include <cstdint>
 #include <iostream>
 #include <cassert>
+#include <memory>
 #include <vector>
 #include <array>
-#include <algorithm>
+#include <gmpxx.h>
 
 namespace CMSat {
 
@@ -172,7 +173,6 @@ inline lbool toLbool(uint32_t v)
     return l;
 }
 
-
 constexpr inline uint32_t toInt  (lbool l)
 {
     return l.value;
@@ -197,8 +197,9 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 
 class OrGate {
     public:
-        OrGate(const Lit& _rhs, const std::vector<Lit>& _lits, int32_t _ID) :
-            lits(_lits), rhs(_rhs), ID(_ID)
+        template<typename T>
+        OrGate(const Lit& _rhs, const T& _lits, int32_t _ID) :
+            lits(_lits), rhs(_rhs), id(_ID)
 
         {
             std::sort(lits.begin(), lits.end());
@@ -220,7 +221,7 @@ class OrGate {
         Lit rhs;
 
         //ID of long clause
-        int32_t ID;
+        int32_t id;
 };
 
 class ITEGate {
@@ -387,6 +388,252 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
     return os;
 }
 
+struct VarMap {
+    explicit VarMap() = default;
+    explicit VarMap(const Lit l) : lit(l) {}
+    explicit VarMap(const lbool v) : val(v) {}
+    bool operator==(const VarMap& other) const { return lit == other.lit && val == other.val; }
+    bool operator!=(const VarMap& other) const { return !(*this == other); }
+    bool invariant() const {
+        // Must be at least one of them
+        if (lit == lit_Undef && val == l_Undef) return false;
+        // Can't be both
+        if (lit != lit_Undef && val != l_Undef) return false;
+        return true;
+    }
+    Lit lit = lit_Undef;
+    lbool val = l_Undef;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const VarMap& v)
+{
+    assert(v.invariant());
+    if (v.lit != lit_Undef) {
+        os << "VarMap lit:" << v.lit;
+        return os;
+    } else {
+        os << "VarMap val: " << v.val;
+        return os;
+    }
+    return os;
 }
 
-#endif //SOLVERTYPESMINI_H
+class Field {
+public:
+    virtual ~Field() = default;
+
+    // Virtual methods for field operations
+    virtual Field& operator=(const Field& other) = 0;
+    virtual Field& operator+=(const Field& other) = 0;
+    virtual std::unique_ptr<Field> add(const Field& other) = 0;
+    virtual Field& operator-=(const Field& other) = 0;
+    virtual Field& operator*=(const Field& other) = 0;
+    virtual Field& operator/=(const Field& other) = 0;
+    virtual bool operator==(const Field&) const = 0;
+    virtual bool is_zero() const = 0;
+    virtual bool is_one() const = 0;
+    virtual void set_zero() = 0;
+    virtual void set_one() = 0;
+    virtual uint64_t bytes_used() const = 0;
+    virtual std::unique_ptr<Field> dup() const = 0;
+    virtual bool parse(const std::string& str, const uint32_t line_no) = 0;
+
+    // A method to display the value (for demonstration purposes)
+    virtual std::ostream& display(std::ostream& os) const = 0;
+
+    static void skip_whitespace(const std::string& str, uint32_t& at) {
+        char c = str[at];
+        while (c == '\t' || c == '\r' || c == ' ') {
+            at++;
+            c = str[at];
+        }
+    }
+
+    static mpz_class parse_sign(const std::string& str, uint32_t& at) {
+        mpz_class sign = 1;
+        if (str[at] == '-') {sign = -1; at++;}
+        else if (str[at] == '+') {sign = 1; at++;}
+        return sign;
+    }
+
+    static bool parse_int(mpz_class& ret, const std::string& str, uint32_t& at,
+            const size_t line_num, int* len = nullptr) {
+        mpz_class val = 0;
+        skip_whitespace(str, at);
+
+        char c = str[at];
+        if (c < '0' || c > '9') {
+            std::cerr
+            << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
+            << " At line " << line_num
+            << " we expected a number"
+            << std::endl;
+            return false;
+        }
+
+        while (c >= '0' && c <= '9') {
+            if (len) (*len)++;
+            mpz_class val2 = val*10 + (c - '0');
+            if (val2 < val) {
+                std::cerr << "PARSE ERROR! At line " << line_num
+                << " the variable number is to high"
+                << std::endl;
+                return false;
+            }
+            val = val2;
+            c = str[++at];
+        }
+        ret = val;
+        return true;
+    }
+
+    static bool check_end_of_weight(const std::string& str, uint32_t& at, const uint32_t line_no) {
+        skip_whitespace(str, at);
+        if (str[at] != '0') {
+            std::cerr << "PARSE ERROR! expected 0 at the end of the weight."
+                << "At line " << line_no
+                << " -- did you forget to set the mode?" << std::endl;
+            return false;
+        }
+        at++;
+        skip_whitespace(str, at);
+        if (str[at] != '\n') {
+
+            std::cerr << "PARSE ERROR! expected end of line at the end of the weight."
+                << "At line " << line_no
+                << " -- did you forget to set the mode?" << std::endl;
+            return false;
+        }
+        return true;
+    }
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Field& f) {
+    return f.display(os);
+}
+
+class FieldGen {
+public:
+    virtual ~FieldGen() = default;
+    virtual std::unique_ptr<Field> zero() const = 0;
+    virtual std::unique_ptr<Field> one() const = 0;
+    virtual std::unique_ptr<FieldGen> dup() const = 0;
+    virtual bool larger_than(const Field&, const Field&) const = 0;
+    virtual bool weighted() const = 0;
+};
+
+class FDouble : public Field {
+public:
+    double val;
+    FDouble(const double _val) : val(_val) {}
+    FDouble(const FDouble& other) : val(other.val) {}
+
+    Field& operator=(const Field& other) override {
+        const auto& od = static_cast<const FDouble&>(other);
+        val = od.val;
+        return *this;
+    }
+
+    Field& operator+=(const Field& other) override {
+        const auto& od = static_cast<const FDouble&>(other);
+        val += od.val;
+        return *this;
+    }
+
+    std::unique_ptr<Field> add(const Field& other) override {
+        const auto& od = static_cast<const FDouble&>(other);
+        return std::make_unique<FDouble>(val + od.val);
+    }
+
+    Field& operator-=(const Field& other) override {
+        const auto& od = static_cast<const FDouble&>(other);
+        val -= od.val;
+        return *this;
+    }
+
+    Field& operator*=(const Field& other) override {
+        const auto& od = static_cast<const FDouble&>(other);
+        val *= od.val;
+        return *this;
+    }
+
+    Field& operator/=(const Field& other) override {
+        const auto& od = static_cast<const FDouble&>(other);
+        if (od.val == 0) throw std::runtime_error("Division by zero");
+        val /= od.val;
+        return *this;
+    }
+
+    bool operator==(const Field& other) const override {
+        const auto& od = static_cast<const FDouble&>(other);
+        return od.val == val;
+    }
+
+    std::ostream& display(std::ostream& os) const override {
+        os << val;
+        return os;
+    }
+
+    std::unique_ptr<Field> dup() const override {
+        return std::make_unique<FDouble>(val);
+    }
+
+    bool is_zero() const override { return val == 0; }
+    bool is_one() const override { return val == 1; }
+    void set_zero() override { val = 0; }
+    void set_one() override { val = 1; }
+    uint64_t bytes_used() const override { return sizeof(FDouble); }
+
+    bool parse(const std::string& str, const uint32_t line_no) override {
+        mpz_class head;
+        mpz_class mult;
+        uint32_t at = 0;
+        auto sign = parse_sign(str, at);
+        parse_int(head, str, at, line_no);
+        mpq_class vald;
+        if (str[at] == '.') {
+            at++;
+            mpz_class tail;
+            int len = 0;
+            if (!parse_int(tail, str, at, line_no, &len)) return false;
+            mpz_class ten(10);
+            mpz_ui_pow_ui(ten.get_mpz_t(), 10, len);
+            mpq_class tenq(ten);
+            mpq_class tailq(tail);
+            vald = head + tailq/tenq;
+        } else {
+            vald = head;
+        }
+        vald *= sign;
+        val = vald.get_d();
+        return check_end_of_weight(str, at, line_no);
+    }
+};
+
+class FGenDouble : public FieldGen {
+public:
+    ~FGenDouble() override = default;
+    std::unique_ptr<Field> zero() const override {
+        return std::make_unique<FDouble>(0);
+    }
+
+    std::unique_ptr<Field> one() const override {
+        return std::make_unique<FDouble>(1.0);
+    }
+
+    std::unique_ptr<FieldGen> dup() const override {
+        return std::make_unique<FGenDouble>();
+    }
+
+    bool larger_than(const Field& a, const Field& b) const override {
+        const auto& ad = static_cast<const FDouble&>(a);
+        const auto& bd = static_cast<const FDouble&>(b);
+        return ad.val > bd.val;
+    }
+
+    bool weighted() const override { return true; }
+};
+
+}
+
+#endif

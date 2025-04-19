@@ -32,8 +32,9 @@ class Solver;
 class SLS {
 public:
     SLS(Solver* solver);
-    ~SLS();
+    ~SLS() = default;
     lbool run(const uint32_t num_sls_called);
+    vector<vector<uint8_t>> run_alter(const int64_t mems, uint32_t num);
 
 private:
     Solver* solver;

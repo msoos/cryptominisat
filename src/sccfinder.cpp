@@ -96,7 +96,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
     if (depth >= (uint32_t)solver->conf.max_scc_depth) {
         if (solver->conf.verbosity && !depth_warning_issued) {
             depth_warning_issued = true;
-            cout << "c [scc] WARNING: reached maximum depth of " << solver->conf.max_scc_depth << endl;
+            verb_print(1, "[scc] WARNING: reached maximum depth of " << solver->conf.max_scc_depth);
         }
         return;
     }
@@ -172,18 +172,13 @@ void SCCFinder::add_bin_xor_in_tmp()
     }
 }
 
-void SCCFinder::Stats::print_short(Solver* solver) const
+void SCCFinder::Stats::print_short(const Solver* solver) const
 {
-    cout
-    << "c [scc]"
+    assert(solver);
+    verb_print(1, "[scc]"
     << " new: " << foundXorsNew
-    << " BP " << bogoprops/(1000*1000) << "M";
-    if (solver) {
-        cout << solver->conf.print_times(cpu_time);
-    } else {
-        cout << "  T: " << std::setprecision(2) << std::fixed << cpu_time;
-    }
-    cout << endl;
+    << " BP " << bogoprops/(1000*1000) << "M"
+    << solver->conf.print_times(cpu_time));
 
     if (solver && solver->sqlStats) {
         solver->sqlStats->time_passed_min(

@@ -265,7 +265,7 @@ end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
-            runStats.print(solver->nVarsOuter());
+            runStats.print(solver->nVarsOuter(), solver->conf.prefix);
         else
             runStats.print_short(solver);
     }
@@ -326,23 +326,23 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     //      and so is this binary XOR reconstruction
                     vector<Lit> bin(2);
                     bin[0] = Lit(origv, false); bin[1] = l2 ^ true;
-                    const auto ID1 = ++solver->clauseID;
-                    *solver->frat << add << ID1 << bin << fin;
-                    const auto ID2 = ++solver->clauseID;
+                    const auto id1 = ++solver->clauseID;
+                    *solver->frat << add << id1 << bin << fin;
+                    const auto id2 = ++solver->clauseID;
                     bin[0] ^= true; bin[1] ^= true;
-                    *solver->frat << add << ID2 << bin << fin;
+                    *solver->frat << add << id2 << bin << fin;
                     const auto bin_XID = ++solver->clauseXID;
                     //     Yes, "1 2 0"  && "-1 -2 0" is the same as "x 1 2 0"
                     // And Yes, "1 -2 0" && "-1  2 0" is the same as "x 1 -2 0"
-                    *solver->frat << implyxfromcls << bin_XID << bin << fratchain << ID1 << ID2 << fin;
+                    *solver->frat << implyxfromcls << bin_XID << bin << fratchain << id1 << id2 << fin;
                     INC_XID(x);
-                    *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
+                    *solver->frat << addx << x << fratchain << old_x->xid << bin_XID << fin;
                     *solver->frat << delx << *old_x << fin;
                     delete old_x;
                     *solver->frat << delx << bin_XID << bin << fin;
-                    *solver->frat << del << ID2 << bin << fin;
+                    *solver->frat << del << id2 << bin << fin;
                     bin[0] ^= true; bin[1] ^= true;
-                    *solver->frat << del << ID1 << bin << fin;
+                    *solver->frat << del << id1 << bin << fin;
                 }
                 go_again = true;
                 break;
@@ -354,7 +354,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
     switch (x.size()) {
         case 0:
             if (x.rhs == true && solver->okay()) {
-                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
+                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.xid << fin;
                 set_unsat_cl_id(solver->clauseID);
                 solver->ok = false;
             }
@@ -364,7 +364,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
         case 1: {
             Lit l(x[0], !x.rhs);
             const auto ID = ++solver->clauseID;
-            *solver->frat << implyclfromx << ID << l << fratchain << x.XID << fin;
+            *solver->frat << implyclfromx << ID << l << fratchain << x.xid << fin;
             delayedEnqueue.push_back(make_tuple(l, ID));
             frat_func_end_with("1-len");
             return false;
@@ -383,7 +383,7 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
         Xor& x = xors[i];
         if (replace_one_xor_clause(x)) xors[j++] = xors[i];
         else {
-            if (x.XID != 0) *solver->frat << delx << x << fin;
+            if (x.xid != 0) *solver->frat << delx << x << fin;
             del_xor_reason(x);
         }
     }
@@ -415,7 +415,7 @@ inline void VarReplacer::updateBin(
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->frat) << del << i->get_ID() << origLit1 << origLit2 << fin;
+            (*solver->frat) << del << i->get_id() << origLit1 << origLit2 << fin;
         }
 
         return;
@@ -428,11 +428,11 @@ inline void VarReplacer::updateBin(
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc
-        const int32_t orig_ID = i->get_ID();
+        const int32_t orig_ID = i->get_id();
         const int32_t ID = ++solver->clauseID;
         /* cout << "orig ID: " << orig_ID << " origl1, l2: " << origLit1 << "," << origLit2 << " lit1, lit2: " << lit1 << "," << lit2 << " new ID: " << ID << endl; */
         *solver->frat<< add << ID << lit1 << lit2 << fin;
-        *solver->frat<< del << i->get_ID() << origLit1 << origLit2 << fin;
+        *solver->frat<< del << i->get_id() << origLit1 << origLit2 << fin;
         Watched* i2 = findWatchedOfBinMaybe(solver->watches, origLit2, origLit1, i->red(), orig_ID);
         if (i2) i2->set_ID(ID);
         else findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
@@ -520,7 +520,7 @@ bool VarReplacer::replaceImplicit()
 
     for(const BinaryClause& bincl : delayed_attach_bin) {
         solver->attach_bin_clause(
-            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.getID());
+            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.get_id());
     }
     delayed_attach_bin.clear();
 
@@ -696,14 +696,14 @@ bool VarReplacer::handleUpdatedClause(
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
-        set_unsat_cl_id(c.stats.ID);
+        set_unsat_cl_id(c.stats.id);
         solver->ok = false;
         return true;
     case 1 :
         c.set_removed();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
-        delayedEnqueue.push_back(make_tuple(c[0], c.stats.ID));
+        delayedEnqueue.push_back(make_tuple(c[0], c.stats.id));
         runStats.removedLongLits += origSize;
         return true;
     case 2:
@@ -711,7 +711,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
-        solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.ID);
+        solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.id);
         runStats.removedLongLits += origSize;
         return true;
 
@@ -912,12 +912,12 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
     }
 
     int32_t ID = ++solver->clauseID;
-    int32_t ID2 = ++solver->clauseID;
+    int32_t id2 = ++solver->clauseID;
     (*solver->frat)
     << add << ID << ~lit1 << lit2 << fin
-    << add << ID2 << lit1 << ~lit2 << fin;
+    << add << id2 << lit1 << ~lit2 << fin;
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
-    bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID2, lit1, ~lit2});
+    bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id2, lit1, ~lit2});
 
     //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none);
@@ -1130,63 +1130,63 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
     return num;
 }
 
-void VarReplacer::print_some_stats(const double global_cpu_time) const
+void VarReplacer::print_some_stats(const double global_cpu_time, const string& prefix) const
 {
-    print_stats_line("c vrep replace time"
+    print_stats_line(prefix + "vrep replace time"
         , globalStats.cpu_time
         , stats_line_percent(globalStats.cpu_time, global_cpu_time)
         , "% time"
     );
 
-    print_stats_line("c vrep tree roots"
+    print_stats_line(prefix + "vrep tree roots"
         , getNumTrees()
     );
 
-    print_stats_line("c vrep trees' crown"
+    print_stats_line(prefix + "vrep trees' crown"
         , get_num_replaced_vars()
         , float_div(get_num_replaced_vars(), getNumTrees())
         , "leafs/tree"
     );
 }
 
-void VarReplacer::Stats::print(const size_t nVars) const
+void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
 {
         cout << "c --------- VAR REPLACE STATS ----------" << endl;
-        print_stats_line("c time"
+        print_stats_line(prefix + "time"
             , cpu_time
             , float_div(cpu_time, numCalls)
             , "per call"
         );
 
-        print_stats_line("c trees' crown"
+        print_stats_line(prefix + "trees' crown"
             , actuallyReplacedVars
             , stats_line_percent(actuallyReplacedVars, nVars)
             , "% of vars"
         );
 
-        print_stats_line("c 0-depth assigns"
+        print_stats_line(prefix + "0-depth assigns"
             , zeroDepthAssigns
             , stats_line_percent(zeroDepthAssigns, nVars)
             , "% vars"
         );
 
-        print_stats_line("c lits replaced"
+        print_stats_line(prefix + "lits replaced"
             , replacedLits
         );
 
-        print_stats_line("c bin cls removed"
+        print_stats_line(prefix + "bin cls removed"
             , removedBinClauses
         );
 
-        print_stats_line("c long cls removed"
+        print_stats_line(prefix + "long cls removed"
             , removedLongClauses
         );
 
-        print_stats_line("c long lits removed"
+        print_stats_line(prefix + "long lits removed"
             , removedLongLits
         );
 
-         print_stats_line("c bogoprops"
+         print_stats_line(prefix + "bogoprops"
             , bogoprops
         );
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;
@@ -1194,15 +1194,13 @@ void VarReplacer::Stats::print(const size_t nVars) const
 
 void VarReplacer::Stats::print_short(const Solver* solver) const
 {
-    cout
-    << "c [vrep]"
+    verb_print(1, "[vrep]"
     << " vars " << actuallyReplacedVars
     << " lits " << replacedLits
     << " rem-bin-cls " << removedBinClauses
     << " rem-long-cls " << removedLongClauses
     << " BP " << bogoprops/(1000*1000) << "M"
-    << solver->conf.print_times(cpu_time)
-    << endl;
+    << solver->conf.print_times(cpu_time));
 }
 
 VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)

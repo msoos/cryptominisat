@@ -23,18 +23,16 @@ THE SOFTWARE.
 #pragma once
 
 #include <vector>
-#include <iostream>
-#include <stdio.h>
+#include <cstdio>
 
 #include "clause.h"
 #include "sqlstats.h"
 #include "xor.h"
 
-
 using std::vector;
 
 #if 0
-#define FRAT_PRINT((...) \
+#define FRAT_PRINT(...) \
     do { \
         const uint32_t tmp_num = sprintf((char*)buf_ptr, __VA_ARGS__); \
         buf_ptr+=tmp_num; \
@@ -46,14 +44,15 @@ using std::vector;
 
 namespace CMSat {
 
-  enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc, implyclfromx, implyxfromcls, weakencl, restorecl, assump, unsatcore, modelF};
+  enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc,
+      implyclfromx, implyxfromcls, weakencl, restorecl, assump, unsatcore, modelF};
   enum FratOutcome{satisfiable, unsatisfiable, unknown};
 
 class Frat
 {
 public:
-    Frat() { }
-    virtual ~Frat() { }
+    Frat() = default;
+    virtual ~Frat() = default;
     virtual bool enabled() { return false; }
     virtual void set_sumconflicts_ptr(uint64_t*) { }
     virtual void set_sqlstats_ptr(SQLStats*) { }
@@ -70,7 +69,7 @@ public:
     virtual Frat& operator<<(const FratFlag) { return *this; }
     virtual void setFile(FILE*) { }
     virtual FILE* getFile() { return nullptr; }
-    virtual void flush();
+    virtual void flush() {}
     virtual bool incremental() {return false;}
 
     int buf_len;
@@ -95,20 +94,20 @@ public:
         del_len = 0;
     }
 
-    virtual ~FratFile()
+    ~FratFile() override
     {
         flush();
         delete[] drup_buf;
         delete[] del_buf;
     }
 
-    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts) override { sumConflicts = _sumConflicts; }
-    virtual void set_sqlstats_ptr(SQLStats* _sqlStats) override { sqlStats = _sqlStats; }
-    virtual void setFile(FILE* _file) override { drup_file = _file; }
-    virtual bool something_delayed() override { return delete_filled; }
-    virtual bool enabled() override { return true; }
+    void set_sumconflicts_ptr(uint64_t* _sumConflicts) override { sumConflicts = _sumConflicts; }
+    void set_sqlstats_ptr(SQLStats* _sqlStats) override { sqlStats = _sqlStats; }
+    void setFile(FILE* _file) override { drup_file = _file; }
+    bool something_delayed() override { return delete_filled; }
+    bool enabled() override { return true; }
 
-    virtual Frat& operator<<(const int32_t clauseID) override
+    Frat& operator<<(const int32_t clauseID) override
     {
         assert(clauseID != 0);
         if (must_delete_next) byteDRUPdID(clauseID);
@@ -116,8 +115,8 @@ public:
         return *this;
     }
 
-    virtual FILE* getFile() override { return drup_file; }
-    virtual void flush() override { frat_flush(); }
+    FILE* getFile() override { return drup_file; }
+    void flush() override { frat_flush(); }
     void frat_flush() {
         fwrite(drup_buf, sizeof(unsigned char), buf_len, drup_file);
         buf_ptr = drup_buf;
@@ -125,7 +124,7 @@ public:
     }
 
 
-    virtual void forget_delay() override
+    void forget_delay() override
     {
         del_ptr = del_buf;
         del_len = 0;
@@ -141,17 +140,17 @@ public:
     bool delete_filled = false;
     bool must_delete_next = false;
 
-    virtual Frat& operator<<(const Xor& x) override
+    Frat& operator<<(const Xor& x) override
     {
         if (must_delete_next) {
-            byteDRUPdID(x.XID);
+            byteDRUPdID(x.xid);
             for(uint32_t i = 0; i < x.size(); i++) {
                 Lit l = Lit(x[i], false);
                 if (i == 0 && !x.rhs) l ^= true;
                 byteDRUPd(l);
             }
         } else {
-            byteDRUPaID(x.XID);
+            byteDRUPaID(x.xid);
             for(uint32_t i = 0; i < x.size(); i++) {
                 Lit l = Lit(x[i], false);
                 if (i == 0 && !x.rhs) l ^= true;
@@ -162,20 +161,20 @@ public:
         return *this;
     }
 
-    virtual Frat& operator<<(const Clause& cl) override
+    Frat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
-            byteDRUPdID(cl.stats.ID);
+            byteDRUPdID(cl.stats.id);
             for(const Lit l: cl) byteDRUPd(l);
         } else {
-            byteDRUPaID(cl.stats.ID);
+            byteDRUPaID(cl.stats.id);
             for(const Lit l: cl) byteDRUPa(l);
         }
 
         return *this;
     }
 
-    virtual Frat& operator<<(const vector<Lit>& cl) override {
+    Frat& operator<<(const vector<Lit>& cl) override {
         if (must_delete_next) for(const Lit& l: cl) byteDRUPd(l);
         else for(const Lit& l: cl) byteDRUPa(l);
         return *this;
@@ -185,7 +184,7 @@ public:
     inline void del_add(unsigned char x) { *del_ptr++=x; del_len++; }
     inline void del_nonbin_move() { if (!binfrat) del_add(' '); }
     inline void buf_nonbin_move() { if (!binfrat) buf_add(' '); }
-    virtual Frat& operator<<(const FratFlag flag) override
+    Frat& operator<<(const FratFlag flag) override
     {
         switch (flag) {
             case FratFlag::fin:
@@ -367,7 +366,7 @@ private:
         }
     }
 
-    virtual Frat& operator<<([[maybe_unused]] const char* str) override
+    Frat& operator<<([[maybe_unused]] const char* str) override
     {
         #ifdef DEBUG_FRAT
         this->flush();

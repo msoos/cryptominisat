@@ -114,11 +114,7 @@ void VarDistGen::calc()
     }
 
     double time_used = cpuTime() - my_time;
-    if (solver->conf.verbosity) {
-        cout << "c [vardistgen] generated var distribution data "
-        << solver->conf.print_times(time_used)
-        << endl;
-    }
+    verb_print(1, "[vardistgen] generated var distribution data " << solver->conf.print_times(time_used));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(

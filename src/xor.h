@@ -46,7 +46,7 @@ public:
         for (const auto& l: cl) {
             assert(l.sign() == false);
             vars.push_back(l.var());
-        };
+        }
     }
     bool trivial() const { return size() == 0 && rhs == false; }
     ~Xor() = default;
@@ -86,7 +86,7 @@ public:
     int32_t reason_cl_ID = 0;
     uint32_t watched[2] = {0,0};
     uint32_t in_matrix = 1000;
-    int32_t XID = 0;
+    int32_t xid = 0;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& x)

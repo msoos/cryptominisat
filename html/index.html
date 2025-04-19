@@ -1,0 +1,236 @@
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoMiniSat5 in your browser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: monospace;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #output {
+            border: 1px solid #ddd;
+            padding: 15px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        .status {
+            font-style: italic;
+            color: #666;
+            margin-left: 10px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        #progress-bar {
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CryptoMiniSat5 SAT Solver in Your Browser</h1>
+        <div>Copy your CNF formula in the input box below and click "Run cryptominisat5.js" to run the counter in your browser. The output will be displayed below the input box.  Format description is available <a href="https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html">here</a></div>
+
+        <div>
+            <label for="input-content">CNF:</label>
+            <textarea id="input-content">p cnf 3 2
+1 2 0
+-3 -1 -2 0
+</textarea>
+        </div>
+
+        <div>
+            <button id="run-button">Run cryptominisat5.js</button>
+            <button id="cancel-button">Cancel</button>
+            <span id="status" class="status">Loading WebAssembly module...</span>
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div>
+            <label for="output">Output:</label>
+            <div id="output">Ready - enter your input and click "Run cryptominisat5.js"</div>
+        </div>
+    </div>
+
+    <script>
+        // Main thread Module configuration
+        var Module = {
+            noInitialRun: true,
+            stdin: function() { return null; },
+            onRuntimeInitialized: function() {
+                document.getElementById('status').textContent = 'Ready';
+                document.getElementById('run-button').disabled = false;
+            }
+        };
+
+        // Create worker with proper WASM loading
+        function createEmscriptenWorker() {
+            const workerCode = `
+                var Module = {
+                    noInitialRun: true,
+                    stdin: function() { return null; },
+                    print: function(text) {
+                        postMessage({ type: 'output', content: text });
+                    },
+                    printErr: function(text) {
+                        console.error('Error:', text);
+                        //postMessage({ type: 'output', content: 'ERROR: ' + text });
+                    },
+                    onRuntimeInitialized: function() {
+                        postMessage({ type: 'ready' });
+                    },
+                    locateFile: function(path) {
+                        console.log('Locating file:', path);
+                        // Resolve correct path for WASM file
+                        if (path.endsWith('.wasm')) {
+                            return self.workerOptions.wasmPath || 'cryptominisat5.wasm';
+                        }
+                        return path;
+                    }
+                };
+
+                // This will be replaced by the Emscripten-generated code
+                var wasmBinary;
+
+                onmessage = function(e) {
+                    if (e.data.type === 'init') {
+                        console.log('Initializing worker with options:', e.data.options);
+                        self.workerOptions = e.data.options;
+                        importScripts(e.data.options.jsPath);
+                    }
+                    else if (e.data.type === 'run') {
+                        try {
+                            console.log('Running with args:', e.data.args);
+                            Module.FS.writeFile('/input.cnf', e.data.input);
+                            Module.callMain(['/input.cnf']);
+                            postMessage({ type: 'done' });
+                        } catch (e) {
+                            postMessage({ type: 'error', content: e.toString() });
+                        }
+                    }
+                };
+            `;
+
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            return URL.createObjectURL(blob);
+        }
+
+        // Main execution logic
+        document.getElementById('run-button').addEventListener('click', async function() {
+            const inputContent = document.getElementById('input-content').value;
+            const outputDiv = document.getElementById('output');
+
+            if (!inputContent.trim()) {
+                outputDiv.textContent = 'Error: Please enter input content';
+                return;
+            }
+
+            outputDiv.textContent = 'Initializing...\n';
+            document.getElementById('run-button').disabled = true;
+            document.getElementById('status').textContent = 'Running...';
+
+            // Get absolute URL for WASM file
+            const wasmPath = new URL('cryptominisat5.wasm', window.location.href).href;
+            const jsPath = new URL('cryptominisat5.js', window.location.href).href;
+            const workerUrl = createEmscriptenWorker();
+            const worker = new Worker(workerUrl);
+
+            worker.onmessage = function(e) {
+                switch (e.data.type) {
+                    case 'output':
+                        console.log('Output:', e.data.content);
+                        outputDiv.textContent += e.data.content + '\n';
+                        outputDiv.scrollTop = outputDiv.scrollHeight;
+                        break;
+                    case 'ready':
+                        //console.log('ready. Sending input:', inputContent);
+                        worker.postMessage({
+                            type: 'run',
+                            input: inputContent
+                        });
+                        break;
+                    case 'done':
+                        document.getElementById('status').textContent = 'Completed';
+                        document.getElementById('run-button').disabled = false;
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        break;
+                    case 'error':
+                        outputDiv.textContent += 'Error: ' + e.data.content + '\n';
+                        document.getElementById('status').textContent = 'Failed';
+                        document.getElementById('run-button').disabled = false;
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        break;
+                }
+            };
+
+            // Initialize worker with proper paths
+            worker.postMessage({
+                type: 'init',
+                options: {
+                    jsPath: jsPath,
+                    wasmPath: wasmPath
+                }
+            });
+        });
+
+        // Load cryptominisat5.js in main thread
+        const script = document.createElement('script');
+        script.src = 'cryptominisat5.js';
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>

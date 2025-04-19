@@ -185,6 +185,14 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     return solver->okay();
 }
 
+static double safe_div(double a, double b) {
+    if (b == 0) {
+        assert(a == 0);
+        return 0;
+    }
+    return a/b;
+}
+
 uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     if (solver->conf.sampling_vars_set) {
         uint32_t size_at_least = (double)solver->conf.sampling_vars.size()*3;
@@ -206,10 +214,10 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     for (Xor& x : solver->xorclauses) {
         if (x.trivial()) {
             del_xor_reason(x);
-            if (x.XID != 0) *solver->frat << delx << x << fin;
+            if (x.xid != 0) *solver->frat << delx << x << fin;
             continue;
         }
-        if (solver->frat->enabled()) assert(x.XID != 0);
+        if (solver->frat->enabled()) assert(x.xid != 0);
 
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];
@@ -276,7 +284,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
             //Clear 'seen'
             for(uint32_t int_var: reverseTable[i]) solver->seen[int_var] = 0;
-            ratio_sampling = (double)sampling_var_inside_matrix/(double)tot_sampling_vars;
+            ratio_sampling = safe_div(sampling_var_inside_matrix, tot_sampling_vars);
         }
 
         //Over the max number of matrixes
@@ -312,7 +320,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             }
             if (solver->conf.verbosity && unused_matrix_printed < 10) {
                 if (m.rows >= solver->conf.gaussconf.min_matrix_rows || solver->conf.verbosity >= 2)
-                cout << "c [matrix] UNused matrix   ";
+                cout << solver->conf.prefix << "[matrix] UNused matrix   ";
             }
             unusedMatrix++;
         }
@@ -343,9 +351,9 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     }
     solver->attach_xorclauses();
 
-    if (solver->conf.verbosity && unusedMatrix > 0) {
-        cout << "c [matrix] unused matrices: " << unusedMatrix
-        <<  " of which too few rows: " << too_few_rows_matrix << endl;
+    if (unusedMatrix > 0) {
+        verb_print(1, "[matrix] unused matrices: " << unusedMatrix
+            <<  " of which too few rows: " << too_few_rows_matrix);
     }
     return realMatrixNum;
 }

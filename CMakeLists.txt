@@ -33,7 +33,6 @@ if(POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif()
 
-
 if(POLICY CMP0022)
     cmake_policy(SET CMP0022 NEW)
 endif()
@@ -50,12 +49,10 @@ if(POLICY CMP0104)
     cmake_policy(SET CMP0104 NEW)
 endif()
 
-
 # -----------------------------------------------------------------------------
 # Provide scripts dir for included cmakes to use
 # -----------------------------------------------------------------------------
 set(CRYPTOMS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
-
 
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
@@ -95,8 +92,9 @@ endforeach()
 PROJECT(cryptominisat5)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 enable_language( CXX )
+enable_language( C )
 include (GNUInstallDirs)
 include (GenerateExportHeader)
 
@@ -111,43 +109,15 @@ option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
 if (STATICCOMPILE)
     set(BUILD_SHARED_LIBS OFF)
-#     if (IPASIR)
-#         if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -ldl -lpthread -Wl,--no-whole-archive -static ")
-#             SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-#             add_compile_options( -static-libstdc++)
-#         endif()
-#     endif()
 endif()
 
-option(EMSCRIPTEN "Generate only emscripten JS" OFF)
-if (EMSCRIPTEN)
-    set(BUILD_SHARED_LIBS ON)
-    set(NOZLIB ON)
-else()
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package (Threads REQUIRED)
-endif()
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package (Threads REQUIRED)
 
 option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
-option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
-if (FEEDBACKFUZZ)
-    set(SANITIZE ON)
-endif()
-
 option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offsets. Slower, but allows the solver to run for much longer." OFF)
 if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
-endif()
-
-option(RDB0ONLY "Use only RDB0 features only" ON)
-if (RDB0ONLY)
-    add_definitions(-DRDB0_ONLY_FEATURES)
-endif()
-
-option(EXTFEAT "Use extended features" OFF)
-if (EXTFEAT)
-    add_definitions(-DEXTENDED_FEATURES)
 endif()
 
 macro(add_sanitize_option flagname)
@@ -175,11 +145,10 @@ endmacro()
 macro(add_sanitize_flags)
 if (SANITIZE)
     MESSAGE(WARNING " --Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
-    SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}  -lasan -lubsan " )
-    SET( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lasan -lubsan ")
     add_compile_options("-fsanitize=address")
+    add_link_options("-fsanitize=address")
     # below warns on overflows EVEN when that's OK, because it's well-defined, disabling
-    #    add_compile_options("-fsanitize=integer")
+    # add_compile_options("-fsanitize=integer")
     add_compile_options("-fsanitize=undefined")
     add_compile_options("-fsanitize=null")
     add_compile_options("-fsanitize=alignment")
@@ -243,7 +212,7 @@ else()
 
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
-    if (STATICCOMPILE)
+    if (NOT BUILD_SHARED_LIBS)
         # We statically link to reduce dependencies
         foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
             # /MD -- Causes the application to use the multithread-specific
@@ -300,19 +269,18 @@ else()
 endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
-option(COVERAGE "Build with coverage check" OFF)
-
-if (COVERAGE AND BUILD_SHARED_LIBS)
-    MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
-endif()
 
 if (NOT WIN32)
-    if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT COVERAGE)
+    if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_compile_options("-fPIC")
+    add_link_options("-fPIE")
     #add_cxx_flag_if_supported("-mtune=native")
 
+    add_cxx_flag_if_supported("-msse4.2")
+    add_cxx_flag_if_supported("-mpopcnt")
+    add_cxx_flag_if_supported("-march=sandybridge")
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
         #      on gcc version 7.3.0
@@ -338,8 +306,6 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-Wunreachable-code")
         add_cxx_flag_if_supported("-g")
         add_cxx_flag_if_supported("-Wno-class-memaccess")
-        add_cxx_flag_if_supported("-mpopcnt")
-        add_cxx_flag_if_supported("-msse4.2")
         add_cxx_flag_if_supported("-Wextra-semi-stmt")
         add_cxx_flag_if_supported("-Wnoweak-vtables")
         add_cxx_flag_if_supported("-ggdb3")
@@ -349,14 +315,7 @@ if (NOT WIN32)
     endif()
 endif()
 
-if (COVERAGE)
-    add_compile_options("--coverage")
-    SET(CMAKE_EXE_LINKER_FLAGS "--coverage")
-endif()
-
-
 option(IPASIR "Also build IPASIR" OFF)
-
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
     add_definitions(-DLIMITMEM)
@@ -371,23 +330,11 @@ endif()
 
 if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     if(NOT BUILD_SHARED_LIBS)
-        MESSAGE(STATUS "Compiling for static library use")
+        MESSAGE(STATUS "Compiling statically")
         if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -ldl -lpthread -Wl,--no-whole-archive -static ")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
         endif()
-
         SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-
-        # removing -rdynamic that's automatically added
-        foreach (language CXX C)
-            set(VAR_TO_MODIFY "CMAKE_SHARED_LIBRARY_LINK_${language}_FLAGS")
-            string(REGEX REPLACE "(^| )-rdynamic($| )"
-                                 " "
-                                 replacement
-                                 "${${VAR_TO_MODIFY}}")
-            #message("Original (${VAR_TO_MODIFY}) is ${${VAR_TO_MODIFY}} replacement is ${replacement}")
-            set(${VAR_TO_MODIFY} "${replacement}" CACHE STRING "Default flags for ${build_config} configuration" FORCE)
-        endforeach()
     else()
         MESSAGE(STATUS "Compiling for dynamic library use")
     endif()
@@ -452,12 +399,6 @@ if (STATS)
     add_definitions( -DUSE_SQLITE3 )
 endif()
 
-option(NORMAL_CL_USE_STATS "Only prop and uip stats for NORM" OFF)
-if (NORMAL_CL_USE_STATS)
-    add_definitions( -DNORMAL_CL_USE_STATS )
-    MESSAGE(STATUS "Adding uip + props to normal run")
-endif()
-
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
     if (FINAL_PREDICTOR)
@@ -472,7 +413,7 @@ ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
 
-if (STATS_NEEDED)
+if (STATS)
     find_package(louvain_communities CONFIG)
     if (louvain_communities_FOUND)
         message(STATUS "Found Community Louvain library")
@@ -480,9 +421,7 @@ if (STATS_NEEDED)
         message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
     else()
         message(STATUS "Cannot find Community Louvain. Please install it!")
-        if (STATS_NEEDED OR FINAL_PREDICTOR)
-            message(FATAL_ERROR "For STATS we must have louvain communities installed!")
-        endif()
+        message(FATAL_ERROR "For STATS we must have louvain communities installed!")
     endif()
 endif()
 
@@ -534,15 +473,14 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
 endif()
 
 
-find_library(cadiback
-    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/
-    NAMES cadiback
-    REQUIRED)
 find_library(cadical
     PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../cadical/build/
     NAMES cadical
     REQUIRED)
-
+find_library(cadiback
+    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/
+    NAMES cadiback
+    REQUIRED)
 
 include(CheckFloatPrecision)
 check_float_precision()
@@ -550,12 +488,6 @@ if (HAVE__FPU_SETCW)
     add_definitions(-DYALSAT_FPU)
     message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
 endif()
-
-option(WEIGHTED "Allow for weighted sampling" OFF)
-if (WEIGHTED)
-    add_definitions( -DWEIGHTED )
-endif()
-
 
 # -----------------------------------------------------------------------------
 # MIT option
@@ -654,7 +586,6 @@ foreach( d ${DirDefs} )
 endforeach()
 message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
 
-add_subdirectory(src cmsat5-src)
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
@@ -670,24 +601,14 @@ add_custom_target(uninstall
 )
 
 # -----------------------------------------------------------------------------
-# Testing
+# Subdirectories
 # -----------------------------------------------------------------------------
 if (ENABLE_TESTING)
+    add_subdirectory(utils/gtest)
+endif()
+add_subdirectory(src cmsat5-src)
+if (ENABLE_TESTING)
     enable_testing()
-
-    #use valgrind
-    find_program(MEMORYCHECK_COMMAND valgrind)
-    if(MEMORYCHECK_COMMAND-NOTFOUND)
-      message(WARNING "Valgrind not found. Test will be run without valgrind.")
-    else()
-      message(STATUS "Valgrind found: ${MEMORYCHECK_COMMAND}. Running test using it.")
-      set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
-    endif()
-
-    # too unstable to add (depends on CPU)
-    #if (NOT STATS AND NOT SLOW_DEBUG)
-        #add_test (NAME library_speed_test COMMAND tests/library_speed_test)
-    #endif()
 
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
@@ -695,7 +616,6 @@ if (ENABLE_TESTING)
     add_subdirectory(scripts/fuzz)
     add_subdirectory(utils/minimal_cms)
     add_subdirectory(utils/lingeling-ala)
-
 else()
     message(WARNING "Testing is disabled")
 endif()

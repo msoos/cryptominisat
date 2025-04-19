@@ -56,7 +56,7 @@ class VarReplacer
         bool replace_if_enough_is_found(const size_t limit = 0, uint64_t* bogoprops = nullptr
                 , bool* replaced = nullptr);
         uint32_t print_equivalent_literals(bool outer_numbering, std::ostream *os = nullptr) const;
-        void print_some_stats(const double global_cpu_time) const;
+        void print_some_stats(const double global_cpu_time, const string& prefix) const;
         const SCCFinder* get_scc_finder() const;
 
         void extend_model_already_set();
@@ -93,7 +93,7 @@ class VarReplacer
             }
 
             Stats& operator+=(const Stats& other);
-            void print(const size_t nVars) const;
+            void print(const size_t nVars, const string& prefix) const;
             void print_short(const Solver* solver) const;
 
             uint64_t numCalls = 0;

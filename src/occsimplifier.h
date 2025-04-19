@@ -128,7 +128,8 @@ public:
 
     // definable vars
     vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-    void get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
+    vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
+    void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = nullptr;
@@ -147,11 +148,12 @@ public:
     size_t mem_used() const;
     uint32_t dump_elimed_clauses(std::ostream* outfile) const;
     bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out, bool& is_xor) const;
+    vector<vector<Lit>> get_elimed_clauses_for(uint32_t outer_v);
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins(const bool avoid_redundant);
-    void blocked_clause_elim();
+    void reverse_blocked_clause_elim();
     bool lit_rem_with_or_gates();
     bool cl_rem_with_or_gates();
 
@@ -166,7 +168,7 @@ public:
     struct Stats
     {
         void print(const size_t nVars, OccSimplifier* occs) const;
-        void print_extra_times() const;
+        void print_extra_times(const char* prefix) const;
         Stats& operator+=(const Stats& other);
         void clear();
         double total_time(OccSimplifier* occs) const;
@@ -276,6 +278,7 @@ private:
     int64_t  gate_based_litrem_time_limit;
     int64_t  subsumption_time_limit;
     int64_t  norm_varelim_time_limit;
+    int64_t  resolvent_sub_time_limit;
     int64_t  xor_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
@@ -372,8 +375,7 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    void        rem_cls_from_watch_due_to_varelim(
-        const Lit lit, bool add_to_block = true);
+    void        rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_set_is_removed = true);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const vector<Lit>& lits, const int32_t ID);
@@ -423,7 +425,7 @@ private:
     void clean_from_red_or_removed(
         const vec<Watched>& in,
         vec<Watched>& out);
-    void  create_dummy_elimed_clause(const Lit lit, bool is_xor = false);
+    void  create_dummy_elimed_clause(Lit lit, bool is_xor = false);
     vector<OccurClause> tmp_subs;
     bool        test_elim_and_fill_resolvents(uint32_t var);
     void        get_gate(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
@@ -552,15 +554,15 @@ private:
     /////////////////////
     //Helpers
     friend class GateFinder;
-    GateFinder *gateFinder;
+    GateFinder *gateFinder = nullptr;
 
     /////////////////////
     //Elimed clause elimination
     vector<Lit> elimed_cls_lits;
     vector<ElimedClauses> elimed_cls; ///<maps var(outer!!) to postion in elimedClauses
-    vector<uint32_t> blk_var_to_cls;
+    vector<uint32_t> blk_var_to_cls; //< indexed by OUTER var
     vector<int32_t> newly_elimed_cls_IDs; // temporary storage for newly elimed cls' IDs
-    bool elimed_map_built;
+    bool elimed_map_built = false;
     void build_elimed_map();
     void clean_elimed_cls();
     bool can_remove_elimed_clauses = false;

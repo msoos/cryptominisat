@@ -28,9 +28,8 @@ IN THE SOFTWARE.
 
 #include "cryptominisat.h"
 #include <vector>
-#include <complex>
 #include <cassert>
-#include <string.h>
+#include <cstring>
 #include "constants.h"
 
 using std::vector;
@@ -57,7 +56,7 @@ extern "C" {
 
   DLL_PUBLIC void  ipasir_trace_proof (void * solver, FILE *f)
   {
-    
+
     MySolver* s = (MySolver*)solver;
     s->solver->set_idrup(f);
   }

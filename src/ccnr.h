@@ -94,6 +94,8 @@ class ls_solver
     bool local_search(
         const vector<bool> *init_solution = 0
         , long long int _mems_limit = 100*1000*1000
+        , const char* prefix = "c "
+        , int64_t _max_steps = 1*1000 * 1000
     );
     void print_solution(bool need_verify = 0);
     void simple_print();
@@ -130,9 +132,7 @@ class ls_solver
     int _best_found_cost;
     long long _mems = 0;
     long long _step;
-    long long _max_steps;
     int _max_tries;
-    int _time_limit;
 
     //aiding data structure
     Mersenne _random_gen; //random generator
@@ -150,7 +150,6 @@ class ls_solver
     int _avg_clause_weight;
     //-------------------
     bool _aspiration;
-    float _up_ratio; //control how much variables need to be delete and assigned by up
 
     //=================
     long long _delta_total_clause_weight;

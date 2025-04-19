@@ -114,11 +114,8 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [distill-bin] cls"
-        << " tried: " << runStats.checkedClauses << "/" << potential_size
-        << endl;
-    }
+        verb_print(2, "[distill-bin] cls" << " tried: "
+                << runStats.checkedClauses << "/" << potential_size);
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -167,8 +164,8 @@ bool DistillerBin::go_through_bins(
         maxNumProps -= 2;
 
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
-            solver->detach_bin_clause(lit1, lit2, w.red(), w.get_ID());
-            (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
+            solver->detach_bin_clause(lit1, lit2, w.red(), w.get_id());
+            (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
             continue;
         }
 
@@ -200,8 +197,8 @@ bool DistillerBin::try_distill_bin(
     if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);
 
     //Disable this clause
-    findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID()).mark_bin_cl();
-    findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_ID()).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_id()).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_id()).mark_bin_cl();
 
     solver->new_decision_level();
     PropBy confl;
@@ -218,8 +215,8 @@ bool DistillerBin::try_distill_bin(
             vector<Lit> x(1);
             x[0] = lit1;
             solver->add_clause_int(x);
-            solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
-            (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
+            solver->detach_bin_clause(lit1, lit2, false, w.get_id());
+            (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
             runStats.numClShorten++;
             return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
@@ -230,19 +227,19 @@ bool DistillerBin::try_distill_bin(
 
     if (!confl.isnullptr()) {
         solver->cancelUntil<false, true>(0);
-        solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
-        (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
+        solver->detach_bin_clause(lit1, lit2, false, w.get_id());
+        (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
         runStats.clRemoved++;
         return true;
     }
 
     //Nothing happened
     solver->cancelUntil<false, true>(0);
-    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID());
+    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_id());
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();
 
-    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_ID());
+    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_id());
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
 
@@ -264,17 +261,15 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void DistillerBin::Stats::print_short(const Solver* _solver) const
+void DistillerBin::Stats::print_short(const Solver* solver) const
 {
-    cout
-    << "c [distill-bin]"
+    verb_print(1, "[distill-bin]"
     << " useful: "<< numClShorten+clRemoved
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " cl-rem: " << clRemoved
     << " 0-depth-assigns: " << zeroDepthAssigns
-    << _solver->conf.print_times(time_used, timeOut)
-    << endl;
+    << solver->conf.print_times(time_used, timeOut));
 }
 
 void DistillerBin::Stats::print(const size_t nVars) const

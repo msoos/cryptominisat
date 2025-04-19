@@ -356,7 +356,7 @@ protected:
     }
 
 protected:
-    template<bool inprocess, bool red_also = true, bool use_disable = false>
+    template<bool inprocess, bool red_also = true, bool distill_use = false>
     PropBy propagate_any_order();
     template<bool bin_only=true> PropBy propagate_light();
     template<bool inprocess>
@@ -569,15 +569,15 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
 
     if (level == 0 && frat->enabled())
     {   if (do_unit_frat) {
-            const auto ID = ++clauseID;
-            const auto XID = ++clauseXID;
+            const auto id = ++clauseID;
+            const auto xid = ++clauseXID;
             /* chain.clear(); */
             if (from.getType() == PropByType::binary_t) {
-                chain.push_back(from.getID());
+                chain.push_back(from.get_id());
                 chain.push_back(unit_cl_IDs[from.lit2().var()]);
             } else if (from.getType() == PropByType::clause_t) {
                 Clause* cl = cl_alloc.ptr(from.get_offset());
-                chain.push_back(cl->stats.ID);
+                chain.push_back(cl->stats.id);
                 for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
             } else {
                 // These are too difficult and not worth it
@@ -588,14 +588,14 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
                 get_xor_reason(from, tmp_ID);
             }
 
-            *frat << add << ID << p << fin;
-	    if (frat && !frat->incremental())
-              *frat << implyxfromcls << XID << p << fratchain << ID << fin;
+            *frat << add << id << p << fin;
+            if (frat && !frat->incremental())
+              *frat << implyxfromcls << xid << p << fratchain << id << fin;
 
             assert(unit_cl_IDs[v] == 0);
             assert(unit_cl_XIDs[v] == 0);
-            unit_cl_IDs[v] = ID;
-            unit_cl_XIDs[v] = XID;
+            unit_cl_IDs[v] = id;
+            unit_cl_XIDs[v] = xid;
         } else {
             assert(unit_cl_IDs[v] != 0);
             assert(unit_cl_XIDs[v] != 0);
@@ -640,7 +640,7 @@ PropBy PropEngine::propagate_light()
                 if (!bin_only) *j++ = *i;
                 const lbool val = value(i->lit2());
                 if (val == l_Undef) enqueue_light(i->lit2());
-                else if (val == l_False) confl = PropBy(~p, i->red(), i->get_ID());
+                else if (val == l_False) confl = PropBy(~p, i->red(), i->get_id());
                 continue;
             }
 

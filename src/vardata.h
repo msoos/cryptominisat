@@ -40,21 +40,12 @@ struct VarData
         stable_polarity = false;
         best_polarity = false;
         inv_polarity = false;
-#ifdef WEIGHTED
-        orig_varnum = num;
-#endif
     }
 
     ///contains the decision level at which the assignment was made.
     uint32_t level = numeric_limits<uint32_t>::max();
     uint32_t sublevel = numeric_limits<uint32_t>::max();
 
-    #ifdef WEIGHTED
-    uint32_t orig_varnum = std::numeric_limits<uint32_t>::max();
-    bool weight_set = false;
-    mpz_class pos_weight = 1.0;
-    mpz_class neg_weight = 1.0;
-    #endif
 
     //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();
@@ -71,7 +62,9 @@ struct VarData
     uint8_t inv_polarity:1;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
-    bool propagated = false;
+    uint8_t propagated:1 = false;
+
+    float weight = 0.5;
 
     #if defined(STATS_NEEDED)
     uint32_t community_num = numeric_limits<uint32_t>::max();

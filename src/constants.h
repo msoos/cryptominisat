@@ -26,11 +26,12 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include <limits>
 #include <random>
+#include <ranges>
 
 using std::cerr;
 using std::exit;
+using std::views::iota;
 
 #define unif_uint_dist(x,y) std::uniform_int_distribution<uint32_t> x(0, y)
 inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusive) {
@@ -117,10 +118,10 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
-#define INC_ID(cl) do { (cl).stats.ID = ++solver->clauseID; } while (0)
+#define INC_ID(cl) do { (cl).stats.id = ++solver->clauseID; } while (0)
 #endif
-// NOTE: XID's are not tracked during stats -- we must have XOR finding etc disabled
-#define INC_XID(x) do { (x).XID = ++solver->clauseXID; } while (0)
+// NOTE: xid's are not tracked during stats -- we must have XOR finding etc disabled
+#define INC_XID(x) do { (x).xid = ++solver->clauseXID; } while (0)
 
 #if defined(LARGE_OFFSETS)
 #define BASE_DATA_TYPE uint64_t
@@ -147,11 +148,11 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 //#define VERBOSE_DEBUG
 
 #ifdef DEBUG_FRAT
-#define frat_func_start *solver->frat << __PRETTY_FUNCTION__ << " start\n"
-#define frat_func_start_raw *frat << __PRETTY_FUNCTION__ << " start\n"
-#define frat_func_end *solver->frat << __PRETTY_FUNCTION__ << " end\n"
-#define frat_func_end_with(txt) *solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n"
-#define frat_func_end_raw *frat << __PRETTY_FUNCTION__ << " end\n"
+#define frat_func_start() do {*solver->frat << __PRETTY_FUNCTION__ << " start\n";} while (0)
+#define frat_func_start_raw() do {*frat << "" << __PRETTY_FUNCTION__ << " start\n";} while (0)
+#define frat_func_end() do {*solver->frat << __PRETTY_FUNCTION__ << " end\n";} while (0)
+#define frat_func_end_with(txt) do {*solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n";} while (0)
+#define frat_func_end_raw() do {*frat << __PRETTY_FUNCTION__ << " end\n";} while (0)
 #else
 #define frat_func_start() do { } while (0)
 #define frat_func_start_raw() do { } while (0)
@@ -188,7 +189,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 
 
 #define verb_print(a, x) \
-    do { if (solver->conf.verbosity >= a) {std::cout << "c " << x << std::endl;} } while (0)
+    do { if (solver->conf.verbosity >= a) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
 #ifdef DEBUG_WATCHED
 #define DEBUG_WATCHED_DO(x) do { x; } while (0)

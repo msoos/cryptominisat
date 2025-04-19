@@ -20,10 +20,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "ccnr_cms.h"
+#include "ccnr_oracle_pre.h"
+#include "constants.h"
+#include "frat.h"
+#include "oracle/utils.h"
 #include "solver.h"
 #include "oracle/oracle.h"
+#include "solvertypes.h"
+#include "subsumeimplicit.h"
+#include "distillerlongwithimpl.h"
+#include "occsimplifier.h"
+#include "time_mem.h"
+#include "varreplacer.h"
+#include "distillerbin.h"
 
 using namespace CMSat;
+
+namespace CMSat {
+    struct VarPair {
+        uint32_t v1;
+        uint32_t v2;
+        uint32_t score;
+    };
+}
 
 inline vector<int> negate(vector<int> vec) {
 	for (int& lit : vec) lit = sspp::Neg(lit);
@@ -47,16 +67,13 @@ inline Lit orc_to_lit(int x) {
     return Lit(var, neg);
 }
 
-vector<vector<int>> Solver::get_irred_cls_for_oracle() const
-{
+vector<vector<int>> Solver::get_irred_cls_for_oracle() const {
     vector<vector<int>> clauses;
     vector<int> tmp;
     for (const auto& off: longIrredCls) {
         const Clause& cl = *cl_alloc.ptr(off);
         tmp.clear();
-        for (auto const& l: cl) {
-            tmp.push_back(orclit(l));
-        }
+        for (auto const& l: cl) tmp.push_back(orclit(l));
         clauses.push_back(tmp);
     }
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -74,33 +91,44 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
     return clauses;
 }
 
-bool Solver::oracle_vivif(bool& finished)
-{
+bool Solver::oracle_vivif(int fast, bool& backbone_found) {
+    using sspp::PosLit;
+    using sspp::NegLit;
+    using sspp::oracle::TriState;
+
     assert(!frat->enabled());
     assert(solver->okay());
-    finished = false;
-
-    backbone_simpl(300LL*1000LL, finished);
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
-    double my_time = cpuTime();
+    double start_vivif_time = cpuTime();
 
     auto clauses = get_irred_cls_for_oracle();
+    std::shuffle(clauses.begin(), clauses.end(), mtrand);
+    for(auto& cl: clauses) std::shuffle(cl.begin(), cl.end(), mtrand);
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
-    bool sat = false;
+
+    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL;
+    if (fast > 0) tot_vivif_mems /= (3*fast);
+    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL;
+    if (fast > 0) mems_per_call /= (3*fast);
+    bool early_aborted_vivif = true;
+    uint32_t bin_added = 0;
+    uint32_t equiv_added = 0;
     for (int i = 0; i < (int)clauses.size(); i++) {
+        if (backbone_found && clauses[i].size() == 2) {
+            // Backbone has been found, this will never be shorter
+            continue;
+        }
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > 1600LL*1000LL*1000LL) goto end;
+            if (oracle.getStats().mems > tot_vivif_mems) goto end1;
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
-            auto ret = oracle.Solve(assump, true, 500LL*1000LL*1000LL);
-            if (ret.isUnknown()) {
-                goto end;
-            }
+            auto ret = oracle.Solve(assump, true,mems_per_call);
+            if (ret.isUnknown()) goto end1;
             if (ret.isFalse()) {
                 sort(assump.begin(), assump.end());
                 auto clause = negate(assump);
@@ -111,14 +139,100 @@ bool Solver::oracle_vivif(bool& finished)
                     ok = false;
                     return false;
                 }
-            } else if(!sat) {
-                sat = true;
             }
         }
     }
-    finished |= true;
+    early_aborted_vivif = false;
+    backbone_found = true;
 
-    end:
+    // Do equiv check
+    end1:
+    const auto oracle_vivif_mems_used = oracle.getStats().mems;
+    const double end_vivif_time = cpuTime();
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL;
+    bool early_aborted_bin = true;
+    oracle.reset_mems();
+    double start_bin_time = cpuTime();
+    if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
+        vector<vector<uint32_t>> pg(nVars());
+        for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), 0);
+        for (const auto& clause : clauses) {
+            for (auto l1 : clause) {
+                for (auto l2 : clause) {
+                    uint32_t v1 = orc_to_lit(l1).var();
+                    uint32_t v2 = orc_to_lit(l2).var();
+                    if (v1 < v2) pg[v1][v2]++;
+                }
+            }
+        }
+        vector<VarPair> varp;
+        for (uint32_t v1 = 0; v1 < nVars(); v1++)
+            for (uint32_t v2 = 0; v2 < nVars(); v2++)
+                if (v1 < v2 && pg[v1][v2] > 0) varp.push_back({v1, v2, pg[v1][v2]});
+        pg.clear();
+        pg.shrink_to_fit();
+
+        // Actually seems to slow it down. Strange. TODO
+        /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
+        /*         return a.score > b.score;}); */
+        verb_print(1, "[oracle-bin] potential pairs: " << varp.size());
+
+        auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL;
+        for (const auto& vp: varp) {
+            if (varData[vp.v1].removed != Removed::none) continue;
+            if (varData[vp.v2].removed != Removed::none) continue;
+            if (value(vp.v1) != l_Undef) continue;
+            if (value(vp.v2) != l_Undef) continue;
+            if (oracle.getStats().mems > tot_bin_mems) goto end2;
+
+            TriState ret;
+            Clause* cl;
+            const Lit l1 = Lit(vp.v1, false);
+            const Lit l2 = Lit(vp.v2, false);
+            ret = oracle.Solve({orclit(l1), orclit(l2)}, true, mem_per_call);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) goto next;
+            cl = add_clause_int({~l1, ~l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+
+            ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem_per_call);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) goto next;
+            assert(ret.isFalse() && ret.isFalse());
+            cl = add_clause_int({l1, l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+            equiv_added++;
+            continue;
+
+            next:
+            ret = oracle.Solve({orclit(~l1), orclit(l2)}, true, mem_per_call);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) continue;
+            cl = add_clause_int({l1, ~l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+
+            ret = oracle.Solve({orclit(l1), orclit(~l2)}, true, mem_per_call);
+            if (ret.isUnknown()) goto end2;
+            if (ret.isTrue()) continue;
+            cl = add_clause_int({~l1, l2}, true);
+            assert(!cl);
+            if (!okay()) return false;
+            bin_added++;
+            equiv_added++;
+        }
+    }
+    early_aborted_bin = false;
+
+    end2:
+    const double end_bin_tme = cpuTime();
+    const auto oracle_bin_mems_used = oracle.getStats().mems;
+
     vector<Lit> tmp2;
     for(const auto& cl: clauses) {
         tmp2.clear();
@@ -134,20 +248,33 @@ bool Solver::oracle_vivif(bool& finished)
             for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
             ClauseStats s;
             s.which_red_array = 2;
-            s.ID = ++clauseID;
+            s.id = ++clauseID;
             s.glue = cl.size();
             Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
             if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
             if (!okay()) return false;
         }
     }
+    execute_inprocess_strategy(false, "must-scc-vrepl");
+    if (!okay()) return okay();
 
-    verb_print(1, "[oracle-vivif] finished: " << finished
+    verb_print(1, "[oracle-vivif]"
+            << " learnt-units: " << oracle.getStats().learned_units
+            << " T-out: " << (early_aborted_vivif ? "Y" : "N")
+            << " T-remain: " << stats_line_percent(tot_vivif_mems-oracle_vivif_mems_used, tot_vivif_mems) << "%"
+            << " T: " << std::setprecision(2) << (end_vivif_time-start_vivif_time));
+
+    verb_print(1, "[oracle-bin]"
+            << " bin-added: " << bin_added
+            << " equiv-added: " << equiv_added
+            << " T-out: " << (early_aborted_bin ? "Y" : "N")
+            << " T-remain: " << stats_line_percent(tot_bin_mems-oracle_bin_mems_used, tot_bin_mems) << "%"
+            << " T: " << std::setprecision(2) << (end_bin_tme - start_bin_time));
+
+    verb_print(1, "[oracle-vivif-bin]"
             << " cache-used: " << oracle.getStats().cache_useful
             << " cache-added: " << oracle.getStats().cache_added
-            << " learnt-units: " << oracle.getStats().learned_units
-            << " finished (vivif or backbone): " << finished
-            << " T: " << std::setprecision(2) << (cpuTime()-my_time));
+            << " total T: " << std::setprecision(2) << (cpuTime() - start_vivif_time));
     return solver->okay();
 }
 
@@ -251,7 +378,7 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
                     assert(edgew[v1][v2] >= 1);
                     if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
                 } else ww[0] = 2;
-                cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
+                cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_id())));
             }
         }
     }
@@ -260,11 +387,11 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
     return cs;
 }
 
-bool Solver::oracle_sparsify()
+bool Solver::oracle_sparsify(bool fast)
 {
     assert(!frat->enabled());
     execute_inprocess_strategy(false, "sub-impl, occ-backw-sub, must-renumber");
-    if (!okay()) return okay();
+    if (!okay()) return okay() ;
     if (nVars() < 10) return okay();
 
     double my_time = cpuTime();
@@ -279,6 +406,7 @@ bool Solver::oracle_sparsify()
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
     oracle.SetVerbosity(conf.verbosity);
     vector<sspp::Lit> tmp;
+    vector<vector<sspp::Lit>> cls;
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         tmp.clear();
@@ -296,26 +424,48 @@ bool Solver::oracle_sparsify()
         // Indicator variable
         tmp.push_back(orclit(Lit(nVars()+i, false)));
         oracle.AddClause(tmp, false);
+        cls.push_back(tmp);
     }
+    vector<int8_t> assumps_map(nVars()+tot_cls+1, 2);
+    CCNROraclePre ccnr(solver);
+    ccnr.init(cls, nVars()+tot_cls, &assumps_map);
     const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
+    vector<int> assumps_changed;
     for (uint32_t i = 0; i < tot_cls; i++) {
-        oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
+        auto l = orclit(Lit(nVars()+i, true));
+        oracle.SetAssumpLit(l, false);
+        assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+        assumps_changed.push_back(sspp::VarOf(l));
     }
 
     // Now try to remove clauses one-by-one
     uint32_t last_printed = 0;
+    uint32_t ccnr_useful = 0;
+    uint32_t unknown = 0;
+    int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL;
+    if (fast) mems /= 3;
+    int64_t mems_per_call = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
+    if (fast) mems_per_call /= 3;
+    sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
                 << " oracle mems: " << print_value_kilo_mega(oracle.getStats().mems)
+                << " ccnr useful: " << (double)ccnr_useful/(double)i*100.0 << "%"
                 << " T: " << (cpuTime()-my_time));
             last_printed = (10*i)/(tot_cls);
         }
 
         // Try removing this clause, making its indicator TRUE (i.e. removed)
-        oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
+        {
+            auto l = orclit(Lit(nVars()+i, false));
+            oracle.SetAssumpLit(l, false);
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
+        }
+
         tmp.clear();
         const auto& c = cs[i];
         if (!c.binary) {
@@ -326,16 +476,45 @@ bool Solver::oracle_sparsify()
             tmp.push_back(orclit(~(c.bin.l2)));
         }
 
-        auto ret = oracle.Solve(tmp, false, 600LL*1000LL*1000LL);
-        if (ret.isUnknown()) { /*out of time*/ goto fin; }
+        for(const auto& l: tmp) {
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
+        }
+        ccnr.adjust_assumps(assumps_changed);
+        assumps_changed.clear();
+        int ret_ccnr = ccnr.run(6000);
+        /* int ret_ccnr = false; */
+        for(const auto& l: tmp) {
+            assumps_map[sspp::VarOf(l)] = 2;
+            assumps_changed.push_back(sspp::VarOf(l));
+        }
+        if (ret_ccnr) {
+            verb_print(3, "[oracle-sparsify] ccnr-oracle determined SAT");
+            ccnr_useful++;
+            goto need;
+        } else {
+            verb_print(3, "[oracle-sparsify] ccnr-oracle UNKNOWN");
+        }
+
+        ret = oracle.Solve(tmp, false, mems);
+        if (ret.isUnknown()) {
+            /*out of time*/
+            unknown++;
+            goto fin;
+        }
 
         if (ret.isTrue()) {
+            need:
             // We need this clause, can't remove
-            oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
+            auto l = orclit(Lit(nVars()+i, true));
+            oracle.SetAssumpLit(l, true);
+            assumps_map[sspp::VarOf(l)] = sspp::IsPos(l);
+            assumps_changed.push_back(sspp::VarOf(l));
         } else {
             assert(ret.isFalse());
             // We can freeze(!) this clause to be disabled.
-            oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
+            auto l = orclit(Lit(nVars()+i, false));
+            oracle.SetAssumpLit(l, true);
             removed++;
             if (!c.binary) {
                 Clause& cl = *cl_alloc.ptr(c.off);
@@ -350,13 +529,14 @@ bool Solver::oracle_sparsify()
             }
         }
 
-        if (oracle.getStats().mems > 900LL*1000LL*1000LL) {
+        if (oracle.getStats().mems > mems_per_call) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
         }
     }
 
     fin:
+    if (fast) conf.oracle_removed_is_learnt = true;
     uint32_t bin_red_added = 0;
     uint32_t bin_irred_removed = 0;
     for(auto& ws: watches) {
@@ -416,6 +596,8 @@ bool Solver::oracle_sparsify()
     verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls
+        << " ccnr useful: " << ccnr_useful
+        << " oracle uknown: " << unknown
         << " cache-used: " << oracle.getStats().cache_useful
         << " cache-added: " << oracle.getStats().cache_added
         << " learnt-units: " << oracle.getStats().learned_units

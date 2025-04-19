@@ -26,7 +26,6 @@ THE SOFTWARE.
 #include <vector>
 #include <map>
 #include <utility>
-#include <gmpxx.h>
 #include <string>
 #include <limits>
 #include <cstdio>
@@ -68,7 +67,15 @@ namespace CMSat {
             signed cutoff,
             Lit out = lit_Undef
         );
-        void set_lit_weight(Lit lit, double weight);
+        // Special. Must be between 0 and 1, inclusive. Sets the weight of the
+        // literal, and the negation of it to 1.0-weight. Used ONLY when polarmode
+        // is set to PolarityMode::polarmode_weighted.
+        template<typename T>
+        void set_lit_weight(const Lit lit, const T& val) {
+            static constexpr bool is_float = (std::is_same<T, float>::value ||
+                    std::is_same<T, double>::value);
+            if constexpr (is_float) set_lit_weight_internal(lit, val);
+        }
 
         ////////////////////////////
         // Solving and simplifying
@@ -156,12 +163,16 @@ namespace CMSat {
         void set_renumber(const bool renumber);
         void set_weaken_time_limitM(const uint32_t lim);
         void set_picosat_gate_limitK(const uint32_t lim);
+        void set_picosat_confl_limit(const uint32_t lim);
         void set_occ_based_lit_rem_time_limitM(const uint32_t lim);
         void set_orig_global_timeout_multiplier(const double mult);
         void set_oracle_get_learnts(bool val);
         void set_oracle_removed_is_learnt(bool val);
+        void set_oracle_find_bins(int val);
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
+        void set_prefix(const char* prefix);
+        void set_do_subs_with_resolvent_clauses(int subs);
 
         ////////////////////////////
         // Predictive system tuning
@@ -180,7 +191,7 @@ namespace CMSat {
         static const char* get_version(); //get solver version in string format
         static const char* get_version_sha1(); //get SHA1 version string of the solver
         static const char* get_compilation_env(); //get compilation environment string
-        static std::string get_text_version_info();  //get printable version and copyright text
+        static std::string get_thanks_info(const char* prefix = "c ");  //get printable version and copyright text
 
 
         ////////////////////////////
@@ -206,7 +217,6 @@ namespace CMSat {
         void print_stats(double wallclock_time_started = 0) const; //print solving stats. Call after solve()/simplify()
         void set_frat(FILE* os); //set frat to ostream, e.g. stdout or a file
         void set_idrup(FILE* os); //set idrup to ostream, e.g. stdout or a file
-        void add_empty_cl_to_frat(); // allows to treat SAT as UNSAT and perform learning
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.
 
@@ -224,7 +234,8 @@ namespace CMSat {
         std::vector<OrGate> get_recovered_or_gates();
         std::vector<ITEGate> get_recovered_ite_gates();
         std::vector<uint32_t> remove_definable_by_irreg_gate(const std::vector<uint32_t>& vars);
-        void get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
+        std::vector<uint32_t> extend_definable_by_irreg_gate(const std::vector<uint32_t>& vars);
+        void clean_sampl_get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_lit_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
@@ -234,6 +245,7 @@ namespace CMSat {
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
         bool backbone_simpl(int64_t max_confl, bool& finished);
+        std::vector<std::vector<uint8_t>> many_sls(int64_t mems, uint32_t num);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT
@@ -258,7 +270,14 @@ namespace CMSat {
         void end_getting_constraints();
 
         uint32_t simplified_nvars();
-        std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
+        std::vector<uint32_t> translate_sampl_set(
+                const std::vector<uint32_t>& sampl_set, bool also_removed);
+
+        std::vector<Lit> get_weight_translation() const;
+        std::map<uint32_t, VarMap> update_var_mapping(const std::map<uint32_t, VarMap>& vmap);
+        std::vector<uint32_t> get_elimed_vars() const;
+        std::vector<std::vector<Lit>> get_cls_defining_var(uint32_t v) const;
+        void reverse_bce();
 
         // Solution reconstruction after minimization
         std::string serialize_solution_reconstruction_data() const;
@@ -271,15 +290,10 @@ namespace CMSat {
         void open_file_and_dump_irred_clauses(const char* fname);
         bool removed_var(uint32_t var) const;
 
-#ifdef WEIGHTED
-        void get_weights(std::map<Lit, mpz_class>& weights,
-            const std::vector<uint32_t>& sampl_vars,
-            const std::vector<uint32_t>& orig_sampl_vars) const;
-#endif
-        bool get_weighted() const;
-        void set_weighted(const bool);
-        void set_multiplier_weight(const mpz_class mult);
-        mpz_class get_multiplier_weight() const;
+        bool get_weighted() const {return false;}
+        void set_weighted(const bool) {}
+        void set_projected(const bool) {}
+        template<class T> void set_multiplier_weight(const T&) {}
         const std::vector<uint32_t>& get_sampl_vars() const;
         void set_sampl_vars(const std::vector<uint32_t>& vars);
         bool get_sampl_vars_set() const;
@@ -288,6 +302,7 @@ namespace CMSat {
         bool get_opt_sampl_vars_set() const;
 
     private:
+        void set_lit_weight_internal(const Lit lit, double val);
 
         ////////////////////////////
         // Do not bother with this, it's private

@@ -1,0 +1,94 @@
+{
+  "nodes": {
+    "cadiback": {
+      "inputs": {
+        "cadical": "cadical",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1742124943,
+        "narHash": "sha256-i1S5+YhYQPIod4jnkdMDHlzIHqvZaZfyN8Sa+HVoRks=",
+        "owner": "meelgroup",
+        "repo": "cadiback",
+        "rev": "c24a73f62da2f984df6d3f1cf37283b1ca1c9f9e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meelgroup",
+        "ref": "synthesis",
+        "repo": "cadiback",
+        "type": "github"
+      }
+    },
+    "cadical": {
+      "inputs": {
+        "nixpkgs": [
+          "cadiback",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1742124921,
+        "narHash": "sha256-zJi1YgOmmqfLCbL1nCQ0qmjwvy9xhKMAOI9Udqi/tBQ=",
+        "owner": "meelgroup",
+        "repo": "cadical",
+        "rev": "8fcb8139c453e7cb85c470cea5d783db8e229518",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meelgroup",
+        "ref": "add_dynamic_lib",
+        "repo": "cadical",
+        "type": "github"
+      }
+    },
+    "cadical_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1742124921,
+        "narHash": "sha256-zJi1YgOmmqfLCbL1nCQ0qmjwvy9xhKMAOI9Udqi/tBQ=",
+        "owner": "meelgroup",
+        "repo": "cadical",
+        "rev": "8fcb8139c453e7cb85c470cea5d783db8e229518",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meelgroup",
+        "ref": "add_dynamic_lib",
+        "repo": "cadical",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1741865919,
+        "narHash": "sha256-4thdbnP6dlbdq+qZWTsm4ffAwoS8Tiq1YResB+RP6WE=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "573c650e8a14b2faa0041645ab18aed7e60f0c9a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "cadiback": "cadiback",
+        "cadical": "cadical_2",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

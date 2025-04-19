@@ -65,7 +65,9 @@ class Main: public MainCommon
         void parse_polarity_type();
         void parse_sampling_vars();
         void check_num_threads_sanity(const unsigned thread_num) const;
-        argparse::ArgumentParser program = argparse::ArgumentParser("cryptominisat5");
+        argparse::ArgumentParser program = argparse::ArgumentParser("cryptominisat",
+            SATSolver::get_version_sha1(),
+            argparse::default_arguments::help);
 
     protected:
         //Options
@@ -99,7 +101,6 @@ class Main: public MainCommon
         uint64_t maxconfl;
 
         //Sampling vars
-        bool only_sampl_solution = false;
         std::string assump_filename;
         vector<Lit> assumps;
 

@@ -72,10 +72,9 @@ bool Solver::full_probe(const bool bin_only)
             if (conf.verbosity >= 5) {
                 const double time_remain = 1.0-float_div(
                 (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
-                cout << "c probe time remain: " << time_remain << " probed: " << probed
+                verb_print(5, "probe time remain: " << time_remain << " probed: " << probed
                 << " set: "  << (orig_num_free_vars - solver->get_num_free_vars())
-                << " T: " << (cpuTime() - my_time)
-                << endl;
+                << " T: " << (cpuTime() - my_time));
             }
         }
     }

@@ -30,14 +30,11 @@ THE SOFTWARE.
 #pragma once
 
 #include <vector>
-#include <limits>
 #include <string>
 #include <utility>
 
 #include "solvertypes.h"
 #include "packedmatrix.h"
-#include "bitarray.h"
-#include "propby.h"
 #include "xor.h"
 #include "gausswatched.h"
 #include "gqueuedata.h"
@@ -57,7 +54,7 @@ struct XorReason
 {
     bool must_recalc = true;
     Lit propagated = lit_Undef;
-    int32_t ID = 0;
+    int32_t id = 0;
     vector<Lit> reason;
 };
 
@@ -80,7 +77,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(const uint32_t row, int32_t& out_ID);
+    vector<Lit>* get_reason(const uint32_t row, int32_t& out_id);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(

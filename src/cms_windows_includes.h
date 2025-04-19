@@ -27,7 +27,7 @@ THE SOFTWARE.
 #define _SCL_SECURE_NO_WARNINGS
 
 #include <intrin.h>
-#include "stdint.h"
+#include <cstdint>
 
 #if !defined(INTMAX_MAX)
 #define INTMAX_MAX _I32_MAX

@@ -350,6 +350,7 @@ class DLL_PUBLIC SolverConf
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;
+        int picosat_confl_limit;
         int varelim_check_resolvent_subs;
 
         //Subs, str limits for simplifier
@@ -484,6 +485,7 @@ class DLL_PUBLIC SolverConf
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;
         long long  distill_implicit_with_implicit_time_limitM;
+        int do_subs_with_resolvent_clauses;
 
         //Gates
         int doGateFind; ///< Find OR gates
@@ -515,11 +517,13 @@ class DLL_PUBLIC SolverConf
         // Oracle
         int oracle_get_learnts; // get oracle learnt clauses
         int oracle_removed_is_learnt; // clauses removed by Oracle should be learnt
+        int oracle_find_bins;
 
         //Misc
         unsigned origSeed;
         int      idrup = 0;
         int      conf_needed = true;
+        string   prefix;
 };
 
 } //end namespace

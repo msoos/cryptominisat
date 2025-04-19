@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "reducedb.h"
+#include "constants.h"
 #include "solver.h"
 #include "solverconf.h"
 #include "sqlstats.h"
@@ -223,26 +224,6 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
     }
 }
 
-#if defined(NORMAL_CL_USE_STATS)
-void ReduceDB::gather_normal_cl_use_stats()
-{
-    for(uint32_t i = 0; i < 3; i++) {
-        ClauseStats cl_stat;
-        for(const auto& offset: solver->longRedCls[i]) {
-            Clause* cl = solver->cl_alloc.ptr(offset);
-
-            assert(cl->stats.introduced_at_conflict <= solver->sumConflicts);
-            const uint64_t age = solver->sumConflicts - cl->stats.introduced_at_conflict;
-            cl_stat.add_in(*cl, age);
-            cl->stats.reset_rdb_stats();
-        }
-        cl_stat.print(i);
-        cl_stats[i] += cl_stat;
-    }
-}
-
-#endif
-
 //TODO maybe we chould count binary learnt clauses as well into the
 //kept no. of clauses as other solvers do
 void ReduceDB::handle_lev2()
@@ -282,16 +263,13 @@ void ReduceDB::handle_lev2()
     solver->check_no_removed_or_freed_cl_in_watch();
     #endif
 
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [DBclean lev2]"
-        << " confl: " << solver->sumConflicts
-        << " orig size: " << orig_size
-        << " marked: " << cl_marked
-        << " ttl:" << cl_ttl
-        << " locked_solver:" << cl_locked_solver
-        << solver->conf.print_times(cpuTime()-my_time)
-        << endl;
-    }
+    verb_print(2, "[DBclean lev2]"
+    << " confl: " << solver->sumConflicts
+    << " orig size: " << orig_size
+    << " marked: " << cl_marked
+    << " ttl:" << cl_ttl
+    << " locked_solver:" << cl_locked_solver
+    << solver->conf.print_times(cpuTime()-my_time));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -517,13 +495,11 @@ void ReduceDB::dump_sql_cl_data(
     }
     solver->sqlStats->end_transaction();
 
-    if (solver->conf.verbosity) {
-        cout << "c [sql] added to DB " << added_to_db
+    verb_print(1, "[sql] added to DB " << added_to_db
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
         << " locked-perc: " << stats_line_percent(num_locked_for_data_gen, all_learnt.size())
         << " non-locked lev0: " << non_locked_lev0
-        << solver->conf.print_times(cpuTime()-my_time)
-        << endl;
+        << solver->conf.print_times(cpuTime()-my_time));
     }
     locked_for_data_gen_total += num_locked_for_data_gen;
     locked_for_data_gen_cls += all_learnt.size();
@@ -591,7 +567,7 @@ void ReduceDB::handle_lev1()
     solver->longRedCls[1].resize(j);
 
     if (solver->conf.verbosity >= 2) {
-        cout << "c [DBclean lev1]"
+        cout << solver->conf.prefix << "[DBclean lev1]"
         << " confl: " << solver->sumConflicts
         << " orig size: " << orig_size
         << " used recently: " << used_recently
@@ -1323,7 +1299,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     return *this;
 }
 
-#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
 void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age, const uint32_t orig_size)
 {
     total_cls++;

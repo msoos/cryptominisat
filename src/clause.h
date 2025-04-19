@@ -21,20 +21,14 @@ THE SOFTWARE.
 ***********************************************/
 
 
-#ifndef CLAUSE_H
-#define CLAUSE_H
+#pragma once
 
 #include <cstdio>
 #include <cstdint>
-#include <vector>
 #include <sys/types.h>
 #include <cstring>
-#include <limits>
 
-#include "solverconf.h"
 #include "solvertypes.h"
-#include "constants.h"
-#include "watched.h"
 #include "alg.h"
 #include "clabstraction.h"
 #include "avgcalc.h"
@@ -148,9 +142,9 @@ struct ClauseStats
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
     uint32_t last_touched_any = 0;
-    int32_t ID;
+    int32_t id;
 
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t extra_pos = numeric_limits<uint32_t>::max();
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
@@ -169,7 +163,7 @@ struct ClauseStats
         ret.is_ternary_resolvent = first.is_ternary_resolvent;
         ret.ttl = std::max(first.ttl, second.ttl);
 
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.props_made = first.props_made + second.props_made;
         #endif
@@ -185,7 +179,7 @@ struct ClauseStats
         return ret;
     }
 
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     void update_rdb_stats()
     {
     }
@@ -403,7 +397,7 @@ public:
 
         stats.last_touched_any = _introduced_at_conflict;
         assert(_ID > 0);
-        stats.ID = _ID;
+        stats.id = _ID;
 
         isFreed = false;
         mySize = ps.size();
@@ -559,7 +553,7 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
         if (i+1 != cl.size())
             os << " ";
     }
-    os << " -- ID: " << cl.stats.ID;
+    os << " -- ID: " << cl.stats.id;
 
     return os;
 }
@@ -634,5 +628,3 @@ struct Sub1Ret {
 };
 
 } //end namespace
-
-#endif //CLAUSE_H

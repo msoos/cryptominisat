@@ -50,8 +50,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if (ENABLE_TESTING)
     add_definitions( -DCMS_TESTING_ENABLED )
-    set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
-    include_directories(${GTEST_PREFIX}/include)
+    include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+    message(STATUS "Including gtest dir ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}")
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
@@ -106,7 +106,6 @@ set(cryptoms_lib_files
     probe.cpp
     oracle_use.cpp
     backbone.cpp
-    frat.cpp
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
@@ -139,6 +138,8 @@ set(cryptoms_lib_files
     vardistgen.cpp
     ccnr.cpp
     ccnr_cms.cpp
+    ccnr_oracle.cpp
+    ccnr_oracle_pre.cpp
     lucky.cpp
     get_clause_query.cpp
     gaussian.cpp
@@ -300,7 +301,11 @@ if (IPASIR)
     )
     target_link_libraries(ipasircryptominisat5
         LINK_PUBLIC ${cryptoms_lib_link_libs}
+        LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
         LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
+        LINK_PUBLIC ${GMP_LIBRARIES}
+        LINK_PUBLIC ${cadiback}
+        LINK_PUBLIC ${cadical}
     )
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5
@@ -319,6 +324,7 @@ if (IPASIR)
 endif()
 
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/mpicosat/mpicosat.h )
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h )
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h )
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h )
@@ -362,23 +368,6 @@ add_executable(cryptominisat5-bin
     signalcode.cpp
 )
 
-if (EMSCRIPTEN)
-    add_executable(cryptominisat5-bin
-        main_emscripten.cpp
-        main_common.cpp
-    )
-
-    set_target_properties(cryptominisat5-bin
-        PROPERTIES
-        OUTPUT_NAME cryptominisat5
-        LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1 --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/pre.js"
-    )
-
-    SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
-        PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
-    )
-endif()
-
 if (MPI_FOUND)
     add_executable(cryptominisat5_mpi-bin
         main_mpi.cpp
@@ -415,10 +404,20 @@ if (MPI_FOUND)
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
 endif()
 
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+set_target_properties(cryptominisat5-bin PROPERTIES
+    OUTPUT_NAME cryptominisat5
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+    LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_RUNTIME_METHODS='[\"callMain\", \"ccall\", \"cwrap\", \"FS\", \"print\"]' -s FORCE_FILESYSTEM=1"
+)
+else()
 set_target_properties(cryptominisat5-bin PROPERTIES
     OUTPUT_NAME cryptominisat5
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
 
 target_link_libraries(cryptominisat5-bin
     ${cryptoms_exec_link_libs}
@@ -428,25 +427,3 @@ install(TARGETS cryptominisat5-bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
-
-if (FEEDBACKFUZZ)
-    add_executable(cms_feedback_fuzz
-        fuzz.cpp
-        libfuzz/FuzzerCrossOver.cpp
-        libfuzz/FuzzerDriver.cpp
-        libfuzz/FuzzerInterface.cpp
-        libfuzz/FuzzerIO.cpp
-        libfuzz/FuzzerLoop.cpp
-        libfuzz/FuzzerMain.cpp
-        libfuzz/FuzzerMutate.cpp
-        libfuzz/FuzzerSanitizerOptions.cpp
-        libfuzz/FuzzerSHA1.cpp
-        libfuzz/FuzzerTraceState.cpp
-        libfuzz/FuzzerUtil.cpp
-    )
-    target_link_libraries(cms_feedback_fuzz
-        ${cryptoms_exec_link_libs}
-    )
-
-    set_target_properties(cms_feedback_fuzz PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-endif()

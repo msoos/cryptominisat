@@ -4,11 +4,8 @@ import sys
 # Do not edit!
 config.cryptominisat_src_root = "@cryptominisat5_SOURCE_DIR@"
 config.cryptominisat_obj_root = "@cryptominisat5_BINARY_DIR@"
-config.python_executable = "@PYTHON_EXECUTABLE@"
+config.python_executable = "@Python3_EXECUTABLE@"
 config.cryptominisat_executable = "$<TARGET_FILE:cryptominisat5-bin>"
-config.sqlite = "@USING_SQLITE@"
-config.mysql = "@USING_SQLITE@"
-config.simple = "@SIMPLE@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@cryptominisat5_SOURCE_DIR@/tests/cnf-files/lit.cfg")

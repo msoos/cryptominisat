@@ -594,35 +594,6 @@ uint64_t CNF::count_lits(
     return lits;
 }
 
-void CNF::print_watchlist_stats() const
-{
-    uint64_t total_size = 0;
-    uint64_t total_size_lits = 0;
-    uint64_t total_cls = 0;
-    uint64_t bin_cls = 0;
-    for(auto const& ws: watches) {
-        for(auto const& w: ws) {
-            total_size+=1;
-            if (w.isBin()) {
-                total_size_lits+=2;
-                total_cls++;
-                bin_cls++;
-            } else if (w.isClause()) {
-                Clause* cl = cl_alloc.ptr(w.get_offset());
-                assert(!cl->get_removed());
-                total_size_lits+=cl->size();
-                total_cls++;
-            }
-        }
-    }
-    cout << "c [watchlist] avg watchlist size: " << float_div(total_size, watches.size());
-    cout << " Avg cl size: " << float_div(total_size_lits, total_cls);
-    cout << " Cls: " << total_cls;
-    cout << " Total WS size: " << total_size;
-    cout << " bin cl: " << bin_cls;
-    cout << endl;
-}
-
 void CNF::print_all_clauses() const
 {
     for(const auto& off : longIrredCls) {
@@ -694,7 +665,7 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
         for(const auto& x: watches[l]) {
             if (x.isBin() &&
                 !x.red() &&
-                l.var() < x.lit2().var()) //don't count twice
+                l < x.lit2()) //don't count twice
             {
                 inc[x.lit2().toInt()]++;
                 inc[l.toInt()]++;
@@ -862,10 +833,10 @@ void CNF::check_no_zero_ID_bins() const
         for(const auto& w: watches[l]) {
             //only do once per binary
             if (w.isBin()) {
-                if (w.get_ID() == 0) {
-                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_ID() << endl;
+                if (w.get_id() == 0) {
+                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_id() << endl;
                 }
-                assert(w.get_ID() > 0);
+                assert(w.get_id() > 0);
             }
         }
     }

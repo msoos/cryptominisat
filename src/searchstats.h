@@ -24,6 +24,7 @@ THE SOFTWARE.
 #define __SEARCHSTATS_H__
 
 #include <cstdint>
+#include <string>
 
 #include "solvertypes.h"
 #include "clause.h"
@@ -33,18 +34,18 @@ namespace CMSat {
 class SearchStats
 {
 public:
+    SearchStats& operator+=(const SearchStats& other);
+    SearchStats& operator-=(const SearchStats& other);
+    SearchStats operator-(const SearchStats& other) const;
     void clear()
     {
         SearchStats tmp;
         *this = tmp;
     }
 
-    SearchStats& operator+=(const SearchStats& other);
-    SearchStats& operator-=(const SearchStats& other);
-    SearchStats operator-(const SearchStats& other) const;
-    void printCommon(uint64_t props, bool do_print_times) const;
-    void print_short(uint64_t props, bool do_print_times) const;
-    void print(uint64_t props, bool do_print_times) const;
+    void printCommon(uint64_t props, bool do_print_times, const string& prefix) const;
+    void print_short(uint64_t props, bool do_print_times, const string& prefix) const;
+    void print(uint64_t props, bool do_print_times, const string& prefix) const;
 
     //Restart stats
     uint64_t blocked_restart = 0;

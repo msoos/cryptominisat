@@ -90,8 +90,9 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 bool InTree::check_timeout_due_to_hyperbin()
 {
     assert(!(solver->timedOutPropagateFull && solver->frat->enabled()));
-    assert(!(solver->timedOutPropagateFull));
 
+    // Can turn it off ONLY if frat is not enabled
+    // otherwise proofs don't go through
     if (solver->timedOutPropagateFull && !solver->frat->enabled()) {
         verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
@@ -386,10 +387,10 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, const bool red_cl, cons
             //Mark both
             w.mark_bin_cl();
             Watched& other_w = findWatchedOfBin(
-                solver->watches, w.lit2(), lit, w.red(), w.get_ID());
+                solver->watches, w.lit2(), lit, w.red(), w.get_id());
             other_w.mark_bin_cl();
 
-            enqueue(~w.lit2(), lit, w.red(), w.get_ID());
+            enqueue(~w.lit2(), lit, w.red(), w.get_id());
         }
     }
     queue.push_back(QueueElem(lit_Undef, lit_Undef, false, 0));

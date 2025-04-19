@@ -183,7 +183,7 @@ class Watched {
             return data2 & 1;
         }
 
-        int32_t get_ID() const
+        int32_t get_id() const
         {
             DEBUG_WATCHED_DO(assert(isBin()));
             return data2 >> 2;
@@ -298,7 +298,7 @@ struct OccurClause {
     // will be equal even if one is removing a literal, and the other is subsuming the whole clause
     bool operator==(const OccurClause& other) const {
         if (ws.getType() != other.ws.getType()) return false;
-        if (ws.isBin()) return ws.get_ID() == other.ws.get_ID();
+        if (ws.isBin()) return ws.get_id() == other.ws.get_id();
         if (ws.isBNN()) return ws.get_bnn() == other.ws.get_bnn();
         if (ws.isClause()) return ws.get_offset() == other.ws.get_offset();
         release_assert(false);
@@ -315,7 +315,7 @@ struct OccurClause {
 
         if (ws.isBin()) {
             assert(other.ws.isBin());
-            return ws.get_ID() < other.ws.get_ID();
+            return ws.get_id() < other.ws.get_id();
         }
 
         assert(!ws.isBNN()); // no idea how this would work
@@ -352,7 +352,7 @@ struct WatchSorterBinTriLong {
                 return !a.red();
             }
 
-            return (a.get_ID() < b.get_ID());
+            return (a.get_id() < b.get_id());
         }
     };
 

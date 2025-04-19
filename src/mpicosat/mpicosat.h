@@ -642,6 +642,12 @@ void picosat_write_clausal_core (PicoSAT *, FILE * core_file);
  */
 void picosat_write_compact_trace (PicoSAT *, FILE * trace_file);
 void picosat_write_extended_trace (PicoSAT *, FILE * trace_file);
+struct TraceData{
+    int* data;
+    int size;
+    int capacity;
+};
+void picosat_write_extended_trace_data (PicoSAT *, struct TraceData* data);
 
 /* Write a RUP trace to a file.  This trace file contains only the learned
  * core clauses while this is not necessarily the case for the RUP file

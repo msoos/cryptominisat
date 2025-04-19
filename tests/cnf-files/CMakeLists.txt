@@ -21,27 +21,13 @@
 # Create llvm-lit configuration file
 configure_file(lit.site.cfg.in lit.site.cfg.in2 @ONLY)
 
-if (MSVC)
-    file(GENERATE
-         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/lit.site.cfg
-         INPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.in2)
+file(GENERATE
+     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+     INPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.in2)
 
 
-    # Make sure this test-suite runs when "test" is target
-    add_test(NAME CNF
-            COMMAND "${Python3_EXECUTABLE}" "-m" "lit.main" ${LIT_ARGS} .
-            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/"
-    )
-else()
-    file(GENERATE
-         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-         INPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.in2)
-
-
-    # Make sure this test-suite runs when "test" is target
-    add_test(NAME CNF
-            COMMAND "${Python3_EXECUTABLE}" "-m" "lit.main" ${LIT_ARGS} .
-            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    )
-endif()
-
+# Make sure this test-suite runs when "test" is target
+add_test(NAME CNF
+        COMMAND lit ${LIT_ARGS} .
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)

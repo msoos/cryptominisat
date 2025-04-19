@@ -20,12 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include "solvertypesmini.h"
 #define DEBUG_DIMACSPARSER_CMS
 
 #include <ctime>
 #include <cstring>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -63,16 +64,16 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-void Main::readInAFile(SATSolver* solver2, const string& filename)
-{
+void Main::readInAFile(SATSolver* solver2, const string& filename) {
+    std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
     solver2->add_sql_tag("filename", filename);
     if (conf.verbosity) cout << "c Reading file '" << filename << "'" << endl;
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
 
     if (in == nullptr) {
@@ -99,6 +100,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
 void Main::readInStandardInput(SATSolver* solver2)
 {
     if (conf.verbosity) cout << "c Reading from standard input... Use '-h' or '--help' for help." << endl;
+    std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
 
     #ifndef USE_ZLIB
     FILE * in = stdin;
@@ -112,15 +114,12 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #else
-    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
 
-    if (!parser.parse_DIMACS(in, false)) {
-        exit(-1);
-    }
-
+    if (!parser.parse_DIMACS(in, false)) exit(-1);
     #ifdef USE_ZLIB
         gzclose(in);
     #endif
@@ -206,7 +205,8 @@ void Main::printResultFunc(
                 num_undef = print_model(solver, os, &solver->get_sampl_vars());
             }
             if (num_undef && !toFile && conf.verbosity) {
-                cout << "c NOTE: " << num_undef << " variables are NOT set." << endl;
+                cout << "c NOTE: " << num_undef << " variables are UNDEF. Sampling vars set:"
+                    << solver->get_sampl_vars_set() << endl;
             }
         }
     }
@@ -214,14 +214,14 @@ void Main::printResultFunc(
 
 /* clang-format off */
 void Main::add_supported_options() {
-    program.add_argument("--verb")
-        .action([&](const auto& a) {conf.verbosity = std::atoi(a.c_str());})
-        .default_value(conf.verbosity)
-        .help("[0-10] Verbosity of solver. 0 = only solution");
     program.add_argument("--version", "-v")
         .action([&](const auto ) {printVersionInfo();})
         .flag()
         .help("Print version information");
+    program.add_argument("--verb")
+        .action([&](const auto& a) {conf.verbosity = std::atoi(a.c_str());})
+        .default_value(conf.verbosity)
+        .help("[0-10] Verbosity of solver. 0 = only solution");
     program.add_argument("--maxtime")
         .help("Stop solving after this much time (s)")
         .scan<'g', double>();
@@ -941,7 +941,7 @@ void Main::add_supported_options() {
         .default_value(conf.idrup)
         .help("idrup");
     program.add_argument("--sampling")
-        .help("Set sampling vars such as '1,84,44'");
+        .help("Set sampling vars such as '1,84,44'. Can also be set via CNF using 'c p show 1 84 44 0'");
     program.add_argument("--assump")
         .action([&](const auto& a) {assump_filename = a;})
         .default_value(assump_filename)
@@ -1066,24 +1066,20 @@ void Main::parse_polarity_type()
 
 void Main::parse_sampling_vars()
 {
-    if (program.is_used("sampling") && !program.is_used("onlysampling")) {
-        cerr << "ERROR: you MUST have both '--sampling' and '--onlysampling' at the same time" << endl;
-        exit(-1);
-    }
     if (!program.is_used("sampling")) return;
 
     string str_vars = program.get<string>("sampling");
-    std::vector<uint32_t> vect;
+    std::vector<uint32_t> sampl_vars;
     std::stringstream ss(str_vars);
     for (int32_t i; ss >> i;) {
         if (i <= 0) {
            cerr << "Sampling variables must be positive (i.e. larger than 0)" << endl;
            exit(-1);
         }
-        vect.push_back(i-1);
+        sampl_vars.push_back(i-1);
         if (ss.peek() == ',') ss.ignore();
     }
-    solver->set_sampl_vars(vect);
+    solver->set_sampl_vars(sampl_vars);
 }
 
 void Main::manually_parse_some_options()
@@ -1317,7 +1313,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(&assumps);
+        ret = solver->solve(&assumps, solver->get_sampl_vars_set());
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
@@ -1364,7 +1360,10 @@ void Main::ban_found_solution() {
 
 void Main::printVersionInfo()
 {
-    cout << solver->get_text_version_info();
+    cout << "c " << "CMS SHA1: " << solver->get_version_sha1() << endl;
+    cout << "c " << "CryptoMiniSat version " << solver->get_version() << endl;
+    cout << "c " << "CMS compilation env " << solver->get_compilation_env();
+    cout << "c " << solver->get_thanks_info("c ") << endl;
 }
 
 int Main::correctReturnValue(const lbool ret) const

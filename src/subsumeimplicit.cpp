@@ -56,7 +56,7 @@ void SubsumeImplicit::try_subsume_bin(
         assert(i->lit2().var() != lit.var());
         *timeAvail -= 30;
         *timeAvail -= solver->watches[i->lit2()].size();
-        removeWBin(solver->watches, i->lit2(), lit, i->red(), i->get_ID());
+        removeWBin(solver->watches, i->lit2(), lit, i->red(), i->get_id());
         if (touched) {
             touched->touch(i->lit2());
         }
@@ -65,7 +65,7 @@ void SubsumeImplicit::try_subsume_bin(
         } else {
             solver->binTri.irredBins--;
         }
-        (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
+        (*solver->frat) << del << i->get_id() << lit << i->lit2() << fin;
 
         return;
     } else {
@@ -76,9 +76,8 @@ void SubsumeImplicit::try_subsume_bin(
     }
 }
 
-uint32_t SubsumeImplicit::subsume_at_watch(const uint32_t at,
-                                           int64_t* timeAvail,
-                                           TouchList* touched)
+uint32_t SubsumeImplicit::subsume_at_watch(
+        const uint32_t at, int64_t* timeAvail, TouchList* touched)
 {
     runStats.numWatchesLooked++;
     const Lit lit = Lit::toLit(at);
@@ -106,11 +105,9 @@ uint32_t SubsumeImplicit::subsume_at_watch(const uint32_t at,
             case WatchType::watch_bnn_t:
                 *j++ = *i;
                 break;
-
             case WatchType::watch_binary_t:
                 try_subsume_bin(lit, i, j, timeAvail, touched);
                 break;
-
             default:
                 assert(false);
                 break;
@@ -132,17 +129,15 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     frat_func_start();
 
     //For randomization, we must have at least 1
-    if (solver->watches.size() == 0) {
-        return;
-    }
+    if (solver->watches.size() == 0) return;
 
     //Randomize starting point
     const size_t rnd_start = rnd_uint(solver->mtrand, solver->watches.size()-1);
-    size_t numDone = 0;
-    for (;numDone < solver->watches.size() && timeAvailable > 0 && !solver->must_interrupt_asap()
-         ;numDone++
+    size_t num_done = 0;
+    for (;num_done < solver->watches.size() && timeAvailable > 0 && !solver->must_interrupt_asap()
+         ;num_done++
     ) {
-        const size_t at = (rnd_start + numDone)  % solver->watches.size();
+        const size_t at = (rnd_start + num_done)  % solver->watches.size();
         subsume_at_watch(at, &timeAvailable);
     }
 
@@ -186,14 +181,12 @@ SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit:
     return *this;
 }
 
-void SubsumeImplicit::Stats::print_short(const Solver* _solver, const char* caller) const
+void SubsumeImplicit::Stats::print_short(const Solver* solver, const char* caller) const
 {
-    cout
-    << "c [impl-sub" << caller << "]"
+    verb_print(1, "[impl-sub" << caller << "]"
     << " bin: " << remBins
-    << _solver->conf.print_times(time_used, time_out)
-    << " w-visit: " << numWatchesLooked
-    << endl;
+    << solver->conf.print_times(time_used, time_out)
+    << " w-visit: " << numWatchesLooked);
 }
 
 void SubsumeImplicit::Stats::print(const char* caller) const

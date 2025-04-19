@@ -44,14 +44,14 @@ picosatlib = ('picosatlib', {
 
 
 def gen_modules(version):
-
+    define_macros_val : list[tuple[str, str | None]] | None
     if platform == "win32" or platform == "cygwin":
         extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DINSTALLED_CADIBACK", "/DCMS_FULL_VERSION=\""+version+"\""]
-        define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", "")]
+        define_macros_val = [("TRACE", "")]
 
     else:
         extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17', "-DINSTALLED_CADIBACK"]
-        define_macros_val = [("TRACE", ""), ("INSTALLED_CADIBACK", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
+        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
 
     modules = Extension(
         name = "pycryptosat",
@@ -73,7 +73,6 @@ def gen_modules(version):
                    "src/distillerlitrem.cpp",
                    "src/distillerlong.cpp",
                    "src/distillerlongwithimpl.cpp",
-                   "src/frat.cpp",
                    "src/gatefinder.cpp",
                    "src/gaussian.cpp",
                    "src/get_clause_query.cpp",
@@ -103,9 +102,6 @@ def gen_modules(version):
                    "src/oracle_use.cpp",
                    "src/probe.cpp",
                ],
-        depends = [
-            "python/cadiback/cadiback.h",
-        ],
         libraries = ['/usr/lib/libcadiback.so'], #, 'libgmpxx.so', 'libgmp.so'
         extra_compile_args = extra_compile_args_val,
         define_macros=define_macros_val,

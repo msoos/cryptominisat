@@ -337,7 +337,7 @@ bool DistillerLong::distill_long_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
-        cout << "c [distill-long";
+        cout << solver->conf.prefix << "[distill-long";
         if (red) {
             cout << "-red" << red_lev << "]";
         } else {
@@ -579,10 +579,14 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     // new clause will inherit this clause's ID
     // so let's set this to 0, this way, when we free() it, it won't be
     // deleted as per cl_last_in_solver
+#ifdef DEBUG_FRAT
+    {
+        std::stringstream ss2;
+        ss2 << lits;
+        *solver->frat << " new smaller cl: " << ss2.str().c_str() << "\n";
+    }
+#endif
     solver->free_cl(offset, false);
-    std::stringstream ss2;
-    ss2 << lits;
-    *solver->frat << " new smaller cl: " << ss2.str().c_str() << "\n";
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
     *solver->frat << findelay;
 

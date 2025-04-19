@@ -20,20 +20,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-
-#ifndef SOLVERTYPES_H
-#define SOLVERTYPES_H
+#pragma once
 
 #include "constants.h"
 
 #include <sstream>
 #include <algorithm>
-#include <limits>
 #include <vector>
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <limits>
 #include <cassert>
 #include "solverconf.h"
 #include "solvertypesmini.h"
@@ -165,7 +161,7 @@ class BinaryClause {
             return red;
         }
 
-        uint32_t getID() const
+        uint32_t get_id() const
         {
             return ID;
         }
@@ -181,7 +177,7 @@ inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
     os << val.getLit1() << " , " << val.getLit2()
     << " red: " << std::boolalpha << val.isRed() << std::noboolalpha
-    << " ID: " << val.getID();
+    << " ID: " << val.get_id();
     return os;
 }
 
@@ -501,6 +497,3 @@ namespace std {
   };
 
 }
-
-
-#endif //SOLVERTYPES_H

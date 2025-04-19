@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "subsumestrengthen.h"
+#include "constants.h"
 #include "occsimplifier.h"
 #include "solver.h"
 #include "watchalgos.h"
@@ -50,16 +51,9 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.get_removed());
     assert(!cl.freed());
+    VERBOSE_PRINT("subsume-ing with clause: " << cl);
 
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume-ing with clause: " << cl << endl;
-    #endif
-
-    Sub0Ret ret = subsume_and_unlink(
-        offset
-        , cl
-        , cl.abst
-    );
+    Sub0Ret ret = subsume_and_unlink( offset , cl , cl.abst);
 
     //If irred is subsumed by redundant, make the redundant into irred
     if (cl.red() && ret.subsumedIrred) {
@@ -235,22 +229,15 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     ) {
         *simplifier->limit_to_decrease -= 3;
         wenThrough++;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
+        if (solver->conf.verbosity >= 5 && wenThrough % 10000 == 0)
             cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
-        }
 
         const size_t at = wenThrough % simplifier->clauses.size();
         const ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
-        if (cl->freed() || cl->get_removed())
-            continue;
-
+        if (cl->freed() || cl->get_removed()) continue;
 
         *simplifier->limit_to_decrease -= 10;
         sub0ret += backw_sub_with_long(offset);
@@ -259,16 +246,12 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     const double time_used = cpuTime() - my_time;
     const bool time_out = (*simplifier->limit_to_decrease <= 0);
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
-        << " tried: " << wenThrough << "/" << simplifier->clauses.size()
-        << " (" << std::setprecision(1) << std::fixed
-        << stats_line_percent(wenThrough, simplifier->clauses.size())
-        << "%)"
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+    verb_print(1, "[occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
+    << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+    << " (" << std::setprecision(1) << std::fixed
+    << stats_line_percent(wenThrough, simplifier->clauses.size())
+    << "%)"
+    << solver->conf.print_times(time_used, time_out, time_remain));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -326,18 +309,14 @@ bool SubsumeStrengthen::backw_str_long_with_long()
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
 
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-backw-sub-str-long-w-long]"
-        << " sub: " << ret.sub
-        << " str: " << ret.str
-        << " tried: " << wenThrough << "/" << simplifier->clauses.size()
-        << " ("
-        << stats_line_percent(wenThrough, simplifier->clauses.size())
-        << ") "
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+    verb_print(1, "[occ-backw-sub-str-long-w-long]"
+    << " sub: " << ret.sub
+    << " str: " << ret.str
+    << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+    << " ("
+    << stats_line_percent(wenThrough, simplifier->clauses.size())
+    << ") "
+    << solver->conf.print_times(time_used, time_out, time_remain));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -504,15 +483,12 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
         const bool time_out =  *simplifier->limit_to_decrease <= 0;
         const double time_used = cpuTime() - start_time;
         const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
-        if (solver->conf.verbosity) {
-            cout
-            << "c [occ-backw-sub-str-w-added-long] "
+        verb_print(1,
+            "[occ-backw-sub-str-w-added-long] "
             << " sub: " << stat.sub
             << " str: " << stat.str
             << " 0-depth ass: " << solver->trail_size() - origTrailSize
-            << solver->conf.print_times(time_used, time_out, time_remain)
-            << endl;
-        }
+            << solver->conf.print_times(time_used, time_out, time_remain));
         if (solver->sqlStats) {
             solver->sqlStats->time_passed(
                 solver
@@ -736,8 +712,8 @@ size_t SubsumeStrengthen::mem_used() const
 
 void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
 {
-    solver->detach_bin_clause(cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_ID());
-    (*solver->frat) << del << cl.ws.get_ID() << cl.lit << cl.ws.lit2() << fin;
+    solver->detach_bin_clause(cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_id());
+    (*solver->frat) << del << cl.ws.get_id() << cl.lit << cl.ws.lit2() << fin;
     if (!cl.ws.red()) {
         simplifier->n_occurs[cl.lit.toInt()]--;
         simplifier->n_occurs[cl.ws.lit2().toInt()]--;
@@ -787,8 +763,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 }
                 //this binary is definitely satisfied
                 solver->detach_bin_clause(
-                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
-                (*solver->frat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
+                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_id());
+                (*solver->frat) << del << subs[j].ws.get_id() << subs[j].lit << subs[j].ws.lit2() << fin;
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
@@ -907,9 +883,9 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
                 simplifier->added_cl_to_var.touch(tmpLits[0]);
                 simplifier->added_cl_to_var.touch(tmpLits[1]);
                 findWatchedOfBin(
-                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_ID()).setRed(false);
+                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_id()).setRed(false);
                 findWatchedOfBin(
-                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_ID()).setRed(false);
+                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_id()).setRed(false);
             }
             continue;
         }
@@ -949,16 +925,12 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     const double time_used = cpuTime() - my_time;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-backw-sub-str-long-w-bins]"
+    verb_print(1, "[occ-backw-sub-str-long-w-bins]"
         << " subs: " << subsumedBin
         << " str: " << strBin
         << " tried: " << tried_bin_tri
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+        << solver->conf.print_times(time_used, time_out, time_remain));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -983,7 +955,7 @@ void SubsumeStrengthen::finishedRun()
 
 void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
 {
-    cout << "c [occ-substr] long"
+    cout << solver->conf.prefix + "[occ-substr] long"
     << " subBySub: " << sub0.numSubsumed
     << " subByStr: " << sub1.sub
     << " lits-rem-str: " << sub1.str
@@ -991,22 +963,22 @@ void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
     << endl;
 }
 
-void SubsumeStrengthen::Stats::print() const
+void SubsumeStrengthen::Stats::print(const string& prefix) const
 {
     cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
-    print_stats_line("c cl-subs"
+    print_stats_line(prefix + "cl-subs"
         , sub0.numSubsumed + sub1.sub
         , " Clauses"
     );
-    print_stats_line("c cl-str rem lit"
+    print_stats_line(prefix + "cl-str rem lit"
         , sub1.str
         , " Lits"
     );
-    print_stats_line("c cl-sub T"
+    print_stats_line(prefix + "cl-sub T"
         , subsumeTime
         , " s"
     );
-    print_stats_line("c cl-str T"
+    print_stats_line(prefix + "cl-str T"
         , strengthenTime
         , " s"
     );
