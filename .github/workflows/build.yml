@@ -103,6 +103,9 @@ jobs:
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
 
+    - name: Test
+      run: ctest -C ${{matrix.build_type}} --verbose
+
     - name: Upload Artifact - Linux
       if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'ON' && !contains(matrix.os, 'arm')
       uses: actions/upload-artifact@v4
