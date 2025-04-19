@@ -1061,7 +1061,6 @@ DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::strin
     }
 }
 
-
 DLL_PUBLIC const char* SATSolver::get_version_sha1()
 {
     return Solver::get_version_sha1();
