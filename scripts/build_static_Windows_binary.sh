@@ -28,7 +28,7 @@ make -j `nproc` cadical
 
 # Build Cadiback
 git clone \
-  --branch mate \
+  --branch synthesis \
   --depth 1 \
   https://github.com/meelgroup/cadiback \
   "${buildDir}/cadiback"
