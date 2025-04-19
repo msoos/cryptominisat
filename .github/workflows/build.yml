@@ -64,7 +64,6 @@ jobs:
         repository: meelgroup/cadical
         ref: mate-only-libraries-1.8.0
         path: cadical
-
     - name: Build Cadical
       run: |
        cd cadical
@@ -78,7 +77,6 @@ jobs:
         repository: meelgroup/cadiback
         ref: synthesis
         path: cadiback
-
     - name: Build Cadiback
       run: |
        cd cadiback
@@ -140,4 +138,3 @@ jobs:
         path: |
           project/build/cryptominisat5
           project/build/lib/*
-
