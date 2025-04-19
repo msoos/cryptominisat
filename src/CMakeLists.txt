@@ -301,7 +301,11 @@ if (IPASIR)
     )
     target_link_libraries(ipasircryptominisat5
         LINK_PUBLIC ${cryptoms_lib_link_libs}
+        LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
         LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
+        LINK_PUBLIC ${GMP_LIBRARIES}
+        LINK_PUBLIC ${cadiback}
+        LINK_PUBLIC ${cadical}
     )
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5

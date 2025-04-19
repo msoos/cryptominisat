@@ -91,7 +91,6 @@ jobs:
       with:
         path: project
         submodules: 'true'
-
     - name: Configure & build
       run: |
         cd project
@@ -101,6 +100,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+        -DIPASIR=ON \
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
@@ -110,26 +110,34 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-linux-amd64
-        path: project/build/cryptominisat5
+        path: |
+          project/build/cryptominisat5
+          project/build/lib/*
 
     - name: Upload Artifact - Linux arm
       if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'ON' && contains(matrix.os, 'arm')
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat-linux-arm64
-        path: project/build/cryptominisat5
+        path: |
+          project/build/cryptominisat5
+          project/build/lib/*
 
     - name: Upload Artifact - Mac ARM64
       if: matrix.os == 'macos-14' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-mac-arm64
-        path: project/build/cryptominisat5
+        path: |
+          project/build/cryptominisat5
+          project/build/lib/*
 
     - name: Upload Artifact - Mac x86_64
       if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-mac-x86_64
-        path: project/build/cryptominisat5
+        path: |
+          project/build/cryptominisat5
+          project/build/lib/*
 
