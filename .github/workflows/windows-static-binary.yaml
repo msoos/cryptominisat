@@ -14,5 +14,5 @@ jobs:
         run: ./scripts/build_static_Windows_binary.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: cryptominisat5_Windows_binary
+          name: cryptominisat5-win
           path: build/cryptominisat/build/cryptominisat5.exe
