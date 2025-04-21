@@ -275,7 +275,6 @@ if (NOT WIN32)
     if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
-    #add_cxx_flag_if_supported("-mtune=native")
 
     add_cxx_flag_if_supported("-msse4.2")
     add_cxx_flag_if_supported("-mpopcnt")
