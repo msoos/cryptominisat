@@ -436,6 +436,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT EMSCRIPTEN)
         )
 
         ADD_CUSTOM_COMMAND(
+            POST_BUILD
             TARGET man_cryptominisat5
             COMMAND help2man
             ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5-bin> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
