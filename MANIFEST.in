@@ -3,5 +3,5 @@ global-exclude *.timeout
 global-exclude *.in
 global-exclude *.txt
 recursive-include src/ *.h *.hpp
-recursive-include src/picosat/ *.h *.hpp
+recursive-include src/mpicosat/ *.h *.hpp
 recursive-include src/oracle/ *.h *.hpp
