@@ -19,7 +19,6 @@
 # THE SOFTWARE.
 
 include_directories( ${PROJECT_SOURCE_DIR} )
-include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
 include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
 include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
 include_directories( SYSTEM ${GMP_INCLUDE_DIR} )
@@ -199,13 +198,6 @@ endif()
 
 if (MPI_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
-endif()
-
-if (BOSPHORUS_LIBRARIES)
-    include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
-
-    SET(cryptoms_lib_files ${cryptoms_lib_files} cms_bosphorus.cpp)
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BOSPHORUS_LIBRARIES})
 endif()
 
 if (BREAKID_LIBRARIES)

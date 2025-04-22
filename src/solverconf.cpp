@@ -215,10 +215,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ternary_max_create(0.3)
         , allow_ternary_bin_create(false)
 
-        //Bosphorus
-        , do_bosphorus(false)
-        , bosphorus_every_n(1)
-
         //BreakID
         , doBreakid(false)
         , breakid_use_assump(true)
@@ -294,7 +290,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
-            "bosphorus,"
             "louvain-comms,"
         )
 

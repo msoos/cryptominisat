@@ -492,7 +492,6 @@ endif()
 # MIT option
 # -----------------------------------------------------------------------------
 option(MIT "Build with only MIT licensed components" OFF)
-# NOTE: everything is MIT, bosphorus is now disabled
 
 # -----------------------------------------------------------------------------
 # Look for BreakID

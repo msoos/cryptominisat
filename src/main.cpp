@@ -947,18 +947,6 @@ void Main::add_supported_options() {
         .default_value(assump_filename)
         .help("Assumptions file");
 
-#ifdef USE_BOSPHORUS
-    po::options_description bosph_options("Gauss options");
-     program.add_argument("--bosph")
-        .action([&](const auto& a) {conf.do_bosphorus = std::atoi(a.c_str());})
-        .default_value(conf.do_bosphorus)
-        .help("Execute bosphorus");
-     program.add_argument("--bospheveryn")
-        .action([&](const auto& a) {conf.bosphorus_every_n = std::atoi(a.c_str());})
-        .default_value(conf.bosphorus_every_n)
-        .help("Execute bosphorus only every Nth iteration -- starting at Nth iter.");
-#endif
-
 /*     po::options_description gaussOptions("Gauss options"); */
      program.add_argument("--maxmatrixrows")
         .action([&](const auto& a) {conf.gaussconf.max_matrix_rows = std::atoi(a.c_str());})

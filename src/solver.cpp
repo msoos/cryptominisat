@@ -79,10 +79,6 @@ extern "C" {
 #include "cms_breakid.h"
 #endif
 
-#ifdef USE_BOSPHORUS
-#include "cms_bosphorus.h"
-#endif
-
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -1262,17 +1258,6 @@ void Solver::check_and_upd_config_parameters()
             conf.doBreakid = false;
         }
         #endif
-
-        #ifdef USE_BOSPHORUS
-        if (conf.do_bosphorus) {
-            if (conf.verbosity) {
-                cout
-                << "c Bosphorus is not supported with FRAT, turning it off"
-                << endl;
-            }
-            conf.do_bosphorus = false;
-        }
-        #endif
     }
 
     if (conf.sampling_vars_set) {
@@ -1895,20 +1880,6 @@ lbool Solver::execute_inprocess_strategy(
                 if (!breakid->doit()) return l_False;
                 #else
                 verb_print(1,"[breakid] BreakID not compiled in, skipping");
-                #endif
-            }
-        } else if (token == "bosphorus") {
-            if (conf.do_bosphorus
-                && (solveStats.num_simplify == 0 ||
-                   (solveStats.num_simplify % conf.bosphorus_every_n == (conf.bosphorus_every_n-1)))
-            ) {
-                #ifdef USE_BOSPHORUS
-                CMSBosphorus bosph(this);
-                bosph.doit();
-                #else
-                if (conf.verbosity) {
-                    cout << "c [bosphorus] Bosphorus not compiled in, skipping" << endl;
-                }
                 #endif
             }
         } else if (token == "") {

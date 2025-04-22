@@ -369,10 +369,6 @@ class DLL_PUBLIC SolverConf
         double ternary_max_create;
         int    allow_ternary_bin_create;
 
-        //Bosphorus
-        int do_bosphorus;
-        uint32_t bosphorus_every_n;
-
         //BreakID
         bool doBreakid;
         bool breakid_use_assump; ///< If false breaks library use of solver
