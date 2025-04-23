@@ -15,4 +15,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cryptominisat5-win
-          path: build/cryptominisat/build/cryptominisat5.exe
+          path: |
+           build/cryptominisat/build/cryptominisat5.exe
+           build/cryptominisat/build/lib/*
+            build/cryptominisat/build/include/*
