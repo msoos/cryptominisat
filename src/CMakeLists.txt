@@ -22,6 +22,7 @@ include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
 include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
 include_directories( SYSTEM ${GMP_INCLUDE_DIR} )
+include_directories( "${CMAKE_SOURCE_DIR}/../cadiback/" )
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")

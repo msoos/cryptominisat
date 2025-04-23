@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include "cryptominisat.h"
 #include "varreplacer.h"
-#include "../cadiback/cadiback.h"
+#include "cadiback.h"
 
 using namespace CMSat;
 
