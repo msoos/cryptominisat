@@ -240,13 +240,6 @@ set_property(TARGET cryptominisat5
     PROPERTY CUDA_ARCHITECTURES 35 50 72
 )
 
-GENERATE_EXPORT_HEADER(cryptominisat5
-         BASE_NAME cryptominisat5
-         #EXPORT_MACRO_NAME cryptominisat5_EXPORT
-         #EXPORT_FILE_NAME MyLibrary_Export.h
-         #STATIC_DEFINE MyLibrary_BUILT_AS_STATIC
-)
-
 if (SQLITE3_FOUND AND STATS)
     add_dependencies(cryptominisat5
         tablestruct
@@ -419,4 +412,4 @@ install(TARGETS cryptominisat5-bin
     # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5-bin" "cryptominisat5")
