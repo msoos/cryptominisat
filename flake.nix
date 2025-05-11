@@ -48,10 +48,6 @@
               ./cryptominisat5Config.cmake.in
             ];
           };
-          patchPhase = ''
-            substituteInPlace src/backbone.cpp \
-              --replace-fail "../cadiback/cadiback.h" "${cadiback}/include/cadiback.h"
-          '';
 
           nativeBuildInputs = [
             cmake
