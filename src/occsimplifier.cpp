@@ -1939,7 +1939,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
     const double my_time = cpuTime();
 
     // Clean up sampl_vars from replaced and set variables
-    map<uint32_t, uint32_t> sampl_var_pairs;
+    map<uint32_t, uint32_t> sampl_var_pairs; //inter -> outer
     for(const uint32_t& v: sampl_vars) {
         uint32_t v2 = solver->varReplacer->get_var_replaced_with_outer(v);
         v2 = solver->map_outer_to_inter(v2);
@@ -1958,14 +1958,13 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
     for(auto& p: sampl_var_pairs) {
         const Lit l = Lit(p.first, false);
         uint32_t irred_and_red = solver->watches[l].size() + solver->watches[~l].size();
-        if (solver->value(p.first) == l_Undef &&
+        if (solver->value(l) == l_Undef &&
                 (irred_and_red == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l)))) {
             assert(p.first < solver->nVars());
             empty_occ++;
             empty_vars.push_back(p.second);
             verb_print(5, "[w-debug] empty_occ: " << p.second+1 << " int var: " << p.first+1);
             elim_var_by_str(l.var(), {});
-            assert(solver->watches[l].empty() && solver->watches[~l].empty());
         } else {
             sampl_vars.push_back(p.second);
         }
