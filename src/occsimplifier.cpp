@@ -2175,6 +2175,98 @@ bool OccSimplifier::cl_rem_with_or_gates()
     return solver->okay();
 }
 
+bool OccSimplifier::gate_based_eqlit() {
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    assert(added_irred_bin.empty());
+    assert(added_long_cl.empty());
+
+    double my_time = cpuTime();
+    gateFinder = new GateFinder(this, solver);
+    gateFinder->find_all();
+    vector<OrGate> gates = gateFinder->get_gates();
+    gateFinder->cleanup();
+    delete gateFinder;
+    gateFinder = nullptr;
+
+    auto old_limit_to_decrease = limit_to_decrease;
+    limit_to_decrease = &gate_based_litrem_time_limit;
+
+    // Fill occ list
+    for(auto& g: gates) std::sort(g.lits.begin(), g.lits.end());
+    map<Lit, vector<uint32_t>> lit_to_gates; //lit -> gate num
+    for(uint32_t i = 0; i < gates.size(); i++) {
+        const auto& g = gates[i];
+        const Lit l = g.lits[0];
+        if (lit_to_gates.count(l) == 0)
+            lit_to_gates[l] = vector<uint32_t>();
+        lit_to_gates[l].push_back(i);
+    }
+
+    vector<Lit> finalLits;
+    auto myadd = [&](Lit l, Lit l2) {
+        finalLits.clear();
+        finalLits.push_back(l);
+        finalLits.push_back(l2);
+        auto newCl = solver->add_clause_int(
+            finalLits //Literals in new clause
+            , false //Is the new clause redundant?
+            , nullptr //orig stats
+            , false //Should clause be attached if long?
+            , &finalLits //Return final set of literals here
+        );
+        assert(newCl == nullptr);
+
+        if (finalLits.size() == 2) {
+            n_occurs[finalLits[0].toInt()]++;
+            n_occurs[finalLits[1].toInt()]++;
+            added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
+        }
+    };
+
+    // Check if any equvalent
+    uint32_t eq = 0;
+    for(uint32_t i = 0; i < gates.size(); i++) {
+        const auto& g = gates[i];
+        Lit l = g.lits[0];
+        const auto it = lit_to_gates.find(l);
+        if (it == lit_to_gates.end()) continue;
+        for(uint32_t i2 = 0; i2 < it->second.size(); i2++) {
+            const auto& g2 = gates[(it->second)[i2]];
+            if (g2.lits == g.lits) {
+                // rhs must be equivalent
+                if (g2.rhs == g.rhs) continue;
+                myadd(g.rhs, ~g2.rhs);
+                myadd(~g.rhs, g2.rhs);
+                eq++;
+            }
+        }
+    }
+
+    /* if (!sub_str_with_added_long_and_bin(true)) goto end; */
+    added_long_cl.clear();
+    added_irred_bin.clear();
+
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+
+    if (solver->okay()) {
+        SLOW_DEBUG_DO(check_n_occur());
+        SLOW_DEBUG_DO(check_clauses_lits_ordered());
+    }
+
+    const double time_used = cpuTime() - my_time;
+    verb_print(1, "[occ-gate-based-eq]" << " eq: " << eq
+        << solver->conf.print_times(time_used, false));
+    assert(limit_to_decrease == &gate_based_litrem_time_limit);
+    limit_to_decrease = old_limit_to_decrease;
+
+    if (solver->sqlStats)
+        solver->sqlStats->time_passed_min( solver , "occ-gate-based-eq" , time_used);
+
+    return solver->okay();
+}
+
 // Checks that both inputs l1 & l2 are in the Clause. If so, replaces it with the RHS
 bool OccSimplifier::lit_rem_with_or_gates() {
     assert(solver->okay());
@@ -2292,7 +2384,9 @@ bool OccSimplifier::lit_rem_with_or_gates() {
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
-    if (!sub_str_with_added_long_and_bin(true)) goto end;
+    /* if (!sub_str_with_added_long_and_bin(true)) goto end; */
+    added_long_cl.clear();
+    added_irred_bin.clear();
 
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -2392,6 +2486,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
+        } else if (token == "occ-gate-based-eqlit") {
+            if (solver->conf.doFindAndReplaceEqLits)
+                gate_based_eqlit();
         } else if (token == "occ-bve-empty") {
             if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
         } else if (token == "occ-bve") {

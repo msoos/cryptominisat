@@ -1779,6 +1779,10 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
             }
+        } else if (token == "occ-gate-based-eqlit") {
+            if (conf.doFindAndReplaceEqLits) {
+                occsimplifier->simplify(false, "occ-gate-based-eqlit");
+            }
         } else if (token == "full-probe") {
             if (!full_probe(false)) return l_False;
         } else if (token == "card-find") {
