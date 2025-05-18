@@ -2145,7 +2145,9 @@ bool OccSimplifier::cl_rem_with_or_gates()
         }
     }
 
-    if (!sub_str_with_added_long_and_bin(true)) goto end;
+    /* if (!sub_str_with_added_long_and_bin(true)) goto end; */
+    added_long_cl.clear();
+    added_irred_bin.clear();
 
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
