@@ -604,6 +604,15 @@ DLL_PUBLIC void SATSolver::set_simplify(const bool simp)
         s.conf.do_simplify_problem = simp;
     }
 }
+
+DLL_PUBLIC void SATSolver::set_gates(const bool gates)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.doGateFind = gates;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
 {
     for (auto & solver : data->solvers) {

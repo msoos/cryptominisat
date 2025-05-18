@@ -118,8 +118,7 @@ namespace CMSat {
          * threads, and the activity of these threads, the elapsed time
          * can wildly differ from wall clock time.
          *
-         * \pre max_time >= 0
-         */
+         * \pre max_time >= 0 */
         void set_max_time(double max_time);
         /**
          * Conflicts that can be consumed before the next call to solve() must return
@@ -173,6 +172,7 @@ namespace CMSat {
         bool minimize_clause(std::vector<Lit>& cl);
         void set_prefix(const char* prefix);
         void set_do_subs_with_resolvent_clauses(int subs);
+        void set_gates(const bool gates);
 
         ////////////////////////////
         // Predictive system tuning
