@@ -2256,13 +2256,13 @@ bool OccSimplifier::gate_based_eqlit() {
     }
 
     const double time_used = cpuTime() - my_time;
-    verb_print(1, "[occ-gate-based-eq]" << " eq: " << eq
+    verb_print(1, "[occ-gate-based-eqlit]" << " eq: " << eq
         << solver->conf.print_times(time_used, false));
     assert(limit_to_decrease == &gate_based_litrem_time_limit);
     limit_to_decrease = old_limit_to_decrease;
 
     if (solver->sqlStats)
-        solver->sqlStats->time_passed_min( solver , "occ-gate-based-eq" , time_used);
+        solver->sqlStats->time_passed_min( solver , "occ-gate-based-eqlit" , time_used);
 
     return solver->okay();
 }
