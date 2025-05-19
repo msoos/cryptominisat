@@ -18,13 +18,19 @@ bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
 
 ## Finding Binaries and Compiling
-It is generally not recommended to compile the code yourself. Instead, you can
-find precompiled binaries for your platform in the
-[releases](https://github.com/msoos/cryptominisat/releases/) were you can find
-precompiled binaries for all platforms and associated static libararies and
-header files. Otherwise, if you must build CryptoMiniSat, please follow the
-[GitHub Actions build
-instructions](https://github.com/msoos/cryptominisat/blob/master/.github/workflows/build.yml).
+Use of [release binaries](https://github.com/msoos/cryptominisat/releases/) is
+_strongly_ encouraged, as CryptoMiniSat requires a specific set of libraries to be
+installed. The second best thing to use is Nix. Simply [install
+nix](https://nixos.org/download/) and then:
+```shell
+nix profile install github:msoos/cryptominisat
+```
+
+Then you will have `ganak` binary available and ready to use.
+
+If this is somehow not what you want, you can also build it. See the [GitHub
+Action](https://github.com/msoos/cryptominisat/blob/master/.github/workflows/build.yml)
+for the specific set of steps.
 
 ## Command-line usage
 Let's take the file:
