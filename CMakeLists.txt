@@ -286,7 +286,7 @@ if (NOT WIN32)
 
     add_cxx_flag_if_supported("-msse4.2")
     add_cxx_flag_if_supported("-mpopcnt")
-    add_cxx_flag_if_supported("-march=sandybridge")
+    add_cxx_flag_if_supported("-mpclmul")
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
       # add_cxx_flag_if_supported("-flto")
       # add_c_flag_if_supported("-flto")
