@@ -814,7 +814,7 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.print_all_restarts = std::atoi(a.c_str());})
         .default_value(conf.print_all_restarts)
         .help("Print a line for every restart");
-    program.add_argument("--printsol,s")
+    program.add_argument("--printsol","-s")
         .action([&](const auto& a) {printResult = std::atoi(a.c_str());})
         .default_value(printResult)
         .help("Print assignment if solution is SAT");
