@@ -26,7 +26,7 @@ nix](https://nixos.org/download/) and then:
 nix profile install github:msoos/cryptominisat
 ```
 
-Then you will have `ganak` binary available and ready to use.
+Then you will have `cryptominisat5` binary available and ready to use.
 
 If this is somehow not what you want, you can also build it. See the [GitHub
 Action](https://github.com/msoos/cryptominisat/blob/master/.github/workflows/build.yml)
