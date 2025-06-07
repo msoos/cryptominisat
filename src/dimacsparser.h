@@ -456,7 +456,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         std::string str2;
         in.parseString(str2);
         if ((str2 == "wmc" || str2 == "pwmc") && !fg->weighted()) {
-            std::cerr << "ERROR: 'c t wmc' or 'c t pwmc' requires a weighted field generator, but a non-weighted was provided" << std::endl;
+            std::cerr << "ERROR: 'c t wmc' or 'c t pwmc' requires a weighted field generator, but a non-weighted was provided. If you are running Ganak or Arjun, try --mode 1" << std::endl;
             return false;
         }
         if (str2 == "wmc" || str2 == "wpmc" || str2 == "pwmc")
