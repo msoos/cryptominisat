@@ -266,8 +266,8 @@ bool DimacsParser<C, S>::parse_header(C& in)
             return false;
         }
         if (verbosity) {
-            cout << "c -- header says num vars:   " << std::setw(12) << num_header_vars << endl;
-            cout << "c -- header says num clauses:" <<  std::setw(12) << num_header_cls << endl;
+            cout << "c o -- header says num vars:   " << std::setw(12) << num_header_vars << endl;
+            cout << "c o -- header says num clauses:" <<  std::setw(12) << num_header_cls << endl;
         }
         if (num_header_vars < 0) {
             std::cerr << "ERROR: Number of variables in header cannot be less than 0" << endl;
@@ -439,7 +439,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
-        if (verbosity >= 6) cout << "c Parsed Solver::new_var()" << endl;
+        if (verbosity >= 6) cout << "c o Parsed Solver::new_var()" << endl;
     } else if (!debugLib.empty() && str == "Solver::new_vars(") {
         in.skipWhitespace();
         int n;
@@ -447,7 +447,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         solver->new_vars(n);
 
         if (verbosity >= 6)
-            cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
+            cout << "c o Parsed Solver::new_vars( " << n << " )" << endl;
     } else if (str == "ind") {
         if (!parseIndependentSet(in, ind_vars)) return false;
         ind_vars_set = true;
@@ -455,6 +455,10 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         in.skipWhitespace();
         std::string str2;
         in.parseString(str2);
+        if ((str2 == "wmc" || str2 == "pwmc") && !fg->weighted()) {
+            std::cerr << "ERROR: 'c t wmc' or 'c t pwmc' requires a weighted field generator, but a non-weighted was provided" << std::endl;
+            return false;
+        }
         if (str2 == "wmc" || str2 == "wpmc" || str2 == "pwmc")
             solver->set_weighted(true);
         if (str2 == "pmc" || str2 == "wpmc" || str2 == "pwmc")
