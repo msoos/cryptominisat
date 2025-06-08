@@ -60,7 +60,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: meelgroup/cadical
-        ref: mate-only-libraries-1.8.0
+        ref: add_dynamic_libs
         path: cadical
     - name: Build Cadical
       run: |
