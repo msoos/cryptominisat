@@ -4317,7 +4317,7 @@ bool OccSimplifier::generate_resolvents(
             bool tautological = resolve_clauses(*it, *it2, lit);
             if (tautological) continue;
             if (solver->satisfied(dummy)) continue;
-//             if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
+            if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
