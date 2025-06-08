@@ -17,7 +17,7 @@ mkdir "${buildDir}"
 
 # Build Cadical
 git clone \
-  --branch add_dynamic_libs \
+  --branch add_dynamic_lib \
   --depth 1 \
   https://github.com/meelgroup/cadical \
   "${buildDir}/cadical"
