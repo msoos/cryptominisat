@@ -23,7 +23,7 @@ git clone \
   "${buildDir}/cadical"
 ( cd "${buildDir}/cadical"
 ./configure -static
-make -j `nproc` cadical
+make -j `nproc`
 )
 
 # Build Cadiback
