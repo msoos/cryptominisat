@@ -17,7 +17,7 @@ mkdir "${buildDir}"
 
 # Build Cadical
 git clone \
-  --branch mate-only-libraries-1.8.0 \
+  --branch add_dynamic_libs \
   --depth 1 \
   https://github.com/meelgroup/cadical \
   "${buildDir}/cadical"
