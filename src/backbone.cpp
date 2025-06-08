@@ -124,10 +124,10 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             << cpuTime()-ccnr_time);
 
     vector<int> learned_units;
-    /* vector<int> learned_bins; */
+    vector<int> learned_bins;
     verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits
             << " num cls: " << num_cls << " num vars: " << nVars());
-    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, /*learned_bins,*/ learned_units);
+    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, learned_units, learned_bins);
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     if (res == 10) {
@@ -142,30 +142,30 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             add_clause_int(tmp);
             if (!okay()) goto end;
         }
-        /* bool ignore = false; */
 
-        /* tmp.clear(); */
-        /* for(const auto& l: learned_bins) { */
-        /*     if (l == 0) { */
-        /*         if (ignore) { */
-        /*             ignore = false; */
-        /*             tmp.clear(); */
-        /*             continue; */
-        /*         } */
-        /*         assert(tmp.size() == 2); */
-        /*         auto ret = add_clause_int(tmp, true); */
-        /*         assert(ret == nullptr); */
-        /*         num_bins_added++; */
-        /*         if (!okay()) goto end; */
-        /*         ignore = false; */
-        /*         tmp.clear(); */
-        /*         continue; */
-        /*     } */
-        /*     const Lit lit = Lit(abs(l)-1, l < 0); */
-        /*     if (varData[lit.var()].removed != Removed::none) {ignore = true; continue;} */
-        /*     if (value(lit.var()) != l_Undef) {ignore = true; continue;} */
-        /*     tmp.push_back(lit); */
-        /* } */
+        tmp.clear();
+        bool ignore = false;
+        for(const auto& l: learned_bins) {
+            if (l == 0) {
+                if (ignore) {
+                    ignore = false;
+                    tmp.clear();
+                    continue;
+                }
+                assert(tmp.size() == 2);
+                auto ret = add_clause_int(tmp, true);
+                assert(ret == nullptr);
+                num_bins_added++;
+                if (!okay()) goto end;
+                ignore = false;
+                tmp.clear();
+                continue;
+            }
+            const Lit lit = Lit(abs(l)-1, l < 0);
+            if (varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
+            if (value(lit.var()) != l_Undef) {ignore = true; continue;}
+            tmp.push_back(lit);
+        }
         backbone_done = true;
     } else {
         ok = false;
