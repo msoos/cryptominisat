@@ -17,20 +17,22 @@ paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24),
 bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
 
-## Finding Binaries and Compiling
-Use of [release binaries](https://github.com/msoos/cryptominisat/releases/) is
-_strongly_ encouraged, as CryptoMiniSat requires a specific set of libraries to be
+## Compiling
+Use of the [release binaries](https://github.com/msoos/cryptominisat/releases) is
+_strongly_ encouraged, as Ganak requires a specific set of libraries to be
 installed. The second best thing to use is Nix. Simply [install
 nix](https://nixos.org/download/) and then:
 ```shell
-nix profile install github:msoos/cryptominisat
+git clone https://github.com/msoos/cryptominisat
+cd cryptominisat
+nix shell
 ```
 
-Then you will have `cryptominisat5` binary available and ready to use.
+Then you will have `cryptominisat` binary available and ready to use.
 
 If this is somehow not what you want, you can also build it. See the [GitHub
-Action](https://github.com/msoos/cryptominisat/blob/master/.github/workflows/build.yml)
-for the specific set of steps.
+Action](https://github.com/meelgroup/cryptominisat/actions/workflows/build.yml) for the
+specific set of steps.
 
 You can also run CryptoMiniSat from your web browser, without installing
 anything, [here](https://www.msoos.org/cryptominisat/).
