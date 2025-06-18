@@ -32,6 +32,9 @@ If this is somehow not what you want, you can also build it. See the [GitHub
 Action](https://github.com/msoos/cryptominisat/blob/master/.github/workflows/build.yml)
 for the specific set of steps.
 
+You can also run CryptoMiniSat from your web browser, without installing
+anything, [here](https://www.msoos.org/cryptominisat/).
+
 ## Command-line usage
 Let's take the file:
 ```plain
