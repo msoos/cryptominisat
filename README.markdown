@@ -23,9 +23,7 @@ _strongly_ encouraged, as Ganak requires a specific set of libraries to be
 installed. The second best thing to use is Nix. Simply [install
 nix](https://nixos.org/download/) and then:
 ```shell
-git clone https://github.com/msoos/cryptominisat
-cd cryptominisat
-nix shell
+nix shell github:msoos/cryptominisat
 ```
 
 Then you will have `cryptominisat` binary available and ready to use.
