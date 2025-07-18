@@ -29,7 +29,7 @@ nix shell github:msoos/cryptominisat
 Then you will have `cryptominisat` binary available and ready to use.
 
 If this is somehow not what you want, you can also build it. See the [GitHub
-Action](https://github.com/meelgroup/cryptominisat/actions/workflows/build.yml) for the
+Action](https://github.com/msoos/cryptominisat/actions/workflows/build.yml) for the
 specific set of steps.
 
 You can also run CryptoMiniSat from your web browser, without installing
