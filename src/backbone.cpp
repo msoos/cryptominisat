@@ -127,9 +127,11 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     vector<int> learned_bins;
     verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits
             << " num cls: " << num_cls << " num vars: " << nVars());
-    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, learned_units, learned_bins);
+    vector<pair<int, int>> eqLits;
+    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, learned_units, learned_bins, eqLits);
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
+    uint32_t num_eq_added = 0;
     if (res == 10) {
         vector<Lit> tmp;
         for(const auto& l: learned_units) {
@@ -141,6 +143,21 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             tmp.push_back(lit);
             add_clause_int(tmp);
             if (!okay()) goto end;
+        }
+
+        for(const auto& p: eqLits) {
+            int l1 = p.first;
+            int l2 = p.second;
+            const Lit lit1 = Lit(abs(l1)-1, l1 < 0);
+            const Lit lit2 = Lit(abs(l2)-1, l2 < 0);
+            tmp = {~lit1, lit2};
+            auto ret = add_clause_int(tmp, true);
+            assert(ret == nullptr);
+            tmp = {lit1, ~lit2};
+            ret = add_clause_int(tmp, true);
+            assert(ret == nullptr);
+            verb_print(4, "[backbone-simpl] added eq clause: " << lit1 << " = " << lit2);
+            num_eq_added++;
         }
 
         tmp.clear();
@@ -173,6 +190,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
 end:
     verb_print(1, "[backbone-simpl] res: " << res
             <<  " num units added: " << trail_size() - num_units
+            <<  " num eq added: " << num_eq_added
             <<  " num bins: " << num_bins_added
             << " T: " << std::fixed << std::setprecision(2)
             << cpuTime() - my_time);
