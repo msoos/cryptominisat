@@ -613,6 +613,14 @@ DLL_PUBLIC void SATSolver::set_gates(const bool gates)
     }
 }
 
+
+DLL_PUBLIC void SATSolver::set_branch_strategy_setup(std::string str) {
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.branch_strategy_setup = str;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
 {
     for (auto & solver : data->solvers) {

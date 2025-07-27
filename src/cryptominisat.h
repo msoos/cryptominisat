@@ -173,6 +173,7 @@ namespace CMSat {
         void set_prefix(const char* prefix);
         void set_do_subs_with_resolvent_clauses(int subs);
         void set_gates(const bool gates);
+        void set_branch_strategy_setup(std::string str);
 
         ////////////////////////////
         // Predictive system tuning
