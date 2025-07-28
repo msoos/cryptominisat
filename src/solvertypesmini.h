@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include <memory>
 #include <vector>
 #include <array>
+#include <map>
+#include <set>
 #include <gmpxx.h>
 
 namespace CMSat {
@@ -264,17 +266,20 @@ enum class rst_dat_type {norm, var, cl};
 
 struct FastBackwData {
     std::vector<Lit>* _assumptions = nullptr;
+    std::set<uint32_t> assumed_indep;
     std::vector<uint32_t>* indic_to_var  = nullptr;
     uint32_t orig_num_vars = 0;
     std::vector<uint32_t>* non_indep_vars = nullptr;
-    std::vector<uint32_t>* indep_vars = nullptr;
+    std::set<uint32_t>* indep_vars = nullptr;
     bool fast_backw_on = false;
     uint32_t* test_var = nullptr;
     uint32_t* test_indic = nullptr;
     uint32_t max_confl = 500;
     uint32_t cur_max_confl = 0;
     uint32_t indep_because_ran_out_of_confl = 0;
+    uint32_t gate_based_found = 0;
     uint64_t start_sumConflicts;
+    std::map<uint32_t, std::vector<std::vector<uint32_t>>>* gates = nullptr;
 };
 
 class BNN

@@ -242,7 +242,7 @@ class Searcher : public HyperEngine
 
         // Fast backward for Arjun
         lbool new_decision_fast_backw();
-        void create_new_fast_backw_assumption();
+        bool create_new_fast_backw_assumption();
 
         ///////////////
         // Variables

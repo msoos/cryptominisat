@@ -3559,32 +3559,66 @@ void Searcher::bump_var_importance(const uint32_t var)
     }
 }
 
-void Searcher::create_new_fast_backw_assumption()
-{
+bool Searcher::create_new_fast_backw_assumption() {
     //Reset conflict limit
     fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
-    //max_confl_this_restart = params.conflictsDoneThisRestart + fast_backw.max_confl;
+    bool must_cleanup = true;
 
-    //Remove indic
-    const Lit indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
-    assert(!indic.sign());
-    fast_backw._assumptions->pop_back();
+    bool gate_worked = true;
+    Lit indic;
+    uint32_t var;
+    while (gate_worked) {
+        //We reached the bottom
+        if (fast_backw._assumptions->size() == fast_backw.indep_vars->size()) {
+            *fast_backw.test_indic = var_Undef;
+            *fast_backw.test_var = var_Undef;
+            return false;
+        }
 
-    //Backtrack
-    if (decisionLevel() >= fast_backw._assumptions->size()) {
-        cancelUntil(fast_backw._assumptions->size());
+        //Remove indic
+        indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
+        assert(!indic.sign());
+        fast_backw.assumed_indep.erase((*fast_backw.indic_to_var)[indic.var()]);
+        fast_backw._assumptions->pop_back();
+
+        //Backtrack
+        if (decisionLevel() >= fast_backw._assumptions->size()) {
+            cancelUntil(fast_backw._assumptions->size());
+        }
+
+        // Var we will check
+        var = fast_backw.indic_to_var->at(indic.var());
+
+        // Check with gates
+        gate_worked = false;
+        const auto& gs = *fast_backw.gates;
+        const auto& at = gs.find(var);
+        /* cout << "fast_backw.assumed_indep size: " */
+        /*      << fast_backw.assumed_indep.size() << endl; */
+        if (at != gs.end()) for(const auto& lhs: at->second) {
+            bool good = true;
+            for(const auto& v: lhs) {
+                if (!fast_backw.indep_vars->count(v)) {good = false; break;}
+            }
+            if (good) {
+                cout << "backw VEERRYYY GOOOD" << endl;
+                fast_backw.gate_based_found++;
+                fast_backw.non_indep_vars->push_back(var);
+                gate_worked = true;
+                break;
+            }
+        }
     }
 
     //Add TRUE/FALSE duo
-    uint32_t var = fast_backw.indic_to_var->at(indic.var());
     *fast_backw.test_indic = indic.var();
     *fast_backw.test_var = var;
     //cout << "Testing: " << *fast_backw.test_var << endl;
     Lit l = Lit(var, false);
     fast_backw._assumptions->push_back(l);
-
     Lit l2 = Lit(var+fast_backw.orig_num_vars, true);
     fast_backw._assumptions->push_back(l2);
+    return true;
 }
 
 lbool Searcher::new_decision_fast_backw()
@@ -3608,15 +3642,7 @@ lbool Searcher::new_decision_fast_backw()
             fast_backw._assumptions->pop_back();
             fast_backw.non_indep_vars->push_back(*fast_backw.test_var);
 
-            //We reached the bottom
-            if (fast_backw._assumptions->size() == fast_backw.indep_vars->size()) {
-                *fast_backw.test_indic = var_Undef;
-                *fast_backw.test_var = var_Undef;
-                return l_True;
-            }
-
-            create_new_fast_backw_assumption();
-
+            if (!create_new_fast_backw_assumption()) return l_True;
             continue;
         } else {
             assert(p.var() < nVars());
@@ -3660,13 +3686,14 @@ lbool Searcher::new_decision_fast_backw()
                 for(uint32_t i = 0; i < splice_into; i++) {
                     backup.push_back(fast_backw._assumptions->at(i));
                 }
-                fast_backw.indep_vars->push_back(*fast_backw.test_var);
+                fast_backw.indep_vars->insert(*fast_backw.test_var);
                 backup.push_back(Lit(*fast_backw.test_indic, false));
                 for(uint32_t i = splice_into; i < fast_backw._assumptions->size(); i++) {
                     const auto x = fast_backw._assumptions->at(i);
                     backup.push_back(x);
                 }
                 std::swap(*fast_backw._assumptions, backup);
+                fast_backw.assumed_indep.insert(*fast_backw.test_var);
                 cancelUntil(splice_into);
             }
 
@@ -3677,7 +3704,7 @@ lbool Searcher::new_decision_fast_backw()
                 return l_True;
             }
 
-            create_new_fast_backw_assumption();
+            if (!create_new_fast_backw_assumption()) return l_True;
             goto start;
         }
 
