@@ -497,7 +497,7 @@ public:
         }
         at++;
         skip_whitespace(str, at);
-        if (str[at] != '\n') {
+        if (at < str.size() && str[at] != '\n') {
 
             std::cerr << "PARSE ERROR! expected end of line at the end of the weight."
                 << "At line " << line_no

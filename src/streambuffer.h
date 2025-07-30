@@ -122,8 +122,8 @@ public:
         std::string str;
         for (;;) {
             if (value() == EOF || value() == '\0' || value() == '\n') return str;
-            advance();
             str.push_back(value());
+            advance();
         }
     }
 
