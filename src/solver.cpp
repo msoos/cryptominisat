@@ -3190,8 +3190,8 @@ void Solver::end_getting_constraints()
     get_clause_query = nullptr;
 }
 
-vector<uint32_t> Solver::translate_sampl_set(
-        const vector<uint32_t>& sampl_set, bool also_removed) {
+set<uint32_t> Solver::translate_sampl_set(
+        const set<uint32_t>& sampl_set, bool also_removed) {
     assert(get_clause_query);
     return get_clause_query->translate_sampl_set(sampl_set, also_removed);
 }

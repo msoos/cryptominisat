@@ -1340,8 +1340,8 @@ void DLL_PUBLIC SATSolver::end_getting_constraints()
     data->solvers[0]->end_getting_constraints();
 }
 
-DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
-    const vector<uint32_t>& sampl_set, bool also_removed)
+DLL_PUBLIC set<uint32_t> SATSolver::translate_sampl_set(
+    const set<uint32_t>& sampl_set, bool also_removed)
 {
     return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
 }

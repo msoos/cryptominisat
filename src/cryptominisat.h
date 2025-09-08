@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <atomic>
 #include <vector>
+#include <set>
 #include <map>
 #include <utility>
 #include <string>
@@ -270,8 +271,8 @@ namespace CMSat {
         void end_getting_constraints();
 
         uint32_t simplified_nvars();
-        std::vector<uint32_t> translate_sampl_set(
-                const std::vector<uint32_t>& sampl_set, bool also_removed);
+        std::set<uint32_t> translate_sampl_set(
+                const std::set<uint32_t>& sampl_set, bool also_removed);
 
         std::vector<Lit> get_weight_translation() const;
         std::map<uint32_t, VarMap> update_var_mapping(const std::map<uint32_t, VarMap>& vmap);
