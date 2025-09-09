@@ -303,7 +303,7 @@ class Solver : public Searcher
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
         vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
-        void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
+        void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, set<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
         bool remove_and_clean_detached_xors(vector<Xor>& xors);

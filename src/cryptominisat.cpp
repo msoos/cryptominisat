@@ -1535,7 +1535,7 @@ DLL_PUBLIC std::vector<uint32_t> SATSolver::extend_definable_by_irreg_gate(const
 }
 
 DLL_PUBLIC void SATSolver::clean_sampl_get_empties(
-    std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars)
+    std::vector<uint32_t>& sampl_vars, std::set<uint32_t>& empty_vars)
 {
     return data->solvers[0]->clean_sampl_get_empties(sampl_vars, empty_vars);
 }

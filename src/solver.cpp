@@ -3350,7 +3350,7 @@ vector<uint32_t> Solver::extend_definable_by_irreg_gate(const vector<uint32_t>& 
     return occsimplifier->extend_definable_by_irreg_gate(vars);
 }
 
-void Solver::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
+void Solver::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, set<uint32_t>& empty_vars)
 {
     if (!okay()) return;
     assert(get_num_bva_vars() == 0);

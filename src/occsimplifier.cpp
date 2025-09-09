@@ -1927,7 +1927,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     return ret;
 }
 
-void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars) {
+void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, set<uint32_t>& empty_vars) {
     assert(solver->okay());
     assert(solver->prop_at_head());
     if (!setup()) return;
@@ -1962,7 +1962,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
                 (irred_and_red == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l)))) {
             assert(p.first < solver->nVars());
             empty_occ++;
-            empty_vars.push_back(p.second);
+            empty_vars.insert(p.second);
             verb_print(5, "[w-debug] empty_occ: " << p.second+1 << " int var: " << p.first+1);
             elim_var_by_str(l.var(), {});
         } else {
