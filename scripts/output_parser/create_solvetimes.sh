@@ -1,4 +1,4 @@
-#!/bin/bash
+#out-ganak-mccomp2324-41122!/bin/bash
 
 module unload gcc/4.9.3
 module load anaconda/3
