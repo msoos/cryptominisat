@@ -1,0 +1,22 @@
+name: nix build
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v25
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v14
+      with:
+        name: msoos
+        # If you chose API tokens for write access OR if you have a private cache
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: nix build
