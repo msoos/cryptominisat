@@ -158,7 +158,7 @@ public:
 
     constexpr uint8_t getValue() const { return value; }
 
-    friend lbool toLbool(uint32_t   v);
+    friend lbool toLbool(uint8_t   v);
     constexpr friend uint32_t   toInt  (lbool l);
 };
 
@@ -166,7 +166,7 @@ constexpr lbool l_True = lbool((uint8_t)0);
 constexpr lbool l_False = lbool((uint8_t)1);
 constexpr lbool l_Undef = lbool((uint8_t)2);
 
-inline lbool toLbool(uint32_t v)
+inline lbool toLbool(uint8_t v)
 {
     lbool l;
     l.value = v;
