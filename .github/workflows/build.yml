@@ -29,7 +29,7 @@ jobs:
         wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
         tar xf gmp-6.3.0.tar.xz
         cd gmp-6.3.0
-        ./configure --enable-static -enable-cxx --enable-shared
+        ./configure --enable-static -enable-cxx --enable-shared --with-pic
         make -j8
         sudo make install
         cd ..
