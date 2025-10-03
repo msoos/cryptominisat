@@ -522,7 +522,7 @@ public:
     virtual bool weighted() const = 0;
 };
 
-class FDouble : public Field {
+class FDouble final : public Field {
 public:
     double val;
     FDouble(const double _val) : val(_val) {}
@@ -610,9 +610,9 @@ public:
     }
 };
 
-class FGenDouble : public FieldGen {
+class FGenDouble final : public FieldGen {
 public:
-    ~FGenDouble() override = default;
+    ~FGenDouble() final = default;
     std::unique_ptr<Field> zero() const final {
         return std::make_unique<FDouble>(0);
     }
