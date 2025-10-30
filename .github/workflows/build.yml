@@ -94,6 +94,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
+        -DLARGEMEM=ON \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
 
