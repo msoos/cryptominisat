@@ -80,6 +80,12 @@ jobs:
        make -j8
        cd ..
 
+    - name: Copy cadiback and cadical libs
+      if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'OFF'
+      run: |
+       sudo cp cadiback/libcadiback.so /usr/lib/
+       sudo cp cadical/build/libcadical.so /usr/lib/
+
     - name: checkout
       uses: actions/checkout@v4
       with:
@@ -96,6 +102,21 @@ jobs:
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
+
+    - name: Copy cadiback and cadical libs
+      if: contains(matrix.os, 'macos') && matrix.staticcompile == 'OFF'
+      run: |
+       sudo cp cadiback/libcadiback.so .
+       sudo cp cadical/build/libcadical.so .
+
+    - name: run it to check it executes
+      run: |
+        echo "Running some command : cryptominisat5 --version"
+        ./project/build/cryptominisat5 --version
+        echo $?
+        echo "Running some command: cryptominisat5 --help"
+        ./project/build/cryptominisat5 --help
+        echo $?
 
     - name: Test
       run: ctest -C ${{matrix.build_type}} --verbose
