@@ -106,8 +106,8 @@ jobs:
     - name: Copy cadiback and cadical libs
       if: contains(matrix.os, 'macos') && matrix.staticcompile == 'OFF'
       run: |
-       sudo cp cadiback/libcadiback.so project/build/
-       sudo cp cadical/build/libcadical.so project/build/
+       sudo cp cadiback/libcadiback.so .
+       sudo cp cadical/build/libcadical.so .
 
     - name: run it to check it executes
       run: |
