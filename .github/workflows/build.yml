@@ -67,11 +67,6 @@ jobs:
        make -j8
        cd ..
 
-    - name: Upload Artifact - Linux
-      if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'OFF'
-      run: |
-       sudo cp cadical/build/libcadical.so /usr/lib/
-
     - name: Checkout Cadiback
       uses: actions/checkout@v4
       with:
@@ -85,10 +80,11 @@ jobs:
        make -j8
        cd ..
 
-    - name: Upload Artifact - Linux
+    - name: Copy cadiback and cadical libs
       if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'OFF'
       run: |
        sudo cp cadiback/libcadiback.so /usr/lib/
+       sudo cp cadical/build/libcadical.so /usr/lib/
 
     - name: checkout
       uses: actions/checkout@v4
@@ -106,6 +102,12 @@ jobs:
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
+
+    - name: Copy cadiback and cadical libs
+      if: contains(matrix.os, 'macos') && matrix.staticcompile == 'OFF'
+      run: |
+       sudo cp cadiback/libcadiback.so project/build/
+       sudo cp cadical/build/libcadical.so project/build/
 
     - name: run it to check it executes
       run: |
