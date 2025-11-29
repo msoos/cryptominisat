@@ -96,6 +96,17 @@ jobs:
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
+    - name: run something
+      run: |
+        echo "Running some command : cryptominisat5 --version"
+        ./project/build/cryptominisat5 --version
+        echo $?
+        echo "Running some command: cryptominisat5 --help"
+        ./project/build/cryptominisat5 --help
+        echo $?
+        echo "Running some command: cryptominisat5 -h"
+        ./project/build/cryptominisat5 -h
+        echo $?
 
     - name: Test
       run: ctest -C ${{matrix.build_type}} --verbose
