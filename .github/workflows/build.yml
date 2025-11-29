@@ -65,8 +65,12 @@ jobs:
        cd cadical
        CXXFLAGS=-fPIC ./configure --competition
        make -j8
-       sudo cp build/libcadical.so /usr/lib/
        cd ..
+
+    - name: Upload Artifact - Linux
+      if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'OFF'
+      run: |
+       sudo cp cadical/build/libcadical.so /usr/lib/
 
     - name: Checkout Cadiback
       uses: actions/checkout@v4
@@ -79,8 +83,12 @@ jobs:
        cd cadiback
        CXX=c++ ./configure
        make -j8
-       sudo cp libcadiback.so /usr/lib/
        cd ..
+
+    - name: Upload Artifact - Linux
+      if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'OFF'
+      run: |
+       sudo cp cadiback/libcadiback.so /usr/lib/
 
     - name: checkout
       uses: actions/checkout@v4
