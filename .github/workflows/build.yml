@@ -65,7 +65,7 @@ jobs:
        cd cadical
        CXXFLAGS=-fPIC ./configure --competition
        make -j8
-       sudo cp build/libcadical.so /usr/local/lib/
+       sudo cp build/libcadical.so /usr/lib/
        cd ..
 
     - name: Checkout Cadiback
@@ -79,7 +79,7 @@ jobs:
        cd cadiback
        CXX=c++ ./configure
        make -j8
-       sudo cp libcadiback.so /usr/local/lib/
+       sudo cp libcadiback.so /usr/lib/
        cd ..
 
     - name: checkout
