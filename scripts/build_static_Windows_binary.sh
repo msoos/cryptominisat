@@ -17,7 +17,7 @@ mkdir "${buildDir}"
 
 # Build Cadical
 git clone \
-  --branch add_dynamic_lib \
+  --branch master \
   --depth 1 \
   https://github.com/meelgroup/cadical \
   "${buildDir}/cadical"
@@ -28,7 +28,7 @@ make -j `nproc`
 
 # Build Cadiback
 git clone \
-  --branch synthesis \
+  --branch main \
   --depth 1 \
   https://github.com/meelgroup/cadiback \
   "${buildDir}/cadiback"

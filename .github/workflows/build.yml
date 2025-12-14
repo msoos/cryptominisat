@@ -58,7 +58,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: meelgroup/cadical
-        ref: add_dynamic_lib
+        ref: master
         path: cadical
     - name: Build Cadical
       run: |
@@ -71,7 +71,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: meelgroup/cadiback
-        ref: synthesis
+        ref: main
         path: cadiback
     - name: Build Cadiback
       run: |
