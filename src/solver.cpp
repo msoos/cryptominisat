@@ -3727,6 +3727,7 @@ map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vm
         if(m.second.lit == lit_Undef) {
             // This is a variable has been set in another round/system
             assert(m.second.val != l_Undef);
+            assert(m.second.lit.var() >= nVarsOuter() && "Must be set, since it hasn't been inserted");
             ret[m.first] = m.second;
         } else {
             assert(m.second.val == l_Undef && "Must be unset");
