@@ -1,8 +1,6 @@
 name: nix build
 
 on:
-  push:
-    branches: [ "*" ]
   pull_request:
     branches: [ "*" ]
 
