@@ -5317,6 +5317,7 @@ int OccSimplifier::check_empty_resolvent_action(
             return 0;
     }
     release_assert(false);
+    exit(EXIT_FAILURE);
 }
 
 uint64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)

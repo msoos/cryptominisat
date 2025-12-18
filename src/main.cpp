@@ -23,10 +23,7 @@ THE SOFTWARE.
 #include "solvertypesmini.h"
 #define DEBUG_DIMACSPARSER_CMS
 
-#include <ctime>
-#include <cstring>
 #include <cerrno>
-#include <cstring>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
