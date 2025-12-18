@@ -3722,29 +3722,28 @@ vector<Lit> Solver::get_weight_translation() const {
 
 map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vmap) {
     map<uint32_t, VarMap> ret;
-    for(const auto&m : vmap) {
-        assert(m.second.invariant());
-        if(m.second.lit == lit_Undef) {
+    for(const auto& [origv, newv] : vmap) {
+        assert(newv.invariant());
+        if(newv.lit == lit_Undef) {
             // This is a variable has been set in another round/system
-            assert(m.second.val != l_Undef);
-            assert(m.second.lit.var() >= nVarsOuter() && "Must be set, since it hasn't been inserted");
-            ret[m.first] = m.second;
+            assert(newv.val != l_Undef);
+            assert(newv.lit.var() >= nVarsOuter() && "Must not have been inserted, since it has been set");
+            ret[origv] = newv;
         } else {
-            assert(m.second.val == l_Undef && "Must be unset");
-            /* cout << "m.first:" << setw(4) << m.first +1 */
-            /*     << " m.second.lit: " << setw(4) */
-            /*     << m.second.lit << " nVarsOuter(): " << nVarsOuter() << endl; */
-            assert(m.second.lit.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
-            Lit l = varReplacer->get_lit_replaced_with_outer(m.second.lit);
-            l = map_outer_to_inter(l);
-            if (varData[l.var()].removed == Removed::elimed) {
+            assert(newv.val == l_Undef && "Must be unset");
+            /* cout << "origv:" << setw(4) << origv +1 */
+            /*     << " newv.lit: " << setw(4) */
+            /*     << newv.lit << " nVarsOuter(): " << nVarsOuter() << endl; */
+            assert(newv.lit.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
+            const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(newv.lit));
+            if (varData[l_inter.var()].removed == Removed::elimed) {
                 // This cannot be mapped anywhere, it's been eliminated
                 // the AIG will define it
                 continue;
             }
-            if (value(l) != l_Undef) ret[m.first] = VarMap(value(l));
-            else ret[m.first] = VarMap(l);
-            /* cout << "ret[m.first]: " << setw(4) << ret[m.first] << endl; */
+            if (value(l_inter) != l_Undef) ret[origv] = VarMap(value(l_inter));
+            else ret[origv] = VarMap(l_inter);
+            /* cout << "ret[origv]: " << setw(4) << ret[origv] << endl; */
         }
     }
     return ret;
