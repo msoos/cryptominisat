@@ -227,6 +227,7 @@ namespace CMSat {
         ////////////////////////////
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
         std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
+                                                                       // [replaced, replaced_with]
 
         //////////////////////
         // EXPERIMENTAL
@@ -274,7 +275,7 @@ namespace CMSat {
                 const std::vector<uint32_t>& sampl_set, bool also_removed);
 
         std::vector<Lit> get_weight_translation() const;
-        std::map<uint32_t, VarMap> update_var_mapping(const std::map<uint32_t, VarMap>& vmap);
+        std::map<uint32_t, Lit> update_var_mapping(const std::map<uint32_t, Lit>& vmap);
         std::vector<uint32_t> get_elimed_vars() const;
         std::vector<std::vector<Lit>> get_cls_defining_var(uint32_t v) const;
         void reverse_bce();

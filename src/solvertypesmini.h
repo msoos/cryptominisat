@@ -388,36 +388,6 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
     return os;
 }
 
-struct VarMap {
-    explicit VarMap() = default;
-    explicit VarMap(const Lit l) : lit(l) {}
-    explicit VarMap(const lbool v) : val(v) {}
-    bool operator==(const VarMap& other) const { return lit == other.lit && val == other.val; }
-    bool operator!=(const VarMap& other) const { return !(*this == other); }
-    bool invariant() const {
-        // Must be at least one of them
-        if (lit == lit_Undef && val == l_Undef) return false;
-        // Can't be both
-        if (lit != lit_Undef && val != l_Undef) return false;
-        return true;
-    }
-    Lit lit = lit_Undef;
-    lbool val = l_Undef;
-};
-
-inline std::ostream& operator<<(std::ostream& os, const VarMap& v)
-{
-    assert(v.invariant());
-    if (v.lit != lit_Undef) {
-        os << "VarMap lit:" << v.lit;
-        return os;
-    } else {
-        os << "VarMap val: " << v.val;
-        return os;
-    }
-    return os;
-}
-
 class Field {
 public:
     virtual ~Field() = default;

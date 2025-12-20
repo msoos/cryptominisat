@@ -3720,30 +3720,27 @@ vector<Lit> Solver::get_weight_translation() const {
     return ret;
 }
 
-map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vmap) {
-    map<uint32_t, VarMap> ret;
-    for(const auto& [origv, newv] : vmap) {
-        assert(newv.invariant());
-        if(newv.lit == lit_Undef) {
-            // This is a variable has been set in another round/system
-            assert(newv.val != l_Undef);
-            assert(newv.lit.var() >= nVarsOuter() && "Must not have been inserted, since it has been set");
-            ret[origv] = newv;
+map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_new_var) {
+    map<uint32_t, Lit> ret;
+    for(const auto& e : orig_to_new_var) {
+        const uint32_t origv = e.first;
+        const Lit& n = e.second;
+        if (n == lit_Undef) {
+            ret[origv] = lit_Undef;
+            continue;
         } else {
-            assert(newv.val == l_Undef && "Must be unset");
-            /* cout << "origv:" << setw(4) << origv +1 */
-            /*     << " newv.lit: " << setw(4) */
-            /*     << newv.lit << " nVarsOuter(): " << nVarsOuter() << endl; */
-            assert(newv.lit.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
-            const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(newv.lit));
+            assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
+            const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
             if (varData[l_inter.var()].removed == Removed::elimed) {
-                // This cannot be mapped anywhere, it's been eliminated
-                // the AIG will define it
+                ret[origv] = lit_Undef;
                 continue;
             }
-            if (value(l_inter) != l_Undef) ret[origv] = VarMap(value(l_inter));
-            else ret[origv] = VarMap(l_inter);
-            /* cout << "ret[origv]: " << setw(4) << ret[origv] << endl; */
+            if (value(l_inter) != l_Undef) {
+                ret[origv] = lit_Undef;
+                continue;
+            }
+            assert(l_inter.var() < nVars());
+            ret[origv] = l_inter;
         }
     }
     return ret;

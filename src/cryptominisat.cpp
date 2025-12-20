@@ -1351,8 +1351,8 @@ DLL_PUBLIC std::vector<Lit> SATSolver::get_weight_translation() const
     return data->solvers[0]->get_weight_translation();
 }
 
-DLL_PUBLIC map<uint32_t, VarMap> SATSolver::update_var_mapping(
-        const std::map<uint32_t, VarMap>& vmap)
+DLL_PUBLIC map<uint32_t, Lit> SATSolver::update_var_mapping(
+        const std::map<uint32_t, Lit>& vmap)
 {
     return data->solvers[0]->update_var_mapping(vmap);
 }

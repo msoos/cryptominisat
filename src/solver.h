@@ -138,7 +138,7 @@ class Solver : public Searcher
         vector<uint32_t> translate_sampl_set(
                 const vector<uint32_t>& sampl_set, bool also_removed);
         vector<Lit> get_weight_translation() const;
-        map<uint32_t, VarMap> update_var_mapping(const map<uint32_t, VarMap>& vmap);
+        map<uint32_t, Lit> update_var_mapping(const map<uint32_t, Lit>& vmap);
         vector<uint32_t> get_elimed_vars() const;
         vector<vector<Lit>> get_cls_defining_var(uint32_t outer_v) const;
         void reverse_bce();
