@@ -71,7 +71,7 @@ void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
 
 // sampl_set is in OUTER notation
 vector<uint32_t> GetClauseQuery::translate_sampl_set(
-    const vector<uint32_t>& sampl_set, bool also_removed)
+    const vector<uint32_t>& sampl_set)
 {
     assert(solver->toClear.empty());
     set<uint32_t> ret_set;
@@ -81,8 +81,7 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
             v = solver->varReplacer->get_var_replaced_with_outer(v);
             v = solver->map_outer_to_inter(v);
             if (solver->value(v) != l_Undef) continue;
-            if (!also_removed && solver->varData[v].removed != Removed::none)
-                continue;
+            if (solver->varData[v].removed != Removed::none) continue;
             ret_set.insert(v);
         }
     } else {

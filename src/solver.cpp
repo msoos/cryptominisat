@@ -3190,10 +3190,9 @@ void Solver::end_getting_constraints()
     get_clause_query = nullptr;
 }
 
-vector<uint32_t> Solver::translate_sampl_set(
-        const vector<uint32_t>& sampl_set, bool also_removed) {
+vector<uint32_t> Solver::translate_sampl_set( const vector<uint32_t>& sampl_set) {
     assert(get_clause_query);
-    return get_clause_query->translate_sampl_set(sampl_set, also_removed);
+    return get_clause_query->translate_sampl_set(sampl_set);
 }
 
 void Solver::check_assigns_for_assumptions() const {
@@ -3723,24 +3722,23 @@ vector<Lit> Solver::get_weight_translation() const {
 map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_new_var) {
     map<uint32_t, Lit> ret;
     for(const auto [origv, n] : orig_to_new_var) {
-        if (n == lit_Undef) {
-            ret[origv] = lit_Undef;
+        std::cout << "[solver remap] Remapping. Orig variable " << origv +1
+            << " is defined to: " << n << std::endl;
+        assert(n != lit_Undef);
+        assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
+        const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
+        if (value(l_inter) != l_Undef) {
+            cout << "[solver remap] Variable was assigned." << endl;
             continue;
-        } else {
-            assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
-            const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
-            if (value(l_inter) != l_Undef) {
-                ret[origv] = lit_Undef;
-                continue;
-            }
-            if (varData[l_inter.var()].removed == Removed::elimed) {
-                ret[origv] = lit_Undef;
-                continue;
-            }
-            assert(l_inter.var() < nVars());
-            assert(value(l_inter) == l_Undef);
-            ret[origv] = l_inter;
         }
+        if (varData[l_inter.var()].removed == Removed::elimed) {
+            cout << "[solver remap] Variable was eliminated." << endl;
+            continue;
+        }
+        assert(l_inter.var() < nVars());
+        assert(value(l_inter) == l_Undef);
+        ret[origv] = l_inter;
+        cout << "[solver remap] Variable is now internal variable: " << l_inter << endl;
     }
     return ret;
 }
