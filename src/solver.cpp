@@ -3722,24 +3722,23 @@ vector<Lit> Solver::get_weight_translation() const {
 
 map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_new_var) {
     map<uint32_t, Lit> ret;
-    for(const auto& e : orig_to_new_var) {
-        const uint32_t origv = e.first;
-        const Lit& n = e.second;
+    for(const auto [origv, n] : orig_to_new_var) {
         if (n == lit_Undef) {
             ret[origv] = lit_Undef;
             continue;
         } else {
             assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
             const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
-            if (varData[l_inter.var()].removed == Removed::elimed) {
-                ret[origv] = lit_Undef;
-                continue;
-            }
             if (value(l_inter) != l_Undef) {
                 ret[origv] = lit_Undef;
                 continue;
             }
+            if (varData[l_inter.var()].removed == Removed::elimed) {
+                ret[origv] = lit_Undef;
+                continue;
+            }
             assert(l_inter.var() < nVars());
+            assert(value(l_inter) == l_Undef);
             ret[origv] = l_inter;
         }
     }
