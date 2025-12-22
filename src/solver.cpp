@@ -3757,6 +3757,8 @@ std::vector<std::vector<Lit>> Solver::get_cls_defining_var(uint32_t outer_v) con
     assert(get_clause_query);
     Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
     Lit l_inter  = map_outer_to_inter(l);
+    assert(l_inter.var() < nVars());
+    assert(value(l_inter) == l_Undef);
     assert(varData[l_inter.var()].removed == Removed::elimed);
     return occsimplifier->get_elimed_clauses_for(outer_v);
 }
