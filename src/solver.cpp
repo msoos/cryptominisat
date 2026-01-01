@@ -3722,8 +3722,8 @@ vector<Lit> Solver::get_weight_translation() const {
 map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_new_var) {
     map<uint32_t, Lit> ret;
     for(const auto [origv, n] : orig_to_new_var) {
-        std::cout << "[solver remap] Remapping. Orig variable " << origv +1
-            << " is defined to: " << n << std::endl;
+        /* std::cout << "[solver remap] Remapping. Orig variable " << origv +1 */
+        /*     << " is defined to: " << n << std::endl; */
         assert(n != lit_Undef);
         assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
         const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
@@ -3732,13 +3732,13 @@ map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_
             continue;
         }
         if (varData[l_inter.var()].removed == Removed::elimed) {
-            cout << "[solver remap] Variable was eliminated." << endl;
+            /* cout << "[solver remap] Variable was eliminated." << endl; */
             continue;
         }
         assert(l_inter.var() < nVars());
         assert(value(l_inter) == l_Undef);
         ret[origv] = l_inter;
-        cout << "[solver remap] Variable is now internal variable: " << l_inter << endl;
+        /* cout << "[solver remap] Variable is now internal variable: " << l_inter << endl; */
     }
     return ret;
 }
@@ -3753,11 +3753,10 @@ vector<uint32_t> Solver::get_elimed_vars() const {
     return ret;
 }
 
-std::vector<std::vector<Lit>> Solver::get_cls_defining_var(uint32_t outer_v) const {
+std::vector<std::vector<Lit>> Solver::get_cls_defining_var(const uint32_t outer_v) const {
     assert(get_clause_query);
     Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
     Lit l_inter  = map_outer_to_inter(l);
-    assert(l_inter.var() < nVars());
     assert(value(l_inter) == l_Undef);
     assert(varData[l_inter.var()].removed == Removed::elimed);
     return occsimplifier->get_elimed_clauses_for(outer_v);
