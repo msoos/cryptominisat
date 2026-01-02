@@ -3728,7 +3728,7 @@ map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_
         assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
         const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
         if (value(l_inter) != l_Undef) {
-            cout << "[solver remap] Variable was assigned." << endl;
+            /* cout << "[solver remap] Variable was assigned." << endl; */
             continue;
         }
         if (varData[l_inter.var()].removed == Removed::elimed) {
