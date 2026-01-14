@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include "ccnr_oracle.h"
 
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <cassert>

@@ -20,10 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef CCNR_MERSENNE_H
-#define CCNR_MERSENNE_H
+#pragma once
 
-namespace CCNR {
+namespace CMSat::CCNR {
 
 class Mersenne
 {
@@ -186,5 +185,3 @@ inline int Mersenne::next(int bound)
 }
 
 }
-
-#endif

@@ -21,9 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "time_mem.h"
-#include <limits>
 #include <cstdio>
-#include <cmath>
 #include <cstdlib>
 #include "constants.h"
 #include "ccnr_cms.h"

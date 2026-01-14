@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef CCNR_H
-#define CCNR_H
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -30,7 +29,7 @@ THE SOFTWARE.
 
 using std::vector;
 
-namespace CCNR {
+namespace CMSat::CCNR {
 
 //--------------------------
 //functions in basis.h & basis.cpp
@@ -178,5 +177,3 @@ class ls_solver
 };
 
 } // namespace CCNR
-
-#endif
