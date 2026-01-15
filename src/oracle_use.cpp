@@ -118,6 +118,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     bool early_aborted_vivif = true;
     uint32_t bin_added = 0;
     uint32_t equiv_added = 0;
+    uint64_t lits_rem = 0;
     for (int i = 0; i < (int)clauses.size(); i++) {
         if (backbone_found && clauses[i].size() == 2) {
             // Backbone has been found, this will never be shorter
@@ -133,6 +134,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
                 sort(assump.begin(), assump.end());
                 auto clause = negate(assump);
                 oracle.AddClauseIfNeededAndStr(clause, true);
+                lits_rem = clauses[i].size()-clause.size();
                 clauses[i] = clause;
                 j = -1; //start from beginning
                 if (clause.empty()) {
@@ -261,6 +263,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     if (!okay()) return okay();
 
     verb_print(1, "[oracle-vivif]"
+            << " lits-rem: " << lits_rem
             << " learnt-units: " << oracle.getStats().learned_units
             << " T-out: " << (early_aborted_vivif ? "Y" : "N")
             << " T-remain: " << stats_line_percent(tot_vivif_mems-oracle_vivif_mems_used, tot_vivif_mems) << "%"

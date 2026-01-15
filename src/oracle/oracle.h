@@ -177,7 +177,7 @@ public:
     void Decide(Lit dec, int level);
     void UnDecide(int level);
 
-    TriState HardSolve(int64_t max_mems = 1000LL*1000LL*1000LL);
+    TriState HardSolve(int64_t max_mems = 1000LL*1000LL*1000LL, int64_t mems_startup = 0);
     // True if conflict
     size_t Propagate(int level);
 
@@ -187,9 +187,9 @@ public:
     vector<Lit> LearnUip(size_t conflict_clause);
     int CDCLBT(size_t confl_clause, int min_level=0);
 
-    vector<vector<char>> sol_cache; // Caches found FULL solutions
+    vector<uint8_t> sol_cache; // Caches found FULL solutions
     void AddSolToCache();
-    bool SatByCache(const vector<Lit>& assumps) const;
+    bool SatByCache(const vector<Lit>& assumps);
     void ClearSolCache();
 };
 

@@ -47,35 +47,58 @@ void Stats::Print() const {
 }
 
 void Oracle::AddSolToCache() {
+    const uint32_t mult = vars+1;
+    if (sol_cache.size() >= 40000*mult) {
+        if (verb >= 1) {
+            cout << "c o Oracle sol cache is very large, removing half entries. Current size: "
+                 << sol_cache.size() << endl;
+        }
+        // remove half randomly
+        vector<size_t> indices;
+        const size_t sz = sol_cache.size()/mult;
+        for (size_t i = 0; i < sz; i++) indices.push_back(i);
+        std::shuffle(indices.begin(), indices.end(), rand_gen);
+        vector<uint8_t> new_cache;
+        for (size_t i = 0; i < sz/2; i++) {
+            size_t idx = indices[i];
+            for (uint32_t j = 0; j < mult; j++) {
+                new_cache.push_back(sol_cache[idx*mult + j]);
+            }
+        }
+        sol_cache.swap(new_cache);
+        assert(sol_cache.size()%mult == 0);
+    }
+
+    sol_cache.push_back(255); // 0th variable, nonsense
     for (Var i = 1; i <= vars; i++) {
         assert(vs[i].phase == 0 || vs[i].phase == 1);
-        sol_cache[i].push_back(vs[i].phase);
+        sol_cache.push_back(vs[i].phase);
     }
+    assert(sol_cache.size()%mult == 0);
     stats.cache_added++;
 }
 
 void Oracle::ClearSolCache() {
-    if (sol_cache[1].empty()) return;
-    for (Var v = 1; v <= vars; v++) sol_cache[v].clear();
+    sol_cache.clear();
 }
 
-bool Oracle::SatByCache(const vector<Lit>& assumps) const {
-    // 1st variable's cache size is the same as all the rest
-    int cs = sol_cache[1].size();
-
+bool Oracle::SatByCache(const vector<Lit>& assumps) {
     // Try all cache lines
-    for (int i = 0; i < cs; i++) {
+    uint64_t checks = 0;
+    const uint32_t mult = vars+1;
+    assert(sol_cache.size()%mult == 0);
+    const uint64_t sz = sol_cache.size();
+    for (uint64_t i = 0; i < sz; i+=mult) {
         bool ok = true;
         // all our assumptions must be in the solution
         for (const Lit& l : assumps) {
-            if (IsPos(l)) {
-                if (sol_cache[VarOf(l)][i] == 0) { ok = false; break; }
-            } else {
-                if (sol_cache[VarOf(l)][i] == 1) { ok = false; break; }
-            }
+            checks++;
+            if (sol_cache[i + VarOf(l)] == !IsPos(l)) { ok = false; break; }
         }
         if (ok) return true;
     }
+    stats.mems += checks/20;
+
     // Not in the cache
     return false;
 }
@@ -654,11 +677,10 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     }
 }
 
-TriState Oracle::HardSolve(int64_t max_mems) {
+TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
     InitLuby();
     int64_t confls = 0;
     int64_t next_restart = 1;
-    int64_t mems_startup = stats.mems;
     int cur_level = 2;
     Var nv = 1;
     while (true) {
@@ -755,7 +777,6 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     vs.resize(vars+1);
     seen.resize(vars+1);
     lvl_seen.resize(vars+3);
-    sol_cache.resize(vars+1);
     watches.resize(vars*2+2);
     lit_val.resize(vars*2+2);
     redu_seen.resize(vars*2+2);
@@ -784,6 +805,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 }
 
 TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
+    int64_t mems_startup = stats.mems;
     if (unsat) return false;
     if (usecache && SatByCache(assumps)) {stats.cache_useful++; return true;}
     oclv("SOLVE called ");
@@ -800,7 +822,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
     size_t confl_clause = Propagate(2);
     if (confl_clause) { UnDecide(2); return false; }
     oclv("HARD SOLVING");
-    TriState sol = HardSolve(max_mems);
+    TriState sol = HardSolve(max_mems, mems_startup);
     UnDecide(2);
     if (!unsat) {
         while (!learned_units.empty()) {
