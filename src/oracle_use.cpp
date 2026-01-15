@@ -154,6 +154,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     oracle.reset_mems();
     double start_bin_time = cpuTime();
     if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
+        double pg_start_time = cpuTime();
         vector<vector<uint32_t>> pg(nVars());
         for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), 0);
         for (const auto& clause : clauses) {
@@ -175,7 +176,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         // Actually seems to slow it down. Strange. TODO
         /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
         /*         return a.score > b.score;}); */
-        verb_print(1, "[oracle-bin] potential pairs: " << varp.size());
+        verb_print(1, "[oracle-bin] potential pairs: " << varp.size()
+                << " T: " << (cpuTime()-pg_start_time));
 
         auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL;
         for (const auto& vp: varp) {

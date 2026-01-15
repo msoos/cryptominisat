@@ -1376,6 +1376,13 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
     }
 }
 
+void DLL_PUBLIC SATSolver::set_bve_nonstop(bool nonstop)
+{
+    for (auto & solver : data->solvers) {
+        solver->conf.non_stop_bve = nonstop;
+    }
+}
+
 void DLL_PUBLIC SATSolver::set_lit_weight_internal(const Lit lit, const double val)
 {
     for (auto & solver : data->solvers) {

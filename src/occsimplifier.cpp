@@ -1432,7 +1432,8 @@ bool OccSimplifier::eliminate_vars()
             << " *limit_to_decrease: " << print_value_kilo_mega(*limit_to_decrease));
         }
 
-        if (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate)) {
+        if (!solver->conf.non_stop_bve &&
+                (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate))) {
             break;
         }
         n_cls_last = n_cls_now;

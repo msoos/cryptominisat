@@ -383,6 +383,7 @@ class DLL_PUBLIC SolverConf
         //BVA
         int      do_bva;
         int min_bva_gain;
+        int non_stop_bve;
         unsigned bva_limit_per_call;
         int      bva_also_twolit_diff;
         long     bva_extra_lit_and_red_start;
