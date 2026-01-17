@@ -67,6 +67,7 @@ void Oracle::AddSolToCache() {
         }
         sol_cache.swap(new_cache);
         assert(sol_cache.size()%mult == 0);
+        rebuild_cache_lookup();
     }
 
     sol_cache.push_back(255); // 0th variable, nonsense
@@ -75,29 +76,115 @@ void Oracle::AddSolToCache() {
         sol_cache.push_back(vs[i].phase);
     }
     assert(sol_cache.size()%mult == 0);
+
+    // add to lookup
+    if (cache_lookup_var != 0) {
+        auto val = vs[cache_lookup_var].phase;
+        cache_lookup[val].push_back(sol_cache.size()/mult - 1);
+        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/mult);
+    }
     stats.cache_added++;
+}
+
+void Oracle::rebuild_cache_lookup() {
+    const uint32_t mult = vars+1;
+    cache_lookup[0].clear();
+    cache_lookup[1].clear();
+    if (cache_lookup_var != 0) {
+        assert(cache_lookup_var < vars+1);
+        for (size_t i = 0; i < sol_cache.size()/mult; i++) {
+            auto val = sol_cache[i*mult + cache_lookup_var];
+            cache_lookup[val].push_back(i);
+        }
+        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/mult);
+    }
 }
 
 void Oracle::ClearSolCache() {
     sol_cache.clear();
+    cache_lookup_var = 0;
+    rebuild_cache_lookup();
+    cache_lookup_frequencies.clear();
 }
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
-    // Try all cache lines
-    uint64_t checks = 0;
     const uint32_t mult = vars+1;
     assert(sol_cache.size()%mult == 0);
-    const uint64_t sz = sol_cache.size();
-    for (uint64_t i = 0; i < sz; i+=mult) {
-        bool ok = true;
-        // all our assumptions must be in the solution
-        for (const Lit& l : assumps) {
-            checks++;
-            if (sol_cache[i + VarOf(l)] == !IsPos(l)) { ok = false; break; }
-        }
-        if (ok) return true;
+
+    if (cache_lookup_frequencies.empty()) {
+        cache_lookup_frequencies.resize(vars+1, 0);
     }
+    for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
+    if ((stats.sat_by_cache_calls % 1000 == 999)) {
+        vector<uint32_t> occs_int(mult, 0);
+        const uint64_t sz = sol_cache.size();
+        for (uint64_t i = 0; i < sz; i+=mult) {
+            for(uint64_t i2 = 1; i2 < mult; i2++) {
+                occs_int[i2] += sol_cache[i + i2];
+            }
+        }
+        vector<double> occs(mult, 0.0);
+        for(uint64_t i = 1; i < mult; i++) {
+            auto& o = occs[i];
+            o = (double)occs_int[i]/((double)sz/mult);
+            o = (o < 0.5) ? o : (1.0 - o);
+        }
+        vector<int> v;
+        for(int i = 1; i <= vars; i++) v.push_back(i);
+        std::sort(v.begin(), v.end(), [&](int a, int b){
+            uint64_t fa = (double)cache_lookup_frequencies[a]*occs[a];
+            uint64_t fb = (double)cache_lookup_frequencies[b]*occs[b];
+            return fa > fb;
+        });
+        cache_lookup_var = v[0];
+        rebuild_cache_lookup();
+    }
+
+
+    // Check if cache var is assumps
+    bool found = false;
+    bool val;
+    if (cache_lookup_var != 0) {
+        for(const auto& l: assumps) {
+            if (VarOf(l) == cache_lookup_var) {
+                found = true;
+                val = IsPos(l);
+                break;
+            }
+        }
+    }
+
+    uint64_t checks = 0;
+    if (found) {
+        for(const auto& idx : cache_lookup[val]) {
+            bool ok = true;
+            // all our assumptions must be in the solution
+            for (const Lit& l : assumps) {
+                checks++;
+                if (sol_cache[idx*mult + VarOf(l)] == !IsPos(l)) { ok = false; break; }
+            }
+            if (ok) return true;
+        }
+    } else {
+        const uint64_t sz = sol_cache.size();
+        for (uint64_t i = 0; i < sz; i+=mult) {
+            bool ok = true;
+            // all our assumptions must be in the solution
+            for (const Lit& l : assumps) {
+                checks++;
+                if (sol_cache[i + VarOf(l)] == !IsPos(l)) { ok = false; break; }
+            }
+            if (ok) return true;
+        }
+    }
+    stats.sat_by_cache_calls++;
     stats.mems += checks/20;
+    if (stats.sat_by_cache_calls % 100 == 99) {
+        cout << "found: " << found << " cache var: " << cache_lookup_var
+            << "orig sz: " << sol_cache.size()/mult
+            << " cache size: " << cache_lookup[0].size() << " -- " << cache_lookup[1].size()
+            << endl;
+    }
 
     // Not in the cache
     return false;

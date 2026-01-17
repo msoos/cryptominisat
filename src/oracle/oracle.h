@@ -34,6 +34,8 @@
 #define oclv2(x) do {} while(0)
 #endif
 
+using std::array;
+
 namespace sspp {
 namespace oracle {
 
@@ -77,6 +79,7 @@ struct Stats {
     int64_t restarts = 0;
     int64_t cache_useful = 0;
     int64_t cache_added = 0;
+    int64_t sat_by_cache_calls = 0;
     void Print() const;
 };
 
@@ -187,7 +190,11 @@ public:
     vector<Lit> LearnUip(size_t conflict_clause);
     int CDCLBT(size_t confl_clause, int min_level=0);
 
+    void rebuild_cache_lookup();
     vector<uint8_t> sol_cache; // Caches found FULL solutions
+    array<vector<uint32_t>, 2> cache_lookup; //0/1 for literal cache_lookup_lit
+    int cache_lookup_var = 0; // 0 = unset
+    vector<uint64_t> cache_lookup_frequencies;
     void AddSolToCache();
     bool SatByCache(const vector<Lit>& assumps);
     void ClearSolCache();
