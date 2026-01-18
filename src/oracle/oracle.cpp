@@ -179,8 +179,8 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     }
     stats.sat_by_cache_calls++;
     stats.mems += checks/20;
-    if (stats.sat_by_cache_calls % 100 == 99) {
-        cout << "found: " << found << " cache var: " << cache_lookup_var
+    if (stats.sat_by_cache_calls % 100 == 99 && verb >= 3) {
+        cout << "c o [oracle]-cache found: " << found << " cache var: " << cache_lookup_var
             << "orig sz: " << sol_cache.size()/mult
             << " cache size: " << cache_lookup[0].size() << " -- " << cache_lookup[1].size()
             << endl;
