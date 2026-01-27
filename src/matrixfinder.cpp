@@ -123,14 +123,14 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     ) {
         matrix_created = false;
         verb_print(1,
-            "c WARNING sampling vars have been given but there"
+            "WARNING sampling vars have been given but there"
             "are too many XORs and it would take too much time to put them"
             "into matrices. Skipping!");
         solver->gqueuedata.clear();
         return solver->attach_xorclauses();
     }
     if (!solver->conf.gaussconf.doMatrixFind) {
-        verb_print(1,"c Matrix finding disabled through switch. Not using matrixes");
+        verb_print(1,"Matrix finding disabled through switch. Not using matrixes");
         solver->gqueuedata.clear();
         return solver->attach_xorclauses();
     }
@@ -198,7 +198,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
         uint32_t size_at_least = (double)solver->conf.sampling_vars.size()*3;
         if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
             solver->conf.gaussconf.max_matrix_rows = size_at_least;
-            verb_print(1,"c [matrix] incrementing max number of rows to " << size_at_least);
+            verb_print(1,"[matrix] incrementing max number of rows to " << size_at_least);
         }
     }
 
@@ -310,7 +310,8 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
         if (use_matrix) {
             solver->gmatrices.push_back(new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
             solver->gqueuedata.resize(solver->gmatrices.size());
-            if (solver->conf.verbosity) cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
+            if (solver->conf.verbosity)
+                cout << solver->conf.prefix << "[matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
         } else {
