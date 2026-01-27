@@ -415,9 +415,7 @@ void XorFinder::grab_mem()
 
 void XorFinder::Stats::print_short(const Solver* solver, double time_remain) const
 {
-    cout
-    << "c [occ-xor] found " << std::setw(6) << foundXors
-    ;
+    cout << solver->conf.prefix << "[occ-xor] found " << std::setw(6) << foundXors;
     if (foundXors > 0) {
         cout
         << " avg sz " << std::setw(3) << std::fixed << std::setprecision(1)
