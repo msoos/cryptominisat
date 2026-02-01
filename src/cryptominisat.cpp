@@ -1181,6 +1181,7 @@ void DLL_PUBLIC SATSolver::add_in_partial_solving_stats()
 
 DLL_PUBLIC std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[data->which_solved]->get_zero_assigned_lits();
 }
 

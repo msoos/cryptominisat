@@ -2328,6 +2328,7 @@ void Solver::print_clause_size_distrib()
 vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
                                            const bool only_nvars) const
 {
+    if (!okay()) return vector<Lit>();
     vector<Lit> lits;
     assert(decisionLevel() == 0);
     size_t until;
