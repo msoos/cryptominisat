@@ -114,6 +114,8 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     if (cache_lookup_frequencies.empty()) {
         cache_lookup_frequencies.resize(vars+1, 0);
     }
+    assert(cache_lookup_frequencies.size() == vars+1);
+
     for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
     if ((stats.sat_by_cache_calls % 1000 == 999)) {
         vector<uint32_t> occs_int(mult, 0);
