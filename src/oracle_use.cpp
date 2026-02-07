@@ -278,7 +278,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             << " T: " << std::setprecision(2) << (end_bin_tme - start_bin_time));
 
     verb_print(1, "[oracle-vivif] cache usefulness: "
-            << std::setprecision(0) << std::fixed << (double)oracle.getStats().cache_useful/(double)oracle.getStats().total_cache_lookups*100.0 << "%"
+            << std::setprecision(0) << std::fixed <<
+            safe_div(oracle.getStats().cache_useful, oracle.getStats().total_cache_lookups)*100.0 << "%"
             << std::setprecision(2)
             << " total T: " << std::setprecision(2) << (cpuTime() - start_vivif_time));
     return solver->okay();

@@ -185,14 +185,6 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     return solver->okay();
 }
 
-static double safe_div(double a, double b) {
-    if (b == 0) {
-        assert(a == 0);
-        return 0;
-    }
-    return a/b;
-}
-
 uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     if (solver->conf.sampling_vars_set) {
         uint32_t size_at_least = (double)solver->conf.sampling_vars.size()*3;

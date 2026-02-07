@@ -24,10 +24,10 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <cstdlib>
-#include <cstdio>
 #include <iostream>
 #include <random>
 #include <ranges>
+#include <cassert>
 
 using std::cerr;
 using std::exit;
@@ -244,3 +244,12 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     /*cout << "set unsat CL ID here to " << (x) << endl;*/\
     /*assert(false);*/\
     } while (0)
+
+
+inline double safe_div(double a, double b) {
+    if (b == 0) {
+        assert(a == 0);
+        return 0;
+    }
+    return a/b;
+}

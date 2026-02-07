@@ -44,14 +44,6 @@ class Solver;
 
 struct ReduceCommonData
 {
-    double safe_div(double a, double b) {
-        if (b == 0) {
-            assert(a == 0);
-            return 0;
-        }
-        return a/b;
-    }
-
     double   avg_props;
     //double   avg_glue; CANNOT COUNT, ternary has no glue!
     double   avg_uip;
