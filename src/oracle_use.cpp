@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "varreplacer.h"
 #include "distillerbin.h"
+#include <iomanip>
 
 using namespace CMSat;
 
@@ -276,9 +277,9 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             << " T-remain: " << stats_line_percent(tot_bin_mems-oracle_bin_mems_used, tot_bin_mems) << "%"
             << " T: " << std::setprecision(2) << (end_bin_tme - start_bin_time));
 
-    verb_print(1, "[oracle-vivif-bin]"
-            << " cache-used: " << oracle.getStats().cache_useful
-            << " cache-added: " << oracle.getStats().cache_added
+    verb_print(1, "[oracle-vivif] cache usefulness: "
+            << std::setprecision(0) << std::fixed << (double)oracle.getStats().cache_useful/(double)oracle.getStats().total_cache_lookups*100.0 << "%"
+            << std::setprecision(2)
             << " total T: " << std::setprecision(2) << (cpuTime() - start_vivif_time));
     return solver->okay();
 }
@@ -597,14 +598,20 @@ bool Solver::oracle_sparsify(bool fast)
 
     //cout << "New cls size: " << clauses.size() << endl;
     //Subsume();
+    //
+    auto safe_div = [](uint32_t a, uint32_t b) {
+        if (b == 0) return 0.0;
+        return (double)a/(double)b*100.0;
+    };
 
     verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls
         << " ccnr useful: " << ccnr_useful
         << " oracle uknown: " << unknown
-        << " cache-used: " << oracle.getStats().cache_useful
-        << " cache-added: " << oracle.getStats().cache_added
+        << " cache useful: " << std::setprecision(0) << std::fixed
+        << safe_div(oracle.getStats().cache_useful, oracle.getStats().total_cache_lookups)*100.0 << "%"
+        << std::setprecision(2)
         << " learnt-units: " << oracle.getStats().learned_units
         << " T: " << (cpuTime()-my_time) << " buildT: " << build_time);
 

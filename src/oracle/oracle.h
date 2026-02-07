@@ -79,7 +79,7 @@ struct Stats {
     int64_t restarts = 0;
     int64_t cache_useful = 0;
     int64_t cache_added = 0;
-    int64_t sat_by_cache_calls = 0;
+    int64_t total_cache_lookups = 0;
     void Print() const;
 };
 

@@ -23,6 +23,7 @@
 #include "oracle.h"
 #include "constants.h"
 
+#include <cstdint>
 #include <iostream>
 #include "utils.h"
 using std::cout;
@@ -109,15 +110,26 @@ void Oracle::ClearSolCache() {
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
     const uint32_t mult = vars+1;
+    if (stats.total_cache_lookups % 1000 == 199 && verb >= 3) {
+        cout << "c o [oracle] cache"
+            << " usefulness: "
+            << std::setprecision(0) << std::fixed << (double)stats.cache_useful/(double)stats.total_cache_lookups*100.0 << "%"
+            << std::setprecision(2)
+            << " elements in cache: " << sol_cache.size()/mult
+            << " cache size distrib for lookup: " << cache_lookup[0].size() << " -- " << cache_lookup[1].size()
+            << endl;
+    }
+
+    stats.total_cache_lookups++;
     assert(sol_cache.size()%mult == 0);
 
     if (cache_lookup_frequencies.empty()) {
         cache_lookup_frequencies.resize(vars+1, 0);
     }
-    assert(cache_lookup_frequencies.size() == vars+1);
+    assert(cache_lookup_frequencies.size() == (uint32_t)vars+1);
 
     for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
-    if ((stats.sat_by_cache_calls % 1000 == 999)) {
+    if ((stats.total_cache_lookups % 1000 == 999)) {
         vector<uint32_t> occs_int(mult, 0);
         const uint64_t sz = sol_cache.size();
         for (uint64_t i = 0; i < sz; i+=mult) {
@@ -179,14 +191,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
             if (ok) return true;
         }
     }
-    stats.sat_by_cache_calls++;
     stats.mems += checks/20;
-    if (stats.sat_by_cache_calls % 100 == 99 && verb >= 3) {
-        cout << "c o [oracle]-cache found: " << found << " cache var: " << cache_lookup_var
-            << "orig sz: " << sol_cache.size()/mult
-            << " cache size: " << cache_lookup[0].size() << " -- " << cache_lookup[1].size()
-            << endl;
-    }
 
     // Not in the cache
     return false;
