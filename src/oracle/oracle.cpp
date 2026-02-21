@@ -37,6 +37,7 @@ namespace sspp {
 namespace oracle {
 namespace {
 constexpr const double EPS = 1e-150;
+constexpr auto max_cache_size = 40000U;
 }
 
 void Stats::Print() const {
@@ -50,7 +51,7 @@ void Stats::Print() const {
 
 void Oracle::AddSolToCache() {
     const uint32_t stride = vars+1;
-    if (sol_cache.size() >= 40000*stride) {
+    if (sol_cache.size() > max_cache_size*stride) {
         if (verb >= 1) {
             cout << "c o Oracle sol cache is very large, removing half entries. Current size: "
                  << sol_cache.size() << endl;
