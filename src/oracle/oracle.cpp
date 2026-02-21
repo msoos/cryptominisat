@@ -49,26 +49,26 @@ void Stats::Print() const {
 }
 
 void Oracle::AddSolToCache() {
-    const uint32_t mult = vars+1;
-    if (sol_cache.size() >= 40000*mult) {
+    const uint32_t stride = vars+1;
+    if (sol_cache.size() >= 40000*stride) {
         if (verb >= 1) {
             cout << "c o Oracle sol cache is very large, removing half entries. Current size: "
                  << sol_cache.size() << endl;
         }
         // remove half randomly
         vector<size_t> indices;
-        const size_t sz = sol_cache.size()/mult;
+        const size_t sz = sol_cache.size()/stride;
         for (size_t i = 0; i < sz; i++) indices.push_back(i);
         std::shuffle(indices.begin(), indices.end(), rand_gen);
         vector<uint8_t> new_cache;
         for (size_t i = 0; i < sz/2; i++) {
             size_t idx = indices[i];
-            for (uint32_t j = 0; j < mult; j++) {
-                new_cache.push_back(sol_cache[idx*mult + j]);
+            for (uint32_t j = 0; j < stride; j++) {
+                new_cache.push_back(sol_cache[idx*stride + j]);
             }
         }
         sol_cache.swap(new_cache);
-        assert(sol_cache.size()%mult == 0);
+        assert(sol_cache.size()%stride == 0);
         rebuild_cache_lookup();
     }
 
@@ -77,28 +77,28 @@ void Oracle::AddSolToCache() {
         assert(vs[i].phase == 0 || vs[i].phase == 1);
         sol_cache.push_back(vs[i].phase);
     }
-    assert(sol_cache.size()%mult == 0);
+    assert(sol_cache.size()%stride == 0);
 
     // add to lookup
     if (cache_lookup_var != 0) {
         auto val = vs[cache_lookup_var].phase;
-        cache_lookup[val].push_back(sol_cache.size()/mult - 1);
-        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/mult);
+        cache_lookup[val].push_back(sol_cache.size()/stride - 1);
+        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/stride);
     }
     stats.cache_added++;
 }
 
 void Oracle::rebuild_cache_lookup() {
-    const uint32_t mult = vars+1;
+    const uint32_t stride = vars+1;
     cache_lookup[0].clear();
     cache_lookup[1].clear();
     if (cache_lookup_var != 0) {
         assert(cache_lookup_var < vars+1);
-        for (size_t i = 0; i < sol_cache.size()/mult; i++) {
-            auto val = sol_cache[i*mult + cache_lookup_var];
+        for (size_t i = 0; i < sol_cache.size()/stride; i++) {
+            auto val = sol_cache[i*stride + cache_lookup_var];
             cache_lookup[val].push_back(i);
         }
-        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/mult);
+        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/stride);
     }
 }
 
@@ -110,19 +110,19 @@ void Oracle::ClearSolCache() {
 }
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
-    const uint32_t mult = vars+1;
+    const uint32_t stride = vars+1;
     if (stats.total_cache_lookups % 1000 == 199 && verb >= 3) {
         cout << "c o [oracle] cache"
             << " usefulness: "
             << std::setprecision(0) << std::fixed << (double)stats.cache_useful/(double)stats.total_cache_lookups*100.0 << "%"
             << std::setprecision(2)
-            << " elements in cache: " << sol_cache.size()/mult
+            << " elements in cache: " << sol_cache.size()/stride
             << " cache size distrib for lookup: " << cache_lookup[0].size() << " -- " << cache_lookup[1].size()
             << endl;
     }
 
     stats.total_cache_lookups++;
-    assert(sol_cache.size()%mult == 0);
+    assert(sol_cache.size()%stride == 0);
 
     if (cache_lookup_frequencies.empty()) {
         cache_lookup_frequencies.resize(vars+1, 0);
@@ -131,17 +131,17 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 
     for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
     if ((stats.total_cache_lookups % 1000 == 999)) {
-        vector<uint32_t> occs_int(mult, 0);
+        vector<uint32_t> occs_int(stride, 0);
         const uint64_t sz = sol_cache.size();
-        for (uint64_t i = 0; i < sz; i+=mult) {
-            for(uint64_t i2 = 1; i2 < mult; i2++) {
+        for (uint64_t i = 0; i < sz; i+=stride) {
+            for(uint64_t i2 = 1; i2 < stride; i2++) {
                 occs_int[i2] += sol_cache[i + i2];
             }
         }
-        vector<double> occs(mult, 0.0);
-        for(uint64_t i = 1; i < mult; i++) {
+        vector<double> occs(stride, 0.0);
+        for(uint64_t i = 1; i < stride; i++) {
             auto& o = occs[i];
-            o = (double)occs_int[i]/((double)sz/mult);
+            o = (double)occs_int[i]/((double)sz/stride);
             o = (o < 0.5) ? o : (1.0 - o);
         }
         vector<int> v;
@@ -176,13 +176,13 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
             // all our assumptions must be in the solution
             for (const Lit& l : assumps) {
                 checks++;
-                if (sol_cache[idx*mult + VarOf(l)] == !IsPos(l)) { ok = false; break; }
+                if (sol_cache[idx*stride + VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
             if (ok) return true;
         }
     } else {
         const uint64_t sz = sol_cache.size();
-        for (uint64_t i = 0; i < sz; i+=mult) {
+        for (uint64_t i = 0; i < sz; i+=stride) {
             bool ok = true;
             // all our assumptions must be in the solution
             for (const Lit& l : assumps) {
