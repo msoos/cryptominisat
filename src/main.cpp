@@ -648,7 +648,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.subsume_gothrough_multip = std::atof(a.c_str());})
         .default_value(conf.subsume_gothrough_multip)
         .help("How many times go through subsume");
-    ;
 
     /* po::options_description bva_options("BVA options"); */
     program.add_argument("--bva")
