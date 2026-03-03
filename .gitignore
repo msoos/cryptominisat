@@ -44,3 +44,4 @@ scripts/linpb*
 mldata
 html/cryptominisat5.js
 html/cryptominisat5.wasm
+.claude
