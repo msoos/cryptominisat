@@ -33,8 +33,8 @@ if(NOT WIN32)
     #add_cxx_flag_if_supported("-Wdeprecated")
 
     if(FINAL_PREDICTOR)
-    add_cxx_flag_if_supported("-Wno-unused-parameter")
-    add_cxx_flag_if_supported("-Wno-unused-but-set-variable")
+        add_cxx_flag_if_supported("-Wno-unused-parameter")
+        add_cxx_flag_if_supported("-Wno-unused-but-set-variable")
     endif()
 endif()
 add_sanitize_flags()
@@ -250,7 +250,7 @@ set_property(TARGET cryptominisat5
     PROPERTY CUDA_ARCHITECTURES 35 50 72
 )
 
-if(SQLITE3_FOUND AND STATS)
+if(STATS)
     add_dependencies(cryptominisat5
         tablestruct
     )
@@ -382,7 +382,7 @@ target_include_directories(cryptominisat5-bin PRIVATE
 
 if(ZLIB_FOUND)
     target_include_directories(cryptominisat5-bin PRIVATE ${ZLIB_INCLUDE_DIR})
-    target_link_libraries(cryptominisat5-bin PUBLIC ${ZLIB_LIBRARY})
+    target_link_libraries(cryptominisat5-bin PRIVATE ${ZLIB_LIBRARY})
 endif()
 
 ##########################
