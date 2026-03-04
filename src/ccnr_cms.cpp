@@ -81,7 +81,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
         verb_print(1, "[ccnr] too few variables & clauses");
         return l_Undef;
     }
-    double startTime = cpuTime();
+    double startTime = cpu_time();
 
     if (!init_problem()) {
         //it's actually l_False under assumptions
@@ -99,7 +99,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
             solver->conf.prefix.c_str());
     lbool ret = deal_with_solution(res, num_sls_called);
 
-    double time_used = cpuTime()-startTime;
+    double time_used = cpu_time()-startTime;
     verb_print(1, "[ccnr] time: " << time_used);
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(

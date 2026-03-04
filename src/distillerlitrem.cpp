@@ -92,7 +92,7 @@ bool DistillerLitRem::go_through_clauses(
     vector<ClOffset>& cls,
     uint32_t at
 ) {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     bool time_out = false;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
@@ -157,7 +157,7 @@ bool DistillerLitRem::go_through_clauses(
     }
     cls.resize(cls.size()- (i-j));
 
-    runStats.time_used += cpuTime() - my_time;
+    runStats.time_used += cpu_time() - my_time;
     return time_out;
 }
 

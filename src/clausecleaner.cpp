@@ -364,7 +364,7 @@ void ClauseCleaner::clean_bnns_post()
 
 // Force cleans everything, recursively
 bool ClauseCleaner::remove_and_clean_all() {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
@@ -413,7 +413,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     }
     #endif
 
-    verb_print(2, "[clean]" << solver->conf.print_times(cpuTime() - my_time));
+    verb_print(2, "[clean]" << solver->conf.print_times(cpu_time() - my_time));
     frat_func_end();
     return solver->okay();
 }

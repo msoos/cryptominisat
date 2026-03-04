@@ -216,7 +216,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     if (simplifier->clauses.empty())
         return;
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     size_t wenThrough = 0;
     Sub0Ret sub0ret;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
@@ -243,7 +243,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
         sub0ret += backw_sub_with_long(offset);
     }
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const bool time_out = (*simplifier->limit_to_decrease <= 0);
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
     verb_print(1, "[occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
@@ -264,14 +264,14 @@ void SubsumeStrengthen::backw_sub_long_with_long()
 
     //Update time used
     runStats.sub0 += sub0ret;
-    runStats.subsumeTime += cpuTime() - my_time;
+    runStats.subsumeTime += cpu_time() - my_time;
 }
 
 bool SubsumeStrengthen::backw_str_long_with_long()
 {
     assert(solver->ok);
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     size_t wenThrough = 0;
     const int64_t orig_limit = *simplifier->limit_to_decrease;
     Sub1Ret ret;
@@ -305,7 +305,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 
     }
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
 
@@ -329,7 +329,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 
     //Update time used
     runStats.sub1 += ret;
-    runStats.strengthenTime += cpuTime() - my_time;
+    runStats.strengthenTime += cpu_time() - my_time;
 
     return solver->okay();
 }
@@ -452,7 +452,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
 
     int64_t orig_limit = *simplifier->limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
-    const double start_time = cpuTime();
+    const double start_time = cpu_time();
     Sub1Ret stat;
 
     //NOTE added_long_cl CAN CHANGE while the below is running!
@@ -481,7 +481,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
 
     if (verbose) {
         const bool time_out =  *simplifier->limit_to_decrease <= 0;
-        const double time_used = cpuTime() - start_time;
+        const double time_used = cpu_time() - start_time;
         const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
         verb_print(1,
             "[occ-backw-sub-str-w-added-long] "
@@ -903,7 +903,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     //Stats
     int64_t orig_time_limit = *simplifier->limit_to_decrease;
     const size_t origTrailSize = solver->trail_size();
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     subsumedBin = 0;
     strBin = 0;
 
@@ -922,7 +922,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         }
     }
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
     verb_print(1, "[occ-backw-sub-str-long-w-bins]"

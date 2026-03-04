@@ -102,7 +102,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
-    double start_vivif_time = cpuTime();
+    double start_vivif_time = cpu_time();
 
     auto clauses = get_irred_cls_for_oracle();
     std::shuffle(clauses.begin(), clauses.end(), mtrand);
@@ -151,13 +151,13 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     // Do equiv check
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
-    const double end_vivif_time = cpuTime();
+    const double end_vivif_time = cpu_time();
     const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL;
     bool early_aborted_bin = true;
     oracle.reset_mems();
-    double start_bin_time = cpuTime();
+    double start_bin_time = cpu_time();
     if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
-        double pg_start_time = cpuTime();
+        double pg_start_time = cpu_time();
         vector<vector<uint32_t>> pg(nVars());
         for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), 0);
         for (const auto& clause : clauses) {
@@ -180,7 +180,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
         /*         return a.score > b.score;}); */
         verb_print(1, "[oracle-bin] potential pairs: " << varp.size()
-                << " T: " << (cpuTime()-pg_start_time));
+                << " T: " << (cpu_time()-pg_start_time));
 
         auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL;
         for (const auto& vp: varp) {
@@ -235,7 +235,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     early_aborted_bin = false;
 
     end2:
-    const double end_bin_tme = cpuTime();
+    const double end_bin_tme = cpu_time();
     const auto oracle_bin_mems_used = oracle.getStats().mems;
 
     vector<Lit> tmp2;
@@ -281,7 +281,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             << std::setprecision(0) << std::fixed <<
             safe_div(oracle.getStats().cache_useful, oracle.getStats().total_cache_lookups)*100.0 << "%"
             << std::setprecision(2)
-            << " total T: " << std::setprecision(2) << (cpuTime() - start_vivif_time));
+            << " total T: " << std::setprecision(2) << (cpu_time() - start_vivif_time));
     return solver->okay();
 }
 
@@ -401,7 +401,7 @@ bool Solver::oracle_sparsify(bool fast)
     if (!okay()) return okay() ;
     if (nVars() < 10) return okay();
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     uint32_t removed = 0;
     uint32_t removed_bin = 0;
     auto cs = order_clauses_for_oracle();
@@ -436,7 +436,7 @@ bool Solver::oracle_sparsify(bool fast)
     vector<int8_t> assumps_map(nVars()+tot_cls+1, 2);
     CCNROraclePre ccnr(solver);
     ccnr.init(cls, nVars()+tot_cls, &assumps_map);
-    const double build_time = cpuTime() - my_time;
+    const double build_time = cpu_time() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
     vector<int> assumps_changed;
@@ -461,7 +461,7 @@ bool Solver::oracle_sparsify(bool fast)
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
                 << " oracle mems: " << print_value_kilo_mega(oracle.getStats().mems)
                 << " ccnr useful: " << (double)ccnr_useful/(double)i*100.0 << "%"
-                << " T: " << (cpuTime()-my_time));
+                << " T: " << (cpu_time()-my_time));
             last_printed = (10*i)/(tot_cls);
         }
 
@@ -614,7 +614,7 @@ bool Solver::oracle_sparsify(bool fast)
         << safe_div(oracle.getStats().cache_useful, oracle.getStats().total_cache_lookups)*100.0 << "%"
         << std::setprecision(2)
         << " learnt-units: " << oracle.getStats().learned_units
-        << " T: " << (cpuTime()-my_time) << " buildT: " << build_time);
+        << " T: " << (cpu_time()-my_time) << " buildT: " << build_time);
 
     return solver->okay();
 }

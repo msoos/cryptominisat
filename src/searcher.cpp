@@ -1239,7 +1239,7 @@ lbool Searcher::search()
     check_no_duplicate_lits_anywhere();
     check_order_heap_sanity();
     #endif
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
 
     //Stats reset & update
     stats.numRestarts++;
@@ -1322,7 +1322,7 @@ void Searcher::dump_search_sql(const double my_time)
         solver->sqlStats->time_passed_min(
             solver
             , "search"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
 }
@@ -1873,7 +1873,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
 void Searcher::resetStats()
 {
-    startTime = cpuTime();
+    startTime = cpu_time();
 
     //Rest solving stats
     stats.clear();
@@ -2310,7 +2310,7 @@ bool Searcher::must_abort(const lbool status) {
         return true;
     }
 
-    if (cpuTime() >= conf.maxTime) {
+    if (cpu_time() >= conf.maxTime) {
         if (conf.verbosity >= 3) {
             cout
             << "c search over max time"
@@ -2667,7 +2667,7 @@ inline void Searcher::print_local_restart_budget()
 void Searcher::check_need_restart() {
     //It's expensive to check the time all the time
     if ((stats.conflicts & 0xff) == 0xff) {
-        if (cpuTime() > conf.maxTime) params.must_stop = true;
+        if (cpu_time() > conf.maxTime) params.must_stop = true;
         if (must_interrupt_asap())  {
             verb_print(3, "must_interrupt_asap() is set, restartig as soon as possible!");
             params.must_stop = true;
@@ -2761,7 +2761,7 @@ void Searcher::finish_up_solve(const lbool status) {
         assert(solver->prop_at_head());
     }
 
-    stats.cpu_time = cpuTime() - startTime;
+    stats.cpu_time = cpu_time() - startTime;
     verb_print(4, "Searcher::solve() finished"
         << " status: " << status
         << " numConflicts : " << stats.conflicts
@@ -3067,13 +3067,13 @@ void Searcher::vsids_decay_var_act()
 
 void Searcher::consolidate_watches(const bool full)
 {
-    double t = cpuTime();
+    double t = cpu_time();
     if (full) {
         watches.full_consolidate();
     } else {
         watches.consolidate();
     }
-    double time_used = cpuTime() - t;
+    double time_used = cpu_time() - t;
     verb_print(1, "[consolidate] "
     << (full ? "full" : "mini")
     << conf.print_times(time_used));

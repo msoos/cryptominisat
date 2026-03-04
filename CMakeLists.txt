@@ -291,7 +291,7 @@ if(NOT WIN32)
         add_cxx_flag_if_supported("-Wnoweak-vtables")
         add_cxx_flag_if_supported("-ggdb3")
 
-        # Apparently needed before OS X Maverics (2013)
+        # Apparently needed before OS X Mavericks (2013)
         #add_c_flag_if_supported("-stdlib=libc++")
     endif()
 endif()

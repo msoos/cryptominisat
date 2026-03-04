@@ -525,7 +525,7 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 {
   assert(max_time >= 0 && "Cannot set negative limit on running time");
 
-  const auto target_time = cpuTime() + max_time;
+  const auto target_time = cpu_time() + max_time;
   for (Solver* s : data->solvers) {
     s->conf.maxTime = target_time;
   }
@@ -853,7 +853,7 @@ struct OneThreadCalc
     void operator()()
     {
         if (print_thread_start_and_finish) {
-            start_time = cpuTime();
+            start_time = cpu_time();
             //data_for_thread.update_mutex->lock();
             //cout << "c Starting thread " << tid << endl;
             //data_for_thread.update_mutex->unlock();
@@ -874,7 +874,7 @@ struct OneThreadCalc
         }
 
         assert(data_for_thread.cpu_times.size() > tid);
-        data_for_thread.cpu_times[tid] = cpuTime();
+        data_for_thread.cpu_times[tid] = cpu_time();
         if (print_thread_start_and_finish) {
             data_for_thread.update_mutex->lock();
             std::ios::fmtflags f(cout.flags());
@@ -926,7 +926,7 @@ lbool calc(
     if (data->timeout != numeric_limits<double>::max()) {
         for (size_t i = 0; i < data->solvers.size(); ++i) {
             Solver& s = *data->solvers[i];
-            s.conf.maxTime = cpuTime() + data->timeout;
+            s.conf.maxTime = cpu_time() + data->timeout;
         }
     }
 
@@ -958,7 +958,7 @@ lbool calc(
             ret = data->solvers[0]->simplify_with_assumptions(assumptions, strategy);
         }
         data->okay = data->solvers[0]->okay();
-        data->cpu_times[0] = cpuTime();
+        data->cpu_times[0] = cpu_time();
         return ret;
     }
 

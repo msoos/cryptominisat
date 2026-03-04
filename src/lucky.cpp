@@ -39,7 +39,7 @@ void CMSat::Lucky::doit()
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
 
     if (check_all(true)) goto end;
     if (check_all(false)) goto end;
@@ -51,7 +51,7 @@ void CMSat::Lucky::doit()
     if (horn_sat(false)) goto end;
 
     end:
-    double time_used = cpuTime() - my_time;
+    double time_used = cpu_time() - my_time;
     if (solver->conf.verbosity) {
         cout << "c [lucky] finished "
         << solver->conf.print_times(time_used)

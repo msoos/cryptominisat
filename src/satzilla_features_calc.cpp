@@ -359,7 +359,7 @@ void SatZillaFeaturesCalc::normalise_values()
 
 SatZillaFeatures SatZillaFeaturesCalc::extract()
 {
-    double start_time = cpuTime();
+    double start_time = cpu_time();
     fill_vars_cls();
 
     satzilla_feat.numVars = 0;
@@ -388,7 +388,7 @@ SatZillaFeatures SatZillaFeaturesCalc::extract()
     }
     normalise_values();
 
-    double time_used = cpuTime() - start_time;
+    double time_used = cpu_time() - start_time;
     if (solver->conf.verbosity) {
         cout << "c [szfeat] satzilla features extracted "
         << solver->conf.print_times(time_used)

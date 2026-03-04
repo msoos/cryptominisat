@@ -376,7 +376,7 @@ void CardFinder::find_pairwise_atmost1()
 void CardFinder::find_cards()
 {
     cards.clear();
-    double my_time = cpuTime();
+    double my_time = cpu_time();
 
     find_pairwise_atmost1();
     find_two_product_atmost1();
@@ -410,7 +410,7 @@ void CardFinder::find_cards()
         cout << "c [cardfind] "
         << "cards: " << cards.size()
         << " avg size: " << avg
-        << solver->conf.print_times(cpuTime()-my_time)
+        << solver->conf.print_times(cpu_time()-my_time)
         << endl;
     }
 }

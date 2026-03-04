@@ -231,7 +231,7 @@ void ReduceDB::handle_lev2()
     solver->dump_memory_stats_to_sql();
     size_t orig_size = solver->longRedCls[2].size();
 
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     assert(solver->watches.get_smudged_list().empty());
 
     //lev2 -- clean
@@ -269,16 +269,16 @@ void ReduceDB::handle_lev2()
     << " marked: " << cl_marked
     << " ttl:" << cl_ttl
     << " locked_solver:" << cl_locked_solver
-    << solver->conf.print_times(cpuTime()-my_time));
+    << solver->conf.print_times(cpu_time()-my_time));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean-lev2"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
-    total_time += cpuTime()-my_time;
+    total_time += cpu_time()-my_time;
 
     last_reducedb_num_conflicts = solver->sumConflicts;
 }
@@ -425,7 +425,7 @@ void ReduceDB::dump_sql_cl_data(
     assert(solver->sqlStats);
 
     reduceDB_called++;
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     uint32_t non_locked_lev0 = 0;
 
     //Set up features
@@ -499,7 +499,7 @@ void ReduceDB::dump_sql_cl_data(
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
         << " locked-perc: " << stats_line_percent(num_locked_for_data_gen, all_learnt.size())
         << " non-locked lev0: " << non_locked_lev0
-        << solver->conf.print_times(cpuTime()-my_time));
+        << solver->conf.print_times(cpu_time()-my_time));
     }
     locked_for_data_gen_total += num_locked_for_data_gen;
     locked_for_data_gen_cls += all_learnt.size();
@@ -515,7 +515,7 @@ void ReduceDB::handle_lev1()
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     size_t orig_size = solver->longRedCls[1].size();
 
     size_t j = 0;
@@ -573,7 +573,7 @@ void ReduceDB::handle_lev1()
         << " used recently: " << used_recently
         << " not used recently: " << non_recent_use
         << " moved w0: " << moved_w0
-        << solver->conf.print_times(cpuTime()-my_time)
+        << solver->conf.print_times(cpu_time()-my_time)
         << endl;
     }
 
@@ -581,10 +581,10 @@ void ReduceDB::handle_lev1()
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean-lev1"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
-    total_time += cpuTime()-my_time;
+    total_time += cpu_time()-my_time;
 }
 
 #ifdef FINAL_PREDICTOR
@@ -716,12 +716,12 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
 
 void ReduceDB::update_preds_lev2()
 {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     update_preds(solver->longRedCls[2]);
     dump_pred_distrib(solver->longRedCls[2], 2);
 
     if (solver->conf.verbosity >= 2) {
-        double predTime = cpuTime() - my_time;
+        double predTime = cpu_time() - my_time;
         cout << "c [DBCL] main predtime: " << predTime << endl;
     }
 }
@@ -1081,7 +1081,7 @@ void ReduceDB::handle_predictors()
     }
 
     assert(delayed_clause_free.empty());
-    double my_time = cpuTime();
+    double my_time = cpu_time();
 
     //Pre-reset, calculate common features
     vector<ClOffset> all_learnt;
@@ -1164,7 +1164,7 @@ void ReduceDB::handle_predictors()
 
         cout
         << "c [DBCL pred] "
-        << solver->conf.print_times(cpuTime()-my_time)
+        << solver->conf.print_times(cpu_time()-my_time)
         << endl;
     }
 
@@ -1172,10 +1172,10 @@ void ReduceDB::handle_predictors()
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean-lev1"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
-    total_time += cpuTime()-my_time;
+    total_time += cpu_time()-my_time;
 }
 #endif
 

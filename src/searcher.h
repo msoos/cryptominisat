@@ -467,7 +467,7 @@ inline const SearchHist& Searcher::getHistory() const
 
 inline void Searcher::add_in_partial_solving_stats()
 {
-    stats.cpu_time = cpuTime() - startTime;
+    stats.cpu_time = cpu_time() - startTime;
 }
 
 inline void Searcher::insert_var_order(const uint32_t x)

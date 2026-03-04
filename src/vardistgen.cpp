@@ -45,7 +45,7 @@ double VarDistGen::compute_tot_act_vsids(Clause* cl) const
 
 void VarDistGen::calc()
 {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     data.clear();
     data.resize(solver->nVars());
 
@@ -113,7 +113,7 @@ void VarDistGen::calc()
         }
     }
 
-    double time_used = cpuTime() - my_time;
+    double time_used = cpu_time() - my_time;
     verb_print(1, "[vardistgen] generated var distribution data " << solver->conf.print_times(time_used));
 
     if (solver->sqlStats) {

@@ -262,7 +262,7 @@ void ClauseAllocator::consolidate(
             verb_print(1, "Not consolidating memory.");
         return;
     }
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     new_sz_while_moving = 0;
 
     //Pointers that will be moved along
@@ -311,7 +311,7 @@ void ClauseAllocator::consolidate(
     free(dataStart);
     dataStart = newDataStart;
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     if (solver->conf.verbosity >= 2
         || (lower_verb && solver->conf.verbosity)
     ) {

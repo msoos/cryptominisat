@@ -46,7 +46,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
 {
     if (!okay()) return okay();
     if (nVars() == 0) return okay();
-    double my_time = cpuTime();
+    double my_time = cpu_time();
 
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
@@ -96,7 +96,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     ccnr.init(cls, nVars(), &assump_map);
     vector<int> sols_found(nVars()+1, -1);
     uint32_t ccnr_sols_found = 0;
-    double ccnr_time = cpuTime();
+    double ccnr_time = cpu_time();
     for(uint32_t nsols = 0; nsols < 10; nsols++) {
         ccnr.reinit();
         bool ret = ccnr.run(30LL*1000LL*1000LL);
@@ -121,7 +121,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     }
     verb_print(1, "[backbone-simpl] ccnr sols: " << ccnr_sols_found << " drop_cands: " << drop_cands.size()
             << " T: " << std::fixed << std::setprecision(2)
-            << cpuTime()-ccnr_time);
+            << cpu_time()-ccnr_time);
 
     vector<int> learned_units;
     vector<int> learned_bins;
@@ -193,7 +193,7 @@ end:
             <<  " num eq added: " << num_eq_added
             <<  " num bins: " << num_bins_added
             << " T: " << std::fixed << std::setprecision(2)
-            << cpuTime() - my_time);
+            << cpu_time() - my_time);
     return okay();
 }
 
@@ -227,7 +227,7 @@ bool Solver::backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finis
     assert(get_num_bva_vars() == 0);
     verb_print(1, "[backbone-simpl] starting backbone simplification...");
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     Lit l;
     uint32_t undefs = 0;
     uint32_t falses = 0;
@@ -276,9 +276,9 @@ bool Solver::backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finis
             << num_seen_flipped
             << " conflicts used: " << print_value_kilo_mega(s2.get_sum_conflicts())
             << " num runs succeeded: " << num_runs
-            << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - my_time));
+            << " T: " << std::fixed << std::setprecision(2) << (cpu_time() - my_time));
     }
-    my_time = cpuTime();
+    my_time = cpu_time();
 
     // random order
     vector<uint32_t> var_order;
@@ -362,7 +362,7 @@ bool Solver::backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finis
     end:
     delete s;
     uint32_t num_set = trail.size() - orig_trail_size;
-    double time_used = cpuTime() - my_time;
+    double time_used = cpu_time() - my_time;
 
     verb_print(1,
         "[backbone-simpl]"
