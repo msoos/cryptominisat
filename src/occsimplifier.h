@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include <map>
 #include <vector>
 #include <set>
-#include <map>
 
 #include "clause.h"
 #include "solvertypes.h"

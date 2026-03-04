@@ -109,8 +109,8 @@ struct SatZillaFeatures
         double glue_distr_var = 0;
         double size_distr_mean = 0;
         double size_distr_var = 0;
-        double activity_distr_mean = 0; //TODO remove
-        double activity_distr_var = 0; //TODO remove
+        double activity_distr_mean = 0;
+        double activity_distr_var = 0;
 
         void print(const std::string& pre_print) const;
     };

@@ -533,7 +533,6 @@ inline void Searcher::bump_cl_act(Clause* cl)
         max_cl_act = new_val;
     }
 
-
     if (cl->stats.activity > 1e20F ) {
         // Rescale. For STATS_NEEDED we rescale ALL
         #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)

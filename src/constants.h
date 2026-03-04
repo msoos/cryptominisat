@@ -39,7 +39,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     return u(mtrand);
 }
 
-
 #if defined(STATS_NEEDED)
 #define LARGE_OFFSETS
 #endif
@@ -140,12 +139,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
 #endif
 
-///////////////////
-// Verbose Debug
-///////////////////
-
 //#define FRAT_DEBUG
-//#define VERBOSE_DEBUG
 
 #ifdef DEBUG_FRAT
 #define frat_func_start() do {*solver->frat << __PRETTY_FUNCTION__ << " start\n";} while (0)
@@ -187,7 +181,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define DEBUG_ATTACH_MORE_DO(x) do { } while (0)
 #endif
 
-
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= a) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
@@ -224,7 +217,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     #define likely(x) x
     #define unlikely(x) x
 #endif
-
 
 #ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)

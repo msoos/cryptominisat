@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <array>
 #include <utility>
 #include <string>
-#include <complex>
 
 #include "solvertypes.h"
 #include "propengine.h"
@@ -49,7 +48,6 @@ using std::vector;
 using std::pair;
 using std::string;
 using std::array;
-using std::complex;
 struct PicoSAT;
 
 namespace CMSat {
@@ -182,7 +180,7 @@ class Solver : public Searcher
 
         //Checks
 
-        //Systems that are used to accompilsh the tasks
+        //Systems that are used to accomplish the tasks
         ClauseCleaner*         clauseCleaner = nullptr;
         VarReplacer*           varReplacer = nullptr;
         SubsumeImplicit*       subsumeImplicit = nullptr;

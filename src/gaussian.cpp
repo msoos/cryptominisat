@@ -954,7 +954,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
         //Row has a '1' in eliminating column, and it's not the row responsible
         if (new_resp_row_n != row_i && (*rowI)[new_resp_col]) {
 
-            // detect orignal non-basic watch list change or not
+            // detect original non-basic watch list change or not
             uint32_t orig_non_resp_var = row_to_var_non_resp[row_i];
             uint32_t orig_non_resp_col = var_to_col[orig_non_resp_var];
             assert((*rowI)[orig_non_resp_col]);
@@ -982,7 +982,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                 << " fixing up..."<< endl;
                 #endif
 
-                // Delete orignal non-responsible var from watch list
+                // Delete original non-responsible var from watch list
                 if (orig_non_resp_var != gqd.new_resp_var) {
                     #ifndef LAZY_DELETE_HACK
                     delete_gausswatch(row_i);
@@ -1261,7 +1261,7 @@ void EGaussian::check_row_not_in_watch(const uint32_t v, const uint32_t row_num)
 {
     for(const auto& x: solver->gwatches[v]) {
         if (x.matrix_num == matrix_no && x.row_n == row_num) {
-            cout << "OOOps, row ID " << row_num << " already in watch for var: " << v+1 << endl;
+            cout << "OOPs, row ID " << row_num << " already in watch for var: " << v+1 << endl;
             assert(false);
         }
     }
