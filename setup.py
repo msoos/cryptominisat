@@ -113,7 +113,6 @@ if __name__ == '__main__':
     pyproject_path = pathlib.Path('pyproject.toml')
     version = _parse_toml(pyproject_path)
     modules = gen_modules(version)
-    # package_data = {'pycryptosat': ['*.so', '*.dll', '*.dylib']}
     setup(
         ext_modules =  [modules],
         libraries = [picosatlib],

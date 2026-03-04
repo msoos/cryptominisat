@@ -17,8 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-from __future__ import with_statement  # Required in 2.5
-from __future__ import print_function
 import optparse
 import gzip
 import re
@@ -426,7 +424,7 @@ class solution_parser:
         f.close()
 
         assert solveline is not None
-        ret = re.match("c.*Solver::solve\((.*)\)", solveline)
+        ret = re.match(r"c.*Solver::solve\((.*)\)", solveline)
         assert ret is not None
         assumps = ret.group(1).strip().split()
         assumps = [int(x) for x in assumps]
