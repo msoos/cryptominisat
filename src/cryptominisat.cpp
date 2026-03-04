@@ -46,8 +46,6 @@ using std::vector;
 
 using namespace CMSat;
 
-using std::complex;
-
 static bool print_thread_start_and_finish = false;
 
 namespace CMSat {
