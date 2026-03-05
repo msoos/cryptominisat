@@ -1,6 +1,8 @@
 name: build
 
 on:
+  push:
+    branches: [ "master" ]
   pull_request:
     branches: [ "*" ]
 
@@ -35,7 +37,7 @@ jobs:
     - name: Install zlib for Mac dynamic
       if: contains(matrix.os, 'macos') && matrix.staticcompile == 'OFF'
       run: |
-        wget https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
+        wget https://zlib.net/fossils/zlib-1.3.1.tar.gz
         tar xzvf zlib-1.3.1.tar.gz
         cd zlib-1.3.1
         ./configure
@@ -46,7 +48,7 @@ jobs:
     - name: Install zlib for Mac static
       if: contains(matrix.os, 'macos') && matrix.staticcompile == 'ON'
       run: |
-        wget https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
+        wget https://zlib.net/fossils/zlib-1.3.1.tar.gz
         tar xzvf zlib-1.3.1.tar.gz
         cd zlib-1.3.1
         ./configure --static
