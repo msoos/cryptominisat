@@ -4,9 +4,6 @@
 #  CRYPTOMINISAT5_LIBRARIES    - libraries to link against
 #  CRYPTOMINISAT5_EXECUTABLE   - the cryptominisat5 executable
 
-include(CMakeFindDependencyMacro)
-find_dependency(Threads)
-
 # Compute paths
 get_filename_component(CRYPTOMINISAT5_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(CRYPTOMINISAT5_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
