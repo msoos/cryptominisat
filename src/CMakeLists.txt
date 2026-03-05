@@ -219,11 +219,11 @@ target_include_directories(cryptominisat5
     ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS}
     ${MPI_INCLUDE_PATH}
     "${CMAKE_SOURCE_DIR}/../cadiback/include/"
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
-    ${GMP_INCLUDE_DIR}
     ${BREAKID_INCLUDE_DIRS}
+  PUBLIC
+    ${GMP_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
 if(ENABLE_TESTING)
@@ -266,13 +266,14 @@ endif()
 
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(cryptominisat5
-    PUBLIC
+    PRIVATE
         Threads::Threads
         ${cryptoms_lib_link_libs}
         ${LOUVAIN_COMMUNITIES_LIBRARIES}
-        ${GMP_LIBRARIES}
         ${cadiback}
         ${cadical}
+    PUBLIC
+        ${GMP_LIBRARIES}
 )
 
 if(NOT WIN32)
@@ -295,13 +296,14 @@ if(IPASIR)
         cryptominisat.cpp
     )
     target_link_libraries(ipasircryptominisat5
-        PUBLIC
+        PRIVATE
             Threads::Threads
             ${cryptoms_lib_link_libs}
             ${LOUVAIN_COMMUNITIES_LIBRARIES}
-            ${GMP_LIBRARIES}
             ${cadiback}
             ${cadical}
+        PUBLIC
+            ${GMP_LIBRARIES}
     )
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5
@@ -330,7 +332,9 @@ cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuffer.
 get_target_property(cryptominisat5_public_headers cryptominisat5 PUBLIC_HEADER)
 
 # -----------------------------------------------------------------------------
-# Copy public headers into build directory include directory.
+# Symlink public headers into build directory include directory.
+# Using symlinks (not copies) ensures #pragma once works correctly when the
+# same header is reachable via both src/ and build/include/cryptominisat5/.
 # The cryptominisat5Config.cmake we generate in the build directory depends on
 # this.
 # -----------------------------------------------------------------------------
@@ -342,11 +346,12 @@ foreach(public_header ${cryptominisat5_public_headers})
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                                "${HEADER_DEST}"
                        COMMAND ${CMAKE_COMMAND} -E echo
-                       "Copying ${HEADER_NAME} to ${HEADER_DEST}"
-                       COMMAND ${CMAKE_COMMAND} -E
-                           copy_if_different
-                           ${public_header}
-                           "${HEADER_DEST}"
+                       "Symlinking ${HEADER_NAME} to ${HEADER_DEST}"
+                       COMMAND ${CMAKE_COMMAND} -E remove
+                               "${HEADER_DEST}/${HEADER_NAME}"
+                       COMMAND ${CMAKE_COMMAND} -E create_symlink
+                               "${public_header}"
+                               "${HEADER_DEST}/${HEADER_NAME}"
                       )
 endforeach()
 
@@ -373,7 +378,10 @@ if(MPI_FOUND)
     )
 endif()
 
-target_link_libraries(cryptominisat5-bin PRIVATE cryptominisat5)
+target_link_libraries(cryptominisat5-bin
+    PRIVATE
+        cryptominisat5
+)
 
 target_include_directories(cryptominisat5-bin PRIVATE
     ${PROJECT_SOURCE_DIR}

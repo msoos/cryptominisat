@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SOLVERTYPESMINI__H
-#define SOLVERTYPESMINI__H
+#pragma once
 
 #include <cstdint>
 #include <iostream>
@@ -605,5 +604,3 @@ public:
 };
 
 }
-
-#endif

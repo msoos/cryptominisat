@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 #include "gtest/gtest.h"
 
-#include <fstream>
-
 #include "src/solver.h"
 #include "src/cardfinder.h"
 #include "src/solverconf.h"

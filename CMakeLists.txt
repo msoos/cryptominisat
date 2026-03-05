@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
 # CMP0092 (disable /W3 on MSVC by default) was introduced in 3.15; guard needed
 if(POLICY CMP0092)
@@ -69,6 +69,8 @@ foreach(build_config ${build_types})
     endforeach()
 endforeach()
 
+set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY ON)
+set(CMAKE_EXPORT_PACKAGE_REGISTRY OFF)
 project(cryptominisat5)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)

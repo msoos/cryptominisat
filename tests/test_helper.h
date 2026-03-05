@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef TEST_HELPER__H
-#define TEST_HELPER__H
+#pragma once
 
 #ifdef KLEE
 #include <klee/klee.h>
@@ -668,5 +667,3 @@ inline void get_all_irred_clauses(SATSolver&s, std::vector<Lit>& lits) {
 //     }
 //     return m.str();
 // }
-
-#endif //TEST_HELPER__H
