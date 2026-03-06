@@ -618,6 +618,17 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
             in.skipLine();
             lineNum++;
             break;
+        case 'e':
+            ++in;
+            in.skipLine();
+            break;
+        case 'a': {
+            ++in;
+            vector<uint32_t> sampl_vars;
+            if (!parseIndependentSet(in, sampl_vars)) return false;
+            solver->set_sampl_vars(sampl_vars);
+            break;
+        }
         case 'c':
             ++in;
             in.parseString(str);
