@@ -1,5 +1,4 @@
 # Config file for the @EXPORT_TYPE@ cryptominisat5 package
-# It defines the following variables
 
 # Compute paths
 get_filename_component(CRYPTOMINISAT5_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
