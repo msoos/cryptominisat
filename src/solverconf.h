@@ -485,6 +485,7 @@ class DLL_PUBLIC SolverConf
         double global_timeout_multiplier_multiplier;
         double global_multiplier_multiplier_max;
         double var_and_mem_out_mult;
+        double oracle_mult;
 
         //Multi-thread, MPI
         unsigned long long sync_every_confl;

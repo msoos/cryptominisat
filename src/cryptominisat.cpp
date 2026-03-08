@@ -1903,6 +1903,11 @@ DLL_PUBLIC void SATSolver::set_oracle_find_bins(int val) {
     s.conf.oracle_find_bins = val;
 }
 
+DLL_PUBLIC void SATSolver::set_oracle_mult(const double val) {
+    Solver& s = *data->solvers[0];
+    s.conf.oracle_mult = val;
+}
+
 DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {
     Solver& s = *data->solvers[0];
     s.conf.oracle_removed_is_learnt = val;

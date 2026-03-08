@@ -112,9 +112,9 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
 
-    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL;
+    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast > 0) tot_vivif_mems /= (3*fast);
-    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL;
+    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast > 0) mems_per_call /= (3*fast);
     bool early_aborted_vivif = true;
     uint32_t bin_added = 0;
@@ -152,7 +152,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
     const double end_vivif_time = cpu_time();
-    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL;
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL * solver->conf.oracle_mult;
     bool early_aborted_bin = true;
     oracle.reset_mems();
     double start_bin_time = cpu_time();
@@ -182,7 +182,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         verb_print(1, "[oracle-bin] potential pairs: " << varp.size()
                 << " T: " << (cpu_time()-pg_start_time));
 
-        auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL;
+        auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL * solver->conf.oracle_mult;
         for (const auto& vp: varp) {
             if (varData[vp.v1].removed != Removed::none) continue;
             if (varData[vp.v2].removed != Removed::none) continue;
@@ -451,9 +451,9 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t last_printed = 0;
     uint32_t ccnr_useful = 0;
     uint32_t unknown = 0;
-    int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL;
+    int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast) mems /= 3;
-    int64_t mems_per_call = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL;
+    int64_t mems_per_call = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast) mems_per_call /= 3;
     sspp::oracle::TriState ret;
     for (uint32_t i = 0; i < tot_cls; i++) {
