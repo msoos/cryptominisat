@@ -37,7 +37,7 @@ namespace sspp {
 namespace oracle {
 namespace {
 constexpr const double EPS = 1e-150;
-constexpr auto max_cache_size = 40000U;
+constexpr size_t max_cache_size = 40000;
 }
 
 void Stats::Print() const {
