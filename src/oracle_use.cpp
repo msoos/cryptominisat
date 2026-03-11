@@ -600,11 +600,6 @@ bool Solver::oracle_sparsify(bool fast)
     //cout << "New cls size: " << clauses.size() << endl;
     //Subsume();
     //
-    auto safe_div = [](uint32_t a, uint32_t b) {
-        if (b == 0) return 0.0;
-        return (double)a/(double)b*100.0;
-    };
-
     verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls
