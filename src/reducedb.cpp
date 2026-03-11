@@ -40,13 +40,6 @@ THE SOFTWARE.
 using namespace CMSat;
 
 namespace CMSat {
-inline double safe_div(double a, double b) {
-    if (b == 0) {
-        assert(a == 0);
-        return 0;
-    }
-    return a/b;
-}
 
 struct SortValAndPos {
     inline bool operator () (const val_and_pos& a, const val_and_pos& b) const
