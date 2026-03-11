@@ -211,19 +211,24 @@ add_library(cryptominisat5
     cryptominisat.cpp
 )
 
-target_include_directories(cryptominisat5
-  PRIVATE
+set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS}
     ${MPI_INCLUDE_PATH}
-    "${CMAKE_SOURCE_DIR}/../cadiback/include/"
+    "${cadical_DIR}/include/"
+    "${cadiback_DIR}/include/"
     $<INSTALL_INTERFACE:include>
     ${BREAKID_INCLUDE_DIRS}
-  PUBLIC
+)
+set(CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES
     ${GMP_INCLUDE_DIR}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
+target_include_directories(cryptominisat5
+    PRIVATE ${CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES}
+    PUBLIC ${CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES}
 )
 
 if(ENABLE_TESTING)
@@ -294,6 +299,10 @@ if(IPASIR)
         ipasir.cpp
         ${cryptoms_lib_files}
         cryptominisat.cpp
+    )
+    target_include_directories(ipasircryptominisat5
+        PRIVATE ${CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES}
+        PUBLIC ${CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES}
     )
     target_link_libraries(ipasircryptominisat5
         PRIVATE
