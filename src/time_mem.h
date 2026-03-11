@@ -150,8 +150,8 @@ static inline uint64_t mem_used(double& vm_usage, std::string* max_mem_usage = n
 
 static inline uint64_t rss_mem_used(void)
 {
-    double dummy;
-    return mem_used(dummy);
+    double vm_unused;
+    return mem_used(vm_unused);
 }
 
 static inline uint64_t memUsedTotal(void)
@@ -190,8 +190,8 @@ inline uint64_t mem_used(double& vm_usage, [[maybe_unused]] std::string* max_mem
 
 static inline uint64_t rss_mem_used(void)
 {
-    double dummy;
-    return mem_used(dummy);
+    double vm_unused;
+    return mem_used(vm_unused);
 }
 
 static inline uint64_t memUsedTotal(void)
