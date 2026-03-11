@@ -148,8 +148,8 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
         vector<int> v;
         for(int i = 1; i <= vars; i++) v.push_back(i);
         std::sort(v.begin(), v.end(), [&](int a, int b){
-            uint64_t fa = (double)cache_lookup_frequencies[a]*occs[a];
-            uint64_t fb = (double)cache_lookup_frequencies[b]*occs[b];
+            double fa = (double)cache_lookup_frequencies[a]*occs[a];
+            double fb = (double)cache_lookup_frequencies[b]*occs[b];
             return fa > fb;
         });
         cache_lookup_var = v[0];

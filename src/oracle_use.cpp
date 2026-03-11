@@ -135,7 +135,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
                 sort(assump.begin(), assump.end());
                 auto clause = negate(assump);
                 oracle.AddClauseIfNeededAndStr(clause, true);
-                lits_rem = clauses[i].size()-clause.size();
+                lits_rem += clauses[i].size()-clause.size();
                 clauses[i] = clause;
                 j = -1; //start from beginning
                 if (clause.empty()) {
