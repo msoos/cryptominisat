@@ -148,6 +148,12 @@ static inline uint64_t mem_used(double& vm_usage, std::string* max_mem_usage = n
    return (uint64_t)resident_set;
 }
 
+static inline uint64_t rss_mem_used(void)
+{
+    double dummy;
+    return mem_used(dummy);
+}
+
 static inline uint64_t memUsedTotal(void)
 {
     using std::ios_base;
@@ -182,6 +188,12 @@ inline uint64_t mem_used(double& vm_usage, [[maybe_unused]] std::string* max_mem
     return ru.ru_maxrss*1024;
 }
 
+static inline uint64_t rss_mem_used(void)
+{
+    double dummy;
+    return mem_used(dummy);
+}
+
 static inline uint64_t memUsedTotal(void)
 {
     struct kinfo_proc kp;
@@ -196,6 +208,11 @@ static inline uint64_t memUsedTotal(void)
 static inline size_t mem_used(double& vm_usage, std::string* max_mem_usage = nullptr)
 {
     vm_usage = 0;
+    return 0;
+}
+
+static inline uint64_t rss_mem_used(void)
+{
     return 0;
 }
 

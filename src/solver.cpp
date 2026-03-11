@@ -1543,12 +1543,12 @@ void Solver::dump_memory_stats_to_sql()
         , varReplacer->mem_used()/(1024*1024)
     );
 
-    const uint64_t rss_mem_used = mem_used();
+    const uint64_t rss_mem = rss_mem_used();
     sqlStats->mem_used(
         this
         , "rss"
         , my_time
-        , rss_mem_used/(1024*1024)
+        , rss_mem/(1024*1024)
     );
     sqlStats->mem_used(
         this
@@ -2100,8 +2100,9 @@ void Solver::print_norm_stats(
     } else {
         print_stats_line(conf.prefix + "Conflicts in UIP", sumConflicts);
     }
+    double vm_unused;
     std::string max_mem_usage;
-    double max_rss_mem_mb = (double)memUsedTotal()/(1024UL*1024UL);
+    double max_rss_mem_mb = (double)::mem_used(vm_unused, &max_mem_usage)/(1024UL*1024UL);
     if (max_mem_usage.empty()) {
         print_stats_line(conf.prefix + "Mem used"
             , max_rss_mem_mb
@@ -2193,22 +2194,22 @@ uint64_t Solver::mem_used_vardata() const
 
 void Solver::print_mem_stats() const
 {
-    const uint64_t rss_mem_used = memUsedTotal();
+    const uint64_t rss_mem = rss_mem_used();
     print_stats_line(conf.prefix + "Mem used"
-        , rss_mem_used/(1024UL*1024UL)
+        , rss_mem/(1024UL*1024UL)
         , "MB"
     );
     uint64_t account = 0;
 
-    account += print_mem_used_longclauses(rss_mem_used);
-    account += print_watch_mem_used(rss_mem_used);
+    account += print_mem_used_longclauses(rss_mem);
+    account += print_watch_mem_used(rss_mem);
 
     size_t mem = 0;
     mem += mem_used_vardata();
     print_stats_line(conf.prefix + "Mem for assings&vardata"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2217,7 +2218,7 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2226,7 +2227,7 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2236,7 +2237,7 @@ void Solver::print_mem_stats() const
         print_stats_line(conf.prefix + "Mem for occsimplifier"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, rss_mem_used)
+            , stats_line_percent(mem, rss_mem)
             , "%"
         );
         account += mem;
@@ -2246,7 +2247,7 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for varReplacer&SCC"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2256,7 +2257,7 @@ void Solver::print_mem_stats() const
         print_stats_line(conf.prefix + "Mem for impl subsume"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, rss_mem_used)
+            , stats_line_percent(mem, rss_mem)
             , "%"
         );
         account += mem;
@@ -2269,13 +2270,13 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for 3 distills"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
 
     print_stats_line(conf.prefix + "Accounted for mem (rss)"
-        , stats_line_percent(account, rss_mem_used)
+        , stats_line_percent(account, rss_mem)
         , "%"
     );
     print_stats_line(conf.prefix + "Accounted for mem (vm)"

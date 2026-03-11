@@ -1529,7 +1529,7 @@ bool OccSimplifier::fill_occur_and_print_stats()
 
     //Print memory usage after occur link-in
     if (solver->conf.verbosity)
-        solver->print_watch_mem_used(memUsedTotal());
+        solver->print_watch_mem_used(rss_mem_used());
 
     return true;
 }
