@@ -436,13 +436,13 @@ if(NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     endif()
 endif()
 
-set(cadical_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cadical/build")
+set(cadical_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cadical/build" CACHE PATH "Directory where CaDiCaL is built/installed")
 find_library(cadical
     PATHS ${cadical_DIR}
     NAMES cadical
     REQUIRED)
 
-set(cadiback_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/")
+set(cadiback_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/" CACHE PATH "Directory where CaDiBaCk is built/installed")
 find_library(cadiback
     PATHS ${cadiback_DIR}
     NAMES cadiback
