@@ -489,6 +489,7 @@ public:
     virtual std::unique_ptr<FieldGen> dup() const = 0;
     virtual bool larger_than(const Field&, const Field&) const = 0;
     virtual bool weighted() const = 0;
+    virtual bool exact() const = 0;
 };
 
 class FDouble final : public Field {
@@ -601,6 +602,7 @@ public:
     }
 
     bool weighted() const final { return true; }
+    bool exact() const final { return false; }
 };
 
 }
