@@ -93,6 +93,12 @@ jobs:
       with:
         path: project
         submodules: 'true'
+
+    - name: Set up ccache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.staticcompile }}
+
     - name: Configure & build
       run: |
         cd project
@@ -102,6 +108,8 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
+        -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
 
