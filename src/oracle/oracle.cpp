@@ -365,10 +365,19 @@ void Oracle::BumpClause(size_t cls) {
             glue++;
         }
     }
-    cla_info[i].glue = glue;
-    // Tier 2 (glue <= 6) clauses get used=2 so they survive 2 reduction rounds
-    // Tier 3 (glue > 6) clauses get used=1 so they survive 1 round
-    cla_info[i].used = (glue <= 6) ? 2 : 1;
+    int old_glue = cla_info[i].glue;
+    // Only update glue if it improved (keep best glue seen)
+    if (glue < old_glue) cla_info[i].glue = glue;
+    // Set used based on current (possibly improved) tier
+    int effective_glue = cla_info[i].glue;
+    if (effective_glue <= 2) {
+        // Promoted to tier 1 — give maximum protection
+        cla_info[i].used = 3;
+    } else if (effective_glue <= 6) {
+        cla_info[i].used = 2;
+    } else {
+        cla_info[i].used = 1;
+    }
     cla_info[i].total_used++;
     return;
 }
