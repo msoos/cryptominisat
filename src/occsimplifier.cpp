@@ -1701,8 +1701,6 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
         solver->ok = solver->propagate_occur<false>(limit_to_decrease);
         if (!solver->okay()) goto end;
 
-        if (!solver->okay()) goto end;
-
         sub_str->remove_binary_cl(OccurClause(l, w));
         if (w.red()) continue;
     }
