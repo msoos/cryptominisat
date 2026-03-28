@@ -37,7 +37,6 @@ THE SOFTWARE.
 #include "sql_tablestructure.h"
 #include "varreplacer.h"
 
-using std::make_pair;
 
 #define bind_null_or_double(stmt,bindat,stucture,func) \
 { \
@@ -505,7 +504,7 @@ void SQLiteStats::set_id_confl(
         , const uint64_t sumConflicts)
 {
     assert(id != 0);
-    id_conf_cache.push_back(make_pair(id, sumConflicts));
+    id_conf_cache.emplace_back(id, sumConflicts);
     if (id_conf_cache.size() < 1000) return;
     else dump_id_confl_cache();
 }

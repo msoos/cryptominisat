@@ -108,7 +108,7 @@ class VarReplacer
         };
         const Stats& get_stats() const;
         size_t mem_used() const;
-        vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
+        vector<std::pair<Lit, Lit>> get_all_binary_xors_outer() const;
         vector<uint32_t> get_vars_replacing_others() const;
         bool get_scc_depth_warning_triggered() const;
         void delete_frat_cls();
@@ -239,7 +239,7 @@ class VarReplacer
 
         ///mapping of variable to set of variables it replaces
         //Everything is OUTER here.
-        map<uint32_t, vector<uint32_t> > reverseTable;
+        map<uint32_t, vector<uint32_t>> reverseTable;
 
         //FRAT
         vector<tuple<int32_t, Lit, Lit>> bins_for_frat;

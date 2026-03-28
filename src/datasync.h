@@ -75,7 +75,7 @@ class DataSync
         int thread_id = -1;
 
         //stuff to sync
-        vector<std::pair<Lit, Lit> > newBinClauses;
+        vector<std::pair<Lit, Lit>> newBinClauses;
 
         //stats
         uint64_t lastSyncConf = 0;

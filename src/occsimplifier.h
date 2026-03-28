@@ -208,7 +208,7 @@ public:
                                // the clauses that have been added as resolvents
     vector<uint32_t> n_occurs;
     TouchList removed_cl_with_var;
-    vector<std::pair<Lit, Lit> > added_irred_bin;
+    vector<std::pair<Lit, Lit>> added_irred_bin;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc

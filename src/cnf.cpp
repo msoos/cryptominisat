@@ -315,10 +315,9 @@ string CNF::watched_to_string(Lit other_lit, const Watched& ws) const
 
         case WatchType::watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
-            for(size_t i = 0; i < cl->size(); i++) {
+            for (size_t i = 0; i < cl->size(); i++) {
+                if (i > 0) ss << ", ";
                 ss << (*cl)[i];
-                if (i + 1 < cl->size())
-                    ss << ", ";
             }
             if (cl->red()) {
                 ss << "(red)";

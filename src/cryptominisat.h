@@ -227,12 +227,12 @@ namespace CMSat {
 
         ////////////////////////////
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
-        std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
-                                                                       // [replaced, replaced_with]
+        std::vector<std::pair<Lit, Lit>> get_all_binary_xors() const; //get all binary XORs that are = 0
+                                                                      // [replaced, replaced_with]
 
         //////////////////////
         // EXPERIMENTAL
-        std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool xor_together_xors) const; //get XORs recovered. If "xor_together_xors" is TRUE, then xors that share a variable (and ONLY they share them) will be XORed together
+        std::vector<std::pair<std::vector<uint32_t>, bool>> get_recovered_xors(bool xor_together_xors) const; //get XORs recovered. If "xor_together_xors" is TRUE, then xors that share a variable (and ONLY they share them) will be XORed together
         std::vector<OrGate> get_recovered_or_gates();
         std::vector<ITEGate> get_recovered_ite_gates();
         std::vector<uint32_t> remove_definable_by_irreg_gate(const std::vector<uint32_t>& vars);

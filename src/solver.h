@@ -88,7 +88,7 @@ class Solver : public Searcher
         virtual ~Solver() override;
 
         void add_sql_tag(const string& name, const string& val);
-        const vector<std::pair<string, string> >& get_sql_tags() const;
+        const vector<std::pair<string, string>>& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
         bool add_clause_outside(const vector<Lit>& lits, bool red = false, bool restore = false);
@@ -295,7 +295,7 @@ class Solver : public Searcher
         // Gates
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
-        vector<pair<Lit, Lit> > get_all_binary_xors() const;
+        vector<pair<Lit, Lit>> get_all_binary_xors() const;
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
         vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
         void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
@@ -420,7 +420,7 @@ class Solver : public Searcher
         );
         void sort_and_clean_bnn(BNN& bnn);
         void set_up_sql_writer();
-        vector<std::pair<string, string> > sql_tags;
+        vector<std::pair<string, string>> sql_tags;
 
         void check_and_upd_config_parameters();
         vector<uint32_t> tmp_xor_clash_vars;

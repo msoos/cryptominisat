@@ -42,7 +42,6 @@ THE SOFTWARE.
 using std::cout;
 using std::endl;
 using std::make_tuple;
-using std::make_pair;
 
 #ifdef VERBOSE_DEBUG
 #define REPLACE_STATISTICS
@@ -395,7 +394,7 @@ inline void VarReplacer::updateBin(
     //Two lits are the same in BIN
     if (lit1 == lit2) {
         *solver->frat << add << ++solver->clauseID << lit2 << fin;
-        delayedEnqueue.push_back(make_pair(lit2, solver->clauseID));
+        delayedEnqueue.emplace_back(lit2, solver->clauseID);
         remove = true;
     }
 
@@ -963,7 +962,7 @@ bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
 */
 void VarReplacer::setAllThatPointsHereTo(const uint32_t var, const Lit lit)
 {
-    map<uint32_t, vector<uint32_t> >::iterator it = reverseTable.find(var);
+    auto it = reverseTable.find(var);
     if (it != reverseTable.end()) {
         for(const uint32_t var2: it->second) {
             assert(table[var2].var() == var);
@@ -1243,7 +1242,7 @@ vector<uint32_t> VarReplacer::get_vars_replacing(uint32_t var) const
 {
     vector<uint32_t> ret;
     var = solver->map_inter_to_outer(var);
-    map<uint32_t, vector<uint32_t> >::const_iterator it = reverseTable.find(var);
+    auto it = reverseTable.find(var);
     if (it != reverseTable.end()) {
         for(uint32_t v: it->second) {
             ret.push_back(solver->map_outer_to_inter(v));
@@ -1253,15 +1252,14 @@ vector<uint32_t> VarReplacer::get_vars_replacing(uint32_t var) const
     return ret;
 }
 
-vector<pair<Lit, Lit> > VarReplacer::get_all_binary_xors_outer() const
+vector<pair<Lit, Lit>> VarReplacer::get_all_binary_xors_outer() const
 {
-    vector<pair<Lit, Lit> > ret;
-    for(size_t i = 0; i < table.size(); i++) {
+    vector<pair<Lit, Lit>> ret;
+    for (size_t i = 0; i < table.size(); i++) {
         if (table[i] != Lit(i, false)) {
-            ret.push_back(make_pair(Lit(i, false), table[i]));
+            ret.emplace_back(Lit(i, false), table[i]);
         }
     }
-
     return ret;
 }
 
