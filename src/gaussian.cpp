@@ -569,7 +569,7 @@ gret EGaussian::init_adjust_matrix() {
                     int32_t id = ++solver->clauseID;
                     *solver->frat << implyclfromx << id << out << fratchain << reason.xid << fin;
                     solver->attach_bin_clause(out[0], out[1], false, id);
-                    VERBOSE_PRINT("ID of bin XOR found (part 1): " << ID);
+                    VERBOSE_PRINT("ID of bin XOR found (part 1): " << id);
 
                     out[0] = out[0]^true; out[1] = out[1]^true;
                     int32_t id2 = ++solver->clauseID;
