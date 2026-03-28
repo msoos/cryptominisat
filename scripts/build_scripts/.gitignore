@@ -1,0 +1,4 @@
+*.pyc
+afl/finding*
+*.cnf.gz
+*.cnf
