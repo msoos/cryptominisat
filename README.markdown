@@ -303,7 +303,7 @@ git clone https://github.com/meelgroup/louvain-community
 cd louvain-community
 mkdir build && cd build
 cmake ..
-make -j10
+make -j$(nproc)
 sudo make install
 cd ../..
 
@@ -312,7 +312,7 @@ git clone https://github.com/microsoft/LightGBM
 cd LightGBM
 mkdir build && cd build
 cmake ..
-make -j10
+make -j$(nproc)
 sudo make install
 cd ../..
 
