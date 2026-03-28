@@ -500,7 +500,6 @@ class DLL_PUBLIC SolverConf
 
         //Misc
         unsigned origSeed;
-        int      idrup = 0;
         int      conf_needed = true;
         string   prefix;
 };

@@ -62,7 +62,6 @@ THE SOFTWARE.
 #include "gaussian.h"
 #include "sqlstats.h"
 #include "frat.h"
-#include "idrup.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
@@ -1410,7 +1409,6 @@ lbool Solver::solve_with_assumptions(
     }
 
     write_final_frat_clauses();
-    conclude_idrup(status);
     return status;
 }
 
@@ -3684,25 +3682,6 @@ void Solver::reverse_bce() {
     occsimplifier->reverse_blocked_clause_elim();
 }
 
-void Solver::conclude_idrup (lbool result) {
-    if (!conf.idrup) return;
-    if (result == l_True) {
-      *frat << satisfiable;
-      *frat << modelF;
-      for (size_t cmVar = 0; cmVar < nVars(); ++cmVar) {
-        lbool value = model_value(cmVar);
-        *frat << Lit(cmVar, value != l_True);
-      }
-      *frat << fin;
-    }
-    else if (result == l_False) {
-      *frat << unsatisfiable;
-      *frat << unsatcore;
-      for (auto x: get_final_conflict()) *frat << ~x;
-      *frat << fin;
-    }
-    else *frat << unknown;
-}
 
 /* // This needs to be an AIG actually, with an order of what to calculate first. */
 vector<Lit> Solver::get_weight_translation() const {

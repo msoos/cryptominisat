@@ -58,7 +58,7 @@ extern "C" {
   {
 
     MySolver* s = (MySolver*)solver;
-    s->solver->set_idrup(f);
+    s->solver->set_frat(f);
   }
 DLL_PUBLIC const char * ipasir_signature ()
 {

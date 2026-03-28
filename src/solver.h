@@ -108,8 +108,6 @@ class Solver : public Searcher
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
         void set_outer_lit_weight(const Lit lit, const float weight);
-        //frat for SAT problems
-        void conclude_idrup (lbool);
         void changed_sampling_vars();
 
         //Querying model

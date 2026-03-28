@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "watcharray.h"
 #include "frat.h"
-#include "idrup.h"
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "gausswatched.h"
@@ -132,7 +131,6 @@ public:
     //frat
     Frat* frat;
     void add_frat(FILE* os);
-    void add_idrup(FILE* os);
 
     //Clauses
     vector<ClOffset> longIrredCls;
