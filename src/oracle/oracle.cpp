@@ -740,13 +740,17 @@ size_t Oracle::Propagate(int level) {
                 if (bv < 0) {
                     // CONFLICT
                     conflict = w.cls;
-                }    else {
+                } else {
                     // UNIT
                     Assign(w.blit, w.cls, level);
                 }
                 continue;
             }
             if (conflict) break;
+            // Prefetch next watch's clause data for non-binary
+            if (j1 != wt.end() && j1->size > 2) {
+                cmsat_prefetch(clauses.data() + j1->cls);
+            }
             // Check if satisfied by the other watched literal
             // fun xor swap trick
             stats.mems++;
