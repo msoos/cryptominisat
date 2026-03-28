@@ -75,7 +75,7 @@ bool CMSat::Lucky::check_all(bool polar)
         if (solver->value(lit) == l_True) {
             continue;
         }
-        if (!lit.sign() == polar) {
+        if (lit.sign() != polar) {
             continue;
         }
         for(const auto& w: solver->watches[lit]) {
@@ -83,7 +83,7 @@ bool CMSat::Lucky::check_all(bool polar)
                 continue;
             if (w.isBin() && solver->value(w.lit2()) == l_False)
                 return false;
-            if (w.isBin() && !w.lit2().sign() != polar)
+            if (w.isBin() && w.lit2().sign() == polar)
                 return false;
         }
     }
@@ -96,7 +96,7 @@ bool CMSat::Lucky::check_all(bool polar)
                 ok = true;
                 break;
             }
-            if (!l.sign() == polar) {
+            if (l.sign() != polar) {
                 ok = true;
                 break;
             }
@@ -228,7 +228,7 @@ bool CMSat::Lucky::horn_sat(bool polar)
         bool satisfied = false;
         Lit to_set = lit_Undef;
         for(const Lit l: *cl) {
-            if (!l.sign() == polar && solver->value(l) == l_Undef) {
+            if (l.sign() != polar && solver->value(l) == l_Undef) {
                 to_set = l;
             }
             if (solver->value(l) == l_True) {
@@ -261,7 +261,7 @@ bool CMSat::Lucky::horn_sat(bool polar)
         if (solver->value(lit) == l_True) {
             continue;
         }
-        if (!lit.sign() == polar) {
+        if (lit.sign() != polar) {
             bool must_set = false;
             for(const auto& w: solver->watches[lit]) {
                 if (w.isBin() &&
