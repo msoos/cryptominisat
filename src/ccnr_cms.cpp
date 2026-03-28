@@ -275,7 +275,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_scores()
     std::sort(vs.begin(), vs.end(), VarValSorter());
 
     vector<pair<uint32_t, double>> tobump;
-    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
+    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump && i < vs.size(); i++) {
 //         cout << "var: " << vs[i].var + 1 << " score: " <<  vs[i].val << endl;
         tobump.push_back(std::make_pair(vs[i].var, 3.0));
     }
