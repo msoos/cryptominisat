@@ -505,12 +505,16 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
     return pt;
 }
 
-// Check if lit can be removed from the learned clause
+// Check if lit can be removed from the learned clause.
+// Uses poison/removable memoization across calls within the same conflict:
+// - If a variable was already proven removable, skip it immediately
+// - If a variable was proven non-removable (poison), fail immediately
 bool Oracle::LitReduntant(Lit lit) {
-    // TODO: this can be optimized a lot
     assert(redu_s.empty());
     redu_it++;
     redu_s.push_back(lit);
+    // Track variables visited in this call for marking
+    vector<Var> visited;
     int its = 0;
     while (!redu_s.empty()) {
         its++;
@@ -526,17 +530,52 @@ bool Oracle::LitReduntant(Lit lit) {
         assert(LitVal(lit) == -1);
         assert(clauses[rc] == Neg(lit));
         for (size_t k = rc+1; clauses[k]; k++) {
-            if (!in_cc[clauses[k]] && vs[VarOf(clauses[k])].level > 1) {
-                if (vs[VarOf(clauses[k])].reason == 0) {
+            Var tv = VarOf(clauses[k]);
+            if (!in_cc[clauses[k]] && vs[tv].level > 1) {
+                // Check memoized marks first
+                if (minimize_mark[tv] == 1) continue; // already proven removable
+                if (minimize_mark[tv] == 2) {
+                    // poison — this path leads to a decision, fail
                     redu_s.clear();
+                    // Mark all visited as poison too
+                    for (Var pv : visited) {
+                        if (minimize_mark[pv] == 0) {
+                            minimize_mark[pv] = 2;
+                            minimize_marked_vars.push_back(pv);
+                        }
+                    }
+                    return false;
+                }
+                if (vs[tv].reason == 0) {
+                    redu_s.clear();
+                    // Mark all visited as poison
+                    for (Var pv : visited) {
+                        if (minimize_mark[pv] == 0) {
+                            minimize_mark[pv] = 2;
+                            minimize_marked_vars.push_back(pv);
+                        }
+                    }
+                    // Mark the decision variable as poison too
+                    if (minimize_mark[tv] == 0) {
+                        minimize_mark[tv] = 2;
+                        minimize_marked_vars.push_back(tv);
+                    }
                     return false;
                 } else {
                     if (redu_seen[clauses[k]] != redu_it) {
                         redu_seen[clauses[k]] = redu_it;
                         redu_s.push_back(clauses[k]);
+                        visited.push_back(tv);
                     }
                 }
             }
+        }
+    }
+    // Success — mark all visited variables as removable
+    for (Var rv : visited) {
+        if (minimize_mark[rv] == 0) {
+            minimize_mark[rv] = 1;
+            minimize_marked_vars.push_back(rv);
         }
     }
     if (its >= 2) {
@@ -606,7 +645,7 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
     }
 
 
-    // Conflict minimization
+    // Conflict minimization with poison/removable memoization
     for (size_t i = 1; i < clause.size(); i++) {
         if (vs[VarOf(clause[i])].reason) {
             stats.mems++;
@@ -618,6 +657,10 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
             }
         }
     }
+    // Clear memoization marks
+    for (Var v : minimize_marked_vars) minimize_mark[v] = 0;
+    minimize_marked_vars.clear();
+
     std::sort(clause.begin(), clause.end(), [&](Lit l1, Lit l2) {
         int d1 = vs[VarOf(l1)].level;
         int d2 = vs[VarOf(l2)].level;
@@ -877,6 +920,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     lit_val.resize(vars*2+2);
     redu_seen.resize(vars*2+2);
     in_cc.resize(vars*2+2);
+    minimize_mark.resize(vars+1, 0);
     // setting magic constants
     restart_factor = 100;
 
