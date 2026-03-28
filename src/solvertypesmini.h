@@ -22,12 +22,13 @@ THE SOFTWARE.
 
 #pragma once
 
+#include <algorithm>
+#include <array>
+#include <cassert>
 #include <cstdint>
 #include <iostream>
-#include <cassert>
 #include <memory>
 #include <vector>
-#include <array>
 #include <gmpxx.h>
 
 namespace CMSat {
@@ -135,16 +136,16 @@ public:
         return !(*this == b);
     }
     constexpr lbool operator ^  (bool  b) const {
-        return lbool((uint8_t)(value ^ (uint8_t)b));
+        return lbool(static_cast<uint8_t>(value ^ static_cast<uint8_t>(b)));
     }
 
-    lbool operator && (lbool b) const {
+    constexpr lbool operator && (lbool b) const {
         uint8_t sel = (value << 1) | (b.value << 3);
         uint8_t v   = (0xF7F755F4 >> sel) & 3;
         return lbool(v);
     }
 
-    lbool operator || (lbool b) const {
+    constexpr lbool operator || (lbool b) const {
         uint8_t sel = (value << 1) | (b.value << 3);
         uint8_t v   = (0xFCFCF400 >> sel) & 3;
         return lbool(v);
@@ -177,13 +178,9 @@ constexpr inline uint32_t toInt  (lbool l)
     return l.value;
 }
 
-inline lbool boolToLBool(const bool b)
+constexpr lbool boolToLBool(const bool b)
 {
-    if (b) {
-        return l_True;
-    } else {
-        return l_False;
-    }
+    return b ? l_True : l_False;
 }
 
 inline std::ostream& operator<<(std::ostream& cout, const lbool val)
@@ -299,19 +296,17 @@ public:
         undefs = _in.size();
         ts = 0;
         sz = _in.size();
-        for(uint32_t i = 0; i < _in.size(); i++) {
-            getData()[i] = _in[i];
-        }
+        std::copy(_in.begin(), _in.end(), getData());
     }
 
     Lit* getData()
     {
-        return (Lit*)((char*)this + sizeof(BNN));
+        return reinterpret_cast<Lit*>(reinterpret_cast<char*>(this) + sizeof(BNN));
     }
 
     const Lit* getData() const
     {
-        return (Lit*)((char*)this + sizeof(BNN));
+        return reinterpret_cast<const Lit*>(reinterpret_cast<const char*>(this) + sizeof(BNN));
     }
 
     const Lit& operator[](const uint32_t at) const

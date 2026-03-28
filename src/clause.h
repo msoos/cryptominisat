@@ -377,12 +377,12 @@ public:
 
     Lit* getData()
     {
-        return (Lit*)((char*)this + sizeof(Clause));
+        return reinterpret_cast<Lit*>(reinterpret_cast<char*>(this) + sizeof(Clause));
     }
 
     const Lit* getData() const
     {
-        return (Lit*)((char*)this + sizeof(Clause));
+        return reinterpret_cast<const Lit*>(reinterpret_cast<const char*>(this) + sizeof(Clause));
     }
 
 public:

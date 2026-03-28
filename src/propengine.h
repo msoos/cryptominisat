@@ -199,15 +199,15 @@ public:
 
     // Read state:
     //
-    uint32_t nAssigns   () const;         ///<The current number of assigned literals.
+    [[nodiscard]] uint32_t nAssigns() const;         ///<The current number of assigned literals.
 
     //Get state
-    uint32_t    decisionLevel() const;      ///<Returns current decision level
-    size_t      getTrailSize() const; //number of variables set at decision level 0
-    size_t trail_size() const {
+    [[nodiscard]] uint32_t decisionLevel() const;      ///<Returns current decision level
+    [[nodiscard]] size_t getTrailSize() const; //number of variables set at decision level 0
+    [[nodiscard]] size_t trail_size() const {
         return trail.size();
     }
-    Lit trail_at(size_t at) const {
+    [[nodiscard]] Lit trail_at(size_t at) const {
         return trail[at].lit;
     }
 
@@ -415,11 +415,7 @@ inline uint32_t PropEngine::nAssigns() const
 
 inline size_t PropEngine::getTrailSize() const
 {
-    if (decisionLevel() == 0) {
-        return trail.size();
-    } else {
-        return trail_lim[0];
-    }
+    return decisionLevel() == 0 ? trail.size() : trail_lim[0];
 }
 
 template<class T> inline
