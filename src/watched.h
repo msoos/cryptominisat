@@ -101,7 +101,7 @@ class Watched {
         Watched(const Lit lit, const bool red, int32_t ID) :
             data1(lit.toInt())
             , type(static_cast<int>(WatchType::watch_binary_t))
-            , data2((int32_t)red | ID<<2) //marking is 2nd bit
+            , data2(static_cast<int32_t>(red) | ID<<2) //marking is 2nd bit
         {
             assert(ID < 1LL<< (EFFECTIVELY_USEABLE_BITS-2) && "Please compile with -DLARGEMEM");
         }
@@ -115,28 +115,28 @@ class Watched {
             data1 = blockedLit.toInt();
         }
 
-        WatchType getType() const
+        [[nodiscard]] WatchType getType() const
         {
             // we rely that WatchType enum is in [0-3] range and fits into type field two bits
             return static_cast<WatchType>(type);
         }
 
-        bool isBin() const
+        [[nodiscard]] bool isBin() const
         {
             return (type == static_cast<int>(WatchType::watch_binary_t));
         }
 
-        bool isClause() const
+        [[nodiscard]] bool isClause() const
         {
             return (type == static_cast<int>(WatchType::watch_clause_t));
         }
 
-        bool isIdx() const
+        [[nodiscard]] bool isIdx() const
         {
             return (type == static_cast<int>(WatchType::watch_idx_t));
         }
 
-        bool isBNN() const
+        [[nodiscard]] bool isBNN() const
         {
             return (type == static_cast<int>(WatchType::watch_bnn_t));
         }
@@ -156,7 +156,7 @@ class Watched {
         BNNPropType get_bnn_prop_t() const
         {
             DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_bnn_t)));
-            return (BNNPropType)data2;
+            return static_cast<BNNPropType>(data2);
         }
 
         /**
@@ -252,15 +252,12 @@ class Watched {
             return data2;
         }
 
-        bool operator==(const Watched& other) const
+        [[nodiscard]] bool operator==(const Watched& other) const
         {
             return data1 == other.data1 && data2 == other.data2 && type == other.type;
         }
 
-        bool operator!=(const Watched& other) const
-        {
-            return !(*this == other);
-        }
+        [[nodiscard]] bool operator!=(const Watched& other) const = default;
 
     private:
         uint32_t data1;
