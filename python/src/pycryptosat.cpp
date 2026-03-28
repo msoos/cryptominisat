@@ -709,6 +709,7 @@ static PyObject* get_conflict(Solver *self)
 
         PyObject *item = PyLong_FromLong(value);
         PyList_Append(result, item);
+        Py_DECREF(item);
     }
 
     return result;
