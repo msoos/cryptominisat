@@ -205,7 +205,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
             if (ret.isTrue()) goto next;
-            assert(ret.isFalse() && ret.isFalse());
+            assert(ret.isFalse());
             cl = add_clause_int({l1, l2}, true);
             assert(!cl);
             if (!okay()) return false;
