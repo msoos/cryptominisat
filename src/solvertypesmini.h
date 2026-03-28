@@ -55,10 +55,10 @@ public:
         return Lit(x ^ 1);
     }
     constexpr Lit  operator^(const bool b) const {
-        return Lit(x ^ (uint32_t)b);
+        return Lit(x ^ static_cast<uint32_t>(b));
     }
-    Lit& operator^=(const bool b) {
-        x ^= (uint32_t)b;
+    constexpr Lit& operator^=(const bool b) {
+        x ^= static_cast<uint32_t>(b);
         return *this;
     }
     constexpr bool sign() const {
@@ -98,8 +98,8 @@ public:
     }
 };
 
-static const Lit lit_Undef(var_Undef, false);  // Useful special constants.
-static const Lit lit_Error(var_Undef, true );  //
+constexpr Lit lit_Undef(var_Undef, false);  // Useful special constants.
+constexpr Lit lit_Error(var_Undef, true );  //
 
 inline std::ostream& operator<<(std::ostream& os, const Lit lit)
 {
@@ -113,11 +113,10 @@ inline std::ostream& operator<<(std::ostream& os, const Lit lit)
 
 inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
 {
-    for (uint32_t i = 0; i < lits.size(); i++) {
+    for (size_t i = 0; i < lits.size(); i++) {
+        if (i > 0) co << " ";
         co << lits[i];
-        if (i != lits.size()-1) co << " ";
     }
-
     return co;
 }
 

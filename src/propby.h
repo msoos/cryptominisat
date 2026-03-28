@@ -171,8 +171,8 @@ class PropBy
             if (lit == ~lit_Undef)
                 type = null_clause_t;
 
-            data2 = ((uint32_t)hyperBin) << 1
-                | ((uint32_t)hyperBinNotAdded) << 2;
+            data2 = (static_cast<uint32_t>(hyperBin) << 1)
+                | (static_cast<uint32_t>(hyperBinNotAdded) << 2);
         }
 
         void set_bnn_reason(uint32_t idx)
@@ -193,28 +193,28 @@ class PropBy
             return data1;
         }
 
-        uint32_t isBNN() const
+        [[nodiscard]] bool isBNN() const
         {
             return type == bnn_t;
         }
 
-        uint32_t getBNNidx() const
+        [[nodiscard]] uint32_t getBNNidx() const
         {
             assert(isBNN());
             return data2;
         }
 
-        bool isRedStep() const
+        [[nodiscard]] bool isRedStep() const
         {
             return red_step;
         }
 
-        int32_t get_id() const
+        [[nodiscard]] int32_t get_id() const
         {
             return ID;
         }
 
-        bool getHyperbin() const
+        [[nodiscard]] bool getHyperbin() const
         {
             return data2 & 2U;
         }
@@ -222,10 +222,10 @@ class PropBy
         void setHyperbin(bool toSet)
         {
             data2 &= ~2U;
-            data2 |= (uint32_t)toSet << 1;
+            data2 |= static_cast<uint32_t>(toSet) << 1;
         }
 
-        bool getHyperbinNotAdded() const
+        [[nodiscard]] bool getHyperbinNotAdded() const
         {
             return data2 & 4U;
         }
@@ -233,7 +233,7 @@ class PropBy
         void setHyperbinNotAdded(bool toSet)
         {
             data2 &= ~4U;
-            data2 |= (uint32_t)toSet << 2;
+            data2 |= static_cast<uint32_t>(toSet) << 2;
         }
 
         Lit getAncestor() const
@@ -244,17 +244,17 @@ class PropBy
             return ~Lit::toLit(data1);
         }
 
-        bool isClause() const
+        [[nodiscard]] bool isClause() const
         {
             return type == clause_t;
         }
 
-        PropByType getType() const
+        [[nodiscard]] PropByType getType() const
         {
-            return (PropByType)type;
+            return static_cast<PropByType>(type);
         }
 
-        Lit lit2() const
+        [[nodiscard]] Lit lit2() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(type == binary_t);
@@ -293,12 +293,12 @@ class PropBy
 #endif
         }
 
-        bool isnullptr() const
+        [[nodiscard]] bool isnullptr() const
         {
             return type == null_clause_t;
         }
 
-        bool operator==(const PropBy other) const
+        [[nodiscard]] bool operator==(const PropBy other) const
         {
             return (type == other.type
                     && red_step == other.red_step
@@ -307,7 +307,7 @@ class PropBy
                    );
         }
 
-        bool operator!=(const PropBy other) const
+        [[nodiscard]] bool operator!=(const PropBy other) const
         {
             return !(*this == other);
         }
