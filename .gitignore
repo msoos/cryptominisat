@@ -48,3 +48,4 @@ html/cryptominisat5.wasm
 /scripts/fuzz/frat-xor
 /scripts/fuzz/doalarm
 /scripts/fuzz/cake_xlrup
+/scripts/fuzz/repro.sh

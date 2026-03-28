@@ -360,7 +360,7 @@ private:
             *(buf_ptr - 1) &= 0x7f;
         } else {
             uint32_t num = sprintf(
-                (char*)buf_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+                (char*)buf_ptr, "%s%d ", (l.sign() ? "-": ""), v+1);
             buf_ptr+=num;
             buf_len+=num;
         }
@@ -416,7 +416,7 @@ private:
             // End marker of this unsigned number
             *(del_ptr - 1) &= 0x7f;
         } else {
-            uint32_t num = sprintf((char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+            uint32_t num = sprintf((char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), v+1);
             del_ptr+=num;
             del_len+=num;
         }

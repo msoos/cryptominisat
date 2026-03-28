@@ -1434,7 +1434,7 @@ void Solver::write_final_frat_clauses() {
     for(auto& x: xorclauses) {
         if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
         x.reason_cl_ID = 0;
-        if (x.xid != 0) *frat << finalx << x.xid << fin;
+        if (x.xid != 0) *frat << finalx << x.xid << fin; // ID-only finalx is intentional: frat-xor looks up the clause content from the proof
         x.xid = 0;
     }
 
@@ -2737,7 +2737,9 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
 
     vector<Lit> lits = lits_out;
     const int32_t xid = ++clauseXID;
+    if (!lits.empty()) lits[0] ^= !rhs;
     *frat << origclx << xid << lits << fin;
+    if (!lits.empty()) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     add_clause_helper(lits);

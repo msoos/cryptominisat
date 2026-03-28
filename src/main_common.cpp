@@ -24,7 +24,6 @@ THE SOFTWARE.
 #include "main_common.h"
 #include "solverconf.h"
 #include <iostream>
-#include <fstream>
 
 using std::endl;
 
