@@ -3475,6 +3475,7 @@ bool Searcher::attach_xorclauses() {
             *frat << implyclfromx << id2 << lits << fratchain << x.xid << fin;
             solver->add_clause_int_frat(lits, id2);
             if (!okay()) return false;
+            *frat << delx << x.xid << fin;
             continue;
         }
         assert(x.size() > 2);
