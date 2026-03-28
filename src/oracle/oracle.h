@@ -130,6 +130,7 @@ public:
 
     void AddOrigClause(vector<Lit> clause, bool entailed);
     vector<Lit> clauses;
+    vector<int> clause_pos; // watch replacement search start position (per clause start)
     vector<vector<Watch>> watches;
     vector<signed char> lit_val;
     vector<VarC> vs;

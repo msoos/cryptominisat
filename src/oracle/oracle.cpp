@@ -211,7 +211,11 @@ void Oracle::ResizeClauseDb() {
         for (Var v = 1; v <= vars; v++) { new_reason[v] = vs[v].reason; }
         size_t prev_orig_clauses_size = orig_clauses_size;
         vector<Lit> new_clauses(orig_clauses_size);
-        for (size_t i = 0; i < orig_clauses_size; i++) { new_clauses[i] = clauses[i]; }
+        vector<int> new_clause_pos(orig_clauses_size, 0);
+        for (size_t i = 0; i < orig_clauses_size; i++) {
+            new_clauses[i] = clauses[i];
+            if (i < clause_pos.size()) new_clause_pos[i] = clause_pos[i];
+        }
         vector<CInfo> new_cla_info;
         num_lbd2_red_cls = 0;
         num_used_red_cls = 0;
@@ -292,6 +296,12 @@ void Oracle::ResizeClauseDb() {
                 int new_used = cla_info[i].used > 0 ? cla_info[i].used - 1 : 0;
                 new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, new_used, cla_info[i].total_used});
             }
+            // Copy clause data and position cache
+            new_clause_pos.resize(new_clauses.size() + len + 1, 0);
+            int old_pos = (cls < clause_pos.size()) ? clause_pos[cls] : 2;
+            // Clamp position to valid range for this clause
+            if (old_pos < 2 || old_pos >= (int)len) old_pos = 2;
+            new_clause_pos[new_pt] = old_pos;
             for (size_t k = cls; clauses[k]; k++) new_clauses.push_back(clauses[k]);
             new_clauses.push_back(0);
             if (added) orig_clauses_size = new_clauses.size();
@@ -310,6 +320,7 @@ void Oracle::ResizeClauseDb() {
             watches[l].resize(pos);
         }
         clauses = new_clauses;
+        clause_pos = new_clause_pos;
         cla_info = new_cla_info;
 #ifdef SLOW_DEBUG
         for (Lit l = 2; l <= vars*2+1; l++) {
@@ -530,6 +541,8 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
     size_t pt = clauses.size();
     watches[clause[0]].push_back({pt, clause[1], (int)clause.size()});
     watches[clause[1]].push_back({pt, clause[0], (int)clause.size()});
+    clause_pos.resize(pt + clause.size() + 1, 0);
+    clause_pos[pt] = 2; // start search at position 2 (first non-watched)
     for (Lit lit : clause) clauses.push_back(lit);
     clauses.push_back(0);
     cla_info.push_back({pt, glue, 1, 0});
@@ -745,13 +758,24 @@ size_t Oracle::Propagate(int level) {
             }
             clauses[w.cls] = other;
             clauses[w.cls+1] = ff;
-            // Try to find true or unassigned lit
+            // Try to find true or unassigned lit (with position caching)
             size_t fo = 0;
-            for (size_t k = w.cls+2; clauses[k]; k++) {
-                if (LitVal(clauses[k]) != -1) {
+            {
+                int pos = clause_pos[w.cls];
+                size_t k = w.cls + pos;
+                // Search from cached position to end
+                while (clauses[k] && LitVal(clauses[k]) == -1) k++;
+                if (clauses[k]) {
                     fo = k;
-                    break;
+                } else {
+                    // Wrap around: search from position 2 to cached position
+                    k = w.cls + 2;
+                    size_t stop = w.cls + pos;
+                    while (k < stop && LitVal(clauses[k]) == -1) k++;
+                    if (k < stop) fo = k;
                 }
+                // Always update cached position
+                clause_pos[w.cls] = (fo ? (int)(fo - w.cls) : pos);
             }
             // Found true or unassigned lit
             if (fo) {
@@ -955,6 +979,8 @@ void Oracle::AddOrigClause(vector<Lit> clause, bool entailed) {
     size_t pt = clauses.size();
     watches[clause[0]].push_back({clauses.size(), clause[1], (int)clause.size()});
     watches[clause[1]].push_back({clauses.size(), clause[0], (int)clause.size()});
+    clause_pos.resize(pt + clause.size() + 1, 0);
+    clause_pos[pt] = 2; // start search at position 2
     for (Lit lit : clause) clauses.push_back(lit);
     clauses.push_back(0);
     // If we have no learned clauses then this is original clause
@@ -987,6 +1013,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     restart_factor = 100;
 
     clauses.push_back(0);
+    clause_pos.push_back(0);
     orig_clauses_size = 1;
     for (const vector<Lit>& clause : clauses_) {
         AddOrigClause(clause, false);
