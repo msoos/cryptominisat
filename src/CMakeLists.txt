@@ -275,8 +275,8 @@ target_link_libraries(cryptominisat5
         Threads::Threads
         ${cryptoms_lib_link_libs}
         ${LOUVAIN_COMMUNITIES_LIBRARIES}
-        ${cadical}
         ${cadiback}
+        ${cadical}
     PUBLIC
         ${GMP_LIBRARIES}
 )
@@ -309,8 +309,8 @@ if(IPASIR)
             Threads::Threads
             ${cryptoms_lib_link_libs}
             ${LOUVAIN_COMMUNITIES_LIBRARIES}
-            ${cadical}
             ${cadiback}
+            ${cadical}
         PUBLIC
             ${GMP_LIBRARIES}
     )
