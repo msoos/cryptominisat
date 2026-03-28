@@ -616,7 +616,7 @@ class Tester:
                 f.write('%s "$CNF"\n' % base_cmd)
         os.chmod(script_path, 0o755)
         print("Repro script written to: %s" % script_path)
-        print("To reproduce the crash, run: ./repro.sh")
+        print("To reproduce the crash, run: ./repro.sh %s" % fname)
         print("To minimize the crash, run: ./minimize_cnf.py %s" % fname)
 
     def fuzz_test_one(self):
