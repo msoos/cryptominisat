@@ -438,12 +438,16 @@ void Oracle::BumpVar(Var v) {
         }
     }
     var_inc = var_inc * var_fact;
-    if (var_inc > 10000.0) {
+    // Rescale all activities when increment gets very large.
+    // Using 1e150 (like CaDiCaL) instead of 10000 makes rescaling
+    // extremely rare, avoiding expensive O(vars) rescaling operations.
+    if (var_inc > 1e150) {
         stats.mems+=10;
-        var_inc /= 10000.0;
+        const double scale = 1e-150;
+        var_inc *= scale;
         for (Var i = 1; i <= vars; i++) {
             double& act = var_act_heap[heap_N + i];
-            act /= 10000.0;
+            act *= scale;
             if (-EPS < act && act < EPS) {
                 assert(act != 0);
                 if (act < 0) {
