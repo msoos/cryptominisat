@@ -457,7 +457,8 @@ class Tester:
                 # of clang of other projects
                 noprob = ["std::_Ios_Fmtflags", "mzd.h", "lexical_cast.hpp",
                       "MersenneTwister.h", "boost::any::holder", "~~~~~",
-                      "SUMMARY", "process memory map", "==========="]
+                      "SUMMARY", "process memory map", "===========",
+                      "Alarm clock"]
 
                 ok = False
                 for x in noprob:
