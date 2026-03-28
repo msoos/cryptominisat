@@ -180,7 +180,7 @@ ReduceDB::ReduceDB(Solver* _solver) :
 ReduceDB::~ReduceDB()
 {
     #ifdef FINAL_PREDICTOR
-    //delete predictors;
+    delete predictors;
     #endif
 }
 
