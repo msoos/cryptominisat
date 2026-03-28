@@ -200,6 +200,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 }
 
 void Oracle::ResizeClauseDb() {
+    // Sort: added clauses first (glue==-1), then by glue ascending, then by used/total_used
     std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
         if (a.glue == -1 || b.glue == -1) return a.glue < b.glue;
         if (a.used != b.used) return a.used > b.used;
@@ -212,8 +213,6 @@ void Oracle::ResizeClauseDb() {
         vector<Lit> new_clauses(orig_clauses_size);
         for (size_t i = 0; i < orig_clauses_size; i++) { new_clauses[i] = clauses[i]; }
         vector<CInfo> new_cla_info;
-        // This sets new_clauses and fixes reasons
-        const size_t good_size = 10000;
         num_lbd2_red_cls = 0;
         num_used_red_cls = 0;
         for (size_t i = 0; i < cla_info.size(); i++) {
@@ -225,7 +224,6 @@ void Oracle::ResizeClauseDb() {
             size_t cls = cla_info[i].pt;
             if (vs[VarOf(clauses[cls+1])].reason == cls) {
                 swap(clauses[cls], clauses[cls+1]);
-                // Can only happen in binary clause
                 assert(clauses[cls+2] == 0);
             }
             if (vs[VarOf(clauses[cls])].reason == cls) {
@@ -251,10 +249,37 @@ void Oracle::ResizeClauseDb() {
             }
             assert(len >= 2);
             if (frozen_sat) assert(!impll);
-            if (cla_info[i].glue <= 2) num_lbd2_red_cls++;
-            else if (cla_info[i].used) num_used_red_cls++;
-            if (frozen_sat || (impll == 0 && !added && !cla_info[i].Keep()
-                        && i > good_size+num_lbd2_red_cls)) {
+
+            // Tiered clause reduction (CaDiCaL-style):
+            // Tier 1 (glue <= 2): always keep
+            // Tier 2 (glue <= 6): keep if used recently (used > 0), decrement used
+            // Tier 3 (glue > 6): delete if not used since last reduce
+            bool should_delete = false;
+            if (frozen_sat) {
+                should_delete = true;
+            } else if (impll == 0 && !added) {
+                int glue = cla_info[i].glue;
+                int used = cla_info[i].used;
+                if (glue <= 2) {
+                    // Tier 1: always keep
+                    num_lbd2_red_cls++;
+                } else if (glue <= 6) {
+                    // Tier 2: delete only if unused for 2 consecutive reductions
+                    if (used > 0) {
+                        num_used_red_cls++;
+                    } else {
+                        should_delete = true;
+                    }
+                } else {
+                    // Tier 3: delete if not used since last reduce
+                    if (used <= 0) {
+                        should_delete = true;
+                    } else {
+                        num_used_red_cls++;
+                    }
+                }
+            }
+            if (should_delete) {
                 stats.forgot_clauses++;
                 clauses[cls] = 0;
                 continue;
@@ -262,7 +287,11 @@ void Oracle::ResizeClauseDb() {
             size_t new_pt = new_clauses.size();
             if (impll) new_reason[VarOf(impll)] = new_pt;
             if (added) assert(new_clauses.size() == orig_clauses_size);
-            else new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, cla_info[i].used-1, cla_info[i].total_used});
+            else {
+                // Decrement used counter (will be set back to 1+ when clause is bumped)
+                int new_used = cla_info[i].used > 0 ? cla_info[i].used - 1 : 0;
+                new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, new_used, cla_info[i].total_used});
+            }
             for (size_t k = cls; clauses[k]; k++) new_clauses.push_back(clauses[k]);
             new_clauses.push_back(0);
             if (added) orig_clauses_size = new_clauses.size();
@@ -326,7 +355,9 @@ void Oracle::BumpClause(size_t cls) {
         }
     }
     cla_info[i].glue = glue;
-    cla_info[i].used = 1;
+    // Tier 2 (glue <= 6) clauses get used=2 so they survive 2 reduction rounds
+    // Tier 3 (glue > 6) clauses get used=1 so they survive 1 round
+    cla_info[i].used = (glue <= 6) ? 2 : 1;
     cla_info[i].total_used++;
     return;
 }
