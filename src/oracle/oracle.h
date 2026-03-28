@@ -165,6 +165,12 @@ public:
     void InitLuby();
     int NextLuby();
 
+    // Glucose-style EMA restart tracking
+    double ema_glue_fast = 0;
+    double ema_glue_slow = 0;
+    int64_t ema_conflicts = 0;
+    bool ShouldRestart() const;
+
     size_t num_lbd2_red_cls = 0;
     size_t num_used_red_cls = 0;
     void ResizeClauseDb();
