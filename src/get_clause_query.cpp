@@ -118,7 +118,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
             out.push_back(Lit(v, solver->value(v) == l_False));
             if (!simplified) out = solver->clause_outer_numbered(out);
             if (all_vars_outside(out)) {
-                if (!simplified) if (!simplified) solver->map_inter_to_outer(out);
+                if (!simplified) solver->map_inter_to_outer(out);
                 units_at++;
                 return true;
             }
