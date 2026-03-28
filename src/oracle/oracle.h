@@ -155,6 +155,7 @@ public:
     // 0=unmarked, 1=removable, 2=poison
     vector<char> minimize_mark;
     vector<Var> minimize_marked_vars; // track which vars to clear
+    vector<Var> redu_visited; // scratch space for LitReduntant (avoid heap allocs)
 
     int64_t lvl_it = 1;
     vector<int64_t> lvl_seen; // for computing LBD

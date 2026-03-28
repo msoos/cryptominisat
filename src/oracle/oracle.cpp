@@ -567,7 +567,7 @@ bool Oracle::LitReduntant(Lit lit) {
     redu_it++;
     redu_s.push_back(lit);
     // Track variables visited in this call for marking
-    vector<Var> visited;
+    redu_visited.clear();
     int its = 0;
     while (!redu_s.empty()) {
         its++;
@@ -591,7 +591,7 @@ bool Oracle::LitReduntant(Lit lit) {
                     // poison — this path leads to a decision, fail
                     redu_s.clear();
                     // Mark all visited as poison too
-                    for (Var pv : visited) {
+                    for (Var pv : redu_visited) {
                         if (minimize_mark[pv] == 0) {
                             minimize_mark[pv] = 2;
                             minimize_marked_vars.push_back(pv);
@@ -602,7 +602,7 @@ bool Oracle::LitReduntant(Lit lit) {
                 if (vs[tv].reason == 0) {
                     redu_s.clear();
                     // Mark all visited as poison
-                    for (Var pv : visited) {
+                    for (Var pv : redu_visited) {
                         if (minimize_mark[pv] == 0) {
                             minimize_mark[pv] = 2;
                             minimize_marked_vars.push_back(pv);
@@ -618,14 +618,14 @@ bool Oracle::LitReduntant(Lit lit) {
                     if (redu_seen[clauses[k]] != redu_it) {
                         redu_seen[clauses[k]] = redu_it;
                         redu_s.push_back(clauses[k]);
-                        visited.push_back(tv);
+                        redu_visited.push_back(tv);
                     }
                 }
             }
         }
     }
     // Success — mark all visited variables as removable
-    for (Var rv : visited) {
+    for (Var rv : redu_visited) {
         if (minimize_mark[rv] == 0) {
             minimize_mark[rv] = 1;
             minimize_marked_vars.push_back(rv);
