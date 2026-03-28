@@ -33,7 +33,6 @@ docs
 pycrypto.*egg-info
 node_modules
 ml-data
-fuzz
 pycryptosat.egg-info
 compile_commands.json
 tests/breakid*
