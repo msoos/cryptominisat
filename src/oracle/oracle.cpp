@@ -345,13 +345,13 @@ void Oracle::ResizeClauseDb() {
 void Oracle::BumpClause(size_t cls) {
     if (cls < orig_clauses_size) return;
     assert(cla_info.size() > 0);
-    size_t i = 0;
-    for (size_t b = cla_info.size()/2; b >= 1; b /= 2) {
-        while (i + b < cla_info.size() && cla_info[i+b].pt <= cls) {
-            i += b;
-        }
-    }
-    assert(cla_info[i].pt == cls);
+    // Binary search using std::lower_bound for better compiler optimization
+    CInfo target;
+    target.pt = cls;
+    auto it = std::lower_bound(cla_info.begin(), cla_info.end(), target,
+        [](const CInfo& a, const CInfo& b) { return a.pt < b.pt; });
+    assert(it != cla_info.end() && it->pt == cls);
+    size_t i = it - cla_info.begin();
     if (cla_info[i].glue == -1) {
         // Special added clause
         assert(cla_info[i].used == -1);
