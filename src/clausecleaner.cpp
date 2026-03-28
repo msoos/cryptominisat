@@ -571,7 +571,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
 
     if (cl.size() == 1) {
         solver->enqueue<true>(cl[0]);
-        *solver->frat << del << cl << del; // double unit delete
+        *solver->frat << del << cl << fin; // double unit delete
         return true;
     }
 
