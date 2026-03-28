@@ -43,6 +43,7 @@ class Main: public MainCommon
         ~Main()
         {
             delete solver;
+            delete resultfile;
             if (fratf) {
                 fflush(fratf);
                 fclose(fratf);
