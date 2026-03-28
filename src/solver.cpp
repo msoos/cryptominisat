@@ -2164,7 +2164,7 @@ uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
     );
 
     size_t array = watches.mem_used_array();
-    print_stats_line(solver->conf.prefix + "Mem for watch array"
+    print_stats_line(conf.prefix + "Mem for watch array"
         , array/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(array, rss_mem_used)
