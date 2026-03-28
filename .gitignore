@@ -44,3 +44,7 @@ mldata
 html/cryptominisat5.js
 html/cryptominisat5.wasm
 .claude
+/scripts/fuzz/frat-rs
+/scripts/fuzz/frat-xor
+/scripts/fuzz/doalarm
+/scripts/fuzz/cake_xlrup
