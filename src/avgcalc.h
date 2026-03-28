@@ -85,19 +85,6 @@ public:
         return *this;
     }
 
-    AvgCalc<T, T2>& operator-=(const AvgCalc<T, T2>& other)
-    {
-        sum -= other.sum;
-        num -= other.num;
-        min = std::min(min, other.min);
-        max = std::max(max, other.max);
-        #if defined(STATS_NEEDED)
-        sumSqare -= other.sumSqare;
-        #endif
-
-        return *this;
-    }
-
     T2 get_sum() const
     {
         return sum;
