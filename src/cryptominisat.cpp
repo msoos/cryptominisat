@@ -949,11 +949,14 @@ lbool calc(
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
 
-        lbool ret ;
+        lbool ret;
         if (todo == Todo::todo_solve) {
             ret = data->solvers[0]->solve_with_assumptions(assumptions, only_sampling_solution);
         } else if (todo == Todo::todo_simplify) {
             ret = data->solvers[0]->simplify_with_assumptions(assumptions, strategy);
+        } else {
+            assert(false);
+            ret = l_Undef;
         }
         data->okay = data->solvers[0]->okay();
         data->cpu_times[0] = cpu_time();
