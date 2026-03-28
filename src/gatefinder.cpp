@@ -223,7 +223,6 @@ void GateFinder::print_graphviz_dot()
     gateUsed.resize(orGates.size(), false);
     size_t index = 0;
     for (const OrGate& orGate: orGates) {
-        index++;
         for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {
                 if (!ws.isIdx()) {
@@ -259,6 +258,7 @@ void GateFinder::print_graphviz_dot()
                 file << "[style = \"dotted\", arrowsize=\"0.4\"];" << endl;
             }*/
         }
+        index++;
     }
 
     for (index = 0; index < orGates.size(); index++) {
