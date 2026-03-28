@@ -833,11 +833,9 @@ void SubsumeStrengthen::backw_sub_with_impl(
         assert(subs[j].ws.isClause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        if (subsLits[j] == lit_Undef) {  //Subsume
-            if (!cl2.red()) ret_sub_str.subsumedIrred = true;
-            simplifier->unlink_clause(offset2, true, false, true);
-            ret_sub_str.sub++;
-        }
+        if (!cl2.red()) ret_sub_str.subsumedIrred = true;
+        simplifier->unlink_clause(offset2, true, false, true);
+        ret_sub_str.sub++;
     }
     runStats.sub1 += ret_sub_str;
 }
