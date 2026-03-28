@@ -282,11 +282,11 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
         MPI_ANY_SOURCE,
         1, //check tag "1", i.e. interrupt tag data
         MPI_COMM_WORLD, &flag, &status);
-    int source = status.MPI_SOURCE;
     assert(err == MPI_SUCCESS);
     if (flag == false) {
         return false;
     }
+    int source = status.MPI_SOURCE;
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "c -->> MPI Server"
