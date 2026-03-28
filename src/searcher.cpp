@@ -306,7 +306,7 @@ void Searcher::normalClMinim()
                 learnt_clause[j++] = learnt_clause[i];
                 break;
             } else {
-                VERBOSE_PRINT("Chain adding ID: " << ID << " due to normal CL minim, lit: " << p <<  " removed");
+                VERBOSE_PRINT("Chain adding ID: " << id << " due to normal CL minim, lit: " << p <<  " removed");
                 chain.push_back(id);
             }
         }
@@ -396,7 +396,7 @@ void Searcher::add_lits_to_learnt(
         case binary_t : {
             id = confl.get_id();
             sumAntecedentsLits += 2;
-            VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << ID);
+            VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << id);
 
             if (confl.isRedStep()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -469,7 +469,7 @@ void Searcher::add_lits_to_learnt(
             lits = cl->data();
             size = cl->size();
             sumAntecedentsLits += size;
-            VERBOSE_PRINT("resolving with cl:" << *cl << " -- ID: " << ID);
+            VERBOSE_PRINT("resolving with cl:" << *cl << " -- ID: " << id);
             break;
         }
 
@@ -486,7 +486,7 @@ void Searcher::add_lits_to_learnt(
         case null_clause_t:
         default: release_assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
-    VERBOSE_PRINT("Chain adding ID: " << ID << " due to resolution on lit: " << p);
+    VERBOSE_PRINT("Chain adding ID: " << id << " due to resolution on lit: " << p);
     chain.push_back(id);
 
     size_t i = 0;
