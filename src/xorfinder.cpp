@@ -95,10 +95,10 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
         std::sort(txors.begin(), txors.end());
 
         size_t sz = 1;
-        vector<Xor>::iterator i = txors.begin();
-        vector<Xor>::iterator j = i;
+        auto i = txors.begin();
+        auto j = i;
         ++i;
-        for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
+        for (auto end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 if (solver->frat->enabled()) {
                     assert(false && "TODO FRAT");

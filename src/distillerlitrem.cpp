@@ -94,12 +94,9 @@ bool DistillerLitRem::go_through_clauses(
 ) {
     double my_time = cpu_time();
     bool time_out = false;
-    vector<ClOffset>::iterator i, j;
-    i = j = cls.begin();
-    for (vector<ClOffset>::iterator end = cls.end()
-        ; i != end
-        ; ++i
-    ) {
+    auto i = cls.begin();
+    auto j = i;
+    for (auto end = cls.end(); i != end; ++i) {
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
             *j++ = *i;

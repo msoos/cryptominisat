@@ -2885,14 +2885,14 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
     //Finally, remove the literals that have seen[literal] = 0
     //Here, we can count do stats, etc.
     bool changedClause  = false;
-    vector<Lit>::iterator i = cl.begin();
-    vector<Lit>::iterator j= i;
+    auto i = cl.begin();
+    auto j = i;
 
     //never remove the 0th literal -- TODO this is a bad thing
     //we should be able to remove this, but I can't figure out how to
     //reorder the clause then
     seen[cl[0].toInt()] = 1;
-    for (vector<Lit>::iterator end = cl.end(); i != end; ++i) {
+    for (auto end = cl.end(); i != end; ++i) {
         if (seen[i->toInt()]) {
             *j++ = *i;
         } else {

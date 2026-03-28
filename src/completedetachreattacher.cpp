@@ -43,11 +43,7 @@ void CompleteDetachReatacher::detach_nonbins()
     assert(!solver->frat->something_delayed());
     ClausesStay stay;
 
-    for (watch_array::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it
-    ) {
+    for (auto it = solver->watches.begin(), end = solver->watches.end(); it != end; ++it) {
         stay += clearWatchNotBinNotTri(*it);
     }
 
@@ -120,9 +116,9 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
     vector<ClOffset>& cs
     , bool removeStatsFirst
 ) {
-    vector<ClOffset>::iterator i = cs.begin();
-    vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator end = cs.end(); i != end; ++i) {
+    auto i = cs.begin();
+    auto j = i;
+    for (auto end = cs.end(); i != end; ++i) {
         assert(!solver->frat->something_delayed());
         Clause* cl = solver->cl_alloc.ptr(*i);
 

@@ -409,9 +409,7 @@ public:
         disabled = false;
         tried_to_remove = 0;
 
-        for (uint32_t i = 0; i < ps.size(); i++) {
-            getData()[i] = ps[i];
-        }
+        std::copy(ps.begin(), ps.end(), getData());
     }
 
     using iterator = Lit *;

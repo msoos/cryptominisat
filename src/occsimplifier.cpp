@@ -3034,14 +3034,9 @@ bool OccSimplifier::backward_sub_str()
 
 bool OccSimplifier::fill_occur() {
     //Calculate binary clauses' contribution to n_occurs
-    size_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+    for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = solver->watches[lit];
         for (const auto& w: ws) {
             if (w.isBin() && !w.red() && lit < w.lit2()) {
                 n_occurs[lit.toInt()]++;
@@ -3288,14 +3283,9 @@ void OccSimplifier::sanityCheckElimedVars() const {
     }
 
     //Then, sanity-check the binary clauses
-    size_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+    for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = solver->watches[lit];
         for (const auto& w : ws) {
             if (w.isBin()) {
                 if (solver->varData[lit.var()].removed == Removed::elimed
@@ -3380,16 +3370,12 @@ void OccSimplifier::set_limits()
 void OccSimplifier::clean_elimed_cls()
 {
     assert(solver->decisionLevel() == 0);
-    vector<ElimedClauses>::iterator i = elimed_cls.begin();
-    vector<ElimedClauses>::iterator j = elimed_cls.begin();
+    auto i = elimed_cls.begin();
+    auto j = elimed_cls.begin();
 
     uint64_t i_lits = 0;
     uint64_t j_lits = 0;
-    for (vector<ElimedClauses>::iterator
-        end = elimed_cls.end()
-        ; i != end
-        ; ++i
-    ) {
+    for (auto end = elimed_cls.end(); i != end; ++i) {
         const uint32_t elimed_on = solver->map_outer_to_inter(i->at(0, elimed_cls_lits).var());
         if (solver->varData[elimed_on].removed == Removed::elimed
             && solver->value(elimed_on) != l_Undef

@@ -370,12 +370,9 @@ bool DistillerLong::distill_long_cls_all(
 bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, bool only_remove) {
     frat_func_start();
     bool time_out = false;
-    vector<ClOffset>::iterator i, j;
-    i = j = cls.begin();
-    for (vector<ClOffset>::iterator end = cls.end()
-        ; i != end
-        ; ++i
-    ) {
+    auto i = cls.begin();
+    auto j = i;
+    for (auto end = cls.end(); i != end; ++i) {
         VERBOSE_PRINT("At offset: " << *i);
 
         //Check if we are in state where we only copy offsets around

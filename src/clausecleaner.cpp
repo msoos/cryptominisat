@@ -393,21 +393,17 @@ bool ClauseCleaner::remove_and_clean_all() {
     if (solver->okay()) {
         //Once we have cleaned the watchlists
         //no watchlist whose lit is set may be non-empty
-        size_t wsLit = 0;
-        for(watch_array::const_iterator
-            it = solver->watches.begin(), end = solver->watches.end()
-            ; it != end
-            ; ++it, wsLit++
-        ) {
+        for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
             const Lit lit = Lit::toLit(wsLit);
             if (solver->value(lit) != l_Undef) {
-                if (!it->empty()) {
-                    cout << "ERROR watches size: " << it->size() << endl;
-                    for(const auto& w: *it) {
+                const auto& wl = solver->watches[lit];
+                if (!wl.empty()) {
+                    cout << "ERROR watches size: " << wl.size() << endl;
+                    for (const auto& w: wl) {
                         cout << "ERROR w: " << w << endl;
                     }
                 }
-                assert(it->empty());
+                assert(wl.empty());
             }
         }
     }

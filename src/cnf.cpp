@@ -602,14 +602,9 @@ void CNF::print_all_clauses() const
     }
 
 
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+    for (uint32_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = watches[lit];
         cout << "watches[" << lit << "]" << endl;
         for (const auto& w : ws) {
             if (w.isBin()) {

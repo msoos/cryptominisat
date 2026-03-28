@@ -2374,14 +2374,9 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
 
 bool Solver::verify_model_implicit_clauses() const
 {
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+    for (uint32_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = watches[lit];
 
         for (Watched w: ws) {
             if (w.isBin()
@@ -2590,14 +2585,9 @@ void Solver::check_all_nonxor_clause_propagated() const {
 void Solver::check_implicit_propagated() const
 {
     const double my_time = cpu_time();
-    size_t wsLit = 0;
-    for(watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
+    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
         const Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+        watch_subarray_const ws = watches[lit];
         for(const auto& w : ws) {
             //Satisfied, or not implicit, skip
             if (value(lit) == l_True || w.isClause()) continue;
@@ -2639,17 +2629,12 @@ size_t Solver::get_num_vars_elimed() const {
 
 void Solver::free_unused_watches()
 {
-    size_t wsLit = 0;
-    for (watch_array::iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
+    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
         if (varData[lit.var()].removed == Removed::elimed
             || varData[lit.var()].removed == Removed::replaced
         ) {
-            watch_subarray ws = *it;
+            watch_subarray ws = watches[lit];
             assert(ws.empty());
             ws.clear();
         }
@@ -2926,13 +2911,8 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     uint64_t thisNumRedBins = 0;
     uint64_t thisNumIrredBins = 0;
 
-    size_t wsLit = 0;
-    for(watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        watch_subarray_const ws = *it;
+    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        watch_subarray_const ws = watches[Lit::toLit(wsLit)];
         for(const auto& w: ws) {
             if (w.isBin()) {
                 #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS

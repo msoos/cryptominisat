@@ -39,7 +39,6 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 #include <set>
-using std::get;
 using std::cout;
 using std::endl;
 using std::make_tuple;
@@ -114,13 +113,9 @@ void VarReplacer::updateVars(
 
 void VarReplacer::printReplaceStats() const
 {
-    uint32_t i = 0;
-    for (vector<Lit>::const_iterator
-        it = table.begin(); it != table.end()
-        ; ++it, i++
-    ) {
-        if (it->var() == i) continue;
-        cout << "Replacing var " << i+1 << " with Lit " << *it << endl;
+    for (uint32_t i = 0; i < table.size(); i++) {
+        if (table[i].var() == i) continue;
+        cout << "Replacing var " << i+1 << " with Lit " << table[i] << endl;
     }
 }
 
@@ -147,27 +142,27 @@ void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
 }
 
 bool VarReplacer::enqueueDelayedEnqueue() {
-    for(auto& l: delayedEnqueue) {
-        get<0>(l) = get_lit_replaced_with(get<0>(l));
+    for (auto& [lit, id] : delayedEnqueue) {
+        lit = get_lit_replaced_with(lit);
 
         if (!solver->ok) {
             //if we are UNSAT, just delete them
-            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
+            *solver->frat << del << id << lit << fin;
             continue;
         }
 
-        if (solver->value(get<0>(l)) == l_Undef) {
-            solver->enqueue<false>(get<0>(l));
+        if (solver->value(lit) == l_Undef) {
+            solver->enqueue<false>(lit);
             // enqueue will add unit, we can delete below
-            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
-        } else if (solver->value(get<0>(l)) == l_False) {
+            *solver->frat << del << id << lit << fin;
+        } else if (solver->value(lit) == l_False) {
             *solver->frat << add << ++solver->clauseID << fin;
-            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
+            *solver->frat << del << id << lit << fin;
             set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
         } else {
             //it's already set, delete
-            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
+            *solver->frat << del << id << lit << fin;
         }
     }
     delayedEnqueue.clear();
@@ -189,16 +184,12 @@ void VarReplacer::attach_delayed_attach() {
 }
 
 void VarReplacer::update_all_vardata() {
-    uint32_t var = 0;
-    for (vector<Lit>::const_iterator
-        it = table.begin(); it != table.end()
-        ; ++it, var++
-    ) {
+    for (uint32_t var = 0; var < table.size(); var++) {
         const uint32_t orig = solver->map_outer_to_inter(var);
         const Lit orig_lit = Lit(orig, false);
 
-        const uint32_t repl = solver->map_outer_to_inter(it->var());
-        const Lit repl_lit = Lit(repl, it->sign());
+        const uint32_t repl = solver->map_outer_to_inter(table[var].var());
+        const Lit repl_lit = Lit(repl, table[var].sign());
 
         update_vardata(orig_lit, repl_lit);
     }
@@ -587,9 +578,9 @@ bool VarReplacer::replace_bnns() {
 bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     frat_func_start();
     assert(!solver->frat->something_delayed());
-    vector<ClOffset>::iterator i = cs.begin();
-    vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator end = cs.end(); i != end; ++i) {
+    auto i = cs.begin();
+    auto j = i;
+    for (auto end = cs.end(); i != end; ++i) {
         runStats.bogoprops += 3;
         assert(!solver->frat->something_delayed());
 
