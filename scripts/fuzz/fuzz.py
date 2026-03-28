@@ -49,7 +49,7 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
 
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
-desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
+desc = """Fuzz the solver with fuzz-generator: ./fuzz.py
 """
 
 
@@ -738,7 +738,7 @@ if __name__ == "__main__":
         rnd_seed = random.randint(0, 1000*1000*100)
 
     while True:
-        toexec = "./fuzz_test.py --fuzzlim 1 --seed %d " % rnd_seed
+        toexec = "./fuzz.py --fuzzlim 1 --seed %d " % rnd_seed
         if not options.novalgrind:
             toexec += "--dovalgrind "
         if options.valgrind_freq:
