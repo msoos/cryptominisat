@@ -623,42 +623,25 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
     for (const auto& w: occ) {
-        if (w.isBin()
-            && ps.size() == 2
-            && ps[!smallest] == w.lit2()
-            && !w.red()
-        ) {
-            out_subsumed.push_back(OccurClause(lit, w));
-        }
-
-        if (!w.isClause()) {
+        if (w.isBin()) {
+            if (ps.size() == 2 && ps[!smallest] == w.lit2() && !w.red()) {
+                out_subsumed.push_back(OccurClause(lit, w));
+            }
             continue;
         }
+        if (!w.isClause()) continue;
 
         *simplifier->limit_to_decrease -= 15;
-
-        if (w.get_offset() == offset
-            || !subsetAbst(abs, w.getAbst())
-        ) {
-            continue;
-        }
+        if (w.get_offset() == offset || !subsetAbst(abs, w.getAbst())) continue;
 
         const ClOffset offset2 = w.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-
-        if (ps.size() > cl2.size() ||
-            cl2.get_removed() ||
-            (only_irred && cl2.red()))
-        {
-            continue;
-        }
+        if (ps.size() > cl2.size() || cl2.get_removed() || (only_irred && cl2.red())) continue;
 
         *simplifier->limit_to_decrease -= 50;
         if (subset(ps, cl2)) {
             out_subsumed.push_back(OccurClause(lit, w));
-            #ifdef VERBOSE_DEBUG
-            cout << "subsumed cl offset: " << offset2 << endl;
-            #endif
+            VERBOSE_PRINT("subsumed cl offset: " << offset2);
         }
     }
 }
