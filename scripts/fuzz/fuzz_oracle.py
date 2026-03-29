@@ -313,6 +313,7 @@ def fuzz_one(args, test_num, seed, counters):
                 print("CNF saved to:", saved)
                 return False
             else:
+                counters["assump"] += 20
                 if verbose:
                     # Print the results line from assump_fuzz output
                     for line in assump_out.split("\n"):
@@ -404,7 +405,7 @@ def main():
     print("Starting seed: %d" % seed)
 
     test_num = 0
-    counters = {"sat": 0, "unsat": 0, "unknown": 0, "timeout": 0}
+    counters = {"sat": 0, "unsat": 0, "unknown": 0, "timeout": 0, "assump": 0}
     start_time = time.time()
 
     try:
@@ -416,9 +417,9 @@ def main():
             if not args.verbose:
                 elapsed = time.time() - start_time
                 skip = counters["unknown"] + counters["timeout"]
-                print("\rTest %d | seed %d | SAT:%d UNSAT:%d skip:%d | %.0fs"
+                print("\rTest %d | seed %d | SAT:%d UNSAT:%d assump:%d skip:%d | %.0fs"
                       % (test_num, seed, counters["sat"], counters["unsat"],
-                         skip, elapsed),
+                         counters["assump"], skip, elapsed),
                       end="", flush=True)
             else:
                 print("Test %d (seed %d):" % (test_num, seed))
