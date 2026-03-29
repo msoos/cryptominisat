@@ -828,40 +828,29 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
         ; i++
     ) {
         //Each BIN only once
-        if (tmp[i].isBin() &&
-            (both_bins || lit < tmp[i].lit2()))
-        {
-            const bool red = tmp[i].red();
-            tried_bin_tri++;
-            tmpLits.resize(2);
-            tmpLits[0] = lit;
-            tmpLits[1] = tmp[i].lit2();
-            std::sort(tmpLits.begin(), tmpLits.end());
+        if (!tmp[i].isBin() || (!both_bins && !(lit < tmp[i].lit2()))) continue;
 
-            Sub1Ret ret;
-            if (!backw_sub_str_with_impl(tmpLits, ret)) {
-                return false;
-            }
-            subsumedBin += ret.sub;
-            strBin += ret.str;
+        const bool red = tmp[i].red();
+        tried_bin_tri++;
+        tmpLits = {std::min(lit, tmp[i].lit2()), std::max(lit, tmp[i].lit2())};
 
-            if (red
-                && ret.subsumedIrred
-            ) {
-                solver->binTri.redBins--;
-                solver->binTri.irredBins++;
-                simplifier->n_occurs[tmpLits[0].toInt()]++;
-                simplifier->n_occurs[tmpLits[1].toInt()]++;
-                simplifier->elim_calc_need_update.touch(tmpLits[0]);
-                simplifier->elim_calc_need_update.touch(tmpLits[1]);
-                simplifier->added_cl_to_var.touch(tmpLits[0]);
-                simplifier->added_cl_to_var.touch(tmpLits[1]);
-                findWatchedOfBin(
-                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_id()).setRed(false);
-                findWatchedOfBin(
-                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_id()).setRed(false);
+        Sub1Ret ret;
+        if (!backw_sub_str_with_impl(tmpLits, ret)) return false;
+        subsumedBin += ret.sub;
+        strBin += ret.str;
+
+        if (red && ret.subsumedIrred) {
+            solver->binTri.redBins--;
+            solver->binTri.irredBins++;
+            for (const Lit l : tmpLits) {
+                simplifier->n_occurs[l.toInt()]++;
+                simplifier->elim_calc_need_update.touch(l);
+                simplifier->added_cl_to_var.touch(l);
             }
-            continue;
+            findWatchedOfBin(
+                solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_id()).setRed(false);
+            findWatchedOfBin(
+                solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_id()).setRed(false);
         }
     }
 
