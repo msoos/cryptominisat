@@ -305,7 +305,8 @@ int main(int argc, char* argv[]) {
 
         // Solve
         oracle.reset_mems();
-        auto result = oracle.Solve(oracle_assumps, /*usecache=*/true, max_mems);
+        bool usecache = std::uniform_int_distribution<int>(0, 9)(rng) < 7;
+        auto result = oracle.Solve(oracle_assumps, usecache, max_mems);
 
         if (result.isUnknown()) {
             num_unknown++;
