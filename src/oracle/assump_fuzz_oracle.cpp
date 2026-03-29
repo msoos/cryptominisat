@@ -283,14 +283,23 @@ int main(int argc, char* argv[]) {
             dimacs_assumps.push_back(positive ? var : -var);
         }
 
+        // Pick a random max_mems limit: sometimes very tight, sometimes generous
+        int64_t max_mems;
+        int mems_choice = std::uniform_int_distribution<int>(0, 9)(rng);
+        if (mems_choice < 2)       max_mems = 10;
+        else if (mems_choice < 4)  max_mems = 100;
+        else if (mems_choice < 6)  max_mems = 1000;
+        else                       max_mems = 100000000;
+
         if (verb >= 1) {
             cout << "c Iter " << iter << ": assumps =";
             for (int a : dimacs_assumps) cout << " " << a;
-            cout << endl;
+            cout << " max_mems=" << max_mems << endl;
         }
 
         // Solve
-        auto result = oracle.Solve(oracle_assumps, /*usecache=*/true);
+        oracle.reset_mems();
+        auto result = oracle.Solve(oracle_assumps, /*usecache=*/true, max_mems);
 
         if (result.isUnknown()) {
             num_unknown++;
@@ -355,11 +364,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (verb >= 1) {
-        cout << "c Results: SAT=" << num_sat << " UNSAT=" << num_unsat
-             << " UNKNOWN=" << num_unknown << endl;
-    }
-
+    cout << "c Results: SAT=" << num_sat << " UNSAT=" << num_unsat
+         << " UNKNOWN=" << num_unknown << endl;
     cout << "PASS" << endl;
     return 0;
 }

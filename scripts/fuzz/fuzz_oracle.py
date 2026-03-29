@@ -313,9 +313,16 @@ def fuzz_one(args, test_num, seed, counters):
                 print("CNF saved to:", saved)
                 return False
             else:
-                counters["assump"] += 20
+                # Parse SAT/UNSAT/UNKNOWN counts from assump_fuzz output
+                for line in assump_out.split("\n"):
+                    if line.startswith("c Results:"):
+                        import re
+                        m = re.search(r'SAT=(\d+)\s+UNSAT=(\d+)\s+UNKNOWN=(\d+)', line)
+                        if m:
+                            counters["assump_sat"] += int(m.group(1))
+                            counters["assump_unsat"] += int(m.group(2))
+                            counters["assump_unknown"] += int(m.group(3))
                 if verbose:
-                    # Print the results line from assump_fuzz output
                     for line in assump_out.split("\n"):
                         if line.startswith("c Results") or line.startswith("PASS"):
                             print("  assump: %s" % line.strip())
@@ -405,7 +412,8 @@ def main():
     print("Starting seed: %d" % seed)
 
     test_num = 0
-    counters = {"sat": 0, "unsat": 0, "unknown": 0, "timeout": 0, "assump": 0}
+    counters = {"sat": 0, "unsat": 0, "unknown": 0, "timeout": 0,
+                 "assump_sat": 0, "assump_unsat": 0, "assump_unknown": 0}
     start_time = time.time()
 
     try:
@@ -417,9 +425,12 @@ def main():
             if not args.verbose:
                 elapsed = time.time() - start_time
                 skip = counters["unknown"] + counters["timeout"]
-                print("\rTest %d | seed %d | SAT:%d UNSAT:%d assump:%d skip:%d | %.0fs"
+                a_sat = counters["assump_sat"]
+                a_unsat = counters["assump_unsat"]
+                a_unk = counters["assump_unknown"]
+                print("\rTest %d | seed %d | SAT:%d UNSAT:%d skip:%d | assump S:%d U:%d ?:%d | %.0fs"
                       % (test_num, seed, counters["sat"], counters["unsat"],
-                         counters["assump"], skip, elapsed),
+                         skip, a_sat, a_unsat, a_unk, elapsed),
                       end="", flush=True)
             else:
                 print("Test %d (seed %d):" % (test_num, seed))
