@@ -5147,19 +5147,6 @@ void OccSimplifier::order_vars_for_elim()
         velim_order.insert(var);
     }
     assert(velim_order.heap_property());
-
-    //Print sorted listed list
-    #ifdef VERBOSE_DEBUG_VARELIM
-    /*cout << "-----------" << endl;
-    for(size_t i = 0; i < velim_order.size(); i++) {
-        cout
-        << "velim_order[" << i << "]: "
-        << " var: " << velim_order[i]+1
-        << " val: " << varElimComplexity[velim_order[i]].first
-        << " , " << varElimComplexity[velim_order[i]].second
-        << endl;
-    }*/
-    #endif
 }
 
 void OccSimplifier::check_elimed_vars_are_unassigned() const
@@ -5195,7 +5182,7 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
 size_t OccSimplifier::mem_used() const
 {
     size_t b = 0;
-    b += dummy.capacity()*sizeof(char);
+    b += dummy.capacity()*sizeof(Lit);
     b += added_long_cl.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
     b += elimed_cls.capacity()*sizeof(ElimedClauses);
@@ -5243,8 +5230,7 @@ double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
 
 void OccSimplifier::Stats::clear()
 {
-    Stats stats;
-    *this = stats;
+    *this = Stats{};
 }
 
 OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
