@@ -5400,83 +5400,44 @@ void OccSimplifier::reverse_blocked_clause_elim() {
     }
     verb_print(2, "[rev-bce] sampl set: " << solver->conf.sampling_vars.size());
 
+    // Check if all irred clauses containing lit only use sampling vars
+    auto all_sampl_neighbors = [&](const Lit check_lit, uint32_t skip_var) -> bool {
+        for (const auto& w : solver->watches[check_lit]) {
+            if (w.isBin()) {
+                if (w.red()) continue;
+                if (!sampling_vars_occsimp[w.lit2().var()]) return false;
+            } else if (w.isClause()) {
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                if (cl->get_removed() || cl->freed() || cl->red()) continue;
+                for (const auto& l2 : *cl) {
+                    if (l2.var() == skip_var) continue;
+                    if (!sampling_vars_occsimp[l2.var()]) return false;
+                }
+            }
+        }
+        return true;
+    };
+
     uint32_t works = 0;
-    for(uint32_t v = 0; v < solver->nVars(); v++) {
+    for (uint32_t v = 0; v < solver->nVars(); v++) {
         if (sampling_vars_occsimp[v]) continue;
-        Lit lit(v, false);
-        bool bad = false;
-        /* cout << "rev-bce checking lit: " << lit << endl; */
-        for(const auto& w: solver->watches[lit]) {
-            if (bad) break;
-            if (w.isBin()) {
-                if (w.red()) continue;
-                Lit l2 = w.lit2();
-                /* cout << lit << " " << l2 << endl; */
-                if (!sampling_vars_occsimp[l2.var()]) {
-                    /* cout << "bad." << endl; */
-                    bad=true; break;}
-            }
-            if (w.isClause()) {
-                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->get_removed() || cl->freed() || cl->red()) continue;
-                /* cout << *cl << endl; */
-                for(const auto& l2: *cl) {
-                    if (l2.var() == v) continue;
-                    if (!sampling_vars_occsimp[l2.var()]) {
-                        /* cout << "bad:" << l2 << endl; */
-                        bad=true; break;}
-                }
-            }
-        }
-        if (bad) continue;
-        for(const auto& w: solver->watches[~lit]) {
-            if (bad) break;
-            if (w.isBin()) {
-                if (w.red()) continue;
-                Lit l2 = w.lit2();
-                /* cout << lit << " " << l2 << endl; */
-                if (!sampling_vars_occsimp[l2.var()]) {
-                    /* cout << "bad:" << l2 << endl; */
-                    bad=true; break;}
-            }
-            if (w.isClause()) {
-                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->get_removed() || cl->freed() || cl->red()) continue;
-                /* cout << *cl << endl; */
-                for(const auto& l2: *cl) {
-                    if (l2.var() == v) continue;
-                    if (!sampling_vars_occsimp[l2.var()]) {
-                        /* cout << "bad:" << l2 << endl; */
-                        bad=true; break;}
-                }
-            }
-        }
-        if (bad) continue;
+        const Lit lit(v, false);
+        if (!all_sampl_neighbors(lit, v) || !all_sampl_neighbors(~lit, v)) continue;
 
         works++;
         cout << "works for var: " << lit << endl;
-        for(const auto& w: solver->watches[lit]) {
-            if (w.isBin()) {
-                if (w.red()) continue;
-                Lit l2 = w.lit2();
-                cout << lit << " " << l2 << endl;
-            }
-            if (w.isClause()) {
+        for (const auto& w : solver->watches[lit]) {
+            if (w.isBin() && !w.red()) cout << lit << " " << w.lit2() << endl;
+            else if (w.isClause()) {
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->get_removed() || cl->freed() || cl->red()) continue;
-                cout << *cl << endl;
+                if (!cl->get_removed() && !cl->freed() && !cl->red()) cout << *cl << endl;
             }
         }
-        for(const auto& w: solver->watches[~lit]) {
-            if (w.isBin()) {
-                if (w.red()) continue;
-                Lit l2 = w.lit2();
-                cout << lit << " " << l2 << endl;
-            }
-            if (w.isClause()) {
+        for (const auto& w : solver->watches[~lit]) {
+            if (w.isBin() && !w.red()) cout << ~lit << " " << w.lit2() << endl;
+            else if (w.isClause()) {
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->get_removed() || cl->freed() || cl->red()) continue;
-                cout << *cl << endl;
+                if (!cl->get_removed() && !cl->freed() && !cl->red()) cout << *cl << endl;
             }
         }
         cout << "--" << endl;
