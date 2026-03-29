@@ -190,13 +190,12 @@ int main(int argc, char* argv[]) {
 
     if (result.isTrue()) {
         cout << "s SATISFIABLE" << endl;
-        // Print model in DIMACS format
+        // Print model using phase values (lit_val is cleared after Solve)
         cout << "v";
         for (int v = 1; v <= cnf.num_vars; v++) {
-            int val = oracle.LitVal(PosLit(v));
-            if (val > 0) cout << " " << v;
-            else if (val < 0) cout << " " << -v;
-            else cout << " " << v; // unassigned = true by convention
+            int phase = oracle.GetPhase(v);
+            if (phase) cout << " " << v;
+            else cout << " " << -v;
         }
         cout << " 0" << endl;
         return 10;

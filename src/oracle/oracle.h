@@ -120,6 +120,9 @@ public:
 
     int CurLevel() const;
     int LitVal(Lit lit) const;
+    // Get the phase (polarity) of a variable from the last solution.
+    // Returns 1 for true, 0 for false. Only valid after a SAT Solve().
+    int GetPhase(Var v) const { return vs[v].phase; }
     const Stats& getStats() const {return stats;}
     void reset_mems() {stats.mems = 0;}
 
