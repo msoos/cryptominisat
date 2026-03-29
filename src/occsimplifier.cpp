@@ -4169,27 +4169,18 @@ bool OccSimplifier::generate_resolvents(
     Lit lit,
     uint32_t limit)
 {
-    size_t at_poss = 0;
-    for (const Watched* it = tmp_poss.begin(), *end = tmp_poss.end()
-        ; it != end
-        ; ++it, at_poss++
-    ) {
+    for (const auto& pos : tmp_poss) {
         *limit_to_decrease -= 3;
         #ifdef SLOW_DEBUG
-        assert(!solver->redundant_or_removed(*it));
+        assert(!solver->redundant_or_removed(pos));
         #endif
 
-        size_t at_negs = 0;
-        for (const Watched *it2 = tmp_negs.begin(), *end2 = tmp_negs.end()
-            ; it2 != end2
-            ; it2++, at_negs++
-        ) {
+        for (const auto& neg : tmp_negs) {
             *limit_to_decrease -= 3;
-            assert(!solver->redundant_or_removed(*it2));
+            assert(!solver->redundant_or_removed(neg));
 
             //Resolve the two clauses
-            bool tautological = resolve_clauses(*it, *it2, lit);
-            if (tautological) continue;
+            if (resolve_clauses(pos, neg, lit)) continue;
             if (solver->satisfied(dummy)) continue;
             if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
 
@@ -4198,33 +4189,25 @@ bool OccSimplifier::generate_resolvents(
             #endif
 
             //Early-abort or over time
-            if (resolvents.size()+1 > limit
-                //Too long resolvent
+            if (resolvents.size() + 1 > limit
                 || (solver->conf.velim_resolvent_too_large != -1
-                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
-                //Over-time
+                    && (int)dummy.size() > solver->conf.velim_resolvent_too_large)
                 || *limit_to_decrease < -10LL*1000LL
-
             ) {
                 return false;
             }
 
             //Calculate new clause stats
             ClauseStats stats;
-            if (it->isBin() && it2->isClause()) {
-                Clause* c = solver->cl_alloc.ptr(it2->get_offset());
-                stats = c->stats;
-            } else if (it2->isBin() && it->isClause()) {
-                Clause* c = solver->cl_alloc.ptr(it->get_offset());
-                stats = c->stats;
-            } else if (it2->isClause() && it->isClause()) {
-                Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
-                Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
-                //Neither are redundant, this works.
-                stats = ClauseStats::combineStats(c1->stats, c2->stats);
+            if (pos.isBin() && neg.isClause()) {
+                stats = solver->cl_alloc.ptr(neg.get_offset())->stats;
+            } else if (neg.isBin() && pos.isClause()) {
+                stats = solver->cl_alloc.ptr(pos.get_offset())->stats;
+            } else if (neg.isClause() && pos.isClause()) {
+                stats = ClauseStats::combineStats(
+                    solver->cl_alloc.ptr(pos.get_offset())->stats,
+                    solver->cl_alloc.ptr(neg.get_offset())->stats);
             }
-            //must clear marking that has been set due to gate
-            //strengthen_dummy_with_bins(false);
             resolvents.add_resolvent(dummy, stats);
         }
     }
@@ -4311,30 +4294,9 @@ void OccSimplifier::weaken(
         for(uint32_t i = at; i < out.size() && *limit_to_decrease > 0; i++) {
             const Lit l = out[i];
             if (l == lit) continue;
-            *limit_to_decrease-=50;
-            *limit_to_decrease-=solver->watches[l].size();
+            *limit_to_decrease -= 50;
+            *limit_to_decrease -= solver->watches[l].size();
             for(auto const& w: solver->watches[l]) {
-                /*if (w.isClause()) {
-                    *limit_to_decrease -= 1;
-                    const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-                    if (cl.get_removed() || cl.red() || cl.size() >= out.size() || cl.size() > 10) continue;
-                    uint32_t num_inside = 0;
-                    bool wrong = false;
-                    Lit toadd = lit_Undef;
-                    for(auto const& l2: cl) {
-                        if (seen[l2.toInt()]) num_inside++;
-                        else toadd = ~l2;
-
-                        if (seen[(~l2).toInt()] || l2.var() == lit.var()) {wrong = true; break;}
-                    }
-                    if (!wrong && num_inside == cl.size()-1) {
-                        out.push_back(toadd);
-                        seen[(toadd).toInt()] = 1;
-                        toClear.push_back(toadd);
-                    }
-                    continue;
-                }*/
-
                 if (!w.isBin() || w.red()) continue;
                 if (w.lit2().var() == lit.var()) continue;
                 if (seen[(~w.lit2()).toInt()] || seen[w.lit2().toInt()]) continue;
