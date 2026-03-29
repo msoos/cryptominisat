@@ -2103,11 +2103,7 @@ bool OccSimplifier::gate_based_eqlit() {
     for(auto& g: gates) std::sort(g.lits.begin(), g.lits.end());
     map<Lit, vector<uint32_t>> lit_to_gates; //lit -> gate num
     for(uint32_t i = 0; i < gates.size(); i++) {
-        const auto& g = gates[i];
-        const Lit l = g.lits[0];
-        if (lit_to_gates.count(l) == 0)
-            lit_to_gates[l] = vector<uint32_t>();
-        lit_to_gates[l].push_back(i);
+        lit_to_gates[gates[i].lits[0]].push_back(i);
     }
 
     vector<Lit> finalLits;
