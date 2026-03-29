@@ -1066,7 +1066,8 @@ void OccSimplifier::subs_with_resolvent_clauses()
     uint64_t resolvents_checked = 0;
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &resolvent_sub_time_limit;
-    for(uint32_t var = 0; var < solver->nVars(); var++) {
+    bool timed_out = false;
+    for (uint32_t var = 0; var < solver->nVars() && !timed_out; var++) {
         if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
         const Lit lit(var, false);
         if (solver->watches[lit].empty() || solver->watches[~lit].empty()) continue;
@@ -1075,21 +1076,21 @@ void OccSimplifier::subs_with_resolvent_clauses()
         const auto& tmp_negs = solver->watches[~lit];
         int32_t id1;
         int32_t id2;
-        for (auto const& pos: tmp_poss) {
+        for (const auto& pos: tmp_poss) {
+            if (timed_out) break;
             *limit_to_decrease -= 3;
             if (pos.isBin()) {
                 if (pos.red()) continue;
                 id1 = pos.get_id();
-            }
-            else if (pos.isClause()) {
+            } else if (pos.isClause()) {
                 const Clause *cl = solver->cl_alloc.ptr(pos.get_offset());
                 if (cl->get_removed() || cl->red()) continue;
                 id1 = cl->stats.id;
             } else { assert(false); }
 
-            for (auto const& neg: tmp_negs) {
+            for (const auto& neg: tmp_negs) {
                 *limit_to_decrease -= 3;
-                if (*limit_to_decrease < 0) goto end;
+                if (*limit_to_decrease < 0) { timed_out = true; break; }
                 if (neg.isBin()) {
                     if (neg.red()) continue;
                     id2 = neg.get_id();
@@ -1099,30 +1100,20 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     id2 = cl->stats.id;
                 } else { assert(false); }
 
-                //Resolve the two clauses
-                bool tautological = resolve_clauses(pos, neg, lit);
-                if (tautological) continue;
+                if (resolve_clauses(pos, neg, lit)) continue;
                 if (solver->satisfied(dummy)) continue;
-                if (dummy.size() == 1) {
-                    // could remove binary subsumed, which would lead watchlist manipulated
-                    // which would lead to memory error, since we are going thorugh it
-                    // just skip.
-                    continue;
-                }
-//                 if (dummy.size() > 10) continue; //likely not useful
+                // size==1 resolvent could remove a binary, manipulating the watchlist
+                // we're iterating over -- skip to avoid memory errors
+                if (dummy.size() == 1) continue;
 
                 resolvents_checked++;
                 tmp_subs.clear();
                 std::sort(dummy.begin(), dummy.end());
 
                 sub_str->find_subsumed(
-                    CL_OFFSET_MAX,
-                    dummy,
-                    calcAbstraction(dummy),
-                    tmp_subs,
-                    true //only irred
-                );
-                for(const auto& sub: tmp_subs) {
+                    CL_OFFSET_MAX, dummy, calcAbstraction(dummy),
+                    tmp_subs, true /*only irred*/);
+                for (const auto& sub: tmp_subs) {
                     if (sub.ws.isBin()) {
                         const auto id3 = sub.ws.get_id();
                         if (id3 == id1 || id3 == id2 || sub.ws.red()) continue;
@@ -1140,7 +1131,6 @@ void OccSimplifier::subs_with_resolvent_clauses()
         }
     }
 
-    end:
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
     verb_print(1, "[occ-resolv-subs] removed: " << removed
