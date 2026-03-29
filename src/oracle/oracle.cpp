@@ -721,6 +721,21 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
     for (Var v : minimize_marked_vars) minimize_mark[v] = 0;
     minimize_marked_vars.clear();
 
+    // Reason-side bumping: for each literal in the learned clause,
+    // also bump variables in its reason clause. Gives VSIDS better
+    // visibility into the conflict neighborhood. (CaDiCaL/MapleCOMSPS)
+    for (size_t i = 1; i < clause.size(); i++) {
+        Var v = VarOf(clause[i]);
+        size_t reason = vs[v].reason;
+        if (reason == 0) continue;
+        for (size_t k = reason; clauses[k]; k++) {
+            Var rv = VarOf(clauses[k]);
+            if (rv != v && vs[rv].level > 1) {
+                BumpVar(rv);
+            }
+        }
+    }
+
     std::sort(clause.begin(), clause.end(), [&](Lit l1, Lit l2) {
         int d1 = vs[VarOf(l1)].level;
         int d2 = vs[VarOf(l2)].level;
