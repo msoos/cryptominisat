@@ -4821,15 +4821,12 @@ void OccSimplifier::add_pos_lits_to_dummy_and_seen(
     if (ps.isBin()) {
         *limit_to_decrease -= 1;
         assert(ps.lit2() != posLit);
-
         seen[ps.lit2().toInt()] = 1;
         dummy.push_back(ps.lit2());
-    }
-
-    if (ps.isClause()) {
+    } else if (ps.isClause()) {
         Clause& cl = *solver->cl_alloc.ptr(ps.get_offset());
         *limit_to_decrease -= (long)cl.size()/2;
-        for (const Lit lit : cl){
+        for (const Lit lit : cl) {
             if (lit != posLit) {
                 seen[lit.toInt()] = 1;
                 dummy.push_back(lit);
@@ -4846,16 +4843,12 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
         *limit_to_decrease -= 1;
         assert(qs.lit2() != ~posLit);
 
-        if (seen[(~qs.lit2()).toInt()]) {
-            return true;
-        }
+        if (seen[(~qs.lit2()).toInt()]) return true;
         if (!seen[qs.lit2().toInt()]) {
             dummy.push_back(qs.lit2());
             seen[qs.lit2().toInt()] = 1;
         }
-    }
-
-    if (qs.isClause()) {
+    } else if (qs.isClause()) {
         Clause& cl = *solver->cl_alloc.ptr(qs.get_offset());
         *limit_to_decrease -= (long)cl.size()/2;
         for (const Lit lit: cl) {
