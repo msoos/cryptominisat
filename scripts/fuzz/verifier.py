@@ -44,7 +44,7 @@ def unique_file(fname_begin, fname_end=".cnf") -> str:
             pass
 
         counter += 1
-        if counter > 300:
+        if counter > 3000:
             print("Cannot create unique_file, last try was: %s" % fname)
             exit(-1)
     exit(-1)
