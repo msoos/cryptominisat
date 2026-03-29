@@ -325,18 +325,13 @@ bool OccSimplifier::clean_clause(
             continue;
         }
 
-        if (solver->value(*i) == l_True)
-            satisfied = true;
+        if (solver->value(*i) == l_True) satisfied = true;
 
-        if (solver->value(*i) == l_True
-            || solver->value(*i) == l_False
-        ) {
-            removeWCl(solver->watches[*i], offset);
-            if (!cl.red()) {
-                removed_cl_with_var.touch(i->var());
-                elim_calc_need_update.touch(i->var());
-                n_occurs[i->toInt()]--;
-            }
+        removeWCl(solver->watches[*i], offset);
+        if (!cl.red()) {
+            removed_cl_with_var.touch(i->var());
+            elim_calc_need_update.touch(i->var());
+            n_occurs[i->toInt()]--;
         }
     }
     cl.shrink(i-j);
