@@ -49,21 +49,22 @@ class SubsumeStrengthen;
 class GateFinder;
 
 struct ElimedClauses {
-    ElimedClauses() = default;
-    explicit ElimedClauses(size_t _start, size_t _end, bool _is_xor):
-        start(_start) , end(_end),  is_xor(_is_xor) {}
-    const Lit& at(const uint64_t at, const vector<Lit>& elimed_cls_lits) const {
-        return elimed_cls_lits[start+at];
-    }
-    Lit& at(const uint64_t at, vector<Lit>& elimed_cls_lits) {
-        return elimed_cls_lits[start+at];
-    }
-
-    uint64_t size() const { return end-start; }
-    uint64_t start;
-    uint64_t end;
+    uint64_t start = 0;
+    uint64_t end = 0;
     bool toRemove = false;
     bool is_xor = false;
+
+    ElimedClauses() = default;
+    ElimedClauses(size_t _start, size_t _end, bool _is_xor):
+        start(_start), end(_end), is_xor(_is_xor) {}
+
+    const Lit& at(uint64_t idx, const vector<Lit>& elimed_cls_lits) const {
+        return elimed_cls_lits[start + idx];
+    }
+    Lit& at(uint64_t idx, vector<Lit>& elimed_cls_lits) {
+        return elimed_cls_lits[start + idx];
+    }
+    uint64_t size() const { return end - start; }
 };
 
 struct BVEStats

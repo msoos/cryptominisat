@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __SUBSUMESTRENGTHEN_H__
-#define __SUBSUMESTRENGTHEN_H__
+#pragma once
 
 #include "cloffset.h"
 #include "solvertypesmini.h"
@@ -155,5 +154,3 @@ inline const SubsumeStrengthen::Stats& SubsumeStrengthen::get_stats() const
 }
 
 } //end namespace
-
-#endif //__SUBSUMESTRENGTHEN_H__
