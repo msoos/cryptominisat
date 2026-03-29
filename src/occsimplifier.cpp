@@ -523,7 +523,7 @@ void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
         << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB");
 }
 
-void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
+void OccSimplifier::print_linkin_data(const LinkInData& link_in_data) const
 {
     if (solver->conf.verbosity < 2) return;
 
@@ -1504,7 +1504,7 @@ void OccSimplifier::sort_occurs_and_set_abst()
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
                 if (cl->freed() || cl->get_removed()) {
                     w.setElimedLit(lit_Error);
-                } else if (cl->size() >solver->conf.maxXorToFind) {
+                } else if (cl->size() > solver->conf.maxXorToFind) {
                     w.setElimedLit(lit_Undef);
                 } else {
                     w.setElimedLit(Lit::toLit(cl->abst));
