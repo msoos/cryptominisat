@@ -70,6 +70,13 @@ def auto_find_binaries(args):
             print("Searched in:", search)
             sys.exit(1)
 
+    if args.assump_fuzz is None:
+        args.assump_fuzz = find_binary("assump_fuzz_oracle", search)
+        if args.assump_fuzz is None:
+            print("ERROR: Cannot find 'assump_fuzz_oracle' binary. Build it with: make assump_fuzz_oracle")
+            print("Searched in:", search)
+            sys.exit(1)
+
     return args
 
 
@@ -288,6 +295,30 @@ def fuzz_one(args, test_num, seed, counters):
                 print("  Solution verified OK (%d vars)" % len(oracle_solution))
             counters["sat"] += 1
 
+            # Run assumption-based fuzzing on SAT instances
+            if verbose:
+                print("  Running assumption-based fuzz (K=20)...")
+            assump_out, assump_rc, assump_timeout = run_solver(
+                args.assump_fuzz, cnf_path, args.tlimit,
+                ["-k", "20", "-s", str(seed)])
+
+            if assump_timeout:
+                if verbose:
+                    print("  assump_fuzz_oracle timed out, skipping")
+            elif assump_rc != 0:
+                print("BUG: assump_fuzz_oracle failed!")
+                print("Output:")
+                print(assump_out)
+                saved = save_failing_cnf(cnf_path, test_num, seed)
+                print("CNF saved to:", saved)
+                return False
+            else:
+                if verbose:
+                    # Print the results line from assump_fuzz output
+                    for line in assump_out.split("\n"):
+                        if line.startswith("c Results") or line.startswith("PASS"):
+                            print("  assump: %s" % line.strip())
+
         # If UNSAT: cross-check with CryptoMiniSat
         if oracle_result == "UNSAT":
             if verbose:
@@ -353,15 +384,18 @@ def main():
                         help="Path to cryptominisat5 binary (auto-detected if not given)")
     parser.add_argument("--fuzzer", type=str, default=None,
                         help="Path to cnf-fuzz-biere binary (auto-detected if not given)")
+    parser.add_argument("--assump-fuzz", type=str, default=None, dest="assump_fuzz",
+                        help="Path to assump_fuzz_oracle binary (auto-detected if not given)")
 
     args = parser.parse_args()
     args = auto_find_binaries(args)
 
     print("Oracle fuzzer")
-    print("  oracle:  %s" % args.oracle)
-    print("  cms:     %s" % args.cms)
-    print("  fuzzer:  %s" % args.fuzzer)
-    print("  tlimit:  %d s" % args.tlimit)
+    print("  oracle:      %s" % args.oracle)
+    print("  cms:         %s" % args.cms)
+    print("  fuzzer:      %s" % args.fuzzer)
+    print("  assump_fuzz: %s" % args.assump_fuzz)
+    print("  tlimit:      %d s" % args.tlimit)
     print()
 
     seed = args.seed

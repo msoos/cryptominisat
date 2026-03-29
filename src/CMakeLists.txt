@@ -391,6 +391,21 @@ target_include_directories(oracle PRIVATE
 )
 target_compile_features(oracle PRIVATE cxx_std_17)
 
+set(cadical_SRC_DIR "${PROJECT_SOURCE_DIR}/../cadical/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
+add_executable(assump_fuzz_oracle
+    oracle/assump_fuzz_oracle.cpp
+    oracle/oracle.cpp
+)
+target_include_directories(assump_fuzz_oracle PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle
+    "${cadiback_DIR}/include/"
+    "${cadical_SRC_DIR}"
+)
+target_link_libraries(assump_fuzz_oracle PRIVATE ${cadiback} ${cadical})
+target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
+
 if(MPI_FOUND)
     add_executable(cryptominisat5_mpi-bin
         main_mpi.cpp
