@@ -125,40 +125,29 @@ void OccSimplifier::save_on_var_memory()
 
 void OccSimplifier::print_elimed_clauses_reverse() const
 {
-    for(vector<ElimedClauses>::const_reverse_iterator
-        it = elimed_cls.rbegin(), end = elimed_cls.rend()
-        ; it != end
-        ; ++it
-    ) {
+    for (auto it = elimed_cls.rbegin(); it != elimed_cls.rend(); ++it) {
         size_t at = 1;
-        vector<Lit> lits;
-        while(at < it->size()) {
+        while (at < it->size()) {
             Lit l = it->at(at, elimed_cls_lits);
             if (l == lit_Undef) {
-                cout
-                << "elimed clause (internal number):";
-                for(size_t i = 0; i < it->size(); i++) {
+                cout << "elimed clause (internal number):";
+                for (size_t i = 0; i < it->size(); i++) {
                     cout << it->at(i, elimed_cls_lits) << " ";
                 }
                 cout << endl;
-                lits.clear();
-            } else {
-                lits.push_back(l);
             }
             at++;
         }
 
-        cout
-        << "dummy elimed clause for var (internal number) " << it->at(0, elimed_cls_lits).var()
-        << endl;
-
+        cout << "dummy elimed clause for var (internal number) "
+             << it->at(0, elimed_cls_lits).var() << endl;
     }
 }
 
 uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
 {
     uint32_t num_cls = 0;
-    for (ElimedClauses elimed: elimed_cls) {
+    for (const auto& elimed: elimed_cls) {
         if (elimed.toRemove) continue;
         for (size_t i = 0; i < elimed.size(); i++) {
             //It's elimed on this variable
@@ -248,21 +237,20 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
     //go through in reverse order
     vector<Lit> lits;
-    for (long int i = (int)elimed_cls.size()-1; i >= 0; i--) {
-        ElimedClauses* it = &elimed_cls[i];
+    for (auto it = elimed_cls.rbegin(); it != elimed_cls.rend(); ++it) {
         if (it->toRemove) continue;
 
         Lit elimed_on = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, elimed_cls_lits));
         size_t at = 1;
         bool satisfied = false;
         lits.clear();
-        while(at < it->size()) {
+        while (at < it->size()) {
             //built clause, reached marker, "lits" is now valid
             if (it->at(at, elimed_cls_lits) == lit_Undef) {
                 if (!satisfied) {
                     [[maybe_unused]] bool var_set;
                     if (!it->is_xor) var_set = extender->add_cl(lits, elimed_on.var());
-                    else var_set =extender->add_xor_cl(lits, elimed_on.var());
+                    else var_set = extender->add_xor_cl(lits, elimed_on.var());
                     #ifndef DEBUG_VARELIM
                     //all should be satisfied in fact
                     //no need to go any further
