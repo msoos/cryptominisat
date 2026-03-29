@@ -151,7 +151,7 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
 
 vector<vector<Lit>> OccSimplifier::get_elimed_clauses_for(const uint32_t outer_v) {
     build_elimed_map();
-    const uint32_t inter_v = solver->map_outer_to_inter(outer_v);
+    [[maybe_unused]] const uint32_t inter_v = solver->map_outer_to_inter(outer_v);
     assert(solver->varData[inter_v].removed == Removed::elimed && "Variable must be eliminated");
 
     const uint32_t at_elimed_cls = blk_var_to_cls[outer_v];
@@ -209,7 +209,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is undef
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
-        const uint32_t outer = solver->map_inter_to_outer(i);
+        [[maybe_unused]] const uint32_t outer = solver->map_inter_to_outer(i);
         assert(solver->varData[i].removed != Removed::elimed
             || (solver->value(i) == l_Undef && solver->model_value(outer) == l_Undef)
         );
@@ -613,8 +613,8 @@ void OccSimplifier::check_cls_sanity() {
         if (cl->size() <= 2) cout << "ERROR: too short cl: " << *cl << endl;
         assert(cl->size() > 2);
     }
-    for(const auto& x: solver->xorclauses)
-        for(const auto& v: x) assert(solver->varData[v].removed == Removed::none);
+    for ([[maybe_unused]] const auto& x: solver->xorclauses)
+        for ([[maybe_unused]] const auto& v: x) assert(solver->varData[v].removed == Removed::none);
 }
 
 void OccSimplifier::add_back_to_solver() {
@@ -667,7 +667,7 @@ void OccSimplifier::remove_all_longs_from_watches() {
 }
 
 bool OccSimplifier::only_red_and_idx_occ(const Lit l) const {
-    const auto should_be = n_occurs[l.toInt()];
+    [[maybe_unused]] const auto should_be = n_occurs[l.toInt()];
     uint32_t val = 0;
     for(const auto& w: solver->watches[l]) {
         if (w.isIdx()) continue;
@@ -1601,8 +1601,7 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
     for(auto const& w: poss) {
         if (!w.isBin()) continue;
 
-        auto val = solver->value(w.lit2());
-        assert(val == l_Undef);
+        assert(solver->value(w.lit2()) == l_Undef);
         solver->enqueue<false>(w.lit2());
         solver->ok = solver->propagate_occur<false>(limit_to_decrease);
         if (!solver->okay()) goto end;
@@ -1635,15 +1634,13 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
     solver->watches[l].copyTo(poss);
     for(auto const& w: poss) {
         assert(w.isClause());
-        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-        assert(cl->red());
+        assert(solver->cl_alloc.ptr(w.get_offset())->red());
         unlink_clause(w.get_offset());
     }
     solver->watches[~l].copyTo(negs);
     for(auto const& w: negs) {
         assert(w.isClause());
-        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-        assert(cl->red());
+        assert(solver->cl_alloc.ptr(w.get_offset())->red());
         unlink_clause(w.get_offset());
     }
     assert(solver->watches[l].empty());
@@ -1752,12 +1749,10 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 
     vector<uint32_t> vars2;
     for(const uint32_t& v: vars) {
-        auto rem_val = solver->varData[v].removed;
-        assert(rem_val == Removed::none || rem_val == Removed::replaced);
+        assert(solver->varData[v].removed == Removed::none
+            || solver->varData[v].removed == Removed::replaced);
         const uint32_t v2 = solver->varReplacer->get_var_replaced_with(v);
-
-        rem_val = solver->varData[v2].removed;
-        assert(rem_val == Removed::none);
+        assert(solver->varData[v2].removed == Removed::none);
         assert(v2 < seen.size());
 
         if (seen[v2]) continue;
@@ -1848,8 +1843,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
         v2 = solver->map_outer_to_inter(v2);
         if (solver->value(v2) != l_Undef) continue;
         if (sampl_var_pairs.count(v2)) continue;
-        auto rem_val = solver->varData[v2].removed;
-        assert(rem_val == Removed::none);
+        assert(solver->varData[v2].removed == Removed::none);
         sampl_var_pairs[v2] = v;
     }
 
@@ -2000,7 +1994,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
             if (cl1->size() <= 3) continue; // we could mess with definition of gates
             if (cl1->stats.id == g.id) continue;
 
-            bool found = false;
+            [[maybe_unused]] bool found = false;
             for(auto const&l: *cl1) {
                 if (l == ~g.lits[0]) {found = true; continue;}
                 seen[l.toInt()] = 1;
