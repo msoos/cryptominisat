@@ -2008,7 +2008,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
         }
     }
 
-    /* if (!sub_str_with_added_long_and_bin(true)) goto end; */
+
     added_long_cl.clear();
     added_irred_bin.clear();
 
@@ -2102,7 +2102,7 @@ bool OccSimplifier::gate_based_eqlit() {
         }
     }
 
-    /* if (!sub_str_with_added_long_and_bin(true)) goto end; */
+
     added_long_cl.clear();
     added_irred_bin.clear();
 
@@ -2243,7 +2243,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
-    /* if (!sub_str_with_added_long_and_bin(true)) goto end; */
+
     added_long_cl.clear();
     added_irred_bin.clear();
 
@@ -3418,7 +3418,6 @@ bool OccSimplifier::find_irreg_gate(
                 out_b.push(m.second);
             }
         }
-//         cout << "PicoSAT UNSAT for var: " << elim_lit << " core size: " << out_a.size() + out_b.size() << " vs: " << a.size()+b.size() << endl;
         found = true;
         resolve_gate = true;
     }
@@ -3504,7 +3503,7 @@ bool OccSimplifier::find_ite_gate(
     out_a.clear();
     out_b.clear();
 
-    //gate description we are looking for where "a" is being defineed
+    //gate description we are looking for where "a" is being defined
     // as  x -> (a=f)
     //    -x -> (a=g)
     // these translate to:
