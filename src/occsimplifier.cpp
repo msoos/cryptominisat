@@ -86,17 +86,17 @@ OccSimplifier::~OccSimplifier()
 
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 {
-    n_occurs.insert(n_occurs.end(), 2, 0);
+    n_occurs.resize(n_occurs.size() + 2, 0);
     if (solver->conf.sampling_vars_set) {
-        sampling_vars_occsimp.insert(sampling_vars_occsimp.end(), 1, 0);
+        sampling_vars_occsimp.push_back(false);
     }
 }
 
 void OccSimplifier::new_vars(size_t n)
 {
-    n_occurs.insert(n_occurs.end(), n*2ULL, 0);
+    n_occurs.resize(n_occurs.size() + n*2, 0);
     if (solver->conf.sampling_vars_set) {
-        sampling_vars_occsimp.insert(sampling_vars_occsimp.end(), n, 0);
+        sampling_vars_occsimp.resize(sampling_vars_occsimp.size() + n, false);
     }
 }
 
