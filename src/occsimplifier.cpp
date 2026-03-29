@@ -26,14 +26,12 @@ THE SOFTWARE.
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
-#include <algorithm>
 #include <iostream>
 
 #include "occsimplifier.h"
 #include "clause.h"
 #include "solver.h"
 #include "clausecleaner.h"
-#include "constants.h"
 #include "solutionextender.h"
 #include "varreplacer.h"
 #include "varupdatehelper.h"
@@ -3096,8 +3094,8 @@ bool OccSimplifier::fill_occur() {
         lredcls.clear();
     }
 
-    LinkInData combined(link_in_data_irred);
-    combined.combine(link_in_data_red);
+    LinkInData combined = link_in_data_irred;
+    combined += link_in_data_red;
     print_linkin_data(combined);
 
     return true;

@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "sqlstats.h"
-#include "solver.h"
 #include "solvertypes.h"
 #include "subsumeimplicit.h"
 #include <algorithm>

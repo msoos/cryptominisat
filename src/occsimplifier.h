@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #pragma once
 
+#include <array>
 #include <map>
 #include <vector>
 #include <set>
@@ -105,8 +106,7 @@ struct BVEStats
         print_stats_line("c v-elim-sub" , subsumedByVE);
     }
     void clear() {
-        BVEStats tmp;
-        *this = tmp;
+        *this = BVEStats{};
     }
 };
 
@@ -250,14 +250,8 @@ private:
     bool perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret);
     void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
     struct Tri {
-        Lit lits[3];
+        std::array<Lit, 3> lits;
         uint32_t size = 0;
-        Tri () : size(0) {}
-        Tri(const Tri & other)
-        {
-            memcpy(lits, other.lits, sizeof(Lit)*3);
-            size = other.size;
-        }
     };
     vector<Tri> cl_to_add_ternary;
 
@@ -298,23 +292,15 @@ private:
     bool fill_occur_and_print_stats();
     struct LinkInData
     {
-        LinkInData()
-        {}
+        uint64_t cl_linked = 0;
+        uint64_t cl_not_linked = 0;
 
-        LinkInData(uint64_t _cl_linked, uint64_t _cl_not_linked) :
-            cl_linked(_cl_linked)
-            , cl_not_linked(_cl_not_linked)
-        {}
-
-        LinkInData& combine(const LinkInData& other)
+        LinkInData& operator+=(const LinkInData& other)
         {
             cl_linked += other.cl_linked;
             cl_not_linked += other.cl_not_linked;
             return *this;
         }
-
-        uint64_t cl_linked = 0;
-        uint64_t cl_not_linked = 0;
     };
     LinkInData link_in_data_irred;
     LinkInData link_in_data_red;
