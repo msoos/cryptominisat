@@ -456,7 +456,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
 
     //NOTE added_long_cl CAN CHANGE while the below is running!
     uint32_t i = 0;
-    for(; i < simplifier->added_long_cl.size()
+    for (; i < simplifier->added_long_cl.size()
         && *simplifier->limit_to_decrease >= 0
         ; i++
     ) {
@@ -464,15 +464,13 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->freed() || cl->get_removed()) continue;
         cl->stats.marked_clause = 0;
-        if (!backw_sub_str_with_long(offs, stat)) goto end;
-        if ((i&0xfff) == 0xfff && solver->must_interrupt_asap()) goto end;
+        if (!backw_sub_str_with_long(offs, stat)) break;
+        if ((i&0xfff) == 0xfff && solver->must_interrupt_asap()) break;
     }
 
-    end:
-    //we still have to clear the marks
-    for(; i < simplifier->added_long_cl.size(); i ++) {
-        ClOffset off = simplifier->added_long_cl[i];
-        Clause* cl = solver->cl_alloc.ptr(off);
+    //We still have to clear the marks on remaining clauses
+    for (; i < simplifier->added_long_cl.size(); i++) {
+        Clause* cl = solver->cl_alloc.ptr(simplifier->added_long_cl[i]);
         if (cl->freed() || cl->get_removed()) continue;
         cl->stats.marked_clause = 0;
     }
@@ -624,7 +622,6 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     watch_subarray occ = solver->watches[lit];
     *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
-    //cout << "find_subsumed going through: " << solver->watches_to_string(lit, occ) << endl;
     for (const auto& w: occ) {
         if (w.isBin()
             && ps.size() == 2
@@ -866,10 +863,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
             }
             continue;
         }
-
-        //Must be a longer clause, break
-        //assert(ws[i].isClause());
-        //break;
     }
 
     return true;
@@ -919,8 +912,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         );
     }
 
-    //runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
-
     return solver->okay();
 }
 
@@ -930,13 +921,13 @@ void SubsumeStrengthen::finishedRun()
     globalstats += runStats;
 }
 
-void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
+void SubsumeStrengthen::Stats::print_short(const Solver* s) const
 {
-    cout << solver->conf.prefix + "[occ-substr] long"
+    cout << s->conf.prefix + "[occ-substr] long"
     << " subBySub: " << sub0.numSubsumed
     << " subByStr: " << sub1.sub
     << " lits-rem-str: " << sub1.str
-    << solver->conf.print_times(subsumeTime+strengthenTime)
+    << s->conf.print_times(subsumeTime+strengthenTime)
     << endl;
 }
 
