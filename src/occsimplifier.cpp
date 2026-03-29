@@ -66,17 +66,6 @@ using std::cout;
 using std::endl;
 using std::unique;
 
-//#define VERBOSE_DEBUG_VARELIM
-//#define VERBOSE_DEBUG_XOR_FINDER
-//#define BIT_MORE_VERBOSITY
-//#define TOUCH_LESS
-//#define VERBOSE_ORGATE_REPLACE
-//#define VERBOSE_DEBUG_ASYMTE
-//#define VERBOSE_GATE_REMOVAL
-//#define VERBOSE_XORGATE_MIX
-//#define CHECK_N_OCCUR
-//#define DEBUG_VARELIM
-
 OccSimplifier::OccSimplifier(Solver* _solver):
     solver(_solver)
     , seen(solver->seen)
@@ -283,8 +272,8 @@ void OccSimplifier::unlink_clause(
     , bool only_set_is_removed
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    if (do_frat && (solver->frat->enabled())) {
-       (*solver->frat) << del << cl << fin;
+    if (do_frat && solver->frat->enabled()) {
+        (*solver->frat) << del << cl << fin;
     }
 
     if (!cl.red()) {
@@ -1135,13 +1124,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     uint64_t resolvents_checked = 0;
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &resolvent_sub_time_limit;
-    /* vector<uint32_t> vars; */
     for(uint32_t var = 0; var < solver->nVars(); var++) {
-        /* vars.push_back(var); */
-    /* } */
-    /* std::shuffle(vars.begin(), vars.end(), solver->mtrand); */
-
-    /* for(const auto& var: vars) { */
         if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
         const Lit lit(var, false);
         if (solver->watches[lit].empty() || solver->watches[~lit].empty()) continue;
@@ -1257,23 +1240,6 @@ bool OccSimplifier::eliminate_vars()
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
 
-    //For debug ONLY
-    // subsume with bins everywhere first
-//     for(uint32_t i = 0; i < solver->nVars(); i++) {
-//         Lit lit = Lit(i, false);
-//         if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
-//             goto end;
-//         }
-//
-//         lit = Lit(i, true);
-//         if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
-//             goto end;
-//         }
-//         if (*limit_to_decrease <= 0)
-//             break;
-//     }
-    //
-
     if (!clear_vars_from_cls_that_have_been_set()) {
         goto end;
     }
@@ -1375,15 +1341,6 @@ bool OccSimplifier::eliminate_vars()
         }
         #endif
         solver->clean_occur_from_removed_clauses_only_smudged();
-
-        //For debug ONLY
-        ///////////////
-//         free_clauses_to_free();
-// //         backward_sub_str();
-// //         limit_to_decrease = &norm_varelim_time_limit;
-//         solver->clauseCleaner->clean_implicit_clauses();
-//         solver->clean_occur_from_removed_clauses();
-        ///////////////
 
         uint32_t n_cls_now   = sum_irred_cls_longs() + solver->binTri.irredBins;
         uint32_t n_vars_now  = solver->get_num_free_vars();
@@ -2951,12 +2908,6 @@ void OccSimplifier::backward_sub()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
-//     if (!sub_str->backw_sub_str_long_with_bins()
-//         || solver->must_interrupt_asap()
-//     ) {
-//         goto end;
-//     }
-
     subsumption_time_limit += (int64_t)
         ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_w_long);
     sub_str->backw_sub_long_with_long();
@@ -3335,19 +3286,6 @@ void OccSimplifier::set_limits()
     if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;
     }
-
-    //For debugging
-//     subsumption_time_limit = 0;
-//     strengthening_time_limit = 0;
-//     norm_varelim_time_limit = 0;
-//     empty_varelim_time_limit = 0;
-//     varelim_num_limit = 0;
-//     subsumption_time_limit   = numeric_limits<int64_t>::max();
-//     strengthening_time_limit = numeric_limits<int64_t>::max();
-//     norm_varelim_time_limit  = numeric_limits<int64_t>::max();
-//     empty_varelim_time_limit = numeric_limits<int64_t>::max();
-//     varelim_num_limit        = numeric_limits<int64_t>::max();
-//     varelim_sub_str_limit    = numeric_limits<int64_t>::max();
 }
 
 void OccSimplifier::clean_elimed_cls()
