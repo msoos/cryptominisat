@@ -937,14 +937,13 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
     //This only matters in terms of var elim complexity
     //solver->clauseCleaner->clean_implicit_clauses();
     cls_to_clean_tmp.clear();
-    while(last_trail_cleared < solver->trail_size()) {
-        Lit l = solver->trail_at(last_trail_cleared++);
-        elim_calc_need_update.touch(l.var());
-        watch_subarray ws = solver->watches[l];
 
-        //Everything here is satisfied
+    // Process a watchlist for a set literal: remove bins, keep long clauses
+    // but collect them for cleaning
+    auto process_watch = [&](const Lit l) {
+        watch_subarray ws = solver->watches[l];
         uint32_t j = 0;
-        for (uint32_t i = 0; i < ws.size(); i ++) {
+        for (uint32_t i = 0; i < ws.size(); i++) {
             Watched& w = ws[i];
             if (w.isBin()) {
                 removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_id());
@@ -964,47 +963,18 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             ws[j++] = w;
             ClOffset offs = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->get_removed() || cl->freed()) {
-                //Satisfied and removed
-                continue;
+            if (!cl->get_removed() && !cl->freed()) {
+                cls_to_clean_tmp.push_back(offs);
             }
-            //We'll need to set removed, etc.
-            cls_to_clean_tmp.push_back(offs);
         }
         ws.resize(j);
+    };
 
-        l = ~l;
-        watch_subarray ws2 = solver->watches[l];
-
-        //Remove literal
-        j = 0;
-        for (uint32_t i = 0; i < ws2.size(); i ++) {
-            Watched& w = ws2[i];
-            if (w.isBin()) {
-                assert(solver->value(w.lit2()) == l_True); //we propagate and it'd be UNSAT otherwise
-                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_id());
-                if (w.red()) {
-                    solver->binTri.redBins--;
-                } else {
-                    n_occurs[l.toInt()]--;
-                    n_occurs[w.lit2().toInt()]--;
-                    elim_calc_need_update.touch(w.lit2());
-                    solver->binTri.irredBins--;
-                }
-                *(solver->frat) << del << w.get_id() << l << w.lit2() << fin;
-                continue;
-            }
-
-            ws2[j++] = w;
-            assert(w.isClause());
-            ClOffset offs = w.get_offset();
-            Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->get_removed() || cl->freed()) {
-                continue;
-            }
-            cls_to_clean_tmp.push_back(offs);
-        }
-        ws2.resize(j);
+    while (last_trail_cleared < solver->trail_size()) {
+        const Lit l = solver->trail_at(last_trail_cleared++);
+        elim_calc_need_update.touch(l.var());
+        process_watch(l);   // satisfied side
+        process_watch(~l);  // falsified side
     }
 
     for(ClOffset offs: cls_to_clean_tmp) {
