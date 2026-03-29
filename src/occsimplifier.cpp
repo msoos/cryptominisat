@@ -4485,30 +4485,16 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
 void OccSimplifier::printOccur(const Lit lit) const
 {
-    for(size_t i = 0; i < solver->watches[lit].size(); i++) {
-        const Watched& w = solver->watches[lit][i];
+    for (const auto& w : solver->watches[lit]) {
         if (w.isBin()) {
-            cout
-            << "Bin   --> "
-            << lit << ", "
-            << w.lit2()
-            << "(red: " << w.red()
-            << ")"
-            << endl;
-        }
-
-        if (w.isClause()) {
+            cout << "Bin   --> " << lit << ", " << w.lit2()
+                 << "(red: " << w.red() << ")" << endl;
+        } else if (w.isClause()) {
             const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-            if (cl.get_removed())
-                continue;
-            cout
-            << "Clause--> "
-            << cl
-            << "(red: " << cl.red()
-            << ")"
-            << "(rem: " << cl.get_removed()
-            << ")"
-            << endl;
+            if (cl.get_removed()) continue;
+            cout << "Clause--> " << cl
+                 << "(red: " << cl.red() << ")"
+                 << "(rem: " << cl.get_removed() << ")" << endl;
         }
     }
 }
@@ -4909,20 +4895,13 @@ bool OccSimplifier::resolve_clauses(
     , const Lit& posLit
 ) {
     //If clause has already been freed, skip
-    Clause *cl1 = nullptr;
     if (ps.isClause()) {
-         cl1 = solver->cl_alloc.ptr(ps.get_offset());
-        if (cl1->freed()) {
-            return true;
-        }
+        Clause* cl = solver->cl_alloc.ptr(ps.get_offset());
+        if (cl->freed()) return true;
     }
-
-    Clause *cl2 = nullptr;
     if (qs.isClause()) {
-         cl2 = solver->cl_alloc.ptr(qs.get_offset());
-        if (cl2->freed()) {
-            return true;
-        }
+        Clause* cl = solver->cl_alloc.ptr(qs.get_offset());
+        if (cl->freed()) return true;
     }
 
     dummy.clear();
@@ -4939,39 +4918,18 @@ bool OccSimplifier::resolve_clauses(
 
 uint32_t OccSimplifier::calc_data_for_heuristic(const Lit lit)
 {
-    uint32_t ret = 0;
     watch_subarray_const ws_list = solver->watches[lit];
-
-    //BUT WATCHES ARE SMUDGED!!
-    //THIS IS WRONG!!
-    /*if (link_in_data_red.cl_linked < 100) {
-        ret = ws_list.size();
-        return ret;
-    }*/
-
     *limit_to_decrease -= (long)ws_list.size()*3 + 100;
-    for (const Watched ws: ws_list) {
-        //Skip redundant clauses
-        if (solver->redundant(ws))
-            continue;
 
-        switch(ws.getType()) {
-            case WatchType::watch_binary_t:
-                ret++;
-                break;
-
-            case WatchType::watch_clause_t: {
-                const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-                if (!cl->get_removed()) {
-                    assert(!cl->freed() && "Inside occur, so cannot be freed");
-                    ret++;
-                }
-                break;
-            }
-
-            default:
-                assert(false);
-                break;
+    uint32_t ret = 0;
+    for (const auto& ws: ws_list) {
+        if (solver->redundant(ws)) continue;
+        if (ws.isBin()) { ret++; continue; }
+        assert(ws.isClause());
+        const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
+        if (!cl->get_removed()) {
+            assert(!cl->freed() && "Inside occur, so cannot be freed");
+            ret++;
         }
     }
     return ret;
@@ -4980,26 +4938,14 @@ uint32_t OccSimplifier::calc_data_for_heuristic(const Lit lit)
 uint32_t OccSimplifier::calc_occ_data(const Lit lit)
 {
     uint32_t ret = 0;
-    watch_subarray_const ws_list = solver->watches[lit];
-    for (const Watched ws: ws_list) {
+    for (const auto& ws: solver->watches[lit]) {
         if (solver->redundant(ws)) continue;
-        switch(ws.getType()) {
-            case WatchType::watch_binary_t:
-                ret++;
-                break;
-
-            case WatchType::watch_clause_t: {
-                const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-                if (!cl->get_removed()) {
-                    assert(!cl->freed() && "Inside occur, so cannot be freed");
-                    ret++;
-                }
-                break;
-            }
-
-            default:
-                assert(false);
-                break;
+        if (ws.isBin()) { ret++; continue; }
+        assert(ws.isClause());
+        const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
+        if (!cl->get_removed()) {
+            assert(!cl->freed() && "Inside occur, so cannot be freed");
+            ret++;
         }
     }
     return ret;
