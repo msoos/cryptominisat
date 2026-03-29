@@ -9,12 +9,7 @@ jobs:
         with:
           msystem: ucrt64
           update: true
-          install: mingw-w64-ucrt-x86_64-toolchain base-devel cmake git zlib gmp-devel msys2-runtime-devel ninja mingw-w64-ucrt-x86_64-ccache
-      - name: Set up ccache
-        uses: hendrikmuhs/ccache-action@v1
-        with:
-          key: windows-ucrt64
-          variant: ccache
+          install: mingw-w64-ucrt-x86_64-toolchain base-devel cmake git zlib gmp-devel msys2-runtime-devel ninja
 
       - shell: msys2 {0}
         run: ./scripts/build_static_Windows_binary.sh
