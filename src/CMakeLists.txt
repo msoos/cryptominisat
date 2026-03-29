@@ -380,6 +380,17 @@ add_executable(cryptominisat5-bin
     signalcode.cpp
 )
 
+add_executable(oracle
+    oracle/oracle_main.cpp
+    oracle/oracle.cpp
+)
+target_include_directories(oracle PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle
+)
+target_compile_features(oracle PRIVATE cxx_std_17)
+
 if(MPI_FOUND)
     add_executable(cryptominisat5_mpi-bin
         main_mpi.cpp
