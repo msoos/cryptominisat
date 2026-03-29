@@ -282,11 +282,24 @@ int main(int argc, char* argv[]) {
         // Build assumptions with random polarity
         vector<Lit> oracle_assumps;
         vector<int> dimacs_assumps;
+        std::set<int> used_vars;
         for (int i = 0; i < num_assumps; i++) {
             int var = shuffled[i];
+            used_vars.insert(var);
             bool positive = std::uniform_int_distribution<int>(0, 1)(rng);
             oracle_assumps.push_back(positive ? PosLit(var) : NegLit(var));
             dimacs_assumps.push_back(positive ? var : -var);
+        }
+
+        // 50% of the time, include the cache lookup variable to exercise
+        // the indexed cache lookup path
+        int clv = oracle.GetCacheLookupVar();
+        if (clv != 0 && used_vars.count(clv) == 0
+                && backbone_vars.count(clv) == 0
+                && std::uniform_int_distribution<int>(0, 1)(rng) == 0) {
+            bool positive = std::uniform_int_distribution<int>(0, 1)(rng);
+            oracle_assumps.push_back(positive ? PosLit(clv) : NegLit(clv));
+            dimacs_assumps.push_back(positive ? clv : -clv);
         }
 
         // Pick a random max_mems limit: sometimes very tight, sometimes generous

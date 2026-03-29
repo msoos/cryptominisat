@@ -112,6 +112,7 @@ public:
     void SetAssumpLit(Lit lit, bool freeze);
     void SetVerbosity(uint32_t _verb) { verb=_verb;}
     void SetCacheCutoff(uint32_t c) { cache_cutoff = c; }
+    int GetCacheLookupVar() const { return cache_lookup_var; }
     TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
     bool FreezeUnit(Lit unit);
     bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
