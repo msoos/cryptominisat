@@ -201,6 +201,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             assert(!cl);
             if (!okay()) return false;
             bin_added++;
+            oracle.AddClauseIfNeededAndStr({orclit(~l1), orclit(~l2)}, true);
 
             ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
@@ -211,6 +212,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (!okay()) return false;
             bin_added++;
             equiv_added++;
+            oracle.AddClauseIfNeededAndStr({orclit(l1), orclit(l2)}, true);
             continue;
 
             next:
@@ -221,6 +223,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             assert(!cl);
             if (!okay()) return false;
             bin_added++;
+            oracle.AddClauseIfNeededAndStr({orclit(l1), orclit(~l2)}, true);
 
             ret = oracle.Solve({orclit(l1), orclit(~l2)}, true, mem_per_call);
             if (ret.isUnknown()) goto end2;
@@ -230,6 +233,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (!okay()) return false;
             bin_added++;
             equiv_added++;
+            oracle.AddClauseIfNeededAndStr({orclit(~l1), orclit(l2)}, true);
         }
     }
     early_aborted_bin = false;
