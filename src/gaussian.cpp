@@ -565,6 +565,7 @@ gret EGaussian::init_adjust_matrix() {
                     *solver->frat << "binary XOR from init_adjust matrix begin\n";
                     const auto reason = xor_reason_create(row_i);
                     vector<Lit> out = tmp_clause;
+                    if (out.size() < 2) std::abort();
                     out[0] ^= !mat[row_i].rhs();
                     int32_t id = ++solver->clauseID;
                     *solver->frat << implyclfromx << id << out << fratchain << reason.xid << fin;
@@ -581,6 +582,7 @@ gret EGaussian::init_adjust_matrix() {
                     *solver->frat << "binary XOR from init_adjust matrix end\n";
                 } else {
                     vector<Lit> out = tmp_clause;
+                    if (out.size() < 2) std::abort();
                     out[0] ^= !mat[row_i].rhs();
                     int32_t id = ++solver->clauseID;
                     solver->attach_bin_clause(out[0], out[1], false, id);
