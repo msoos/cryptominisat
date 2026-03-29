@@ -171,32 +171,34 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     }
 
     uint64_t checks = 0;
+    const uint8_t* cache_base = sol_cache.data();
     if (found) {
         for(const auto& idx : cache_lookup[val]) {
+            const uint8_t* entry = cache_base + idx*stride;
             bool ok = true;
             // all our assumptions must be in the solution
             for (const Lit& l : assumps) {
                 checks++;
-                if (sol_cache[idx*stride + VarOf(l)] == !IsPos(l)) { ok = false; break; }
+                if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
             if (ok) {
                 // Restore phases from cached solution so GetPhase works
-                for (Var v = 1; v <= vars; v++) vs[v].phase = sol_cache[idx*stride + v];
+                for (Var v = 1; v <= vars; v++) vs[v].phase = entry[v];
                 return true;
             }
         }
     } else {
-        const uint64_t sz = sol_cache.size();
-        for (uint64_t i = 0; i < sz; i+=stride) {
+        const uint8_t* const cache_end = cache_base + sol_cache.size();
+        for (const uint8_t* entry = cache_base; entry < cache_end; entry += stride) {
             bool ok = true;
             // all our assumptions must be in the solution
             for (const Lit& l : assumps) {
                 checks++;
-                if (sol_cache[i + VarOf(l)] == !IsPos(l)) { ok = false; break; }
+                if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
             if (ok) {
                 // Restore phases from cached solution so GetPhase works
-                for (Var v = 1; v <= vars; v++) vs[v].phase = sol_cache[i + v];
+                for (Var v = 1; v <= vars; v++) vs[v].phase = entry[v];
                 return true;
             }
         }
@@ -464,7 +466,10 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
     assert(vs[v].reason == 0);
     assert(vs[v].level != 1);
     for (Lit tl : {PosLit(v), NegLit(v)}) {
-        for (const Watch w : watches[tl]) {
+        const auto& wt = watches[tl];
+        for (size_t wi = 0; wi < wt.size(); wi++) {
+            const Watch w = wt[wi];
+            if (wi + 1 < wt.size()) cmsat_prefetch(clauses.data() + wt[wi+1].cls);
             stats.mems++;
             assert(w.size > 2);
             size_t pos = w.cls;
@@ -508,7 +513,10 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
     oclv("Assigning " << v << " to: " << IsPos(dec) << " at level: " << level << " reason: " << reason_clause);
     decided.push_back(v);
     prop_q.push_back(Neg(dec));
-    cmsat_prefetch(watches[Neg(dec)].data());
+    // Prefetch the actual first Watch entry (not just the vector header)
+    // so it's in cache when the propagation loop processes this literal
+    const auto& ws = watches[Neg(dec)];
+    if (!ws.empty()) cmsat_prefetch(&ws[0]);
 }
 
 void Oracle::UnDecide(int level) {
