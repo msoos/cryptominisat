@@ -467,40 +467,29 @@ private:
     bool        all_occ_based_lit_rem();
 
 
+    // Pool-style container that reuses allocated memory across clear() calls
     struct Resolvents {
-        uint32_t at = 0;
-        vector<vector<Lit>> resolvents_lits;
-        vector<ClauseStats> resolvents_stats;
-        void clear() {
-            at = 0;
-        }
-        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
-            if (resolvents_lits.size() < at+1) {
-                resolvents_lits.resize(at+1);
-                resolvents_stats.resize(at+1);
-            }
+        void clear() { sz = 0; }
+        bool empty() const { return sz == 0; }
+        uint32_t size() const { return sz; }
 
-            resolvents_lits[at] = res;
-            resolvents_stats[at] = stats;
-            at++;
+        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
+            if (lits.size() <= sz) {
+                lits.resize(sz + 1);
+                cl_stats.resize(sz + 1);
+            }
+            lits[sz] = res;
+            cl_stats[sz] = stats;
+            sz++;
         }
-        vector<Lit>& back_lits() {
-            assert(at > 0);
-            return resolvents_lits[at-1];
-        }
-        const ClauseStats& back_stats() const {
-            assert(at > 0);
-            return resolvents_stats[at-1];
-        }
-        void pop() {
-            at--;
-        }
-        bool empty() const {
-            return at == 0;
-        }
-        uint32_t size() const {
-            return at;
-        }
+        vector<Lit>& back_lits() { assert(sz > 0); return lits[sz-1]; }
+        const ClauseStats& back_stats() const { assert(sz > 0); return cl_stats[sz-1]; }
+        void pop() { assert(sz > 0); sz--; }
+
+    private:
+        uint32_t sz = 0;
+        vector<vector<Lit>> lits;
+        vector<ClauseStats> cl_stats;
     };
     Resolvents resolvents;
     uint32_t calc_data_for_heuristic(const Lit lit);
