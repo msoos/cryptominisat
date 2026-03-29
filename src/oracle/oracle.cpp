@@ -112,7 +112,7 @@ void Oracle::ClearSolCache() {
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
     const uint32_t stride = vars+1;
-    if (stats.total_cache_lookups % 1000 == 199 && verb >= 3) {
+    if (stats.total_cache_lookups % cache_cutoff == (cache_cutoff/5) && verb >= 3) {
         cout << "c o [oracle] cache"
             << " usefulness: "
             << std::setprecision(0) << std::fixed << (double)stats.cache_useful/(double)stats.total_cache_lookups*100.0 << "%"
@@ -131,7 +131,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     assert(cache_lookup_frequencies.size() == (uint32_t)vars+1);
 
     for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
-    if ((stats.total_cache_lookups % 1000 == 999)) {
+    if ((stats.total_cache_lookups % cache_cutoff == cache_cutoff - 1)) {
         vector<uint32_t> occs_int(stride, 0);
         const uint64_t sz = sol_cache.size();
         for (uint64_t i = 0; i < sz; i+=stride) {

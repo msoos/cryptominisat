@@ -241,8 +241,15 @@ int main(int argc, char* argv[]) {
     }
 
     // 4. Create oracle
+    std::mt19937 rng(seed);
     sspp::oracle::Oracle oracle(cnf.num_vars, oracle_clauses);
     if (verb >= 2) oracle.SetVerbosity(1);
+
+    // Randomize cache cutoff to exercise the indexed lookup path
+    constexpr int cutoff_choices[] = {1, 4, 100, 10000};
+    int cutoff = cutoff_choices[std::uniform_int_distribution<int>(0, 3)(rng)];
+    oracle.SetCacheCutoff(cutoff);
+    if (verb >= 1) cout << "c Cache cutoff: " << cutoff << endl;
 
     // Build list of non-backbone variables for assumption picking
     vector<int> pickable_vars;
@@ -258,7 +265,6 @@ int main(int argc, char* argv[]) {
     }
 
     // 5. Fuzz loop
-    std::mt19937 rng(seed);
     int num_sat = 0, num_unsat = 0, num_unknown = 0;
 
     for (int iter = 0; iter < K; iter++) {
