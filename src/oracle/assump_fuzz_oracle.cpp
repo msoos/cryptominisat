@@ -290,8 +290,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Solve
-        // usecache=false: we need fresh phases for model verification
-        auto result = oracle.Solve(oracle_assumps, /*usecache=*/false);
+        auto result = oracle.Solve(oracle_assumps, /*usecache=*/true);
 
         if (result.isUnknown()) {
             num_unknown++;

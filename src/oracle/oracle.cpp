@@ -179,7 +179,11 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 checks++;
                 if (sol_cache[idx*stride + VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
-            if (ok) return true;
+            if (ok) {
+                // Restore phases from cached solution so GetPhase works
+                for (Var v = 1; v <= vars; v++) vs[v].phase = sol_cache[idx*stride + v];
+                return true;
+            }
         }
     } else {
         const uint64_t sz = sol_cache.size();
@@ -190,7 +194,11 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 checks++;
                 if (sol_cache[i + VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
-            if (ok) return true;
+            if (ok) {
+                // Restore phases from cached solution so GetPhase works
+                for (Var v = 1; v <= vars; v++) vs[v].phase = sol_cache[i + v];
+                return true;
+            }
         }
     }
     stats.mems += checks/20;
