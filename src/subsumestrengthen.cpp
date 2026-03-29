@@ -518,33 +518,21 @@ bool SubsumeStrengthen::subset(const T1& A, const T2& B)
     }
     #endif
 
-    bool ret;
     uint32_t i = 0;
-    uint32_t i2;
-    Lit lastB = lit_Undef;
-    for (i2 = 0; i2 < B.size(); i2++) {
-        if (lastB != lit_Undef)
-            assert(lastB < B[i2]);
+    uint32_t i2 = 0;
+    bool ret = false;
+    for (; i2 < B.size(); i2++) {
+        assert(i2 == 0 || B[i2-1] < B[i2]);
 
-        lastB = B[i2];
         //Literals are ordered
-        if (A[i] < B[i2]) {
-            ret = false;
-            goto end;
-        }
-        else if (A[i] == B[i2]) {
+        if (A[i] < B[i2]) break;
+        if (A[i] == B[i2]) {
             i++;
-
             //went through the whole of A now, so A subsumes B
-            if (i == A.size()) {
-                ret = true;
-                goto end;
-            }
+            if (i == A.size()) { ret = true; break; }
         }
     }
-    ret = false;
 
-    end:
     *simplifier->limit_to_decrease -= (long)i2*4 + (long)i*4;
     return ret;
 }
@@ -568,33 +556,25 @@ Lit SubsumeStrengthen::subset1(const T1& A, const T2& B)
     Lit retLit = lit_Undef;
 
     uint32_t i = 0;
-    uint32_t i2;
-    for (i2 = 0; i2 < B.size(); i2++) {
+    uint32_t i2 = 0;
+    for (; i2 < B.size(); i2++) {
         if (A[i] == ~B[i2] && retLit == lit_Undef) {
             retLit = B[i2];
             i++;
-            if (i == A.size())
-                goto end;
-
+            if (i == A.size()) break;
             continue;
         }
 
         //Literals are ordered
-        if (A[i] < B[i2]) {
-            retLit = lit_Error;
-            goto end;
-        }
+        if (A[i] < B[i2]) { retLit = lit_Error; break; }
 
         if (A[i] == B[i2]) {
             i++;
-
-            if (i == A.size())
-                goto end;
+            if (i == A.size()) break;
         }
     }
-    retLit = lit_Error;
+    if (i2 == B.size() && i < A.size()) retLit = lit_Error;
 
-    end:
     *simplifier->limit_to_decrease -= (long)i2*4 + (long)i*4;
     return retLit;
 }
