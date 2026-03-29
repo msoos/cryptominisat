@@ -671,16 +671,13 @@ void OccSimplifier::add_back_to_solver() {
 
 void OccSimplifier::remove_all_longs_from_watches() {
     for (auto& ws : solver->watches) {
-        Watched* i = ws.begin();
-        Watched* j = i;
-        for (Watched *end2 = ws.end(); i != end2; i++) {
+        auto j = ws.begin();
+        for (auto i = ws.begin(), end = ws.end(); i != end; i++) {
             if (i->isClause()) continue;
-            else {
-                assert(i->isBin() || i->isBNN());
-                *j++ = *i;
-            }
+            assert(i->isBin() || i->isBNN());
+            *j++ = *i;
         }
-        ws.shrink(i - j);
+        ws.shrink(ws.end() - j);
     }
 }
 

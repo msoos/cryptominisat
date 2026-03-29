@@ -29,9 +29,10 @@ THE SOFTWARE.
 #include "clause.h"
 #include "Vec.h"
 #include <vector>
-using std::vector;
 
 namespace CMSat {
+
+using std::vector;
 
 class OccSimplifier;
 class GateFinder;
