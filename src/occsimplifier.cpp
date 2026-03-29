@@ -3687,13 +3687,6 @@ bool OccSimplifier::find_ite_gate(
             if (match != 2) {
                 continue;
             }
-//             cout << "base: " << *cl << endl;
-//             cout << "elim lit: " << elim_lit << endl;
-//             cout << "lits[0]: " << lits[0] << endl;
-//             cout << "lits[1]: " << lits[1] << endl;
-//             cout << "lits[1]: " << lits[2] << endl;
-//             cout << "check " << *cl2 << endl;
-
 
             //Make ~elim_lit 1st position
             if (~elim_lit == (*cl2)[1]) {
@@ -3892,7 +3885,6 @@ bool OccSimplifier::find_xor_gate(
                 myparity ^= l2.sign();
             }
 
-            //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
             if (this_cl_ok && myparity == parity) {
                 cl2->stats.marked_clause = 1;
                 toclear_marked_cls.push_back(cl2);
@@ -3903,7 +3895,7 @@ bool OccSimplifier::find_xor_gate(
                         val += 1 << i2;
                     }
                 }
-                if (parities_found.find(val) == parities_found.end()) {
+                if (!parities_found.count(val)) {
                     out_a.push(w2);
                     parities_found.insert(val);
                 }
@@ -3937,7 +3929,6 @@ bool OccSimplifier::find_xor_gate(
                 }
                 myparity ^= l2.sign();
             }
-            //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
             if (this_cl_ok && myparity == parity) {
                 cl2->stats.marked_clause = 1;
                 toclear_marked_cls.push_back(cl2);
@@ -3948,7 +3939,7 @@ bool OccSimplifier::find_xor_gate(
                         val += 1 << i2;
                     }
                 }
-                if (parities_found.find(val) == parities_found.end()) {
+                if (!parities_found.count(val)) {
                     out_b.push(w2);
                     parities_found.insert(val);
                 }
@@ -3981,7 +3972,7 @@ bool OccSimplifier::find_xor_gate(
     }
     toClear.clear();
 
-    //Cleark cl markings
+    //Clear cl markings
     for(const auto& cl: toclear_marked_cls) {
         cl->stats.marked_clause = 0;
     }
