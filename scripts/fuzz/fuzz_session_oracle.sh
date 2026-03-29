@@ -14,7 +14,7 @@
 #
 # If the session already exists, it will attach to it instead of creating a new one.
 
-SESSION="fuzzing-oracle"
+SESSION="fuzzing oracle"
 DIR="$(dirname "$(realpath "$0")")"
 NUM_WINDOWS=24
 
