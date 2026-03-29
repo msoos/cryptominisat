@@ -168,11 +168,6 @@ public:
 
     vector<Lit> learned_units;
 
-    int restart_factor = 0;
-    vector<int> luby;
-    void InitLuby();
-    int NextLuby();
-
     // Glucose-style EMA restart tracking
     double ema_glue_fast = 0;
     double ema_glue_slow = 0;

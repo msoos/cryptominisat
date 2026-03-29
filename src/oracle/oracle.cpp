@@ -390,19 +390,6 @@ void Oracle::BumpClause(size_t cls) {
     return;
 }
 
-void Oracle::InitLuby() {
-    luby.clear();
-}
-
-int Oracle::NextLuby() {
-    luby.push_back(1);
-    while (luby.size() >= 2 && luby[luby.size()-1] == luby[luby.size()-2]) {
-        luby.pop_back();
-        luby.back() *= 2;
-    }
-    return luby.back();
-}
-
 Var Oracle::PopVarHeap() {
     if (var_act_heap[1] <= 0) {
         return 0;
@@ -954,12 +941,10 @@ bool Oracle::ShouldRestart() const {
 }
 
 TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
-    InitLuby();
     ema_glue_fast = 0;
     ema_glue_slow = 0;
     ema_conflicts = 0;
     int64_t confls = 0;
-    int64_t next_restart = 1;
     int cur_level = 2;
     Var nv = 1;
     while (true) {
@@ -1064,9 +1049,6 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     redu_seen.resize(vars*2+2);
     in_cc.resize(vars*2+2);
     minimize_mark.resize(vars+1, 0);
-    // setting magic constants
-    restart_factor = 100;
-
     clauses.push_back(0);
     clause_pos.push_back(0);
     orig_clauses_size = 1;

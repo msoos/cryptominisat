@@ -28,11 +28,6 @@ static Lit dimacs_to_oracle_lit(int d) {
     else return NegLit(-d);
 }
 
-// Convert oracle Lit back to DIMACS for display
-static int oracle_lit_to_dimacs(Lit l) {
-    int var = sspp::VarOf(l);
-    return sspp::IsPos(l) ? var : -var;
-}
 
 struct CNF {
     int num_vars = 0;
