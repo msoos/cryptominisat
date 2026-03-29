@@ -450,43 +450,24 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 }
 
 struct sort_smallest_first {
-    sort_smallest_first(ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
-    {}
+    explicit sort_smallest_first(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc) {}
 
-    bool operator()(const Watched& first, const Watched& second)
+    bool operator()(const Watched& a, const Watched& b) const
     {
-        if (second.isBin() && first.isClause()) {
-            //wrong order
-            return false;
-        }
-        if (first.isBin() && second.isClause()) {
-            //this is the right order
-            return true;
-        }
+        // Bins before clauses
+        if (a.isBin() != b.isBin()) return a.isBin();
 
-        if (first.isBin() && second.isBin()) {
-            //correct order if first has lit2() smaller.
-            if (first.lit2() != second.lit2()) {
-                return first.lit2() < second.lit2();
-            }
-            return first.get_id() < second.get_id();
+        if (a.isBin()) {
+            if (a.lit2() != b.lit2()) return a.lit2() < b.lit2();
+            return a.get_id() < b.get_id();
         }
 
-        if (first.isClause() && second.isClause()) {
-            Clause& cl1 = *cl_alloc.ptr(first.get_offset());
-            Clause& cl2 = *cl_alloc.ptr(second.get_offset());
-            if (cl1.size() != cl2.size()) {
-                //Smaller clause size first is correct order
-                return cl1.size() < cl2.size();
-            }
-
-            //we don't care, let's use offset as a distinguisher
-            return first.get_offset() < second.get_offset();
-        }
-
-        assert(false && "This cannot happen");
-        return false;
+        assert(a.isClause() && b.isClause());
+        const Clause& cl1 = *cl_alloc.ptr(a.get_offset());
+        const Clause& cl2 = *cl_alloc.ptr(b.get_offset());
+        if (cl1.size() != cl2.size()) return cl1.size() < cl2.size();
+        return a.get_offset() < b.get_offset();
     }
 
     ClauseAllocator& cl_alloc;
