@@ -2617,10 +2617,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         }
         #endif
 
-        tmp_tern_res.clear();
-        for(uint32_t i = 0; i < newcl.size; i++) {
-            tmp_tern_res.push_back(newcl.lits[i]);
-        }
+        tmp_tern_res.assign(newcl.lits.begin(), newcl.lits.begin() + newcl.size);
 
         Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, &stats, true);
         if (newCl) {
@@ -2639,11 +2636,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
             }
         } else {
             if (!solver->okay()) return false;
-            //We'd need to check sub1_ret and see if it subsumed an irred
-            // then fix it up. Can't be bothered.
-//             if (!sub_str->backw_sub_str_with_impl(finalLits_ternary, sub1_ret)) {
-//                 return false;
-//             }
         }
         *limit_to_decrease-=20;
         ternary_res_cls_limit--;
