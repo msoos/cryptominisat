@@ -348,17 +348,14 @@ private:
     vector<uint64_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
-        const vector<uint64_t>&  varElimComplexity;
-        bool operator () (const uint64_t x, const uint64_t y) const
-        {
+        explicit VarOrderLt(const vector<uint64_t>& _varElimComplexity) :
+            varElimComplexity(_varElimComplexity) {}
+
+        bool operator()(uint64_t x, uint64_t y) const {
             return varElimComplexity[x] < varElimComplexity[y];
         }
 
-        explicit VarOrderLt(
-            const vector<uint64_t>& _varElimComplexity
-        ) :
-            varElimComplexity(_varElimComplexity)
-        {}
+        const vector<uint64_t>& varElimComplexity;
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
