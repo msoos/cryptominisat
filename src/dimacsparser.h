@@ -711,7 +711,6 @@ bool DimacsParser<C, S>::parseIndependentSet(C& in, vector<uint32_t>& lst) {
         if (parsed_lit == 0) break;
         uint32_t var = std::abs(parsed_lit) - 1;
         var += offset_vars;
-        if (!check_var(var)) return false;
         lst.push_back(var);
     }
     return true;
