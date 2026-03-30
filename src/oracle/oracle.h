@@ -187,7 +187,6 @@ public:
     void BumpVar(Var v);
     void ActivateActivity(Var v);
     Var PopVarHeap();
-    int ReuseTrail() const; // returns level to backtrack to on restart
 
     bool LitSat(Lit lit) const;
     bool LitAssigned(Lit lit) const;

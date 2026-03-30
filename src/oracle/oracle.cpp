@@ -884,34 +884,6 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     }
 }
 
-// Compute the lowest level we need to backtrack to on restart.
-// Walk the decision trail from the bottom and check if each decision
-// variable has higher activity than all undecided variables. If so,
-// we'd make the same decision again, so no need to undo it.
-int Oracle::ReuseTrail() const {
-    // Find the index in decided[] where level 3 decisions start
-    size_t start = 0;
-    while (start < decided.size() && vs[decided[start]].level <= 2) start++;
-    // Walk forward through decisions at level >= 3
-    for (size_t i = start; i < decided.size(); i++) {
-        Var v = decided[i];
-        // If this variable was implied (has a reason), it's not a decision
-        if (vs[v].reason != 0) continue;
-        // Check: would this variable still be chosen by the heap?
-        // A variable would be chosen if its activity is >= the max active activity
-        double act = var_act_heap[heap_N + v];
-        if (act < 0) act = -act; // inactive variables have negated activity
-        // The max activity in the heap is var_act_heap[1]
-        double max_act = var_act_heap[1];
-        if (max_act > act) {
-            // There's a higher-activity variable available — stop reuse here
-            return vs[v].level;
-        }
-    }
-    // All decisions would be made the same way
-    return (int)decided.size() + 3; // don't backtrack at all
-}
-
 bool Oracle::ShouldRestart() const {
     // Need enough conflicts to warm up the EMAs
     if (ema_conflicts < 50) return false;
@@ -937,12 +909,10 @@ TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
             assert(cur_level >= 2);
             continue;
         }
-        // Glucose-style EMA restart with trail reuse
+        // Glucose-style EMA restart: check after every propagation with no conflict
         if (ShouldRestart()) {
-            int reuse_level = ReuseTrail();
-            int bt_level = max(3, reuse_level);
-            UnDecide(bt_level);
-            cur_level = bt_level - 1;
+            UnDecide(3);
+            cur_level = 2;
             stats.restarts++;
             if (total_confls > last_db_clean + 10000) {
                 last_db_clean = total_confls;
