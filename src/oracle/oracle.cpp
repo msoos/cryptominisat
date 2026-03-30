@@ -181,11 +181,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 checks++;
                 if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
-            if (ok) {
-                // Restore phases from cached solution so GetPhase works
-                for (Var v = 1; v <= vars; v++) vs[v].phase = entry[v];
-                return true;
-            }
+            if (ok) return true;
         }
     } else {
         const uint8_t* const cache_end = cache_base + sol_cache.size();
@@ -196,11 +192,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 checks++;
                 if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
-            if (ok) {
-                // Restore phases from cached solution so GetPhase works
-                for (Var v = 1; v <= vars; v++) vs[v].phase = entry[v];
-                return true;
-            }
+            if (ok) return true;
         }
     }
     stats.mems += checks/20;
@@ -375,21 +367,25 @@ void Oracle::BumpClause(size_t cls) {
             glue++;
         }
     }
-    int old_glue = cla_info[i].glue;
-    // Only update glue if it improved (keep best glue seen)
-    if (glue < old_glue) cla_info[i].glue = glue;
-    // Set used based on current (possibly improved) tier
-    int effective_glue = cla_info[i].glue;
-    if (effective_glue <= 2) {
-        // Promoted to tier 1 — give maximum protection
-        cla_info[i].used = 3;
-    } else if (effective_glue <= 6) {
-        cla_info[i].used = 2;
-    } else {
-        cla_info[i].used = 1;
-    }
+    cla_info[i].glue = glue;
+    // Tier 2 (glue <= 6) clauses get used=2 so they survive 2 reduction rounds
+    // Tier 3 (glue > 6) clauses get used=1 so they survive 1 round
+    cla_info[i].used = (glue <= 6) ? 2 : 1;
     cla_info[i].total_used++;
     return;
+}
+
+void Oracle::InitLuby() {
+    luby.clear();
+}
+
+int Oracle::NextLuby() {
+    luby.push_back(1);
+    while (luby.size() >= 2 && luby[luby.size()-1] == luby[luby.size()-2]) {
+        luby.pop_back();
+        luby.back() *= 2;
+    }
+    return luby.back();
 }
 
 Var Oracle::PopVarHeap() {
@@ -771,17 +767,13 @@ size_t Oracle::Propagate(int level) {
                 if (bv < 0) {
                     // CONFLICT
                     conflict = w.cls;
-                } else {
+                }    else {
                     // UNIT
                     Assign(w.blit, w.cls, level);
                 }
                 continue;
             }
             if (conflict) break;
-            // Prefetch next watch's clause data for non-binary
-            if (j1 != wt.end() && j1->size > 2) {
-                cmsat_prefetch(clauses.data() + j1->cls);
-            }
             // Check if satisfied by the other watched literal
             // fun xor swap trick
             stats.mems++;
@@ -848,28 +840,6 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     stats.conflicts++;
     auto clause = LearnUip(confl_clause);
     assert(clause.size() >= 1);
-
-    // Update Glucose-style EMA for restart decisions
-    // Compute glue of the learned clause
-    {
-        lvl_it++;
-        int glue = 0;
-        for (size_t ci = 0; ci < clause.size(); ci++) {
-            int lev = (ci == 0) ? (decided.empty() ? 2 : vs[decided.back()].level + 1)
-                                : vs[VarOf(clause[ci])].level;
-            if (lvl_seen[lev] != lvl_it) {
-                lvl_seen[lev] = lvl_it;
-                glue++;
-            }
-        }
-        // EMA alpha: fast = 2^-5 = 1/32, slow = 2^-14 = 1/16384
-        constexpr double alpha_fast = 1.0 / 32.0;
-        constexpr double alpha_slow = 1.0 / 16384.0;
-        ema_glue_fast = alpha_fast * glue + (1.0 - alpha_fast) * ema_glue_fast;
-        ema_glue_slow = alpha_slow * glue + (1.0 - alpha_slow) * ema_glue_slow;
-        ema_conflicts++;
-    }
-
     if (clause.size() == 1 || vs[VarOf(clause[1])].level == 1) {
         assert(min_level <= 2);
         UnDecide(3);
@@ -928,46 +898,10 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     }
 }
 
-// Compute the lowest level we need to backtrack to on restart.
-// Walk the decision trail from the bottom and check if each decision
-// variable has higher activity than all undecided variables. If so,
-// we'd make the same decision again, so no need to undo it.
-int Oracle::ReuseTrail() const {
-    // Find the index in decided[] where level 3 decisions start
-    size_t start = 0;
-    while (start < decided.size() && vs[decided[start]].level <= 2) start++;
-    // Walk forward through decisions at level >= 3
-    for (size_t i = start; i < decided.size(); i++) {
-        Var v = decided[i];
-        // If this variable was implied (has a reason), it's not a decision
-        if (vs[v].reason != 0) continue;
-        // Check: would this variable still be chosen by the heap?
-        // A variable would be chosen if its activity is >= the max active activity
-        double act = var_act_heap[heap_N + v];
-        if (act < 0) act = -act; // inactive variables have negated activity
-        // The max activity in the heap is var_act_heap[1]
-        double max_act = var_act_heap[1];
-        if (max_act > act) {
-            // There's a higher-activity variable available — stop reuse here
-            return vs[v].level;
-        }
-    }
-    // All decisions would be made the same way
-    return (int)decided.size() + 3; // don't backtrack at all
-}
-
-bool Oracle::ShouldRestart() const {
-    // Need enough conflicts to warm up the EMAs
-    if (ema_conflicts < 50) return false;
-    // Restart when fast EMA exceeds slow EMA by margin (Glucose-style)
-    return ema_glue_fast > 1.25 * ema_glue_slow;
-}
-
 TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
-    ema_glue_fast = 0;
-    ema_glue_slow = 0;
-    ema_conflicts = 0;
+    InitLuby();
     int64_t confls = 0;
+    int64_t next_restart = 1;
     int cur_level = 2;
     Var nv = 1;
     while (true) {
@@ -981,12 +915,11 @@ TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
             assert(cur_level >= 2);
             continue;
         }
-        // Glucose-style EMA restart with trail reuse
-        if (ShouldRestart()) {
-            int reuse_level = ReuseTrail();
-            int bt_level = max(3, reuse_level);
-            UnDecide(bt_level);
-            cur_level = bt_level - 1;
+        if (confls >= next_restart) {
+            int nl = NextLuby();
+            next_restart = confls + nl*restart_factor;
+            UnDecide(3);
+            cur_level = 2;
             stats.restarts++;
             if (total_confls > last_db_clean + 10000) {
                 last_db_clean = total_confls;
@@ -1072,6 +1005,9 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     redu_seen.resize(vars*2+2);
     in_cc.resize(vars*2+2);
     minimize_mark.resize(vars+1, 0);
+    // setting magic constants
+    restart_factor = 100;
+
     clauses.push_back(0);
     clause_pos.push_back(0);
     orig_clauses_size = 1;

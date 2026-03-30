@@ -168,11 +168,10 @@ public:
 
     vector<Lit> learned_units;
 
-    // Glucose-style EMA restart tracking
-    double ema_glue_fast = 0;
-    double ema_glue_slow = 0;
-    int64_t ema_conflicts = 0;
-    bool ShouldRestart() const;
+    int restart_factor = 0;
+    vector<int> luby;
+    void InitLuby();
+    int NextLuby();
 
     size_t num_lbd2_red_cls = 0;
     size_t num_used_red_cls = 0;
@@ -187,7 +186,6 @@ public:
     void BumpVar(Var v);
     void ActivateActivity(Var v);
     Var PopVarHeap();
-    int ReuseTrail() const; // returns level to backtrack to on restart
 
     bool LitSat(Lit lit) const;
     bool LitAssigned(Lit lit) const;
