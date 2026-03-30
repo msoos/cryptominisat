@@ -804,28 +804,6 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     stats.conflicts++;
     auto clause = LearnUip(confl_clause);
     assert(clause.size() >= 1);
-
-    // Update Glucose-style EMA for restart decisions
-    // Compute glue of the learned clause
-    {
-        lvl_it++;
-        int glue = 0;
-        for (size_t ci = 0; ci < clause.size(); ci++) {
-            int lev = (ci == 0) ? (decided.empty() ? 2 : vs[decided.back()].level + 1)
-                                : vs[VarOf(clause[ci])].level;
-            if (lvl_seen[lev] != lvl_it) {
-                lvl_seen[lev] = lvl_it;
-                glue++;
-            }
-        }
-        // EMA alpha: fast = 2^-5 = 1/32, slow = 2^-14 = 1/16384
-        constexpr double alpha_fast = 1.0 / 32.0;
-        constexpr double alpha_slow = 1.0 / 16384.0;
-        ema_glue_fast = alpha_fast * glue + (1.0 - alpha_fast) * ema_glue_fast;
-        ema_glue_slow = alpha_slow * glue + (1.0 - alpha_slow) * ema_glue_slow;
-        ema_conflicts++;
-    }
-
     if (clause.size() == 1 || vs[VarOf(clause[1])].level == 1) {
         assert(min_level <= 2);
         UnDecide(3);
@@ -884,17 +862,8 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     }
 }
 
-bool Oracle::ShouldRestart() const {
-    // Need enough conflicts to warm up the EMAs
-    if (ema_conflicts < 50) return false;
-    // Restart when fast EMA exceeds slow EMA by margin (Glucose-style)
-    return ema_glue_fast > 1.25 * ema_glue_slow;
-}
-
 TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
-    ema_glue_fast = 0;
-    ema_glue_slow = 0;
-    ema_conflicts = 0;
+    InitLuby();
     int64_t confls = 0;
     int cur_level = 2;
     Var nv = 1;
@@ -909,8 +878,9 @@ TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
             assert(cur_level >= 2);
             continue;
         }
-        // Glucose-style EMA restart: check after every propagation with no conflict
-        if (ShouldRestart()) {
+        if (confls >= next_restart) {
+            int nl = NextLuby();
+            next_restart = confls + nl*restart_factor;
             UnDecide(3);
             cur_level = 2;
             stats.restarts++;
