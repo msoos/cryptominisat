@@ -20,12 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#pragma once
 
 #include <string>
 #include <vector>
-#include <memory>
 #include <fstream>
 
 #include "argparse.hpp"
@@ -45,6 +43,7 @@ class Main: public MainCommon
         ~Main()
         {
             delete solver;
+            delete resultfile;
             if (fratf) {
                 fflush(fratf);
                 fclose(fratf);
@@ -114,5 +113,3 @@ class Main: public MainCommon
         //Drat checker
         bool clause_ID_needed = false;
 };
-
-#endif //MAIN_H

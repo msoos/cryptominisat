@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include "ccnr_oracle.h"
 
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <cassert>
@@ -211,7 +210,7 @@ int OracleLS::pick_var() {
         for (int v: ccd_vars) {
             assert(v <= num_vars);
             assert(v < (int)vars.size());
-            if (assump_map->at(v) != 2) continue;
+            if ((*assump_map)[v] != 2) continue;
 
             if (vars[v].score >= best_score) {
                 best_var = v;
@@ -308,7 +307,10 @@ void OracleLS::flip(int v) {
     mems += vars[v].lits.size();
 
     // Go through each clause the literal is in and update status
-    for (const auto& l: vars[v].lits) {
+    const auto& vlits = vars[v].lits;
+    for (size_t li = 0; li < vlits.size(); li++) {
+        const auto& l = vlits[li];
+        if (li + 1 < vlits.size()) cmsat_prefetch(&cls[vlits[li+1].cl_num]);
         auto& cl = cls[l.cl_num];
         assert(cl.sat_count >= 0);
         assert(cl.sat_count <= (int)cl.lits.size());

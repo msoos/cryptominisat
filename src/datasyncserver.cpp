@@ -149,10 +149,8 @@ void DataSyncServer::get_bin(const Lit lit1, const Lit lit2)
 
     //check if binary is already known
     vector<Lit>& thisBins = bins[(~lit1).toInt()];
-    for (vector<Lit>::const_iterator it = thisBins.begin(), end = thisBins.end(); it != end; ++it) {
-        if (*it == lit2) {
-            return;
-        }
+    for (const Lit l : thisBins) {
+        if (l == lit2) return;
     }
 
     //binary not already known
@@ -237,9 +235,8 @@ void DataSyncServer::sendDataToAll()
 
     //Binaries. First, the 2*num_vars, then the list sizes, then the data.
     data.push_back((uint32_t)num_vars*2);
-    uint32_t at = 0;
-    for(vector<vector<Lit> >::const_iterator it = bins.begin(), end = bins.end(); it != end; ++it, at++) {
-        const vector<Lit>& binSet = *it;
+    for (uint32_t at = 0; at < bins.size(); at++) {
+        const vector<Lit>& binSet = bins[at];
         assert(binSet.size() >= syncMPIFinish[at]);
         uint32_t sizeToSend = binSet.size() - syncMPIFinish[at];
         data.push_back(sizeToSend);
@@ -282,11 +279,11 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
         MPI_ANY_SOURCE,
         1, //check tag "1", i.e. interrupt tag data
         MPI_COMM_WORLD, &flag, &status);
-    int source = status.MPI_SOURCE;
     assert(err == MPI_SUCCESS);
     if (flag == false) {
         return false;
     }
+    int source = status.MPI_SOURCE;
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "c -->> MPI Server"

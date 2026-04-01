@@ -315,10 +315,9 @@ string CNF::watched_to_string(Lit other_lit, const Watched& ws) const
 
         case WatchType::watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
-            for(size_t i = 0; i < cl->size(); i++) {
+            for (size_t i = 0; i < cl->size(); i++) {
+                if (i > 0) ss << ", ";
                 ss << (*cl)[i];
-                if (i + 1 < cl->size())
-                    ss << ", ";
             }
             if (cl->red()) {
                 ss << "(red)";
@@ -602,14 +601,9 @@ void CNF::print_all_clauses() const
     }
 
 
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+    for (uint32_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = watches[lit];
         cout << "watches[" << lit << "]" << endl;
         for (const auto& w : ws) {
             if (w.isBin()) {
@@ -646,13 +640,6 @@ void CNF::add_frat(FILE* os) {
     frat->set_sqlstats_ptr(sqlStats);
 }
 
-void CNF::add_idrup(FILE* os) {
-    if (frat) delete frat;
-    frat = new IdrupFile<false>(inter_to_outerMain);
-    frat->setFile(os);
-    frat->set_sumconflicts_ptr(&sumConflicts);
-    frat->set_sqlstats_ptr(sqlStats);
-}
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
 {

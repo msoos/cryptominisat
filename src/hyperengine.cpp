@@ -384,16 +384,11 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
      #endif
 
     currAncestors.clear();
-    size_t i = 0;
-    for (Clause::const_iterator
-        it = cl.begin(), end = cl.end()
-        ; it != end
-        ; ++it, i++
-    ) {
-        if (*it != p) {
-            assert(value(*it) == l_False);
-            if (varData[it->var()].level != 0)
-                currAncestors.push_back(~*it);
+    for (const Lit lit : cl) {
+        if (lit != p) {
+            assert(value(lit) == l_False);
+            if (varData[lit.var()].level != 0)
+                currAncestors.push_back(~lit);
         }
     }
 
@@ -454,11 +449,7 @@ Lit HyperEngine::deepest_common_ancestor()
         cout << "LEVEL analyzeFail" << endl;
         #endif
         size_t num_lit_undef = 0;
-        for (vector<Lit>::iterator
-            it = currAncestors.begin(), end = currAncestors.end()
-            ; it != end
-            ; ++it
-        ) {
+        for (auto it = currAncestors.begin(), end = currAncestors.end(); it != end; ++it) {
             propStats.otfHyperTime += 1;
 
             //We have reached the top of the graph, the other 'threads' that

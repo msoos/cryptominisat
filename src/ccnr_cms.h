@@ -20,19 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef CMS_ccnr_H
-#define CMS_ccnr_H
+#pragma once
 
 #include <cstdint>
-#include <cstdio>
 #include <utility>
 #include "solvertypes.h"
 
-namespace CCNR {
-    class ls_solver;
-}
-
 namespace CMSat {
+    namespace CCNR {
+        class ls_solver;
+    }
+
 
 class Solver;
 using std::pair;
@@ -78,5 +76,3 @@ private:
 };
 
 }
-
-#endif //CMS_WALKSAT_H

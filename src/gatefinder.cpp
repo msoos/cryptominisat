@@ -70,7 +70,7 @@ void GateFinder::find_or_gates_and_update_stats()
 {
     assert(solver->ok);
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     const int64_t orig_numMaxGateFinder =
         solver->conf.gatefinder_time_limitM*100LL*1000LL
         *solver->conf.global_timeout_multiplier;
@@ -81,7 +81,7 @@ void GateFinder::find_or_gates_and_update_stats()
     runStats.gatesSize += 2*orGates.size();
     runStats.num+=orGates.size();
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const bool time_out = (numMaxGateFinder <= 0);
     const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
     runStats.findGateTime = time_used;
@@ -223,7 +223,6 @@ void GateFinder::print_graphviz_dot()
     gateUsed.resize(orGates.size(), false);
     size_t index = 0;
     for (const OrGate& orGate: orGates) {
-        index++;
         for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {
                 if (!ws.isIdx()) {
@@ -259,6 +258,7 @@ void GateFinder::print_graphviz_dot()
                 file << "[style = \"dotted\", arrowsize=\"0.4\"];" << endl;
             }*/
         }
+        index++;
     }
 
     for (index = 0; index < orGates.size(); index++) {

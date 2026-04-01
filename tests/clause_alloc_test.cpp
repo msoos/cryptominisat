@@ -52,7 +52,7 @@ TEST_F(clause_allocator, add_1)
 {
     vector<Lit> cl;
     srand(0);
-    double t = cpuTime();
+    double t = cpu_time();
 
     uint64_t num = 10ULL*1000ULL*1000ULL;
     for(size_t i = 0; i < num; i++) {
@@ -66,7 +66,7 @@ TEST_F(clause_allocator, add_1)
         }
         s->add_clause_outside(cl);
         if (i % (300ULL*1000ULL) == 0) {
-            cout << "Added " << i/(3000LL*1000ULL) << "M" << " T:" << (cpuTime()-t) << endl;
+            cout << "Added " << i/(3000LL*1000ULL) << "M" << " T:" << (cpu_time()-t) << endl;
             s->cl_alloc.consolidate(s, true);
         }
     }

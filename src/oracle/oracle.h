@@ -34,6 +34,8 @@
 #define oclv2(x) do {} while(0)
 #endif
 
+using std::array;
+
 namespace sspp {
 namespace oracle {
 
@@ -77,6 +79,7 @@ struct Stats {
     int64_t restarts = 0;
     int64_t cache_useful = 0;
     int64_t cache_added = 0;
+    int64_t total_cache_lookups = 0;
     void Print() const;
 };
 
@@ -108,6 +111,8 @@ public:
 
     void SetAssumpLit(Lit lit, bool freeze);
     void SetVerbosity(uint32_t _verb) { verb=_verb;}
+    void SetCacheCutoff(uint32_t c) { cache_cutoff = c; }
+    int GetCacheLookupVar() const { return cache_lookup_var; }
     TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
     bool FreezeUnit(Lit unit);
     bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
@@ -117,16 +122,21 @@ public:
 
     int CurLevel() const;
     int LitVal(Lit lit) const;
+    // Get the phase (polarity) of a variable from the last solution.
+    // Returns 1 for true, 0 for false. Only valid after a SAT Solve().
+    int GetPhase(Var v) const { return vs[v].phase; }
     const Stats& getStats() const {return stats;}
     void reset_mems() {stats.mems = 0;}
 
  private:
     uint32_t verb = 0;
+    uint32_t cache_cutoff = 1000;
     size_t total_confls = 0;
     size_t last_db_clean = 0;
 
     void AddOrigClause(vector<Lit> clause, bool entailed);
     vector<Lit> clauses;
+    vector<int> clause_pos; // watch replacement search start position (per clause start)
     vector<vector<Watch>> watches;
     vector<signed char> lit_val;
     vector<VarC> vs;
@@ -146,6 +156,12 @@ public:
     vector<char> seen;
     vector<int64_t> redu_seen;
     vector<Lit> redu_s;
+
+    // Poison/removable marks for conflict minimization memoization
+    // 0=unmarked, 1=removable, 2=poison
+    vector<char> minimize_mark;
+    vector<Var> minimize_marked_vars; // track which vars to clear
+    vector<Var> redu_visited; // scratch space for LitReduntant (avoid heap allocs)
 
     int64_t lvl_it = 1;
     vector<int64_t> lvl_seen; // for computing LBD
@@ -177,7 +193,7 @@ public:
     void Decide(Lit dec, int level);
     void UnDecide(int level);
 
-    TriState HardSolve(int64_t max_mems = 1000LL*1000LL*1000LL);
+    TriState HardSolve(int64_t max_mems = 1000LL*1000LL*1000LL, int64_t mems_startup = 0);
     // True if conflict
     size_t Propagate(int level);
 
@@ -187,9 +203,13 @@ public:
     vector<Lit> LearnUip(size_t conflict_clause);
     int CDCLBT(size_t confl_clause, int min_level=0);
 
-    vector<vector<char>> sol_cache; // Caches found FULL solutions
+    void rebuild_cache_lookup();
+    vector<uint8_t> sol_cache; // Caches found FULL solutions
+    array<vector<uint32_t>, 2> cache_lookup; //0/1 for literal cache_lookup_lit
+    int cache_lookup_var = 0; // 0 = unset
+    vector<uint64_t> cache_lookup_frequencies;
     void AddSolToCache();
-    bool SatByCache(const vector<Lit>& assumps) const;
+    bool SatByCache(const vector<Lit>& assumps);
     void ClearSolCache();
 };
 

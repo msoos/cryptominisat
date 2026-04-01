@@ -217,7 +217,7 @@ bool BreakID::doit()
     CompleteDetachReatacher reattacher(solver);
     reattacher.detach_nonbins();
     remove_duplicates();
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     assert(breakid == nullptr);
     breakid = new BID::BreakID;
     breakid->set_verbosity(0);
@@ -259,7 +259,7 @@ bool BreakID::doit()
     //get_outer_permutations();
 
     // Finish up
-    double time_used = cpuTime() - my_time;
+    double time_used = cpu_time() - my_time;
     int64_t remain = breakid->get_steps_remain();
     bool time_out = remain <= 0;
     double time_remain = float_div(remain, set_time_lim);
@@ -341,7 +341,7 @@ bool BreakID::check_limits()
 
 void BreakID::remove_duplicates()
 {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     dedup_cls.clear();
 
     for(ClOffset offs: solver->longIrredCls) {
@@ -358,11 +358,11 @@ void BreakID::remove_duplicates()
 
     size_t old_size = dedup_cls.size();
     if (dedup_cls.size() > 1 && true) {
-        vector<ClOffset>::iterator prev = dedup_cls.begin();
-        vector<ClOffset>::iterator i = dedup_cls.begin();
+        auto prev = dedup_cls.begin();
+        auto i = dedup_cls.begin();
         ++i;
         Clause* prevcl = solver->cl_alloc.ptr(*prev);
-        for(vector<ClOffset>::iterator end = dedup_cls.end(); i != end; ++i) {
+        for (auto end = dedup_cls.end(); i != end; ++i) {
             Clause* cl = solver->cl_alloc.ptr(*i);
             if (!equiv(cl, prevcl)) {
                 ++prev;
@@ -374,7 +374,7 @@ void BreakID::remove_duplicates()
         dedup_cls.resize(prev-dedup_cls.begin());
     }
 
-    double time_used = cpuTime() - my_time;
+    double time_used = cpu_time() - my_time;
     if (solver->conf.verbosity >= 1) {
         cout << "c [breakid] tmp-rem-dup cls"
         << " dupl: " << print_value_kilo_mega(old_size-dedup_cls.size(), false)

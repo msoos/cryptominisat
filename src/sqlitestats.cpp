@@ -37,7 +37,6 @@ THE SOFTWARE.
 #include "sql_tablestructure.h"
 #include "varreplacer.h"
 
-using std::make_pair;
 
 #define bind_null_or_double(stmt,bindat,stucture,func) \
 { \
@@ -454,7 +453,7 @@ void SQLiteStats::time_passed(
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
+    sqlite3_bind_double(stmtTimePassed, bindAt++, cpu_time());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
     sqlite3_bind_int(stmtTimePassed, bindAt++, time_out);
@@ -471,7 +470,7 @@ void SQLiteStats::time_passed_min(
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
+    sqlite3_bind_double(stmtTimePassed, bindAt++, cpu_time());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
     sqlite3_bind_null(stmtTimePassed, bindAt++);
@@ -505,7 +504,7 @@ void SQLiteStats::set_id_confl(
         , const uint64_t sumConflicts)
 {
     assert(id != 0);
-    id_conf_cache.push_back(make_pair(id, sumConflicts));
+    id_conf_cache.emplace_back(id, sumConflicts);
     if (id_conf_cache.size() < 1000) return;
     else dump_id_confl_cache();
 }
@@ -638,7 +637,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->sumConflicts);
     sqlite3_bind_int  (stmt, bindAt++, searchHist.num_conflicts_this_restart);
     sqlite3_bind_int  (stmt, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_double(stmt, bindAt++, cpuTime());
+    sqlite3_bind_double(stmt, bindAt++, cpu_time());
 
 
     sqlite3_bind_int64(stmt, bindAt++, binTri.irredBins);
@@ -735,7 +734,7 @@ void SQLiteStats::reduceDB_common(
     sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, cur_rst_type);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, cpuTime());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, cpu_time());
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, tot_cls_in_db);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, (double)median_data.median_act);

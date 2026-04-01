@@ -24,7 +24,6 @@ THE SOFTWARE.
 #include "main_common.h"
 #include "solverconf.h"
 #include <iostream>
-#include <fstream>
 
 using std::endl;
 
@@ -42,18 +41,6 @@ void MainCommon::handle_frat_option() {
     fratf = fratfTmp;
 }
 
-void MainCommon::handle_idrup_option() {
-    assert(conf.idrup);
-    FILE* idrupfTmp = fopen(idrup_fname.c_str(), "w");
-    if (idrupfTmp == NULL) {
-        std::cerr
-        << "ERROR: Could not open IDRUP file '" << idrup_fname << "' for writing"
-        << endl;
-
-        std::exit(-1);
-    }
-    idrupf = idrupfTmp;
-}
 
 uint32_t MainCommon::print_model(CMSat::SATSolver* solver, std::ostream* os, const std::vector<uint32_t>* only)
 {

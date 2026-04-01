@@ -21,69 +21,66 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************************/
 
-#ifndef TIME_MEM_H
-#define TIME_MEM_H
-#include "constants.h"
+#pragma once
+
 #include <cassert>
-#include <time.h>
+#include <functional>
 
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <string>
-#include <signal.h>
+#include <cstdint>
 
 // note: MinGW64 defines both __MINGW32__ and __MINGW64__
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32) || defined(EMSCRIPTEN)
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
 #include <ctime>
-static inline double cpuTime(void)
+#include <windows.h>
+static inline double cpu_time(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
 }
+
 static inline double cpuTimeTotal(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
 }
-static inline double realTimeSec() {
-    return 0;
-}
 
-static inline double real_time_sec() {
-    return 0;
+static inline double real_time_sec(void)
+{
+    return (double)GetTickCount64() / 1000.0;
 }
-
 
 #else //Linux or POSIX
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <time.h>
 
-static inline long realTimeMicros() {
-    struct timeval tv;
-    gettimeofday(&tv, nullptr);
-    return 1000000 * tv.tv_sec + tv.tv_usec;
-}
-
-static inline double real_time_sec() {
-    return (double) realTimeMicros() / 1000000;
-}
-
-static inline double cpuTime(void)
+static inline double cpu_time(void)
 {
     struct rusage ru;
-    int ret = getrusage(RUSAGE_SELF, &ru);
+    [[maybe_unused]] int ret = getrusage(RUSAGE_SELF, &ru);
     assert(ret == 0);
 
     return (double)ru.ru_utime.tv_sec + ((double)ru.ru_utime.tv_usec / 1000000.0);
 }
 
+// Returns total CPU time used by all threads in the process (user + system).
 static inline double cpuTimeTotal(void)
 {
-    struct rusage ru;
-    int ret = getrusage(RUSAGE_SELF, &ru);
+    struct timespec ts;
+    [[maybe_unused]] int ret = clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
     assert(ret == 0);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1000000000.0;
+}
 
-    return (double)ru.ru_utime.tv_sec + ((double)ru.ru_utime.tv_usec / 1000000.0);
+static inline double real_time_sec(void)
+{
+    struct timespec ts;
+    [[maybe_unused]] int ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+    assert(ret == 0);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1000000000.0;
 }
 
 #endif
@@ -94,63 +91,25 @@ static inline double cpuTimeTotal(void)
 // size and resident set size, and return the results in KB.
 //
 // On failure, returns 0.0, 0.0
-static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = nullptr)
+static inline uint64_t mem_used(double& vm_usage, std::string* max_mem_usage = nullptr)
 {
-   //double& vm_usage
    using std::ios_base;
    using std::ifstream;
    using std::string;
 
-   vm_usage     = 0.0;
+   vm_usage = 0.0;
 
    // 'file' stat seems to give the most reliable results
-   //
-   ifstream stat_stream("/proc/self/stat",ios_base::in);
+   ifstream stat_stream("/proc/self/stat", ios_base::in);
 
    // dummy vars for leading entries in stat that we don't care about
-   //
-   string pid; //                        The process ID.
-   string comm;  //The  filename  of the executable, in parentheses.
-   string state; //One of the following characters, indicating process (see man stat(2))
-   string ppid; //The PID of the parent of this process.
-   string pgrp; //The process group ID of the process.
-   string session; //The session ID of the process.
+   string pid, comm, state, ppid, pgrp, session, tty_nr, tpgid;
+   string flags, minflt, cminflt, majflt, cmajflt;
+   string utime, stime, cutime, cstime, priority, nice;
+   string num_threads, itrealvalue, starttime;
 
-   //The  controlling  terminal of the process.  (The minor device number is contained in the combina‐
-   //tion of bits 31 to 20 and 7 to 0; the major device number is in bits 15 to 8.)
-   string tty_nr;
-
-   //The ID of the foreground process group of the controlling terminal of the process.
-   string tpgid;
-
-
-   string flags;
-   string minflt;
-   string cminflt;
-   string majflt;
-   string cmajflt;
-   string utime;
-   string stime;
-   string cutime;
-   string cstime;
-   string priority;
-   string nice;
-
-   //Number of threads in this process (since Linux 2.6).  Before kernel  2.6,  this  field  was  hard
-   //coded to 0 as a placeholder for an earlier removed field.
-   string num_threads;
-
-   string itrealvalue;
-   string starttime;
-
-   /**** the two fields we want *****/
    unsigned long vsize; //Virtual memory size in bytes.
-
-   //Resident Set Size: number of pages the process has in real memory.  This is just the pages  which
-   //count toward text, data, or stack space.  This does not include pages which have not been demand-
-   //loaded in, or which are swapped out.
-   long rss;
-   /**** the two fields we want *****/
+   long rss; //Resident Set Size: number of pages the process has in real memory.
 
    stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
                >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
@@ -160,7 +119,7 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
    stat_stream.close();
 
    long page_size_kb = sysconf(_SC_PAGE_SIZE); // in case x86-64 is configured to use 2MB pages
-   vm_usage     = vsize;
+   vm_usage     = (double)vsize;
    double resident_set = (double)rss * (double)page_size_kb;
 
    if (max_mem_usage != nullptr) {
@@ -170,23 +129,57 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
        //   but we'd need to parse it, etc.
        //   see man(5) proc for details
        //   This note is related to issue #629 in CryptoMiniSat
-       ifstream stat_stream2("/proc/self/status", ios_base::in);
+       ifstream stat_stream2("/proc/self/status",ios_base::in);
        string tp;
-       while (std::getline(stat_stream2, tp)) {
-           if (tp.rfind("VmHWM:", 0) == 0) {
-               tp.erase(0, tp.find_first_of('\t') + 1);
-               tp.erase(0, tp.find_first_not_of(' '));
+       while(getline(stat_stream2, tp)){
+           if (tp.size() > 7 && tp.find("VmHWM:") != std::string::npos) {
+               tp.erase(0, 7);
+               tp.erase(tp.begin(),
+                        std::find_if(tp.begin(), tp.end(),
+                          std::bind(std::not_equal_to<char>(), '\t', std::placeholders::_1)));
+               tp.erase(tp.begin(),
+                        std::find_if(tp.begin(), tp.end(),
+                          std::bind(std::not_equal_to<char>(), ' ', std::placeholders::_1)));
                *max_mem_usage = tp;
-               break;
            }
       }
    }
 
-   return resident_set;
+   return (uint64_t)resident_set;
 }
+
+static inline uint64_t rss_mem_used(void)
+{
+    double vm_unused;
+    return mem_used(vm_unused);
+}
+
+static inline uint64_t memUsedTotal(void)
+{
+    using std::ios_base;
+    using std::ifstream;
+    using std::string;
+
+    ifstream stat_stream("/proc/self/stat", ios_base::in);
+    string pid, comm, state, ppid, pgrp, session, tty_nr, tpgid;
+    string flags, minflt, cminflt, majflt, cmajflt;
+    string utime, stime, cutime, cstime, priority, nice;
+    string num_threads, itrealvalue, starttime;
+    unsigned long vsize;
+    long rss;
+    stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+                >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+                >> utime >> stime >> cutime >> cstime >> priority >> nice
+                >> num_threads >> itrealvalue >> starttime >> vsize >> rss;
+    stat_stream.close();
+    return (uint64_t)vsize;
+}
+
 #elif defined(__FreeBSD__)
 #include <sys/types.h>
-inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = nullptr)
+#include <sys/sysctl.h>
+#include <sys/user.h>
+inline uint64_t mem_used(double& vm_usage, [[maybe_unused]] std::string* max_mem_usage = nullptr)
 {
     vm_usage = 0;
 
@@ -194,12 +187,37 @@ inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = null
     getrusage(RUSAGE_SELF, &ru);
     return ru.ru_maxrss*1024;
 }
+
+static inline uint64_t rss_mem_used(void)
+{
+    double vm_unused;
+    return mem_used(vm_unused);
+}
+
+static inline uint64_t memUsedTotal(void)
+{
+    struct kinfo_proc kp;
+    size_t len = sizeof(kp);
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, (int)getpid()};
+    if (sysctl(mib, 4, &kp, &len, nullptr, 0) == 0)
+        return (uint64_t)kp.ki_size;
+    return 0;
+}
+
 #else //Windows
-static inline size_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = nullptr)
+static inline size_t mem_used(double& vm_usage, std::string* max_mem_usage = nullptr)
 {
     vm_usage = 0;
     return 0;
 }
-#endif
 
-#endif //TIME_MEM_H
+static inline uint64_t rss_mem_used(void)
+{
+    return 0;
+}
+
+static inline uint64_t memUsedTotal(void)
+{
+    return 0;
+}
+#endif

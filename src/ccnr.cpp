@@ -23,14 +23,13 @@ THE SOFTWARE.
 #include "ccnr.h"
 #include "ccnr_mersenne.h"
 
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <cassert>
 #include <cstdint>
 
-using namespace CCNR;
+using namespace CMSat::CCNR;
 
 using std::cout;
 using std::endl;

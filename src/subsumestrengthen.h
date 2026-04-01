@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __SUBSUMESTRENGTHEN_H__
-#define __SUBSUMESTRENGTHEN_H__
+#pragma once
 
 #include "cloffset.h"
 #include "solvertypesmini.h"
@@ -29,9 +28,10 @@ THE SOFTWARE.
 #include "clause.h"
 #include "Vec.h"
 #include <vector>
-using std::vector;
 
 namespace CMSat {
+
+using std::vector;
 
 class OccSimplifier;
 class GateFinder;
@@ -67,7 +67,7 @@ public:
     struct Stats
     {
         Stats& operator+=(const Stats& other);
-        void print_short(const Solver* solver) const;
+        void print_short(const Solver* s) const;
         void print(const string& prefix) const;
 
         Sub0Ret sub0;
@@ -154,5 +154,3 @@ inline const SubsumeStrengthen::Stats& SubsumeStrengthen::get_stats() const
 }
 
 } //end namespace
-
-#endif //__SUBSUMESTRENGTHEN_H__

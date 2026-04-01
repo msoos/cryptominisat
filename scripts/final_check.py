@@ -1,6 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-import os
 import sys
 
 if len(sys.argv) != 2:
@@ -18,7 +17,7 @@ with open(sys.argv[1], "r") as f:
             print("line: ", line_no)
         line = line.strip()
         if len(line) == 0:
-            print("EMTPY LINE!!")
+            print("EMPTY LINE!!")
             exit(-1)
 
         x = None
@@ -199,6 +198,7 @@ for id, lits in cls_store.items():
     print("ERROR, cl ID: ", id, " not finalized. lits: ", lits)
     err = True
 
-if err :exit(-1)
+if err:
+    exit(-1)
 exit(0)
 

@@ -235,7 +235,10 @@ bool DimacsParser<C, S>::parseWeight(C& in) {
         }
         std::string str = in.getRemain();
         if (!weight->parse(str, lineNum)) return false;
-        const Lit lit = Lit(std::abs(slit)-1, slit < 0);
+        uint32_t var = std::abs(slit)-1;
+        var += offset_vars;
+        if (!check_var(var)) return false;
+        const Lit lit = Lit(var, slit < 0);
         solver->set_lit_weight(lit, weight);
         return true;
     } else {
@@ -618,6 +621,17 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
             in.skipLine();
             lineNum++;
             break;
+        case 'e':
+            ++in;
+            in.skipLine();
+            break;
+        case 'a': {
+            ++in;
+            vector<uint32_t> sampl_vars;
+            if (!parseIndependentSet(in, sampl_vars)) return false;
+            solver->set_sampl_vars(sampl_vars);
+            break;
+        }
         case 'c':
             ++in;
             in.parseString(str);
@@ -696,6 +710,7 @@ bool DimacsParser<C, S>::parseIndependentSet(C& in, vector<uint32_t>& lst) {
         if (!in.parseInt(parsed_lit, lineNum)) return false;
         if (parsed_lit == 0) break;
         uint32_t var = std::abs(parsed_lit) - 1;
+        var += offset_vars;
         lst.push_back(var);
     }
     return true;

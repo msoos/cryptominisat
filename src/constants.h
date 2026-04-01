@@ -24,10 +24,10 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <cstdlib>
-#include <cstdio>
 #include <iostream>
 #include <random>
 #include <ranges>
+#include <cassert>
 
 using std::cerr;
 using std::exit;
@@ -38,7 +38,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     unif_uint_dist(u, maximum_inclusive);
     return u(mtrand);
 }
-
 
 #if defined(STATS_NEEDED)
 #define LARGE_OFFSETS
@@ -140,12 +139,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
 #endif
 
-///////////////////
-// Verbose Debug
-///////////////////
-
 //#define FRAT_DEBUG
-//#define VERBOSE_DEBUG
 
 #ifdef DEBUG_FRAT
 #define frat_func_start() do {*solver->frat << __PRETTY_FUNCTION__ << " start\n";} while (0)
@@ -187,7 +181,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define DEBUG_ATTACH_MORE_DO(x) do { } while (0)
 #endif
 
-
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= a) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
@@ -225,7 +218,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     #define unlikely(x) x
 #endif
 
-
 #ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)
 #else
@@ -244,3 +236,12 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     /*cout << "set unsat CL ID here to " << (x) << endl;*/\
     /*assert(false);*/\
     } while (0)
+
+
+inline double safe_div(double a, double b) {
+    if (b == 0) {
+        assert(a == 0);
+        return 0;
+    }
+    return a/b;
+}

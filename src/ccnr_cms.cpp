@@ -21,9 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "time_mem.h"
-#include <limits>
 #include <cstdio>
-#include <cmath>
 #include <cstdlib>
 #include "constants.h"
 #include "ccnr_cms.h"
@@ -83,7 +81,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
         verb_print(1, "[ccnr] too few variables & clauses");
         return l_Undef;
     }
-    double startTime = cpuTime();
+    double startTime = cpu_time();
 
     if (!init_problem()) {
         //it's actually l_False under assumptions
@@ -101,7 +99,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
             solver->conf.prefix.c_str());
     lbool ret = deal_with_solution(res, num_sls_called);
 
-    double time_used = cpuTime()-startTime;
+    double time_used = cpu_time()-startTime;
     verb_print(1, "[ccnr] time: " << time_used);
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -277,7 +275,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_scores()
     std::sort(vs.begin(), vs.end(), VarValSorter());
 
     vector<pair<uint32_t, double>> tobump;
-    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
+    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump && i < vs.size(); i++) {
 //         cout << "var: " << vs[i].var + 1 << " score: " <<  vs[i].val << endl;
         tobump.push_back(std::make_pair(vs[i].var, 3.0));
     }

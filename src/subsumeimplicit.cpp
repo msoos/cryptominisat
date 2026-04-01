@@ -120,7 +120,7 @@ uint32_t SubsumeImplicit::subsume_at_watch(
 void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string caller)
 {
     assert(solver->okay());
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     const uint64_t orig_timeAvailable =
         1000LL*1000LL*solver->conf.subsume_implicit_time_limitM
         *solver->conf.global_timeout_multiplier;
@@ -141,7 +141,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
         subsume_at_watch(at, &timeAvailable);
     }
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const bool time_out = (timeAvailable <= 0);
     const double time_remain = float_div(timeAvailable, orig_timeAvailable);
     runStats.numCalled++;

@@ -23,7 +23,9 @@
 #include "oracle.h"
 #include "constants.h"
 
+#include <cstdint>
 #include <iostream>
+#include <iomanip>
 #include "utils.h"
 using std::cout;
 using std::endl;
@@ -35,6 +37,7 @@ namespace sspp {
 namespace oracle {
 namespace {
 constexpr const double EPS = 1e-150;
+constexpr size_t max_cache_size = 40000;
 }
 
 void Stats::Print() const {
@@ -47,40 +50,159 @@ void Stats::Print() const {
 }
 
 void Oracle::AddSolToCache() {
+    const uint32_t stride = vars+1;
+    if (sol_cache.size() > max_cache_size*stride) {
+        if (verb >= 1) {
+            cout << "c o Oracle sol cache is very large, removing half entries. Current size: "
+                 << sol_cache.size() << endl;
+        }
+        // remove half randomly
+        vector<size_t> indices;
+        const size_t sz = sol_cache.size()/stride;
+        for (size_t i = 0; i < sz; i++) indices.push_back(i);
+        std::shuffle(indices.begin(), indices.end(), rand_gen);
+        vector<uint8_t> new_cache;
+        for (size_t i = 0; i < sz/2; i++) {
+            size_t idx = indices[i];
+            for (uint32_t j = 0; j < stride; j++) {
+                new_cache.push_back(sol_cache[idx*stride + j]);
+            }
+        }
+        sol_cache.swap(new_cache);
+        assert(sol_cache.size()%stride == 0);
+        rebuild_cache_lookup();
+    }
+
+    sol_cache.push_back(255); // 0th variable, nonsense
     for (Var i = 1; i <= vars; i++) {
         assert(vs[i].phase == 0 || vs[i].phase == 1);
-        sol_cache[i].push_back(vs[i].phase);
+        sol_cache.push_back(vs[i].phase);
+    }
+    assert(sol_cache.size()%stride == 0);
+
+    // add to lookup
+    if (cache_lookup_var != 0) {
+        auto val = vs[cache_lookup_var].phase;
+        cache_lookup[val].push_back(sol_cache.size()/stride - 1);
+        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/stride);
     }
     stats.cache_added++;
 }
 
-void Oracle::ClearSolCache() {
-    if (sol_cache[1].empty()) return;
-    for (Var v = 1; v <= vars; v++) sol_cache[v].clear();
+void Oracle::rebuild_cache_lookup() {
+    const uint32_t stride = vars+1;
+    cache_lookup[0].clear();
+    cache_lookup[1].clear();
+    if (cache_lookup_var != 0) {
+        assert(cache_lookup_var < vars+1);
+        for (size_t i = 0; i < sol_cache.size()/stride; i++) {
+            auto val = sol_cache[i*stride + cache_lookup_var];
+            cache_lookup[val].push_back(i);
+        }
+        assert(cache_lookup[0].size() + cache_lookup[1].size() == sol_cache.size()/stride);
+    }
 }
 
-bool Oracle::SatByCache(const vector<Lit>& assumps) const {
-    // 1st variable's cache size is the same as all the rest
-    int cs = sol_cache[1].size();
+void Oracle::ClearSolCache() {
+    sol_cache.clear();
+    cache_lookup_var = 0;
+    rebuild_cache_lookup();
+    cache_lookup_frequencies.clear();
+}
 
-    // Try all cache lines
-    for (int i = 0; i < cs; i++) {
-        bool ok = true;
-        // all our assumptions must be in the solution
-        for (const Lit& l : assumps) {
-            if (IsPos(l)) {
-                if (sol_cache[VarOf(l)][i] == 0) { ok = false; break; }
-            } else {
-                if (sol_cache[VarOf(l)][i] == 1) { ok = false; break; }
+bool Oracle::SatByCache(const vector<Lit>& assumps) {
+    const uint32_t stride = vars+1;
+    if (stats.total_cache_lookups % cache_cutoff == (cache_cutoff/5) && verb >= 3) {
+        cout << "c o [oracle] cache"
+            << " usefulness: "
+            << std::setprecision(0) << std::fixed << (double)stats.cache_useful/(double)stats.total_cache_lookups*100.0 << "%"
+            << std::setprecision(2)
+            << " elements in cache: " << sol_cache.size()/stride
+            << " cache size distrib for lookup: " << cache_lookup[0].size() << " -- " << cache_lookup[1].size()
+            << endl;
+    }
+
+    stats.total_cache_lookups++;
+    assert(sol_cache.size()%stride == 0);
+
+    if (cache_lookup_frequencies.empty()) {
+        cache_lookup_frequencies.resize(vars+1, 0);
+    }
+    assert(cache_lookup_frequencies.size() == (uint32_t)vars+1);
+
+    for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
+    if ((stats.total_cache_lookups % cache_cutoff == cache_cutoff - 1)) {
+        vector<uint32_t> occs_int(stride, 0);
+        const uint64_t sz = sol_cache.size();
+        for (uint64_t i = 0; i < sz; i+=stride) {
+            for(uint64_t i2 = 1; i2 < stride; i2++) {
+                occs_int[i2] += sol_cache[i + i2];
             }
         }
-        if (ok) return true;
+        vector<double> occs(stride, 0.0);
+        for(uint64_t i = 1; i < stride; i++) {
+            auto& o = occs[i];
+            o = (double)occs_int[i]/((double)sz/stride);
+            o = (o < 0.5) ? o : (1.0 - o);
+        }
+        vector<int> v;
+        for(int i = 1; i <= vars; i++) v.push_back(i);
+        std::sort(v.begin(), v.end(), [&](int a, int b){
+            double fa = (double)cache_lookup_frequencies[a]*occs[a];
+            double fb = (double)cache_lookup_frequencies[b]*occs[b];
+            return fa > fb;
+        });
+        cache_lookup_var = v[0];
+        rebuild_cache_lookup();
     }
+
+
+    // Check if cache var is assumps
+    bool found = false;
+    bool val;
+    if (cache_lookup_var != 0) {
+        for(const auto& l: assumps) {
+            if (VarOf(l) == cache_lookup_var) {
+                found = true;
+                val = IsPos(l);
+                break;
+            }
+        }
+    }
+
+    uint64_t checks = 0;
+    const uint8_t* cache_base = sol_cache.data();
+    if (found) {
+        for(const auto& idx : cache_lookup[val]) {
+            const uint8_t* entry = cache_base + idx*stride;
+            bool ok = true;
+            // all our assumptions must be in the solution
+            for (const Lit& l : assumps) {
+                checks++;
+                if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
+            }
+            if (ok) return true;
+        }
+    } else {
+        const uint8_t* const cache_end = cache_base + sol_cache.size();
+        for (const uint8_t* entry = cache_base; entry < cache_end; entry += stride) {
+            bool ok = true;
+            // all our assumptions must be in the solution
+            for (const Lit& l : assumps) {
+                checks++;
+                if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
+            }
+            if (ok) return true;
+        }
+    }
+    stats.mems += checks/20;
+
     // Not in the cache
     return false;
 }
 
 void Oracle::ResizeClauseDb() {
+    // Sort: added clauses first (glue==-1), then by glue ascending, then by used/total_used
     std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
         if (a.glue == -1 || b.glue == -1) return a.glue < b.glue;
         if (a.used != b.used) return a.used > b.used;
@@ -91,10 +213,12 @@ void Oracle::ResizeClauseDb() {
         for (Var v = 1; v <= vars; v++) { new_reason[v] = vs[v].reason; }
         size_t prev_orig_clauses_size = orig_clauses_size;
         vector<Lit> new_clauses(orig_clauses_size);
-        for (size_t i = 0; i < orig_clauses_size; i++) { new_clauses[i] = clauses[i]; }
+        vector<int> new_clause_pos(orig_clauses_size, 0);
+        for (size_t i = 0; i < orig_clauses_size; i++) {
+            new_clauses[i] = clauses[i];
+            if (i < clause_pos.size()) new_clause_pos[i] = clause_pos[i];
+        }
         vector<CInfo> new_cla_info;
-        // This sets new_clauses and fixes reasons
-        const size_t good_size = 10000;
         num_lbd2_red_cls = 0;
         num_used_red_cls = 0;
         for (size_t i = 0; i < cla_info.size(); i++) {
@@ -106,7 +230,6 @@ void Oracle::ResizeClauseDb() {
             size_t cls = cla_info[i].pt;
             if (vs[VarOf(clauses[cls+1])].reason == cls) {
                 swap(clauses[cls], clauses[cls+1]);
-                // Can only happen in binary clause
                 assert(clauses[cls+2] == 0);
             }
             if (vs[VarOf(clauses[cls])].reason == cls) {
@@ -132,10 +255,37 @@ void Oracle::ResizeClauseDb() {
             }
             assert(len >= 2);
             if (frozen_sat) assert(!impll);
-            if (cla_info[i].glue <= 2) num_lbd2_red_cls++;
-            else if (cla_info[i].used) num_used_red_cls++;
-            if (frozen_sat || (impll == 0 && !added && !cla_info[i].Keep()
-                        && i > good_size+num_lbd2_red_cls)) {
+
+            // Tiered clause reduction (CaDiCaL-style):
+            // Tier 1 (glue <= 2): always keep
+            // Tier 2 (glue <= 6): keep if used recently (used > 0), decrement used
+            // Tier 3 (glue > 6): delete if not used since last reduce
+            bool should_delete = false;
+            if (frozen_sat) {
+                should_delete = true;
+            } else if (impll == 0 && !added) {
+                int glue = cla_info[i].glue;
+                int used = cla_info[i].used;
+                if (glue <= 2) {
+                    // Tier 1: always keep
+                    num_lbd2_red_cls++;
+                } else if (glue <= 6) {
+                    // Tier 2: delete only if unused for 2 consecutive reductions
+                    if (used > 0) {
+                        num_used_red_cls++;
+                    } else {
+                        should_delete = true;
+                    }
+                } else {
+                    // Tier 3: delete if not used since last reduce
+                    if (used <= 0) {
+                        should_delete = true;
+                    } else {
+                        num_used_red_cls++;
+                    }
+                }
+            }
+            if (should_delete) {
                 stats.forgot_clauses++;
                 clauses[cls] = 0;
                 continue;
@@ -143,7 +293,17 @@ void Oracle::ResizeClauseDb() {
             size_t new_pt = new_clauses.size();
             if (impll) new_reason[VarOf(impll)] = new_pt;
             if (added) assert(new_clauses.size() == orig_clauses_size);
-            else new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, cla_info[i].used-1, cla_info[i].total_used});
+            else {
+                // Decrement used counter (will be set back to 1+ when clause is bumped)
+                int new_used = cla_info[i].used > 0 ? cla_info[i].used - 1 : 0;
+                new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, new_used, cla_info[i].total_used});
+            }
+            // Copy clause data and position cache
+            new_clause_pos.resize(new_clauses.size() + len + 1, 0);
+            int old_pos = (cls < clause_pos.size()) ? clause_pos[cls] : 2;
+            // Clamp position to valid range for this clause
+            if (old_pos < 2 || old_pos >= (int)len) old_pos = 2;
+            new_clause_pos[new_pt] = old_pos;
             for (size_t k = cls; clauses[k]; k++) new_clauses.push_back(clauses[k]);
             new_clauses.push_back(0);
             if (added) orig_clauses_size = new_clauses.size();
@@ -162,6 +322,7 @@ void Oracle::ResizeClauseDb() {
             watches[l].resize(pos);
         }
         clauses = new_clauses;
+        clause_pos = new_clause_pos;
         cla_info = new_cla_info;
 #ifdef SLOW_DEBUG
         for (Lit l = 2; l <= vars*2+1; l++) {
@@ -186,13 +347,13 @@ void Oracle::ResizeClauseDb() {
 void Oracle::BumpClause(size_t cls) {
     if (cls < orig_clauses_size) return;
     assert(cla_info.size() > 0);
-    size_t i = 0;
-    for (size_t b = cla_info.size()/2; b >= 1; b /= 2) {
-        while (i + b < cla_info.size() && cla_info[i+b].pt <= cls) {
-            i += b;
-        }
-    }
-    assert(cla_info[i].pt == cls);
+    // Binary search using std::lower_bound for better compiler optimization
+    CInfo target;
+    target.pt = cls;
+    auto it = std::lower_bound(cla_info.begin(), cla_info.end(), target,
+        [](const CInfo& a, const CInfo& b) { return a.pt < b.pt; });
+    assert(it != cla_info.end() && it->pt == cls);
+    size_t i = it - cla_info.begin();
     if (cla_info[i].glue == -1) {
         // Special added clause
         assert(cla_info[i].used == -1);
@@ -207,7 +368,9 @@ void Oracle::BumpClause(size_t cls) {
         }
     }
     cla_info[i].glue = glue;
-    cla_info[i].used = 1;
+    // Tier 2 (glue <= 6) clauses get used=2 so they survive 2 reduction rounds
+    // Tier 3 (glue > 6) clauses get used=1 so they survive 1 round
+    cla_info[i].used = (glue <= 6) ? 2 : 1;
     cla_info[i].total_used++;
     return;
 }
@@ -268,12 +431,16 @@ void Oracle::BumpVar(Var v) {
         }
     }
     var_inc = var_inc * var_fact;
-    if (var_inc > 10000.0) {
+    // Rescale all activities when increment gets very large.
+    // Using 1e150 (like CaDiCaL) instead of 10000 makes rescaling
+    // extremely rare, avoiding expensive O(vars) rescaling operations.
+    if (var_inc > 1e150) {
         stats.mems+=10;
-        var_inc /= 10000.0;
+        const double scale = 1e-150;
+        var_inc *= scale;
         for (Var i = 1; i <= vars; i++) {
             double& act = var_act_heap[heap_N + i];
-            act /= 10000.0;
+            act *= scale;
             if (-EPS < act && act < EPS) {
                 assert(act != 0);
                 if (act < 0) {
@@ -295,7 +462,10 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
     assert(vs[v].reason == 0);
     assert(vs[v].level != 1);
     for (Lit tl : {PosLit(v), NegLit(v)}) {
-        for (const Watch w : watches[tl]) {
+        const auto& wt = watches[tl];
+        for (size_t wi = 0; wi < wt.size(); wi++) {
+            const Watch w = wt[wi];
+            if (wi + 1 < wt.size()) cmsat_prefetch(clauses.data() + wt[wi+1].cls);
             stats.mems++;
             assert(w.size > 2);
             size_t pos = w.cls;
@@ -339,7 +509,10 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
     oclv("Assigning " << v << " to: " << IsPos(dec) << " at level: " << level << " reason: " << reason_clause);
     decided.push_back(v);
     prop_q.push_back(Neg(dec));
-    cmsat_prefetch(watches[Neg(dec)].data());
+    // Prefetch the actual first Watch entry (not just the vector header)
+    // so it's in cache when the propagation loop processes this literal
+    const auto& ws = watches[Neg(dec)];
+    if (!ws.empty()) cmsat_prefetch(&ws[0]);
 }
 
 void Oracle::UnDecide(int level) {
@@ -380,18 +553,24 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
     size_t pt = clauses.size();
     watches[clause[0]].push_back({pt, clause[1], (int)clause.size()});
     watches[clause[1]].push_back({pt, clause[0], (int)clause.size()});
+    clause_pos.resize(pt + clause.size() + 1, 0);
+    clause_pos[pt] = 2; // start search at position 2 (first non-watched)
     for (Lit lit : clause) clauses.push_back(lit);
     clauses.push_back(0);
     cla_info.push_back({pt, glue, 1, 0});
     return pt;
 }
 
-// Check if lit can be removed from the learned clause
+// Check if lit can be removed from the learned clause.
+// Uses poison/removable memoization across calls within the same conflict:
+// - If a variable was already proven removable, skip it immediately
+// - If a variable was proven non-removable (poison), fail immediately
 bool Oracle::LitReduntant(Lit lit) {
-    // TODO: this can be optimized a lot
     assert(redu_s.empty());
     redu_it++;
     redu_s.push_back(lit);
+    // Track variables visited in this call for marking
+    redu_visited.clear();
     int its = 0;
     while (!redu_s.empty()) {
         its++;
@@ -407,17 +586,52 @@ bool Oracle::LitReduntant(Lit lit) {
         assert(LitVal(lit) == -1);
         assert(clauses[rc] == Neg(lit));
         for (size_t k = rc+1; clauses[k]; k++) {
-            if (!in_cc[clauses[k]] && vs[VarOf(clauses[k])].level > 1) {
-                if (vs[VarOf(clauses[k])].reason == 0) {
+            Var tv = VarOf(clauses[k]);
+            if (!in_cc[clauses[k]] && vs[tv].level > 1) {
+                // Check memoized marks first
+                if (minimize_mark[tv] == 1) continue; // already proven removable
+                if (minimize_mark[tv] == 2) {
+                    // poison — this path leads to a decision, fail
                     redu_s.clear();
+                    // Mark all visited as poison too
+                    for (Var pv : redu_visited) {
+                        if (minimize_mark[pv] == 0) {
+                            minimize_mark[pv] = 2;
+                            minimize_marked_vars.push_back(pv);
+                        }
+                    }
+                    return false;
+                }
+                if (vs[tv].reason == 0) {
+                    redu_s.clear();
+                    // Mark all visited as poison
+                    for (Var pv : redu_visited) {
+                        if (minimize_mark[pv] == 0) {
+                            minimize_mark[pv] = 2;
+                            minimize_marked_vars.push_back(pv);
+                        }
+                    }
+                    // Mark the decision variable as poison too
+                    if (minimize_mark[tv] == 0) {
+                        minimize_mark[tv] = 2;
+                        minimize_marked_vars.push_back(tv);
+                    }
                     return false;
                 } else {
                     if (redu_seen[clauses[k]] != redu_it) {
                         redu_seen[clauses[k]] = redu_it;
                         redu_s.push_back(clauses[k]);
+                        redu_visited.push_back(tv);
                     }
                 }
             }
+        }
+    }
+    // Success — mark all visited variables as removable
+    for (Var rv : redu_visited) {
+        if (minimize_mark[rv] == 0) {
+            minimize_mark[rv] = 1;
+            minimize_marked_vars.push_back(rv);
         }
     }
     if (its >= 2) {
@@ -487,7 +701,7 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
     }
 
 
-    // Conflict minimization
+    // Conflict minimization with poison/removable memoization
     for (size_t i = 1; i < clause.size(); i++) {
         if (vs[VarOf(clause[i])].reason) {
             stats.mems++;
@@ -499,6 +713,25 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
             }
         }
     }
+    // Clear memoization marks
+    for (Var v : minimize_marked_vars) minimize_mark[v] = 0;
+    minimize_marked_vars.clear();
+
+    // Reason-side bumping: for each literal in the learned clause,
+    // also bump variables in its reason clause. Gives VSIDS better
+    // visibility into the conflict neighborhood. (CaDiCaL/MapleCOMSPS)
+    for (size_t i = 1; i < clause.size(); i++) {
+        Var v = VarOf(clause[i]);
+        size_t reason = vs[v].reason;
+        if (reason == 0) continue;
+        for (size_t k = reason; clauses[k]; k++) {
+            Var rv = VarOf(clauses[k]);
+            if (rv != v && vs[rv].level > 1) {
+                BumpVar(rv);
+            }
+        }
+    }
+
     std::sort(clause.begin(), clause.end(), [&](Lit l1, Lit l2) {
         int d1 = vs[VarOf(l1)].level;
         int d2 = vs[VarOf(l2)].level;
@@ -552,13 +785,24 @@ size_t Oracle::Propagate(int level) {
             }
             clauses[w.cls] = other;
             clauses[w.cls+1] = ff;
-            // Try to find true or unassigned lit
+            // Try to find true or unassigned lit (with position caching)
             size_t fo = 0;
-            for (size_t k = w.cls+2; clauses[k]; k++) {
-                if (LitVal(clauses[k]) != -1) {
+            {
+                int pos = clause_pos[w.cls];
+                size_t k = w.cls + pos;
+                // Search from cached position to end
+                while (clauses[k] && LitVal(clauses[k]) == -1) k++;
+                if (clauses[k]) {
                     fo = k;
-                    break;
+                } else {
+                    // Wrap around: search from position 2 to cached position
+                    k = w.cls + 2;
+                    size_t stop = w.cls + pos;
+                    while (k < stop && LitVal(clauses[k]) == -1) k++;
+                    if (k < stop) fo = k;
                 }
+                // Always update cached position
+                clause_pos[w.cls] = (fo ? (int)(fo - w.cls) : pos);
             }
             // Found true or unassigned lit
             if (fo) {
@@ -654,11 +898,10 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
     }
 }
 
-TriState Oracle::HardSolve(int64_t max_mems) {
+TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
     InitLuby();
     int64_t confls = 0;
     int64_t next_restart = 1;
-    int64_t mems_startup = stats.mems;
     int cur_level = 2;
     Var nv = 1;
     while (true) {
@@ -732,6 +975,8 @@ void Oracle::AddOrigClause(vector<Lit> clause, bool entailed) {
     size_t pt = clauses.size();
     watches[clause[0]].push_back({clauses.size(), clause[1], (int)clause.size()});
     watches[clause[1]].push_back({clauses.size(), clause[0], (int)clause.size()});
+    clause_pos.resize(pt + clause.size() + 1, 0);
+    clause_pos[pt] = 2; // start search at position 2
     for (Lit lit : clause) clauses.push_back(lit);
     clauses.push_back(0);
     // If we have no learned clauses then this is original clause
@@ -755,15 +1000,16 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     vs.resize(vars+1);
     seen.resize(vars+1);
     lvl_seen.resize(vars+3);
-    sol_cache.resize(vars+1);
     watches.resize(vars*2+2);
     lit_val.resize(vars*2+2);
     redu_seen.resize(vars*2+2);
     in_cc.resize(vars*2+2);
+    minimize_mark.resize(vars+1, 0);
     // setting magic constants
     restart_factor = 100;
 
     clauses.push_back(0);
+    clause_pos.push_back(0);
     orig_clauses_size = 1;
     for (const vector<Lit>& clause : clauses_) {
         AddOrigClause(clause, false);
@@ -784,6 +1030,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 }
 
 TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
+    int64_t mems_startup = stats.mems;
     if (unsat) return false;
     if (usecache && SatByCache(assumps)) {stats.cache_useful++; return true;}
     oclv("SOLVE called ");
@@ -800,7 +1047,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
     size_t confl_clause = Propagate(2);
     if (confl_clause) { UnDecide(2); return false; }
     oclv("HARD SOLVING");
-    TriState sol = HardSolve(max_mems);
+    TriState sol = HardSolve(max_mems, mems_startup);
     UnDecide(2);
     if (!unsat) {
         while (!learned_units.empty()) {

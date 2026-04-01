@@ -285,67 +285,26 @@ Gauss options:
 
 In particular, you may want to set `--autodisablegauss 0` in case you are sure it'll help.
 
-## CrystalBall
-Build and use instructions below. Please see the [associated blog
-post](https://www.msoos.org/2019/06/crystalball-sat-solving-data-gathering-and-machine-learning/)
-for more information.
+## Proof Verification
 
-```shell
-# prerequisites on a modern Debian/Ubuntu installation
-sudo apt-get install build-essential cmake git
-sudo apt-get install zlib1g-dev libsqlite3-dev
-sudo apt-get install libboost-program-options-dev libboost-serialization-dev
-sudo apt-get install python3-pip
-sudo pip3 install sklearn pandas numpy lit matplotlib
+CryptoMiniSat can emit FRAT proofs that can be independently verified. Run the
+solver with a proof output file:
 
-# build and install Louvain Communities
-git clone https://github.com/meelgroup/louvain-community
-cd louvain-community
-mkdir build && cd build
-cmake ..
-make -j10
-sudo make install
-cd ../..
-
-# build and install LightGBM
-git clone https://github.com/microsoft/LightGBM
-cd LightGBM
-mkdir build && cd build
-cmake ..
-make -j10
-sudo make install
-cd ../..
-
-# getting the code
-git clone https://github.com/msoos/cryptominisat
-cd cryptominisat
-git checkout crystalball
-git submodule update --init
-mkdir build && cd build
-ln -s ../scripts/crystal/* .
-ln -s ../scripts/build_scripts/* .
-
-# Let's get an unsatisfiable CNF
-wget https://www.msoos.org/largefiles/goldb-heqc-i10mul.cnf.gz
-gunzip goldb-heqc-i10mul.cnf.gz
-
-# Gather the data, denormalize, label,
-# create the classifier, generate C++,
-# and build the final SAT solver
-./ballofcrystal.sh goldb-heqc-i10mul.cnf
-[...compilations and the full data pipeline...]
-
-# let's use our newly built tool
-./cryptominisat5 goldb-heqc-i10mul.cnf
-[ ... ]
-s UNSATISFIABLE
-
-# Let's look at the data
-cd goldb-heqc-i10mul.cnf-dir
-sqlite3 mydata.db
-sqlite> select count() from sum_cl_use;
-94507
+```bash
+./cryptominisat5 input.cnf proof.frat
 ```
+
+Then elaborate and check using tools from
+[meelgroup/frat-xor](https://github.com/meelgroup/frat-xor):
+
+```bash
+grep -v "^c" proof.frat > proof_clean.frat
+./frat-xor elab proof_clean.frat input.cnf proof.xlrup
+./cake_xlrup input.cnf proof.xlrup
+```
+
+`cake_xlrup` prints `s VERIFIED` on success. For full details, including
+debugging verification failures, see [README_VERIFIER.md](README_VERIFIER.md).
 
 ## CMake Arguments
 The following arguments to cmake configure the generated build artifacts. To

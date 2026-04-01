@@ -229,6 +229,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Bounded variable addition
         , do_bva(false)
         , min_bva_gain(16)
+        , non_stop_bve(false)
         , bva_limit_per_call(250000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
@@ -356,6 +357,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)
         , var_and_mem_out_mult(1.0)
+        , oracle_mult(1.0)
 
         //Multi-thread, MPI
         , sync_every_confl(7000) //THREAD syncing

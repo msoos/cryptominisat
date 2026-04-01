@@ -95,10 +95,10 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
         std::sort(txors.begin(), txors.end());
 
         size_t sz = 1;
-        vector<Xor>::iterator i = txors.begin();
-        vector<Xor>::iterator j = i;
+        auto i = txors.begin();
+        auto j = i;
         ++i;
-        for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
+        for (auto end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 if (solver->frat->enabled()) {
                     assert(false && "TODO FRAT");
@@ -132,7 +132,7 @@ bool XorFinder::find_xors() {
     for(auto& gw: solver->gwatches) gw.clear();
     if (!solver->okay()) return false;
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     const int64_t orig_xor_find_time_limit =
         1000LL*1000LL*solver->conf.xor_finder_time_limitM
         *solver->conf.global_timeout_multiplier;
@@ -140,7 +140,7 @@ bool XorFinder::find_xors() {
     xor_find_time_limit = orig_xor_find_time_limit;
 
     occsimplifier->sort_occurs_and_set_abst();
-    verb_print(1, "[occ-xor] sort occur list T: " << (cpuTime()-my_time));
+    verb_print(1, "[occ-xor] sort occur list T: " << (cpu_time()-my_time));
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
@@ -157,7 +157,7 @@ bool XorFinder::find_xors() {
     //Print stats
     const bool time_out = (xor_find_time_limit < 0);
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
-    runStats.findTime = cpuTime() - my_time;
+    runStats.findTime = cpu_time() - my_time;
     runStats.time_outs += time_out;
     solver->print_xors(solver->xorclauses);
 
@@ -168,7 +168,7 @@ bool XorFinder::find_xors() {
         solver->sqlStats->time_passed(
             solver
             , "xor-find"
-            , cpuTime() - my_time
+            , cpu_time() - my_time
             , time_out
             , time_remain
         );
@@ -415,9 +415,7 @@ void XorFinder::grab_mem()
 
 void XorFinder::Stats::print_short(const Solver* solver, double time_remain) const
 {
-    cout
-    << "c [occ-xor] found " << std::setw(6) << foundXors
-    ;
+    cout << solver->conf.prefix << "[occ-xor] found " << std::setw(6) << foundXors;
     if (foundXors > 0) {
         cout
         << " avg sz " << std::setw(3) << std::fixed << std::setprecision(1)

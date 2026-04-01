@@ -100,7 +100,7 @@ class EGaussian {
     vector<Xor> xorclauses;
 
   private:
-    Solver* solver;   // orignal sat solver
+    Solver* solver;   // original sat solver
 
     //Cleanup
     void clear_gwatches(const uint32_t var);
@@ -208,7 +208,7 @@ class EGaussian {
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
 
-    //TODO this is an overstatement, coudl be improved
+    //TODO this is an overstatement, could be improved
     memset(satisfied_xors.data(), 0, satisfied_xors.size());
 }
 

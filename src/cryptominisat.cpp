@@ -46,8 +46,6 @@ using std::vector;
 
 using namespace CMSat;
 
-using std::complex;
-
 static bool print_thread_start_and_finish = false;
 
 namespace CMSat {
@@ -525,7 +523,7 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 {
   assert(max_time >= 0 && "Cannot set negative limit on running time");
 
-  const auto target_time = cpuTime() + max_time;
+  const auto target_time = cpu_time() + max_time;
   for (Solver* s : data->solvers) {
     s->conf.maxTime = target_time;
   }
@@ -853,7 +851,7 @@ struct OneThreadCalc
     void operator()()
     {
         if (print_thread_start_and_finish) {
-            start_time = cpuTime();
+            start_time = cpu_time();
             //data_for_thread.update_mutex->lock();
             //cout << "c Starting thread " << tid << endl;
             //data_for_thread.update_mutex->unlock();
@@ -874,7 +872,7 @@ struct OneThreadCalc
         }
 
         assert(data_for_thread.cpu_times.size() > tid);
-        data_for_thread.cpu_times[tid] = cpuTime();
+        data_for_thread.cpu_times[tid] = cpu_time();
         if (print_thread_start_and_finish) {
             data_for_thread.update_mutex->lock();
             std::ios::fmtflags f(cout.flags());
@@ -926,7 +924,7 @@ lbool calc(
     if (data->timeout != numeric_limits<double>::max()) {
         for (size_t i = 0; i < data->solvers.size(); ++i) {
             Solver& s = *data->solvers[i];
-            s.conf.maxTime = cpuTime() + data->timeout;
+            s.conf.maxTime = cpu_time() + data->timeout;
         }
     }
 
@@ -951,14 +949,17 @@ lbool calc(
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
 
-        lbool ret ;
+        lbool ret;
         if (todo == Todo::todo_solve) {
             ret = data->solvers[0]->solve_with_assumptions(assumptions, only_sampling_solution);
         } else if (todo == Todo::todo_simplify) {
             ret = data->solvers[0]->simplify_with_assumptions(assumptions, strategy);
+        } else {
+            assert(false);
+            ret = l_Undef;
         }
         data->okay = data->solvers[0]->okay();
-        data->cpu_times[0] = cpuTime();
+        data->cpu_times[0] = cpu_time();
         return ret;
     }
 
@@ -1150,23 +1151,6 @@ DLL_PUBLIC void SATSolver::set_frat(FILE* os)
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 
-DLL_PUBLIC void SATSolver::set_idrup(FILE* os)
-{
-    if (data->solvers.size() > 1) {
-        std::cerr << "ERROR: IDRUP cannot be used in multi-threaded mode" << endl;
-        exit(-1);
-    }
-    if (nVars() > 0) {
-        std::cerr << "ERROR: IDRUP cannot be set after variables have been added" << endl;
-        exit(-1);
-    }
-    data->solvers[0]->conf.doBreakid = false;
-    data->solvers[0]->conf.doFindXors = false;
-    data->solvers[0]->add_idrup(os);
-    data->solvers[0]->conf.gaussconf.max_matrix_rows = 0;
-    data->solvers[0]->conf.gaussconf.max_matrix_columns = 0;
-    data->solvers[0]->conf.do_hyperbin_and_transred = true;
-}
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
 {
@@ -1181,6 +1165,7 @@ void DLL_PUBLIC SATSolver::add_in_partial_solving_stats()
 
 DLL_PUBLIC std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[data->which_solved]->get_zero_assigned_lits();
 }
 
@@ -1340,10 +1325,9 @@ void DLL_PUBLIC SATSolver::end_getting_constraints()
     data->solvers[0]->end_getting_constraints();
 }
 
-DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
-    const vector<uint32_t>& sampl_set, bool also_removed)
+DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(const vector<uint32_t>& sampl_set)
 {
-    return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
+    return data->solvers[0]->translate_sampl_set(sampl_set);
 }
 
 DLL_PUBLIC std::vector<Lit> SATSolver::get_weight_translation() const
@@ -1351,8 +1335,8 @@ DLL_PUBLIC std::vector<Lit> SATSolver::get_weight_translation() const
     return data->solvers[0]->get_weight_translation();
 }
 
-DLL_PUBLIC map<uint32_t, VarMap> SATSolver::update_var_mapping(
-        const std::map<uint32_t, VarMap>& vmap)
+DLL_PUBLIC map<uint32_t, Lit> SATSolver::update_var_mapping(
+        const std::map<uint32_t, Lit>& vmap)
 {
     return data->solvers[0]->update_var_mapping(vmap);
 }
@@ -1374,6 +1358,13 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
 {
     for (auto & solver : data->solvers) {
         solver->conf.min_bva_gain = min_bva_gain;
+    }
+}
+
+void DLL_PUBLIC SATSolver::set_bve_nonstop(bool nonstop)
+{
+    for (auto & solver : data->solvers) {
+        solver->conf.non_stop_bve = nonstop;
     }
 }
 
@@ -1896,6 +1887,11 @@ DLL_PUBLIC void SATSolver::set_oracle_get_learnts(bool val) {
 DLL_PUBLIC void SATSolver::set_oracle_find_bins(int val) {
     Solver& s = *data->solvers[0];
     s.conf.oracle_find_bins = val;
+}
+
+DLL_PUBLIC void SATSolver::set_oracle_mult(const double val) {
+    Solver& s = *data->solvers[0];
+    s.conf.oracle_mult = val;
 }
 
 DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {

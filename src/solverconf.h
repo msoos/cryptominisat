@@ -83,9 +83,9 @@ inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
             return "weighted";
         case PolarityMode::polarmode_rnd :
             return "rnd";
+        default:
+            release_assert(false && "Unknown polarity mode");
     }
-    assert(false);
-    return "ERR: undefined!";
 }
 
 inline std::string restart_type_to_short_string(const Restart type)
@@ -93,26 +93,20 @@ inline std::string restart_type_to_short_string(const Restart type)
     switch(type) {
         case Restart::glue:
             return "glue";
-
         case Restart::geom:
             return "geom";
-
         case Restart::luby:
             return "luby";
-
         case Restart::fixed:
             return "fixd";
-
         case Restart::never:
             return "neve";
-
         case Restart::automatic:
             release_assert(false);
             return "";
+        default:
+            release_assert(false && "Unknown restart type");
     }
-
-    assert(false && "oops, one of the restart types has no string name");
-    return "ERR: undefined!";
 }
 
 inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
@@ -137,9 +131,9 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
             return "svd";
         case PolarityMode::polarmode_rnd :
             return "rnd";
+        default:
+            release_assert(false && "Unknown polarity mode");
     }
-    assert(false);
-    return "ERR: undefined!";
 }
 
 inline std::string getNameOfRestartType(Restart rest_type)
@@ -147,24 +141,17 @@ inline std::string getNameOfRestartType(Restart rest_type)
     switch(rest_type) {
         case Restart::glue :
             return "glue";
-
         case Restart::geom:
             return "geometric";
-
         case Restart::luby:
             return "luby";
-
         case Restart::fixed:
             return "fixed";
-
         case Restart::never:
             return "never";
-
         default:
-            assert(false && "Unknown clause cleaning type?");
+            release_assert(false && "Unknown clause cleaning type?");
     }
-    assert(false);
-    return "ERR: undefined!";
 }
 
 inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
@@ -172,16 +159,11 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
     switch(clauseCleaningType) {
         case ClauseClean::glue :
             return "glue";
-
         case ClauseClean::activity:
             return "activity";
-
         default:
-            assert(false && "Unknown clause cleaning type?");
-            std::exit(-1);
+            release_assert(false && "Unknown clause cleaning type?");
     }
-    assert(false);
-    return "ERR: undefined!";
 }
 
 class GaussConf
@@ -285,7 +267,6 @@ class DLL_PUBLIC SolverConf
         double   blocking_restart_multip;
         uint32_t fixed_restart_num_confl;
 
-
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
@@ -383,6 +364,7 @@ class DLL_PUBLIC SolverConf
         //BVA
         int      do_bva;
         int min_bva_gain;
+        int non_stop_bve;
         unsigned bva_limit_per_call;
         int      bva_also_twolit_diff;
         long     bva_extra_lit_and_red_start;
@@ -503,6 +485,7 @@ class DLL_PUBLIC SolverConf
         double global_timeout_multiplier_multiplier;
         double global_multiplier_multiplier_max;
         double var_and_mem_out_mult;
+        double oracle_mult;
 
         //Multi-thread, MPI
         unsigned long long sync_every_confl;
@@ -517,7 +500,6 @@ class DLL_PUBLIC SolverConf
 
         //Misc
         unsigned origSeed;
-        int      idrup = 0;
         int      conf_needed = true;
         string   prefix;
 };

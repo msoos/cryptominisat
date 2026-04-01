@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include "vmtf.h"
 
 #include "avgcalc.h"
-#include "propby.h"
 #include "heap.h"
 #include "alg.h"
 #include "clause.h"
@@ -200,15 +199,15 @@ public:
 
     // Read state:
     //
-    uint32_t nAssigns   () const;         ///<The current number of assigned literals.
+    [[nodiscard]] uint32_t nAssigns() const;         ///<The current number of assigned literals.
 
     //Get state
-    uint32_t    decisionLevel() const;      ///<Returns current decision level
-    size_t      getTrailSize() const; //number of variables set at decision level 0
-    size_t trail_size() const {
+    [[nodiscard]] uint32_t decisionLevel() const;      ///<Returns current decision level
+    [[nodiscard]] size_t getTrailSize() const; //number of variables set at decision level 0
+    [[nodiscard]] size_t trail_size() const {
         return trail.size();
     }
-    Lit trail_at(size_t at) const {
+    [[nodiscard]] Lit trail_at(size_t at) const {
         return trail[at].lit;
     }
 
@@ -278,7 +277,7 @@ protected:
     vector<Trail>  trail; ///< Assignment stack; stores all assignments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
-    Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
+    Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
 
     friend class EGaussian;
 
@@ -416,11 +415,7 @@ inline uint32_t PropEngine::nAssigns() const
 
 inline size_t PropEngine::getTrailSize() const
 {
-    if (decisionLevel() == 0) {
-        return trail.size();
-    } else {
-        return trail_lim[0];
-    }
+    return decisionLevel() == 0 ? trail.size() : trail_lim[0];
 }
 
 template<class T> inline

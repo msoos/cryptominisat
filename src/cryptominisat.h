@@ -156,6 +156,7 @@ namespace CMSat {
         void set_simplify(const bool simp);
         void set_find_xors(bool do_find_xors);
         void set_min_bva_gain(uint32_t min_bva_gain);
+        void set_bve_nonstop(bool nonstop = false);
         void set_varelim_check_resolvent_subs(bool varelim_check_resolvent_subs); //check subumption and literal during varelim
         void set_max_red_linkin_size(uint32_t sz);
         void set_seed(const uint32_t seed);
@@ -168,6 +169,7 @@ namespace CMSat {
         void set_oracle_get_learnts(bool val);
         void set_oracle_removed_is_learnt(bool val);
         void set_oracle_find_bins(int val);
+        void set_oracle_mult(const double mult);
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
         void set_prefix(const char* prefix);
@@ -216,7 +218,6 @@ namespace CMSat {
 
         void print_stats(double wallclock_time_started = 0) const; //print solving stats. Call after solve()/simplify()
         void set_frat(FILE* os); //set frat to ostream, e.g. stdout or a file
-        void set_idrup(FILE* os); //set idrup to ostream, e.g. stdout or a file
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.
 
@@ -226,11 +227,12 @@ namespace CMSat {
 
         ////////////////////////////
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
-        std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
+        std::vector<std::pair<Lit, Lit>> get_all_binary_xors() const; //get all binary XORs that are = 0
+                                                                      // [replaced, replaced_with]
 
         //////////////////////
         // EXPERIMENTAL
-        std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool xor_together_xors) const; //get XORs recovered. If "xor_together_xors" is TRUE, then xors that share a variable (and ONLY they share them) will be XORed together
+        std::vector<std::pair<std::vector<uint32_t>, bool>> get_recovered_xors(bool xor_together_xors) const; //get XORs recovered. If "xor_together_xors" is TRUE, then xors that share a variable (and ONLY they share them) will be XORed together
         std::vector<OrGate> get_recovered_or_gates();
         std::vector<ITEGate> get_recovered_ite_gates();
         std::vector<uint32_t> remove_definable_by_irreg_gate(const std::vector<uint32_t>& vars);
@@ -270,11 +272,10 @@ namespace CMSat {
         void end_getting_constraints();
 
         uint32_t simplified_nvars();
-        std::vector<uint32_t> translate_sampl_set(
-                const std::vector<uint32_t>& sampl_set, bool also_removed);
+        std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
 
         std::vector<Lit> get_weight_translation() const;
-        std::map<uint32_t, VarMap> update_var_mapping(const std::map<uint32_t, VarMap>& vmap);
+        std::map<uint32_t, Lit> update_var_mapping(const std::map<uint32_t, Lit>& vmap);
         std::vector<uint32_t> get_elimed_vars() const;
         std::vector<std::vector<Lit>> get_cls_defining_var(uint32_t v) const;
         void reverse_bce();

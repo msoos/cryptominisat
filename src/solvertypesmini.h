@@ -20,15 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SOLVERTYPESMINI__H
-#define SOLVERTYPESMINI__H
+#pragma once
 
+#include <algorithm>
+#include <array>
+#include <cassert>
 #include <cstdint>
 #include <iostream>
-#include <cassert>
 #include <memory>
 #include <vector>
-#include <array>
 #include <gmpxx.h>
 
 namespace CMSat {
@@ -55,10 +55,10 @@ public:
         return Lit(x ^ 1);
     }
     constexpr Lit  operator^(const bool b) const {
-        return Lit(x ^ (uint32_t)b);
+        return Lit(x ^ static_cast<uint32_t>(b));
     }
-    Lit& operator^=(const bool b) {
-        x ^= (uint32_t)b;
+    constexpr Lit& operator^=(const bool b) {
+        x ^= static_cast<uint32_t>(b);
         return *this;
     }
     constexpr bool sign() const {
@@ -98,8 +98,8 @@ public:
     }
 };
 
-static const Lit lit_Undef(var_Undef, false);  // Useful special constants.
-static const Lit lit_Error(var_Undef, true );  //
+constexpr Lit lit_Undef(var_Undef, false);  // Useful special constants.
+constexpr Lit lit_Error(var_Undef, true );  //
 
 inline std::ostream& operator<<(std::ostream& os, const Lit lit)
 {
@@ -113,11 +113,10 @@ inline std::ostream& operator<<(std::ostream& os, const Lit lit)
 
 inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
 {
-    for (uint32_t i = 0; i < lits.size(); i++) {
+    for (size_t i = 0; i < lits.size(); i++) {
+        if (i > 0) co << " ";
         co << lits[i];
-        if (i != lits.size()-1) co << " ";
     }
-
     return co;
 }
 
@@ -136,16 +135,16 @@ public:
         return !(*this == b);
     }
     constexpr lbool operator ^  (bool  b) const {
-        return lbool((uint8_t)(value ^ (uint8_t)b));
+        return lbool(static_cast<uint8_t>(value ^ static_cast<uint8_t>(b)));
     }
 
-    lbool operator && (lbool b) const {
+    constexpr lbool operator && (lbool b) const {
         uint8_t sel = (value << 1) | (b.value << 3);
         uint8_t v   = (0xF7F755F4 >> sel) & 3;
         return lbool(v);
     }
 
-    lbool operator || (lbool b) const {
+    constexpr lbool operator || (lbool b) const {
         uint8_t sel = (value << 1) | (b.value << 3);
         uint8_t v   = (0xFCFCF400 >> sel) & 3;
         return lbool(v);
@@ -178,13 +177,9 @@ constexpr inline uint32_t toInt  (lbool l)
     return l.value;
 }
 
-inline lbool boolToLBool(const bool b)
+constexpr lbool boolToLBool(const bool b)
 {
-    if (b) {
-        return l_True;
-    } else {
-        return l_False;
-    }
+    return b ? l_True : l_False;
 }
 
 inline std::ostream& operator<<(std::ostream& cout, const lbool val)
@@ -300,19 +295,17 @@ public:
         undefs = _in.size();
         ts = 0;
         sz = _in.size();
-        for(uint32_t i = 0; i < _in.size(); i++) {
-            getData()[i] = _in[i];
-        }
+        std::copy(_in.begin(), _in.end(), getData());
     }
 
     Lit* getData()
     {
-        return (Lit*)((char*)this + sizeof(BNN));
+        return reinterpret_cast<Lit*>(reinterpret_cast<char*>(this) + sizeof(BNN));
     }
 
     const Lit* getData() const
     {
-        return (Lit*)((char*)this + sizeof(BNN));
+        return reinterpret_cast<const Lit*>(reinterpret_cast<const char*>(this) + sizeof(BNN));
     }
 
     const Lit& operator[](const uint32_t at) const
@@ -385,36 +378,6 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
         os << " <-> " << bnn.out;
     os << " [size: " << bnn.size() << "]";
 
-    return os;
-}
-
-struct VarMap {
-    explicit VarMap() = default;
-    explicit VarMap(const Lit l) : lit(l) {}
-    explicit VarMap(const lbool v) : val(v) {}
-    bool operator==(const VarMap& other) const { return lit == other.lit && val == other.val; }
-    bool operator!=(const VarMap& other) const { return !(*this == other); }
-    bool invariant() const {
-        // Must be at least one of them
-        if (lit == lit_Undef && val == l_Undef) return false;
-        // Can't be both
-        if (lit != lit_Undef && val != l_Undef) return false;
-        return true;
-    }
-    Lit lit = lit_Undef;
-    lbool val = l_Undef;
-};
-
-inline std::ostream& operator<<(std::ostream& os, const VarMap& v)
-{
-    assert(v.invariant());
-    if (v.lit != lit_Undef) {
-        os << "VarMap lit:" << v.lit;
-        return os;
-    } else {
-        os << "VarMap val: " << v.val;
-        return os;
-    }
     return os;
 }
 
@@ -520,6 +483,7 @@ public:
     virtual std::unique_ptr<FieldGen> dup() const = 0;
     virtual bool larger_than(const Field&, const Field&) const = 0;
     virtual bool weighted() const = 0;
+    virtual bool exact() const = 0;
 };
 
 class FDouble final : public Field {
@@ -632,8 +596,7 @@ public:
     }
 
     bool weighted() const final { return true; }
+    bool exact() const final { return false; }
 };
 
 }
-
-#endif

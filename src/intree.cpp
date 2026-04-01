@@ -152,7 +152,7 @@ bool InTree::intree_probe() {
         return solver->okay();
     }
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
@@ -173,7 +173,7 @@ bool InTree::intree_probe() {
     tree_look();
     unmark_all_bins();
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
         (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
     const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);

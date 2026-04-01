@@ -46,7 +46,6 @@ struct VarData
     uint32_t level = numeric_limits<uint32_t>::max();
     uint32_t sublevel = numeric_limits<uint32_t>::max();
 
-
     //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();
 

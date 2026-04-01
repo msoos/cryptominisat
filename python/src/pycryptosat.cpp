@@ -369,9 +369,13 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 
     PyObject *clause;
     while ((clause = PyIter_Next(iterator)) != NULL) {
-        _add_clause(self, clause);
+        int ret = _add_clause(self, clause);
         /* release reference when done */
         Py_DECREF(clause);
+        if (ret == 0) {
+            Py_DECREF(iterator);
+            return NULL;
+        }
     }
 
     /* release reference when done */
@@ -705,6 +709,7 @@ static PyObject* get_conflict(Solver *self)
 
         PyObject *item = PyLong_FromLong(value);
         PyList_Append(result, item);
+        Py_DECREF(item);
     }
 
     return result;

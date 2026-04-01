@@ -62,7 +62,6 @@ THE SOFTWARE.
 #include "gaussian.h"
 #include "sqlstats.h"
 #include "frat.h"
-#include "idrup.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
@@ -912,7 +911,7 @@ bool Solver::renumber_variables(bool must_renumber)
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
     if (!clear_gauss_matrices(false)) return false;
 
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     if (!clauseCleaner->remove_and_clean_all()) return false;
 
     //outer_to_inter[10] = 0 ---> what was 10 is now 0.
@@ -943,7 +942,7 @@ bool Solver::renumber_variables(bool must_renumber)
     test_reflectivity_of_renumbering();
 
     //Print results
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     verb_print(1, "[renumber]" << conf.print_times(time_used));
     if (sqlStats) {
         sqlStats->time_passed_min(
@@ -1002,7 +1001,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 {
     //print_mem_stats();
 
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     minNumVars = newNumVars;
     Searcher::save_on_var_memory();
 
@@ -1012,7 +1011,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     }
     datasync->save_on_var_memory();
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -1175,7 +1174,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     }
     #endif
 
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     updateArrayRev(model, inter_to_outerMain);
 
     if (!only_sampling_solution) {
@@ -1201,7 +1200,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     }
 
     check_model_for_assumptions();
-    if (sqlStats) sqlStats->time_passed_min( this , "extend solution" , cpuTime()-my_time);
+    if (sqlStats) sqlStats->time_passed_min( this , "extend solution" , cpu_time()-my_time);
 }
 
 void Solver::set_up_sql_writer()
@@ -1410,7 +1409,6 @@ lbool Solver::solve_with_assumptions(
     }
 
     write_final_frat_clauses();
-    conclude_idrup(status);
     return status;
 }
 
@@ -1436,7 +1434,7 @@ void Solver::write_final_frat_clauses() {
     for(auto& x: xorclauses) {
         if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
         x.reason_cl_ID = 0;
-        if (x.xid != 0) *frat << finalx << x.xid << fin;
+        if (x.xid != 0) *frat << finalx << x.xid << fin; // ID-only finalx is intentional: frat-xor looks up the clause content from the proof
         x.xid = 0;
     }
 
@@ -1483,7 +1481,7 @@ void Solver::dump_memory_stats_to_sql()
         return;
     }
 
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
 
     sqlStats->mem_used(
         this
@@ -1543,19 +1541,18 @@ void Solver::dump_memory_stats_to_sql()
         , varReplacer->mem_used()/(1024*1024)
     );
 
-    double vm_mem_used = 0;
-    const uint64_t rss_mem_used = memUsedTotal(vm_mem_used);
+    const uint64_t rss_mem = rss_mem_used();
     sqlStats->mem_used(
         this
         , "rss"
         , my_time
-        , rss_mem_used/(1024*1024)
+        , rss_mem/(1024*1024)
     );
     sqlStats->mem_used(
         this
         , "vm"
         , my_time
-        , vm_mem_used/(1024*1024)
+        , memUsedTotal()/(1024*1024)
     );
 }
 
@@ -1587,7 +1584,7 @@ lbool Solver::iterate_until_solved() {
 
     while (status == l_Undef
         && !must_interrupt_asap()
-        && cpuTime() < conf.maxTime
+        && cpu_time() < conf.maxTime
         && sumConflicts < conf.max_confl
     ) {
         iteration_num++;
@@ -1618,7 +1615,7 @@ lbool Solver::iterate_until_solved() {
 
         //If we are over the limit, exit
         if (sumConflicts >= conf.max_confl
-            || cpuTime() > conf.maxTime
+            || cpu_time() > conf.maxTime
             || must_interrupt_asap()
         ) break;
 
@@ -1671,7 +1668,7 @@ void Solver::check_too_many_in_tier0()
 
 void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution) {
     verb_print(10, __func__ << " called with status: " << status);
-    double mytime = cpuTime();
+    double mytime = cpu_time();
     if (status == l_True) {
         extend_solution(only_sampling_solution);
         cancelUntil(0);
@@ -1689,7 +1686,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
 
     USE_BREAKID_DO( if (breakid) breakid->finished_solving());
     DEBUG_IMPLICIT_STATS_DO(check_implicit_stats());
-    if (sqlStats) sqlStats->time_passed_min(this, "solution extend", cpuTime() - mytime);
+    if (sqlStats) sqlStats->time_passed_min(this, "solution extend", cpu_time() - mytime);
 }
 
 lbool Solver::execute_inprocess_strategy(
@@ -1702,7 +1699,7 @@ lbool Solver::execute_inprocess_strategy(
 
     while(std::getline(ss, token, ',')) {
         if (sumConflicts >= conf.max_confl
-            || cpuTime() > conf.maxTime
+            || cpu_time() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
             || !okay()
@@ -1730,7 +1727,7 @@ lbool Solver::execute_inprocess_strategy(
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
-            if (sumConflicts >= conf.max_confl || cpuTime() > conf.maxTime
+            if (sumConflicts >= conf.max_confl || cpu_time() > conf.maxTime
                 || must_interrupt_asap() || nVars() == 0 || !ok) {
                 break;
             }
@@ -2101,9 +2098,9 @@ void Solver::print_norm_stats(
     } else {
         print_stats_line(conf.prefix + "Conflicts in UIP", sumConflicts);
     }
-    double vm_usage;
+    double vm_unused;
     std::string max_mem_usage;
-    double max_rss_mem_mb = (double)memUsedTotal(vm_usage, &max_mem_usage)/(1024UL*1024UL);
+    double max_rss_mem_mb = (double)::mem_used(vm_unused, &max_mem_usage)/(1024UL*1024UL);
     if (max_mem_usage.empty()) {
         print_stats_line(conf.prefix + "Mem used"
             , max_rss_mem_mb
@@ -2165,7 +2162,7 @@ uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
     );
 
     size_t array = watches.mem_used_array();
-    print_stats_line(solver->conf.prefix + "Mem for watch array"
+    print_stats_line(conf.prefix + "Mem for watch array"
         , array/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(array, rss_mem_used)
@@ -2195,23 +2192,22 @@ uint64_t Solver::mem_used_vardata() const
 
 void Solver::print_mem_stats() const
 {
-    double vm_mem_used = 0;
-    const uint64_t rss_mem_used = memUsedTotal(vm_mem_used);
+    const uint64_t rss_mem = rss_mem_used();
     print_stats_line(conf.prefix + "Mem used"
-        , rss_mem_used/(1024UL*1024UL)
+        , rss_mem/(1024UL*1024UL)
         , "MB"
     );
     uint64_t account = 0;
 
-    account += print_mem_used_longclauses(rss_mem_used);
-    account += print_watch_mem_used(rss_mem_used);
+    account += print_mem_used_longclauses(rss_mem);
+    account += print_watch_mem_used(rss_mem);
 
     size_t mem = 0;
     mem += mem_used_vardata();
     print_stats_line(conf.prefix + "Mem for assings&vardata"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2220,7 +2216,7 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2229,7 +2225,7 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2239,7 +2235,7 @@ void Solver::print_mem_stats() const
         print_stats_line(conf.prefix + "Mem for occsimplifier"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, rss_mem_used)
+            , stats_line_percent(mem, rss_mem)
             , "%"
         );
         account += mem;
@@ -2249,7 +2245,7 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for varReplacer&SCC"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
@@ -2259,7 +2255,7 @@ void Solver::print_mem_stats() const
         print_stats_line(conf.prefix + "Mem for impl subsume"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, rss_mem_used)
+            , stats_line_percent(mem, rss_mem)
             , "%"
         );
         account += mem;
@@ -2272,17 +2268,17 @@ void Solver::print_mem_stats() const
     print_stats_line(conf.prefix + "Mem for 3 distills"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, rss_mem_used)
+        , stats_line_percent(mem, rss_mem)
         , "%"
     );
     account += mem;
 
     print_stats_line(conf.prefix + "Accounted for mem (rss)"
-        , stats_line_percent(account, rss_mem_used)
+        , stats_line_percent(account, rss_mem)
         , "%"
     );
     print_stats_line(conf.prefix + "Accounted for mem (vm)"
-        , stats_line_percent(account, vm_mem_used)
+        , stats_line_percent(account, memUsedTotal())
         , "%"
     );
 }
@@ -2328,6 +2324,7 @@ void Solver::print_clause_size_distrib()
 vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
                                            const bool only_nvars) const
 {
+    if (!okay()) return vector<Lit>();
     vector<Lit> lits;
     assert(decisionLevel() == 0);
     size_t until;
@@ -2377,14 +2374,9 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
 
 bool Solver::verify_model_implicit_clauses() const
 {
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+    for (uint32_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = watches[lit];
 
         for (Watched w: ws) {
             if (w.isBin()
@@ -2592,15 +2584,10 @@ void Solver::check_all_nonxor_clause_propagated() const {
 
 void Solver::check_implicit_propagated() const
 {
-    const double my_time = cpuTime();
-    size_t wsLit = 0;
-    for(watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
+    const double my_time = cpu_time();
+    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
         const Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+        watch_subarray_const ws = watches[lit];
         for(const auto& w : ws) {
             //Satisfied, or not implicit, skip
             if (value(lit) == l_True || w.isClause()) continue;
@@ -2625,7 +2612,7 @@ void Solver::check_implicit_propagated() const
             }
         }
     }
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -2642,17 +2629,12 @@ size_t Solver::get_num_vars_elimed() const {
 
 void Solver::free_unused_watches()
 {
-    size_t wsLit = 0;
-    for (watch_array::iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
+    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
         if (varData[lit.var()].removed == Removed::elimed
             || varData[lit.var()].removed == Removed::replaced
         ) {
-            watch_subarray ws = *it;
+            watch_subarray ws = watches[lit];
             assert(ws.empty());
             ws.clear();
         }
@@ -2740,7 +2722,9 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
 
     vector<Lit> lits = lits_out;
     const int32_t xid = ++clauseXID;
+    if (!lits.empty()) lits[0] ^= !rhs;
     *frat << origclx << xid << lits << fin;
+    if (!lits.empty()) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     add_clause_helper(lits);
@@ -2921,19 +2905,14 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     #ifdef NDEBUG
     return;
     #endif
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
 
     //Check number of red & irred binary clauses
     uint64_t thisNumRedBins = 0;
     uint64_t thisNumIrredBins = 0;
 
-    size_t wsLit = 0;
-    for(watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        watch_subarray_const ws = *it;
+    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
+        watch_subarray_const ws = watches[Lit::toLit(wsLit)];
         for(const auto& w: ws) {
             if (w.isBin()) {
                 #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
@@ -2981,7 +2960,7 @@ void Solver::check_implicit_stats(const bool onlypairs) const
 
     end:
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -3000,7 +2979,7 @@ void Solver::check_stats(const bool allowFreed) const
 
     check_implicit_stats();
 
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     uint64_t numLitsIrred = count_lits(longIrredCls, false, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
         std::cerr << "ERROR: " << endl
@@ -3020,7 +2999,7 @@ void Solver::check_stats(const bool allowFreed) const
     assert(numLitsRed == litStats.redLits);
     assert(numLitsIrred == litStats.irredLits);
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -3190,10 +3169,9 @@ void Solver::end_getting_constraints()
     get_clause_query = nullptr;
 }
 
-vector<uint32_t> Solver::translate_sampl_set(
-        const vector<uint32_t>& sampl_set, bool also_removed) {
+vector<uint32_t> Solver::translate_sampl_set( const vector<uint32_t>& sampl_set) {
     assert(get_clause_query);
-    return get_clause_query->translate_sampl_set(sampl_set, also_removed);
+    return get_clause_query->translate_sampl_set(sampl_set);
 }
 
 void Solver::check_assigns_for_assumptions() const {
@@ -3618,7 +3596,7 @@ bool Solver::check_clause_represented_by_xor(const Clause& cl) {
 
 // Detaches clauses that are the XORs
 void Solver::detach_clauses_in_xors() {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     SLOW_DEBUG_DO(check_no_idx_in_watchlist());
 
     // Setup
@@ -3671,7 +3649,7 @@ void Solver::detach_clauses_in_xors() {
     verb_print(1, "[gauss] clauses deleted that are represented by XORs: " << deleted
         << " xorclauses: " << xorclauses.size()
         << " GJ matrices: " << gmatrices.size()
-        << conf.print_times(cpuTime() - my_time));
+        << conf.print_times(cpu_time() - my_time));
 }
 
 bool Solver::removed_var_ext(uint32_t var) const {
@@ -3686,25 +3664,6 @@ void Solver::reverse_bce() {
     occsimplifier->reverse_blocked_clause_elim();
 }
 
-void Solver::conclude_idrup (lbool result) {
-    if (!conf.idrup) return;
-    if (result == l_True) {
-      *frat << satisfiable;
-      *frat << modelF;
-      for (size_t cmVar = 0; cmVar < nVars(); ++cmVar) {
-        lbool value = model_value(cmVar);
-        *frat << Lit(cmVar, value != l_True);
-      }
-      *frat << fin;
-    }
-    else if (result == l_False) {
-      *frat << unsatisfiable;
-      *frat << unsatcore;
-      for (auto x: get_final_conflict()) *frat << ~x;
-      *frat << fin;
-    }
-    else *frat << unknown;
-}
 
 /* // This needs to be an AIG actually, with an order of what to calculate first. */
 vector<Lit> Solver::get_weight_translation() const {
@@ -3720,31 +3679,26 @@ vector<Lit> Solver::get_weight_translation() const {
     return ret;
 }
 
-map<uint32_t, VarMap> Solver::update_var_mapping(const map<uint32_t, VarMap>& vmap) {
-    map<uint32_t, VarMap> ret;
-    for(const auto&m : vmap) {
-        assert(m.second.invariant());
-        if(m.second.lit == lit_Undef) {
-            // This is a variable has been set in another round/system
-            assert(m.second.val != l_Undef);
-            ret[m.first] = m.second;
-        } else {
-            assert(m.second.val == l_Undef && "Must be unset");
-            /* cout << "m.first:" << setw(4) << m.first +1 */
-            /*     << " m.second.lit: " << setw(4) */
-            /*     << m.second.lit << " nVarsOuter(): " << nVarsOuter() << endl; */
-            assert(m.second.lit.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
-            Lit l = varReplacer->get_lit_replaced_with_outer(m.second.lit);
-            l = map_outer_to_inter(l);
-            if (varData[l.var()].removed == Removed::elimed) {
-                // This cannot be mapped anywhere, it's been eliminated
-                // the AIG will define it
-                continue;
-            }
-            if (value(l) != l_Undef) ret[m.first] = VarMap(value(l));
-            else ret[m.first] = VarMap(l);
-            /* cout << "ret[m.first]: " << setw(4) << ret[m.first] << endl; */
+map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_new_var) {
+    map<uint32_t, Lit> ret;
+    for(const auto [origv, n] : orig_to_new_var) {
+        /* std::cout << "[solver remap] Remapping. Orig variable " << origv +1 */
+        /*     << " is defined to: " << n << std::endl; */
+        assert(n != lit_Undef);
+        assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
+        const Lit l_inter = map_outer_to_inter(varReplacer->get_lit_replaced_with_outer(n));
+        if (value(l_inter) != l_Undef) {
+            /* cout << "[solver remap] Variable was assigned." << endl; */
+            continue;
         }
+        if (varData[l_inter.var()].removed == Removed::elimed) {
+            /* cout << "[solver remap] Variable was eliminated." << endl; */
+            continue;
+        }
+        assert(l_inter.var() < nVars());
+        assert(value(l_inter) == l_Undef);
+        ret[origv] = l_inter;
+        /* cout << "[solver remap] Variable is now internal variable: " << l_inter << endl; */
     }
     return ret;
 }
@@ -3759,10 +3713,11 @@ vector<uint32_t> Solver::get_elimed_vars() const {
     return ret;
 }
 
-std::vector<std::vector<Lit>> Solver::get_cls_defining_var(uint32_t outer_v) const {
+std::vector<std::vector<Lit>> Solver::get_cls_defining_var(const uint32_t outer_v) const {
     assert(get_clause_query);
     Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
     Lit l_inter  = map_outer_to_inter(l);
+    assert(value(l_inter) == l_Undef);
     assert(varData[l_inter.var()].removed == Removed::elimed);
     return occsimplifier->get_elimed_clauses_for(outer_v);
 }

@@ -64,9 +64,9 @@ void CCNROraclePre::reinit() {
 }
 
 bool CCNROraclePre::run(int64_t mems_limit) {
-    /* double start_time = cpuTime(); */
+    /* double start_time = cpu_time(); */
     bool res = ls->local_search(mems_limit);
-    /* double time_used = cpuTime()-start_time; */
+    /* double time_used = cpu_time()-start_time; */
     /* cout << "[ccnr] T: " << setprecision(2) << fixed << time_used << " res: " << res << endl; */
     return res;
 }

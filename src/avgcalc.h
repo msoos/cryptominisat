@@ -77,7 +77,7 @@ public:
         sum += other.sum;
         num += other.num;
         min = std::min(min, other.min);
-        max = std::min(min, other.max);
+        max = std::max(max, other.max);
         #if defined(STATS_NEEDED)
         sumSqare += other.sumSqare;
         #endif
@@ -87,12 +87,14 @@ public:
 
     AvgCalc<T, T2>& operator-=(const AvgCalc<T, T2>& other)
     {
-        sum += other.sum;
-        num += other.num;
-        min = std::min(min, other.min);
-        max = std::min(min, other.max);
+        sum -= other.sum;
+        num -= other.num;
         #if defined(STATS_NEEDED)
-        sumSqare += other.sumSqare;
+        sumSqare -= other.sumSqare;
+        #endif
+        #ifdef AVGCALC_NEED_MIN_MAX
+        min = numeric_limits<T>::max();
+        max = numeric_limits<T>::min();
         #endif
 
         return *this;

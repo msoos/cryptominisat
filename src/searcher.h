@@ -467,7 +467,7 @@ inline const SearchHist& Searcher::getHistory() const
 
 inline void Searcher::add_in_partial_solving_stats()
 {
-    stats.cpu_time = cpuTime() - startTime;
+    stats.cpu_time = cpu_time() - startTime;
 }
 
 inline void Searcher::insert_var_order(const uint32_t x)
@@ -532,7 +532,6 @@ inline void Searcher::bump_cl_act(Clause* cl)
     if (max_cl_act < new_val) {
         max_cl_act = new_val;
     }
-
 
     if (cl->stats.activity > 1e20F ) {
         // Rescale. For STATS_NEEDED we rescale ALL

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
@@ -49,7 +49,7 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
 
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
-desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
+desc = """Fuzz the solver with fuzz-generator: ./fuzz.py
 """
 
 
@@ -409,6 +409,7 @@ class Tester:
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
         command += fixed_opts + " "
+        self.last_solver_base_cmd = command
         if fname is not None:
             command += " %s " % fname
         if fname_frat:
@@ -457,7 +458,8 @@ class Tester:
                 # of clang of other projects
                 noprob = ["std::_Ios_Fmtflags", "mzd.h", "lexical_cast.hpp",
                       "MersenneTwister.h", "boost::any::holder", "~~~~~",
-                      "SUMMARY", "process memory map", "==========="]
+                      "SUMMARY", "process memory map", "===========",
+                      "Alarm clock"]
 
                 ok = False
                 for x in noprob:
@@ -470,6 +472,7 @@ class Tester:
 
             if found_something:
                 print("Error line while executing: %s" % errline.strip())
+                self.write_repro_script(fname, fname_frat)
                 exit(-1)
 
         os.unlink(err_fname)
@@ -513,6 +516,7 @@ class Tester:
 
         if retcode != 0:
             print("Return code of CryptoMiniSat is not 0, it is: %d -- error!" % retcode)
+            self.write_repro_script(fname, fname_frat)
             exit(-1)
 
         # if library debug is set, check it
@@ -543,7 +547,7 @@ class Tester:
             consoleOutputGrep = p.communicate()[0]
 
             fname_xlrup = unique_file("xlrup-file")
-            toexec = "./frat-rs elab {clean} {cnf} {xlrup}"
+            toexec = "./frat-xor elab {clean} {cnf} {xlrup}"
             toexec = toexec.format(cnf=fname, clean=fname_cleanproof, xlrup=fname_xlrup)
             print("Checking with FRAT.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
@@ -551,6 +555,7 @@ class Tester:
 
             toexec = "./cake_xlrup {cnf} {xlrup}"
             toexec = toexec.format(cnf=fname, xlrup=fname_xlrup)
+            print("Checking with cake_xlrup.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput3 = p.communicate()[0]
 
@@ -565,6 +570,7 @@ class Tester:
             # Check whether we have found a verification code
             if foundVerif is False:
                 print("verifier error! It says: %s" % consoleOutput2)
+                self.write_repro_script(fname, fname_frat)
                 assert foundVerif, "Cannot find FRAT verification code!"
             else:
                 os.unlink(fname_xlrup)
@@ -585,7 +591,33 @@ class Tester:
                 print("UNSAT verified by other solver")
             else:
                 print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
+                self.write_repro_script(fname)
                 exit()
+
+    def write_repro_script(self, fname, fname_frat=None):
+        script_path = "repro.sh"
+        base_cmd = self.last_solver_base_cmd.strip()
+        with open(script_path, "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write("set -x\n")
+            f.write('CNF="${1:-%s}"\n' % fname)
+            if fname_frat:
+                f.write("FRAT=$(mktemp --suffix=.frat)\n")
+                f.write("CLEAN=$(mktemp --suffix=.cnf)\n")
+                f.write("XLRUP=$(mktemp --suffix=.xlrup)\n")
+                f.write("\n")
+                f.write('%s "$CNF" "$FRAT"\n' % base_cmd)
+                f.write('grep -v "^c" "$FRAT" > "$CLEAN"\n')
+                f.write('./frat-xor elab "$CLEAN" "$CNF" "$XLRUP"\n')
+                f.write('./cake_xlrup "$CNF" "$XLRUP"\n')
+                f.write("\n")
+                f.write('rm -f "$FRAT" "$CLEAN" "$XLRUP"\n')
+            else:
+                f.write('%s "$CNF"\n' % base_cmd)
+        os.chmod(script_path, 0o755)
+        print("Repro script written to: %s" % script_path)
+        print("To reproduce the crash, run: ./repro.sh %s" % fname)
+        print("To minimize the crash, run: ./minimize_cnf.py %s" % fname)
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
@@ -737,7 +769,7 @@ if __name__ == "__main__":
         rnd_seed = random.randint(0, 1000*1000*100)
 
     while True:
-        toexec = "./fuzz_test.py --fuzzlim 1 --seed %d " % rnd_seed
+        toexec = "./fuzz.py --fuzzlim 1 --seed %d " % rnd_seed
         if not options.novalgrind:
             toexec += "--dovalgrind "
         if options.valgrind_freq:

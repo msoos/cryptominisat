@@ -20,6 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Alg_h
 #define Alg_h
 
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
 #include "solvertypes.h"
@@ -31,11 +32,10 @@ namespace CMSat {
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
 {
-    uint32_t j = 0;
-    for (; j < ts.size() && ts[j] != t; j++);
-    assert(j < ts.size());
-    for (; j < (uint32_t)(ts.size()-1); j++) ts[j] = ts[j+1];
-    ts.resize(ts.size() -1);
+    auto it = std::ranges::find(ts, t);
+    assert(it != ts.end());
+    std::move(it + 1, ts.end(), it);
+    ts.resize(ts.size() - 1);
 }
 
 } //end namespace

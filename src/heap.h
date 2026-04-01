@@ -70,8 +70,8 @@ class Heap {
     void percolateDown(int i)
     {
         int x = heap[i];
-        while (left(i) < (int)heap.size()) {
-            int child = right(i) < (int)heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
+        while (left(i) < static_cast<int>(heap.size())) {
+            int child = right(i) < static_cast<int>(heap.size()) && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
             if (!lt(heap[child], x)) {
                 break;
             }
@@ -102,21 +102,21 @@ public:
     }
 
     template<class T> void run_check(T fun) { for(auto x: heap) fun(x); }
-    uint32_t  size      ()          const
+    [[nodiscard]] uint32_t size() const
     {
         return heap.size();
     }
-    bool empty     ()          const
+    [[nodiscard]] bool empty() const
     {
-        return heap.size() == 0;
+        return heap.empty();
     }
-    bool inHeap    (int n)     const
+    [[nodiscard]] bool inHeap(int n) const
     {
-        return n < (int)indices.size() && indices[n] >= 0;
+        return n < static_cast<int>(indices.size()) && indices[n] >= 0;
     }
-    int  operator[](int index) const
+    [[nodiscard]] int operator[](int index) const
     {
-        assert(index < (int)heap.size());
+        assert(index < static_cast<int>(heap.size()));
         return heap[index];
     }
 
@@ -173,11 +173,11 @@ public:
     template<typename T>
     void build(const T& ns)
     {
-        for (int i = 0; i < (int)ns.size(); i++) {
+        for (int i = 0; i < static_cast<int>(ns.size()); i++) {
             indices.growTo(ns[i]+1, -1);
         }
 
-        for (int i = 0; i < (int)heap.size(); i++) {
+        for (int i = 0; i < static_cast<int>(heap.size()); i++) {
             indices[heap[i]] = -1;
         }
         heap.clear();
@@ -187,14 +187,14 @@ public:
             heap.push(ns[i]);
         }
 
-        for (int i = (int)heap.size() / 2 - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(heap.size()) / 2 - 1; i >= 0; i--) {
             percolateDown(i);
         }
     }
 
     void clear(bool dealloc = false)
     {
-        for (int i = 0; i < (int)heap.size(); i++) {
+        for (int i = 0; i < static_cast<int>(heap.size()); i++) {
             indices[heap[i]] = -1;
         }
         heap.clear(dealloc);

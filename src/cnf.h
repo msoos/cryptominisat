@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "watcharray.h"
 #include "frat.h"
-#include "idrup.h"
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "gausswatched.h"
@@ -126,13 +125,12 @@ public:
     //Note that this array can have the same internal variable more than
     //once, in case one has been replaced with the other. So if var 1 =  var 2
     //and var 1 was set to TRUE and var 2 to be FALSE, then we'll have var 1
-    //insided this array twice, once it needs to be set to TRUE and once FALSE
+    //inside this array twice, once it needs to be set to TRUE and once FALSE
     vector<Lit> assumptions;
 
     //frat
     Frat* frat;
     void add_frat(FILE* os);
-    void add_idrup(FILE* os);
 
     //Clauses
     vector<ClOffset> longIrredCls;
@@ -180,28 +178,28 @@ public:
     vector<Lit>      toClear;
     uint64_t MYFLAG = 1;
 
-    bool okay() const {
+    [[nodiscard]] bool okay() const {
         assert(!(!ok && frat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) &&
                "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID");
         return ok;
     }
     auto level(Lit l) const { return varData[l.var()].level; }
-    lbool value (const uint32_t x) const { return assigns[x]; }
-    lbool value (const Lit p) const { return assigns[p.var()] ^ p.sign(); }
-    bool must_interrupt_asap() const { return must_interrupt_inter->load(std::memory_order_relaxed); }
+    [[nodiscard]] lbool value (const uint32_t x) const { return assigns[x]; }
+    [[nodiscard]] lbool value (const Lit p) const { return assigns[p.var()] ^ p.sign(); }
+    [[nodiscard]] bool must_interrupt_asap() const { return must_interrupt_inter->load(std::memory_order_relaxed); }
     void set_must_interrupt_asap() { must_interrupt_inter->store(true, std::memory_order_relaxed); }
     void unset_must_interrupt_asap() { must_interrupt_inter->store(false, std::memory_order_relaxed); }
     std::atomic<bool>* get_must_interrupt_inter_asap_ptr() { return must_interrupt_inter; }
     const vector<BNN*>& get_bnns() const { return bnns; }
 
     bool check_bnn_sane(BNN& bnn);
-    bool clause_locked(const Clause& c, const ClOffset offset) const;
-    bool redundant(const Watched& ws) const;
-    bool redundant_or_removed(const Watched& ws) const;
-    size_t cl_size(const Watched& ws) const;
+    [[nodiscard]] bool clause_locked(const Clause& c, const ClOffset offset) const;
+    [[nodiscard]] bool redundant(const Watched& ws) const;
+    [[nodiscard]] bool redundant_or_removed(const Watched& ws) const;
+    [[nodiscard]] size_t cl_size(const Watched& ws) const;
     string watched_to_string(Lit other_lit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;
-    bool satisfied(const ClOffset& off) const;
+    [[nodiscard]] bool satisfied(const ClOffset& off) const;
 
     uint64_t print_mem_used_longclauses(size_t total_mem) const;
     uint64_t mem_used_longclauses() const;
@@ -510,9 +508,8 @@ template<typename T>
 inline vector<Lit> unsign_lits(const T& lits)
 {
     vector<Lit> ret(lits.size());
-    for(size_t i = 0; i < lits.size(); i++) {
-        ret[i] = lits[i].unsign();
-    }
+    std::transform(lits.begin(), lits.end(), ret.begin(),
+        [](const auto& lit) { return lit.unsign(); });
     return ret;
 }
 
@@ -546,16 +543,9 @@ bool CNF::satisfied(const T& cl) const {
 template<typename T>
 bool CNF::no_duplicate_lits(const T& lits) const
 {
-    vector<Lit> x(lits.size());
-    for(size_t i = 0; i < x.size(); i++) {
-        x[i] = lits[i];
-    }
+    vector<Lit> x(lits.begin(), lits.end());
     std::sort(x.begin(), x.end());
-    for(size_t i = 1; i < x.size(); i++) {
-        if (x[i-1] == x[i])
-            return false;
-    }
-    return true;
+    return std::adjacent_find(x.begin(), x.end()) == x.end();
 }
 
 inline void CNF::check_no_duplicate_lits_anywhere() const
@@ -574,9 +564,9 @@ inline void CNF::check_no_duplicate_lits_anywhere() const
 
 template<class T> void CNF::clean_xor_no_prop(T& ps, bool& rhs) {
     std::sort(ps.begin(), ps.end());
-    Lit p;
-    uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+    Lit p = lit_Undef;
+    uint32_t i = 0, j = 0;
+    for (; i != ps.size(); i++) {
         assert(ps[i].sign() == false);
 
         if (ps[i].var() == p.var()) {

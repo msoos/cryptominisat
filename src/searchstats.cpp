@@ -72,6 +72,10 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     transReduRemIrred += other.transReduRemIrred;
     transReduRemRed += other.transReduRemRed;
 
+    //SatZillaFeatures
+    num_xors_found_last += other.num_xors_found_last;
+    num_gates_found_last += other.num_gates_found_last;
+
     //Stat structs
     resolvs += other.resolvs;
     conflicts += other.conflicts;
@@ -128,6 +132,10 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     hyperBinAdded -= other.hyperBinAdded;
     transReduRemIrred -= other.transReduRemIrred;
     transReduRemRed -= other.transReduRemRed;
+
+    //SatZillaFeatures
+    num_xors_found_last -= other.num_xors_found_last;
+    num_gates_found_last -= other.num_gates_found_last;
 
     //Stat structs
     resolvs -= other.resolvs;

@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <array>
 #include <utility>
 #include <string>
-#include <complex>
 
 #include "solvertypes.h"
 #include "propengine.h"
@@ -49,7 +48,6 @@ using std::vector;
 using std::pair;
 using std::string;
 using std::array;
-using std::complex;
 struct PicoSAT;
 
 namespace CMSat {
@@ -90,7 +88,7 @@ class Solver : public Searcher
         virtual ~Solver() override;
 
         void add_sql_tag(const string& name, const string& val);
-        const vector<std::pair<string, string> >& get_sql_tags() const;
+        const vector<std::pair<string, string>>& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
         bool add_clause_outside(const vector<Lit>& lits, bool red = false, bool restore = false);
@@ -110,8 +108,6 @@ class Solver : public Searcher
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
         void set_outer_lit_weight(const Lit lit, const float weight);
-        //frat for SAT problems
-        void conclude_idrup (lbool);
         void changed_sampling_vars();
 
         //Querying model
@@ -135,12 +131,11 @@ class Solver : public Searcher
                uint32_t max_glue = std::numeric_limits<uint32_t>::max());
         bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
         void end_getting_constraints();
-        vector<uint32_t> translate_sampl_set(
-                const vector<uint32_t>& sampl_set, bool also_removed);
+        vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
         vector<Lit> get_weight_translation() const;
-        map<uint32_t, VarMap> update_var_mapping(const map<uint32_t, VarMap>& vmap);
+        map<uint32_t, Lit> update_var_mapping(const map<uint32_t, Lit>& vmap);
         vector<uint32_t> get_elimed_vars() const;
-        vector<vector<Lit>> get_cls_defining_var(uint32_t outer_v) const;
+        vector<vector<Lit>> get_cls_defining_var(const uint32_t outer_v) const;
         void reverse_bce();
 
         //Version
@@ -183,7 +178,7 @@ class Solver : public Searcher
 
         //Checks
 
-        //Systems that are used to accompilsh the tasks
+        //Systems that are used to accomplish the tasks
         ClauseCleaner*         clauseCleaner = nullptr;
         VarReplacer*           varReplacer = nullptr;
         SubsumeImplicit*       subsumeImplicit = nullptr;
@@ -300,7 +295,7 @@ class Solver : public Searcher
         // Gates
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
-        vector<pair<Lit, Lit> > get_all_binary_xors() const;
+        vector<pair<Lit, Lit>> get_all_binary_xors() const;
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
         vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
         void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
@@ -425,7 +420,7 @@ class Solver : public Searcher
         );
         void sort_and_clean_bnn(BNN& bnn);
         void set_up_sql_writer();
-        vector<std::pair<string, string> > sql_tags;
+        vector<std::pair<string, string>> sql_tags;
 
         void check_and_upd_config_parameters();
         vector<uint32_t> tmp_xor_clash_vars;

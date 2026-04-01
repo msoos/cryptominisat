@@ -54,7 +54,7 @@ class DataSyncServer {
         void finish_data_send();
 
         std::vector<uint32_t> syncMPIFinish;
-        std::vector<std::vector<Lit> > bins;
+        std::vector<std::vector<Lit>> bins;
         std::vector<lbool> value;
         std::vector<Lit> clauses_array;
 

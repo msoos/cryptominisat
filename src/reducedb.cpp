@@ -40,50 +40,6 @@ THE SOFTWARE.
 using namespace CMSat;
 
 namespace CMSat {
-inline double safe_div(double a, double b) {
-    if (b == 0) {
-        assert(a == 0);
-        return 0;
-    }
-    return a/b;
-}
-
-struct SortValAndPos {
-    inline bool operator () (const val_and_pos& a, const val_and_pos& b) const
-    {
-        return a.val > b.val;
-    }
-};
-
-struct SortRedClsGlue
-{
-    explicit SortRedClsGlue(ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
-    {}
-    ClauseAllocator& cl_alloc;
-
-    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
-    {
-        const Clause* x = cl_alloc.ptr(xOff);
-        const Clause* y = cl_alloc.ptr(yOff);
-        return x->stats.glue < y->stats.glue;
-    }
-};
-
-struct SortRedClsAct
-{
-    explicit SortRedClsAct(ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
-    {}
-    ClauseAllocator& cl_alloc;
-
-    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
-    {
-        const Clause* x = cl_alloc.ptr(xOff);
-        const Clause* y = cl_alloc.ptr(yOff);
-        return x->stats.activity > y->stats.activity;
-    }
-};
 
 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
 struct SortRedClsUIP1
@@ -187,7 +143,7 @@ ReduceDB::ReduceDB(Solver* _solver) :
 ReduceDB::~ReduceDB()
 {
     #ifdef FINAL_PREDICTOR
-    //delete predictors;
+    delete predictors;
     #endif
 }
 
@@ -209,12 +165,18 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
 
     switch (clean_type) {
         case ClauseClean::glue : {
-            std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(), SortRedClsGlue(solver->cl_alloc));
+            std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+                [this](const ClOffset x, const ClOffset y) {
+                    return solver->cl_alloc.ptr(x)->stats.glue < solver->cl_alloc.ptr(y)->stats.glue;
+                });
             break;
         }
 
         case ClauseClean::activity : {
-            std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(), SortRedClsAct(solver->cl_alloc));
+            std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+                [this](const ClOffset x, const ClOffset y) {
+                    return solver->cl_alloc.ptr(x)->stats.activity > solver->cl_alloc.ptr(y)->stats.activity;
+                });
             break;
         }
 
@@ -231,7 +193,7 @@ void ReduceDB::handle_lev2()
     solver->dump_memory_stats_to_sql();
     size_t orig_size = solver->longRedCls[2].size();
 
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
     assert(solver->watches.get_smudged_list().empty());
 
     //lev2 -- clean
@@ -269,16 +231,16 @@ void ReduceDB::handle_lev2()
     << " marked: " << cl_marked
     << " ttl:" << cl_ttl
     << " locked_solver:" << cl_locked_solver
-    << solver->conf.print_times(cpuTime()-my_time));
+    << solver->conf.print_times(cpu_time()-my_time));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean-lev2"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
-    total_time += cpuTime()-my_time;
+    total_time += cpu_time()-my_time;
 
     last_reducedb_num_conflicts = solver->sumConflicts;
 }
@@ -351,7 +313,9 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         dat[i].pos = i;
         dat[i].val = stats_extra.calc_sum_uip1_per_time(solver->sumConflicts);
     }
-    std::sort(dat.begin(), dat.end(), SortValAndPos());
+    std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
+        return a.val > b.val;
+    });
     for(size_t i = 0; i < dat.size(); i++) {
         ClOffset offs = all_learnt[dat[i].pos];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -374,7 +338,9 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         dat[i].pos = i;
         dat[i].val = stats_extra.calc_sum_props_per_time(solver->sumConflicts);
     }
-    std::sort(dat.begin(), dat.end(), SortValAndPos());
+    std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
+        return a.val > b.val;
+    });
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[dat[i].pos];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -398,7 +364,9 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         dat[i].pos = i;
         dat[i].val = cl->stats.activity;
     }
-    std::sort(dat.begin(), dat.end(), SortValAndPos());
+    std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
+        return a.val > b.val;
+    });
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[dat[i].pos];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -425,7 +393,7 @@ void ReduceDB::dump_sql_cl_data(
     assert(solver->sqlStats);
 
     reduceDB_called++;
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     uint32_t non_locked_lev0 = 0;
 
     //Set up features
@@ -499,7 +467,7 @@ void ReduceDB::dump_sql_cl_data(
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
         << " locked-perc: " << stats_line_percent(num_locked_for_data_gen, all_learnt.size())
         << " non-locked lev0: " << non_locked_lev0
-        << solver->conf.print_times(cpuTime()-my_time));
+        << solver->conf.print_times(cpu_time()-my_time));
     }
     locked_for_data_gen_total += num_locked_for_data_gen;
     locked_for_data_gen_cls += all_learnt.size();
@@ -515,7 +483,7 @@ void ReduceDB::handle_lev1()
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     size_t orig_size = solver->longRedCls[1].size();
 
     size_t j = 0;
@@ -573,7 +541,7 @@ void ReduceDB::handle_lev1()
         << " used recently: " << used_recently
         << " not used recently: " << non_recent_use
         << " moved w0: " << moved_w0
-        << solver->conf.print_times(cpuTime()-my_time)
+        << solver->conf.print_times(cpu_time()-my_time)
         << endl;
     }
 
@@ -581,10 +549,10 @@ void ReduceDB::handle_lev1()
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean-lev1"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
-    total_time += cpuTime()-my_time;
+    total_time += cpu_time()-my_time;
 }
 
 #ifdef FINAL_PREDICTOR
@@ -716,12 +684,12 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
 
 void ReduceDB::update_preds_lev2()
 {
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     update_preds(solver->longRedCls[2]);
     dump_pred_distrib(solver->longRedCls[2], 2);
 
     if (solver->conf.verbosity >= 2) {
-        double predTime = cpuTime() - my_time;
+        double predTime = cpu_time() - my_time;
         cout << "c [DBCL] main predtime: " << predTime << endl;
     }
 }
@@ -1081,7 +1049,7 @@ void ReduceDB::handle_predictors()
     }
 
     assert(delayed_clause_free.empty());
-    double my_time = cpuTime();
+    double my_time = cpu_time();
 
     //Pre-reset, calculate common features
     vector<ClOffset> all_learnt;
@@ -1164,7 +1132,7 @@ void ReduceDB::handle_predictors()
 
         cout
         << "c [DBCL pred] "
-        << solver->conf.print_times(cpuTime()-my_time)
+        << solver->conf.print_times(cpu_time()-my_time)
         << endl;
     }
 
@@ -1172,10 +1140,10 @@ void ReduceDB::handle_predictors()
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean-lev1"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
-    total_time += cpuTime()-my_time;
+    total_time += cpu_time()-my_time;
 }
 #endif
 

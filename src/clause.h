@@ -146,7 +146,7 @@ struct ClauseStats
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t extra_pos = numeric_limits<uint32_t>::max();
-    uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
+    uint32_t uip1_used = 0; ///N.o. times clause was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
     #endif
 
@@ -249,7 +249,7 @@ struct ClauseStatsExtra
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     float discounted_props_made = 0;
     float discounted_uip1_used = 0;
-    uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
+    uint32_t sum_uip1_used = 0; ///N.o. times clause was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
     float discounted_uip1_used3 = 0;
     float discounted_uip1_used2 = 0;
@@ -370,20 +370,19 @@ public:
     uint32_t is_ternary_resolved:1;
     uint32_t occurLinked:1;
     uint32_t must_recalc_abst:1;
-    uint32_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
+    uint32_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to indicate where a propagation is coming from
     uint32_t reloced:1;
     uint32_t disabled:1;
     uint32_t tried_to_remove:1;
 
-
     Lit* getData()
     {
-        return (Lit*)((char*)this + sizeof(Clause));
+        return reinterpret_cast<Lit*>(reinterpret_cast<char*>(this) + sizeof(Clause));
     }
 
     const Lit* getData() const
     {
-        return (Lit*)((char*)this + sizeof(Clause));
+        return reinterpret_cast<const Lit*>(reinterpret_cast<const char*>(this) + sizeof(Clause));
     }
 
 public:
@@ -410,9 +409,7 @@ public:
         disabled = false;
         tried_to_remove = 0;
 
-        for (uint32_t i = 0; i < ps.size(); i++) {
-            getData()[i] = ps[i];
-        }
+        std::copy(ps.begin(), ps.end(), getData());
     }
 
     using iterator = Lit *;
@@ -461,8 +458,6 @@ public:
     void set_strengthened()
     {
         must_recalc_abst = true;
-        //is_ternary_resolved = false; //probably not a good idea
-        //is_distilled = false; //TODO?
     }
 
     void recalc_abst_if_needed()

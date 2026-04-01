@@ -306,7 +306,7 @@ void Searcher::normalClMinim()
                 learnt_clause[j++] = learnt_clause[i];
                 break;
             } else {
-                VERBOSE_PRINT("Chain adding ID: " << ID << " due to normal CL minim, lit: " << p <<  " removed");
+                VERBOSE_PRINT("Chain adding ID: " << id << " due to normal CL minim, lit: " << p <<  " removed");
                 chain.push_back(id);
             }
         }
@@ -396,7 +396,7 @@ void Searcher::add_lits_to_learnt(
         case binary_t : {
             id = confl.get_id();
             sumAntecedentsLits += 2;
-            VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << ID);
+            VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << id);
 
             if (confl.isRedStep()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -469,7 +469,7 @@ void Searcher::add_lits_to_learnt(
             lits = cl->data();
             size = cl->size();
             sumAntecedentsLits += size;
-            VERBOSE_PRINT("resolving with cl:" << *cl << " -- ID: " << ID);
+            VERBOSE_PRINT("resolving with cl:" << *cl << " -- ID: " << id);
             break;
         }
 
@@ -486,7 +486,7 @@ void Searcher::add_lits_to_learnt(
         case null_clause_t:
         default: release_assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
-    VERBOSE_PRINT("Chain adding ID: " << ID << " due to resolution on lit: " << p);
+    VERBOSE_PRINT("Chain adding ID: " << id << " due to resolution on lit: " << p);
     chain.push_back(id);
 
     size_t i = 0;
@@ -1239,7 +1239,7 @@ lbool Searcher::search()
     check_no_duplicate_lits_anywhere();
     check_order_heap_sanity();
     #endif
-    const double my_time = cpuTime();
+    const double my_time = cpu_time();
 
     //Stats reset & update
     stats.numRestarts++;
@@ -1322,7 +1322,7 @@ void Searcher::dump_search_sql(const double my_time)
         solver->sqlStats->time_passed_min(
             solver
             , "search"
-            , cpuTime()-my_time
+            , cpu_time()-my_time
         );
     }
 }
@@ -1873,7 +1873,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
 void Searcher::resetStats()
 {
-    startTime = cpuTime();
+    startTime = cpu_time();
 
     //Rest solving stats
     stats.clear();
@@ -2310,7 +2310,7 @@ bool Searcher::must_abort(const lbool status) {
         return true;
     }
 
-    if (cpuTime() >= conf.maxTime) {
+    if (cpu_time() >= conf.maxTime) {
         if (conf.verbosity >= 3) {
             cout
             << "c search over max time"
@@ -2667,7 +2667,7 @@ inline void Searcher::print_local_restart_budget()
 void Searcher::check_need_restart() {
     //It's expensive to check the time all the time
     if ((stats.conflicts & 0xff) == 0xff) {
-        if (cpuTime() > conf.maxTime) params.must_stop = true;
+        if (cpu_time() > conf.maxTime) params.must_stop = true;
         if (must_interrupt_asap())  {
             verb_print(3, "must_interrupt_asap() is set, restartig as soon as possible!");
             params.must_stop = true;
@@ -2761,7 +2761,7 @@ void Searcher::finish_up_solve(const lbool status) {
         assert(solver->prop_at_head());
     }
 
-    stats.cpu_time = cpuTime() - startTime;
+    stats.cpu_time = cpu_time() - startTime;
     verb_print(4, "Searcher::solve() finished"
         << " status: " << status
         << " numConflicts : " << stats.conflicts
@@ -2885,14 +2885,14 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
     //Finally, remove the literals that have seen[literal] = 0
     //Here, we can count do stats, etc.
     bool changedClause  = false;
-    vector<Lit>::iterator i = cl.begin();
-    vector<Lit>::iterator j= i;
+    auto i = cl.begin();
+    auto j = i;
 
     //never remove the 0th literal -- TODO this is a bad thing
     //we should be able to remove this, but I can't figure out how to
     //reorder the clause then
     seen[cl[0].toInt()] = 1;
-    for (vector<Lit>::iterator end = cl.end(); i != end; ++i) {
+    for (auto end = cl.end(); i != end; ++i) {
         if (seen[i->toInt()]) {
             *j++ = *i;
         } else {
@@ -3067,13 +3067,13 @@ void Searcher::vsids_decay_var_act()
 
 void Searcher::consolidate_watches(const bool full)
 {
-    double t = cpuTime();
+    double t = cpu_time();
     if (full) {
         watches.full_consolidate();
     } else {
         watches.consolidate();
     }
-    double time_used = cpuTime() - t;
+    double time_used = cpu_time() - t;
     verb_print(1, "[consolidate] "
     << (full ? "full" : "mini")
     << conf.print_times(time_used));
@@ -3475,6 +3475,7 @@ bool Searcher::attach_xorclauses() {
             *frat << implyclfromx << id2 << lits << fratchain << x.xid << fin;
             solver->add_clause_int_frat(lits, id2);
             if (!okay()) return false;
+            *frat << delx << x.xid << fin;
             continue;
         }
         assert(x.size() > 2);

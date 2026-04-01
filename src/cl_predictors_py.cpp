@@ -151,6 +151,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     import_array();
     wchar_t *tmp = charToWChar(best_feats_fname.c_str());
     PySys_SetArgv(1, &tmp);
+    delete[] tmp;
 
     std::wstring pypath2(Py_GetPath());
     //std::wcout << L"path: " << pypath2 << std::endl;

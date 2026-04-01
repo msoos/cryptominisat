@@ -34,7 +34,7 @@ bool Solver::full_probe(const bool bin_only)
     frat_func_start();
 
     const size_t orig_num_free_vars = solver->get_num_free_vars();
-    double my_time = cpuTime();
+    double my_time = cpu_time();
     int64_t start_bogoprops = solver->propStats.bogoProps;
     int64_t bogoprops_to_use =
         solver->conf.full_probe_time_limitM*1000ULL*1000ULL
@@ -74,7 +74,7 @@ bool Solver::full_probe(const bool bin_only)
                 (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
                 verb_print(5, "probe time remain: " << time_remain << " probed: " << probed
                 << " set: "  << (orig_num_free_vars - solver->get_num_free_vars())
-                << " T: " << (cpuTime() - my_time));
+                << " T: " << (cpu_time() - my_time));
             }
         }
     }
@@ -82,7 +82,7 @@ bool Solver::full_probe(const bool bin_only)
     cleanup:
     std::fill(seen2.begin(), seen2.end(), 0);
 
-    const double time_used = cpuTime() - my_time;
+    const double time_used = cpu_time() - my_time;
     const double time_remain = 1.0-float_div(
         (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
     const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);

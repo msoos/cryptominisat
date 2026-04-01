@@ -79,7 +79,7 @@ class MatrixFinder {
         inline bool firstPartOfSecond(const Xor& c1, const Xor& c2) const;
         inline bool belong_same_matrix(const Xor& x);
 
-        map<uint32_t, vector<uint32_t> > reverseTable; //matrix -> vars
+        map<uint32_t, vector<uint32_t>> reverseTable; //matrix -> vars
         vector<uint32_t> table; //var -> matrix
         uint32_t matrix_no;
 

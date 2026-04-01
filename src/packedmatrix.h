@@ -97,7 +97,7 @@ public:
         }
         numRows = b.numRows;
         numCols = b.numCols;
-        memcpy(mp, b.mp, sizeof(int)*numRows*(numCols+1));
+        memcpy(mp, b.mp, sizeof(int64_t)*numRows*(numCols+1));
 
         return *this;
     }

@@ -22,10 +22,10 @@ THE SOFTWARE.
 
 #pragma once
 
+#include <array>
 #include <map>
 #include <vector>
 #include <set>
-#include <map>
 
 #include "clause.h"
 #include "solvertypes.h"
@@ -49,21 +49,22 @@ class SubsumeStrengthen;
 class GateFinder;
 
 struct ElimedClauses {
-    ElimedClauses() = default;
-    explicit ElimedClauses(size_t _start, size_t _end, bool _is_xor):
-        start(_start) , end(_end),  is_xor(_is_xor) {}
-    const Lit& at(const uint64_t at, const vector<Lit>& elimed_cls_lits) const {
-        return elimed_cls_lits[start+at];
-    }
-    Lit& at(const uint64_t at, vector<Lit>& elimed_cls_lits) {
-        return elimed_cls_lits[start+at];
-    }
-
-    uint64_t size() const { return end-start; }
-    uint64_t start;
-    uint64_t end;
+    uint64_t start = 0;
+    uint64_t end = 0;
     bool toRemove = false;
     bool is_xor = false;
+
+    ElimedClauses() = default;
+    ElimedClauses(size_t _start, size_t _end, bool _is_xor):
+        start(_start), end(_end), is_xor(_is_xor) {}
+
+    const Lit& at(uint64_t idx, const vector<Lit>& elimed_cls_lits) const {
+        return elimed_cls_lits[start + idx];
+    }
+    Lit& at(uint64_t idx, vector<Lit>& elimed_cls_lits) {
+        return elimed_cls_lits[start + idx];
+    }
+    uint64_t size() const { return end - start; }
 };
 
 struct BVEStats
@@ -106,8 +107,7 @@ struct BVEStats
         print_stats_line("c v-elim-sub" , subsumedByVE);
     }
     void clear() {
-        BVEStats tmp;
-        *this = tmp;
+        *this = BVEStats{};
     }
 };
 
@@ -209,7 +209,7 @@ public:
                                // the clauses that have been added as resolvents
     vector<uint32_t> n_occurs;
     TouchList removed_cl_with_var;
-    vector<std::pair<Lit, Lit> > added_irred_bin;
+    vector<std::pair<Lit, Lit>> added_irred_bin;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc
@@ -251,14 +251,8 @@ private:
     bool perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret);
     void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
     struct Tri {
-        Lit lits[3];
+        std::array<Lit, 3> lits;
         uint32_t size = 0;
-        Tri () : size(0) {}
-        Tri(const Tri & other)
-        {
-            memcpy(lits, other.lits, sizeof(Lit)*3);
-            size = other.size;
-        }
     };
     vector<Tri> cl_to_add_ternary;
 
@@ -299,29 +293,21 @@ private:
     bool fill_occur_and_print_stats();
     struct LinkInData
     {
-        LinkInData()
-        {}
+        uint64_t cl_linked = 0;
+        uint64_t cl_not_linked = 0;
 
-        LinkInData(uint64_t _cl_linked, uint64_t _cl_not_linked) :
-            cl_linked(_cl_linked)
-            , cl_not_linked(_cl_not_linked)
-        {}
-
-        LinkInData& combine(const LinkInData& other)
+        LinkInData& operator+=(const LinkInData& other)
         {
             cl_linked += other.cl_linked;
             cl_not_linked += other.cl_not_linked;
             return *this;
         }
-
-        uint64_t cl_linked = 0;
-        uint64_t cl_not_linked = 0;
     };
     LinkInData link_in_data_irred;
     LinkInData link_in_data_red;
     uint64_t calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const;
     void     print_mem_usage_of_occur(uint64_t memUsage) const;
-    void     print_linkin_data(const LinkInData link_in_data) const;
+    void     print_linkin_data(const LinkInData& link_in_data) const;
     OccSimplifier::LinkInData link_in_clauses(
         const vector<ClOffset>& toAdd
         , bool alsoOccur
@@ -362,17 +348,14 @@ private:
     vector<uint64_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
-        const vector<uint64_t>&  varElimComplexity;
-        bool operator () (const uint64_t x, const uint64_t y) const
-        {
+        explicit VarOrderLt(const vector<uint64_t>& _varElimComplexity) :
+            varElimComplexity(_varElimComplexity) {}
+
+        bool operator()(uint64_t x, uint64_t y) const {
             return varElimComplexity[x] < varElimComplexity[y];
         }
 
-        explicit VarOrderLt(
-            const vector<uint64_t>& _varElimComplexity
-        ) :
-            varElimComplexity(_varElimComplexity)
-        {}
+        const vector<uint64_t>& varElimComplexity;
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
@@ -481,40 +464,29 @@ private:
     bool        all_occ_based_lit_rem();
 
 
+    // Pool-style container that reuses allocated memory across clear() calls
     struct Resolvents {
-        uint32_t at = 0;
-        vector<vector<Lit>> resolvents_lits;
-        vector<ClauseStats> resolvents_stats;
-        void clear() {
-            at = 0;
-        }
-        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
-            if (resolvents_lits.size() < at+1) {
-                resolvents_lits.resize(at+1);
-                resolvents_stats.resize(at+1);
-            }
+        void clear() { sz = 0; }
+        bool empty() const { return sz == 0; }
+        uint32_t size() const { return sz; }
 
-            resolvents_lits[at] = res;
-            resolvents_stats[at] = stats;
-            at++;
+        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
+            if (lits.size() <= sz) {
+                lits.resize(sz + 1);
+                cl_stats.resize(sz + 1);
+            }
+            lits[sz] = res;
+            cl_stats[sz] = stats;
+            sz++;
         }
-        vector<Lit>& back_lits() {
-            assert(at > 0);
-            return resolvents_lits[at-1];
-        }
-        const ClauseStats& back_stats() const {
-            assert(at > 0);
-            return resolvents_stats[at-1];
-        }
-        void pop() {
-            at--;
-        }
-        bool empty() const {
-            return at == 0;
-        }
-        uint32_t size() const {
-            return at;
-        }
+        vector<Lit>& back_lits() { assert(sz > 0); return lits[sz-1]; }
+        const ClauseStats& back_stats() const { assert(sz > 0); return cl_stats[sz-1]; }
+        void pop() { assert(sz > 0); sz--; }
+
+    private:
+        uint32_t sz = 0;
+        vector<vector<Lit>> lits;
+        vector<ClauseStats> cl_stats;
     };
     Resolvents resolvents;
     uint32_t calc_data_for_heuristic(const Lit lit);
