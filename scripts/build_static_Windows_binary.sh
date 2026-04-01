@@ -47,6 +47,7 @@ cmake \
   -B "${buildDir}/cryptominisat/build" \
   -G Ninja \
   -D CMAKE_BUILD_TYPE=Release \
+  -D GMP_INCLUDE_DIR=/ucrt64/include \
   -D GMP_LIBRARY=/ucrt64/lib/libgmp.a \
   -D GMPXX_LIBRARY=/ucrt64/lib/libgmpxx.a \
   -D STATICCOMPILE=ON \
