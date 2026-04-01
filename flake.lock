@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774783545,
-        "narHash": "sha256-uNif/N0T7pj2fLNs2YL79JMlkBIfogFecsBHoQBcnhA=",
+        "lastModified": 1775080446,
+        "narHash": "sha256-2c1KHx0CGjuxHVg8u9c4hdF6TC+RjY1LDs/HYRiOF/o=",
         "owner": "meelgroup",
         "repo": "cadiback",
-        "rev": "dbebe2fedf72e11cdf2bf00e72ba77c92cbed055",
+        "rev": "798d069b99e030ddb4e612fb6ef7ccaaa2d3a5e5",
         "type": "github"
       },
       "original": {
@@ -30,11 +30,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772998436,
-        "narHash": "sha256-4GNXpkS3gP9UJ6rw7HMkm1wbkrAjNHzhE3sJHBkRU+Q=",
+        "lastModified": 1774711910,
+        "narHash": "sha256-+lp31YSbeq5DwwkhgiBvz7s2tM0l+zcMppHJ2cUDalI=",
         "owner": "meelgroup",
         "repo": "cadical",
-        "rev": "729939aba815b1837b1590279e66c61ed9d3092f",
+        "rev": "25c12aac83fd2f8627ca5c9a82cd864feea8783f",
         "type": "github"
       },
       "original": {
