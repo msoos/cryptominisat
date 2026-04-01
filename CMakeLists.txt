@@ -585,11 +585,11 @@ export(
     FILE "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_TARGETS_FILENAME}"
 )
 
-# Create cryptominisat5Config file
-set(EXPORT_TYPE "Build-tree")
-set(CONF_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include")
-configure_file(cryptominisat5Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
+# Build-tree config (absolute paths, for use without installation)
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cryptominisat5Config-buildtree.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_CONFIG_FILENAME}"
+    @ONLY
 )
 
 # Export this package to the CMake user package registry
@@ -600,14 +600,16 @@ set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat5)
 set(CRYPTOMINISAT5_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
     "Installation directory for cryptominisat5 CMake files")
 
-# Create cryptominisat5Config file
-set(EXPORT_TYPE "installed")
-set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-configure_file(cryptominisat5Config.cmake.in
-   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
-)
+# Install-tree config and version files (relocatable via CMakePackageConfigHelpers)
+set(CRYPTOMINISAT5_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
 
 include(CMakePackageConfigHelpers)
+configure_package_config_file(cryptominisat5Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_CONFIG_FILENAME}"
+    INSTALL_DESTINATION "${CRYPTOMINISAT5_INSTALL_CMAKE_DIR}"
+    PATH_VARS CRYPTOMINISAT5_INSTALL_INCLUDEDIR
+)
+
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_VERSION_FILENAME}"
   COMPATIBILITY SameMajorVersion)
