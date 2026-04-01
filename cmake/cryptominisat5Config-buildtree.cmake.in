@@ -1,12 +1,8 @@
-# Config file for the cryptominisat5 package.
-@PACKAGE_INIT@
-
-set_and_check(CRYPTOMINISAT5_INCLUDE_DIRS "@PACKAGE_CRYPTOMINISAT5_INSTALL_INCLUDEDIR@")
+# Config file for the Build-tree cryptominisat5 package (not relocatable).
+set(CRYPTOMINISAT5_INCLUDE_DIRS "@CMAKE_CURRENT_BINARY_DIR@/include")
 include("${CMAKE_CURRENT_LIST_DIR}/cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_LIBRARIES cryptominisat5)
 set(CRYPTOMINISAT5_STATIC_LIBRARIES cryptominisat5)
 set(CRYPTOMINISAT5_VERSION_MAJOR @PROJECT_VERSION_MAJOR@)
 set(CRYPTOMINISAT5_VERSION_MINOR @PROJECT_VERSION_MINOR@)
 set(CRYPTOMINISAT5_VERSION_PATCH @PROJECT_VERSION_PATCH@)
-
-check_required_components(cryptominisat5)
