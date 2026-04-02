@@ -23,7 +23,7 @@ installation is needed beyond GMP**.
 sudo apt-get install libgmp-dev   # or: yum install gmp-devel
 python -m venv venv
 source venv/bin/activate
-pip install scikit-build-core build
+pip install scikit-build-core cmake ninja build
 pip install . --no-build-isolation
 ```
 
@@ -33,7 +33,7 @@ pip install . --no-build-isolation
 brew install gmp
 python -m venv venv
 source venv/bin/activate
-pip install scikit-build-core build
+pip install scikit-build-core cmake ninja build
 pip install . --no-build-isolation
 ```
 
@@ -42,7 +42,7 @@ pip install . --no-build-isolation
 ```sh
 python -m venv venv
 source venv/bin/activate
-pip install scikit-build-core build
+pip install scikit-build-core cmake ninja build
 python -m build --wheel --no-isolation   # wheel lands in dist/
 ```
 

@@ -529,11 +529,13 @@ endif()
 
 find_library(cadical
     PATHS ${cadical_DIR}
+    PATH_SUFFIXES lib
     NAMES cadical
     REQUIRED NO_DEFAULT_PATH)
 
 find_library(cadiback
     PATHS ${cadiback_DIR}
+    PATH_SUFFIXES lib
     NAMES cadiback
     REQUIRED NO_DEFAULT_PATH)
 

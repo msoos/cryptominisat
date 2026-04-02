@@ -148,7 +148,7 @@ git clone https://github.com/msoos/cryptominisat
 cd cryptominisat
 python3 -m venv venv
 source venv/bin/activate
-pip install scikit-build-core build
+pip install scikit-build-core cmake ninja build
 pip install . --no-build-isolation
 ```
 
