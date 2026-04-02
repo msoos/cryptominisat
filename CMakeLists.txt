@@ -346,7 +346,12 @@ else()
   set(GIT_SHA1 "GIT-hash-notfound")
 endif()
 
-set(CMS_FULL_VERSION "5.13.0")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml" PYPROJECT_TOML)
+string(REGEX MATCH "version = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" _ "${PYPROJECT_TOML}")
+set(CMS_FULL_VERSION "${CMAKE_MATCH_1}")
+if(NOT CMS_FULL_VERSION)
+  message(FATAL_ERROR "Could not parse version from pyproject.toml")
+endif()
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
