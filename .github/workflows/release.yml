@@ -69,7 +69,8 @@ jobs:
 
     - name: Package artifacts
       run: |
-        TAG=${{ github.ref_name }}
+        TAG="${{ github.ref_name }}"
+        TAG="${TAG#release/}"
         if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
           ARCH="linux-amd64"
         elif [[ "${{ matrix.os }}" == "ubuntu-24.04-arm" ]]; then
