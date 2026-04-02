@@ -455,6 +455,7 @@ if(NOT cadical_DIR)
         GIT_REPOSITORY https://github.com/meelgroup/cadical
         GIT_TAG        master
         SOURCE_DIR     "${_cadical_src}"
+        GIT_SHALLOW    TRUE
     )
     FetchContent_GetProperties(cadical_src)
     if(NOT cadical_src_POPULATED)
@@ -492,6 +493,7 @@ if(NOT cadiback_DIR)
         GIT_REPOSITORY https://github.com/meelgroup/cadiback
         GIT_TAG        main
         SOURCE_DIR     "${_cadiback_src}"
+        GIT_SHALLOW    TRUE
     )
     FetchContent_GetProperties(cadiback_src)
     if(NOT cadiback_src_POPULATED)
