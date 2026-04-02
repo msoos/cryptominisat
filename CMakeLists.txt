@@ -672,9 +672,8 @@ if(BUILD_PYTHON_EXTENSION)
     target_link_libraries(pycryptosat PRIVATE cryptominisat5)
     target_compile_features(pycryptosat PRIVATE cxx_std_17)
 
-    # scikit-build-core installs whatever is in DESTINATION "." relative to
-    # the wheel root, which is what we want (pycryptosat.cpython-3xx-…so).
-    install(TARGETS pycryptosat DESTINATION .)
+    # Only install the extension into the wheel (not the static lib / headers / binary).
+    install(TARGETS pycryptosat DESTINATION . COMPONENT python)
 endif()
 
 if(ENABLE_TESTING)

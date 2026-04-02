@@ -132,12 +132,29 @@ True
 >>> print solution
 (None, True, False, True)
 ```
-If you want to build the python module, you can do this:
+If you want to build the Python package from source, the build uses
+[scikit-build-core](https://github.com/scikit-build/scikit-build-core) which
+drives CMake — cadical and cadiback are fetched and compiled automatically,
+so no manual C++ dependency installation is needed beyond GMP.
+
 ```shell
-sudo apt-get install build-essential
-sudo apt-get install python3-setuptools python3-dev
+# Debian/Ubuntu
+sudo apt-get install build-essential cmake libgmp-dev python3-dev
+
+# macOS
+brew install cmake gmp
+
 git clone https://github.com/msoos/cryptominisat
-python -m build
+cd cryptominisat
+python3 -m venv venv
+source venv/bin/activate
+pip install scikit-build-core build
+pip install . --no-build-isolation
+```
+
+Or to produce a wheel file without installing:
+```shell
+python -m build --wheel --no-isolation   # wheel lands in dist/
 pip install dist/pycryptosat-*.whl
 ```
 

@@ -1,6 +1,6 @@
 [build-system]
 requires = ["scikit-build-core>=0.9"]
-build-backend = "scikit-build-core.build"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "pycryptosat"
@@ -39,7 +39,8 @@ cmake.args = [
     "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
     "-DIPASIR=OFF",
 ]
-wheel.packages = []   # pure-Python packages to include (none; extension only)
+wheel.packages = []          # pure-Python packages to include (none; extension only)
+install.components = ["python"]  # only install the pycryptosat.so, not the full CMS install
 
 [tool.cibuildwheel]
 build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
