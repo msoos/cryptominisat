@@ -48,8 +48,10 @@ skip = "pp* *-musllinux* *i686"
 build-frontend = "build"
 
 [tool.cibuildwheel.linux]
-# GMP is in the manylinux allowed-library list so auditwheel will leave it external.
-# Install the dev headers so the build can find gmp.h.
+# manylinux_2_28 = AlmaLinux 8; has working dnf repos (manylinux2014/CentOS 7 is EOL).
+# yum is an alias for dnf on AlmaLinux 8 so the before-all command works unchanged.
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 before-all = "yum install -y gmp-devel || (apt-get update && apt-get install -y libgmp-dev)"
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
