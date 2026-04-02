@@ -501,7 +501,7 @@ if(NOT cadiback_DIR)
     if(NOT EXISTS "${_cadiback_lib}")
         message(STATUS "CaDiBaCk: building in ${_cadiback_src}")
         execute_process(
-            COMMAND bash -c "CXXFLAGS=-fPIC ./configure"
+            COMMAND bash -c "CXXFLAGS=-fPIC ./configure --release"
             WORKING_DIRECTORY "${_cadiback_src}"
             RESULT_VARIABLE _cadiback_cfg_ret
         )
