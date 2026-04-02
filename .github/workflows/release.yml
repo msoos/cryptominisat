@@ -13,11 +13,25 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, macos-14, ubuntu-24.04-arm, macos-15-intel]
+        os: [ubuntu-latest, macos-14, ubuntu-24.04-arm, macos-15-intel, windows-latest]
         build_type: [Release]
         staticcompile: [ON]
 
     steps:
+    - name: Set up MSYS2
+      if: contains(matrix.os, 'windows')
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-ninja
+          make
+          mingw-w64-x86_64-gmp
+          mingw-w64-x86_64-zlib
+
     - name: Install dependencies for Linux
       if: contains(matrix.os, 'ubuntu')
       run: sudo apt-get update && sudo apt-get install -yq help2man libgmp-dev
@@ -50,7 +64,23 @@ jobs:
         path: project
         submodules: 'true'
 
-    - name: Configure & build
+    - name: Configure & build (Windows)
+      if: contains(matrix.os, 'windows')
+      shell: msys2 {0}
+      run: |
+        cd project
+        mkdir -p build && cd build
+        cmake \
+        -DENABLE_TESTING=OFF \
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+        -DIPASIR=ON \
+        -DSTATICCOMPILE=ON \
+        -G Ninja \
+        -S ..
+        cmake --build . --config ${{ matrix.build_type }} -v
+
+    - name: Configure & build (non-Windows)
+      if: "!contains(matrix.os, 'windows')"
       run: |
         cd project
         mkdir -p build && cd build
@@ -62,12 +92,30 @@ jobs:
         -S ..
         cmake --build . --config ${{ matrix.build_type }} -v
 
-    - name: run it to check it executes
+    - name: run it to check it executes (Windows)
+      if: contains(matrix.os, 'windows')
+      shell: msys2 {0}
+      run: |
+        ./project/build/cryptominisat5.exe --version
+        echo $?
+
+    - name: run it to check it executes (non-Windows)
+      if: "!contains(matrix.os, 'windows')"
       run: |
         ./project/build/cryptominisat5 --version
         echo $?
 
-    - name: Package artifacts
+    - name: Package artifacts (Windows)
+      if: contains(matrix.os, 'windows')
+      shell: bash
+      run: |
+        TAG=${{ github.ref_name }}
+        ARCHIVE="cryptominisat5-${TAG}-windows-x86_64.zip"
+        7z a "${ARCHIVE}" ./project/build/cryptominisat5.exe
+        echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+
+    - name: Package artifacts (non-Windows)
+      if: "!contains(matrix.os, 'windows')"
       run: |
         TAG=${{ github.ref_name }}
         if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
