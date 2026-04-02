@@ -116,6 +116,7 @@ jobs:
       if: contains(matrix.os, 'windows')
       shell: msys2 {0}
       run: |
+        export PATH="./project/build:./project/build/cmsat5-src:$PATH"
         EXE=./project/build/cryptominisat5.exe
         echo "Running: $EXE --version"
         $EXE --version
