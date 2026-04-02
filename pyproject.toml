@@ -38,6 +38,8 @@ cmake.args = [
     "-DBUILD_SHARED_LIBS=OFF",
     "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
     "-DIPASIR=OFF",
+    "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
+    "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
 ]
 wheel.packages = []          # pure-Python packages to include (none; extension only)
 install.components = ["python"]  # only install the pycryptosat.so, not the full CMS install
