@@ -1,0 +1,61 @@
+name: Build and publish Python wheels
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:   # allow manual test-runs without a tag
+
+jobs:
+  build_wheels:
+    name: Wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each runner builds for its native architecture.
+        # Linux aarch64 uses a native ARM GitHub-hosted runner.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-14, macos-15-intel]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+
+      - name: Install GMP (macOS)
+        if: contains(matrix.os, 'macos')
+        run: |
+          brew install gmp || true
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21
+        # All cibuildwheel settings live in [tool.cibuildwheel] in pyproject.toml.
+        # The only per-runner override needed is the arch selector:
+        env:
+          CIBW_ARCHS_LINUX: native   # x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm
+          CIBW_ARCHS_MACOS: native   # arm64 on macos-14, x86_64 on macos-15-intel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  publish:
+    name: Publish to PyPI
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    # Only publish on version tags; not on workflow_dispatch test-runs.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment: pypi
+    permissions:
+      id-token: write   # required for OIDC trusted publishing
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

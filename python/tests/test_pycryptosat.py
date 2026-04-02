@@ -295,6 +295,206 @@ class TestSolve(unittest.TestCase):
         self.assertEqual(res, True)
 
 
+class TestNbVars(unittest.TestCase):
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_zero_initially(self):
+        self.assertEqual(self.solver.nb_vars(), 0)
+
+    def test_grows_with_clauses(self):
+        self.solver.add_clause([1, 2, 3])
+        self.assertEqual(self.solver.nb_vars(), 3)
+
+    def test_grows_to_max_var(self):
+        self.solver.add_clause([1, -5, 4])
+        self.assertEqual(self.solver.nb_vars(), 5)
+
+    def test_no_shrink_on_second_add(self):
+        self.solver.add_clause([1, 2, 3, 4, 5])
+        self.solver.add_clause([1, 2])
+        self.assertEqual(self.solver.nb_vars(), 5)
+
+    def test_solution_length_matches_nb_vars(self):
+        # solution tuple is (None, v1, v2, ..., vN), length = nb_vars + 1
+        self.solver.add_clause([1, -3, 5])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertEqual(len(solution), self.solver.nb_vars() + 1)
+        self.assertIsNone(solution[0])
+
+
+class TestIsSatisfiable(unittest.TestCase):
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_sat(self):
+        self.solver.add_clause([1, 2])
+        self.assertIs(self.solver.is_satisfiable(), True)
+
+    def test_unsat(self):
+        self.solver.add_clause([1])
+        self.solver.add_clause([-1])
+        self.assertIs(self.solver.is_satisfiable(), False)
+
+    def test_no_clauses_is_sat(self):
+        self.assertIs(self.solver.is_satisfiable(), True)
+
+
+class TestIncremental(unittest.TestCase):
+    """Adding clauses between solve() calls must work correctly."""
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_sat_then_unsat_after_new_clause(self):
+        self.solver.add_clause([1])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+
+        self.solver.add_clause([-1])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, False)
+
+    def test_multiple_solve_calls_same_result(self):
+        for cl in clauses1:
+            self.solver.add_clause(cl)
+        for _ in range(5):
+            res, solution = self.solver.solve()
+            self.assertEqual(res, True)
+            self.assertTrue(check_solution(clauses1, solution))
+
+    def test_assumptions_do_not_persist(self):
+        # Solve with an assumption that forces UNSAT, then without it → SAT.
+        self.solver.add_clause([1, 2])
+        self.solver.add_clause([-1])   # forces var1 = False
+
+        res, _ = self.solver.solve([-2])   # assume var2=False too → UNSAT
+        self.assertEqual(res, False)
+
+        res, solution = self.solver.solve()  # no assumption → SAT
+        self.assertEqual(res, True)
+        self.assertFalse(solution[1])        # var1 still False from clause
+        self.assertTrue(solution[2])         # var2 must be True
+
+    def test_add_xor_then_regular(self):
+        # XOR(1,2) = True means exactly one of {1,2} is True.
+        self.solver.add_xor_clause([1, 2], True)
+        self.solver.add_clause([1])    # force var1 = True
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(solution[1])
+        self.assertFalse(solution[2])  # XOR satisfied: 1 XOR 0 = 1
+
+    def test_clause_count_grows(self):
+        # nb_vars tracks the highest variable seen.
+        self.assertEqual(self.solver.nb_vars(), 0)
+        self.solver.add_clause([3])
+        self.assertEqual(self.solver.nb_vars(), 3)
+        self.solver.add_clause([7, -3])
+        self.assertEqual(self.solver.nb_vars(), 7)
+
+
+class TestSolveArgs(unittest.TestCase):
+    """Per-call solve() keyword arguments."""
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_solve_bad_verbose(self):
+        self.solver.add_clause([1])
+        self.assertRaises(ValueError, self.solver.solve, None, -1)
+
+    def test_solve_bad_time_limit(self):
+        self.solver.add_clause([1])
+        self.assertRaises(ValueError, self.solver.solve, [], 0, -1.0)
+
+    def test_solve_bad_confl_limit(self):
+        self.solver.add_clause([1])
+        self.assertRaises(ValueError, self.solver.solve, [], 0, 1.0, -1)
+
+    def test_solve_confl_limit_zero_hard_problem(self):
+        # confl_limit=0 on a non-trivial formula should return (None, None).
+        clauses = []
+        with open(_MODULE_DIR + "f400-r425-x000.cnf") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line[0] in ("c", "p"):
+                    continue
+                nums = [int(x) for x in line.split()]
+                assert nums[-1] == 0
+                clauses.append(nums[:-1])
+        self.solver.add_clauses(clauses)
+        res, sol = self.solver.solve(confl_limit=0)
+        self.assertIsNone(res)
+        self.assertIsNone(sol)
+
+    def test_per_call_limits_restored(self):
+        # After a solve() with confl_limit=0, the next call without a limit
+        # should still be able to find a solution (limits are not permanent).
+        for cl in clauses1:
+            self.solver.add_clause(cl)
+        self.solver.solve(confl_limit=0)   # may or may not find solution
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(check_solution(clauses1, solution))
+
+    def test_assumption_unknown_variable_raises(self):
+        self.solver.add_clause([1, 2])
+        self.assertRaises(ValueError, self.solver.solve, [10])
+
+
+class TestVersion(unittest.TestCase):
+
+    def test_version_string(self):
+        v = pycryptosat.__version__
+        self.assertIsInstance(v, str)
+        self.assertRegex(v, r'^\d+\.\d+\.\d+$')
+
+    def test_version_constant(self):
+        self.assertEqual(pycryptosat.__version__, pycryptosat.VERSION)
+
+
+class TestXorMixed(unittest.TestCase):
+    """XOR clauses combined with regular clauses."""
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_xor_unsat_via_regular_clauses(self):
+        # XOR(1,2)=False means 1==2.  Force 1=T and 2=F → contradiction.
+        self.solver.add_xor_clause([1, 2], False)
+        self.solver.add_clause([1])
+        self.solver.add_clause([-2])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, False)
+
+    def test_xor_system_unique_solution(self):
+        # XOR(1,2)=True AND XOR(2,3)=True AND XOR(1,3)=False
+        # → 1⊕2=1, 2⊕3=1, 1⊕3=0
+        # Adding 1=True via unit clause → 2=False, 3=True.
+        self.solver.add_xor_clause([1, 2], True)
+        self.solver.add_xor_clause([2, 3], True)
+        self.solver.add_xor_clause([1, 3], False)
+        self.solver.add_clause([1])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(solution[1])
+        self.assertFalse(solution[2])
+        self.assertTrue(solution[3])
+
+    def test_xor_rhs_false_means_equal(self):
+        # XOR(a,b)=False ↔ a==b. Force a=True → b must be True too.
+        self.solver.add_xor_clause([1, 2], False)
+        self.solver.add_clause([1])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(solution[1])
+        self.assertTrue(solution[2])
+
+
 class TestSolveTimeLimit(unittest.TestCase):
 
     def get_clauses(self):

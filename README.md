@@ -19,8 +19,7 @@ bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
 ## Compiling
 Use of the [release binaries](https://github.com/msoos/cryptominisat/releases) is
-_strongly_ encouraged, as Ganak requires a specific set of libraries to be
-installed. The second best thing to use is Nix. Simply [install
+_strongly_ encouraged. The second best thing to use is Nix. Simply [install
 nix](https://nixos.org/download/) and then:
 ```shell
 nix shell github:msoos/cryptominisat
@@ -28,12 +27,34 @@ nix shell github:msoos/cryptominisat
 
 Then you will have `cryptominisat` binary available and ready to use.
 
-If this is somehow not what you want, you can also build it. See the [GitHub
-Action](https://github.com/msoos/cryptominisat/actions/workflows/build.yml) for the
-specific set of steps.
-
 You can also run CryptoMiniSat from your web browser, without installing
 anything, [here](https://www.msoos.org/cryptominisat/).
+
+### Building from source
+
+Install system dependencies first:
+```shell
+# Debian/Ubuntu
+sudo apt-get install build-essential cmake git libgmp-dev
+
+# macOS (brew)
+brew install cmake gmp
+```
+
+Then build — cadical and cadiback are fetched and built automatically:
+```shell
+git clone https://github.com/msoos/cryptominisat
+cd cryptominisat
+mkdir build && cd build
+cmake ..
+make -j8
+```
+
+If you already have cadical and cadiback built somewhere, point cmake at them to skip the auto-fetch:
+```shell
+cmake .. -Dcadical_DIR=/path/to/cadical/build -Dcadiback_DIR=/path/to/cadiback
+make -j8
+```
 
 ## Command-line usage
 Let's take the file:
@@ -111,12 +132,29 @@ True
 >>> print solution
 (None, True, False, True)
 ```
-If you want to build the python module, you can do this:
+If you want to build the Python package from source, the build uses
+[scikit-build-core](https://github.com/scikit-build/scikit-build-core) which
+drives CMake — cadical and cadiback are fetched and compiled automatically,
+so no manual C++ dependency installation is needed beyond GMP.
+
 ```shell
-sudo apt-get install build-essential
-sudo apt-get install python3-setuptools python3-dev
+# Debian/Ubuntu
+sudo apt-get install build-essential cmake libgmp-dev python3-dev
+
+# macOS
+brew install cmake gmp
+
 git clone https://github.com/msoos/cryptominisat
-python -m build
+cd cryptominisat
+python3 -m venv venv
+source venv/bin/activate
+pip install scikit-build-core cmake ninja build
+pip install . --no-build-isolation
+```
+
+Or to produce a wheel file without installing:
+```shell
+python -m build --wheel --no-isolation   # wheel lands in dist/
 pip install dist/pycryptosat-*.whl
 ```
 
@@ -320,6 +358,8 @@ use, specify options prior to running make in a clean subdirectory: `cmake
 - `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for
   [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR)
   interface support
+- `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory (contains `libcadical.a`). Auto-fetched and built if not set.
+- `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains `libcadiback.a`). Auto-fetched and built if not set.
 
 ## C usage
 See src/cryptominisat_c.h.in for details. This is an experimental feature.

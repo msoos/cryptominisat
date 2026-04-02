@@ -10,22 +10,45 @@ Python process itself.
 pip install pycryptosat
 ```
 
-## Compiling
-If you don't want to use the pip package, you can compile it locally.
+## Building from source
 
-You must first build and install CryptoMiniSat using the instructions in the root README.
+The build uses [scikit-build-core](https://github.com/scikit-build/scikit-build-core),
+which drives CMake under the hood. CMake automatically fetches and builds the
+required `cadical` and `cadiback` dependencies, so **no manual dependency
+installation is needed beyond GMP**.
 
-Then you can compile the python package from the root directory (the one with setup.py) as:
+### Quick start (Linux)
 
-```
-apt-get install python-dev
-python -m build
+```sh
+sudo apt-get install libgmp-dev   # or: yum install gmp-devel
+python -m venv venv
+source venv/bin/activate
+pip install scikit-build-core cmake ninja build
+pip install . --no-build-isolation
 ```
 
-To help with debug, you can also:
+### Quick start (macOS)
+
+```sh
+brew install gmp
+python -m venv venv
+source venv/bin/activate
+pip install scikit-build-core cmake ninja build
+pip install . --no-build-isolation
 ```
-python setup.py bdist_wheel
+
+### Build a wheel without installing
+
+```sh
+python -m venv venv
+source venv/bin/activate
+pip install scikit-build-core cmake ninja build
+python -m build --wheel --no-isolation   # wheel lands in dist/
 ```
+
+The resulting wheel is fully self-contained on macOS (GMP is bundled by
+`delocate`). On Linux the wheel depends on `libgmp.so.10`, which is part of
+the `manylinux` ABI and is present on any standard distribution.
 
 ## Usage
 
@@ -107,6 +130,8 @@ absolute value corresponds to i\ :sup:`th` variable::
 This solution translates to: x\ :sub:`1` = x\ :sub:`4` = x\ :sub:`5` = True,
 x\ :sub:`2` = x\ :sub:`3` = False
 
-# Special options (e.g. LARGEMEM, etc)
+# Special CMake options
 
-In case you need to e.g. have LARGEMEM, you must modify `setup.py` and add `'-DLARGE_OFFSETS'` to `extra_compile_args`. Similarly for other options.
+Extra compile definitions (e.g. `LARGE_OFFSETS`) can be passed via
+`SKBUILD_CMAKE_ARGS` or added to `pyproject.toml`'s `[tool.scikit-build]
+cmake.args` list.

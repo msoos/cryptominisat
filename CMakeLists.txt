@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 # CMP0092 (disable /W3 on MSVC by default) was introduced in 3.15; guard needed
 if(POLICY CMP0092)
@@ -346,7 +346,12 @@ else()
   set(GIT_SHA1 "GIT-hash-notfound")
 endif()
 
-set(CMS_FULL_VERSION "5.13.0")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml" PYPROJECT_TOML)
+string(REGEX MATCH "version = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" _ "${PYPROJECT_TOML}")
+set(CMS_FULL_VERSION "${CMAKE_MATCH_1}")
+if(NOT CMS_FULL_VERSION)
+  message(FATAL_ERROR "Could not parse version from pyproject.toml")
+endif()
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -436,17 +441,103 @@ if(NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     endif()
 endif()
 
-set(cadical_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cadical/build" CACHE PATH "Directory where CaDiCaL is built/installed")
+set(cadical_DIR "" CACHE PATH "Directory where CaDiCaL is built (contains libcadical and include/). Auto-fetched if empty.")
+set(cadiback_DIR "" CACHE PATH "Directory where CaDiBaCk is built (contains libcadiback and include/). Auto-fetched if empty.")
+
+if(NOT cadical_DIR OR NOT cadiback_DIR)
+    include(FetchContent)
+endif()
+
+if(NOT cadical_DIR)
+    set(_cadical_src "${CMAKE_BINARY_DIR}/deps/cadical")
+    set(_cadical_lib "${_cadical_src}/build/libcadical.a")
+    FetchContent_Declare(cadical_src
+        GIT_REPOSITORY https://github.com/meelgroup/cadical
+        GIT_TAG        master
+        SOURCE_DIR     "${_cadical_src}"
+    )
+    FetchContent_GetProperties(cadical_src)
+    if(NOT cadical_src_POPULATED)
+        message(STATUS "CaDiCaL: fetching from meelgroup/cadical master")
+        FetchContent_Populate(cadical_src)
+    endif()
+    if(NOT EXISTS "${_cadical_lib}")
+        message(STATUS "CaDiCaL: building in ${_cadical_src}")
+        execute_process(
+            COMMAND bash -c "CXXFLAGS=-fPIC ./configure --no-contracts --no-tracing --fp"
+            WORKING_DIRECTORY "${_cadical_src}"
+            RESULT_VARIABLE _cadical_cfg_ret
+        )
+        if(NOT _cadical_cfg_ret EQUAL 0)
+            message(FATAL_ERROR "CaDiCaL configure failed (exit ${_cadical_cfg_ret})")
+        endif()
+        execute_process(
+            COMMAND make -j8
+            WORKING_DIRECTORY "${_cadical_src}"
+            RESULT_VARIABLE _cadical_make_ret
+        )
+        if(NOT _cadical_make_ret EQUAL 0)
+            message(FATAL_ERROR "CaDiCaL build failed (exit ${_cadical_make_ret})")
+        endif()
+    endif()
+    set(cadical_DIR "${_cadical_src}/build" CACHE PATH "Directory where CaDiCaL is built" FORCE)
+    set(cadical_SRC_DIR "${_cadical_src}/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)" FORCE)
+    message(STATUS "CaDiCaL: using auto-built ${cadical_DIR}")
+endif()
+
+if(NOT cadiback_DIR)
+    set(_cadiback_src "${CMAKE_BINARY_DIR}/deps/cadiback")
+    set(_cadiback_lib "${_cadiback_src}/libcadiback.a")
+    FetchContent_Declare(cadiback_src
+        GIT_REPOSITORY https://github.com/meelgroup/cadiback
+        GIT_TAG        main
+        SOURCE_DIR     "${_cadiback_src}"
+    )
+    FetchContent_GetProperties(cadiback_src)
+    if(NOT cadiback_src_POPULATED)
+        message(STATUS "CaDiBaCk: fetching from meelgroup/cadiback main")
+        FetchContent_Populate(cadiback_src)
+    endif()
+    if(NOT EXISTS "${_cadiback_lib}")
+        message(STATUS "CaDiBaCk: building in ${_cadiback_src}")
+        execute_process(
+            COMMAND bash -c "CXXFLAGS=-fPIC ./configure --release"
+            WORKING_DIRECTORY "${_cadiback_src}"
+            RESULT_VARIABLE _cadiback_cfg_ret
+        )
+        if(NOT _cadiback_cfg_ret EQUAL 0)
+            message(FATAL_ERROR "CaDiBaCk configure failed (exit ${_cadiback_cfg_ret})")
+        endif()
+        execute_process(
+            COMMAND make -j8
+            WORKING_DIRECTORY "${_cadiback_src}"
+            RESULT_VARIABLE _cadiback_make_ret
+        )
+        if(NOT _cadiback_make_ret EQUAL 0)
+            message(FATAL_ERROR "CaDiBaCk build failed (exit ${_cadiback_make_ret})")
+        endif()
+    endif()
+    set(cadiback_DIR "${_cadiback_src}" CACHE PATH "Directory where CaDiBaCk is built" FORCE)
+    message(STATUS "CaDiBaCk: using auto-built ${cadiback_DIR}")
+endif()
+
+# When cadical_DIR was provided manually, derive cadical_SRC_DIR from it (../src)
+if(NOT cadical_SRC_DIR)
+    get_filename_component(_cadical_parent "${cadical_DIR}" DIRECTORY)
+    set(cadical_SRC_DIR "${_cadical_parent}/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
+endif()
+
 find_library(cadical
     PATHS ${cadical_DIR}
+    PATH_SUFFIXES lib
     NAMES cadical
-    REQUIRED)
+    REQUIRED NO_DEFAULT_PATH)
 
-set(cadiback_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/" CACHE PATH "Directory where CaDiBaCk is built/installed")
 find_library(cadiback
     PATHS ${cadiback_DIR}
+    PATH_SUFFIXES lib
     NAMES cadiback
-    REQUIRED)
+    REQUIRED NO_DEFAULT_PATH)
 
 include(CheckFloatPrecision)
 check_float_precision()
@@ -553,6 +644,40 @@ if(ENABLE_TESTING)
     add_subdirectory(utils/gtest)
 endif()
 add_subdirectory(src cmsat5-src)
+
+# =============================================================================
+# Python extension module (pycryptosat)
+# Activated by scikit-build-core via -DBUILD_PYTHON_EXTENSION=ON.
+# Requires CMake >= 3.18 (python_add_library).
+# =============================================================================
+option(BUILD_PYTHON_EXTENSION "Build the pycryptosat Python extension module" OFF)
+if(BUILD_PYTHON_EXTENSION)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+
+    # pycryptosat.cpp uses only the raw Python C API; GitSHA1 symbols are
+    # already provided by the cryptominisat5 static library.
+    python_add_library(pycryptosat MODULE WITH_SOABI
+        python/src/pycryptosat.cpp
+    )
+
+    target_compile_definitions(pycryptosat PRIVATE
+        CMS_FULL_VERSION="${CMS_FULL_VERSION}"
+    )
+
+    target_include_directories(pycryptosat PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}
+        "${cadical_DIR}/include/"
+        "${cadiback_DIR}/include/"
+    )
+
+    target_link_libraries(pycryptosat PRIVATE cryptominisat5)
+    target_compile_features(pycryptosat PRIVATE cxx_std_17)
+
+    # Only install the extension into the wheel (not the static lib / headers / binary).
+    install(TARGETS pycryptosat DESTINATION . COMPONENT python)
+endif()
+
 if(ENABLE_TESTING)
     enable_testing()
 

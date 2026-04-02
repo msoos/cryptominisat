@@ -56,38 +56,6 @@ jobs:
         sudo make install
         cd ..
 
-    - name: Checkout Cadical
-      uses: actions/checkout@v4
-      with:
-        repository: meelgroup/cadical
-        ref: master
-        path: cadical
-    - name: Build Cadical
-      run: |
-       cd cadical
-       CXXFLAGS=-fPIC ./configure --competition
-       make -j8
-       cd ..
-
-    - name: Checkout Cadiback
-      uses: actions/checkout@v4
-      with:
-        repository: meelgroup/cadiback
-        ref: main
-        path: cadiback
-    - name: Build Cadiback
-      run: |
-       cd cadiback
-       CXX=c++ ./configure
-       make -j8
-       cd ..
-
-    - name: Copy cadiback and cadical libs
-      if: contains(matrix.os, 'ubuntu') && matrix.staticcompile == 'OFF'
-      run: |
-       sudo cp cadiback/libcadiback.so /usr/lib/
-       sudo cp cadical/build/libcadical.so /usr/lib/
-
     - name: checkout
       uses: actions/checkout@v4
       with:
@@ -112,12 +80,6 @@ jobs:
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
-
-    - name: Copy cadiback and cadical libs
-      if: contains(matrix.os, 'macos') && matrix.staticcompile == 'OFF'
-      run: |
-       sudo cp cadiback/libcadiback.so .
-       sudo cp cadical/build/libcadical.so .
 
     - name: run it to check it executes
       run: |

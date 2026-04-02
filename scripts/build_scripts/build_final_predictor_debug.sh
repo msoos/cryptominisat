@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 rm -rf cm* CM* lib* cryptomini* Testing* tests* pycryptosat include tests
 rm -f ../tests/cnf-files/*sqlite
-cmake -DCMAKE_BUILD_TYPE=Debug -DFINAL_PREDICTOR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DFINAL_PREDICTOR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
 make -j$(nproc)
