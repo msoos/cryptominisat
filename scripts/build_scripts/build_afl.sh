@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 rm -rf cm* CM* lib* cryptomini* Testing* tests* pycryptosat include tests
-CC=afl-gcc CXX=afl-g++ cmake -DLIMITMEM=ON -DENABLE_PYTHON_INTERFACE=OFF -DENABLE_TESTING=OFF -DNOZLIB=ON ..
+CC=afl-gcc CXX=afl-g++ cmake -DLIMITMEM=ON -DENABLE_PYTHON_INTERFACE=OFF -DENABLE_TESTING=OFF -DNOZLIB=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
 make -j$(nproc)
 mkdir -p afl/testcase_dir/
 mkdir -p afl/findings_dir/
