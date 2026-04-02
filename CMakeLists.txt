@@ -509,7 +509,7 @@ if(NOT cadiback_DIR)
             message(FATAL_ERROR "CaDiBaCk configure failed (exit ${_cadiback_cfg_ret})")
         endif()
         execute_process(
-            COMMAND make -j8
+            COMMAND make -j8 libcadiback.a
             WORKING_DIRECTORY "${_cadiback_src}"
             RESULT_VARIABLE _cadiback_make_ret
         )
