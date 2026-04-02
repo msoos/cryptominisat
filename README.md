@@ -56,6 +56,29 @@ cmake .. -Dcadical_DIR=/path/to/cadical/build -Dcadiback_DIR=/path/to/cadiback
 make -j8
 ```
 
+### Building on Windows (MSYS2/MINGW64)
+
+Install [MSYS2](https://www.msys2.org/), then from the MINGW64 shell install dependencies:
+```shell
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja \
+          mingw-w64-x86_64-make mingw-w64-x86_64-gmp mingw-w64-x86_64-zlib make
+```
+
+Then build:
+```shell
+git clone --recurse-submodules https://github.com/msoos/cryptominisat
+cd cryptominisat
+mkdir build && cd build
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . -v
+```
+
+For a fully static binary (no external DLL dependencies at runtime), add `-DSTATICCOMPILE=ON`:
+```shell
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
+cmake --build . -v
+```
+
 ## Command-line usage
 Let's take the file:
 ```plain
