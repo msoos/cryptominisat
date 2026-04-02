@@ -1,5 +1,7 @@
-include(FindPkgConfig)
-pkg_check_modules(PC_GMP "gmp")
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_GMP QUIET gmp)
+endif()
 
 set(GMP_DEFINITIONS ${PC_GMP_CFLAGS_OTHER})
 
