@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 # CMP0092 (disable /W3 on MSVC by default) was introduced in 3.15; guard needed
 if(POLICY CMP0092)
@@ -642,6 +642,41 @@ if(ENABLE_TESTING)
     add_subdirectory(utils/gtest)
 endif()
 add_subdirectory(src cmsat5-src)
+
+# =============================================================================
+# Python extension module (pycryptosat)
+# Activated by scikit-build-core via -DBUILD_PYTHON_EXTENSION=ON.
+# Requires CMake >= 3.18 (python_add_library).
+# =============================================================================
+option(BUILD_PYTHON_EXTENSION "Build the pycryptosat Python extension module" OFF)
+if(BUILD_PYTHON_EXTENSION)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+
+    # pycryptosat.cpp uses only the raw Python C API; GitSHA1 symbols are
+    # already provided by the cryptominisat5 static library.
+    python_add_library(pycryptosat MODULE WITH_SOABI
+        python/src/pycryptosat.cpp
+    )
+
+    target_compile_definitions(pycryptosat PRIVATE
+        CMS_FULL_VERSION="${CMS_FULL_VERSION}"
+    )
+
+    target_include_directories(pycryptosat PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}
+        "${cadical_DIR}/include/"
+        "${cadiback_DIR}/include/"
+    )
+
+    target_link_libraries(pycryptosat PRIVATE cryptominisat5)
+    target_compile_features(pycryptosat PRIVATE cxx_std_17)
+
+    # scikit-build-core installs whatever is in DESTINATION "." relative to
+    # the wheel root, which is what we want (pycryptosat.cpython-3xx-…so).
+    install(TARGETS pycryptosat DESTINATION .)
+endif()
+
 if(ENABLE_TESTING)
     enable_testing()
 

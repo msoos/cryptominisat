@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "tomli", "pathlib"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.9"]
+build-backend = "scikit-build-core.build"
 
 [project]
 name = "pycryptosat"
@@ -16,9 +16,43 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Topic :: Utilities"
     ]
-requires-python = ">=3.5"
+requires-python = ">=3.8"
 readme = "python/README.md"
+
+[tool.scikit-build]
+cmake.build-type = "Release"
+# BUILD_SHARED_LIBS=OFF → cryptominisat5 becomes a static lib linked into the extension
+# CMAKE_POSITION_INDEPENDENT_CODE=ON → required so the static lib can be linked into a .so
+cmake.args = [
+    "-DBUILD_PYTHON_EXTENSION=ON",
+    "-DENABLE_TESTING=OFF",
+    "-DBUILD_SHARED_LIBS=OFF",
+    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+    "-DIPASIR=OFF",
+]
+wheel.packages = []   # pure-Python packages to include (none; extension only)
+
+[tool.cibuildwheel]
+build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+skip = "pp* *-musllinux* *i686"
+build-frontend = "build"
+
+[tool.cibuildwheel.linux]
+# GMP is in the manylinux allowed-library list so auditwheel will leave it external.
+# Install the dev headers so the build can find gmp.h.
+before-all = "yum install -y gmp-devel || (apt-get update && apt-get install -y libgmp-dev)"
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+# GMP is not a macOS system library; brew installs it and delocate bundles it.
+before-all = "brew install gmp || true"
+repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
