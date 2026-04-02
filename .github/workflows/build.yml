@@ -81,8 +81,9 @@ jobs:
       with:
         key: ${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.staticcompile }}
 
-    - name: Configure & build
-      shell: ${{ contains(matrix.os, 'windows') && 'msys2 {0}' || 'bash' }}
+    - name: Configure & build (Windows)
+      if: contains(matrix.os, 'windows')
+      shell: msys2 {0}
       run: |
         cd project
         mkdir -p build && cd build
@@ -91,15 +92,42 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
         -DSTATICCOMPILE=${{ matrix.staticcompile }} \
-        ${{ !contains(matrix.os, 'windows') && '-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache' || '' }} \
-        ${{ contains(matrix.os, 'windows') && '-G Ninja' || '' }} \
+        -G Ninja \
         -S ..
         cmake --build . --config ${{matrix.build_type}} -v
 
-    - name: run it to check it executes
-      shell: ${{ contains(matrix.os, 'windows') && 'msys2 {0}' || 'bash' }}
+    - name: Configure & build (non-Windows)
+      if: "!contains(matrix.os, 'windows')"
+      shell: bash
       run: |
-        EXE=./project/build/cryptominisat5${{ contains(matrix.os, 'windows') && '.exe' || '' }}
+        cd project
+        mkdir -p build && cd build
+        cmake \
+        -DENABLE_TESTING=OFF \
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+        -DIPASIR=ON \
+        -DSTATICCOMPILE=${{ matrix.staticcompile }} \
+        -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+        -S ..
+        cmake --build . --config ${{matrix.build_type}} -v
+
+    - name: run it to check it executes (Windows)
+      if: contains(matrix.os, 'windows')
+      shell: msys2 {0}
+      run: |
+        EXE=./project/build/cryptominisat5.exe
+        echo "Running: $EXE --version"
+        $EXE --version
+        echo $?
+        echo "Running: $EXE --help"
+        $EXE --help
+        echo $?
+
+    - name: run it to check it executes (non-Windows)
+      if: "!contains(matrix.os, 'windows')"
+      shell: bash
+      run: |
+        EXE=./project/build/cryptominisat5
         echo "Running: $EXE --version"
         $EXE --version
         echo $?
