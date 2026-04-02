@@ -19,8 +19,7 @@ bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
 ## Compiling
 Use of the [release binaries](https://github.com/msoos/cryptominisat/releases) is
-_strongly_ encouraged, as Ganak requires a specific set of libraries to be
-installed. The second best thing to use is Nix. Simply [install
+_strongly_ encouraged. The second best thing to use is Nix. Simply [install
 nix](https://nixos.org/download/) and then:
 ```shell
 nix shell github:msoos/cryptominisat
@@ -28,12 +27,34 @@ nix shell github:msoos/cryptominisat
 
 Then you will have `cryptominisat` binary available and ready to use.
 
-If this is somehow not what you want, you can also build it. See the [GitHub
-Action](https://github.com/msoos/cryptominisat/actions/workflows/build.yml) for the
-specific set of steps.
-
 You can also run CryptoMiniSat from your web browser, without installing
 anything, [here](https://www.msoos.org/cryptominisat/).
+
+### Building from source
+
+Install system dependencies first:
+```shell
+# Debian/Ubuntu
+sudo apt-get install build-essential cmake git libgmp-dev
+
+# macOS (brew)
+brew install cmake gmp
+```
+
+Then build — cadical and cadiback are fetched and built automatically:
+```shell
+git clone https://github.com/msoos/cryptominisat
+cd cryptominisat
+mkdir build && cd build
+cmake ..
+make -j8
+```
+
+If you already have cadical and cadiback built somewhere, point cmake at them to skip the auto-fetch:
+```shell
+cmake .. -Dcadical_DIR=/path/to/cadical/build -Dcadiback_DIR=/path/to/cadiback
+make -j8
+```
 
 ## Command-line usage
 Let's take the file:
@@ -320,6 +341,8 @@ use, specify options prior to running make in a clean subdirectory: `cmake
 - `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for
   [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR)
   interface support
+- `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory (contains `libcadical.a`). Auto-fetched and built if not set.
+- `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains `libcadiback.a`). Auto-fetched and built if not set.
 
 ## C usage
 See src/cryptominisat_c.h.in for details. This is an experimental feature.

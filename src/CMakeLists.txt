@@ -391,7 +391,7 @@ target_include_directories(oracle PRIVATE
 )
 target_compile_features(oracle PRIVATE cxx_std_17)
 
-set(cadical_SRC_DIR "${PROJECT_SOURCE_DIR}/../cadical/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
+set(cadical_SRC_DIR "${cadical_SRC_DIR}" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
 add_executable(assump_fuzz_oracle
     oracle/assump_fuzz_oracle.cpp
     oracle/oracle.cpp

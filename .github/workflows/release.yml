@@ -44,32 +44,6 @@ jobs:
         sudo make install
         cd ..
 
-    - name: Checkout Cadical
-      uses: actions/checkout@v4
-      with:
-        repository: meelgroup/cadical
-        ref: master
-        path: cadical
-    - name: Build Cadical
-      run: |
-       cd cadical
-       CXXFLAGS=-fPIC ./configure --competition
-       make -j8
-       cd ..
-
-    - name: Checkout Cadiback
-      uses: actions/checkout@v4
-      with:
-        repository: meelgroup/cadiback
-        ref: main
-        path: cadiback
-    - name: Build Cadiback
-      run: |
-       cd cadiback
-       CXX=c++ ./configure
-       make -j8
-       cd ..
-
     - name: checkout
       uses: actions/checkout@v4
       with:
