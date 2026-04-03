@@ -448,6 +448,19 @@ if(NOT cadical_DIR OR NOT cadiback_DIR)
     include(FetchContent)
 endif()
 
+# CXXFLAGS to pass to external configure scripts (cadical, cadiback).
+# Must include macOS -arch and -isysroot so libraries match the CMake target
+# architecture (e.g. when cibuildwheel cross-compiles arm64 on an x86_64 host).
+set(_external_cxxflags "-fPIC")
+if(CMAKE_OSX_ARCHITECTURES)
+    foreach(_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+        string(APPEND _external_cxxflags " -arch ${_arch}")
+    endforeach()
+endif()
+if(CMAKE_OSX_SYSROOT AND NOT CMAKE_OSX_SYSROOT STREQUAL "")
+    string(APPEND _external_cxxflags " -isysroot ${CMAKE_OSX_SYSROOT}")
+endif()
+
 if(NOT cadical_DIR)
     set(_cadical_src "${CMAKE_BINARY_DIR}/deps/cadical")
     set(_cadical_lib "${_cadical_src}/build/libcadical.a")
@@ -465,7 +478,10 @@ if(NOT cadical_DIR)
     if(NOT EXISTS "${_cadical_lib}")
         message(STATUS "CaDiCaL: building in ${_cadical_src}")
         execute_process(
-            COMMAND bash -c "CXX=${CMAKE_CXX_COMPILER} CXXFLAGS=-fPIC ./configure --no-contracts --no-tracing --fp"
+            COMMAND ${CMAKE_COMMAND} -E env
+                "CXX=${CMAKE_CXX_COMPILER}"
+                "CXXFLAGS=${_external_cxxflags}"
+                sh "${_cadical_src}/configure" --no-contracts --no-tracing --fp
             WORKING_DIRECTORY "${_cadical_src}"
             RESULT_VARIABLE _cadical_cfg_ret
         )

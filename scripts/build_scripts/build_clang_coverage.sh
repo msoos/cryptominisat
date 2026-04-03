@@ -2,7 +2,19 @@
 
 set -euo pipefail
 
-rm -rf cm* CM* lib* cryptomini* Testing* tests* pycryptosat include tests cusp* scalmc*
+rm -rf cm*
+rm -rf CM*
+rm -rf lib*
+rm -rf cryptomini*
+rm -rf Testing*
+rm -rf tests*
+rm -rf pycryptosat
+rm -rf include
+rm -rf tests
+rm -rf cusp*
+rm -rf scalmc*
+rm -rf deps
+rm -rf _deps
 CXX=clang++ cmake -DENABLE_TESTING=ON -DSTATICCOMPILE=ON -DCOVERAGE=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
 make -j$(nproc) VERBOSE=1
 make test
