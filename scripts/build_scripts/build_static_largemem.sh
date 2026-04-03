@@ -13,6 +13,6 @@ rm -rf include
 rm -rf tests
 rm -rf deps
 rm -rf _deps
-cmake -DLARGEMEM=ON -DENABLE_TESTING=OFF -DSTATICCOMPILE=ON -DNOBREAKID=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
+cmake -DLARGEMEM=ON -DENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DNOBREAKID=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
 make -j$(nproc)
 strip cryptominisat5

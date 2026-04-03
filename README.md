@@ -73,9 +73,9 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . -v
 ```
 
-For a fully static binary (no external DLL dependencies at runtime), add `-DSTATICCOMPILE=ON`:
+For a fully static binary (no external DLL dependencies at runtime), add `-DBUILD_SHARED_LIBS=OFF`:
 ```shell
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . -v
 ```
 
@@ -372,7 +372,7 @@ The following arguments to cmake configure the generated build artifacts. To
 use, specify options prior to running make in a clean subdirectory: `cmake
 <options> ..`
 
-- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary.
+- `-DBUILD_SHARED_LIBS=<ON/OFF>` -- build shared (ON, default) or static (OFF) library and binary.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower). Needs [louvain
   communities](https://github.com/meelgroup/louvain-community) installed.
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support

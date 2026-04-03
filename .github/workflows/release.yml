@@ -74,7 +74,7 @@ jobs:
         -DENABLE_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
-        -DSTATICCOMPILE=ON \
+        -DBUILD_SHARED_LIBS=OFF \
         -G Ninja \
         -S ..
         cmake --build . --config ${{ matrix.build_type }} -v
@@ -88,7 +88,7 @@ jobs:
         -DENABLE_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
-        -DSTATICCOMPILE=ON \
+        -DBUILD_SHARED_LIBS=OFF \
         -S ..
         cmake --build . --config ${{ matrix.build_type }} -v
 

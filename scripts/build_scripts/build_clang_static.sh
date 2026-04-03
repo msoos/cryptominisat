@@ -13,6 +13,6 @@ rm -rf include
 rm -rf tests
 rm -rf deps
 rm -rf _deps
-CXX=clang++ cmake -DENABLE_TESTING=ON -DSTATICCOMPILE=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
+CXX=clang++ cmake -DENABLE_TESTING=ON -DBUILD_SHARED_LIBS=OFF -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
 make -j$(nproc)
 make test

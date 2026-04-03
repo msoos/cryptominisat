@@ -20,7 +20,7 @@ cmake -DENABLE_TESTING:BOOL=ON \
                    -DUSE_GAUSS=ON \
                    -DSTATS:BOOL=ON \
                    -DSLOW_DEBUG:BOOL=ON \
-                   -DSTATICCOMPILE:BOOL=ON \
+                   -DBUILD_SHARED_LIBS:BOOL=OFF \
                    -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
 make -j$(nproc)
 make test
