@@ -46,6 +46,8 @@ install.components = ["python"]  # only install the pycryptosat.so, not the full
 build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "pp* *-musllinux* *i686"
 build-frontend = "build"
+test-requires = "pytest"
+test-command = "pytest {project}/python/tests"
 
 [tool.cibuildwheel.linux]
 # manylinux_2_28 = AlmaLinux 8; has working dnf repos (manylinux2014/CentOS 7 is EOL).
