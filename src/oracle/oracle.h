@@ -35,6 +35,7 @@
 #define oclv2(x) do {} while(0)
 #endif
 
+#include <array>
 using std::array;
 
 namespace sspp {
