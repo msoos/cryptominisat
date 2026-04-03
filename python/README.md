@@ -52,8 +52,9 @@ the `manylinux` ABI and is present on any standard distribution.
 
 ## Usage
 
-The `pycryptosat` module has one object, `Solver` that has two functions
-`solve` and `add_clause`.
+The `pycryptosat` module has one object, `Solver`, with the following methods:
+`solve`, `add_clause`, `add_clauses`, `add_xor_clause`, `nb_vars`,
+`is_satisfiable`, and `get_conflict`.
 
 The funcion `add_clause()` takes an iterable list of literals such as
 `[1, 2]` which represents the truth `1 or 2 = True`. For example,
@@ -67,9 +68,9 @@ with `add_clause()`:
 >>> s = Solver()
 >>> s.add_clause([1, 2])
 >>> sat, solution = s.solve()
->>> print sat
+>>> print(sat)
 True
->>> print solution
+>>> print(solution)
 (None, True, True)
 ```
 
@@ -88,9 +89,10 @@ If instead of an assumption `add_clause()` would have been used, subsequent
 `solve()` calls would have returned unsatisfiable.
 
 `Solver` takes the following keyword arguments:
-  * `time_limit`: the time limit (integer)
-  * `confl_limit`: the propagation limit (integer)
-  * `verbose`: the verbosity level (integer)
+  * `verbose`: the verbosity level (integer, default 0)
+  * `time_limit`: the time limit in seconds (float)
+  * `confl_limit`: the conflict limit (integer)
+  * `threads`: the number of threads to use (integer, default 1)
 
 Both `time_limit` and `confl_limit` set a budget to the solver. The former is based on time elapsed while the former is based on number of conflicts met during search. If the solver runs out of budget, it returns with `(None, None)`. If both limits are used, the solver will terminate whenever one of the limits are hit (whichever first). Warning: Results from `time_limit` may differ from run to run, depending on compute load, etc. Use `confl_limit` for more reproducible runs.
 
