@@ -56,7 +56,7 @@ test-command = "cd /tmp && pytest {project}/python/tests"
 # yum is an alias for dnf on AlmaLinux 8 so the before-all command works unchanged.
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
-before-all = "yum install -y ccache gmp-devel || (apt-get update && apt-get install -y ccache libgmp-dev)"
+before-all = "yum install -y epel-release && yum install -y ccache gmp-devel"
 # CCACHE_DIR must be under /project so the host-side actions/cache step can reach it.
 environment = { CCACHE_DIR = "/project/.ccache" }
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
