@@ -5,11 +5,21 @@ endif()
 
 set(GMP_DEFINITIONS ${PC_GMP_CFLAGS_OTHER})
 
+if(APPLE)
+    execute_process(
+        COMMAND brew --prefix gmp
+        OUTPUT_VARIABLE HOMEBREW_GMP_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+endif()
+
 find_path(
     GMP_INCLUDE_DIR
     NAMES gmpxx.h
-    HINTS ${PC_GMP_INCLUDEDIR}
+    HINTS ${PC_GMP_INCLUDEDIR} ${HOMEBREW_GMP_PREFIX}/include
     PATHS ${CMAKE_INSTALL_PREFIX}/include
+          /opt/homebrew/include
           /usr/local/include
           /usr/include
 )
@@ -28,9 +38,10 @@ endif()
 find_library(
     GMPXX_LIBRARY
     NAMES gmpxx
-    HINTS ${PC_GMP_LIBDIR}
+    HINTS ${PC_GMP_LIBDIR} ${HOMEBREW_GMP_PREFIX}/lib
     PATHS ${CMAKE_INSTALL_PREFIX}/lib
           ${CMAKE_INSTALL_PREFIX}/lib64
+          /opt/homebrew/lib
           /usr/local/lib
           /usr/local/lib64
           /usr/lib
@@ -40,9 +51,10 @@ find_library(
 find_library(
     GMP_LIBRARY
     NAMES gmp
-    HINTS ${PC_GMP_LIBDIR}
+    HINTS ${PC_GMP_LIBDIR} ${HOMEBREW_GMP_PREFIX}/lib
     PATHS ${CMAKE_INSTALL_PREFIX}/lib
           ${CMAKE_INSTALL_PREFIX}/lib64
+          /opt/homebrew/lib
           /usr/local/lib
           /usr/local/lib64
           /usr/lib
