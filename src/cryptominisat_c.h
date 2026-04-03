@@ -34,7 +34,7 @@ typedef struct slice_lbool { const c_lbool* vals; size_t num_vals; } slice_lbool
 #ifdef __cplusplus
     #define NOEXCEPT noexcept
 
-    namespace CMSat{ struct SATSolver; }
+    namespace CMSat{ class SATSolver; }
     using CMSat::SATSolver;
 
     extern "C" {
