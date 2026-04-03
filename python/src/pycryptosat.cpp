@@ -36,9 +36,20 @@ using namespace CMSat;
 #define MODULE_DOC "CryptoMiniSAT satisfiability solver."
 
 #define IS_INT(x)  PyLong_Check(x)
+
+/* On Linux/macOS with -fvisibility=hidden, PyMODINIT_FUNC in older Python
+ * headers (e.g. 3.8) does not carry __attribute__((visibility("default"))),
+ * so the init symbol would be invisible to dlsym.  Declare it exported
+ * explicitly, mirroring what __declspec(dllexport) does on Windows. */
+#if defined(__GNUC__) || defined(__clang__)
+#  define CMS_PY_EXPORT __attribute__((visibility("default")))
+#else
+#  define CMS_PY_EXPORT
+#endif
+
 #define MODULE_INIT_FUNC(name) \
-PyMODINIT_FUNC PyInit_ ## name(void); \
-PyMODINIT_FUNC PyInit_ ## name(void)
+CMS_PY_EXPORT PyMODINIT_FUNC PyInit_ ## name(void); \
+CMS_PY_EXPORT PyMODINIT_FUNC PyInit_ ## name(void)
 
 typedef struct {
     PyObject_HEAD
