@@ -18,7 +18,9 @@ set(GMP_PC_ADD_CFLAGS "-I${GMP_INCLUDE_DIR}")
 
 set(_gmp_old_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
 if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    # Prefer static GMP, but fall back to shared — gmp-devel on RHEL/AlmaLinux
+    # only ships libgmp.so (no libgmp.a).
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
 else()
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".dylib" ".a")
 endif()
