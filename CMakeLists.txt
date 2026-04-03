@@ -465,7 +465,7 @@ if(NOT cadical_DIR)
     if(NOT EXISTS "${_cadical_lib}")
         message(STATUS "CaDiCaL: building in ${_cadical_src}")
         execute_process(
-            COMMAND bash -c "CXXFLAGS=-fPIC ./configure --no-contracts --no-tracing --fp"
+            COMMAND bash -c "CXX=${CMAKE_CXX_COMPILER} CXXFLAGS=-fPIC ./configure --no-contracts --no-tracing --fp"
             WORKING_DIRECTORY "${_cadical_src}"
             RESULT_VARIABLE _cadical_cfg_ret
         )
@@ -503,7 +503,7 @@ if(NOT cadiback_DIR)
     if(NOT EXISTS "${_cadiback_lib}")
         message(STATUS "CaDiBaCk: building in ${_cadiback_src}")
         execute_process(
-            COMMAND bash -c "CXXFLAGS=-fPIC ./configure --release"
+            COMMAND bash -c "CXX=${CMAKE_CXX_COMPILER} CXXFLAGS=-fPIC ./configure --release"
             WORKING_DIRECTORY "${_cadiback_src}"
             RESULT_VARIABLE _cadiback_cfg_ret
         )
