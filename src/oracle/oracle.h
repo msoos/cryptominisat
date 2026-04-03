@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <array>
 #include <iostream>
 #include "utils.h"
 /* #define DEBUG_ORACLE_VERB */
