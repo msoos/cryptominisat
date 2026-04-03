@@ -52,12 +52,7 @@ build-frontend = "build"
 # yum is an alias for dnf on AlmaLinux 8 so the before-all command works unchanged.
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
-before-all = """
-    yum install -y gmp-devel || (apt-get update && apt-get install -y libgmp-dev)
-    echo '=== GMP file search ==='
-    find /usr /opt/homebrew -name 'libgmp.so*' -o -name 'libgmpxx.so*' -o -name 'gmp.h' 2>/dev/null | sort
-    echo '=== end GMP search ==='
-"""
+before-all = "yum install -y gmp-devel || (apt-get update && apt-get install -y libgmp-dev)"
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
