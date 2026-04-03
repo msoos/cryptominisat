@@ -36,22 +36,9 @@ using namespace CMSat;
 #define MODULE_DOC "CryptoMiniSAT satisfiability solver."
 
 #define IS_INT(x)  PyLong_Check(x)
-
-/* On Linux/macOS with -fvisibility=hidden, PyMODINIT_FUNC in older Python
- * headers (e.g. 3.8) does not carry __attribute__((visibility("default"))),
- * so the init symbol would be invisible to dlsym.  Place the export attribute
- * *after* PyMODINIT_FUNC (between return type and function name) — the
- * canonical GCC/Clang position for function attributes, matching what
- * __declspec(dllexport) does on Windows. */
-#if defined(__GNUC__) || defined(__clang__)
-#  define CMS_PY_EXPORT __attribute__((visibility("default")))
-#else
-#  define CMS_PY_EXPORT
-#endif
-
 #define MODULE_INIT_FUNC(name) \
-PyMODINIT_FUNC CMS_PY_EXPORT PyInit_ ## name(void); \
-PyMODINIT_FUNC CMS_PY_EXPORT PyInit_ ## name(void)
+PyMODINIT_FUNC PyInit_ ## name(void); \
+PyMODINIT_FUNC PyInit_ ## name(void)
 
 typedef struct {
     PyObject_HEAD
@@ -802,6 +789,15 @@ static PyTypeObject pycryptosat_SolverType = {
     (initproc)Solver_init,      /* tp_init */
 };
 
+/* Force PyInit_pycryptosat to be exported even when built with
+ * -fvisibility=hidden.  Older Python headers (e.g. 3.8) do not include
+ * __attribute__((visibility("default"))) in PyMODINIT_FUNC, so without this
+ * the symbol is hidden and dlsym() cannot find it.  The pragma is the only
+ * unambiguous way to override the default visibility for both the forward
+ * declaration and the definition that follow. */
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC visibility push(default)
+#endif
 MODULE_INIT_FUNC(pycryptosat)
 {
     PyObject* m;
@@ -857,3 +853,6 @@ MODULE_INIT_FUNC(pycryptosat)
 
     return m;
 }
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC visibility pop
+#endif
