@@ -272,12 +272,12 @@ endif()
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(cryptominisat5
     PRIVATE
-        Threads::Threads
         ${cryptoms_lib_link_libs}
         ${LOUVAIN_COMMUNITIES_LIBRARIES}
         ${cadiback}
         ${cadical}
     PUBLIC
+        Threads::Threads
         ${GMP_LIBRARIES}
 )
 
