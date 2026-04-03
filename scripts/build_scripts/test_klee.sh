@@ -5,7 +5,7 @@ set -euo pipefail
 rm -rf cm* CM* lib* cryptomini* Testing* tests* pycryptosat include
 rm -rf tests
 
-CXX=/home/soos/development/smt/klee/scripts/klee-clang cmake -DNOZLIB=ON  -DENABLE_PYTHON_INTERFACE=OFF -DUSE_PTHREADS=OFF -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
+CXX=/home/soos/development/smt/klee/scripts/klee-clang cmake -DNOZLIB=ON  -DUSE_PTHREADS=OFF -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
 make -j$(nproc) VERBOSE=1
 
 lvm-link-3.4 cryptominisat5_simple /home/soos/development/smt/libcxx/build/lib/libc++.so.1.0 -o out
