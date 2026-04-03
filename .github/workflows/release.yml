@@ -119,7 +119,6 @@ jobs:
       if: "!contains(matrix.os, 'windows')"
       run: |
         TAG="${{ github.ref_name }}"
-        TAG="${TAG//\//-}"
         TAG="${TAG#release/}"
         if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
           ARCH="linux-amd64"
