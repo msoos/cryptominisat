@@ -39,8 +39,10 @@ using namespace CMSat;
 
 /* On Linux/macOS with -fvisibility=hidden, PyMODINIT_FUNC in older Python
  * headers (e.g. 3.8) does not carry __attribute__((visibility("default"))),
- * so the init symbol would be invisible to dlsym.  Declare it exported
- * explicitly, mirroring what __declspec(dllexport) does on Windows. */
+ * so the init symbol would be invisible to dlsym.  Place the export attribute
+ * *after* PyMODINIT_FUNC (between return type and function name) — the
+ * canonical GCC/Clang position for function attributes, matching what
+ * __declspec(dllexport) does on Windows. */
 #if defined(__GNUC__) || defined(__clang__)
 #  define CMS_PY_EXPORT __attribute__((visibility("default")))
 #else
@@ -48,8 +50,8 @@ using namespace CMSat;
 #endif
 
 #define MODULE_INIT_FUNC(name) \
-CMS_PY_EXPORT PyMODINIT_FUNC PyInit_ ## name(void); \
-CMS_PY_EXPORT PyMODINIT_FUNC PyInit_ ## name(void)
+PyMODINIT_FUNC CMS_PY_EXPORT PyInit_ ## name(void); \
+PyMODINIT_FUNC CMS_PY_EXPORT PyInit_ ## name(void)
 
 typedef struct {
     PyObject_HEAD
