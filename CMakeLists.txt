@@ -519,7 +519,10 @@ if(NOT cadiback_DIR)
     if(NOT EXISTS "${_cadiback_lib}")
         message(STATUS "CaDiBaCk: building in ${_cadiback_src}")
         execute_process(
-            COMMAND bash -c "CXX=${CMAKE_CXX_COMPILER} CXXFLAGS=-fPIC ./configure --release"
+            COMMAND ${CMAKE_COMMAND} -E env
+                "CXX=${CMAKE_CXX_COMPILER}"
+                "CXXFLAGS=${_external_cxxflags}"
+                sh "${_cadiback_src}/configure" --release
             WORKING_DIRECTORY "${_cadiback_src}"
             RESULT_VARIABLE _cadiback_cfg_ret
         )
