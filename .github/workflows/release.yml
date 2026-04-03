@@ -110,6 +110,7 @@ jobs:
       shell: bash
       run: |
         TAG=${{ github.ref_name }}
+        TAG="${TAG#release/}"
         ARCHIVE="cryptominisat5-${TAG}-windows-x86_64.zip"
         7z a "${ARCHIVE}" ./project/build/cryptominisat5.exe
         echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
@@ -118,6 +119,7 @@ jobs:
       if: "!contains(matrix.os, 'windows')"
       run: |
         TAG="${{ github.ref_name }}"
+        TAG="${TAG//\//-}"
         TAG="${TAG#release/}"
         if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
           ARCH="linux-amd64"
