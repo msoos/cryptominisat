@@ -15,7 +15,7 @@ jobs:
     name: Wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         # Each runner builds for its native architecture.
         # Linux aarch64 uses a native ARM GitHub-hosted runner.
