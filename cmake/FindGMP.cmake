@@ -16,14 +16,11 @@ find_path(
 set(GMP_INCLUDE_DIRS ${GMP_INCLUDE_DIR})
 set(GMP_PC_ADD_CFLAGS "-I${GMP_INCLUDE_DIR}")
 
-# scikit-build-core sets CMAKE_FIND_LIBRARY_SUFFIXES to ".a" for manylinux
-# wheel builds to encourage static linking, but gmp-devel on RHEL/AlmaLinux
-# only ships libgmp.so (no libgmp.a). Add .so as fallback — but only when not
-# doing a fully static executable build (STATICCOMPILE=ON), since the static
-# linker rejects .so files.
 set(_gmp_old_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
-if(NOT STATICCOMPILE)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+if(STATICCOMPILE)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+else()
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".dylib" ".a")
 endif()
 
 find_library(
