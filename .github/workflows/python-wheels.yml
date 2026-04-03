@@ -31,6 +31,18 @@ jobs:
         run: |
           brew install gmp || true
 
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          # Linux builds happen inside Docker; ccache dir is set to /project/.ccache
+          # (= .ccache relative to the checkout) so the host can cache it.
+          # macOS builds are native; ccache uses ~/.ccache by default.
+          path: |
+            .ccache
+            ~/.ccache
+          key: ccache-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.os }}-
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21
         # All cibuildwheel settings live in [tool.cibuildwheel] in pyproject.toml.
