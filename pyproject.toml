@@ -16,7 +16,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -25,7 +24,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Utilities"
     ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 readme = "python/README.md"
 
 [tool.scikit-build]
@@ -45,7 +44,7 @@ wheel.packages = []          # pure-Python packages to include (none; extension 
 install.components = ["python"]  # only install the pycryptosat.so, not the full CMS install
 
 [tool.cibuildwheel]
-build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "pp* *-musllinux* *i686"
 build-frontend = "build"
 test-requires = "pytest"

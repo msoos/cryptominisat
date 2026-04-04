@@ -43,7 +43,7 @@ jobs:
           restore-keys: ccache-${{ matrix.os }}-
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21
+        uses: pypa/cibuildwheel@v3.1.0
         # All cibuildwheel settings live in [tool.cibuildwheel] in pyproject.toml.
         # The only per-runner override needed is the arch selector:
         env:
