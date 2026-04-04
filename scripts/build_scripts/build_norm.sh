@@ -15,6 +15,6 @@ rm -rf Make*
 rm -rf .cmake
 rm -rf deps
 rm -rf _deps
-cmake -DNOBREAKID=ON -DENABLE_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
+cmake -DNOBREAKID=ON -DENABLE_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback/build ..
 make -j$(nproc)
 ctest --rerun-failed --output-on-failure
