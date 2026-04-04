@@ -223,7 +223,6 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${BREAKID_INCLUDE_DIRS}
 )
 set(CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES
-    ${GMP_INCLUDE_DIR}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 target_include_directories(cryptominisat5
@@ -278,7 +277,7 @@ target_link_libraries(cryptominisat5
         ${cadical}
     PUBLIC
         Threads::Threads
-        ${GMP_LIBRARIES}
+        PkgConfig::GMP
 )
 
 if(NOT WIN32)
@@ -312,7 +311,7 @@ if(IPASIR)
             ${cadiback}
             ${cadical}
         PUBLIC
-            ${GMP_LIBRARIES}
+            PkgConfig::GMP
     )
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5
