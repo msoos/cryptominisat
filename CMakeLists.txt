@@ -412,6 +412,10 @@ endif()
 # Look for ZLIB (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
 option(NOZLIB "Don't use zlib" OFF)
+# When building statically, prefer .a over .so for all find_library/find_package calls
+if(NOT BUILD_SHARED_LIBS)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+endif()
 
 # cannot currently compile static zlib under Windows
 if(NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
@@ -531,6 +535,11 @@ if(NOT cadical_SRC_DIR)
     set(cadical_SRC_DIR "${_cadical_parent}/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
 endif()
 
+# cadical/cadiback Makefiles produce both libcadical.so and libcadical.a.
+# Force .a to avoid picking up the shared library (macOS default suffix order
+# prefers .dylib/.so over .a).
+set(_saved_lib_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 find_library(cadical
     PATHS ${cadical_DIR}
     PATH_SUFFIXES lib
@@ -542,6 +551,7 @@ find_library(cadiback
     PATH_SUFFIXES lib
     NAMES cadiback
     REQUIRED NO_DEFAULT_PATH)
+set(CMAKE_FIND_LIBRARY_SUFFIXES ${_saved_lib_suffixes})
 
 include(CheckFloatPrecision)
 check_float_precision()
