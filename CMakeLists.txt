@@ -436,10 +436,6 @@ if(NOT TARGET cadical)
     if(cadical_DIR)
         find_package(cadical CONFIG REQUIRED HINTS "${cadical_DIR}")
         message(STATUS "CaDiCaL: using pre-built at ${cadical_DIR}")
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../cadical/CMakeLists.txt")
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../cadical"
-                         "${CMAKE_CURRENT_BINARY_DIR}/cadical-build")
-        message(STATUS "CaDiCaL: using sibling repo")
     else()
         FetchContent_Declare(cadical
             GIT_REPOSITORY https://github.com/meelgroup/cadical
@@ -453,10 +449,6 @@ if(NOT TARGET cadiback)
     if(cadiback_DIR)
         find_package(cadiback CONFIG REQUIRED HINTS "${cadiback_DIR}")
         message(STATUS "CaDiBaCk: using pre-built at ${cadiback_DIR}")
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/CMakeLists.txt")
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../cadiback"
-                         "${CMAKE_CURRENT_BINARY_DIR}/cadiback-build")
-        message(STATUS "CaDiBaCk: using sibling repo")
     else()
         FetchContent_Declare(cadiback
             GIT_REPOSITORY https://github.com/meelgroup/cadiback
@@ -573,7 +565,7 @@ configure_file(
     IMMEDIATE @ONLY
 )
 
-add_custom_target(uninstall
+add_custom_target(uninstall_cryptominisat5
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
 )
 

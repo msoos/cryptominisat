@@ -345,10 +345,10 @@ get_target_property(cryptominisat5_public_headers cryptominisat5 PUBLIC_HEADER)
 # this.
 # -----------------------------------------------------------------------------
 set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat5")
-add_custom_target(CopyPublicHeaders ALL)
+add_custom_target(CopyPublicHeaders_cryptominisat5 ALL)
 foreach(public_header ${cryptominisat5_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
-    add_custom_command(TARGET CopyPublicHeaders PRE_BUILD
+    add_custom_command(TARGET CopyPublicHeaders_cryptominisat5 PRE_BUILD
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                                "${HEADER_DEST}"
                        COMMAND ${CMAKE_COMMAND} -E echo
