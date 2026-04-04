@@ -2318,13 +2318,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             *solver->frat << __PRETTY_FUNCTION__ << " Executing OCC strategy token:" << token.c_str() << "\n";
         }
 
-        if (!token.empty()) {
-            verb_print(2, "[simp-stats] BEFORE " << token
-                << " irred_bins " << solver->binTri.irredBins
-                << " irred_long_cls " << solver->longIrredCls.size()
-                << " irred_long_lits " << solver->litStats.irredLits
-                << " free_vars " << solver->get_num_free_vars());
-        }
+        if (!token.empty())
+            print_simp_stats("BEFORE", token);
 
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
@@ -2378,13 +2373,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
              cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
             exit(-1);
         }
-        if (!token.empty()) {
-            verb_print(2, "[simp-stats] AFTER " << token
-                << " irred_bins " << solver->binTri.irredBins
-                << " irred_long_cls " << solver->longIrredCls.size()
-                << " irred_long_lits " << solver->litStats.irredLits
-                << " free_vars " << solver->get_num_free_vars());
-        }
+        if (!token.empty())
+            print_simp_stats("AFTER", token);
 
         CHECK_N_OCCUR_DO(check_n_occur());
         SLOW_DEBUG_DO(check_cls_sanity());
