@@ -1739,6 +1739,9 @@ lbool Solver::execute_inprocess_strategy(
         if (token.substr(0,3) != "occ" && !token.empty())
             verb_print(1, "--> Executing strategy token: " << token);
 
+        if (token.substr(0,3) != "occ" && !token.empty())
+            print_simp_stats("BEFORE", token);
+
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found(
@@ -1892,6 +1895,9 @@ lbool Solver::execute_inprocess_strategy(
             cout << "ERROR: strategy '" << token << "' not recognised!" << endl;
             exit(-1);
         }
+
+        if (token.substr(0,3) != "occ" && !token.empty())
+            print_simp_stats("AFTER", token);
 
         SLOW_DEBUG_DO(check_stats());
         if (!okay()) return l_False;
