@@ -1,20 +1,28 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
-rm -rf cm*
-rm -rf CM*
+rm -rf .cmake
 rm -rf lib*
-rm -rf cryptomini*
-rm -rf Testing*
+rm -rf Test*
 rm -rf tests*
-rm -rf pycryptosat
 rm -rf include
 rm -rf tests
-rm -rf utils
-rm -rf Make*
-rm -rf .cmake
+rm -rf approxmc*
+rm -rf apx-src
+rm -rf CM*
+rm -rf cmake*
 rm -rf deps
 rm -rf _deps
-cmake -DNOBREAKID=ON -DENABLE_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback/build ..
+SOLVERS_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+echo "solvers dir: $SOLVERS_DIR"
+cmake -DENABLE_TESTING=ON \
+    -Dcadical_DIR="${SOLVERS_DIR}/cadical/build" \
+    -Dcadiback_DIR="${SOLVERS_DIR}/cadiback/build" \
+    -Dcryptominisat5_DIR="${SOLVERS_DIR}/cryptominisat/build" \
+    -Dsbva_DIR="${SOLVERS_DIR}/sbva/build" \
+    -Dtreedecomp_DIR="${SOLVERS_DIR}/treedecomp/build" \
+    -Darjun_DIR="${SOLVERS_DIR}/arjun/build" \
+    ..
 make -j$(nproc)
-ctest --rerun-failed --output-on-failure
+make test

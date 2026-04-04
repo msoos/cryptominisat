@@ -113,7 +113,7 @@ p cnf 3 4
 Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
 ## Incremental Python Usage
-The python module works with both Python 3. Just execute:
+The python module works with Python 3. Just execute:
 ```shell
 pip3 install pycryptosat
 ```
@@ -126,34 +126,20 @@ You can then use it in incremental mode as:
 >>> s.add_clause([-2])
 >>> s.add_clause([-1, 2, 3])
 >>> sat, solution = s.solve()
->>> print sat
+>>> print(sat)
 True
->>> print solution
+>>> print(solution)
 (None, True, False, True)
->>> sat, solution = s.solve([-3])
->> print sat
+>>> sat, solution = s.solve([-3])  # assume var 3 = False → UNSAT
+>>> print(sat)
 False
->>> sat, solution = s.solve()
->>> print sat
+>>> sat, solution = s.solve()      # without assumption → still SAT
+>>> print(sat)
 True
->>> s.add_clause([-3])
+>>> s.add_clause([-3])             # permanently add -3
 >>> sat, solution = s.solve()
->>> print sat
+>>> print(sat)
 False
-```
-
-We can also try to assume any variable values for a single solver run:
-```python
->>> sat, solution = s.solve([-3])
->>> print sat
-False
->>> print solution
-None
->>> sat, solution = s.solve()
->>> print sat
-True
->>> print solution
-(None, True, False, True)
 ```
 If you want to build the Python package from source, the build uses
 [scikit-build-core](https://github.com/scikit-build/scikit-build-core) which
@@ -253,13 +239,13 @@ int main()
 
 The library usage also allows for assumptions. We can add these lines just
 before the `return 0;` above:
-```
+```c++
 vector<Lit> assumptions;
 assumptions.push_back(Lit(2, true));
 lbool ret = solver.solve(&assumptions);
 assert(ret == l_False);
 
-lbool ret = solver.solve();
+ret = solver.solve();   // no assumption → solution exists again
 assert(ret == l_True);
 ```
 
@@ -296,7 +282,7 @@ while(true) {
 ```
 
 The above loop will run as long as there are solutions. It is __highly__
-suggested to __only__ add into the new clause(`bad_solutions` above) the
+suggested to __only__ add into the new clause (`ban_solution` above) the
 variables that are "important" or "main" to your problem. Variables that were
 only used to translate the original problem into CNF should not be added.
 This way, you will not get spurious solutions that don't differ in the main,

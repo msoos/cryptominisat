@@ -465,6 +465,107 @@ class TestXorMixed(unittest.TestCase):
         self.assertTrue(solution[2])
 
 
+class TestGetConflict(unittest.TestCase):
+    """get_conflict() behaviour in various situations."""
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_get_conflict_after_sat_is_empty(self):
+        # After a SAT solve, the conflict set should be empty.
+        self.solver.add_clause([1, 2])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertEqual(self.solver.get_conflict(), [])
+
+    def test_get_conflict_returns_list(self):
+        self.solver.add_clause([-1])
+        res, _ = self.solver.solve([-1])
+        # -1 is forced False by the clause AND assumed False → SAT, not UNSAT
+        # Let's force a real conflict: clause forces 1=False, assume 1=True
+        res, _ = self.solver.solve([1])
+        self.assertEqual(res, False)
+        confl = self.solver.get_conflict()
+        self.assertIsInstance(confl, list)
+        self.assertIn(-1, confl)
+
+
+class TestEdgeCases(unittest.TestCase):
+    """Edge cases not covered elsewhere."""
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_empty_clause_makes_unsat(self):
+        # An empty clause is always False → immediately UNSAT.
+        self.solver.add_clause([])
+        res, sol = self.solver.solve()
+        self.assertEqual(res, False)
+        self.assertIsNone(sol)
+
+    def test_add_clauses_with_generator(self):
+        # add_clauses() must accept any iterable, not just lists.
+        def clause_gen():
+            yield [1, 2]
+            yield [-1, 3]
+        self.solver.add_clauses(clause_gen())
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+
+    def test_add_clauses_empty_input(self):
+        # Adding zero clauses is a no-op; solver stays SAT.
+        self.solver.add_clauses([])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+
+    def test_solve_per_call_verbose_does_not_crash(self):
+        self.solver.add_clause([1])
+        res, _ = self.solver.solve(verbose=0)
+        self.assertEqual(res, True)
+
+    def test_solve_per_call_time_limit(self):
+        # A generous time_limit should still find the solution.
+        self.solver.add_clause([1, 2])
+        res, solution = self.solver.solve(time_limit=60.0)
+        self.assertEqual(res, True)
+
+    def test_solve_per_call_confl_limit_large(self):
+        # A generous confl_limit should still find the solution.
+        for cl in clauses1:
+            self.solver.add_clause(cl)
+        res, solution = self.solver.solve(confl_limit=100000)
+        self.assertEqual(res, True)
+        self.assertTrue(check_solution(clauses1, solution))
+
+    def test_unit_clause_sets_variable(self):
+        self.solver.add_clause([5])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(solution[5])
+
+    def test_negative_unit_clause_sets_variable_false(self):
+        self.solver.add_clause([-3])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+        self.assertFalse(solution[3])
+
+    def test_solve_assumptions_as_keyword(self):
+        # assumptions can be passed as a keyword argument.
+        self.solver.add_clause([1, 2])
+        self.solver.add_clause([-1])
+        res, _ = self.solver.solve(assumptions=[-2])
+        self.assertEqual(res, False)
+
+    def test_is_satisfiable_after_unsat(self):
+        self.solver.add_clause([1])
+        self.solver.add_clause([-1])
+        self.assertIs(self.solver.is_satisfiable(), False)
+
+    def test_nb_vars_after_xor_clause(self):
+        self.solver.add_xor_clause([1, 2, 3], True)
+        self.assertEqual(self.solver.nb_vars(), 3)
+
+
 class TestSolveTimeLimit(unittest.TestCase):
 
     def get_clauses(self):
@@ -514,7 +615,7 @@ def run():
     suite = unittest.TestSuite()
     for cls in (TestXor, InitTester, TestSolve, TestNbVars, TestIsSatisfiable,
                 TestIncremental, TestSolveArgs, TestVersion, TestXorMixed,
-                TestSolveTimeLimit):
+                TestGetConflict, TestEdgeCases, TestSolveTimeLimit):
         suite.addTests(loader.loadTestsFromTestCase(cls))
 
     runner = unittest.TextTestRunner(verbosity=2)
