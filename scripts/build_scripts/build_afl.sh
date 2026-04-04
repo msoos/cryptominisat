@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+SAT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+echo "solvers dir: $SAT_DIR"
+
 rm -rf cm*
 rm -rf CM*
 rm -rf lib*
@@ -13,7 +16,7 @@ rm -rf include
 rm -rf tests
 rm -rf deps
 rm -rf _deps
-CC=afl-gcc CXX=afl-g++ cmake -DLIMITMEM=ON -DENABLE_TESTING=OFF -DNOZLIB=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
+CC=afl-gcc CXX=afl-g++ cmake -DLIMITMEM=ON -DENABLE_TESTING=OFF -DNOZLIB=ON -Dcadical_DIR="${SAT_DIR}/cadical/build" -Dcadiback_DIR="${SAT_DIR}/cadiback" ..
 make -j$(nproc)
 mkdir -p afl/testcase_dir/
 mkdir -p afl/findings_dir/

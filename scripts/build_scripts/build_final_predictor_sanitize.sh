@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+SAT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+echo "solvers dir: $SAT_DIR"
+
 rm -rf cm*
 rm -rf CM*
 rm -rf lib*
@@ -17,6 +20,6 @@ rm -rf utils
 rm -rf Make*
 rm -rf deps
 rm -rf _deps
-rm -f ../tests/cnf-files/*sqlite
-CXX=clang++ ccmake -DFINAL_PREDICTOR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_TESTING=ON -DSANITIZE=ON -Dcadical_DIR=../../cadical/build -Dcadiback_DIR=../../cadiback ..
+rm -f ${SAT_DIR}/cryptominisat/tests/cnf-files/*sqlite
+CXX=clang++ ccmake -DFINAL_PREDICTOR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_TESTING=ON -DSANITIZE=ON -Dcadical_DIR="${SAT_DIR}/cadical/build" -Dcadiback_DIR="${SAT_DIR}/cadiback" ..
 make -j$(nproc)
