@@ -63,9 +63,6 @@
           cmakeFlags = [
             "-Dcadical_DIR=${cadical}"
             "-Dcadiback_DIR=${cadiback}"
-            # cadical puts cadical.hpp in include/, not src/; override the
-            # auto-derived path (which would wrongly point to ../src).
-            "-Dcadical_SRC_DIR=${cadical}/include"
           ];
         };
     in
