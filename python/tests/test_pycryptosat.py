@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from array import array as _array
+from array import array
 import os
 import sys
 import unittest
@@ -31,9 +31,6 @@ import pycryptosat
 from pycryptosat import Solver
 
 _MODULE_DIR = os.path.dirname(os.path.realpath(__file__))+os.path.sep
-
-def array(typecode, initializer=()):
-    return _array(str(typecode), initializer)
 
 
 def check_clause(clause, solution):
@@ -513,11 +510,12 @@ def run():
         print("pycryptosat version: %r" % pycryptosat.__version__)
     except AttributeError:
         pass
+    loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestXor))
-    suite.addTest(unittest.makeSuite(InitTester))
-    suite.addTest(unittest.makeSuite(TestSolve))
-    suite.addTest(unittest.makeSuite(TestSolveTimeLimit))
+    for cls in (TestXor, InitTester, TestSolve, TestNbVars, TestIsSatisfiable,
+                TestIncremental, TestSolveArgs, TestVersion, TestXorMixed,
+                TestSolveTimeLimit):
+        suite.addTests(loader.loadTestsFromTestCase(cls))
 
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)

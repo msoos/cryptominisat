@@ -56,7 +56,7 @@ The `pycryptosat` module has one object, `Solver`, with the following methods:
 `solve`, `add_clause`, `add_clauses`, `add_xor_clause`, `nb_vars`,
 `is_satisfiable`, and `get_conflict`.
 
-The funcion `add_clause()` takes an iterable list of literals such as
+The function `add_clause()` takes an iterable list of literals such as
 `[1, 2]` which represents the truth `1 or 2 = True`. For example,
 `add_clause([1])` sets variable `1` to `True`.
 

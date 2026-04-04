@@ -194,7 +194,7 @@ static int parse_xor_clause(
             return 0;
         }
         if (sign) {
-            PyErr_SetString(PyExc_ValueError, "XOR clause must contiain only positive variables (not inverted literals)");
+            PyErr_SetString(PyExc_ValueError, "XOR clause must contain only positive variables (not inverted literals)");
             Py_DECREF(iterator);
             return 0;
         }
@@ -447,37 +447,11 @@ static PyObject* get_solution(SATSolver *cmsat)
     return tuple;
 }
 
-static PyObject* get_raw_solution(SATSolver *cmsat) {
-
-    // Create tuple with the size of number of variables in model
-    unsigned max_idx = cmsat->nVars();
-    PyObject *tuple = PyTuple_New((Py_ssize_t) max_idx);
-    if (tuple == NULL) {
-        PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
-        return NULL;
-    }
-
-    // Add each variable in model to the tuple
-    PyObject *py_value = NULL;
-    int sign;
-    for (long var = 0; var != (long)max_idx; var++) {
-
-        if (cmsat->get_model()[var] != l_Undef) {
-
-            sign = (cmsat->get_model()[var] == l_True) ? 1 : -1;
-
-            py_value = PyLong_FromLong((var + 1) * sign);
-            PyTuple_SET_ITEM(tuple, (Py_ssize_t)var, py_value);
-        }
-    }
-    return tuple;
-}
-
 PyDoc_STRVAR(nb_vars_doc,
 "nb_vars()\n\
-Return the number of literals in the solver.\n\
+Return the number of variables in the solver.\n\
 \n\
-:return: Number of literals\n\
+:return: Number of variables\n\
 :rtype: <int>"
 );
 
@@ -491,7 +465,7 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 {
     PyObject *iterator = PyObject_GetIter(assumptions);
     if (iterator == NULL) {
-        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
         return 0;
     }
 
@@ -534,17 +508,17 @@ Solve the system of equations that have been added with add_clause();\n\
     >>> s.add_clause([3])\n\
     >>> s.add_clause([-1, 2, 3])\n\
     >>> sat, solution = s.solve()\n\
-    >>> print sat\n\
+    >>> print(sat)\n\
     True\n\
-    >>> print solution\n\
+    >>> print(solution)\n\
     (None, True, False, True)\n\
     \n\
     We can also try to assume any variable values for a single solver run:\n\
     \n\
-    sat, solution = s.solve([-3])\n\
-    >>> print sat\n\
+    >>> sat, solution = s.solve([-3])\n\
+    >>> print(sat)\n\
     False\n\
-    >>> print solution\n\
+    >>> print(solution)\n\
     None\n\
 \n\
 :param assumptions: (Optional) Allows the user to set values to specific\n\
@@ -722,10 +696,10 @@ static PyMethodDef Solver_methods[] = {
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
     {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
-    {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
-    //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
-    {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
-    {"get_conflict", (PyCFunction) get_conflict, METH_VARARGS | METH_KEYWORDS, get_conflict_doc},
+    {"nb_vars", (PyCFunction) nb_vars, METH_NOARGS, nb_vars_doc},
+    //{"nb_clauses", (PyCFunction) nb_clauses, METH_NOARGS, "returns number of clauses"},
+    {"is_satisfiable", (PyCFunction) is_satisfiable, METH_NOARGS, is_satisfiable_doc},
+    {"get_conflict", (PyCFunction) get_conflict, METH_NOARGS, get_conflict_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 
