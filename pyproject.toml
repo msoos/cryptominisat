@@ -52,10 +52,9 @@ test-requires = "pytest"
 test-command = "cd /tmp && pytest {project}/python/tests"
 
 [tool.cibuildwheel.linux]
-# manylinux_2_28 = AlmaLinux 8; has working dnf repos (manylinux2014/CentOS 7 is EOL).
-# yum is an alias for dnf on AlmaLinux 8 so the before-all command works unchanged.
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
+# manylinux_2_34 = AlmaLinux 9; gmp-devel/mpfr-devel ship .pc files so pkg-config works.
+manylinux-x86_64-image = "manylinux_2_34"
+manylinux-aarch64-image = "manylinux_2_34"
 before-all = "yum install -y epel-release && yum install -y ccache gmp-devel"
 # CCACHE_DIR must be under /project so the host-side actions/cache step can reach it.
 environment = { CCACHE_DIR = "/project/.ccache" }
