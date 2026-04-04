@@ -217,8 +217,6 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS}
     ${MPI_INCLUDE_PATH}
-    "${cadical_DIR}/include/"
-    "${cadiback_DIR}/include/"
     $<INSTALL_INTERFACE:include>
     ${BREAKID_INCLUDE_DIRS}
 )
@@ -273,8 +271,8 @@ target_link_libraries(cryptominisat5
     PRIVATE
         ${cryptoms_lib_link_libs}
         ${LOUVAIN_COMMUNITIES_LIBRARIES}
-        ${cadiback}
-        ${cadical}
+        cadiback
+        cadical
     PUBLIC
         Threads::Threads
         PkgConfig::GMP
@@ -308,8 +306,8 @@ if(IPASIR)
             Threads::Threads
             ${cryptoms_lib_link_libs}
             ${LOUVAIN_COMMUNITIES_LIBRARIES}
-            ${cadiback}
-            ${cadical}
+            cadiback
+            cadical
         PUBLIC
             PkgConfig::GMP
     )
@@ -390,7 +388,6 @@ target_include_directories(oracle PRIVATE
 )
 target_compile_features(oracle PRIVATE cxx_std_17)
 
-set(cadical_SRC_DIR "${cadical_SRC_DIR}" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
 add_executable(assump_fuzz_oracle
     oracle/assump_fuzz_oracle.cpp
     oracle/oracle.cpp
@@ -399,10 +396,8 @@ target_include_directories(assump_fuzz_oracle PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle
-    "${cadiback_DIR}/include/"
-    "${cadical_SRC_DIR}"
 )
-target_link_libraries(assump_fuzz_oracle PRIVATE ${cadiback} ${cadical})
+target_link_libraries(assump_fuzz_oracle PRIVATE cadiback cadical)
 target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
 
 if(MPI_FOUND)

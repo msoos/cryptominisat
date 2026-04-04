@@ -428,130 +428,44 @@ if(NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     endif()
 endif()
 
-set(cadical_DIR "" CACHE PATH "Directory where CaDiCaL is built (contains libcadical and include/). Auto-fetched if empty.")
-set(cadiback_DIR "" CACHE PATH "Directory where CaDiBaCk is built (contains libcadiback and include/). Auto-fetched if empty.")
+set(cadical_DIR  "" CACHE PATH "cadical install/build prefix (contains lib/cmake/cadical/). Auto-resolved if empty.")
+set(cadiback_DIR "" CACHE PATH "cadiback install/build prefix (contains lib/cmake/cadiback/). Auto-resolved if empty.")
 
-if(NOT cadical_DIR OR NOT cadiback_DIR)
-    include(FetchContent)
-endif()
-
-# CXXFLAGS to pass to external configure scripts (cadical, cadiback).
-# Must include macOS -arch and -isysroot so libraries match the CMake target
-# architecture (e.g. when cibuildwheel cross-compiles arm64 on an x86_64 host).
-set(_external_cxxflags "-fPIC")
-if(CMAKE_OSX_ARCHITECTURES)
-    foreach(_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
-        string(APPEND _external_cxxflags " -arch ${_arch}")
-    endforeach()
-endif()
-if(CMAKE_OSX_SYSROOT AND NOT CMAKE_OSX_SYSROOT STREQUAL "")
-    string(APPEND _external_cxxflags " -isysroot ${CMAKE_OSX_SYSROOT}")
-endif()
-
-if(NOT cadical_DIR)
-    set(_cadical_src "${CMAKE_BINARY_DIR}/deps/cadical")
-    set(_cadical_lib "${_cadical_src}/build/libcadical.a")
-    FetchContent_Declare(cadical_src
-        GIT_REPOSITORY https://github.com/meelgroup/cadical
-        GIT_TAG        master
-        SOURCE_DIR     "${_cadical_src}"
-        GIT_SHALLOW    TRUE
-    )
-    FetchContent_GetProperties(cadical_src)
-    if(NOT cadical_src_POPULATED)
-        message(STATUS "CaDiCaL: fetching from meelgroup/cadical master")
-        FetchContent_Populate(cadical_src)
+include(FetchContent)
+if(NOT TARGET cadical)
+    if(cadical_DIR)
+        find_package(cadical CONFIG REQUIRED HINTS "${cadical_DIR}")
+        message(STATUS "CaDiCaL: using pre-built at ${cadical_DIR}")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../cadical/CMakeLists.txt")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../cadical"
+                         "${CMAKE_CURRENT_BINARY_DIR}/cadical-build")
+        message(STATUS "CaDiCaL: using sibling repo")
+    else()
+        FetchContent_Declare(cadical
+            GIT_REPOSITORY https://github.com/meelgroup/cadical
+            GIT_TAG        master
+            GIT_SHALLOW    TRUE)
+        FetchContent_MakeAvailable(cadical)
+        message(STATUS "CaDiCaL: fetched from GitHub")
     endif()
-    if(NOT EXISTS "${_cadical_lib}")
-        message(STATUS "CaDiCaL: building in ${_cadical_src}")
-        execute_process(
-            COMMAND ${CMAKE_COMMAND} -E env
-                "CXX=${CMAKE_CXX_COMPILER}"
-                "CXXFLAGS=${_external_cxxflags}"
-                sh "${_cadical_src}/configure" --no-contracts --no-tracing --fp
-            WORKING_DIRECTORY "${_cadical_src}"
-            RESULT_VARIABLE _cadical_cfg_ret
-        )
-        if(NOT _cadical_cfg_ret EQUAL 0)
-            message(FATAL_ERROR "CaDiCaL configure failed (exit ${_cadical_cfg_ret})")
-        endif()
-        execute_process(
-            COMMAND make -j8
-            WORKING_DIRECTORY "${_cadical_src}"
-            RESULT_VARIABLE _cadical_make_ret
-        )
-        if(NOT _cadical_make_ret EQUAL 0)
-            message(FATAL_ERROR "CaDiCaL build failed (exit ${_cadical_make_ret})")
-        endif()
-    endif()
-    set(cadical_DIR "${_cadical_src}/build" CACHE PATH "Directory where CaDiCaL is built" FORCE)
-    set(cadical_SRC_DIR "${_cadical_src}/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)" FORCE)
-    message(STATUS "CaDiCaL: using auto-built ${cadical_DIR}")
 endif()
-
-if(NOT cadiback_DIR)
-    set(_cadiback_src "${CMAKE_BINARY_DIR}/deps/cadiback")
-    set(_cadiback_lib "${_cadiback_src}/libcadiback.a")
-    FetchContent_Declare(cadiback_src
-        GIT_REPOSITORY https://github.com/meelgroup/cadiback
-        GIT_TAG        main
-        SOURCE_DIR     "${_cadiback_src}"
-        GIT_SHALLOW    TRUE
-    )
-    FetchContent_GetProperties(cadiback_src)
-    if(NOT cadiback_src_POPULATED)
-        message(STATUS "CaDiBaCk: fetching from meelgroup/cadiback main")
-        FetchContent_Populate(cadiback_src)
+if(NOT TARGET cadiback)
+    if(cadiback_DIR)
+        find_package(cadiback CONFIG REQUIRED HINTS "${cadiback_DIR}")
+        message(STATUS "CaDiBaCk: using pre-built at ${cadiback_DIR}")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/CMakeLists.txt")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../cadiback"
+                         "${CMAKE_CURRENT_BINARY_DIR}/cadiback-build")
+        message(STATUS "CaDiBaCk: using sibling repo")
+    else()
+        FetchContent_Declare(cadiback
+            GIT_REPOSITORY https://github.com/meelgroup/cadiback
+            GIT_TAG        main
+            GIT_SHALLOW    TRUE)
+        FetchContent_MakeAvailable(cadiback)
+        message(STATUS "CaDiBaCk: fetched from GitHub")
     endif()
-    if(NOT EXISTS "${_cadiback_lib}")
-        message(STATUS "CaDiBaCk: building in ${_cadiback_src}")
-        execute_process(
-            COMMAND ${CMAKE_COMMAND} -E env
-                "CXX=${CMAKE_CXX_COMPILER}"
-                "CXXFLAGS=${_external_cxxflags}"
-                sh "${_cadiback_src}/configure" --release
-            WORKING_DIRECTORY "${_cadiback_src}"
-            RESULT_VARIABLE _cadiback_cfg_ret
-        )
-        if(NOT _cadiback_cfg_ret EQUAL 0)
-            message(FATAL_ERROR "CaDiBaCk configure failed (exit ${_cadiback_cfg_ret})")
-        endif()
-        execute_process(
-            COMMAND make -j8 libcadiback.a
-            WORKING_DIRECTORY "${_cadiback_src}"
-            RESULT_VARIABLE _cadiback_make_ret
-        )
-        if(NOT _cadiback_make_ret EQUAL 0)
-            message(FATAL_ERROR "CaDiBaCk build failed (exit ${_cadiback_make_ret})")
-        endif()
-    endif()
-    set(cadiback_DIR "${_cadiback_src}" CACHE PATH "Directory where CaDiBaCk is built" FORCE)
-    message(STATUS "CaDiBaCk: using auto-built ${cadiback_DIR}")
 endif()
-
-# When cadical_DIR was provided manually, derive cadical_SRC_DIR from it (../src)
-if(NOT cadical_SRC_DIR)
-    get_filename_component(_cadical_parent "${cadical_DIR}" DIRECTORY)
-    set(cadical_SRC_DIR "${_cadical_parent}/src" CACHE PATH "CaDiCaL source dir (for cadical.hpp)")
-endif()
-
-# cadical/cadiback Makefiles produce both libcadical.so and libcadical.a.
-# Force .a to avoid picking up the shared library (macOS default suffix order
-# prefers .dylib/.so over .a).
-set(_saved_lib_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-find_library(cadical
-    PATHS ${cadical_DIR}
-    PATH_SUFFIXES lib
-    NAMES cadical
-    REQUIRED NO_DEFAULT_PATH)
-
-set(CMAKE_FIND_LIBRARY_SUFFIXES ${_saved_lib_suffixes})
-find_library(cadiback
-    PATHS ${cadiback_DIR}
-    PATH_SUFFIXES lib
-    NAMES cadiback
-    REQUIRED NO_DEFAULT_PATH)
 
 include(CheckFloatPrecision)
 check_float_precision()
@@ -693,8 +607,6 @@ if(BUILD_PYTHON_EXTENSION)
     target_include_directories(pycryptosat PRIVATE
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}
-        "${cadical_DIR}/include/"
-        "${cadiback_DIR}/include/"
     )
 
     target_link_libraries(pycryptosat PRIVATE cryptominisat5)
