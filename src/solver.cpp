@@ -1739,6 +1739,14 @@ lbool Solver::execute_inprocess_strategy(
         if (token.substr(0,3) != "occ" && !token.empty())
             verb_print(1, "--> Executing strategy token: " << token);
 
+        if (token.substr(0,3) != "occ" && !token.empty()) {
+            verb_print(2, "[simp-stats] BEFORE " << token
+                << " irred_bins " << solver->binTri.irredBins
+                << " irred_long_cls " << solver->longIrredCls.size()
+                << " irred_long_lits " << solver->litStats.irredLits
+                << " free_vars " << solver->get_num_free_vars());
+        }
+
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found(
@@ -1891,6 +1899,14 @@ lbool Solver::execute_inprocess_strategy(
         } else {
             cout << "ERROR: strategy '" << token << "' not recognised!" << endl;
             exit(-1);
+        }
+
+        if (token.substr(0,3) != "occ" && !token.empty()) {
+            verb_print(2, "[simp-stats] AFTER " << token
+                << " irred_bins " << solver->binTri.irredBins
+                << " irred_long_cls " << solver->longIrredCls.size()
+                << " irred_long_lits " << solver->litStats.irredLits
+                << " free_vars " << solver->get_num_free_vars());
         }
 
         SLOW_DEBUG_DO(check_stats());
