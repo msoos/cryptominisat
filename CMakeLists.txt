@@ -414,7 +414,7 @@ endif()
 option(NOZLIB "Don't use zlib" OFF)
 # When building statically, prefer .a over .so for all find_library/find_package calls
 if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
 endif()
 
 # cannot currently compile static zlib under Windows
@@ -546,12 +546,12 @@ find_library(cadical
     NAMES cadical
     REQUIRED NO_DEFAULT_PATH)
 
+set(CMAKE_FIND_LIBRARY_SUFFIXES ${_saved_lib_suffixes})
 find_library(cadiback
     PATHS ${cadiback_DIR}
     PATH_SUFFIXES lib
     NAMES cadiback
     REQUIRED NO_DEFAULT_PATH)
-set(CMAKE_FIND_LIBRARY_SUFFIXES ${_saved_lib_suffixes})
 
 include(CheckFloatPrecision)
 check_float_precision()
