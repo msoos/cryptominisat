@@ -324,21 +324,21 @@ void Main::add_supported_options() {
     program.add_argument("--dumppreddistrib")
         .action([&](const auto& a) {conf.dump_pred_distrib = std::atoi(a.c_str());})
         .default_value(conf.dump_pred_distrib)
-        .help("Dump predict distirution to pred_distrib.csv");
+        .help("Dump predict distribution to pred_distrib.csv");
 
     //chunk
     program.add_argument("--predlongchunk")
         .action([&](const auto& a) {conf.pred_long_chunk = std::atoi(a.c_str());})
         .default_value(conf.pred_long_chunk)
-        help("Pred long chunk multiplier");
+        .help("Pred long chunk multiplier");
     program.add_argument("--predforeverchunk")
         .action([&](const auto& a) {conf.pred_forever_chunk = std::atoi(a.c_str());})
         .default_value(conf.pred_forever_chunk)
-        help("Pred forever chunk multiplier");
+        .help("Pred forever chunk multiplier");
     program.add_argument("--predforeverchunkmult")
         .action([&](const auto& a) {conf.pred_forever_chunk_mult = std::atof(a.c_str());})
         .default_value(conf.pred_forever_chunk_mult)
-        help("Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option");
+        .help("Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option");
 
     //Check intervals for LONG and FOREVER
     program.add_argument("--predlongcheckn")
@@ -360,7 +360,7 @@ void Main::add_supported_options() {
     program.add_argument("--preddontmovetime")
         .action([&](const auto& a) {conf.pred_dontmove_until_timeinside = std::atoi(a.c_str());})
         .default_value(conf.pred_dontmove_until_timeinside)
-        .help("Don't move clause until it's time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.");
+        .help("Don't move clause until its time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.");
     #endif
 
     /* po::options_description restartOptions("Restart options"); */
@@ -401,7 +401,7 @@ void Main::add_supported_options() {
     program.add_argument("--gluecut1")
         .action([&](const auto& a) {conf.glue_put_lev1_if_below_or_eq = std::atoi(a.c_str());})
         .default_value(conf.glue_put_lev1_if_below_or_eq)
-        .help("Glue value for lev 1 cut ('give another shot'");
+        .help("Glue value for lev 1 cut ('give another shot')");
     program.add_argument("--adjustglue")
         .action([&](const auto& a) {conf.adjust_glue_if_too_many_tier0 = std::atof(a.c_str());})
         .default_value(conf.adjust_glue_if_too_many_tier0)
@@ -459,7 +459,7 @@ void Main::add_supported_options() {
     program.add_argument("--breakidmaxvars")
         .action([&](const auto& a) {conf.breakid_vars_limit_K = std::atoll(a.c_str());})
         .default_value(conf.breakid_vars_limit_K)
-        .help("Maximum number of variables in thousands. If exceeded, BreakID will not run");;
+        .help("Maximum number of variables in thousands. If exceeded, BreakID will not run");
     program.add_argument("--breakidtime")
         .action([&](const auto& a) {conf.breakid_time_limit_K = std::atoll(a.c_str());})
         .default_value(conf.breakid_time_limit_K)
@@ -467,7 +467,7 @@ void Main::add_supported_options() {
     program.add_argument("--breakidcls")
         .action([&](const auto& a) {conf.breakid_max_constr_per_permut = std::atoi(a.c_str());})
         .default_value(conf.breakid_max_constr_per_permut)
-        .help("Maximum number of breaking clauses per permutation.");;
+        .help("Maximum number of breaking clauses per permutation.");
     program.add_argument("--breakidmatrix")
         .action([&](const auto& a) {conf.breakid_matrix_detect = std::atoi(a.c_str());})
         .default_value(conf.breakid_matrix_detect)
@@ -505,7 +505,7 @@ void Main::add_supported_options() {
     program.add_argument("--slsccnraspire")
         .action([&](const auto& a) {conf.sls_ccnr_asipire = std::atoi(a.c_str());})
         .default_value(conf.sls_ccnr_asipire)
-        .help("Turn aspiration on/off for CCANR");
+        .help("Turn aspiration on/off for CCNR");
     program.add_argument("--slstobump")
         .action([&](const auto& a) {conf.sls_how_many_to_bump = std::atoi(a.c_str());})
         .default_value(conf.sls_how_many_to_bump)
@@ -557,7 +557,7 @@ void Main::add_supported_options() {
     program.add_argument("--maxnumsimppersolve")
         .action([&](const auto& a) {conf.max_num_simplify_per_solve_call = std::atoi(a.c_str());})
         .default_value(conf.max_num_simplify_per_solve_call)
-        .help("Maximum number of simplifiactions to perform for every solve() call. After this, no more inprocessing will take place.");
+        .help("Maximum number of simplifications to perform for every solve() call. After this, no more inprocessing will take place.");
 
     program.add_argument("--schedule")
         .action([&](const auto& a) {conf.simplify_schedule_nonstartup = a;})
@@ -627,7 +627,7 @@ void Main::add_supported_options() {
     program.add_argument("--weakentimelim")
         .action([&](const auto& a) {conf.weaken_time_limitM = std::atoll(a.c_str());})
         .default_value(conf.weaken_time_limitM)
-        .help("Time-out in bogoprops M of weakeaning used");
+        .help("Time-out in bogoprops M of weakening used");
     program.add_argument("--substimelim")
         .action([&](const auto& a) {conf.subsumption_time_limitM = std::atoll(a.c_str());})
         .default_value(conf.subsumption_time_limitM)
@@ -771,7 +771,7 @@ void Main::add_supported_options() {
     program.add_argument("--diffdeclevelchrono")
         .action([&](const auto& a) {conf.diff_declev_for_chrono = std::atoi(a.c_str());})
         .default_value(conf.diff_declev_for_chrono)
-        .help("Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).");
+        .help("Difference in decision level is more than this, perform chronological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).");
 
 #ifdef USE_SQLITE3
     /* po::options_description sqlOptions("SQL options"); */
@@ -781,8 +781,8 @@ void Main::add_supported_options() {
         .help("Write to SQL. 0 = no SQL, 1 or 2 = sqlite");
     program.add_argument("--sqlitedb")
         .action([&](const auto& a) {sqlite_filename = a;})
-        .default_value(conf.verbosity)
-        .help("[0-10] Verbosity of solver. 0 = only solution");;
+        .default_value(sqlite_filename)
+        .help("SQLite database filename to write clause data to");
     program.add_argument("--sqlitedboverwrite")
         .action([&](const auto& a) {conf.sql_overwrite_file = std::atoi(a.c_str());})
         .default_value(conf.sql_overwrite_file)
@@ -828,7 +828,7 @@ void Main::add_supported_options() {
     program.add_argument("--distillbin")
         .action([&](const auto& a) {conf.do_distill_bin_clauses = std::atoi(a.c_str());})
         .default_value(conf.do_distill_bin_clauses)
-        .help("Regularly execute clause distillation");
+        .help("Regularly execute binary clause distillation");
     program.add_argument("--distillmaxm")
         .action([&](const auto& a) {conf.distill_long_cls_time_limitM = std::atoll(a.c_str());})
         .default_value(conf.distill_long_cls_time_limitM)
@@ -944,12 +944,12 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.gaussconf.max_matrix_rows = std::atoi(a.c_str());})
         .default_value(conf.gaussconf.max_matrix_rows)
         .help("Set maximum no. of rows for gaussian matrix. Too large matrices"
-            "should bee discarded for reasons of efficiency");
+            " should be discarded for reasons of efficiency");
      program.add_argument("--maxmatrixcols")
         .action([&](const auto& a) {conf.gaussconf.max_matrix_columns = std::atoi(a.c_str());})
         .default_value(conf.gaussconf.max_matrix_columns)
         .help("Set maximum no. of columns for gaussian matrix. Too large matrices"
-            "should bee discarded for reasons of efficiency");
+            " should be discarded for reasons of efficiency");
     program.add_argument("--autodisablegauss")
         .action([&](const auto& a) {conf.gaussconf.autodisable = std::atoi(a.c_str());})
         .default_value(conf.gaussconf.autodisable)
@@ -966,7 +966,7 @@ void Main::add_supported_options() {
     program.add_argument("--gaussusefulcutoff")
         .action([&](const auto& a) {conf.gaussconf.min_usefulness_cutoff = std::atof(a.c_str());})
         .default_value(conf.gaussconf.min_usefulness_cutoff)
-        .help("Turn off Gauss if less than this many usefulenss ratio is recorded");
+        .help("Turn off Gauss if less than this many usefulness ratio is recorded");
     program.add_argument("--dumpresult")
         .action([&](const auto& a) {result_fname = a;})
         .help("Write solution(s) to this file");
