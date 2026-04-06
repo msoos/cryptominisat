@@ -44,7 +44,7 @@ public:
     size_t mem_used() const;
 
     void backw_sub_long_with_long();
-    bool backw_str_long_with_long();
+    bool backw_sub_str_long_with_long();
     bool backw_sub_str_long_with_bins();
     bool backw_sub_str_long_with_bins_watch(const Lit lit, bool both_bins = false);
     bool handle_added_long_cl(const bool main_run);
