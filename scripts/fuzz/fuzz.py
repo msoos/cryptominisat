@@ -250,15 +250,24 @@ class Tester:
         return sched
 
     def rnd_schedule_all(self):
-        sched_opts = "scc-vrepl,"
-        sched_opts += "sub-impl, intree-probe,"
+        sched_opts = "scc-vrepl, must-scc-vrepl,"
+        sched_opts += "sub-impl, intree-probe, full-probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+        sched_opts += "distill-cls-onlyrem, must-distill-cls, must-distill-cls-onlyrem,"
+        sched_opts += "distill-litrem, distill-bins, clean-cls,"
+        sched_opts += "oracle-vivif, oracle-vivif-fast, oracle-vivif-veryfast,"
+        sched_opts += "oracle-vivif-sparsify, oracle-vivif-sparsify-mustfinish,"
+        sched_opts += "oracle-sparsify, oracle-sparsify-fast,"
+        sched_opts += "backbone,"
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
+        sched_opts += "occ-bve-empty, occ-ternary-res, occ-gate-based-eqlit,"
+        sched_opts += "occ-del-elimed, occ-rem-unconn-assumps,"
+        sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
         sched_opts += "renumber, must-renumber,"
-        sched_opts += "card-find, breakid,"
-        sched_opts += "occ-lit-rem, distill-bins, occ-resolv-subs,occ-rem-with-orgates"
+        sched_opts += "card-find, breakid, cl-consolidate,"
+        sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
 
         # type of schedule
         cmd = ""
