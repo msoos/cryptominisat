@@ -189,7 +189,12 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
         << " irred_bins " << solver->binTri.irredBins \
         << " irred_long_cls " << solver->longIrredCls.size() \
         << " irred_long_lits " << solver->litStats.irredLits \
-        << " free_vars " << solver->get_num_free_vars())
+        << " free_vars " << solver->get_num_free_vars() \
+        << " elimed_vars " << solver->get_num_vars_elimed() \
+        << " replaced_vars " << solver->varReplacer->get_num_replaced_vars() \
+        << " units " << solver->trail_size() \
+        << " mem_MB " << (rss_mem_used() / (1024ULL * 1024ULL)) \
+        << " T: " << std::setprecision(3) << cpu_time() << std::setprecision(2))
 
 #ifdef DEBUG_WATCHED
 #define DEBUG_WATCHED_DO(x) do { x; } while (0)
