@@ -2107,9 +2107,10 @@ bool OccSimplifier::gate_based_eqlit() {
     }
 
 
-    added_long_cl.clear();
-    added_irred_bin.clear();
+    if (!sub_str_with_added_long_and_bin(false)) goto end;
 
+    end:
+    clear_added_long_cl_marks();
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
@@ -2192,7 +2193,6 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             assert(!cl->freed());
             assert(cl->get_occur_linked());
 
-            //TODO check calcAbst!
             bool contains_rhs = false;
             bool contains_inv_rhs = false;
             uint32_t found = 0;
@@ -2232,11 +2232,13 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 solver->watches[gate.rhs].push(Watched(off, cl->abst));
                 n_occurs[gate.rhs.toInt()]++;
                 elim_calc_need_update.touch(gate.rhs);
+                added_cl_to_var.touch(gate.rhs);
                 solver->litStats.irredLits++;
                 std::sort(cl->begin(), cl->end());
             } else {
                 cl->recalc_abstraction();
             }
+            for(const Lit l: *cl) added_cl_to_var.touch(l);
             INC_ID(*cl);
             (*solver->frat) << add << *cl << fin << findelay;
             VERBOSE_DEBUG_DO(solver->print_clause("shortened", *cl));
@@ -2248,10 +2250,10 @@ bool OccSimplifier::lit_rem_with_or_gates() {
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
 
-    added_long_cl.clear();
-    added_irred_bin.clear();
+    if (!sub_str_with_added_long_and_bin(false)) goto end;
 
     end:
+    clear_added_long_cl_marks();
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
