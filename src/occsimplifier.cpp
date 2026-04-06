@@ -2332,8 +2332,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-backw-sub") {
             backward_sub();
         } else if (token == "occ-del-elimed") {
-        } else if (token == "occ-rem-unconn-assumps") {
-            delete_component_unconnected_to_assumps();
         } else if (token == "occ-ternary-res") {
             if (solver->conf.doTernary) {
                 ternary_res();
@@ -2755,69 +2753,6 @@ void OccSimplifier::fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& 
             }
         }
     }
-}
-
-//WARNING we MUST be sure there is at least ONE solution!
-void OccSimplifier::delete_component_unconnected_to_assumps()
-{
-    assert(solver->okay());
-    uint64_t removed = 0;
-
-    vector<uint32_t> tocheck;
-    for(uint32_t i = 0; i < solver->nVars(); i++) {
-        if (solver->varData[i].assumption != l_Undef) {
-            tocheck.push_back(i);
-            seen[i] = 1;
-        }
-    }
-
-    vector<uint32_t> tocheck2;
-    while(!tocheck.empty()) {
-        verb_print(3, __PRETTY_FUNCTION__ << "-- tocheck size: " << tocheck.size());
-        std::swap(tocheck, tocheck2);
-        tocheck.clear();
-        for(auto const& v: tocheck2) {
-            Lit l = Lit(v, true);
-            fill_tocheck_seen(solver->watches[l], tocheck);
-            fill_tocheck_seen(solver->watches[~l], tocheck);
-        }
-    }
-
-    for(uint32_t i = 0; i < solver->nVars()*2; i++) {
-        Lit l = Lit::toLit(i);
-        if (seen[l.var()]) continue;
-
-        vec<Watched> tmp;
-        solver->watches[l].copyTo(tmp);
-        for(auto const& w: tmp) {
-            assert(!w.isBNN());
-            if (w.isBin()) {
-                if (w.red()) continue;
-                if (!seen[w.lit2().var()]) {
-                    solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_id(), false, true);
-                    removed++;
-                }
-            } else if (w.isClause()) {
-                const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
-                if (cl2.get_removed() || cl2.red()) continue;
-                bool ok = true;
-                for(auto const&l2: cl2) {
-                    if (seen[l2.var()]) {ok = false; break;}
-                }
-                if (ok) {
-                    unlink_clause(w.get_offset(), true, false, true);
-                    removed++;
-                }
-            }
-        }
-    }
-
-    for(uint32_t i = 0; i < solver->nVars(); i++) seen[i] = 0;
-
-    solver->clean_occur_from_removed_clauses_only_smudged();
-    free_clauses_to_free();
-
-    verb_print(1, "[occ-rem-unconn-assumps] Removed cls: " << removed);
 }
 
 void OccSimplifier::backward_sub()

@@ -148,7 +148,6 @@ public:
     vector<vector<Lit>> get_elimed_clauses_for(uint32_t outer_v);
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
-    void delete_component_unconnected_to_assumps(); //for arjun
     void reverse_blocked_clause_elim();
     bool lit_rem_with_or_gates();
     bool cl_rem_with_or_gates();
