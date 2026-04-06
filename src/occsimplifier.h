@@ -136,8 +136,6 @@ public:
     uint64_t picolits_added = 0;
     vector<int> var_to_picovar;
     vector<uint32_t> picovars_used;
-    vector<std::pair<ClOffset, ClOffset>> equiv_subformula_cls;
-    bool check_equiv_subformula(Lit lit);
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
@@ -195,6 +193,7 @@ public:
     //validity checking
     void check_elimed_vars_are_unassigned() const;
     void check_no_marked_clauses();
+    void clear_added_long_cl_marks();
     void sanityCheckElimedVars() const;
     void printOccur(const Lit lit) const;
     void check_clauses_lits_ordered() const;
