@@ -128,7 +128,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits
             << " num cls: " << num_cls << " num vars: " << nVars());
     vector<pair<int, int>> eqLits;
-    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, learned_units, learned_bins, eqLits);
+    int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits);
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     uint32_t num_eq_added = 0;
