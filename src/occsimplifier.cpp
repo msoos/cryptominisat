@@ -1024,38 +1024,6 @@ void OccSimplifier::check_no_marked_clauses()
     }
 }
 
-void OccSimplifier::strengthen_dummy_with_bins(const bool avoid_redundant)
-{
-    auto old_limit_to_decrease = limit_to_decrease;
-    limit_to_decrease = &dummy_str_time_limit;
-    uint32_t j;
-
-    if (*limit_to_decrease < 0) goto end;
-    for(auto const&l: dummy) seen[l.toInt()] = 1;
-    for(auto const&l: dummy) {
-        if (!seen[l.toInt()]) continue; //avoid loops
-        *limit_to_decrease -= 1;
-        for(auto const& w: solver->watches[l]) {
-            if (!w.isBin()) continue;
-            if (avoid_redundant && w.red()) continue;
-            const Lit lit2 = w.lit2();
-            if (seen[(~lit2).toInt()]) seen[(~lit2).toInt()] = 0;
-        }
-    }
-
-    j = 0;
-    for(uint32_t i = 0; i < dummy.size(); i++) {
-        if (seen[dummy[i].toInt()]) {
-            dummy[j++] = dummy[i];
-        }
-        seen[dummy[i].toInt()] = 0;
-    }
-    dummy.resize(j);
-
-    end:
-    limit_to_decrease = old_limit_to_decrease;
-}
-
 void OccSimplifier::subs_with_resolvent_clauses()
 {
     if (!solver->conf.do_subs_with_resolvent_clauses) return;
@@ -3213,8 +3181,6 @@ void OccSimplifier::set_limits()
     ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
     weaken_time_limit = 1000ULL*1000ULL*solver->conf.weaken_time_limitM
         *solver->conf.global_timeout_multiplier;
-    dummy_str_time_limit = 1000ULL*1000ULL*solver->conf.dummy_str_time_limitM
-        *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
@@ -3384,7 +3350,7 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t id
 
 void OccSimplifier::add_picosat_cls(
     const vec<Watched>& ws, const Lit elim_lit,
-    map<int, Watched>& picosat_cl_to_cms_cl)
+    unordered_map<int, Watched>& picosat_cl_to_cms_cl)
 {
     picosat_cl_to_cms_cl.clear();
     for(const auto& w: ws) {
@@ -3437,8 +3403,8 @@ bool OccSimplifier::find_irreg_gate(
     int ret = picosat_enable_trace_generation(picosat);
     assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
 
-    map<int, Watched> a_map;
-    map<int, Watched> b_map;
+    unordered_map<int, Watched> a_map;
+    unordered_map<int, Watched> b_map;
     assert(picovars_used.empty());
     add_picosat_cls(a, elim_lit, a_map);
     add_picosat_cls(b, elim_lit, b_map);
@@ -4018,42 +3984,6 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
 
     assert(solver->decisionLevel() == 0);
     return conflicted;
-}
-
-bool OccSimplifier::forward_subsume_irred(
-    const Lit lit,
-    cl_abst_type abs,
-    const uint32_t size)
-{
-    for(const auto& w: solver->watches[lit]) {
-        if (w.isBin()) {
-            if (!w.red() && seen[w.lit2().toInt()]) {
-                return true;
-            }
-        } else {
-            assert(w.isClause());
-            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->freed() || cl->get_removed() || cl->red()) {
-                continue;
-            }
-            if (cl->size() >= size || !subsetAbst(cl->abst, abs)) {
-                continue;
-            }
-
-            bool ok = true;
-            for(const auto& l: *cl) {
-                if (!seen[l.toInt()]) {
-                    ok = false;
-                    break;
-                }
-            }
-            if (ok) {
-                return true;
-            }
-
-        }
-    }
-    return false;
 }
 
 bool OccSimplifier::generate_resolvents_weakened(
@@ -5226,7 +5156,6 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     testedToElimVars += other.testedToElimVars;
     triedToElimVars += other.triedToElimVars;
     newClauses += other.newClauses;
-    subsumedByVE  += other.subsumedByVE;
     gatefind_timeouts += other.gatefind_timeouts;
 
     return *this;

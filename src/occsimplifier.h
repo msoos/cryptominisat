@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <array>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <set>
 
@@ -39,6 +40,7 @@ namespace CMSat {
 
 using std::vector;
 using std::map;
+using std::unordered_map;
 using std::set;
 using std::pair;
 
@@ -80,7 +82,6 @@ struct BVEStats
     uint64_t testedToElimVars = 0;
     uint64_t triedToElimVars = 0;
     uint64_t newClauses = 0;
-    uint64_t subsumedByVE = 0;
     uint64_t gatefind_timeouts = 0;
 
     BVEStats& operator+=(const BVEStats& other);
@@ -90,7 +91,6 @@ struct BVEStats
             << " gatefind timeout: " << gatefind_timeouts << endl;
         cout << "c [occ-bve]" << " cl-new: " << newClauses << " tried: " << triedToElimVars
             << " tested: " << testedToElimVars << endl;
-        cout << "c [occ-bve]" << " subs: "  << subsumedByVE << endl;
     }
 
     void print() const {
@@ -104,7 +104,6 @@ struct BVEStats
             ((double)clauses_elimed_sumsize
             /(double)(clauses_elimed_bin + clauses_elimed_long))
         );
-        print_stats_line("c v-elim-sub" , subsumedByVE);
     }
     void clear() {
         *this = BVEStats{};
@@ -152,7 +151,6 @@ public:
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_component_unconnected_to_assumps(); //for arjun
-    void strengthen_dummy_with_bins(const bool avoid_redundant);
     void reverse_blocked_clause_elim();
     bool lit_rem_with_or_gates();
     bool cl_rem_with_or_gates();
@@ -284,7 +282,6 @@ private:
     int64_t  ternary_res_cls_limit;
     int64_t  occ_based_lit_rem_time_limit;
     int64_t  weaken_time_limit;
-    int64_t  dummy_str_time_limit;
     int64_t* limit_to_decrease;
 
     //Memory limits
@@ -374,10 +371,6 @@ private:
     TouchList   elim_calc_need_update;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t var);
-    bool        forward_subsume_irred(
-        const Lit lit,
-        cl_abst_type abs,
-        const uint32_t size);
     vector<Lit> weaken_dummy;
     bool check_taut_weaken_dummy(const uint32_t dontuse);
     vector<Lit> antec_poss_weakened;
@@ -423,7 +416,7 @@ private:
         vec<Watched>& out_a,
         vec<Watched>& out_b
     );
-    void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, map<int, Watched>& picosat_cl_to_cms_cl);
+    void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
     bool turned_off_irreg_gate = false;
     bool resolve_gate;
     bool find_irreg_gate(
