@@ -212,7 +212,7 @@ void Main::printResultFunc(
 /* clang-format off */
 void Main::add_supported_options() {
     program.add_argument("--version", "-v")
-        .action([&](const auto ) {printVersionInfo();})
+        .action([&](const auto ) {printVersionInfo(); exit(0);})
         .flag()
         .help("Print version information");
     program.add_argument("--verb")
@@ -1163,10 +1163,6 @@ void Main::parseCommandLine() {
 
     add_supported_options();
     check_options_correctness();
-    if (program["version"] == true) {
-        printVersionInfo();
-        std::exit(0);
-    }
 
     try {
         manually_parse_some_options();
