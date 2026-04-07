@@ -89,7 +89,8 @@ def make_repro_with_schedules(repro_script, schedules):
         new_val = ",".join(elements)
         content = re.sub(r"(%s\s+)\S+" % re.escape(key),
                          lambda m, v=new_val: m.group(1) + v, content)
-    tmp = tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w")
+    script_dir = os.path.dirname(os.path.abspath(repro_script))
+    tmp = tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w", dir=script_dir)
     tmp.write(content)
     tmp.close()
     os.chmod(tmp.name, 0o755)
