@@ -90,6 +90,10 @@ def set_up_parser():
     parser.add_option("--maxth", "-m", dest="max_threads", default=20,
                       type=int, help="Max number of threads")
 
+    parser.add_option("--threads", dest="force_threads", default=None,
+                      type=int,
+                      help="Force a specific number of threads for CryptoMiniSat. If not given, threads are chosen randomly.")
+
     parser.add_option("--tout", "-t", dest="maxtime", type=int, default=25,
                       help="Max time to run. Default: %default")
 
@@ -247,6 +251,19 @@ class Tester:
         if "autodisablegauss" in self.extra_opts_supported:
             sched.append("occ-xor")
 
+        # oracle steps require backbone to have run first
+        first_oracle = None
+        for i, s in enumerate(sched):
+            if s.startswith("oracle"):
+                first_oracle = i
+                break
+        if first_oracle is not None:
+            # remove any backbone entries after the first oracle
+            # and ensure one exists before it
+            has_backbone_before = "backbone" in sched[:first_oracle]
+            if not has_backbone_before:
+                sched.insert(first_oracle, "backbone")
+
         return sched
 
     def rnd_schedule_all(self):
@@ -267,7 +284,7 @@ class Tester:
 
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
         sched_opts += "occ-bve-empty, occ-ternary-res, occ-gate-based-eqlit,"
-        sched_opts += "occ-del-elimed, occ-rem-unconn-assumps,"
+        sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
         sched_opts += "renumber, must-renumber,"
         sched_opts += "card-find, breakid, cl-consolidate,"
@@ -639,8 +656,11 @@ class Tester:
         fuzzers.extend(fuzzers_xor)
         fuzzer = random.choice(fuzzers)
 
-        self.num_threads = random.choice([1]+[random.randint(2,4)])
-        self.num_threads = min(options.max_threads, self.num_threads)
+        if options.force_threads is not None:
+            self.num_threads = options.force_threads
+        else:
+            self.num_threads = random.choice([1]+[random.randint(2,4)])
+            self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
@@ -791,6 +811,8 @@ if __name__ == "__main__":
             toexec += "--gauss "
         if options.only_sampling:
             toexec += "--sampling "
+        if options.force_threads is not None:
+            toexec += "--threads %d " % options.force_threads
         toexec += "-m %d " % options.max_threads
         toexec += "-t %d " % options.maxtime
 
