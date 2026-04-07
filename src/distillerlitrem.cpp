@@ -262,7 +262,9 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
         solver->enqueue<true>(~lit);
     }
     assert(solver->ok);
-    PropBy confl = solver->propagate<true>();
+    // distill_use=true disables Gaussian elimination, which is needed for FRAT
+    // correctness: XOR-derived conflicts can't be captured in RUP proofs
+    PropBy confl = solver->propagate<true, true, true>();
     solver->cancelUntil<false, true>(0);
 
      //Couldn't remove literal
