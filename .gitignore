@@ -49,3 +49,4 @@ html/cryptominisat5.wasm
 /scripts/fuzz/doalarm
 /scripts/fuzz/cake_xlrup
 /scripts/fuzz/repro.sh
+/scripts/fuzz/oracle_fuzz_failures
