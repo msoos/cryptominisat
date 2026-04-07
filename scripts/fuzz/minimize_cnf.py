@@ -33,12 +33,12 @@ def write_cnf(fname, clauses):
             f.write(cl + "\n")
 
 
-def is_crash(clauses, tmpfile, verbose=True):
+def is_crash(clauses, tmpfile, repro_script, verbose=True):
     write_cnf(tmpfile, clauses)
     if verbose:
-        print("  Running: ./repro.sh %s  (%d clauses)" % (tmpfile, len(clauses)))
+        print("  Running: %s %s  (%d clauses)" % (repro_script, tmpfile, len(clauses)))
     result = subprocess.run(
-        ["./repro.sh", tmpfile],
+        [repro_script, tmpfile],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
@@ -57,7 +57,7 @@ def save_intermediate(clauses, base, step):
     return fname
 
 
-def ddmin(clauses, tmpfile, base):
+def ddmin(clauses, tmpfile, base, repro_script):
     chunk_size = len(clauses) // 2
     oracle_calls = 0
     step = 0
@@ -72,7 +72,7 @@ def ddmin(clauses, tmpfile, base):
             print("  Trying to remove clauses [%d:%d] (%d clauses -> %d)" % (
                 i, end, len(clauses), len(candidate)))
             oracle_calls += 1
-            if is_crash(candidate, tmpfile):
+            if is_crash(candidate, tmpfile, repro_script):
                 step += 1
                 print("  REDUCED: %d -> %d clauses (removed %d at offset %d)" % (
                     len(clauses), len(candidate), end - i, i))
@@ -88,17 +88,19 @@ def ddmin(clauses, tmpfile, base):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: %s <input.cnf>" % sys.argv[0])
+    if len(sys.argv) < 3:
+        print("Usage: %s <input.cnf> <repro.sh>" % sys.argv[0])
         sys.exit(1)
 
     input_fname = sys.argv[1]
+    repro_script = sys.argv[2]
+
     if not os.path.exists(input_fname):
         print("Error: file not found: %s" % input_fname)
         sys.exit(1)
 
-    if not os.path.exists("./repro.sh"):
-        print("Error: ./repro.sh not found")
+    if not os.path.exists(repro_script):
+        print("Error: repro script not found: %s" % repro_script)
         sys.exit(1)
 
     clauses = parse_cnf(input_fname)
@@ -108,13 +110,13 @@ def main():
     tmpfile = tempfile.NamedTemporaryFile(suffix=".cnf", delete=False).name
     try:
         print("\nVerifying original CNF crashes...")
-        print("  Running: ./repro.sh %s  (%d clauses)" % (input_fname, len(clauses)))
-        if not is_crash(clauses, tmpfile, verbose=False):
+        print("  Running: %s %s  (%d clauses)" % (repro_script, input_fname, len(clauses)))
+        if not is_crash(clauses, tmpfile, repro_script, verbose=False):
             print("ERROR: original CNF does not trigger the crash. Aborting.")
             sys.exit(1)
         print("Confirmed crash. Starting minimization...\n")
 
-        minimized, oracle_calls = ddmin(clauses, tmpfile, base)
+        minimized, oracle_calls = ddmin(clauses, tmpfile, base, repro_script)
 
         out_fname = base + "_minimized.cnf"
         write_cnf(out_fname, minimized)
@@ -123,7 +125,7 @@ def main():
         print("Original: %d clauses" % len(clauses))
         print("Minimized: %d clauses (%d oracle calls)" % (len(minimized), oracle_calls))
         print("Minimized CNF written to: %s" % out_fname)
-        print("Verify with: ./repro.sh %s" % out_fname)
+        print("Verify with: %s %s" % (repro_script, out_fname))
     finally:
         if os.path.exists(tmpfile):
             os.unlink(tmpfile)
