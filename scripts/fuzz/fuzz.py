@@ -625,7 +625,7 @@ class Tester:
                 exit()
 
     def write_repro_script(self, fname, fname_frat=None):
-        script_path = "repro.sh"
+        script_path = unique_file("repro", ".sh")
         base_cmd = self.last_solver_base_cmd.strip()
         with open(script_path, "w") as f:
             f.write("#!/bin/bash\n")
@@ -646,7 +646,7 @@ class Tester:
                 f.write('%s "$CNF"\n' % base_cmd)
         os.chmod(script_path, 0o755)
         print("Repro script written to: %s" % script_path)
-        print("To reproduce the crash, run: ./repro.sh %s" % fname)
+        print("To reproduce the crash, run: ./%s %s" % (script_path, fname))
         print("To minimize the crash, run: ./minimize_cnf.py %s" % fname)
 
     def fuzz_test_one(self):
