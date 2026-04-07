@@ -43,11 +43,11 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define LARGE_OFFSETS
 #endif
 
-// #define VERBOSE_DEBUG
-// #define VERBOSE_DEBUG_FULLPROP
-// #define DEBUG_DEPTH
-// #define SLOW_DEBUG
-// #define DEBUG_ATTACH_FULL
+/* #define VERBOSE_DEBUG */
+/* #define VERBOSE_DEBUG_FULLPROP */
+/* #define DEBUG_DEPTH */
+/* #define SLOW_DEBUG */
+/* #define DEBUG_ATTACH_FULL */
 /* #define DEBUG_FRAT */
 
 #ifndef NDEBUG
