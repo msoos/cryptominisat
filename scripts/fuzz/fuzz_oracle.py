@@ -311,6 +311,8 @@ def fuzz_one(args, test_num, seed, counters):
                 print(assump_out)
                 saved = save_failing_cnf(cnf_path, test_num, seed)
                 print("CNF saved to:", saved)
+                print("To reproduce directly: %s -k 20 -s %d -v 2 %s" % (
+                    args.assump_fuzz, seed, saved))
                 return False
             else:
                 # Parse SAT/UNSAT/UNKNOWN counts from assump_fuzz output
