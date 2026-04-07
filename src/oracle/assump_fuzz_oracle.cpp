@@ -12,7 +12,6 @@
 
 #include "argparse.hpp"
 #include "oracle.h"
-#include "cadiback.h"
 #include "cadical.hpp"
 
 using std::cout;
@@ -25,8 +24,6 @@ using sspp::Lit;
 using sspp::Var;
 using sspp::PosLit;
 using sspp::NegLit;
-using sspp::VarOf;
-using sspp::IsPos;
 
 // Convert DIMACS literal (1-based, sign) to oracle Lit (even/odd encoding)
 static Lit dimacs_to_oracle_lit(int d) {
@@ -197,52 +194,9 @@ int main(int argc, char* argv[]) {
         cout << "c Parsed: " << cnf.num_vars << " vars, "
              << cnf.clauses.size() << " clauses" << endl;
 
-    // 2. Run cadiback to find backbones
-    // Convert to cadiback's flat DIMACS format
-    vector<int> cadiback_cnf;
-    for (const auto& cl : cnf.dimacs_clauses) {
-        for (int lit : cl) cadiback_cnf.push_back(lit);
-        cadiback_cnf.push_back(0);
-    }
-
-    vector<int> drop_cands; // empty = check all variables
-    vector<int> backbone_lits;
-    vector<int> learned_bins;
-    vector<std::pair<int, int>> eq_lits;
-
-    int cadiback_res = CadiBack::doit(
-        cadiback_cnf, verb >= 2 ? 0 : -1,
-        drop_cands, backbone_lits, learned_bins, eq_lits);
-
-    if (cadiback_res == 20) {
-        cerr << "ERROR: cadiback says UNSAT, but expected SAT" << endl;
-        return 1;
-    }
-
-    // Collect backbone variables
-    std::set<int> backbone_vars;
-    for (int bl : backbone_lits) {
-        if (bl == 0) continue;
-        backbone_vars.insert(abs(bl));
-    }
-
-    if (verb >= 1)
-        cout << "c Backbones: " << backbone_vars.size()
-             << " out of " << cnf.num_vars << " vars" << endl;
-
-    // 3. Build oracle clause list = original clauses + backbone units
-    vector<vector<Lit>> oracle_clauses = cnf.clauses;
-    // Also keep combined DIMACS clauses for verification
-    vector<vector<int>> all_dimacs_clauses = cnf.dimacs_clauses;
-    for (int bl : backbone_lits) {
-        if (bl == 0) continue;
-        oracle_clauses.push_back({dimacs_to_oracle_lit(bl)});
-        all_dimacs_clauses.push_back({bl});
-    }
-
-    // 4. Create oracle
+    // 2. Create oracle
     std::mt19937 rng(seed);
-    sspp::oracle::Oracle oracle(cnf.num_vars, oracle_clauses);
+    sspp::oracle::Oracle oracle(cnf.num_vars, cnf.clauses);
     if (verb >= 2) oracle.SetVerbosity(1);
 
     // Randomize cache cutoff to exercise the indexed lookup path
@@ -251,24 +205,16 @@ int main(int argc, char* argv[]) {
     oracle.SetCacheCutoff(cutoff);
     if (verb >= 1) cout << "c Cache cutoff: " << cutoff << endl;
 
-    // Build list of non-backbone variables for assumption picking
+    // Build list of variables for assumption picking
     vector<int> pickable_vars;
-    for (int v = 1; v <= cnf.num_vars; v++) {
-        if (backbone_vars.count(v) == 0)
-            pickable_vars.push_back(v);
-    }
+    for (int v = 1; v <= cnf.num_vars; v++)
+        pickable_vars.push_back(v);
 
-    if (pickable_vars.empty()) {
-        if (verb >= 1) cout << "c All variables are backbones, nothing to fuzz" << endl;
-        cout << "PASS" << endl;
-        return 0;
-    }
-
-    // 5. Fuzz loop
+    // 3. Fuzz loop
     int num_sat = 0, num_unsat = 0, num_unknown = 0;
 
     for (int iter = 0; iter < K; iter++) {
-        // Pick 1-10 random non-backbone variables
+        // Pick 1-10 random variables
         int num_assumps = std::uniform_int_distribution<int>(1, 10)(rng);
         num_assumps = std::min(num_assumps, (int)pickable_vars.size());
 
@@ -295,7 +241,6 @@ int main(int argc, char* argv[]) {
         // the indexed cache lookup path
         int clv = oracle.GetCacheLookupVar();
         if (clv != 0 && used_vars.count(clv) == 0
-                && backbone_vars.count(clv) == 0
                 && std::uniform_int_distribution<int>(0, 1)(rng) == 0) {
             bool positive = std::uniform_int_distribution<int>(0, 1)(rng);
             oracle_assumps.push_back(positive ? PosLit(clv) : NegLit(clv));
@@ -339,7 +284,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (!verify_solution_against_clauses(
-                    all_dimacs_clauses, model, cnf.num_vars, dimacs_assumps)) {
+                    cnf.dimacs_clauses, model, cnf.num_vars, dimacs_assumps)) {
                 cerr << "BUG at iteration " << iter << "!" << endl;
                 cerr << "Assumptions:";
                 for (int a : dimacs_assumps) cerr << " " << a;
@@ -355,12 +300,6 @@ int main(int argc, char* argv[]) {
             // Add all original clauses
             for (const auto& cl : cnf.dimacs_clauses) {
                 for (int lit : cl) cadical.add(lit);
-                cadical.add(0);
-            }
-            // Add backbone units
-            for (int bl : backbone_lits) {
-                if (bl == 0) continue;
-                cadical.add(bl);
                 cadical.add(0);
             }
             // Add assumptions as unit clauses

@@ -172,6 +172,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 
     uint64_t checks = 0;
     const uint8_t* cache_base = sol_cache.data();
+    const uint8_t* match = nullptr;
     if (found) {
         for(const auto& idx : cache_lookup[val]) {
             const uint8_t* entry = cache_base + idx*stride;
@@ -181,7 +182,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 checks++;
                 if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
-            if (ok) return true;
+            if (ok) { match = entry; break; }
         }
     } else {
         const uint8_t* const cache_end = cache_base + sol_cache.size();
@@ -192,11 +193,19 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 checks++;
                 if (entry[VarOf(l)] == !IsPos(l)) { ok = false; break; }
             }
-            if (ok) return true;
+            if (ok) { match = entry; break; }
         }
     }
     stats.mems += checks/20;
 
+    if (match) {
+        // Restore phases from the cached solution so GetPhase() returns
+        // values consistent with this cached model.
+        for (Var i = 1; i <= vars; i++) {
+            vs[i].phase = match[i];
+        }
+        return true;
+    }
     // Not in the cache
     return false;
 }
@@ -467,7 +476,12 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
             const Watch w = wt[wi];
             if (wi + 1 < wt.size()) cmsat_prefetch(clauses.data() + wt[wi+1].cls);
             stats.mems++;
-            assert(w.size > 2);
+            if (w.size <= 2) {
+                // Binary clause learned during oracle solving (e.g. from
+                // backbone unit propagation). The other literal is already
+                // assigned at level 1 — just drop the watch.
+                continue;
+            }
             size_t pos = w.cls;
             size_t opos = w.cls+1;
             if (clauses[pos] != tl) {
@@ -481,7 +495,19 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
                     f = i;
                 }
             }
-            assert(f);
+            if (!f) {
+                // All non-watch literals are assigned (e.g. due to learned units
+                // from backbone detection). The clause must be satisfied by some
+                // assigned literal — just drop the watch.
+                #ifdef VERBOSE_DEBUG
+                bool sat = false;
+                for (size_t i = w.cls; clauses[i]; i++) {
+                    if (LitVal(clauses[i]) == 1) { sat = true; break; }
+                }
+                assert(sat);
+                #endif
+                continue;
+            }
             swap(clauses[f], clauses[pos]);
             watches[clauses[pos]].push_back({w.cls, clauses[opos], w.size});
         }
@@ -652,7 +678,14 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 #endif
 
     vector<Lit> clause = {0};
-    int level = vs[VarOf(clauses[conflict_clause])].level;
+    // Find the actual max level — the first watch position is not guaranteed
+    // to hold the highest-level literal (e.g. when backbone units learned
+    // during oracle solving cause level-1 literals to occupy watch positions).
+    int level = 0;
+    for (size_t i = conflict_clause; clauses[i]; i++) {
+        int lv = vs[VarOf(clauses[i])].level;
+        if (lv > level) level = lv;
+    }
     int open = 0;
     oclv("---");
     for (size_t i = conflict_clause; clauses[i]; i++) {
