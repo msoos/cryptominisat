@@ -51,7 +51,12 @@ def run_repro(repro_script, cnf_file):
         stderr=subprocess.STDOUT,
         universal_newlines=True,
     )
-    return any(m in result.stdout for m in FAILURE_MARKERS)
+    out = result.stdout
+    # Reject SAT results — "UNSATISFIABLE" contains "SATISFIABLE" as substring,
+    # so check both to distinguish them.
+    if "s SATISFIABLE" in out and "s UNSATISFIABLE" not in out:
+        return False
+    return any(m in out for m in FAILURE_MARKERS)
 
 
 def is_crash(clauses, tmpfile, repro_script, verbose=True):
