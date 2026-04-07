@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Delta debugger for CNF minimization.
-# 1. First minimizes --schedule and --preschedule elements in the repro script.
-# 2. Then minimizes the CNF clauses.
+# 1. Minimizes --schedule and --preschedule elements in the repro script.
+# 2. Tries to disable subsystems by setting boolean options from 1->0 / true->false.
+# 3. Minimizes the CNF clauses.
 # Calls <repro.sh> <cnf> to check if a candidate still triggers the crash.
 
 import sys
@@ -76,6 +77,19 @@ def save_intermediate(clauses, base, step):
     return fname
 
 
+def _make_temp_repro(repro_script, content):
+    script_dir = os.path.dirname(os.path.abspath(repro_script))
+    tmp = tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w", dir=script_dir)
+    tmp.write(content)
+    tmp.close()
+    os.chmod(tmp.name, 0o755)
+    return tmp.name
+
+
+# ---------------------------------------------------------------------------
+# Phase 1: schedule minimization
+# ---------------------------------------------------------------------------
+
 def parse_schedules(repro_script):
     with open(repro_script) as f:
         content = f.read()
@@ -87,19 +101,12 @@ def parse_schedules(repro_script):
     return schedules
 
 
-def make_repro_with_schedules(repro_script, schedules):
-    with open(repro_script) as f:
-        content = f.read()
+def _apply_schedules(content, schedules):
     for key, elements in schedules.items():
         new_val = ",".join(elements)
         content = re.sub(r"(%s\s+)\S+" % re.escape(key),
                          lambda m, v=new_val: m.group(1) + v, content)
-    script_dir = os.path.dirname(os.path.abspath(repro_script))
-    tmp = tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w", dir=script_dir)
-    tmp.write(content)
-    tmp.close()
-    os.chmod(tmp.name, 0o755)
-    return tmp.name
+    return content
 
 
 def minimize_schedule(repro_script, cnf_file):
@@ -107,6 +114,9 @@ def minimize_schedule(repro_script, cnf_file):
     if not schedules:
         print("No --schedule or --preschedule found in repro script, skipping.")
         return repro_script
+
+    with open(repro_script) as f:
+        base_content = f.read()
 
     for key in ("--schedule", "--preschedule"):
         if key not in schedules:
@@ -120,7 +130,7 @@ def minimize_schedule(repro_script, cnf_file):
                 i += 1
                 continue
             schedules[key] = candidate
-            tmp_repro = make_repro_with_schedules(repro_script, schedules)
+            tmp_repro = _make_temp_repro(repro_script, _apply_schedules(base_content, schedules))
             try:
                 crashed = run_repro(tmp_repro, cnf_file)
             finally:
@@ -136,12 +146,86 @@ def minimize_schedule(repro_script, cnf_file):
         print("  Final %s (%d elements): %s" % (key, len(elements), ",".join(elements)))
 
     minimized_repro = os.path.splitext(repro_script)[0] + "_sched_minimized.sh"
-    final_repro = make_repro_with_schedules(repro_script, schedules)
-    os.rename(final_repro, minimized_repro)
+    final_content = _apply_schedules(base_content, schedules)
+    tmp = _make_temp_repro(repro_script, final_content)
+    os.rename(tmp, minimized_repro)
     os.chmod(minimized_repro, 0o755)
-    print("\nMinimized repro script written to: %s" % minimized_repro)
+    print("\nSchedule-minimized repro written to: %s" % minimized_repro)
     return minimized_repro
 
+
+# ---------------------------------------------------------------------------
+# Phase 2: option minimization (disable subsystems)
+# ---------------------------------------------------------------------------
+
+
+# Options that must not be set to 0/false during minimization.
+OPTION_BLACKLIST = {"--threads", "--savemem", "--yalsatmems", "--walksatruns"}
+
+
+def parse_option_candidates(repro_script):
+    """Return list of (opt, old_val, new_val) for boolean options we can try disabling."""
+    with open(repro_script) as f:
+        content = f.read()
+    m = re.search(r"cryptominisat5([^\n]+)", content)
+    if not m:
+        return []
+    cmd_args = m.group(1)
+    candidates = []
+    for m in re.finditer(r"(--[\w-]+)\s+(\S+)", cmd_args):
+        opt, val = m.group(1), m.group(2)
+        if opt in OPTION_BLACKLIST:
+            continue
+        if val == "1":
+            candidates.append((opt, val, "0"))
+        elif val.lower() == "true":
+            candidates.append((opt, val, "false"))
+    return candidates
+
+
+def _apply_option(content, opt, new_val):
+    return re.sub(r"(%s\s+)\S+" % re.escape(opt),
+                  lambda m, v=new_val: m.group(1) + v, content)
+
+
+def minimize_options(repro_script, cnf_file):
+    candidates = parse_option_candidates(repro_script)
+    if not candidates:
+        print("No disableable options found, skipping.")
+        return repro_script
+
+    print("\nTrying to disable %d options..." % len(candidates))
+    with open(repro_script) as f:
+        current_content = f.read()
+    disabled = []
+
+    for opt, old_val, new_val in candidates:
+        trial_content = _apply_option(current_content, opt, new_val)
+        tmp_repro = _make_temp_repro(repro_script, trial_content)
+        crashed = run_repro(tmp_repro, cnf_file)
+        if crashed:
+            print("  Disabled %s (%s -> %s)" % (opt, old_val, new_val))
+            disabled.append(opt)
+            current_content = trial_content
+            os.unlink(tmp_repro)
+        else:
+            os.unlink(tmp_repro)
+
+    if not disabled:
+        print("  No options could be disabled.")
+        return repro_script
+
+    minimized_repro = os.path.splitext(repro_script)[0] + "_opts_minimized.sh"
+    tmp = _make_temp_repro(repro_script, current_content)
+    os.rename(tmp, minimized_repro)
+    os.chmod(minimized_repro, 0o755)
+    print("\nOption-minimized repro written to: %s" % minimized_repro)
+    return minimized_repro
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: CNF clause minimization
+# ---------------------------------------------------------------------------
 
 def ddmin(clauses, tmpfile, base, repro_script):
     chunk_size = len(clauses) // 2
@@ -172,6 +256,10 @@ def ddmin(clauses, tmpfile, base, repro_script):
 
     return clauses, oracle_calls
 
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 def main():
     if len(sys.argv) < 3:
@@ -204,7 +292,10 @@ def main():
         print("=== Phase 1: Minimizing schedule ===")
         repro_script = minimize_schedule(repro_script, input_fname)
 
-        print("\n=== Phase 2: Minimizing CNF clauses ===")
+        print("\n=== Phase 2: Disabling subsystem options ===")
+        repro_script = minimize_options(repro_script, input_fname)
+
+        print("\n=== Phase 3: Minimizing CNF clauses ===")
         minimized, oracle_calls = ddmin(clauses, tmpfile, base, repro_script)
 
         out_fname = base + "_minimized.cnf"
