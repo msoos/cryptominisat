@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # Delta debugger for CNF minimization.
-# Calls ./repro.sh <cnf> to check if a candidate CNF still triggers the crash.
-# Saves every intermediate CNF that is smaller and still crashes.
+# 1. First minimizes --schedule and --preschedule elements in the repro script.
+# 2. Then minimizes the CNF clauses.
+# Calls <repro.sh> <cnf> to check if a candidate still triggers the crash.
 
 import sys
 import os
+import re
 import subprocess
 import tempfile
 
@@ -33,17 +35,30 @@ def write_cnf(fname, clauses):
             f.write(cl + "\n")
 
 
-def is_crash(clauses, tmpfile, repro_script, verbose=True):
-    write_cnf(tmpfile, clauses)
-    if verbose:
-        print("  Running: %s %s  (%d clauses)" % (repro_script, tmpfile, len(clauses)))
+FAILURE_MARKERS = [
+    "Checking failed",
+    "panicked",
+    "Unit propagation stuck",
+    "verifier error",
+    "empty clause not derived",
+]
+
+
+def run_repro(repro_script, cnf_file):
     result = subprocess.run(
-        [repro_script, tmpfile],
+        [repro_script, cnf_file],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
     )
-    crashed = "Checking failed" in result.stdout
+    return any(m in result.stdout for m in FAILURE_MARKERS)
+
+
+def is_crash(clauses, tmpfile, repro_script, verbose=True):
+    write_cnf(tmpfile, clauses)
+    if verbose:
+        print("  Running: %s %s  (%d clauses)" % (repro_script, tmpfile, len(clauses)))
+    crashed = run_repro(repro_script, tmpfile)
     if verbose:
         print("  Result: %s" % ("CRASH" if crashed else "no crash"))
     return crashed
@@ -53,8 +68,73 @@ def save_intermediate(clauses, base, step):
     fname = "%s_intermediate_%03d_%dclauses.cnf" % (base, step, len(clauses))
     write_cnf(fname, clauses)
     print("  Saved intermediate CNF: %s" % fname)
-    print("  Replay with: ./repro.sh %s" % fname)
     return fname
+
+
+def parse_schedules(repro_script):
+    with open(repro_script) as f:
+        content = f.read()
+    schedules = {}
+    for key in ("--schedule", "--preschedule"):
+        m = re.search(r"%s\s+(\S+)" % re.escape(key), content)
+        if m:
+            schedules[key] = m.group(1).split(",")
+    return schedules
+
+
+def make_repro_with_schedules(repro_script, schedules):
+    with open(repro_script) as f:
+        content = f.read()
+    for key, elements in schedules.items():
+        new_val = ",".join(elements)
+        content = re.sub(r"(%s\s+)\S+" % re.escape(key),
+                         lambda m, v=new_val: m.group(1) + v, content)
+    tmp = tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w")
+    tmp.write(content)
+    tmp.close()
+    os.chmod(tmp.name, 0o755)
+    return tmp.name
+
+
+def minimize_schedule(repro_script, cnf_file):
+    schedules = parse_schedules(repro_script)
+    if not schedules:
+        print("No --schedule or --preschedule found in repro script, skipping.")
+        return repro_script
+
+    for key in ("--schedule", "--preschedule"):
+        if key not in schedules:
+            continue
+        elements = list(schedules[key])
+        print("\nMinimizing %s (%d elements): %s" % (key, len(elements), ",".join(elements)))
+        i = 0
+        while i < len(elements):
+            candidate = elements[:i] + elements[i + 1:]
+            if not candidate:
+                i += 1
+                continue
+            schedules[key] = candidate
+            tmp_repro = make_repro_with_schedules(repro_script, schedules)
+            try:
+                crashed = run_repro(tmp_repro, cnf_file)
+            finally:
+                os.unlink(tmp_repro)
+            if crashed:
+                print("  Removed %s element [%d]: %s  (%d -> %d elements)" % (
+                    key, i, elements[i], len(elements), len(candidate)))
+                elements = candidate
+            else:
+                schedules[key] = elements
+                i += 1
+        schedules[key] = elements
+        print("  Final %s (%d elements): %s" % (key, len(elements), ",".join(elements)))
+
+    minimized_repro = os.path.splitext(repro_script)[0] + "_sched_minimized.sh"
+    final_repro = make_repro_with_schedules(repro_script, schedules)
+    os.rename(final_repro, minimized_repro)
+    os.chmod(minimized_repro, 0o755)
+    print("\nMinimized repro script written to: %s" % minimized_repro)
+    return minimized_repro
 
 
 def ddmin(clauses, tmpfile, base, repro_script):
@@ -110,12 +190,15 @@ def main():
     tmpfile = tempfile.NamedTemporaryFile(suffix=".cnf", delete=False).name
     try:
         print("\nVerifying original CNF crashes...")
-        print("  Running: %s %s  (%d clauses)" % (repro_script, input_fname, len(clauses)))
         if not is_crash(clauses, tmpfile, repro_script, verbose=False):
             print("ERROR: original CNF does not trigger the crash. Aborting.")
             sys.exit(1)
-        print("Confirmed crash. Starting minimization...\n")
+        print("Confirmed crash.\n")
 
+        print("=== Phase 1: Minimizing schedule ===")
+        repro_script = minimize_schedule(repro_script, input_fname)
+
+        print("\n=== Phase 2: Minimizing CNF clauses ===")
         minimized, oracle_calls = ddmin(clauses, tmpfile, base, repro_script)
 
         out_fname = base + "_minimized.cnf"
@@ -125,6 +208,7 @@ def main():
         print("Original: %d clauses" % len(clauses))
         print("Minimized: %d clauses (%d oracle calls)" % (len(minimized), oracle_calls))
         print("Minimized CNF written to: %s" % out_fname)
+        print("Minimized repro:  %s" % repro_script)
         print("Verify with: %s %s" % (repro_script, out_fname))
     finally:
         if os.path.exists(tmpfile):
