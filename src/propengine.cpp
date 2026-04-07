@@ -1119,7 +1119,6 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             << " type: " << removed_type_to_string(varData[l.var()].removed)
             << endl;
         }
-        cout << "XOR Propagating? " << (int)(x.propagating_watch<2) << endl;
 #endif
 
         // Some sanity checks

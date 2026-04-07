@@ -2692,7 +2692,7 @@ void Searcher::check_need_restart() {
         params.must_stop = true;
     }
 
-    VERBOSE_DEBUG_DO(if (params.needToStopSearch) cout << "c needToStopSearch set" << endl);
+    VERBOSE_DEBUG_DO(if (params.must_stop) cout << "c must_stop set" << endl);
 }
 
 void Searcher::print_solution_varreplace_status() const

@@ -216,7 +216,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     }
 
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "Number of elimed clauses: " << elimedClauses.size() << endl;
+    cout << "Number of elimed clauses: " << elimed_cls.size() << endl;
     print_elimed_clauses_reverse();
     #endif
 
@@ -2941,8 +2941,8 @@ bool OccSimplifier::uneliminate(uint32_t var)
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout
     << "Uneliminating cl ";
-    for(size_t i=0; i< elimedClauses[at_elimed_cls].size(); i++){
-        cout << elimedClauses[at_elimed_cls].at(i, elimed_cls_lits) << " ";
+    for(size_t i=0; i< elimed_cls[at_elimed_cls].size(); i++){
+        cout << elimed_cls[at_elimed_cls].at(i, elimed_cls_lits) << " ";
     }
     cout << " on var " << var+1
     << endl;
