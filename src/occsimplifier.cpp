@@ -2100,7 +2100,9 @@ bool OccSimplifier::gate_based_eqlit() {
                 // rhs must be equivalent
                 if (g2.rhs == g.rhs) continue;
                 myadd(g.rhs, ~g2.rhs);
+                if (!solver->okay()) goto end;
                 myadd(~g.rhs, g2.rhs);
+                if (!solver->okay()) goto end;
                 eq++;
             }
         }
