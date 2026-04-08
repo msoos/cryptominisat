@@ -41,7 +41,7 @@ inline Lit orc_to_lit(int x) {
     return Lit(var, neg);
 }
 
-bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
+bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
         bool& backbone_done)
 {
     if (!okay()) return okay();
@@ -128,7 +128,9 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
     verb_print(1, "[backbone-simpl] cadiback called with -- lits: " << num_lits
             << " num cls: " << num_cls << " num vars: " << nVars());
     vector<pair<int, int>> eqLits;
-    int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits);
+    bool backbone_limit_hit = false;
+    int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits,
+        orig_max_confl, &backbone_limit_hit);
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     uint32_t num_eq_added = 0;
@@ -183,8 +185,9 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
             if (value(lit.var()) != l_Undef) {ignore = true; continue;}
             tmp.push_back(lit);
         }
-        backbone_done = true;
-    } else {
+        if (!backbone_limit_hit) backbone_done = true;
+    } else if (res != 0) {
+        // res == 20 means UNSAT, res == 0 means limit hit (not an error)
         ok = false;
     }
 end:
