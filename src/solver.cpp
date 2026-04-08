@@ -1823,23 +1823,27 @@ lbool Solver::execute_inprocess_strategy(
                 distill_bin_cls->distill();
             }
         } else if (token == "distill-litrem") {
+            // Per-literal: assume all others false + target true, single propagation.
+            // Can find literals distill-cls misses; only shortens irred clauses, never removes.
             if (conf.do_distill_clauses) {
                 distill_lit_rem->distill_lit_rem();
             }
         } else if (token == "distill-cls") {
-            //Enqueues literals in long + tri clauses two-by-two and propagates
+            // Sequential: negate literals one-by-one with propagation after each.
+            // Can shorten and remove irred clauses. Skips already-distilled clauses.
             if (conf.do_distill_clauses) {
                 distill_long_cls->distill(false, false);
             }
         } else if (token == "clean-cls") {
             clauseCleaner->remove_and_clean_all();
         } else if (token == "distill-cls-onlyrem") {
-            //Enqueues literals in long + tri clauses two-by-two and propagates
+            // Like distill-cls but skips shortening; only removes fully-subsumed clauses.
             if (conf.do_distill_clauses) {
                 distill_long_cls->distill(false, true);
             }
         } else if (token == "must-distill-cls") {
-            //Enqueues literals in long + tri clauses two-by-two and propagates
+            // Like distill-cls but resets distilled/tried_to_remove flags first,
+            // forcing all clauses to be re-checked.
             if (conf.do_distill_clauses) {
                 for(const auto& offs: longIrredCls) {
                     Clause* cl = cl_alloc.ptr(offs);
@@ -1849,7 +1853,8 @@ lbool Solver::execute_inprocess_strategy(
                 distill_long_cls->distill(false, false);
             }
         } else if (token == "must-distill-cls-onlyrem") {
-            //Enqueues literals in long + tri clauses two-by-two and propagates
+            // Like distill-cls-onlyrem but resets tried_to_remove first,
+            // forcing all clauses to be re-checked for removal.
             if (conf.do_distill_clauses) {
                 for(const auto& offs: longIrredCls) {
                     Clause* cl = cl_alloc.ptr(offs);
