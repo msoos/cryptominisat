@@ -251,10 +251,14 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         if (!okay()) return false;
     }
 
-    if (conf.oracle_get_learnts) {
-        for (const auto& cl: oracle.GetLearnedClauses()) {
-            tmp2.clear();
-            for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
+    for (const auto& cl: oracle.GetLearnedClauses()) {
+        tmp2.clear();
+        for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
+        if (cl.size() == 1) {
+            Clause* cl2 = solver->add_clause_int(tmp2);
+            assert(!cl2);
+            if (!okay()) return false;
+        } else if (conf.oracle_get_learnts) {
             ClauseStats s;
             s.which_red_array = 2;
             s.id = ++clauseID;
@@ -547,6 +551,12 @@ bool Solver::oracle_sparsify(bool fast)
     }
 
     fin:
+    for (const auto& l: oracle.GetLearnedUnits(nVars())) {
+        const Lit lit = orc_to_lit(l);
+        if (value(lit.var()) == l_Undef) {
+            if (!fully_enqueue_this(lit)) return false;
+        }
+    }
     if (fast) conf.oracle_removed_is_learnt = true;
     uint32_t bin_red_added = 0;
     uint32_t bin_irred_removed = 0;

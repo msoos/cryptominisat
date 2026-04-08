@@ -120,6 +120,7 @@ public:
     void AddClause(const vector<Lit>& clause, bool entailed);
     void PrintStats() const;
     vector<vector<Lit>> GetLearnedClauses() const;
+    vector<Lit> GetLearnedUnits(int max_var) const;
 
     int CurLevel() const;
     int LitVal(Lit lit) const;

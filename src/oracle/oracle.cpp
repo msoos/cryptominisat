@@ -1206,5 +1206,15 @@ vector<vector<Lit>> Oracle::GetLearnedClauses() const {
     return ret;
 }
 
+vector<Lit> Oracle::GetLearnedUnits(int max_var) const {
+    vector<Lit> ret;
+    const int limit = std::min(vars, max_var);
+    for (Var v = 1; v <= limit; v++) {
+        if (LitVal(PosLit(v)) == 1)       ret.push_back(PosLit(v));
+        else if (LitVal(PosLit(v)) == -1) ret.push_back(NegLit(v));
+    }
+    return ret;
+}
+
 } // namespace oracle
 } // namespace sspp
