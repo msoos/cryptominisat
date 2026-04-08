@@ -1899,8 +1899,8 @@ lbool Solver::execute_inprocess_strategy(
         if (token.substr(0,3) != "occ" && !token.empty())
             print_simp_stats("AFTER", token);
 
-        SLOW_DEBUG_DO(check_stats());
         if (!okay()) return l_False;
+        SLOW_DEBUG_DO(check_stats());
         DEBUG_ATTACH_MORE_DO(check_wrong_attach());
         DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
     }
