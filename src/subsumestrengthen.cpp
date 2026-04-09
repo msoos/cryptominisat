@@ -340,17 +340,28 @@ void inline SubsumeStrengthen::fill_sub_str(
             if (cl.size() > 2) continue;
             if (w.red()) continue;
 
-            if (w.lit2() != bin_other_lit) continue;
-
             if (inverted) {
-                out_subsumed.push_back(OccurClause(lit, w));
-                out_lits.push_back(bin_other_lit);
+                // cl = {..., ~lit, bin_other_lit}, target = (lit, w.lit2())
+                // Strengthening: w.lit2() == bin_other_lit
+                //   → resolve on lit/~lit → unit bin_other_lit
+                if (w.lit2() == bin_other_lit) {
+                    out_subsumed.push_back(OccurClause(lit, w));
+                    out_lits.push_back(bin_other_lit);
+                }
             } else {
-                //Don't delete ourselves
-                num_bin_found++;
-                if (num_bin_found <= 1) continue;
-                out_subsumed.push_back(OccurClause(lit, w));
-                out_lits.push_back(lit_Undef);
+                if (w.lit2() == bin_other_lit) {
+                    // Subsumption: same clause (skip self, report duplicates)
+                    num_bin_found++;
+                    if (num_bin_found > 1) {
+                        out_subsumed.push_back(OccurClause(lit, w));
+                        out_lits.push_back(lit_Undef);
+                    }
+                } else if (w.lit2() == ~bin_other_lit) {
+                    // cl = {lit, bin_other_lit}, target = (lit, ~bin_other_lit)
+                    // Strengthening: resolve on bin_other_lit → unit lit
+                    out_subsumed.push_back(OccurClause(lit, w));
+                    out_lits.push_back(lit);
+                }
             }
             continue;
         }
