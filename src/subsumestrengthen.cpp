@@ -490,7 +490,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
 template<class T1, class T2>
 bool SubsumeStrengthen::subset(const T1& A, const T2& B)
 {
-    #ifdef MORE_DEBUG
+    #ifdef MORE_DEUBUG
     cout << "A:" << A << endl;
     for(size_t i = 1; i < A.size(); i++) {
         assert(A[i-1] < A[i]);
