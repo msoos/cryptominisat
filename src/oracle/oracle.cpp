@@ -199,11 +199,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     stats.mems += checks/20;
 
     if (match) {
-        // Restore phases from the cached solution so GetPhase() returns
-        // values consistent with this cached model.
-        for (Var i = 1; i <= vars; i++) {
-            vs[i].phase = match[i];
-        }
+        cached_solution = match;
         return true;
     }
     // Not in the cache
@@ -1066,6 +1062,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
     int64_t mems_startup = stats.mems;
     if (unsat) return false;
     if (usecache && SatByCache(assumps)) {stats.cache_useful++; return true;}
+    cached_solution = nullptr;
     oclv("SOLVE called ");
     // TODO: solution caching
     for (const auto& lit : assumps) {

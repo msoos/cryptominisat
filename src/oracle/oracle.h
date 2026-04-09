@@ -126,7 +126,10 @@ public:
     int LitVal(Lit lit) const;
     // Get the phase (polarity) of a variable from the last solution.
     // Returns 1 for true, 0 for false. Only valid after a SAT Solve().
-    int GetPhase(Var v) const { return vs[v].phase; }
+    int GetPhase(Var v) const {
+        if (cached_solution) return cached_solution[v];
+        return vs[v].phase;
+    }
     const Stats& getStats() const {return stats;}
     void reset_mems() {stats.mems = 0;}
 
@@ -144,6 +147,7 @@ public:
     vector<VarC> vs;
 
     bool unsat = false;
+    const uint8_t* cached_solution = nullptr;
 
     const int vars;
     size_t orig_clauses_size = 0;
