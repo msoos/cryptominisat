@@ -102,6 +102,7 @@ public:
     const Stats& get_stats() const;
 
 private:
+    OrGate* find_gate_to_elim_on(Lit lit, uint32_t cutoff);
     void print_graphviz_dot();
 
     //Setup
@@ -120,6 +121,7 @@ private:
     );
 
     vector<ClOffset> subs; //to reduce overhead of allocation
+    size_t findEqOrGates();
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates
