@@ -1351,37 +1351,6 @@ void OccSimplifier::free_clauses_to_free()
     cl_to_free_later.clear();
 }
 
-void OccSimplifier::promote_red_to_irred(Clause& cl)
-{
-    assert(cl.red());
-    STATS_DO(solver->stats_del_cl(&cl));
-    cl.make_irred();
-    solver->litStats.redLits -= cl.size();
-    solver->litStats.irredLits += cl.size();
-    if (!cl.get_occur_linked()) {
-        link_in_clause(cl);
-    } else {
-        for(const Lit l: cl) {
-            n_occurs[l.toInt()]++;
-            elim_calc_need_update.touch(l);
-            added_cl_to_var.touch(l);
-        }
-    }
-}
-
-void OccSimplifier::promote_red_bin_to_irred(const vector<Lit>& lits, int32_t id)
-{
-    solver->binTri.redBins--;
-    solver->binTri.irredBins++;
-    for (const Lit l : lits) {
-        n_occurs[l.toInt()]++;
-        elim_calc_need_update.touch(l);
-        added_cl_to_var.touch(l);
-    }
-    findWatchedOfBin(solver->watches, lits[1], lits[0], true, id).setRed(false);
-    findWatchedOfBin(solver->watches, lits[0], lits[1], true, id).setRed(false);
-}
-
 bool OccSimplifier::fill_occur_and_print_stats()
 {
     double my_time = cpu_time();
@@ -2783,44 +2752,42 @@ bool OccSimplifier::backward_sub_str()
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &subsumption_time_limit;
 
-    auto cleanup = [&]() {
-        solver->clean_occur_from_removed_clauses_only_smudged();
-        free_clauses_to_free();
-        limit_to_decrease = old_limit_to_decrease;
-    };
-
     //Sub-str long with bins
     subsumption_time_limit += (int64_t)
         ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);
     if (!sub_str->backw_sub_str_long_with_bins()
         || solver->must_interrupt_asap()
     ) {
-        cleanup();
-        return solver->okay();
+        goto end;
     }
 
     //Sub long with long
     subsumption_time_limit += (int64_t)
         ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_w_long);
     sub_str->backw_sub_long_with_long();
-    if (solver->must_interrupt_asap()) {
-        cleanup();
-        return solver->okay();
-    }
+    if (solver->must_interrupt_asap())
+        goto end;
 
     //Sub+Str long with long
     limit_to_decrease = &strengthening_time_limit;
-    if (!sub_str->backw_sub_str_long_with_long()
+    if (!sub_str->backw_str_long_with_long()
         || solver->must_interrupt_asap()
     ) {
-        cleanup();
-        return solver->okay();
+        goto end;
     }
 
     //Deal with added long and bin
-    sub_str_with_added_long_and_bin(true);
+    if (!sub_str_with_added_long_and_bin(true)
+        || solver->must_interrupt_asap()
+    ) {
+        goto end;
+    }
 
-    cleanup();
+    end:
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+    limit_to_decrease = old_limit_to_decrease;
+
     return solver->okay();
 }
 
@@ -5198,17 +5165,7 @@ bool OccSimplifier::remove_literal(
     if (cl.red()) solver->litStats.redLits--;
     else solver->litStats.irredLits--;
 
-    if (!clean_clause(offset, only_set_is_removed)) return false;
-
-    // Re-check: if clause is still long and irred, enqueue for re-processing
-    // so it can be used to subsume/strengthen other clauses
-    if (!cl.get_removed() && !cl.freed() && cl.size() > 2 && !cl.red()) {
-        if (!cl.stats.marked_clause) {
-            cl.stats.marked_clause = 1;
-            added_long_cl.push_back(offset);
-        }
-    }
-    return true;
+    return clean_clause(offset, only_set_is_removed);
 }
 
 void OccSimplifier::check_clauses_lits_ordered() const

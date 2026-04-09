@@ -56,7 +56,19 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
 
     //If irred is subsumed by redundant, make the redundant into irred
     if (cl.red() && ret.subsumedIrred) {
-        simplifier->promote_red_to_irred(cl);
+        STATS_DO(solver->stats_del_cl(&cl));
+        cl.make_irred();
+        solver->litStats.redLits -= cl.size();
+        solver->litStats.irredLits += cl.size();
+        if (!cl.get_occur_linked()) {
+            simplifier->link_in_clause(cl);
+        } else {
+            for(const Lit l: cl) {
+                simplifier->n_occurs[l.toInt()]++;
+                simplifier->elim_calc_need_update.touch(l);
+                simplifier->added_cl_to_var.touch(l);
+            }
+        }
     }
 
     //Update stats
@@ -156,8 +168,20 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             VERBOSE_PRINT("subsumed clause " << cl2);
 
             //If subsumes a irred, and is redundant, make it irred
-            if (cl.red() && !cl2.red()) {
-                simplifier->promote_red_to_irred(cl);
+            if (cl.red()
+                && !cl2.red()
+            ) {
+                STATS_DO(solver->stats_del_cl(&cl));
+                cl.make_irred();
+                solver->litStats.redLits -= cl.size();
+                solver->litStats.irredLits += cl.size();
+                if (!cl.get_occur_linked()) {
+                    simplifier->link_in_clause(cl);
+                } else {
+                    for(const Lit l: cl) {
+                        simplifier->n_occurs[l.toInt()]++;
+                    }
+                }
             }
 
             //Update stats
@@ -242,7 +266,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     runStats.subsumeTime += cpu_time() - my_time;
 }
 
-bool SubsumeStrengthen::backw_sub_str_long_with_long()
+bool SubsumeStrengthen::backw_str_long_with_long()
 {
     assert(solver->ok);
 
@@ -328,6 +352,8 @@ void inline SubsumeStrengthen::fill_sub_str(
     uint32_t num_bin_found = 0;
     const auto& cs = solver->watches[lit];
 
+    //Do subsume only for the moment
+    //TODO strengthening
     Lit bin_other_lit = lit_Undef;
     if (cl.size() == 2) {
         if (lit == (cl[0]^inverted)) bin_other_lit = cl[1];
@@ -339,29 +365,17 @@ void inline SubsumeStrengthen::fill_sub_str(
         if (w.isBin()) {
             if (cl.size() > 2) continue;
             if (w.red()) continue;
+            if (w.lit2() != bin_other_lit) continue;
 
             if (inverted) {
-                // cl = {..., ~lit, bin_other_lit}, target = (lit, w.lit2())
-                // Strengthening: w.lit2() == bin_other_lit
-                //   → resolve on lit/~lit → unit bin_other_lit
-                if (w.lit2() == bin_other_lit) {
-                    out_subsumed.push_back(OccurClause(lit, w));
-                    out_lits.push_back(bin_other_lit);
-                }
+                out_subsumed.push_back(OccurClause(lit, w));
+                out_lits.push_back(bin_other_lit);
             } else {
-                if (w.lit2() == bin_other_lit) {
-                    // Subsumption: same clause (skip self, report duplicates)
-                    num_bin_found++;
-                    if (num_bin_found > 1) {
-                        out_subsumed.push_back(OccurClause(lit, w));
-                        out_lits.push_back(lit_Undef);
-                    }
-                } else if (w.lit2() == ~bin_other_lit) {
-                    // cl = {lit, bin_other_lit}, target = (lit, ~bin_other_lit)
-                    // Strengthening: resolve on bin_other_lit → unit lit
-                    out_subsumed.push_back(OccurClause(lit, w));
-                    out_lits.push_back(lit);
-                }
+                //Don't delete ourselves
+                num_bin_found++;
+                if (num_bin_found <= 1) continue;
+                out_subsumed.push_back(OccurClause(lit, w));
+                out_lits.push_back(lit_Undef);
             }
             continue;
         }
@@ -809,7 +823,17 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
         strBin += ret.str;
 
         if (red && ret.subsumedIrred) {
-            simplifier->promote_red_bin_to_irred(tmpLits, tmp[i].get_id());
+            solver->binTri.redBins--;
+            solver->binTri.irredBins++;
+            for (const Lit l : tmpLits) {
+                simplifier->n_occurs[l.toInt()]++;
+                simplifier->elim_calc_need_update.touch(l);
+                simplifier->added_cl_to_var.touch(l);
+            }
+            findWatchedOfBin(
+                solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_id()).setRed(false);
+            findWatchedOfBin(
+                solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_id()).setRed(false);
         }
     }
 
