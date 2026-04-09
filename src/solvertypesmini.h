@@ -197,7 +197,7 @@ class OrGate {
             lits(_lits), rhs(_rhs), id(_ID)
 
         {
-            std::sort(lits.begin(), lits.end());
+          assert(std::is_sorted(lits.begin(), lits.end()));
         }
 
         bool operator==(const OrGate& other) const

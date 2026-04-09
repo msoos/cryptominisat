@@ -889,7 +889,7 @@ bool OccSimplifier::sub_str_with_added_long_and_bin(const bool verbose)
             tmp_bin_cl[0] = added_irred_bin[i].first;
             tmp_bin_cl[1] = added_irred_bin[i].second;
 
-            Sub1Ret ret; //TODO use this in the stats
+            Sub1Ret ret;
             if (!sub_str->backw_sub_str_with_impl(tmp_bin_cl, ret)) return false;
         }
         added_irred_bin.clear();
@@ -906,8 +906,6 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
 
-    //This only matters in terms of var elim complexity
-    //solver->clauseCleaner->clean_implicit_clauses();
     cls_to_clean_tmp.clear();
 
     // Process a watchlist for a set literal: remove bins, keep long clauses
@@ -1710,7 +1708,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     uint32_t no_cls_matching_filter = 0;
     uint32_t no_occ = 0;
     uint32_t too_many_occ = 0;
-    uint32_t equiv_subformula = 0;
 
     vector<uint32_t> vars2;
     for(const uint32_t& v: vars) {
@@ -1782,8 +1779,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 
     verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
                << " pico ran: " << picosat_ran << " unsat: " << unsat
-               << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ
-               << " empty-res: " << equiv_subformula);
+               << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ);
 
     solver->conf.maxOccurRedMB = backup;
     finish_up(origTrailSize);
@@ -2189,7 +2185,6 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             assert(!cl->freed());
             assert(cl->get_occur_linked());
 
-            //TODO check calcAbst!
             bool contains_rhs = false;
             bool contains_inv_rhs = false;
             uint32_t found = 0;

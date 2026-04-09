@@ -328,8 +328,6 @@ void inline SubsumeStrengthen::fill_sub_str(
     uint32_t num_bin_found = 0;
     const auto& cs = solver->watches[lit];
 
-    //Do subsume only for the moment
-    //TODO strengthening
     Lit bin_other_lit = lit_Undef;
     if (cl.size() == 2) {
         if (lit == (cl[0]^inverted)) bin_other_lit = cl[1];
@@ -480,7 +478,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
 template<class T1, class T2>
 bool SubsumeStrengthen::subset(const T1& A, const T2& B)
 {
-    #ifdef MORE_DEUBUG
+    #ifdef MORE_DEBUG
     cout << "A:" << A << endl;
     for(size_t i = 1; i < A.size(); i++) {
         assert(A[i-1] < A[i]);

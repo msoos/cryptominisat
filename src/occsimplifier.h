@@ -136,8 +136,6 @@ public:
     uint64_t picolits_added = 0;
     vector<int> var_to_picovar;
     vector<uint32_t> picovars_used;
-    vector<std::pair<ClOffset, ClOffset>> equiv_subformula_cls;
-    bool check_equiv_subformula(Lit lit);
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
