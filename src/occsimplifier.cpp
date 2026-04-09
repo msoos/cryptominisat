@@ -5207,17 +5207,7 @@ bool OccSimplifier::remove_literal(
     if (cl.red()) solver->litStats.redLits--;
     else solver->litStats.irredLits--;
 
-    if (!clean_clause(offset, only_set_is_removed)) return false;
-
-    // Re-check: if clause is still long and irred, enqueue for re-processing
-    // so it can be used to subsume/strengthen other clauses
-    if (!cl.get_removed() && !cl.freed() && cl.size() > 2 && !cl.red()) {
-        if (!cl.stats.marked_clause) {
-            cl.stats.marked_clause = 1;
-            added_long_cl.push_back(offset);
-        }
-    }
-    return true;
+    return clean_clause(offset, only_set_is_removed);
 }
 
 void OccSimplifier::check_clauses_lits_ordered() const
