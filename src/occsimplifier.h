@@ -215,6 +215,8 @@ public:
         , bool only_set_is_removed = false
     );
     void free_clauses_to_free();
+    void promote_red_to_irred(Clause& cl);
+    void promote_red_bin_to_irred(const vector<Lit>& lits, int32_t id);
 
     //Setup and teardown. Should be private, but testing needs it to be public
     bool setup();

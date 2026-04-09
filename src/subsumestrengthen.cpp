@@ -56,19 +56,7 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
 
     //If irred is subsumed by redundant, make the redundant into irred
     if (cl.red() && ret.subsumedIrred) {
-        STATS_DO(solver->stats_del_cl(&cl));
-        cl.make_irred();
-        solver->litStats.redLits -= cl.size();
-        solver->litStats.irredLits += cl.size();
-        if (!cl.get_occur_linked()) {
-            simplifier->link_in_clause(cl);
-        } else {
-            for(const Lit l: cl) {
-                simplifier->n_occurs[l.toInt()]++;
-                simplifier->elim_calc_need_update.touch(l);
-                simplifier->added_cl_to_var.touch(l);
-            }
-        }
+        simplifier->promote_red_to_irred(cl);
     }
 
     //Update stats
@@ -168,20 +156,8 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             VERBOSE_PRINT("subsumed clause " << cl2);
 
             //If subsumes a irred, and is redundant, make it irred
-            if (cl.red()
-                && !cl2.red()
-            ) {
-                STATS_DO(solver->stats_del_cl(&cl));
-                cl.make_irred();
-                solver->litStats.redLits -= cl.size();
-                solver->litStats.irredLits += cl.size();
-                if (!cl.get_occur_linked()) {
-                    simplifier->link_in_clause(cl);
-                } else {
-                    for(const Lit l: cl) {
-                        simplifier->n_occurs[l.toInt()]++;
-                    }
-                }
+            if (cl.red() && !cl2.red()) {
+                simplifier->promote_red_to_irred(cl);
             }
 
             //Update stats
@@ -266,7 +242,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     runStats.subsumeTime += cpu_time() - my_time;
 }
 
-bool SubsumeStrengthen::backw_str_long_with_long()
+bool SubsumeStrengthen::backw_sub_str_long_with_long()
 {
     assert(solver->ok);
 
@@ -823,17 +799,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
         strBin += ret.str;
 
         if (red && ret.subsumedIrred) {
-            solver->binTri.redBins--;
-            solver->binTri.irredBins++;
-            for (const Lit l : tmpLits) {
-                simplifier->n_occurs[l.toInt()]++;
-                simplifier->elim_calc_need_update.touch(l);
-                simplifier->added_cl_to_var.touch(l);
-            }
-            findWatchedOfBin(
-                solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_id()).setRed(false);
-            findWatchedOfBin(
-                solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_id()).setRed(false);
+            simplifier->promote_red_bin_to_irred(tmpLits, tmp[i].get_id());
         }
     }
 
