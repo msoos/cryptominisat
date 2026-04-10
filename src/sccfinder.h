@@ -124,13 +124,14 @@ class SCCFinder {
 };
 
 inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
+    const uint32_t v_prime = lit.toInt();
     // Was successor v' visited?
-    if (index[lit.toInt()] ==  numeric_limits<uint32_t>::max()) {
-        tarjan(lit.toInt());
+    if (index[v_prime] == numeric_limits<uint32_t>::max()) {
+        tarjan(v_prime);
         depth--;
-        lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
-    } else if (stackIndicator[lit.toInt()])  {
-        lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
+        lowlink[vertex] = std::min(lowlink[vertex], lowlink[v_prime]);
+    } else if (stackIndicator[v_prime]) {
+        lowlink[vertex] = std::min(lowlink[vertex], lowlink[v_prime]);
     }
 }
 
