@@ -146,11 +146,12 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
 void SCCFinder::add_bin_xor_in_tmp()
 {
+    const Lit head = Lit::toLit(tmp[0]);
     for (uint32_t i = 1; i < tmp.size(); i++) {
-        bool rhs = Lit::toLit(tmp[0]).sign()
-            ^ Lit::toLit(tmp[i]).sign();
+        const Lit other = Lit::toLit(tmp[i]);
+        const bool rhs = head.sign() ^ other.sign();
 
-        BinaryXor binxor(Lit::toLit(tmp[0]).var(), Lit::toLit(tmp[i]).var(), rhs);
+        BinaryXor binxor(head.var(), other.var(), rhs);
         binxors.insert(binxor);
 
         //Both are UNDEF, so this is a proper binary XOR
@@ -178,7 +179,7 @@ void SCCFinder::Stats::print_short(const Solver* solver) const
     << " BP " << bogoprops/(1000*1000) << "M"
     << solver->conf.print_times(cpu_time));
 
-    if (solver && solver->sqlStats) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "scc"
