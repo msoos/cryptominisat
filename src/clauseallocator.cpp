@@ -79,11 +79,7 @@ inline ClOffset read_reloced_offset(const Clause* old)
 }
 } // namespace
 
-ClauseAllocator::ClauseAllocator() :
-    dataStart(nullptr)
-    , size(0)
-    , capacity(0)
-    , currentlyUsedSize(0)
+ClauseAllocator::ClauseAllocator()
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
 }
