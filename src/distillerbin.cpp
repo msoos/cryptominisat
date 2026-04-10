@@ -55,9 +55,10 @@ bool DistillerBin::distill()
     runStats.clear();
     frat_func_start();
 
-    if (!distill_bin_cls_all(1.0)) goto end;
+    // distill_bin_cls_all returns solver->okay(); ignore the return value
+    // since the post-amble below works whether or not we hit UNSAT.
+    (void)distill_bin_cls_all(1.0);
 
-end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3) runStats.print(solver->nVars());
@@ -98,14 +99,14 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     runStats.potentialClauses += potential_size;
     runStats.numCalled += 1;
 
-    bool time_out;
+    bool time_out = false;
     vector<Lit> todo;
+    todo.reserve(solver->nVars() * 2);
     for(uint32_t i = 0; i < solver->nVars()*2; i ++) {
-        const Lit lit = Lit::toLit(i);
-        todo.push_back(lit);
+        todo.push_back(Lit::toLit(i));
     }
     std::shuffle(todo.begin(), todo.end(), solver->mtrand);
-    for(const auto& lit: todo) {
+    for(const Lit lit: todo) {
         time_out = go_through_bins(lit);
         if (time_out || !solver->okay()) break;
     }
@@ -212,8 +213,7 @@ bool DistillerBin::try_distill_bin(
         } else if (solver->value(lit2) == l_False) {
             //Unit derived
             solver->cancelUntil<false, true>(0);
-            vector<Lit> x(1);
-            x[0] = lit1;
+            vector<Lit> x = {lit1};
             solver->add_clause_int(x);
             solver->detach_bin_clause(lit1, lit2, false, w.get_id());
             (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
