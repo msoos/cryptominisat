@@ -24,6 +24,7 @@
 #include "constants.h"
 
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 using std::cout;
@@ -107,6 +108,27 @@ void Oracle::ClearSolCache() {
     cache_lookup_var = 0;
     rebuild_cache_lookup();
     cache_lookup_frequencies.clear();
+}
+
+void Oracle::PruneSolCacheForVar(Var v, uint8_t phase) {
+    if (sol_cache.empty()) return;
+    const uint32_t stride = vars+1;
+    assert(sol_cache.size()%stride == 0);
+    const size_t num_entries = sol_cache.size()/stride;
+    size_t write = 0;
+    for (size_t read = 0; read < num_entries; read++) {
+        if (sol_cache[read*stride + v] == phase) {
+            if (write != read) {
+                std::memmove(&sol_cache[write*stride],
+                             &sol_cache[read*stride], stride);
+            }
+            write++;
+        }
+    }
+    sol_cache.resize(write * stride);
+    // cached_solution may point into the old layout; invalidate it.
+    cached_solution = nullptr;
+    rebuild_cache_lookup();
 }
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
@@ -517,6 +539,9 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
     decided.pop_back();
     assert(prop_q.back() == Neg(lit));
     prop_q.pop_back();
+    // A freeze permanently commits lit. Any cached solution with lit in the
+    // opposite phase is no longer valid, so drop those entries now.
+    if (freeze) PruneSolCacheForVar(VarOf(lit), IsPos(lit) ? 1 : 0);
 }
 
 void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
@@ -1113,6 +1138,7 @@ bool Oracle::FreezeUnit(Lit unit) {
     if (LitVal(unit) == 1) {
         return true;
     }
+    const size_t pre_decided = decided.size();
     Decide(unit, 1);
     stats.learned_units++;
     oclv("[oracle] learnt unit: " << VarOf(unit) << " val: " << LitVal(unit));
@@ -1120,6 +1146,15 @@ bool Oracle::FreezeUnit(Lit unit) {
     if (confl) {
         unsat = true;
         return false;
+    }
+    // The freeze (and any level-1 propagation it triggered) may have
+    // invalidated cached full solutions. Drop any entries that now
+    // contradict the newly-committed level-1 assignments.
+    if (!sol_cache.empty()) {
+        for (size_t i = pre_decided; i < decided.size(); i++) {
+            const Var v = decided[i];
+            PruneSolCacheForVar(v, vs[v].phase);
+        }
     }
     return true;
 }

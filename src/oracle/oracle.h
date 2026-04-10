@@ -280,6 +280,11 @@ public:
     void AddSolToCache();
     bool SatByCache(const vector<Lit>& assumps);
     void ClearSolCache();
+    // Drop cached solutions that contradict a newly-frozen literal.
+    // Must be called whenever a var becomes permanently assigned at level 1
+    // after the cache has accumulated entries, otherwise SatByCache may
+    // return a stale solution that violates the freeze.
+    void PruneSolCacheForVar(Var v, uint8_t phase);
 };
 
 
