@@ -102,18 +102,18 @@ class SCCFinder {
 
     private:
         void tarjan(const uint32_t vertex);
-        bool depth_warning_issued;
+        bool depth_warning_issued = false;
         void doit(const Lit lit, const uint32_t vertex);
         void add_bin_xor_in_tmp();
 
         //temporaries
-        uint32_t globalIndex;
+        uint32_t globalIndex = 0;
         vector<uint32_t> index;
         vector<uint32_t> lowlink;
         std::stack<uint32_t, vector<uint32_t> > stack;
         vector<char> stackIndicator;
         vector<uint32_t> tmp;
-        uint32_t depth;
+        uint32_t depth = 0;
 
         Solver* solver;
         std::set<BinaryXor> binxors;
