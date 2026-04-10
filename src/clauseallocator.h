@@ -56,6 +56,8 @@ class ClauseAllocator {
     public:
         ClauseAllocator();
         ~ClauseAllocator();
+        ClauseAllocator(const ClauseAllocator&) = delete;
+        ClauseAllocator& operator=(const ClauseAllocator&) = delete;
 
         template<class T>
         Clause* Clause_new(const T& ps, const uint32_t conflictNum, const uint32_t ID)
@@ -102,16 +104,16 @@ class ClauseAllocator {
             , Clause* old
         );
 
-        uint32_t new_sz_while_moving;
-        BASE_DATA_TYPE* dataStart; ///<Stack starts at these positions
-        uint64_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
+        uint32_t new_sz_while_moving = 0;
+        BASE_DATA_TYPE* dataStart = nullptr; ///<Stack starts at these positions
+        uint64_t size = 0; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
         This may NOT be their current size: the clauses may be shrunken during
         the running of the solver. Therefore, it is imperative that their original
         size is saved. This way, we can later move clauses around.
         */
-        uint64_t capacity; ///<The number of BASE_DATA_TYPE datapieces allocated
+        uint64_t capacity = 0; ///<The number of BASE_DATA_TYPE datapieces allocated
         /**
         @brief The estimated used size of the stack
         This is incremented by clauseSize each time a clause is allocated, and
@@ -119,7 +121,7 @@ class ClauseAllocator {
         problem is, that clauses can shrink, and thus this value will be an
         overestimation almost all the time
         */
-        uint64_t currentlyUsedSize;
+        uint64_t currentlyUsedSize = 0;
 
         void* allocEnough(const uint32_t num_lits);
 };
