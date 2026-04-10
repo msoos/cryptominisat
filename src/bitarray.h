@@ -25,10 +25,10 @@ THE SOFTWARE.
 
 //#define DEBUG_BITARRAY
 
-#include <string.h>
+#include <cstring>
+#include <cstdlib>
 #include <cassert>
 #include "constants.h"
-#include <stdlib.h>
 
 
 namespace CMSat {
@@ -41,8 +41,7 @@ public:
         free(mp);
     }
 
-    BitArray()
-    {}
+    BitArray() = default;
 
     BitArray(const BitArray& other)
     {
@@ -51,6 +50,7 @@ public:
 
     BitArray& operator=(const BitArray& b)
     {
+        if (this == &b) return *this;
         if (size != b.size) {
             mp = (uint64_t*)realloc(mp, b.size*sizeof(uint64_t));
             assert(mp != nullptr);
@@ -63,7 +63,8 @@ public:
 
     void resize(uint32_t _size, const bool fill)
     {
-        _size = _size/64 + (bool)(_size%64);
+        // ceil-div by 64 (number of 64-bit words needed)
+        _size = (_size + 63) / 64;
         if (size != _size) {
             mp = (uint64_t*)realloc(mp, _size*sizeof(uint64_t));
             assert(mp != nullptr);
@@ -75,10 +76,8 @@ public:
 
     inline bool isZero() const
     {
-        const uint64_t*  mp2 = (const uint64_t*)mp;
-
         for (uint32_t i = 0; i < size; i++) {
-            if (mp2[i]) return false;
+            if (mp[i]) return false;
         }
         return true;
     }
