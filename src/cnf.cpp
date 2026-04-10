@@ -200,37 +200,19 @@ void CNF::update_watch(
     watch_subarray ws
     , const vector<uint32_t>& outer_to_inter
 ) {
-    for(Watched *it = ws.begin(), *end = ws.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (it->isBin()) {
-            it->setLit2(
-                getUpdatedLit(it->lit2(), outer_to_inter)
-            );
+    for (Watched& w: ws) {
+        if (w.isBin()) {
+            w.setLit2(getUpdatedLit(w.lit2(), outer_to_inter));
             continue;
         }
 
-        if (it->isBNN()) {
-            continue;
-        }
+        if (w.isBNN()) continue;
 
-        assert(it->isClause());
-        const Clause &cl = *cl_alloc.ptr(it->get_offset());
-        Lit blocked_lit = it->getBlockedLit();
-        blocked_lit = getUpdatedLit(it->getBlockedLit(), outer_to_inter);
-        bool found = false;
-        for(Lit lit: cl) {
-            if (lit == blocked_lit) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            it->setElimedLit(cl[2]);
-        } else {
-            it->setElimedLit(blocked_lit);
-        }
+        assert(w.isClause());
+        const Clause& cl = *cl_alloc.ptr(w.get_offset());
+        const Lit blocked_lit = getUpdatedLit(w.getBlockedLit(), outer_to_inter);
+        const bool found = std::find(cl.begin(), cl.end(), blocked_lit) != cl.end();
+        w.setElimedLit(found ? blocked_lit : cl[2]);
     }
 }
 
