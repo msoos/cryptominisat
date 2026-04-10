@@ -25,9 +25,9 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <algorithm>
 #include <cstring>
-#include <limits>
 #include <cassert>
 #include <cmath>
+#include <sstream>
 #include "solvertypes.h"
 #include "clause.h"
 #include "solver.h"
@@ -110,24 +110,17 @@ void* ClauseAllocator::allocEnough(
 
         //Oops, not enough space anyway
         if (newcapacity < size + needed) {
-            std::cerr
-            << "ERROR: memory manager can't handle the load."
+            std::stringstream msg;
+            msg << "ERROR: memory manager can't handle the load."
 #ifndef LARGE_OFFSETS
-            << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
+                << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
 #endif
-            << " size: " << size
-            << " needed: " << needed
-            << " newcapacity: " << newcapacity
-            << endl;
-            std::cout
-            << "ERROR: memory manager can't handle the load."
-#ifndef LARGE_OFFSETS
-            << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
-#endif
-            << " size: " << size
-            << " needed: " << needed
-            << " newcapacity: " << newcapacity
-            << endl;
+                << " size: " << size
+                << " needed: " << needed
+                << " newcapacity: " << newcapacity;
+            // Print to both streams so it shows up regardless of which is captured.
+            std::cerr << msg.str() << endl;
+            std::cout << msg.str() << endl;
 
             throw std::bad_alloc();
         }
