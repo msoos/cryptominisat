@@ -102,24 +102,19 @@ void ClauseCleaner::clean_implicit_clauses()
 
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
-    size_t wsLit = 0;
-    size_t wsLit2 = 2;
-    for (size_t end = solver->watches.size()
-        ; wsLit != end
-        ; wsLit++, wsLit2++
-    ) {
-        if (wsLit2 < end
-            && !solver->watches[Lit::toLit(wsLit2)].empty()
-        ) {
-            solver->watches.prefetch(Lit::toLit(wsLit2).toInt());
+    const size_t end = solver->watches.size();
+    constexpr size_t prefetch_distance = 2;
+    for (size_t wsLit = 0; wsLit < end; wsLit++) {
+        // Prefetch a few watchlists ahead to hide memory latency.
+        const size_t prefetch_at = wsLit + prefetch_distance;
+        if (prefetch_at < end && !solver->watches[Lit::toLit(prefetch_at)].empty()) {
+            solver->watches.prefetch(prefetch_at);
         }
 
-        const Lit lit = Lit::toLit(wsLit);
-        watch_subarray ws = solver->watches[lit];
-        if (ws.empty())
-            continue;
+        watch_subarray ws = solver->watches[Lit::toLit(wsLit)];
+        if (ws.empty()) continue;
 
-        clean_implicit_watchlist(ws, lit);
+        clean_implicit_watchlist(ws, Lit::toLit(wsLit));
     }
     impl_data.update_solver_stats(solver);
 
