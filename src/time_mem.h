@@ -24,7 +24,6 @@ THE SOFTWARE.
 #pragma once
 
 #include <cassert>
-#include <functional>
 
 #include <iostream>
 #include <fstream>
@@ -134,12 +133,10 @@ static inline uint64_t mem_used(double& vm_usage, std::string* max_mem_usage = n
        while(getline(stat_stream2, tp)){
            if (tp.size() > 7 && tp.find("VmHWM:") != std::string::npos) {
                tp.erase(0, 7);
-               tp.erase(tp.begin(),
-                        std::find_if(tp.begin(), tp.end(),
-                          std::bind(std::not_equal_to<char>(), '\t', std::placeholders::_1)));
-               tp.erase(tp.begin(),
-                        std::find_if(tp.begin(), tp.end(),
-                          std::bind(std::not_equal_to<char>(), ' ', std::placeholders::_1)));
+               const auto first_non_ws = tp.find_first_not_of(" \t");
+               if (first_non_ws != std::string::npos) {
+                   tp.erase(0, first_non_ws);
+               }
                *max_mem_usage = tp;
            }
       }
