@@ -24,7 +24,6 @@ THE SOFTWARE.
 #include "ccnr_oracle_pre.h"
 #include "constants.h"
 #include "frat.h"
-#include "oracle/utils.h"
 #include "solver.h"
 #include "oracle/oracle.h"
 #include "solvertypes.h"

@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <cstdlib>
 #include "ccnr_oracle_pre.h"
 #include "ccnr_oracle.h"
-#include "oracle/utils.h"
+#include "oracle/oracle.h"
 #include "solvertypes.h"
 
 using namespace CMSat;

@@ -393,7 +393,7 @@ target_compile_features(oracle PUBLIC cxx_std_17)
 set_target_properties(oracle PROPERTIES
     VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/oracle/oracle.h;${CMAKE_CURRENT_SOURCE_DIR}/oracle/utils.h"
+    PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/oracle/oracle.h"
 )
 install(TARGETS oracle
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -401,6 +401,24 @@ install(TARGETS oracle
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/oracle"
 )
+
+get_target_property(oracle_public_headers oracle PUBLIC_HEADER)
+set(ORACLE_HEADER_DEST "${PROJECT_BINARY_DIR}/include/oracle")
+add_custom_target(CopyPublicHeaders_oracle ALL)
+foreach(public_header ${oracle_public_headers})
+    get_filename_component(HEADER_NAME ${public_header} NAME)
+    add_custom_command(TARGET CopyPublicHeaders_oracle PRE_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E make_directory
+                               "${ORACLE_HEADER_DEST}"
+                       COMMAND ${CMAKE_COMMAND} -E echo
+                       "Symlinking ${HEADER_NAME} to ${ORACLE_HEADER_DEST}"
+                       COMMAND ${CMAKE_COMMAND} -E remove
+                               "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
+                       COMMAND ${CMAKE_COMMAND} -E create_symlink
+                               "${public_header}"
+                               "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
+                      )
+endforeach()
 
 add_executable(oracle-bin
     oracle/oracle_main.cpp

@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <utility>
 #include <vector>
 #include "solvertypes.h"
-#include "oracle/utils.h"
+#include "oracle/oracle.h"
 
 using std::pair;
 using std::make_pair;
