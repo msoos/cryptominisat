@@ -43,9 +43,8 @@ ClauseCleaner::ClauseCleaner(Solver* _solver) :
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBin());
-    if (solver->value(lit) == l_True) return true;
-    if (solver->value(watched.lit2()) == l_True) return true;
-    return false;
+    return solver->value(lit) == l_True
+        || solver->value(watched.lit2()) == l_True;
 }
 
 void ClauseCleaner::clean_binary_implicit(
