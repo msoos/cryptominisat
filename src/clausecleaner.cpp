@@ -219,15 +219,13 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
     assert(solver->prop_at_head());
     verb_print(15, "Cleaning clauses in vector<ClOffset>");
 
-    vector<ClOffset>::iterator s, ss, end;
-    size_t at = 0;
-    for (s = ss = cs.begin(), end = cs.end();  s != end; ++s, ++at) {
+    size_t kept = 0;
+    for (size_t at = 0; at < cs.size(); at++) {
         if (at + 1 < cs.size()) {
-            Clause* pre_cl = solver->cl_alloc.ptr(cs[at+1]);
-            cmsat_prefetch(pre_cl);
+            cmsat_prefetch(solver->cl_alloc.ptr(cs[at + 1]));
         }
 
-        const ClOffset off = *s;
+        const ClOffset off = cs[at];
         Clause& cl = *solver->cl_alloc.ptr(off);
 
         const Lit origLit1 = cl[0];
@@ -243,10 +241,10 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
             else solver->litStats.irredLits -= origSize;
             delayed_free.push_back(off);
         } else {
-            *ss++ = *s;
+            cs[kept++] = off;
         }
     }
-    cs.resize(cs.size() - (s-ss));
+    cs.resize(kept);
 }
 
 bool ClauseCleaner::clean_clause(Clause& cl)
