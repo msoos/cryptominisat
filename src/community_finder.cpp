@@ -57,33 +57,22 @@ void CMSat::CommunityFinder::compute()
     double my_time = cpu_time();
     map<pair<uint32_t, uint32_t>, long double> edges;
 
-    //Binary clauses
-    for(uint32_t watched_at = 0; watched_at< solver->nVars()*2; watched_at++) {
-        Lit l = Lit::toLit(watched_at);
-        watch_subarray_const ws = solver->watches[l];
-        for(uint32_t watched_at_sub = 0; watched_at_sub < ws.size(); watched_at_sub++) {
-            const Watched& w = ws[watched_at_sub];
-            if (w.isBin() &&
-                w.lit2() < l &&
-                !w.red()
-            ) {
-                //VIG graph
-                uint32_t size = 2;
-                long double weight = 1.0L/((long double)size*((long double)size-1.0L)/2.0L);
+    //VIG-graph edge weight: each clause of length n contributes
+    //  1 / (n*(n-1)/2) to every pair of vars it contains
+    auto vig_weight = [](uint32_t size) {
+        return 1.0L / ((long double)size * ((long double)size - 1.0L) / 2.0L);
+    };
+    auto add_edge = [&](uint32_t v1, uint32_t v2, long double weight) {
+        if (v2 < v1) std::swap(v1, v2);
+        edges[make_pair(v1, v2)] += weight;
+    };
 
-                uint32_t v1 = l.var();
-                uint32_t v2 = w.lit2().var();
-                //must start with smallest
-                if (v2  < v1) {
-                    std::swap(v1, v2);
-                }
-                auto edge = make_pair(v1, v2);
-                auto it = edges.find(edge);
-                if (it == edges.end()) {
-                    edges[edge] = weight;
-                } else {
-                    it->second+=weight;
-                }
+    //Binary clauses
+    for(uint32_t watched_at = 0; watched_at < solver->nVars()*2; watched_at++) {
+        const Lit l = Lit::toLit(watched_at);
+        for (const Watched& w: solver->watches[l]) {
+            if (w.isBin() && w.lit2() < l && !w.red()) {
+                add_edge(l.var(), w.lit2().var(), vig_weight(2));
             }
         }
     }
@@ -91,25 +80,10 @@ void CMSat::CommunityFinder::compute()
     //Non-binary clauses
     for(const auto& offs: solver->longIrredCls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
-        //VIG graph
-        uint32_t size = cl->size();
-        long double weight = 1.0L/((long double)size*((long double)size-1.0L)/2.0L);
-        for(uint32_t i = 0; i < cl->size(); i ++) {
-            for(uint32_t i2 = i+1; i2 < cl->size(); i2 ++) {
-                uint32_t v1 = (*cl)[i].var();
-                uint32_t v2 = (*cl)[i2].var();
-
-                //must start with smallest
-                if (v2  < v1) {
-                    std::swap(v1, v2);
-                }
-                auto edge = make_pair(v1, v2);
-                auto it = edges.find(edge);
-                if (it == edges.end()) {
-                    edges[edge] = weight;
-                } else {
-                    it->second+=weight;
-                }
+        const long double weight = vig_weight(cl->size());
+        for(uint32_t i = 0; i < cl->size(); i++) {
+            for(uint32_t i2 = i+1; i2 < cl->size(); i2++) {
+                add_edge((*cl)[i].var(), (*cl)[i2].var(), weight);
             }
         }
     }
