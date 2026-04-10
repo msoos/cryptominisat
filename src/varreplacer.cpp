@@ -220,30 +220,31 @@ bool VarReplacer::perform_replace() {
     DEBUG_IMPLICIT_STATS_DO(solver->check_implicit_stats());
 
     build_fast_inter_replace_lookup();
-    if (!replaceImplicit()) goto end;
-    assert(solver->watches.get_smudged_list().empty());
-    assert(delayed_attach_or_free.empty());
-    if (!replace_set(solver->longIrredCls)) goto end;
-    for(auto& lredcls: solver->longRedCls) if (!replace_set(lredcls)) goto end;
-    replace_bnns();
-    solver->clean_occur_from_removed_clauses_only_smudged();
-    attach_delayed_attach();
+    [&] {
+        if (!replaceImplicit()) return;
+        assert(solver->watches.get_smudged_list().empty());
+        assert(delayed_attach_or_free.empty());
+        if (!replace_set(solver->longIrredCls)) return;
+        for(auto& lredcls: solver->longRedCls) if (!replace_set(lredcls)) return;
+        replace_bnns();
+        solver->clean_occur_from_removed_clauses_only_smudged();
+        attach_delayed_attach();
 
-    // XOR
-    assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
-    for(auto& gw: solver->gwatches) gw.clear();
-    if (!replace_xor_clauses(solver->xorclauses)) goto end;
-    solver->attach_xorclauses();
+        // XOR
+        assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
+        for(auto& gw: solver->gwatches) gw.clear();
+        if (!replace_xor_clauses(solver->xorclauses)) return;
+        solver->attach_xorclauses();
 
-    //While replacing the clauses
-    //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue
-    //* We cannot because we are going through a struct and we might change it
-    //* We shouldn't because then non-dominators would end up in the 'trail'
-    if (!enqueueDelayedEnqueue()) goto end;
+        //While replacing the clauses
+        //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue
+        //* We cannot because we are going through a struct and we might change it
+        //* We shouldn't because then non-dominators would end up in the 'trail'
+        if (!enqueueDelayedEnqueue()) return;
 
-    USE_BREAKID_DO(if (solver->breakid) solver->breakid->update_var_after_varreplace());
+        USE_BREAKID_DO(if (solver->breakid) solver->breakid->update_var_after_varreplace());
+    }();
 
-end:
     delayed_attach_or_free.clear();
     destroy_fast_inter_replace_lookup();
     assert(solver->prop_at_head() || !solver->ok);
