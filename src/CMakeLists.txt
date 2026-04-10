@@ -378,27 +378,58 @@ add_executable(cryptominisat5-bin
     signalcode.cpp
 )
 
-add_executable(oracle
-    oracle/oracle_main.cpp
+add_library(oracle
     oracle/oracle.cpp
 )
-target_include_directories(oracle PRIVATE
+target_include_directories(oracle
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/oracle
+    INTERFACE
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+target_compile_features(oracle PUBLIC cxx_std_17)
+set_target_properties(oracle PROPERTIES
+    VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/oracle/oracle.h;${CMAKE_CURRENT_SOURCE_DIR}/oracle/utils.h"
+)
+install(TARGETS oracle
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/oracle"
+)
+
+add_executable(oracle-bin
+    oracle/oracle_main.cpp
+)
+target_include_directories(oracle-bin PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle
 )
-target_compile_features(oracle PRIVATE cxx_std_17)
+target_link_libraries(oracle-bin PRIVATE oracle)
+target_compile_features(oracle-bin PRIVATE cxx_std_17)
+set_target_properties(oracle-bin PROPERTIES
+    OUTPUT_NAME oracle
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+install(TARGETS oracle-bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 add_executable(assump_fuzz_oracle
     oracle/assump_fuzz_oracle.cpp
-    oracle/oracle.cpp
 )
 target_include_directories(assump_fuzz_oracle PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle
 )
-target_link_libraries(assump_fuzz_oracle PRIVATE cadiback cadical)
+target_link_libraries(assump_fuzz_oracle PRIVATE oracle cadiback cadical)
 target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
 
 if(MPI_FOUND)
