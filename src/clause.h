@@ -532,11 +532,8 @@ public:
         cout << endl;
     }
 
-    void copy_to(vector<Lit>& lits) {
-        lits.clear();
-        for(const Lit l: *this) {
-            lits.push_back(l);
-        }
+    void copy_to(vector<Lit>& lits) const {
+        lits.assign(begin(), end());
     }
 };
 
