@@ -66,6 +66,17 @@ inline uint64_t clause_storage_elems(uint32_t num_lits)
     const uint64_t bytes_needed = sizeof(Clause) + sizeof(Lit) * num_lits;
     return (bytes_needed + sizeof(BASE_DATA_TYPE) - 1) / sizeof(BASE_DATA_TYPE);
 }
+
+// Read the relocated offset that move_cl() stored into the first lit(s) of
+// `old`. Mirrors the encoding done in move_cl().
+inline ClOffset read_reloced_offset(const Clause* old)
+{
+    ClOffset new_offset = (*old)[0].toInt();
+    #ifdef LARGE_OFFSETS
+    new_offset += ((uint64_t)(*old)[1].toInt()) << 32;
+    #endif
+    return new_offset;
+}
 } // namespace
 
 ClauseAllocator::ClauseAllocator() :
@@ -227,17 +238,11 @@ void ClauseAllocator::move_one_watchlist(
         if (w.isClause()) {
             Clause* old = ptr(w.get_offset());
             assert(!old->freed());
-            Lit blocked = w.getBlockedLit();
-            if (old->reloced) {
-                ClOffset new_offset = (*old)[0].toInt();
-                #ifdef LARGE_OFFSETS
-                new_offset += ((uint64_t)(*old)[1].toInt())<<32;
-                #endif
-                w = Watched(new_offset, blocked);
-            } else {
-                ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
-                w = Watched(new_offset, blocked);
-            }
+            const Lit blocked = w.getBlockedLit();
+            const ClOffset new_offset = old->reloced
+                ? read_reloced_offset(old)
+                : move_cl(newDataStart, new_ptr, old);
+            w = Watched(new_offset, blocked);
         }
     }
 }
@@ -276,7 +281,6 @@ void ClauseAllocator::consolidate(
 
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
 
-    vector<bool> visited(solver->watches.size(), 0);
     for(auto& ws: solver->watches) {
         move_one_watchlist(ws, newDataStart, new_ptr);
     }
@@ -297,11 +301,7 @@ void ClauseAllocator::consolidate(
             ) {
                 Clause* old = ptr(vdata.reason.get_offset());
                 assert(!old->freed());
-                ClOffset new_offset = (*old)[0].toInt();
-                #ifdef LARGE_OFFSETS
-                new_offset += ((uint64_t)(*old)[1].toInt())<<32;
-                #endif
-                vdata.reason = PropBy(new_offset);
+                vdata.reason = PropBy(read_reloced_offset(old));
             } else {
                 vdata.reason = PropBy();
             }
@@ -349,14 +349,9 @@ void ClauseAllocator::update_offsets(
 
     for(ClOffset& offs: offsets) {
         Clause* old = ptr(offs);
-        if (!old->reloced) {
-            offs = move_cl(newDataStart, new_ptr, old);
-        } else {
-            offs = (*old)[0].toInt();
-            #ifdef LARGE_OFFSETS
-            offs += ((uint64_t)(*old)[1].toInt())<<32;
-            #endif
-        }
+        offs = old->reloced
+            ? read_reloced_offset(old)
+            : move_cl(newDataStart, new_ptr, old);
     }
 }
 
