@@ -981,7 +981,12 @@ TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
             UnDecide(3);
             cur_level = 2;
             stats.restarts++;
-            if (total_confls > last_db_clean + 10000) {
+            // Reduce the clause db less aggressively (was 10000). On many
+            // related solves the db churns rapidly when the threshold is
+            // small; bumping it reduces churn and lets useful learned
+            // clauses survive longer at the cost of slightly higher peak
+            // memory.
+            if (total_confls > last_db_clean + 20000) {
                 last_db_clean = total_confls;
                 oclv("c [oracle] Resizing cldb"
                     << " num_lbd2_red_cls: " << num_lbd2_red_cls
