@@ -152,7 +152,8 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     assert(cache_lookup_frequencies.size() == (uint32_t)vars+1);
 
     for (const Lit& l : assumps) cache_lookup_frequencies[VarOf(l)]++;
-    if ((stats.total_cache_lookups % cache_cutoff == cache_cutoff - 1)) {
+    if ((stats.total_cache_lookups % cache_cutoff == cache_cutoff - 1) &&
+        sol_cache.size() >= stride) {
         vector<uint32_t> occs_int(stride, 0);
         const uint64_t sz = sol_cache.size();
         for (uint64_t i = 0; i < sz; i+=stride) {
@@ -160,10 +161,11 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
                 occs_int[i2] += sol_cache[i + i2];
             }
         }
+        const double n_entries = (double)sz / (double)stride;
         vector<double> occs(stride, 0.0);
         for(uint64_t i = 1; i < stride; i++) {
             auto& o = occs[i];
-            o = (double)occs_int[i]/((double)sz/stride);
+            o = (double)occs_int[i]/n_entries;
             o = (o < 0.5) ? o : (1.0 - o);
         }
         vector<int> v;
