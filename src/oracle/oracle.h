@@ -168,6 +168,40 @@ struct CInfo {
     bool Keep() const;
 };
 
+// Mirrors CMS's FastBackwData but in oracle's Lit/var space.
+// Used by Oracle::SlowBackwSolve to run a single persistent-stack
+// solve session that classifies many test_vars as indep / not-indep
+// without ever tearing down the assumption stack between tests.
+struct SlowBackwData {
+    // Mutable assumption list. Layout:
+    //   [0 .. indep_vars->size())                 — confirmed-indep indicators
+    //   [indep_vars->size() .. size()-2)          — unknown indicators (still to test)
+    //   [size()-2, size()-1)                      — current test pair
+    //                                              (test_var positive,
+    //                                               test_var+orig_num_vars negative)
+    std::vector<Lit>* _assumptions = nullptr;
+    // Map: indic-var (oracle internal) -> caller's "real" var index
+    const std::vector<int>* indic_to_var = nullptr;
+    // For each caller var, the two oracle Lits that form its test pair.
+    // test_pos_lit[v] = oracle Lit (v positive)
+    // test_dual_neg_lit[v] = oracle Lit (v+orig_num_vars negative)
+    const std::vector<Lit>* test_pos_lit = nullptr;
+    const std::vector<Lit>* test_dual_neg_lit = nullptr;
+    // Output: caller's "real" var indices that were classified
+    std::vector<int>* non_indep_vars = nullptr;
+    // Output: caller's "real" var indices marked indep. We splice into here
+    // and into _assumptions in lockstep.
+    std::vector<int>* indep_vars = nullptr;
+    // Current test_var info. Set by SlowBackwSolve as it walks tests.
+    int* test_indic = nullptr;
+    int* test_var = nullptr;
+    // Per-test conflict budget. Halved by the solver if progress is slow.
+    int64_t max_confl = 500;
+    int64_t cur_max_confl = 0;
+    int64_t indep_because_ran_out_of_confl = 0;
+    int64_t start_sumConflicts = 0;
+};
+
 class Oracle {
 public:
     Oracle(int vars_, const vector<vector<Lit>>& clauses_);
@@ -178,6 +212,14 @@ public:
     void SetCacheCutoff(uint32_t c) { cache_cutoff = c; }
     int GetCacheLookupVar() const { return cache_lookup_var; }
     TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
+    // Persistent-stack independence-test solve. See SlowBackwData above.
+    // Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw,
+    // but using the oracle's CDCL machinery.
+    // Returns:
+    //   true  — all tests classified, _assumptions is at the indep boundary
+    //   false — formula became globally UNSAT
+    //   unknown — mems budget exceeded; caller can resume by calling again
+    TriState SlowBackwSolve(SlowBackwData& d, int64_t max_mems = 1000ULL*1000LL*1000LL);
     bool FreezeUnit(Lit unit);
     bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
     void AddClause(const vector<Lit>& clause, bool entailed);

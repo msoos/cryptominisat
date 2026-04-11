@@ -1144,6 +1144,271 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
     return sol;
 }
 
+// =================================================================
+// SlowBackwSolve — persistent assumption stack independence test
+//
+// Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw
+// but built on top of the oracle's CDCL machinery.
+//
+// The caller's _assumptions list lives across the entire backward
+// round. Layout:
+//   [0 .. indep_vars->size())     — confirmed indep indicators
+//   [indep_vars->size() .. n-2)   — unknown indicators yet to test
+//   [n-2 .. n)                    — current test pair
+//
+// Internally we walk the list in order, decide undecided lits as
+// new decision levels, treat already-true lits as no-op (skip),
+// and treat false lits as a "current test failed" event. CDCL
+// conflicts are handled by the standard CDCLBT (with min_level=0)
+// and may backtrack into the assumption stack — the next iteration
+// of the walking loop just re-pushes the lost decisions.
+//
+// On a "current test failed" event we pop the test pair, mark
+// non-indep, and pop the next indic from the top of _assumptions
+// to use as the new test_var (pushing its test pair on top).
+// On a "current test succeeded" event (SAT or budget exhausted)
+// we splice the test_indic into the indep section at position
+// indep_vars->size(), promote test_var to indep, and set up the
+// next test (if any).
+// =================================================================
+
+namespace {
+// Helper: pop next indic from the top of _assumptions, push the
+// corresponding test pair. Returns the indic Lit and writes the
+// caller's "real" var into *out_var.
+inline void create_new_test_assumption(SlowBackwData& d) {
+    Lit indic = d._assumptions->back();
+    assert(IsPos(indic));
+    d._assumptions->pop_back();
+    int indic_var = VarOf(indic);
+    int real_var = (*d.indic_to_var)[indic_var];
+    *d.test_indic = indic_var;
+    *d.test_var = real_var;
+    d._assumptions->push_back((*d.test_pos_lit)[real_var]);
+    d._assumptions->push_back((*d.test_dual_neg_lit)[real_var]);
+}
+} // anonymous
+
+TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
+    if (unsat) return TriState(false);
+    assert(d._assumptions != nullptr);
+    assert(d.indic_to_var != nullptr);
+    assert(d.test_pos_lit != nullptr);
+    assert(d.test_dual_neg_lit != nullptr);
+    assert(d.indep_vars != nullptr);
+    assert(d.non_indep_vars != nullptr);
+    assert(d.test_indic != nullptr);
+    assert(d.test_var != nullptr);
+
+    int64_t mems_startup = stats.mems;
+    InitLuby();
+    int64_t confls = 0;
+    int64_t next_restart = 1;
+    int cur_level = 1;
+    Var nv = 1;
+
+    // Initialize per-test conflict budget
+    d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
+    d.start_sumConflicts = stats.conflicts;
+
+    // Reaching the bottom: when _assumptions->size() == indep_vars->size(),
+    // there are no more unknowns left to test, all done.
+    if ((int64_t)d._assumptions->size() <= (int64_t)d.indep_vars->size()) {
+        *d.test_indic = -1;
+        *d.test_var = -1;
+        return TriState(true);
+    }
+
+    // The very first call doesn't yet have a current test_indic — the caller
+    // pushed [...indics..., test_pair] so the test pair is at the top.
+    // We pick up the test_var/test_indic from the existing top.
+    {
+        // Recover test_var from caller-pushed test pair (if any).
+        // Caller's contract: the last 2 lits are the test pair.
+        // *d.test_var is presumed already set.
+    }
+
+    while (true) {
+        size_t confl_clause = Propagate(cur_level);
+        if (stats.mems > mems_startup + max_mems) {
+            return TriState::unknown();
+        }
+
+        if (confl_clause) {
+            confls++;
+            total_confls++;
+            if (cur_level <= 1) {
+                // Root-level conflict: formula globally UNSAT.
+                unsat = true;
+                return TriState(false);
+            }
+            int new_level = CDCLBT(confl_clause, /*min_level=*/0);
+            // CDCLBT may have backtracked into the assumption stack;
+            // cur_level is updated, the walking loop will re-push lost
+            // decisions on the next iteration.
+            cur_level = new_level;
+            continue;
+        }
+
+        // Conflict-budget restart for the current test
+        if (confls >= next_restart) {
+            int nl = NextLuby();
+            next_restart = confls + nl * restart_factor;
+            UnDecide(2);  // clear all decisions, keep level-1 frozen
+            cur_level = 1;
+            stats.restarts++;
+            if (total_confls > last_db_clean + 20000) {
+                last_db_clean = total_confls;
+                ResizeClauseDb();
+            }
+            continue;
+        }
+
+        // Walk the assumption list and decide the next undecided lit, OR
+        // detect that the current test has succeeded / failed.
+        bool need_continue = false;
+        while ((size_t)cur_level - 1 < d._assumptions->size()) {
+            const size_t idx = (size_t)cur_level - 1;
+            const Lit p = d._assumptions->at(idx);
+            const int v = LitVal(p);
+            if (v == 1) {
+                // Already true via prior propagation/decisions — bump level
+                // (a "dummy" decision level so backtracking knows where).
+                // Use Assign with reason=0 at the new level so we keep the
+                // trail consistent. Decide() asserts LitVal==0, so use Assign
+                // directly. We need a no-op marker on the trail, so we
+                // re-Assign at the new level — except the var is already
+                // assigned. Workaround: just bump cur_level without touching
+                // the trail. We track "logical level = idx + 1" in the
+                // walking loop, even though the SAT state has fewer real
+                // decisions.
+                cur_level++;
+                continue;
+            }
+            if (v == -1) {
+                // The current test pair (or an earlier indic) has been
+                // contradicted by the trail. The test_var pair is at the
+                // top of _assumptions; remove it and mark non_indep.
+                assert(d._assumptions->size() >= 2);
+                d._assumptions->pop_back();
+                d._assumptions->pop_back();
+                d.non_indep_vars->push_back(*d.test_var);
+
+                // Bottom reached?
+                if ((int64_t)d._assumptions->size() <= (int64_t)d.indep_vars->size()) {
+                    *d.test_indic = -1;
+                    *d.test_var = -1;
+                    return TriState(true);
+                }
+
+                // Pop the next indic and turn it into the new test_var pair.
+                create_new_test_assumption(d);
+
+                // Reset the per-test budget
+                d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
+                d.start_sumConflicts = stats.conflicts;
+
+                // The trail may have decisions above the new top of
+                // _assumptions; backtrack to the new top.
+                int new_level = (int)d._assumptions->size() - 2;
+                if (new_level < 1) new_level = 1;
+                if (cur_level > new_level) {
+                    UnDecide(new_level + 1);
+                    cur_level = new_level;
+                }
+                need_continue = true;
+                break;
+            }
+            // v == 0: undecided — make this lit a real decision.
+            cur_level++;
+            Decide(p, cur_level);
+            need_continue = true;
+            break;
+        }
+        if (need_continue) continue;
+
+        // All assumptions decided. Time to either find a SAT model or
+        // exhaust the conflict budget for this test_var.
+        if ((int64_t)stats.conflicts > d.cur_max_confl) {
+            d.indep_because_ran_out_of_confl++;
+            // Adaptive halving when learning is slow
+            if ((int64_t)stats.conflicts - d.start_sumConflicts > 150LL*1000LL) {
+                d.max_confl /= 2;
+                d.start_sumConflicts = stats.conflicts;
+                if (d.max_confl < 50) d.max_confl = 50;
+            }
+            // Promote current test_var to indep — splice into the indep
+            // section of _assumptions, then set up the next test if any.
+            // The current test pair is at positions [size-2, size).
+            // We pop it and insert the indic at position indep_vars->size().
+            assert(d._assumptions->size() >= 2);
+            d._assumptions->pop_back();
+            d._assumptions->pop_back();
+            const int splice_into = (int)d.indep_vars->size();
+            d.indep_vars->push_back(*d.test_var);
+            d._assumptions->insert(d._assumptions->begin() + splice_into,
+                                   PosLit(*d.test_indic));
+
+            if ((int64_t)d._assumptions->size() <= (int64_t)d.indep_vars->size()) {
+                *d.test_indic = -1;
+                *d.test_var = -1;
+                return TriState(true);
+            }
+
+            // Backtrack to splice_into (we just inserted there, decisions
+            // above it are no longer aligned with the assumption list).
+            UnDecide(splice_into + 1);
+            cur_level = splice_into;
+
+            // Pop next indic, set up new test_var pair
+            create_new_test_assumption(d);
+
+            // Reset budget
+            d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
+            d.start_sumConflicts = stats.conflicts;
+            continue;
+        }
+
+        // Pick a regular CDCL decision (branch) to explore the model space
+        Var decv = 0;
+        if (confls == 0) {
+            while (nv <= vars && LitVal(PosLit(nv)) != 0) nv++;
+            if (nv <= vars) decv = nv;
+        } else {
+            while (true) {
+                decv = PopVarHeap();
+                if (decv == 0 || LitVal(PosLit(decv)) == 0) break;
+            }
+        }
+        if (decv == 0) {
+            // SAT — found a model satisfying all assumptions.
+            // Current test_var IS independent.
+            assert(d._assumptions->size() >= 2);
+            d._assumptions->pop_back();
+            d._assumptions->pop_back();
+            const int splice_into = (int)d.indep_vars->size();
+            d.indep_vars->push_back(*d.test_var);
+            d._assumptions->insert(d._assumptions->begin() + splice_into,
+                                   PosLit(*d.test_indic));
+
+            if ((int64_t)d._assumptions->size() <= (int64_t)d.indep_vars->size()) {
+                *d.test_indic = -1;
+                *d.test_var = -1;
+                return TriState(true);
+            }
+
+            UnDecide(splice_into + 1);
+            cur_level = splice_into;
+            create_new_test_assumption(d);
+            d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
+            d.start_sumConflicts = stats.conflicts;
+            continue;
+        }
+        cur_level++;
+        Decide(MkLit(decv, vs[decv].phase), cur_level);
+    }
+}
+
 bool Oracle::FreezeUnit(Lit unit) {
     if (unsat) return false;
     assert(CurLevel() == 1);
