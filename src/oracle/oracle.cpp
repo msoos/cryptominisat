@@ -299,7 +299,7 @@ void Oracle::ResizeClauseDb() {
             } else if (impll == 0 && !added) {
                 int glue = cla_info[i].glue;
                 int used = cla_info[i].used;
-                if (glue <= 3) {
+                if (glue <= 4) {
                     // Tier 1: always keep
                     num_lbd2_red_cls++;
                 } else if (glue <= 6) {
