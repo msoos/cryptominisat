@@ -1071,7 +1071,11 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     in_cc.resize(vars*2+2);
     minimize_mark.resize(vars+1, 0);
     // setting magic constants
-    restart_factor = 100;
+    // restart_factor controls Luby-style restart cadence (next_restart =
+    // confls + luby * restart_factor). 200 was empirically faster than 100
+    // on arjun's slow backward independence test, where many related solves
+    // benefit from longer search runs between restarts.
+    restart_factor = 200;
 
     clauses.push_back(0);
     clause_pos.push_back(0);
