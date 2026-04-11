@@ -285,16 +285,21 @@ void Oracle::ResizeClauseDb() {
             if (frozen_sat) assert(!impll);
 
             // Tiered clause reduction (CaDiCaL-style):
-            // Tier 1 (glue <= 2): always keep
+            // Tier 1 (glue <= 3): always keep
             // Tier 2 (glue <= 6): keep if used recently (used > 0), decrement used
             // Tier 3 (glue > 6): delete if not used since last reduce
+            //
+            // Tier 1 cutoff is 3 (was 2). On clients that do many related
+            // solves with shared structure (e.g. arjun's slow backward
+            // independence test), the slightly-higher-glue clauses still
+            // encode reusable facts and the extra retention helps.
             bool should_delete = false;
             if (frozen_sat) {
                 should_delete = true;
             } else if (impll == 0 && !added) {
                 int glue = cla_info[i].glue;
                 int used = cla_info[i].used;
-                if (glue <= 2) {
+                if (glue <= 3) {
                     // Tier 1: always keep
                     num_lbd2_red_cls++;
                 } else if (glue <= 6) {
