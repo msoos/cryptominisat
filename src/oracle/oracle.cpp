@@ -1640,6 +1640,52 @@ int Oracle::Vivify(int64_t max_mems) {
 }
 
 // =================================================================
+// FailedLiteralProbe — at root, try each unassigned var both polarities.
+// If assuming one polarity leads to an immediate propagation conflict,
+// the opposite polarity is a derived root unit. Cheap and finds facts
+// that CDCL would otherwise only stumble into after long search.
+// =================================================================
+int Oracle::FailedLiteralProbe(int64_t max_mems) {
+    if (unsat) return 0;
+    assert(CurLevel() == 1);
+
+    const int64_t mems_start = stats.mems;
+    int units_found = 0;
+
+    for (Var v = 1; v <= vars && !unsat; v++) {
+        stats.mems++;
+        if (stats.mems > mems_start + max_mems) break;
+        if (LitVal(PosLit(v)) != 0) continue; // already assigned at root
+
+        // Probe v = TRUE.
+        Decide(PosLit(v), 2);
+        size_t confl = Propagate(2);
+        UnDecide(2);
+        if (confl) {
+            FreezeUnit(NegLit(v));
+            units_found++;
+            continue;
+        }
+
+        // Probe v = FALSE.
+        Decide(NegLit(v), 2);
+        confl = Propagate(2);
+        UnDecide(2);
+        if (confl) {
+            FreezeUnit(PosLit(v));
+            units_found++;
+        }
+    }
+
+    if (verb >= 2) {
+        std::cout << "c [oracle] FailedLiteralProbe learned "
+                  << units_found << " units mems "
+                  << (stats.mems - mems_start) << std::endl;
+    }
+    return units_found;
+}
+
+// =================================================================
 // BVE — Bounded Variable Elimination (gated by an eliminable[] mask).
 //
 // For a variable v, let P = clauses containing  v and N = clauses
