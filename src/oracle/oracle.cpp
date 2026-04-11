@@ -1308,13 +1308,14 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
                 d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
                 d.start_sumConflicts = stats.conflicts;
 
-                // The trail may have decisions above the new top of
-                // _assumptions; backtrack to the new top.
-                int new_level = (int)d._assumptions->size() - 2;
-                if (new_level < 1) new_level = 1;
-                if (cur_level > new_level) {
-                    UnDecide(new_level + 1);
-                    cur_level = new_level;
+                // Backtrack the trail to just below the new test pair —
+                // only if our trail has decisions above that point.
+                // We want walking to next visit idx (size-2) = first test
+                // pair lit, so cur_level should be size-1.
+                const int target = (int)d._assumptions->size() - 1;
+                if (cur_level > target) {
+                    UnDecide(target + 1);
+                    cur_level = target;
                 }
                 need_continue = true;
                 break;
@@ -1355,13 +1356,26 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
                 return TriState(true);
             }
 
-            // Backtrack to splice_into (we just inserted there, decisions
-            // above it are no longer aligned with the assumption list).
-            UnDecide(splice_into + 1);
-            cur_level = splice_into;
+            // Backtrack to keep only the first (splice_into+1) decisions —
+            // those correspond to indeps[0..splice_into], i.e. _assumptions
+            // positions [0..splice_into] which is the indep section + the
+            // newly spliced indic.
+            const int target_after_splice = splice_into + 1;
+            if (cur_level > target_after_splice) {
+                UnDecide(target_after_splice + 1);
+                cur_level = target_after_splice;
+            }
 
             // Pop next indic, set up new test_var pair
             create_new_test_assumption(d);
+
+            // Now backtrack again to just below the new test pair so the
+            // walking loop visits it next.
+            const int target_after_test = (int)d._assumptions->size() - 1;
+            if (cur_level > target_after_test) {
+                UnDecide(target_after_test + 1);
+                cur_level = target_after_test;
+            }
 
             // Reset budget
             d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
@@ -1397,9 +1411,17 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
                 return TriState(true);
             }
 
-            UnDecide(splice_into + 1);
-            cur_level = splice_into;
+            const int target_after_splice = splice_into + 1;
+            if (cur_level > target_after_splice) {
+                UnDecide(target_after_splice + 1);
+                cur_level = target_after_splice;
+            }
             create_new_test_assumption(d);
+            const int target_after_test = (int)d._assumptions->size() - 1;
+            if (cur_level > target_after_test) {
+                UnDecide(target_after_test + 1);
+                cur_level = target_after_test;
+            }
             d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
             d.start_sumConflicts = stats.conflicts;
             continue;
