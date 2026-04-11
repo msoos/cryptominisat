@@ -218,6 +218,16 @@ public:
     // the oracle is already UNSAT, this is a no-op. Returns the number of
     // lits removed across all vivified clauses.
     int Vivify(int64_t max_mems = 200LL*1000LL*1000LL);
+    // Bounded variable elimination (BVE). For each variable v where
+    // eliminable[v] is true and where the number of non-tautological
+    // resolvents does not exceed (#pos + #neg + grow_cap), remove v and
+    // replace its clauses with the resolvents. Caller is responsible for
+    // ensuring eliminable[v] is ONLY true for variables that are NOT
+    // needed downstream (e.g., for arjun: vars that are known not to be
+    // in the independent support). Must be called at root level before
+    // any solves. Returns the number of variables eliminated.
+    int BVE(const vector<bool>& eliminable, int grow_cap = 0,
+            int64_t max_mems = 500LL*1000LL*1000LL);
     // Persistent-stack independence-test solve. See SlowBackwData above.
     // Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw,
     // but using the oracle's CDCL machinery.
