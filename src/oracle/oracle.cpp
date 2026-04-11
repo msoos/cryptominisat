@@ -634,12 +634,26 @@ bool Oracle::LitReduntant(Lit lit) {
         Var v = VarOf(lit);
         assert(vs[v].reason);
         size_t rc = vs[v].reason;
-        if (clauses[rc] != Neg(lit)) {
-            swap(clauses[rc], clauses[rc+1]);
-        }
         assert(LitVal(lit) == -1);
-        assert(clauses[rc] == Neg(lit));
-        for (size_t k = rc+1; clauses[k]; k++) {
+        // Do NOT mutate clauses[] here. ResizeClauseDb detects reason
+        // clauses by checking clauses[rc] (and clauses[rc+1] for binaries)
+        // — a swap to ternary+ clauses moves the propagated lit to rc+1
+        // and ResizeClauseDb misses it, marks the clause deletable, and
+        // the vs[v].reason pointer becomes stale. Instead, iterate the
+        // clause verbatim and skip the single lit that equals Neg(lit).
+        //
+        // Skip any lit that is NOT currently false — in a well-formed
+        // CDCL state every antecedent should be false, but batched
+        // decisions + re-assignment across levels can leave a reason
+        // clause with a stale-true antecedent (same var re-assigned at
+        // a different level after its original propagation). Processing
+        // such a lit would push a non-false entry to redu_s and trip
+        // the `LitVal(lit) == -1` invariant below. Skipping it is safe:
+        // the learned clause is already being built from the resolution
+        // of other (still-false) lits.
+        for (size_t k = rc; clauses[k]; k++) {
+            if (clauses[k] == Neg(lit)) continue;
+            if (LitVal(clauses[k]) != -1) continue;
             Var tv = VarOf(clauses[k]);
             if (!in_cc[clauses[k]] && vs[tv].level > 1) {
                 // Check memoized marks first
@@ -1271,31 +1285,29 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
             continue;
         }
 
-        // Walk the assumption list and decide the next undecided lit, OR
-        // detect that the current test has succeeded / failed.
+        // Walk the assumption list and decide undecided lits.
+        //
+        // Per-Decide propagation is inlined here so we don't pay an
+        // outer-while round trip for every lit. The loop only bails
+        // out to the outer while when it either reaches a SAT state
+        // (ready to CDCL-branch or finish the test) or encounters the
+        // v==-1 test-failure path.
         bool need_continue = false;
+        bool inner_conflict = false;
         while ((size_t)cur_level - 1 < d._assumptions->size()) {
             const size_t idx = (size_t)cur_level - 1;
             const Lit p = (*d._assumptions)[idx];
             const int v = LitVal(p);
             if (v == 1) {
-                // Already true via prior propagation/decisions — bump level
-                // (a "dummy" decision level so backtracking knows where).
-                // Use Assign with reason=0 at the new level so we keep the
-                // trail consistent. Decide() asserts LitVal==0, so use Assign
-                // directly. We need a no-op marker on the trail, so we
-                // re-Assign at the new level — except the var is already
-                // assigned. Workaround: just bump cur_level without touching
-                // the trail. We track "logical level = idx + 1" in the
-                // walking loop, even though the SAT state has fewer real
-                // decisions.
+                // Already true via prior propagation/decisions — bump
+                // walking level as a phantom marker, no trail change.
                 cur_level++;
                 continue;
             }
             if (v == -1) {
                 // The current test pair (or an earlier indic) has been
-                // contradicted by the trail. The test_var pair is at the
-                // top of _assumptions; remove it and mark non_indep.
+                // contradicted by the trail. The test_var pair is at
+                // the top of _assumptions; remove it and mark non_indep.
                 assert(d._assumptions->size() >= 2);
                 d._assumptions->pop_back();
                 d._assumptions->pop_back();
@@ -1315,10 +1327,7 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
                 d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
                 d.start_sumConflicts = stats.conflicts;
 
-                // Backtrack the trail to just below the new test pair —
-                // only if our trail has decisions above that point.
-                // We want walking to next visit idx (size-2) = first test
-                // pair lit, so cur_level should be size-1.
+                // Backtrack the trail to just below the new test pair.
                 const int target = (int)d._assumptions->size() - 1;
                 if (cur_level > target) {
                     UnDecide(target + 1);
@@ -1327,13 +1336,28 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
                 need_continue = true;
                 break;
             }
-            // v == 0: undecided — make this lit a real decision.
+            // v == 0: undecided — real decision at a fresh trail level.
             cur_level++;
             Decide(p, cur_level);
-            need_continue = true;
-            break;
+            // Inlined propagation: saves the outer-while round trip
+            // (Propagate + restart check + re-dispatch) per assumption.
+            size_t confl2 = Propagate(cur_level);
+            if (stats.mems > mems_startup + max_mems) {
+                return TriState::unknown();
+            }
+            if (confl2) {
+                confls++;
+                total_confls++;
+                if (cur_level <= 1) {
+                    unsat = true;
+                    return TriState(false);
+                }
+                cur_level = CDCLBT(confl2, /*min_level=*/0);
+                inner_conflict = true;
+                break; // let the outer loop re-dispatch from the new cur_level
+            }
         }
-        if (need_continue) continue;
+        if (inner_conflict || need_continue) continue;
 
         // All assumptions decided. Time to either find a SAT model or
         // exhaust the conflict budget for this test_var.
