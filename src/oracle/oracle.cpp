@@ -1075,7 +1075,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     // confls + luby * restart_factor). 200 was empirically faster than 100
     // on arjun's slow backward independence test, where many related solves
     // benefit from longer search runs between restarts.
-    restart_factor = 200;
+    restart_factor = 100;
 
     clauses.push_back(0);
     clause_pos.push_back(0);
