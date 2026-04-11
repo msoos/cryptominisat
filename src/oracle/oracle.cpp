@@ -1269,7 +1269,7 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
         bool need_continue = false;
         while ((size_t)cur_level - 1 < d._assumptions->size()) {
             const size_t idx = (size_t)cur_level - 1;
-            const Lit p = d._assumptions->at(idx);
+            const Lit p = (*d._assumptions)[idx];
             const int v = LitVal(p);
             if (v == 1) {
                 // Already true via prior propagation/decisions — bump level
