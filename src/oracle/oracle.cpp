@@ -1260,6 +1260,12 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
             if (total_confls > last_db_clean + 20000) {
                 last_db_clean = total_confls;
                 ResizeClauseDb();
+                // Vivify the surviving learned clauses. By this point
+                // CDCL has accumulated non-trivial learning, and shorter
+                // clauses cut propagation cost for every subsequent
+                // test. Budget is capped so one cleanup pass doesn't
+                // blow the solver mems limit.
+                Vivify(50LL*1000LL*1000LL);
             }
             continue;
         }
@@ -1511,6 +1517,125 @@ bool Oracle::AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed) {
         }
     }
     return false;
+}
+
+// =================================================================
+// Vivify — O(k) walk-and-decide learned-clause minimization.
+//
+// For each long learned clause [l_0, l_1, ..., l_{k-1}], we walk left
+// to right deciding NOT(l_i) at a single probing level. Three outcomes:
+//
+//   * Propagation conflicts while deciding NOT(l_i): the prefix
+//     [l_0..l_i] is already entailed, so the tail [l_{i+1}..l_{k-1}]
+//     is redundant — shorten the clause to the prefix.
+//   * l_i is already forced TRUE by the prefix: prefix ⊨ l_i, so
+//     [l_0..l_i] entails the original — shorten to that prefix.
+//   * l_i is already forced FALSE by the prefix: NOT(l_i) is implied,
+//     so we can drop l_i from the clause outright.
+//
+// Much cheaper than asymmetric minimization; roughly one Propagate per
+// literal in the clause. Must be called at root level. Capped by max_mems.
+// =================================================================
+int Oracle::Vivify(int64_t max_mems) {
+    if (unsat) return 0;
+    assert(CurLevel() == 1);
+
+    const int64_t mems_start = stats.mems;
+    int removed_lits = 0;
+    int vivified_cls = 0;
+
+    const size_t snapshot = cla_info.size();
+
+    for (size_t ci = 0; ci < snapshot && !unsat; ci++) {
+        stats.mems++;
+        if (stats.mems > mems_start + max_mems) break;
+
+        if (cla_info[ci].glue == -1) continue;  // entailed/orig-added
+        if (cla_info[ci].glue >= 1000000) continue;  // flagged for delete
+
+        const size_t cls = cla_info[ci].pt;
+        // Extract lits; drop root-false ones; bail if any root-true.
+        bool sat_at_root = false;
+        vector<Lit> clause;
+        for (size_t k = 0; clauses[cls+k]; k++) {
+            stats.mems++;
+            const Lit l = clauses[cls+k];
+            const int lv = LitVal(l);
+            if (lv == 1 && vs[VarOf(l)].level == 1) {
+                sat_at_root = true;
+                break;
+            }
+            if (lv == -1 && vs[VarOf(l)].level == 1) continue;
+            clause.push_back(l);
+        }
+        if (sat_at_root) continue;
+        if (clause.size() < 3) continue;
+
+        // O(k) walk. All probe decisions land at level 2 — we only care
+        // whether the prefix is inconsistent, not at which sub-level.
+        vector<Lit> new_clause;
+        new_clause.reserve(clause.size());
+        bool modified = false;
+        size_t i = 0;
+        for (; i < clause.size(); i++) {
+            const Lit li = clause[i];
+            const int lv = LitVal(li);
+            if (lv == 1) {
+                // prefix forces l_i TRUE → clause is already entailed
+                // via [new_clause ++ l_i]. Keep this tail lit, drop the rest.
+                new_clause.push_back(li);
+                i++;
+                modified = modified || (i != clause.size());
+                break;
+            }
+            if (lv == -1) {
+                // l_i is already false under the prefix — it can't
+                // contribute to the clause. Drop it.
+                modified = true;
+                continue;
+            }
+            // lv == 0: probe NOT(l_i) at level 2.
+            Decide(Neg(li), 2);
+            stats.mems++;
+            size_t confl = Propagate(2);
+            new_clause.push_back(li);
+            if (confl) {
+                // [new_clause] is UNSAT under negation → entailed.
+                // Everything after l_i is redundant.
+                i++;
+                modified = modified || (i != clause.size());
+                break;
+            }
+        }
+        // Clear level-2 trail before we touch the DB or loop next.
+        if (CurLevel() > 1) UnDecide(2);
+
+        if (!modified || new_clause.size() >= clause.size()) continue;
+        if (new_clause.empty()) {
+            unsat = true;
+            continue;
+        }
+
+        // Flag the original for tier-3 deletion at next ResizeClauseDb.
+        cla_info[ci].glue = 1000000;
+        cla_info[ci].used = 0;
+        cla_info[ci].total_used = 0;
+        vivified_cls++;
+        removed_lits += (int)(clause.size() - new_clause.size());
+
+        if (new_clause.size() == 1) {
+            FreezeUnit(new_clause[0]);
+        } else {
+            AddOrigClause(new_clause, /*entailed=*/true);
+        }
+    }
+
+    if (verb >= 2) {
+        std::cout << "c [oracle] Vivify removed " << removed_lits
+                  << " lits from " << vivified_cls << " clauses"
+                  << " mems " << (stats.mems - mems_start) << std::endl;
+    }
+    return removed_lits;
 }
 
 vector<vector<Lit>> Oracle::GetLearnedClauses() const {

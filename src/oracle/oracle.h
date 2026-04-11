@@ -212,6 +212,12 @@ public:
     void SetCacheCutoff(uint32_t c) { cache_cutoff = c; }
     int GetCacheLookupVar() const { return cache_lookup_var; }
     TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
+    // Vivify all learned clauses: for each long learned clause, try to
+    // remove literals by testing F ∧ NOT(clause \ {p}) for UNSAT. Must be
+    // called at root level (CurLevel() == 1). Safe to call any time; if
+    // the oracle is already UNSAT, this is a no-op. Returns the number of
+    // lits removed across all vivified clauses.
+    int Vivify(int64_t max_mems = 200LL*1000LL*1000LL);
     // Persistent-stack independence-test solve. See SlowBackwData above.
     // Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw,
     // but using the oracle's CDCL machinery.
