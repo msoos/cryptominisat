@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) {
         .required();
 
     program.add_argument("-k", "--iterations")
-        .help("Number of random assumption tests")
-        .default_value(20)
+        .help("Number of random assumption tests (-1 = random 1..1000)")
+        .default_value(-1)
         .scan<'i', int>();
 
     program.add_argument("-v", "--verb")
@@ -173,6 +173,11 @@ int main(int argc, char* argv[]) {
     program.add_argument("-s", "--seed")
         .help("Random seed")
         .default_value(0)
+        .scan<'i', int>();
+
+    program.add_argument("--vivify")
+        .help("Enable occasional Vivify calls (0/1)")
+        .default_value(1)
         .scan<'i', int>();
 
     try {
@@ -187,6 +192,7 @@ int main(int argc, char* argv[]) {
     int K = program.get<int>("--iterations");
     int verb = program.get<int>("--verb");
     int seed = program.get<int>("--seed");
+    int vivify_enabled = program.get<int>("--vivify");
 
     // 1. Parse CNF
     CNF cnf = parse_dimacs(input_file);
@@ -196,6 +202,10 @@ int main(int argc, char* argv[]) {
 
     // 2. Create oracle
     std::mt19937 rng(seed);
+    if (K < 0) {
+        K = std::uniform_int_distribution<int>(1, 1000)(rng);
+        if (verb >= 1) cout << "c Random iterations: " << K << endl;
+    }
     sspp::oracle::Oracle oracle(cnf.num_vars, cnf.clauses);
     if (verb >= 2) oracle.SetVerbosity(1);
 
@@ -215,7 +225,8 @@ int main(int argc, char* argv[]) {
 
     for (int iter = 0; iter < K; iter++) {
         // Pick 1-10 random variables
-        int num_assumps = std::uniform_int_distribution<int>(1, 10)(rng);
+        int max_assumps_cap = std::uniform_int_distribution<int>(0, 3)(rng) == 0 ? 200 : 50;
+        int num_assumps = std::uniform_int_distribution<int>(1, max_assumps_cap)(rng);
         num_assumps = std::min(num_assumps, (int)pickable_vars.size());
 
         // Shuffle and take first num_assumps
@@ -266,6 +277,26 @@ int main(int argc, char* argv[]) {
         bool usecache = std::uniform_int_distribution<int>(0, 9)(rng) < 7;
         auto result = oracle.Solve(oracle_assumps, usecache, max_mems);
 
+        // Snapshot the model BEFORE any subsequent mutating call (e.g. Vivify)
+        vector<int> model;
+        if (result.isTrue()) {
+            model.assign(cnf.num_vars + 1, 0);
+            for (int v = 1; v <= cnf.num_vars; v++) {
+                int phase = oracle.GetPhase(v);
+                model[v] = phase ? v : -v;
+            }
+        }
+
+        // Occasionally run Vivify between two Solve calls
+        if (vivify_enabled && std::uniform_int_distribution<int>(0, 99)(rng) < 30) {
+            constexpr int64_t viv_mems_choices[] = {0, 10, 100, 1000, 100000000};
+            int64_t viv_mems = viv_mems_choices[
+                std::uniform_int_distribution<int>(0, 4)(rng)];
+            if (verb >= 1) cout << "c  running Vivify max_mems=" << viv_mems << endl;
+            oracle.reset_mems();
+            oracle.Vivify(viv_mems);
+        }
+
         if (result.isUnknown()) {
             num_unknown++;
             if (verb >= 1) cout << "c  -> UNKNOWN" << endl;
@@ -275,13 +306,6 @@ int main(int argc, char* argv[]) {
         if (result.isTrue()) {
             num_sat++;
             if (verb >= 1) cout << "c  -> SAT" << endl;
-
-            // Verify solution
-            vector<int> model(cnf.num_vars + 1);
-            for (int v = 1; v <= cnf.num_vars; v++) {
-                int phase = oracle.GetPhase(v);
-                model[v] = phase ? v : -v;
-            }
 
             if (!verify_solution_against_clauses(
                     cnf.dimacs_clauses, model, cnf.num_vars, dimacs_assumps)) {

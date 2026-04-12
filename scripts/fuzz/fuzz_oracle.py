@@ -305,11 +305,12 @@ def fuzz_one(args, test_num, seed, counters):
             counters["sat"] += 1
 
             # Run assumption-based fuzzing on SAT instances
+            assump_k = random.choice([1, 10, 100, 200])
             if verbose:
-                print("  Running assumption-based fuzz (K=20)...")
+                print("  Running assumption-based fuzz (K=%d)..." % assump_k)
             assump_out, assump_rc, assump_timeout = run_solver(
                 args.assump_fuzz, cnf_path, args.tlimit,
-                ["-k", "20", "-s", str(seed)])
+                ["-k", str(assump_k),"-v", "2",  "-s", str(seed), "--vivify", str(vivify)])
 
             if assump_timeout:
                 if verbose:
@@ -320,8 +321,8 @@ def fuzz_one(args, test_num, seed, counters):
                 print(assump_out)
                 saved = save_failing_cnf(cnf_path, test_num, seed)
                 print("CNF saved to:", saved)
-                print("To reproduce directly: %s -k 20 -s %d -v 2 %s" % (
-                    args.assump_fuzz, seed, saved))
+                print("To reproduce directly: %s -k %d -s %d -v 2 %s" % (
+                    args.assump_fuzz, assump_k, seed, saved))
                 return False
             else:
                 # Parse SAT/UNSAT/UNKNOWN counts from assump_fuzz output
