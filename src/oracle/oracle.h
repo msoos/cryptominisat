@@ -169,39 +169,6 @@ struct CInfo {
     bool Keep() const;
 };
 
-// Mirrors CMS's FastBackwData but in oracle's Lit/var space.
-// Used by Oracle::SlowBackwSolve to run a single persistent-stack
-// solve session that classifies many test_vars as indep / not-indep
-// without ever tearing down the assumption stack between tests.
-struct SlowBackwData {
-    // Mutable assumption list. Layout:
-    //   [0 .. indep_vars->size())                 — confirmed-indep indicators
-    //   [indep_vars->size() .. size()-2)          — unknown indicators (still to test)
-    //   [size()-2, size()-1)                      — current test pair
-    //                                              (test_var positive,
-    //                                               test_var+orig_num_vars negative)
-    std::vector<Lit>* _assumptions = nullptr;
-    // Map: indic-var (oracle internal) -> caller's "real" var index
-    const std::vector<int>* indic_to_var = nullptr;
-    // For each caller var, the two oracle Lits that form its test pair.
-    // test_pos_lit[v] = oracle Lit (v positive)
-    // test_dual_neg_lit[v] = oracle Lit (v+orig_num_vars negative)
-    const std::vector<Lit>* test_pos_lit = nullptr;
-    const std::vector<Lit>* test_dual_neg_lit = nullptr;
-    // Output: caller's "real" var indices that were classified
-    std::vector<int>* non_indep_vars = nullptr;
-    // Output: caller's "real" var indices marked indep. We splice into here
-    // and into _assumptions in lockstep.
-    std::vector<int>* indep_vars = nullptr;
-    // Current test_var info. Set by SlowBackwSolve as it walks tests.
-    int* test_indic = nullptr;
-    int* test_var = nullptr;
-    // Per-test conflict budget. Halved by the solver if progress is slow.
-    int64_t max_confl = 500;
-    int64_t cur_max_confl = 0;
-    int64_t indep_because_ran_out_of_confl = 0;
-    int64_t start_sumConflicts = 0;
-};
 
 class Oracle {
 public:
@@ -230,29 +197,17 @@ public:
     // replace its clauses with the resolvents. Caller is responsible for
     // ensuring eliminable[v] is ONLY true for variables that are NOT
     // needed downstream (e.g., for arjun: vars that are known not to be
-    // in the independent support). Can be called between SlowBackwSolve
-    // sessions — resets to root level automatically if needed. Returns
-    // the number of variables eliminated.
+    // in the independent support). Resets to root level automatically if
+    // needed. Returns the number of variables eliminated.
     int BVE(const vector<bool>& eliminable, int grow_cap = 0,
             int64_t max_mems = 500LL*1000LL*1000LL);
     // SCC-based equivalent literal replacement. Finds strongly connected
     // components in the binary implication graph and replaces equivalent
     // literals throughout the clause DB. Must be called at root level.
     // If `protected_vars` is non-empty, vars where protected_vars[v]==true
-    // will never be replaced (they stay as representatives). This is
-    // needed for assumption indicator vars whose positive lits are
-    // asserted during SlowBackwSolve — replacing them would disconnect
-    // the assumption from its propagation clauses.
+    // will never be replaced (they stay as representatives).
     // Returns number of variables eliminated via equivalence.
     int SCCEquivLitElim(const vector<bool>& protected_vars = {});
-    // Persistent-stack independence-test solve. See SlowBackwData above.
-    // Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw,
-    // but using the oracle's CDCL machinery.
-    // Returns:
-    //   true  — all tests classified, _assumptions is at the indep boundary
-    //   false — formula became globally UNSAT
-    //   unknown — mems budget exceeded; caller can resume by calling again
-    TriState SlowBackwSolve(SlowBackwData& d, int64_t max_mems = 1000ULL*1000LL*1000LL);
     bool FreezeUnit(Lit unit);
     bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
     void AddClause(const vector<Lit>& clause, bool entailed);
