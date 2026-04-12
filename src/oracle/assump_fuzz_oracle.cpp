@@ -176,7 +176,27 @@ int main(int argc, char* argv[]) {
         .scan<'i', int>();
 
     program.add_argument("--vivify")
-        .help("Enable occasional Vivify calls (0/1)")
+        .help("Enable Vivify calls (0/1)")
+        .default_value(1)
+        .scan<'i', int>();
+
+    program.add_argument("--vivify-freq")
+        .help("Percent chance of running Vivify per iteration (0..100)")
+        .default_value(70)
+        .scan<'i', int>();
+
+    program.add_argument("--vivify-max-runs")
+        .help("Max number of Vivify runs per iteration (1..N)")
+        .default_value(3)
+        .scan<'i', int>();
+
+    program.add_argument("--vivify-before")
+        .help("Also run Vivify BEFORE each Solve (0/1)")
+        .default_value(1)
+        .scan<'i', int>();
+
+    program.add_argument("--vivify-initial")
+        .help("Run Vivify immediately after oracle construction (0/1)")
         .default_value(1)
         .scan<'i', int>();
 
@@ -193,6 +213,25 @@ int main(int argc, char* argv[]) {
     int verb = program.get<int>("--verb");
     int seed = program.get<int>("--seed");
     int vivify_enabled = program.get<int>("--vivify");
+    int vivify_freq = program.get<int>("--vivify-freq");
+    int vivify_max_runs = program.get<int>("--vivify-max-runs");
+    int vivify_before = program.get<int>("--vivify-before");
+    int vivify_initial = program.get<int>("--vivify-initial");
+
+    auto run_vivify = [&](sspp::oracle::Oracle& o, std::mt19937& r, const char* tag) {
+        if (!vivify_enabled) return;
+        constexpr int64_t viv_mems_choices[] =
+            {0, 10, 100, 1000, 100000, 100000000, 100000000, 100000000};
+        int nruns = std::uniform_int_distribution<int>(1, std::max(1, vivify_max_runs))(r);
+        for (int vi = 0; vi < nruns; vi++) {
+            int64_t vm = viv_mems_choices[
+                std::uniform_int_distribution<int>(0, 7)(r)];
+            if (verb >= 1) cout << "c  Vivify[" << tag << "] #" << vi
+                                << " max_mems=" << vm << endl;
+            o.reset_mems();
+            o.Vivify(vm);
+        }
+    };
 
     // 1. Parse CNF
     CNF cnf = parse_dimacs(input_file);
@@ -208,6 +247,10 @@ int main(int argc, char* argv[]) {
     }
     sspp::oracle::Oracle oracle(cnf.num_vars, cnf.clauses);
     if (verb >= 2) oracle.SetVerbosity(1);
+
+    // Exercise Vivify on the freshly-built oracle — hits the branch where
+    // no learned clauses exist yet (og == true inside AddOrigClause).
+    if (vivify_initial) run_vivify(oracle, rng, "initial");
 
     // Randomize cache cutoff to exercise the indexed lookup path
     constexpr int cutoff_choices[] = {1, 4, 100, 10000};
@@ -273,6 +316,13 @@ int main(int argc, char* argv[]) {
         }
 
         // Solve
+        // Before-Solve Vivify: exercises the DB right before a query, so
+        // any lost/corrupted clause surfaces in *this* iteration's answer.
+        if (vivify_before
+            && std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
+            run_vivify(oracle, rng, "before");
+        }
+
         oracle.reset_mems();
         bool usecache = std::uniform_int_distribution<int>(0, 9)(rng) < 7;
         auto result = oracle.Solve(oracle_assumps, usecache, max_mems);
@@ -287,14 +337,10 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Occasionally run Vivify between two Solve calls
-        if (vivify_enabled && std::uniform_int_distribution<int>(0, 99)(rng) < 30) {
-            constexpr int64_t viv_mems_choices[] = {0, 10, 100, 1000, 100000000};
-            int64_t viv_mems = viv_mems_choices[
-                std::uniform_int_distribution<int>(0, 4)(rng)];
-            if (verb >= 1) cout << "c  running Vivify max_mems=" << viv_mems << endl;
-            oracle.reset_mems();
-            oracle.Vivify(viv_mems);
+        // After-Solve Vivify: most bugs show up here because we've learned
+        // clauses and have a live model/phase to compare against.
+        if (std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
+            run_vivify(oracle, rng, "after");
         }
 
         if (result.isUnknown()) {

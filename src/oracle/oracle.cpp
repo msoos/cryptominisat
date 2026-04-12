@@ -1263,20 +1263,42 @@ int Oracle::Vivify(int64_t max_mems) {
     assert(CurLevel() == 1);
 
     const int64_t mems_start = stats.mems;
-    int removed_lits = 0;
-    int vivified_cls = 0;
+    int removed_lits_irred = 0, removed_lits_red = 0;
+    int vivified_irred = 0, vivified_red = 0;
+    int removed_irred = 0, removed_red = 0;  // clauses killed (sat-at-root)
 
-    const size_t snapshot = cla_info.size();
+    // Collect clause starts: first the originals (pt in [1, orig_clauses_size)),
+    // then the learned ones (from cla_info). For originals we can't mark the
+    // slot for deletion (they're preserved verbatim by ResizeClauseDb), but we
+    // can still shorten them by emitting the shorter version as an entailed
+    // learned clause. For learned ones we mark the old entry for tier-3 drop.
+    // -1 in cla_idx means "original, no cla_info entry".
+    struct Target { size_t cls; ssize_t cla_idx; };
+    vector<Target> targets;
+    targets.reserve(cla_info.size() + 64);
+    for (size_t pt = 1; pt < orig_clauses_size; ) {
+        if (clauses[pt] == 0) { pt++; continue; }
+        targets.push_back({pt, -1});
+        // skip to terminator
+        size_t k = pt;
+        while (clauses[k] != 0) k++;
+        pt = k + 1;
+    }
+    for (size_t i = 0; i < cla_info.size(); i++) {
+        targets.push_back({cla_info[i].pt, (ssize_t)i});
+    }
+    const size_t snapshot = targets.size();
 
-    size_t ci = RandInt((size_t)0, snapshot, rand_gen);
-    for (; ci < snapshot && !unsat; ci++) {
+    size_t ti = RandInt((size_t)0, snapshot, rand_gen);
+    for (; ti < snapshot && !unsat; ti++) {
         stats.mems++;
         if (stats.mems > mems_start + max_mems) break;
 
-        /* if (cla_info[ci].glue == -1) continue;  // entailed/orig-added */
-        if (cla_info[ci].glue >= 1000000) continue;  // flagged for delete
+        const ssize_t cla_idx = targets[ti].cla_idx;
+        if (cla_idx >= 0 && cla_info[cla_idx].glue >= 1000000)
+            continue;  // already flagged for delete
 
-        const size_t cls = cla_info[ci].pt;
+        const size_t cls = targets[ti].cls;
         // Extract lits; drop root-false ones; bail if any root-true.
         bool sat_at_root = false;
         vector<Lit> clause;
@@ -1291,7 +1313,20 @@ int Oracle::Vivify(int64_t max_mems) {
             if (lv == -1 && vs[VarOf(l)].level == 1) continue;
             clause.push_back(l);
         }
-        if (sat_at_root) continue;
+        if (sat_at_root) {
+            // Clause is dead at root. Learned ones we flag for deletion at
+            // next ResizeClauseDb; originals are preserved verbatim by that
+            // routine, so we leave them be.
+            if (cla_idx >= 0) {
+                cla_info[cla_idx].glue = 1000000;
+                cla_info[cla_idx].used = 0;
+                cla_info[cla_idx].total_used = 0;
+                removed_red++;
+            } else {
+                removed_irred++;
+            }
+            continue;
+        }
         if (clause.size() < 3) continue;
 
         // O(k) walk. All probe decisions land at level 2 — we only care
@@ -1339,12 +1374,19 @@ int Oracle::Vivify(int64_t max_mems) {
             continue;
         }
 
-        // Flag the original for tier-3 deletion at next ResizeClauseDb.
-        cla_info[ci].glue = 1000000;
-        cla_info[ci].used = 0;
-        cla_info[ci].total_used = 0;
-        vivified_cls++;
-        removed_lits += (int)(clause.size() - new_clause.size());
+        // For learned clauses, flag the original entry for tier-3 deletion —
+        // the new, shorter clause we add below subsumes it. Originals stay.
+        const int dropped = (int)(clause.size() - new_clause.size());
+        if (cla_idx >= 0) {
+            cla_info[cla_idx].glue = 1000000;
+            cla_info[cla_idx].used = 0;
+            cla_info[cla_idx].total_used = 0;
+            vivified_red++;
+            removed_lits_red += dropped;
+        } else {
+            vivified_irred++;
+            removed_lits_irred += dropped;
+        }
 
         if (new_clause.size() == 1) {
             FreezeUnit(new_clause[0]);
@@ -1353,12 +1395,15 @@ int Oracle::Vivify(int64_t max_mems) {
         }
     }
 
-    if (verb >= 2) {
-        std::cout << "c [oracle] Vivify removed " << removed_lits
-                  << " lits from " << vivified_cls << " clauses"
+    if (verb >= 1) {
+        std::cout << "c [oracle] Vivify shortened"
+                  << " irred: " << vivified_irred << " cls / " << removed_lits_irred << " lits"
+                  << ", red: "  << vivified_red   << " cls / " << removed_lits_red   << " lits"
+                  << "; removed sat-at-root irred: " << removed_irred
+                  << " red: " << removed_red
                   << " mems " << (stats.mems - mems_start) << std::endl;
     }
-    return removed_lits;
+    return removed_lits_irred + removed_lits_red;
 }
 
 // =================================================================
