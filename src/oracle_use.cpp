@@ -109,8 +109,10 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
-    oracle.SetVerbosity(conf.verbosity);
+    oracle.SetVerbosity(2);
 
+    int64_t mems_before_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
+    mems_before_vivif /= 20;
     int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast > 0) tot_vivif_mems /= (3*fast);
     int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL * solver->conf.oracle_mult;
@@ -126,6 +128,11 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         }
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             if (oracle.getStats().mems > tot_vivif_mems) goto end1;
+            if (oracle.getStats().mems > mems_before_vivif) {
+                oracle.Vivify();
+                mems_before_vivif += oracle.getStats().mems;
+                goto end1;
+            }
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
             auto ret = oracle.Solve(assump, true,mems_per_call);
@@ -418,7 +425,7 @@ bool Solver::oracle_sparsify(bool fast)
 
     // The "+tot_cls" is for indicator variables
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
-    oracle.SetVerbosity(conf.verbosity);
+    oracle.SetVerbosity(2);
     vector<sspp::Lit> tmp;
     vector<vector<sspp::Lit>> cls;
     for(uint32_t i = 0; i < cs.size(); i++) {
@@ -458,6 +465,8 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t last_printed = 0;
     uint32_t ccnr_useful = 0;
     uint32_t unknown = 0;
+    int64_t mems_before_vivif = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL * solver->conf.oracle_mult;
+    mems_before_vivif /= 20;
     int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast) mems /= 3;
     int64_t mems_per_call = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL * solver->conf.oracle_mult;
@@ -541,6 +550,10 @@ bool Solver::oracle_sparsify(bool fast)
                 findWatchedOfBin(watches, lit1, lit2, false, c.bin.ID).mark_bin_cl();
                 findWatchedOfBin(watches, lit2, lit1, false, c.bin.ID).mark_bin_cl();
             }
+        }
+        if (oracle.getStats().mems > mems_before_vivif) {
+            oracle.Vivify();
+            mems_before_vivif += oracle.getStats().mems;
         }
 
         if (oracle.getStats().mems > mems_per_call) {
