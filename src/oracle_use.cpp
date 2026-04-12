@@ -111,8 +111,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(2);
 
-    int64_t mems_before_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
-    mems_before_vivif /= 20;
+    int64_t mems_for_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult/20.0;
+    int64_t mems_before_vivif = mems_for_vivif;
     int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast > 0) tot_vivif_mems /= (3*fast);
     int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL * solver->conf.oracle_mult;
@@ -129,8 +129,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             if (oracle.getStats().mems > tot_vivif_mems) goto end1;
             if (oracle.getStats().mems > mems_before_vivif) {
-                oracle.Vivify();
-                mems_before_vivif += oracle.getStats().mems;
+                oracle.Vivify(mems_for_vivif/10);
+                mems_before_vivif = oracle.getStats().mems + mems_for_vivif;
                 goto end1;
             }
             auto assump = negate(clauses[i]);
@@ -465,8 +465,8 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t last_printed = 0;
     uint32_t ccnr_useful = 0;
     uint32_t unknown = 0;
-    int64_t mems_before_vivif = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL * solver->conf.oracle_mult;
-    mems_before_vivif /= 20;
+    int64_t mems_for_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult/20.0;
+    int64_t mems_before_vivif = mems_for_vivif/20;
     int64_t mems = solver->conf.global_timeout_multiplier*100LL*1000LL*1000LL * solver->conf.oracle_mult;
     if (fast) mems /= 3;
     int64_t mems_per_call = solver->conf.global_timeout_multiplier*333LL*1000LL*1000LL * solver->conf.oracle_mult;
@@ -552,8 +552,8 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
         if (oracle.getStats().mems > mems_before_vivif) {
-            oracle.Vivify();
-            mems_before_vivif += oracle.getStats().mems;
+            oracle.Vivify(mems_for_vivif/10);
+            mems_before_vivif = oracle.getStats().mems+mems_for_vivif;
         }
 
         if (oracle.getStats().mems > mems_per_call) {

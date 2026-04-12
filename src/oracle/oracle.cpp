@@ -1268,11 +1268,12 @@ int Oracle::Vivify(int64_t max_mems) {
 
     const size_t snapshot = cla_info.size();
 
-    for (size_t ci = 0; ci < snapshot && !unsat; ci++) {
+    size_t ci = RandInt((size_t)0, snapshot, rand_gen);
+    for (; ci < snapshot && !unsat; ci++) {
         stats.mems++;
         if (stats.mems > mems_start + max_mems) break;
 
-        if (cla_info[ci].glue == -1) continue;  // entailed/orig-added
+        /* if (cla_info[ci].glue == -1) continue;  // entailed/orig-added */
         if (cla_info[ci].glue >= 1000000) continue;  // flagged for delete
 
         const size_t cls = cla_info[ci].pt;
