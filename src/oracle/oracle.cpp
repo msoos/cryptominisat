@@ -2000,7 +2000,7 @@ int Oracle::BVE(const vector<bool>& eliminable, int grow_cap, int64_t max_mems) 
     return eliminated;
 }
 
-int Oracle::SCCEquivLitElim() {
+int Oracle::SCCEquivLitElim(const vector<bool>& protected_vars) {
     if (unsat) return 0;
     // Reset to root level if needed — allows calling between
     // SlowBackwSolve sessions (which leave the trail at level > 1).
@@ -2097,11 +2097,26 @@ int Oracle::SCCEquivLitElim() {
                     if (w_lit == u) break;
                 }
                 if (scc.size() > 1) {
-                    // Pick representative: literal with smallest VarOf.
-                    // Among ties, prefer positive literal.
+                    // Pick representative: prefer protected vars (they
+                    // must NOT be replaced — they're assumption indicator
+                    // vars whose lits are asserted during SlowBackwSolve).
+                    // Among eligible candidates, pick smallest VarOf;
+                    // among ties, prefer positive literal.
+                    auto is_prot = [&](Lit c) -> bool {
+                        Var v = VarOf(c);
+                        return !protected_vars.empty()
+                            && (size_t)v < protected_vars.size()
+                            && protected_vars[v];
+                    };
                     Lit best = scc[0];
                     for (size_t i = 1; i < scc.size(); i++) {
                         Lit c = scc[i];
+                        // Protected vars always win over non-protected.
+                        bool c_prot = is_prot(c);
+                        bool b_prot = is_prot(best);
+                        if (c_prot && !b_prot) { best = c; continue; }
+                        if (!c_prot && b_prot) continue;
+                        // Both same protection status: use smallest var.
                         if (VarOf(c) < VarOf(best) ||
                             (VarOf(c) == VarOf(best) && IsPos(c) && IsNeg(best))) {
                             best = c;

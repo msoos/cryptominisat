@@ -238,8 +238,13 @@ public:
     // SCC-based equivalent literal replacement. Finds strongly connected
     // components in the binary implication graph and replaces equivalent
     // literals throughout the clause DB. Must be called at root level.
+    // If `protected_vars` is non-empty, vars where protected_vars[v]==true
+    // will never be replaced (they stay as representatives). This is
+    // needed for assumption indicator vars whose positive lits are
+    // asserted during SlowBackwSolve — replacing them would disconnect
+    // the assumption from its propagation clauses.
     // Returns number of variables eliminated via equivalence.
-    int SCCEquivLitElim();
+    int SCCEquivLitElim(const vector<bool>& protected_vars = {});
     // Persistent-stack independence-test solve. See SlowBackwData above.
     // Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw,
     // but using the oracle's CDCL machinery.
