@@ -1933,62 +1933,14 @@ int Oracle::BVE(const vector<bool>& eliminable, int grow_cap, int64_t max_mems) 
     }
 
     // -----------------------------------------------------------------
-    // Step 4a. Intra-resolvent subsumption: sort resolvents by size,
-    // then check each against shorter ones. A resolvent subsumed by
-    // a shorter resolvent is dropped. Also remove exact duplicates.
-    // This is O(R² * L) in the worst case but R is bounded by the
-    // number of eliminated vars and L is the max clause length.
-    // -----------------------------------------------------------------
-    {
-        // Sort by ascending size for efficient subsumption
-        std::sort(pending_new_clauses.begin(), pending_new_clauses.end(),
-            [](const vector<Lit>& a, const vector<Lit>& b) {
-                return a.size() < b.size();
-            });
-        // Sort lits within each clause for comparison
-        for (auto& c : pending_new_clauses) {
-            std::sort(c.begin(), c.end());
-        }
-        // Remove duplicates
-        pending_new_clauses.erase(
-            std::unique(pending_new_clauses.begin(), pending_new_clauses.end()),
-            pending_new_clauses.end());
-        // Forward subsumption: if shorter clause subsumes longer, mark longer
-        size_t orig_count = pending_new_clauses.size();
-        vector<char> subsumed(pending_new_clauses.size(), 0);
-        for (size_t i = 0; i < pending_new_clauses.size(); i++) {
-            if (subsumed[i]) continue;
-            const auto& shorter = pending_new_clauses[i];
-            for (size_t j = i + 1; j < pending_new_clauses.size(); j++) {
-                if (subsumed[j]) continue;
-                if (pending_new_clauses[j].size() < shorter.size()) continue;
-                // Check if shorter ⊂ longer
-                if (std::includes(pending_new_clauses[j].begin(),
-                                  pending_new_clauses[j].end(),
-                                  shorter.begin(), shorter.end())) {
-                    subsumed[j] = 1;
-                }
-            }
-        }
-        size_t write = 0;
-        for (size_t i = 0; i < pending_new_clauses.size(); i++) {
-            if (!subsumed[i]) {
-                if (write != i) pending_new_clauses[write] = std::move(pending_new_clauses[i]);
-                write++;
-            }
-        }
-        pending_new_clauses.resize(write);
-        if (verb >= 2 && orig_count > write) {
-            std::cout << "c [oracle] BVE subsumption removed "
-                      << (orig_count - write) << " redundant resolvents"
-                      << std::endl;
-        }
-    }
-
-    // -----------------------------------------------------------------
-    // Step 4b. Commit — add every surviving resolvent via the standard
+    // Step 4. Commit — add every pending resolvent via the standard
     // entailed-clause path. AddClauseIfNeededAndStr will also strengthen
-    // each resolvent before inserting.
+    // each resolvent before inserting, so we get a cheap form of
+    // subsumption for free. The old (alive==0) clauses stay in the
+    // clauses[] storage but are unreachable from their watched lits: we
+    // *don't* touch watches here — instead we let the next ResizeClauseDb
+    // compact them away. Learned clauses flagged for death via cla_info
+    // glue=INT_MAX below are dropped by the existing tier-3 rule.
     // -----------------------------------------------------------------
     for (const auto& c : pending_new_clauses) {
         if (unsat) break;
