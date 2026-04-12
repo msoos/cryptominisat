@@ -249,17 +249,26 @@ def fuzz_one(args, test_num, seed, counters):
             num_vars, clauses = parse_cnf_file(cnf_path)
             print("  CNF: %d vars, %d clauses" % (num_vars, len(clauses)))
 
-        # Run oracle
+        # Run oracle (randomly enable Vivify to exercise that path)
+        rng = random.Random(seed)
+        vivify = 1 if rng.random() < 0.3 else 0
+        oracle_verb = "2" if verbose else "0"
+        oracle_args = ["-v", oracle_verb, "--vivify", str(vivify)]
         if verbose:
-            print("  Running oracle...")
+            print("  Running oracle (vivify=%d)..." % vivify)
         oracle_out, oracle_rc, oracle_timeout = run_solver(
-            args.oracle, cnf_path, args.tlimit, ["-v", "0"])
+            args.oracle, cnf_path, args.tlimit, oracle_args)
 
         if oracle_timeout:
             if verbose:
                 print("  Oracle timed out, skipping")
             counters["timeout"] += 1
             return True
+
+        if verbose:
+            for line in oracle_out.split("\n"):
+                if "Vivify" in line or "Re-solving" in line:
+                    print("    %s" % line)
 
         oracle_result, oracle_solution = parse_oracle_output(oracle_out)
 

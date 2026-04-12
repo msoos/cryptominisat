@@ -140,6 +140,11 @@ int main(int argc, char* argv[]) {
         .default_value((int64_t)(1000LL * 1000LL * 1000LL))
         .scan<'i', int64_t>();
 
+    program.add_argument("--vivify")
+        .help("Run Vivify after an initial Solve, then re-Solve (0=off, 1=on)")
+        .default_value(0)
+        .scan<'i', int>();
+
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception& err) {
@@ -151,6 +156,7 @@ int main(int argc, char* argv[]) {
     string input_file = program.get<string>("input");
     int verb = program.get<int>("--verb");
     int64_t max_mems = program.get<int64_t>("--max-mems");
+    int do_vivify = program.get<int>("--vivify");
 
     // Parse DIMACS
     if (verb >= 1) cout << "c Reading " << input_file << " ..." << endl;
@@ -179,6 +185,13 @@ int main(int argc, char* argv[]) {
     auto t2 = std::chrono::steady_clock::now();
     vector<Lit> no_assumps;
     auto result = oracle.Solve(no_assumps, /*usecache=*/false, max_mems);
+    if (do_vivify && !result.isUnknown()) {
+        if (verb >= 1) cout << "c Running Vivify..." << endl;
+        int removed = oracle.Vivify();
+        if (verb >= 1) cout << "c Vivify removed " << removed << " lits" << endl;
+        if (verb >= 1) cout << "c Re-solving after Vivify..." << endl;
+        result = oracle.Solve(no_assumps, /*usecache=*/false, max_mems);
+    }
     auto t3 = std::chrono::steady_clock::now();
     double solve_time = std::chrono::duration<double>(t3 - t2).count();
 
