@@ -134,6 +134,7 @@ inline std::ostream& operator<<(std::ostream& os, const TriState& ts) {
 struct Stats {
     int64_t mems = 0;
     int64_t decisions = 0;
+    int64_t propagations = 0;
     int64_t learned_clauses = 0;
     int64_t learned_bin_clauses = 0;
     int64_t learned_units = 0;
@@ -229,10 +230,16 @@ public:
     // replace its clauses with the resolvents. Caller is responsible for
     // ensuring eliminable[v] is ONLY true for variables that are NOT
     // needed downstream (e.g., for arjun: vars that are known not to be
-    // in the independent support). Must be called at root level before
-    // any solves. Returns the number of variables eliminated.
+    // in the independent support). Can be called between SlowBackwSolve
+    // sessions — resets to root level automatically if needed. Returns
+    // the number of variables eliminated.
     int BVE(const vector<bool>& eliminable, int grow_cap = 0,
             int64_t max_mems = 500LL*1000LL*1000LL);
+    // SCC-based equivalent literal replacement. Finds strongly connected
+    // components in the binary implication graph and replaces equivalent
+    // literals throughout the clause DB. Must be called at root level.
+    // Returns number of variables eliminated via equivalence.
+    int SCCEquivLitElim();
     // Persistent-stack independence-test solve. See SlowBackwData above.
     // Mirrors CMSat::Searcher::find_fast_backw + new_decision_fast_backw,
     // but using the oracle's CDCL machinery.

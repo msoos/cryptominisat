@@ -42,7 +42,7 @@ constexpr size_t max_cache_size = 40000;
 }
 
 void Stats::Print() const {
-    cout <<"Decisions/Propagations "<<decisions<<"/"<<mems<<endl;
+    cout <<"Decisions/Propagations "<<decisions<<"/"<<propagations<<endl;
     cout <<"Conflicts: "<<conflicts<<endl;
     cout <<"Learned clauses/bin/unit: "<<learned_clauses<<"/"<<learned_bin_clauses<<"/"<<learned_units<<endl;
     cout <<"Forgot clauses: "<<forgot_clauses<<endl;
@@ -905,7 +905,7 @@ size_t Oracle::Propagate(int level) {
         }
         if (conflict) break;
     }
-    //stats.propagations += (int)prop_q.size();
+    stats.propagations += (int64_t)prop_q.size();
     prop_q.clear();
     return conflict;
 }
@@ -1221,6 +1221,12 @@ TriState Oracle::SlowBackwSolve(SlowBackwData& d, int64_t max_mems) {
     int64_t next_restart = 1;
     int cur_level = 1;
     Var nv = 1;
+
+    // Clear any stale trail state from a prior SlowBackwSolve call
+    // (e.g., when the caller uses chunked mems budgets with BVE
+    // between chunks). The walking loop re-decides everything fresh.
+    prop_q.clear();
+    if (CurLevel() > 1) UnDecide(2);
 
     // Initialize per-test conflict budget
     d.cur_max_confl = (int64_t)stats.conflicts + d.max_confl;
@@ -1733,7 +1739,9 @@ int Oracle::FailedLiteralProbe(int64_t max_mems) {
 // =================================================================
 int Oracle::BVE(const vector<bool>& eliminable, int grow_cap, int64_t max_mems) {
     if (unsat) return 0;
-    assert(CurLevel() == 1);
+    // Reset to root level if needed — allows calling between
+    // SlowBackwSolve sessions (which leave the trail at level > 1).
+    if (CurLevel() > 1) UnDecide(2);
 
     const int64_t mems_start = stats.mems;
     const size_t eff_size = eliminable.size();
@@ -1967,10 +1975,382 @@ int Oracle::BVE(const vector<bool>& eliminable, int grow_cap, int64_t max_mems) 
         }
     }
 
-    if (verb >= 2) {
+    // Count removed clauses (those flagged for deletion).
+    int cls_removed = 0;
+    int lits_in_removed = 0;
+    int lits_in_added = 0;
+    for (size_t ci = 0; ci < cls_start.size(); ci++) {
+        if (!cls_alive[ci]) {
+            cls_removed++;
+            for (size_t k = cls_start[ci]; clauses[k]; k++) lits_in_removed++;
+        }
+    }
+    for (const auto& c : pending_new_clauses) lits_in_added += (int)c.size();
+
+    if (verb >= 1) {
         std::cout << "c [oracle] BVE eliminated " << eliminated
-                  << " vars, added " << pending_new_clauses.size()
-                  << " resolvents, mems " << (stats.mems - mems_start)
+                  << " vars, removed " << cls_removed
+                  << " clauses (" << lits_in_removed << " lits)"
+                  << ", added " << pending_new_clauses.size()
+                  << " resolvents (" << lits_in_added << " lits)"
+                  << ", net lits " << (lits_in_added - lits_in_removed)
+                  << ", mems " << (stats.mems - mems_start)
+                  << std::endl;
+    }
+    return eliminated;
+}
+
+int Oracle::SCCEquivLitElim() {
+    if (unsat) return 0;
+    // Reset to root level if needed — allows calling between
+    // SlowBackwSolve sessions (which leave the trail at level > 1).
+    if (CurLevel() > 1) UnDecide(2);
+
+    const int num_lits = vars * 2 + 2;
+
+    // -----------------------------------------------------------------
+    // Step 1. Build binary implication graph from watches.
+    // For each binary clause (a ∨ b), add edges ¬a → b and ¬b → a.
+    // -----------------------------------------------------------------
+    vector<vector<Lit>> imp_graph(num_lits);
+    for (Lit p = 2; p < num_lits; p++) {
+        for (const Watch& w : watches[p]) {
+            if (w.size != 2) continue;
+            // This watch is on literal p, and the binary clause is (Neg(p), blit).
+            // Wait — watches[p] fires when p becomes true (i.e., Neg(p) is
+            // falsified). So watch on p means clause has Neg(p) as one watched
+            // lit... Actually no. Let me re-check.
+            // In AddOrigClause: watches[clause[0]] gets {cls, clause[1], size}.
+            // So watches[a] contains a watch for a clause starting with a.
+            // The clause is (a ∨ b) for binary. The watch on a has blit=b.
+            // Similarly watches[b] has blit=a.
+            // The implication from binary clause (a ∨ b) is: ¬a → b and ¬b → a.
+            // From watches[a] with blit=b, we get: ¬a → b.
+            Lit a = p;
+            Lit b = w.blit;
+            imp_graph[Neg(a)].push_back(b);
+            // Note: the edge ¬b → a will be added when we process watches[b].
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Step 2. Tarjan's SCC algorithm.
+    // -----------------------------------------------------------------
+    vector<int> scc_index(num_lits, -1);
+    vector<int> scc_lowlink(num_lits, -1);
+    vector<bool> on_stack(num_lits, false);
+    vector<Lit> tarjan_stack;
+    int scc_counter = 0;
+    // rep[lit] = representative literal for lit's equivalence class
+    vector<Lit> rep(num_lits);
+    for (int i = 0; i < num_lits; i++) rep[i] = i;
+
+    // Iterative Tarjan to avoid stack overflow on large graphs.
+    // We use an explicit call stack.
+    struct Frame {
+        Lit node;
+        int child_idx; // which child we're about to visit next
+    };
+    vector<Frame> call_stack;
+
+    for (Lit root = 2; root < num_lits; root++) {
+        if (scc_index[root] != -1) continue;
+        call_stack.push_back({root, 0});
+
+        while (!call_stack.empty()) {
+            Frame& f = call_stack.back();
+            Lit u = f.node;
+
+            if (f.child_idx == 0) {
+                // First visit of u
+                scc_index[u] = scc_lowlink[u] = scc_counter++;
+                tarjan_stack.push_back(u);
+                on_stack[u] = true;
+            }
+
+            bool pushed_child = false;
+            while (f.child_idx < (int)imp_graph[u].size()) {
+                Lit w_lit = imp_graph[u][f.child_idx];
+                if (scc_index[w_lit] == -1) {
+                    // Not visited — recurse
+                    f.child_idx++;
+                    call_stack.push_back({w_lit, 0});
+                    pushed_child = true;
+                    break;
+                } else if (on_stack[w_lit]) {
+                    scc_lowlink[u] = std::min(scc_lowlink[u], scc_index[w_lit]);
+                }
+                f.child_idx++;
+            }
+
+            if (pushed_child) continue;
+
+            // All children processed — check if u is SCC root.
+            if (scc_lowlink[u] == scc_index[u]) {
+                // Pop the SCC
+                vector<Lit> scc;
+                while (true) {
+                    Lit w_lit = tarjan_stack.back();
+                    tarjan_stack.pop_back();
+                    on_stack[w_lit] = false;
+                    scc.push_back(w_lit);
+                    if (w_lit == u) break;
+                }
+                if (scc.size() > 1) {
+                    // Pick representative: literal with smallest VarOf.
+                    // Among ties, prefer positive literal.
+                    Lit best = scc[0];
+                    for (size_t i = 1; i < scc.size(); i++) {
+                        Lit c = scc[i];
+                        if (VarOf(c) < VarOf(best) ||
+                            (VarOf(c) == VarOf(best) && IsPos(c) && IsNeg(best))) {
+                            best = c;
+                        }
+                    }
+                    for (Lit c : scc) {
+                        rep[c] = best;
+                    }
+                }
+            }
+
+            // Return from this frame — update parent's lowlink.
+            call_stack.pop_back();
+            if (!call_stack.empty()) {
+                Frame& parent = call_stack.back();
+                scc_lowlink[parent.node] =
+                    std::min(scc_lowlink[parent.node], scc_lowlink[u]);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Step 3. Ensure consistency: if rep[x] = r, then rep[Neg(x)] = Neg(r).
+    // Also check for UNSAT: if x and Neg(x) are in the same SCC.
+    // -----------------------------------------------------------------
+    int eliminated = 0;
+    for (Var v = 1; v <= vars; v++) {
+        Lit pos = PosLit(v);
+        Lit neg = NegLit(v);
+        if (rep[pos] == rep[neg]) {
+            // x and ¬x in same SCC → UNSAT
+            unsat = true;
+            if (verb >= 1) {
+                std::cout << "c [oracle] SCC: found x and ¬x in same SCC for var "
+                          << v << ", UNSAT" << std::endl;
+            }
+            return 0;
+        }
+        // Ensure Neg consistency
+        if (rep[pos] != pos) {
+            rep[neg] = Neg(rep[pos]);
+        } else if (rep[neg] != neg) {
+            rep[pos] = Neg(rep[neg]);
+        }
+    }
+
+    // Count how many vars are eliminated (mapped to a different var)
+    for (Var v = 1; v <= vars; v++) {
+        Lit pos = PosLit(v);
+        if (VarOf(rep[pos]) != v) eliminated++;
+    }
+
+    if (eliminated == 0) {
+        if (verb >= 1) {
+            std::cout << "c [oracle] SCC: no equivalent literals found" << std::endl;
+        }
+        return 0;
+    }
+
+    // -----------------------------------------------------------------
+    // Step 4. For eliminated vars, propagate assignments from representative.
+    // If rep is assigned at root, assign the eliminated var the same way.
+    // -----------------------------------------------------------------
+    for (Var v = 1; v <= vars; v++) {
+        Lit pos = PosLit(v);
+        if (VarOf(rep[pos]) == v) continue; // not eliminated
+        Lit r = rep[pos];
+        if (LitAssigned(r) && !LitAssigned(pos)) {
+            // Assign v to match r's value
+            Lit unit = LitSat(r) ? pos : Neg(pos);
+            FreezeUnit(unit);
+            if (unsat) return 0;
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Step 5. Walk ALL clauses and replace each literal with its rep.
+    // Remove tautological clauses, remove duplicate lits.
+    // We rebuild clauses[] from scratch and rebuild watches.
+    // -----------------------------------------------------------------
+    // Collect all clauses (original + learned) as vectors of lits.
+    struct ClauseInfo {
+        vector<Lit> lits;
+        bool is_learned;
+        int glue;
+        int used;
+        uint32_t total_used;
+    };
+    vector<ClauseInfo> all_clauses;
+
+    // Walk original clauses: [1, orig_clauses_size)
+    {
+        size_t i = 1;
+        while (i < orig_clauses_size) {
+            if (clauses[i] == 0) { i++; continue; }
+            ClauseInfo ci;
+            ci.is_learned = false;
+            ci.glue = -1; ci.used = -1; ci.total_used = 0;
+            while (i < orig_clauses_size && clauses[i] != 0) {
+                ci.lits.push_back(clauses[i]);
+                i++;
+            }
+            all_clauses.push_back(std::move(ci));
+            if (i < orig_clauses_size) i++; // skip terminator
+        }
+    }
+
+    // Walk learned clauses: [orig_clauses_size, clauses.size())
+    // Match them with cla_info entries.
+    {
+        // Build a map from clause start offset to cla_info index
+        std::unordered_map<size_t, size_t> pt_to_info;
+        for (size_t ci = 0; ci < cla_info.size(); ci++) {
+            pt_to_info[cla_info[ci].pt] = ci;
+        }
+
+        size_t i = orig_clauses_size;
+        while (i < clauses.size()) {
+            if (clauses[i] == 0) { i++; continue; }
+            size_t start = i;
+            ClauseInfo ci;
+            ci.is_learned = true;
+            ci.glue = 3; ci.used = 0; ci.total_used = 0; // defaults
+            auto it = pt_to_info.find(start);
+            if (it != pt_to_info.end()) {
+                ci.glue = cla_info[it->second].glue;
+                ci.used = cla_info[it->second].used;
+                ci.total_used = cla_info[it->second].total_used;
+            }
+            while (i < clauses.size() && clauses[i] != 0) {
+                ci.lits.push_back(clauses[i]);
+                i++;
+            }
+            all_clauses.push_back(std::move(ci));
+            if (i < clauses.size()) i++; // skip terminator
+        }
+    }
+
+    // Replace lits and filter
+    int cls_removed = 0;
+    int lits_removed = 0;
+    vector<ClauseInfo> surviving;
+    surviving.reserve(all_clauses.size());
+
+    for (auto& ci : all_clauses) {
+        int orig_size = (int)ci.lits.size();
+        // Replace each lit with its representative
+        for (Lit& l : ci.lits) {
+            l = rep[l];
+        }
+
+        // Remove root-false lits, check for root-true (satisfied)
+        bool satisfied = false;
+        {
+            int j = 0;
+            for (int k = 0; k < (int)ci.lits.size(); k++) {
+                Lit l = ci.lits[k];
+                int val = LitVal(l);
+                if (val == 1 && vs[VarOf(l)].level == 1) {
+                    satisfied = true;
+                    break;
+                }
+                if (val == -1 && vs[VarOf(l)].level == 1) continue; // skip root-false
+                ci.lits[j++] = l;
+            }
+            if (!satisfied) ci.lits.resize(j);
+        }
+        if (satisfied) { cls_removed++; lits_removed += orig_size; continue; }
+
+        // Sort and remove duplicates
+        std::sort(ci.lits.begin(), ci.lits.end());
+        ci.lits.erase(std::unique(ci.lits.begin(), ci.lits.end()), ci.lits.end());
+
+        // Check for tautology (both l and Neg(l))
+        bool taut = false;
+        for (size_t k = 0; k + 1 < ci.lits.size(); k++) {
+            if (ci.lits[k] == Neg(ci.lits[k + 1])) {
+                taut = true;
+                break;
+            }
+        }
+        if (taut) { cls_removed++; lits_removed += orig_size; continue; }
+
+        lits_removed += orig_size - (int)ci.lits.size();
+        surviving.push_back(std::move(ci));
+    }
+
+    // -----------------------------------------------------------------
+    // Step 6. Rebuild clauses[], watches[], cla_info[], clause_pos[]
+    //         from the surviving clauses.
+    // -----------------------------------------------------------------
+    clauses.clear();
+    clauses.push_back(0); // sentinel at position 0
+    clause_pos.clear();
+    clause_pos.push_back(0);
+
+    // Clear all watches
+    for (int i = 0; i < num_lits; i++) watches[i].clear();
+
+    cla_info.clear();
+    num_lbd2_red_cls = 0;
+    num_used_red_cls = 0;
+
+    // First add original clauses, then learned.
+    // orig_end tracks the end of original-clause region; initialized to
+    // current size (= 1, just sentinel) so that if all orig clauses
+    // vanish we still get a valid boundary.
+    size_t orig_end = clauses.size();
+    for (const auto& ci : surviving) {
+        if (ci.lits.empty()) {
+            unsat = true;
+            if (verb >= 1) {
+                std::cout << "c [oracle] SCC: empty clause after replacement, UNSAT"
+                          << std::endl;
+            }
+            return 0;
+        }
+        if (ci.lits.size() == 1) {
+            FreezeUnit(ci.lits[0]);
+            if (unsat) return 0;
+            continue;
+        }
+        // Add clause
+        size_t pt = clauses.size();
+        watches[ci.lits[0]].push_back({pt, ci.lits[1], (int)ci.lits.size()});
+        watches[ci.lits[1]].push_back({pt, ci.lits[0], (int)ci.lits.size()});
+        clause_pos.resize(pt + ci.lits.size() + 1, 0);
+        clause_pos[pt] = 2;
+        for (Lit l : ci.lits) clauses.push_back(l);
+        clauses.push_back(0);
+
+        if (!ci.is_learned) {
+            orig_end = clauses.size();
+        } else {
+            cla_info.push_back({pt, ci.glue, ci.used, ci.total_used});
+            if (ci.glue <= 2) num_lbd2_red_cls++;
+            if (ci.used > 0) num_used_red_cls++;
+        }
+    }
+
+    orig_clauses_size = orig_end;
+
+    // Invalidate solution cache — clause DB has changed.
+    ClearSolCache();
+
+    if (verb >= 1) {
+        std::cout << "c [oracle] SCC eliminated " << eliminated
+                  << " equiv vars, removed " << cls_removed
+                  << " clauses, removed " << lits_removed << " lits"
                   << std::endl;
     }
     return eliminated;
