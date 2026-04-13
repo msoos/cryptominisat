@@ -1345,8 +1345,9 @@ int Oracle::Vivify(int64_t max_mems) {
     }
     const size_t snapshot = targets.size();
 
-    size_t ti = RandInt((size_t)0, snapshot, rand_gen);
-    for (; ti < snapshot && !unsat; ti++) {
+    const size_t start_ti = snapshot ? RandInt((size_t)0, snapshot - 1, rand_gen) : 0;
+    for (size_t step = 0; step < snapshot && !unsat; step++) {
+        const size_t ti = (start_ti + step) % snapshot;
         stats.mems++;
         if (stats.mems > mems_start + max_mems) break;
 
