@@ -204,8 +204,11 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     const uint8_t* cache_base = sol_cache.data();
     const uint8_t* match = nullptr;
     if (found) {
-        for(const auto& idx : cache_lookup[val]) {
-            const uint8_t* entry = cache_base + idx*stride;
+        const auto& bucket = cache_lookup[val];
+        for (size_t bi = 0; bi < bucket.size(); bi++) {
+            if (bi + 1 < bucket.size())
+                cmsat_prefetch(cache_base + bucket[bi+1]*stride);
+            const uint8_t* entry = cache_base + bucket[bi]*stride;
             bool ok = true;
             // all our assumptions must be in the solution
             for (const Lit& l : assumps) {
@@ -217,6 +220,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
     } else {
         const uint8_t* const cache_end = cache_base + sol_cache.size();
         for (const uint8_t* entry = cache_base; entry < cache_end; entry += stride) {
+            if (entry + stride < cache_end) cmsat_prefetch(entry + stride);
             bool ok = true;
             // all our assumptions must be in the solution
             for (const Lit& l : assumps) {
