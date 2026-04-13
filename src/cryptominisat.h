@@ -240,6 +240,17 @@ namespace CMSat {
         void clean_sampl_get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_lit_incidence();
+
+        // Per-variable irreducible-clause statistics in OUTER var space,
+        // computed over the *current simplified* CNF.
+        struct OuterVarFeats {
+            std::vector<uint32_t> pos;
+            std::vector<uint32_t> neg;
+            std::vector<uint32_t> bin;
+            std::vector<uint32_t> longcls;
+            std::vector<double>   inv_sz_sum;
+        };
+        OuterVarFeats get_var_feats();
         std::vector<uint32_t> get_var_incidence_also_red();
         std::vector<double> get_vsids_scores();
 

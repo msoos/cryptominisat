@@ -254,6 +254,18 @@ public:
     vector<uint32_t> get_outside_lit_incidence();
     vector<uint32_t> get_outside_var_incidence_also_red();
 
+    // Per-variable irreducible-clause statistics in OUTER var space, computed
+    // over the *current simplified* CNF (binary watches + long irred clauses).
+    // Returned as 5 parallel arrays indexed by outer var id.
+    struct OuterVarFeats {
+        std::vector<uint32_t> pos;       // # occurrences of positive literal
+        std::vector<uint32_t> neg;       // # occurrences of negative literal
+        std::vector<uint32_t> bin;       // # binary irred clauses containing var
+        std::vector<uint32_t> longcls;   // # irred clauses of size>=3 containing var
+        std::vector<double>   inv_sz_sum;// sum_{cl} 1/|cl| over containing clauses
+    };
+    OuterVarFeats get_outside_var_feats();
+
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();
     void clean_occur_from_idx_types_only_smudged();
