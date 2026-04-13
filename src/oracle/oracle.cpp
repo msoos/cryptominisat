@@ -1355,6 +1355,9 @@ int Oracle::Vivify(int64_t max_mems) {
     }
     const size_t snapshot = targets.size();
 
+    // Reusable scratch buffers so we don't re-allocate per iteration.
+    vector<Lit> clause;
+    vector<Lit> new_clause;
     const size_t start_ti = snapshot ? RandInt((size_t)0, snapshot - 1, rand_gen) : 0;
     for (size_t step = 0; step < snapshot && !unsat; step++) {
         const size_t ti = (start_ti + step) % snapshot;
@@ -1368,7 +1371,7 @@ int Oracle::Vivify(int64_t max_mems) {
         const size_t cls = targets[ti].cls;
         // Extract lits; drop root-false ones; bail if any root-true.
         bool sat_at_root = false;
-        vector<Lit> clause;
+        clause.clear();
         for (size_t k = 0; clauses[cls+k]; k++) {
             stats.mems++;
             const Lit l = clauses[cls+k];
@@ -1398,7 +1401,7 @@ int Oracle::Vivify(int64_t max_mems) {
 
         // O(k) walk. All probe decisions land at level 2 — we only care
         // whether the prefix is inconsistent, not at which sub-level.
-        vector<Lit> new_clause;
+        new_clause.clear();
         new_clause.reserve(clause.size());
         bool modified = false;
         size_t i = 0;
