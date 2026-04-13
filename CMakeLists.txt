@@ -90,6 +90,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # static compilation
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
+# STATIC_BINARY controls whether the cryptominisat5 executable is linked fully statically.
+# Defaults to ON when BUILD_SHARED_LIBS=OFF, but can be set to OFF independently
+# (e.g. when building the Python wheel: BUILD_SHARED_LIBS=OFF embeds static .a
+# deps in the .so, but we don't want a fully static cryptominisat5 binary).
+if(NOT BUILD_SHARED_LIBS)
+    option(STATIC_BINARY "Link the cryptominisat5 binary fully statically" ON)
+else()
+    option(STATIC_BINARY "Link the cryptominisat5 binary fully statically" OFF)
+endif()
+
+if(STATIC_BINARY AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    message(STATUS "Linking cryptominisat5 binary statically")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+endif()
 
 find_package(Threads REQUIRED)
 
