@@ -213,6 +213,22 @@ int main(int argc, char* argv[]) {
         .default_value(20)
         .scan<'i', int>();
 
+    program.add_argument("--cache-cutoff")
+        .help("Solution-cache lookup cadence")
+        .default_value(1000).scan<'i', int>();
+    program.add_argument("--db-clean-interval")
+        .help("Conflicts between learned-clause DB cleans")
+        .default_value(20000).scan<'i', int>();
+    program.add_argument("--tier1-max-glue")
+        .help("Max glue for tier-1 (always-keep) learned clauses")
+        .default_value(5).scan<'i', int>();
+    program.add_argument("--tier2-max-glue")
+        .help("Max glue for tier-2 (keep-if-used) learned clauses")
+        .default_value(6).scan<'i', int>();
+    program.add_argument("--restart-factor")
+        .help("Luby restart-factor multiplier")
+        .default_value(400).scan<'i', int>();
+
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception& err) {
@@ -320,15 +336,26 @@ int main(int argc, char* argv[]) {
     sspp::oracle::Oracle oracle(cnf.num_vars, cnf.clauses);
     if (verb >= 2) oracle.SetVerbosity(1);
 
+    // Apply cutoffs from the command line. Fuzzing harnesses (e.g. fuzz_oracle.py)
+    // are expected to vary these across runs to exercise extreme regimes.
+    int cf_cache    = program.get<int>("--cache-cutoff");
+    int cf_db_clean = program.get<int>("--db-clean-interval");
+    int cf_t1       = program.get<int>("--tier1-max-glue");
+    int cf_t2       = program.get<int>("--tier2-max-glue");
+    int cf_restart  = program.get<int>("--restart-factor");
+    oracle.SetCacheCutoff(cf_cache);
+    oracle.SetDbCleanInterval(cf_db_clean);
+    oracle.SetTier1MaxGlue(cf_t1);
+    oracle.SetTier2MaxGlue(cf_t2);
+    oracle.SetRestartFactor(cf_restart);
+    if (verb >= 1) cout << "c Cutoffs: cache=" << cf_cache
+                        << " db_clean=" << cf_db_clean
+                        << " tier1<=" << cf_t1 << " tier2<=" << cf_t2
+                        << " restart_factor=" << cf_restart << endl;
+
     // Exercise Vivify on the freshly-built oracle — hits the branch where
     // no learned clauses exist yet (og == true inside AddOrigClause).
     if (vivify_initial && !run_vivify(oracle, rng, "initial")) return 1;
-
-    // Randomize cache cutoff to exercise the indexed lookup path
-    constexpr int cutoff_choices[] = {1, 4, 100, 10000};
-    int cutoff = cutoff_choices[std::uniform_int_distribution<int>(0, 3)(rng)];
-    oracle.SetCacheCutoff(cutoff);
-    if (verb >= 1) cout << "c Cache cutoff: " << cutoff << endl;
 
     // Build list of variables for assumption picking
     vector<int> pickable_vars;

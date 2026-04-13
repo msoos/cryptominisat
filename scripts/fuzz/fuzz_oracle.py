@@ -253,7 +253,24 @@ def fuzz_one(args, test_num, seed, counters):
         rng = random.Random(seed)
         vivify = 1 if rng.random() < 0.3 else 0
         oracle_verb = "2" if verbose else "0"
-        oracle_args = ["-v", oracle_verb, "--vivify", str(vivify)]
+        # Randomly choose a cutoff preset so we exercise extreme regimes
+        # (very-low → constant DB churn, tiny tiers; high → defaults).
+        # Keep these in sync with the corresponding presets in assump_fuzz.
+        presets = {
+            "very-low": dict(cache=4,   db_clean=200,   t1=2, t2=3, restart=10),
+            "low":      dict(cache=100, db_clean=2000,  t1=3, t2=5, restart=100),
+            "high":     dict(cache=1000,db_clean=20000, t1=5, t2=6, restart=400),
+        }
+        preset_name = rng.choice(list(presets.keys()))
+        ps = presets[preset_name]
+        cutoff_args = [
+            "--cache-cutoff",      str(ps["cache"]),
+            "--db-clean-interval", str(ps["db_clean"]),
+            "--tier1-max-glue",    str(ps["t1"]),
+            "--tier2-max-glue",    str(ps["t2"]),
+            "--restart-factor",    str(ps["restart"]),
+        ]
+        oracle_args = ["-v", oracle_verb, "--vivify", str(vivify)] + cutoff_args
         if verbose:
             print("  Running oracle (vivify=%d)..." % vivify)
         oracle_out, oracle_rc, oracle_timeout = run_solver(
@@ -310,7 +327,8 @@ def fuzz_one(args, test_num, seed, counters):
                 print("  Running assumption-based fuzz (K=%d)..." % assump_k)
             assump_out, assump_rc, assump_timeout = run_solver(
                 args.assump_fuzz, cnf_path, args.tlimit,
-                ["-k", str(assump_k),"-v", "2",  "-s", str(seed), "--vivify", str(vivify)])
+                ["-k", str(assump_k), "-v", "2", "-s", str(seed),
+                 "--vivify", str(vivify)] + cutoff_args)
 
             if assump_timeout:
                 if verbose:

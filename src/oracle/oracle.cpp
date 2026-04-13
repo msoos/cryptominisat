@@ -300,10 +300,10 @@ void Oracle::ResizeClauseDb() {
             } else if (impll == 0 && !added) {
                 int glue = cla_info[i].glue;
                 int used = cla_info[i].used;
-                if (glue <= 5) {
+                if (glue <= tier1_max_glue) {
                     // Tier 1: always keep
                     num_lbd2_red_cls++;
-                } else if (glue <= 6) {
+                } else if (glue <= tier2_max_glue) {
                     // Tier 2: delete only if unused for 2 consecutive reductions
                     if (used > 0) {
                         num_used_red_cls++;
@@ -1030,7 +1030,7 @@ TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
             // small; bumping it reduces churn and lets useful learned
             // clauses survive longer at the cost of slightly higher peak
             // memory.
-            if (total_confls > last_db_clean + 20000) {
+            if (total_confls > last_db_clean + db_clean_interval) {
                 last_db_clean = total_confls;
                 oclv("c [oracle] Resizing cldb"
                     << " num_lbd2_red_cls: " << num_lbd2_red_cls

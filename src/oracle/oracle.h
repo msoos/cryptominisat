@@ -178,6 +178,10 @@ public:
     void SetAssumpLit(Lit lit, bool freeze);
     void SetVerbosity(uint32_t _verb) { verb=_verb;}
     void SetCacheCutoff(uint32_t c) { cache_cutoff = c; }
+    void SetRestartFactor(int f) { restart_factor = f; }
+    void SetDbCleanInterval(uint32_t n) { db_clean_interval = n; }
+    void SetTier1MaxGlue(int g) { tier1_max_glue = g; }
+    void SetTier2MaxGlue(int g) { tier2_max_glue = g; }
     int GetCacheLookupVar() const { return cache_lookup_var; }
     TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
     // Vivify all learned clauses: for each long learned clause, try to
@@ -214,6 +218,9 @@ public:
  private:
     uint32_t verb = 0;
     uint32_t cache_cutoff = 1000;
+    uint32_t db_clean_interval = 20000;
+    int tier1_max_glue = 5;
+    int tier2_max_glue = 6;
     size_t total_confls = 0;
     size_t last_db_clean = 0;
 
