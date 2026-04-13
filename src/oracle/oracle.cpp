@@ -865,6 +865,10 @@ size_t Oracle::Propagate(int level) {
         while (j1 != wt.end()) {
             // This code is inspired by cadical propagation code
             const Watch w = *j2++ = *j1++;
+            // Prefetch the next watch's clause head; typical workloads have
+            // many misses at clauses[w.cls] on the slow path, and this hides
+            // part of that latency behind the cheap blit check below.
+            if (j1 != wt.end()) cmsat_prefetch(clauses.data() + j1->cls);
             int bv = LitVal(w.blit);
             if (bv > 0) continue; // SAT by blit
             if (w.size == 2) {
