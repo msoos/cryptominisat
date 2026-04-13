@@ -190,13 +190,6 @@ public:
     // the oracle is already UNSAT, this is a no-op. Returns the number of
     // lits removed across all vivified clauses.
     int Vivify(int64_t max_mems = 200LL*1000LL*1000LL);
-    // SCC-based equivalent literal replacement. Finds strongly connected
-    // components in the binary implication graph and replaces equivalent
-    // literals throughout the clause DB. Must be called at root level.
-    // If `protected_vars` is non-empty, vars where protected_vars[v]==true
-    // will never be replaced (they stay as representatives).
-    // Returns number of variables eliminated via equivalence.
-    int SCCEquivLitElim(const vector<bool>& protected_vars = {});
     bool FreezeUnit(Lit unit);
     bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
     void AddClause(const vector<Lit>& clause, bool entailed);
