@@ -788,6 +788,9 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
     for (size_t i = decided.size()-1; open; i--) {
         Var v = decided[i];
         if (!seen[v]) continue;
+        // Prefetch the next-back decided slot's var-state; we're walking the
+        // trail in reverse and vs[] is scattered across memory.
+        if (i >= 1) cmsat_prefetch(&vs[decided[i-1]]);
         assert(vs[v].level == level);
         open--;
         if (open) {
