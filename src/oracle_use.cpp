@@ -552,7 +552,14 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
         if (oracle.getStats().mems > mems_before_vivif) {
-            /* oracle.Vivify(mems_for_vivif/10); */
+            // Safe to Vivify here. Vivify only emits clauses entailed by the
+            // oracle's CNF, and (since 8f5340c2f) it ignores level-2 soft
+            // assumptions — so its strengthenings don't depend on the current
+            // indicator state. Any clause we later decide to remove is
+            // therefore entailed by the *original* CNF, not just by the
+            // Vivify-shortened view. Verified empirically by the
+            // --sparsify-cumulative fuzzer mode in assump_fuzz_oracle.
+            oracle.Vivify(mems_for_vivif/10);
             mems_before_vivif = oracle.getStats().mems+mems_for_vivif;
         }
 
