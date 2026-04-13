@@ -186,21 +186,6 @@ public:
     // the oracle is already UNSAT, this is a no-op. Returns the number of
     // lits removed across all vivified clauses.
     int Vivify(int64_t max_mems = 200LL*1000LL*1000LL);
-    // Failed literal probing. At root level, for each unassigned var v
-    // try v=TRUE and v=FALSE; if either side propagates to a conflict,
-    // freeze the other polarity as a root unit. Returns the number of
-    // units learned. Budget-capped.
-    int FailedLiteralProbe(int64_t max_mems = 100LL*1000LL*1000LL);
-    // Bounded variable elimination (BVE). For each variable v where
-    // eliminable[v] is true and where the number of non-tautological
-    // resolvents does not exceed (#pos + #neg + grow_cap), remove v and
-    // replace its clauses with the resolvents. Caller is responsible for
-    // ensuring eliminable[v] is ONLY true for variables that are NOT
-    // needed downstream (e.g., for arjun: vars that are known not to be
-    // in the independent support). Resets to root level automatically if
-    // needed. Returns the number of variables eliminated.
-    int BVE(const vector<bool>& eliminable, int grow_cap = 0,
-            int64_t max_mems = 500LL*1000LL*1000LL);
     // SCC-based equivalent literal replacement. Finds strongly connected
     // components in the binary implication graph and replaces equivalent
     // literals throughout the clause DB. Must be called at root level.
