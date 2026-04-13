@@ -200,6 +200,19 @@ int main(int argc, char* argv[]) {
         .default_value(1)
         .scan<'i', int>();
 
+    program.add_argument("--soundness-check")
+        .help("After every Vivify, Solve(no_assumps) and verify the "
+              "SAT/UNSAT answer still matches the baseline (1=on)")
+        .default_value(1)
+        .scan<'i', int>();
+
+    program.add_argument("--freeze-rate")
+        .help("Probability (0..100) per iteration of FreezeUnit'ing a random "
+              "lit consistent with the baseline model — mimics the "
+              "SetAssumpLit pattern in oracle_sparsify.")
+        .default_value(20)
+        .scan<'i', int>();
+
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception& err) {
@@ -217,20 +230,54 @@ int main(int argc, char* argv[]) {
     int vivify_max_runs = program.get<int>("--vivify-max-runs");
     int vivify_before = program.get<int>("--vivify-before");
     int vivify_initial = program.get<int>("--vivify-initial");
+    int soundness_check = program.get<int>("--soundness-check");
+    int freeze_rate = program.get<int>("--freeze-rate");
+    vector<int8_t> frozen_var; // frozen_var[v] = 1 if already SetAssumpLit'd
 
-    auto run_vivify = [&](sspp::oracle::Oracle& o, std::mt19937& r, const char* tag) {
-        if (!vivify_enabled) return;
+    // Baseline: ground truth for the input CNF (no assumptions). If Vivify
+    // is unsound and adds a non-entailed clause, the oracle's answer to
+    // Solve({}, ...) can flip away from this baseline — which is exactly
+    // the symptom the user sees in oracle_sparsify.
+    int baseline = 0; // 0=unknown, 10=SAT, 20=UNSAT — set after parse.
+
+    auto check_base_sound = [&](sspp::oracle::Oracle& o, const char* where) {
+        if (!soundness_check || baseline == 0) return true;
+        o.reset_mems();
+        vector<Lit> no_assumps;
+        auto r = o.Solve(no_assumps, /*usecache=*/false, /*max_mems=*/1000000000LL);
+        if (r.isUnknown()) return true; // can't conclude
+        int got = r.isTrue() ? 10 : 20;
+        if (got != baseline) {
+            cerr << "UNSOUND: after " << where
+                 << ": oracle reports " << (got == 10 ? "SAT" : "UNSAT")
+                 << " but baseline is " << (baseline == 10 ? "SAT" : "UNSAT")
+                 << endl;
+            return false;
+        }
+        return true;
+    };
+
+    auto run_vivify = [&](sspp::oracle::Oracle& o, std::mt19937& r, const char* tag) -> bool {
+        if (!vivify_enabled) return true;
         constexpr int64_t viv_mems_choices[] =
             {0, 10, 100, 1000, 100000, 100000000, 100000000, 100000000};
         int nruns = std::uniform_int_distribution<int>(1, std::max(1, vivify_max_runs))(r);
         for (int vi = 0; vi < nruns; vi++) {
             int64_t vm = viv_mems_choices[
                 std::uniform_int_distribution<int>(0, 7)(r)];
+            const auto& st_before = o.getStats();
+            size_t forgot_before = st_before.forgot_clauses;
             if (verb >= 1) cout << "c  Vivify[" << tag << "] #" << vi
                                 << " max_mems=" << vm << endl;
             o.reset_mems();
             o.Vivify(vm);
+            if (verb >= 1) {
+                cout << "c   forgot_cls delta=" << (o.getStats().forgot_clauses - forgot_before)
+                     << endl;
+            }
+            if (!check_base_sound(o, "Vivify")) return false;
         }
+        return true;
     };
 
     // 1. Parse CNF
@@ -238,6 +285,31 @@ int main(int argc, char* argv[]) {
     if (verb >= 1)
         cout << "c Parsed: " << cnf.num_vars << " vars, "
              << cnf.clauses.size() << " clauses" << endl;
+
+    // Ground truth for no-assumption Solve — needed to catch a Vivify that
+    // makes the formula spuriously UNSAT. If SAT, also capture the model so
+    // we can FreezeUnit lits known to be compatible with a satisfying
+    // assignment (safe way to mimic SetAssumpLit from oracle_sparsify).
+    vector<int> baseline_model; // baseline_model[v] = +v or -v (1..num_vars)
+    if (soundness_check) {
+        CaDiCaL::Solver cad;
+        for (const auto& cl : cnf.dimacs_clauses) {
+            for (int lit : cl) cad.add(lit);
+            cad.add(0);
+        }
+        int r = cad.solve();
+        if (r == 10) {
+            baseline = 10;
+            baseline_model.assign(cnf.num_vars + 1, 0);
+            for (int v = 1; v <= cnf.num_vars; v++) {
+                baseline_model[v] = (cad.val(v) > 0) ? v : -v;
+            }
+        } else if (r == 20) baseline = 20;
+        if (verb >= 1)
+            cout << "c Baseline (no assumps): "
+                 << (baseline == 10 ? "SAT" : baseline == 20 ? "UNSAT" : "UNKNOWN")
+                 << endl;
+    }
 
     // 2. Create oracle
     std::mt19937 rng(seed);
@@ -250,7 +322,7 @@ int main(int argc, char* argv[]) {
 
     // Exercise Vivify on the freshly-built oracle — hits the branch where
     // no learned clauses exist yet (og == true inside AddOrigClause).
-    if (vivify_initial) run_vivify(oracle, rng, "initial");
+    if (vivify_initial && !run_vivify(oracle, rng, "initial")) return 1;
 
     // Randomize cache cutoff to exercise the indexed lookup path
     constexpr int cutoff_choices[] = {1, 4, 100, 10000};
@@ -266,7 +338,29 @@ int main(int argc, char* argv[]) {
     // 3. Fuzz loop
     int num_sat = 0, num_unsat = 0, num_unknown = 0;
 
+    frozen_var.assign(cnf.num_vars + 1, 0);
+
     for (int iter = 0; iter < K; iter++) {
+        // Mimic oracle_sparsify: occasionally SetAssumpLit(v, freeze=true)
+        // using the baseline model's polarity, so we never make the formula
+        // inconsistent with the baseline. Bugs in Vivify's interaction with
+        // frozen lits will then show up in the soundness check.
+        if (baseline == 10
+            && std::uniform_int_distribution<int>(0, 99)(rng) < freeze_rate) {
+            for (int attempt = 0; attempt < 5; attempt++) {
+                int v = std::uniform_int_distribution<int>(1, cnf.num_vars)(rng);
+                if (frozen_var[v]) continue;
+                int lit_sign = baseline_model[v]; // +v or -v
+                Lit ol = (lit_sign > 0) ? PosLit(v) : NegLit(v);
+                oracle.SetAssumpLit(ol, /*freeze=*/true);
+                frozen_var[v] = 1;
+                if (verb >= 1) cout << "c  Freeze var " << v
+                                    << " = " << (lit_sign > 0 ? "T" : "F") << endl;
+                break;
+            }
+            if (!check_base_sound(oracle, "SetAssumpLit")) return 1;
+        }
+
         // Pick 1-10 random variables
         int max_assumps_cap = std::uniform_int_distribution<int>(0, 3)(rng) == 0 ? 200 : 50;
         int num_assumps = std::uniform_int_distribution<int>(1, max_assumps_cap)(rng);
@@ -320,7 +414,7 @@ int main(int argc, char* argv[]) {
         // any lost/corrupted clause surfaces in *this* iteration's answer.
         if (vivify_before
             && std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
-            run_vivify(oracle, rng, "before");
+            if (!run_vivify(oracle, rng, "before")) return 1;
         }
 
         oracle.reset_mems();
@@ -340,7 +434,7 @@ int main(int argc, char* argv[]) {
         // After-Solve Vivify: most bugs show up here because we've learned
         // clauses and have a live model/phase to compare against.
         if (std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
-            run_vivify(oracle, rng, "after");
+            if (!run_vivify(oracle, rng, "after")) return 1;
         }
 
         if (result.isUnknown()) {
@@ -376,6 +470,15 @@ int main(int argc, char* argv[]) {
             for (int alit : dimacs_assumps) {
                 cadical.add(alit);
                 cadical.add(0);
+            }
+            // Frozen vars are part of the oracle's effective formula;
+            // CaDiCaL must see them too, otherwise it solves a strictly
+            // less-constrained problem and produces false-positive bugs.
+            for (int v = 1; v <= cnf.num_vars; v++) {
+                if (frozen_var[v]) {
+                    cadical.add(baseline_model[v]);
+                    cadical.add(0);
+                }
             }
 
             int cad_res = cadical.solve();

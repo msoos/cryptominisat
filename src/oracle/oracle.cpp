@@ -493,8 +493,37 @@ void Oracle::BumpVar(Var v) {
 void Oracle::SetAssumpLit(Lit lit, bool freeze) {
     assert(CurLevel() == 1);
     Var v = VarOf(lit);
+    assert(prop_q.empty());
+    if (unsat) return;
+    // Var may already be at level 1 if a previous SetAssumpLit's propagation
+    // implied it. Honor existing assignment: no-op if compatible, unsat if not.
+    if (vs[v].level == 1) {
+        if (LitVal(lit) < 0) unsat = true;
+        return;
+    }
     assert(vs[v].reason == 0);
-    assert(vs[v].level != 1);
+    // For freeze=true, we need to derive all root-level implications of the
+    // newly-frozen unit. Learned clauses may contain `lit` alongside other
+    // vars (e.g., binary clauses from backbone propagation), and dropping
+    // watches without propagation loses those implications. Assign + Propagate
+    // at level 1 first; the watch-cleanup below then runs against an up-to-date
+    // state.
+    if (freeze) {
+        Assign(lit, 0, 1);
+        if (Propagate(1)) { unsat = true; return; }
+        assert(prop_q.empty());
+        // Remove `lit` from the decided[] stack since it's a permanent unit,
+        // not a decision; any level-1 implications from Propagate stay on
+        // decided[] (they too are root-level permanent).
+        for (size_t i = decided.size(); i-- > 0; ) {
+            if (decided[i] == v) {
+                decided.erase(decided.begin() + i);
+                break;
+            }
+        }
+        PruneSolCacheForVar(VarOf(lit), IsPos(lit) ? 1 : 0);
+        return;
+    }
     for (Lit tl : {PosLit(v), NegLit(v)}) {
         const auto& wt = watches[tl];
         for (size_t wi = 0; wi < wt.size(); wi++) {

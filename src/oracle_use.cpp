@@ -552,7 +552,7 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
         if (oracle.getStats().mems > mems_before_vivif) {
-            /* oracle.Vivify(mems_for_vivif/10); */
+            oracle.Vivify(mems_for_vivif/10);
             mems_before_vivif = oracle.getStats().mems+mems_for_vivif;
         }
 
