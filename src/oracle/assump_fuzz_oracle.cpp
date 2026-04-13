@@ -216,6 +216,18 @@ int main(int argc, char* argv[]) {
         .default_value(0)
         .scan<'i', int>();
 
+    program.add_argument("--sparsify-cumulative")
+        .help("In sparsify-mode, persistently remove clauses the oracle "
+              "decides are redundant (SetAssumpLit ind=TRUE, freeze=true), "
+              "and run Vivify between probes. At the end, build the reduced "
+              "CNF (orig minus removed clauses) and verify with CaDiCaL that "
+              "its satisfiability matches the original. Catches the case "
+              "where Vivify's strengthening misleads the oracle into "
+              "removing a clause that wasn't actually redundant in the "
+              "*original* CNF (the user's hypothesis).")
+        .default_value(0)
+        .scan<'i', int>();
+
     program.add_argument("--freeze-rate")
         .help("Probability (0..100) per iteration of FreezeUnit'ing a random "
               "lit consistent with the baseline model — mimics the "
@@ -259,6 +271,7 @@ int main(int argc, char* argv[]) {
     int soundness_check = program.get<int>("--soundness-check");
     int freeze_rate = program.get<int>("--freeze-rate");
     int sparsify_mode = program.get<int>("--sparsify-mode");
+    int sparsify_cumulative = program.get<int>("--sparsify-cumulative");
     vector<int8_t> frozen_var; // frozen_var[v] = 1 if already SetAssumpLit'd
 
     // Baseline: ground truth for the input CNF (no assumptions). If Vivify
@@ -392,6 +405,92 @@ int main(int argc, char* argv[]) {
             if (verb >= 1) cout << "c [sparsify-mode] initial Vivify" << endl;
             oracle.reset_mems();
             oracle.Vivify(100000000);
+        }
+
+        // ----------------------------------------------------------------
+        // Cumulative variant: persistently remove clauses, Vivify between,
+        // then verify reduced CNF ≡ original CNF (in satisfiability).
+        // ----------------------------------------------------------------
+        if (sparsify_cumulative) {
+            vector<int8_t> removed(n_cls, 0);
+            int s_removed = 0, s_kept = 0, s_unknown = 0;
+            // Walk each clause once (mirrors oracle_sparsify's for-loop).
+            for (int ci = 0; ci < n_cls; ci++) {
+                // Periodic Vivify, like the line under investigation.
+                if (vivify_enabled
+                    && std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
+                    if (verb >= 1) cout << "c [sparsify-cum] ci=" << ci << " Vivify" << endl;
+                    oracle.reset_mems();
+                    oracle.Vivify(100000000);
+                }
+
+                // Tentatively flip indicator to TRUE (removed).
+                const Lit pos_ind = PosLit(orig_vars + 1 + ci);
+                oracle.SetAssumpLit(pos_ind, /*freeze=*/false);
+
+                vector<Lit> tmp;
+                for (int dl : cnf.dimacs_clauses[ci]) {
+                    tmp.push_back(dimacs_to_oracle_lit(-dl));
+                }
+
+                oracle.reset_mems();
+                auto res = oracle.Solve(tmp, /*usecache=*/false, 100000000LL);
+
+                if (res.isUnknown()) {
+                    s_unknown++;
+                    // Restore active.
+                    oracle.SetAssumpLit(NegLit(orig_vars + 1 + ci), /*freeze=*/false);
+                } else if (res.isFalse()) {
+                    // UNSAT → clause is entailed by the rest. Persistently remove
+                    // (freeze ind=TRUE), exactly like oracle_sparsify does.
+                    oracle.SetAssumpLit(pos_ind, /*freeze=*/true);
+                    removed[ci] = 1;
+                    s_removed++;
+                } else {
+                    // SAT → keep clause active (freeze ind=FALSE).
+                    oracle.SetAssumpLit(NegLit(orig_vars + 1 + ci), /*freeze=*/true);
+                    s_kept++;
+                }
+            }
+
+            if (verb >= 1)
+                cout << "c [sparsify-cum] removed=" << s_removed
+                     << " kept=" << s_kept << " unknown=" << s_unknown << endl;
+
+            // Verify equivalence: orig CNF and reduced CNF must agree on SAT/UNSAT.
+            CaDiCaL::Solver cad_orig;
+            for (const auto& cl : cnf.dimacs_clauses) {
+                for (int l : cl) cad_orig.add(l);
+                cad_orig.add(0);
+            }
+            int r_orig = cad_orig.solve();
+
+            CaDiCaL::Solver cad_red;
+            for (int k = 0; k < n_cls; k++) {
+                if (removed[k]) continue;
+                for (int l : cnf.dimacs_clauses[k]) cad_red.add(l);
+                cad_red.add(0);
+            }
+            int r_red = cad_red.solve();
+
+            if (r_orig != 0 && r_red != 0 && r_orig != r_red) {
+                cerr << "BUG [sparsify-cum]: reduced CNF disagrees with original!" << endl
+                     << "  original = " << (r_orig == 10 ? "SAT" : "UNSAT") << endl
+                     << "  reduced  = " << (r_red  == 10 ? "SAT" : "UNSAT") << endl
+                     << "  removed " << s_removed << " of " << n_cls << " clauses" << endl;
+                // Dump the indices of removed clauses for repro.
+                cerr << "  removed indices:";
+                for (int k = 0; k < n_cls; k++) if (removed[k]) cerr << " " << k;
+                cerr << endl;
+                return 1;
+            }
+            cout << "c [sparsify-cum] Results: removed=" << s_removed
+                 << " kept=" << s_kept << " unknown=" << s_unknown
+                 << " orig=" << (r_orig == 10 ? "SAT" : r_orig == 20 ? "UNSAT" : "?")
+                 << " reduced=" << (r_red == 10 ? "SAT" : r_red == 20 ? "UNSAT" : "?")
+                 << endl;
+            cout << "PASS" << endl;
+            return 0;
         }
 
         int s_sat = 0, s_unsat = 0, s_unknown = 0;

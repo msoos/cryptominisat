@@ -332,11 +332,15 @@ def fuzz_one(args, test_num, seed, counters):
                 sparsify_mode = args.force_sparsify
             else:
                 sparsify_mode = 1 if random.random() < 0.5 else 0
+            # Cumulative variant only meaningful when sparsify-mode is on.
+            cumulative = 1 if (sparsify_mode and args.sparsify_cumulative
+                               and random.random() < args.sparsify_cumulative) else 0
             assump_out, assump_rc, assump_timeout = run_solver(
                 args.assump_fuzz, cnf_path, args.tlimit,
                 ["-k", str(assump_k), "-v", "2", "-s", str(seed),
                  "--vivify", str(vivify),
-                 "--sparsify-mode", str(sparsify_mode)] + cutoff_args)
+                 "--sparsify-mode", str(sparsify_mode),
+                 "--sparsify-cumulative", str(cumulative)] + cutoff_args)
 
             if assump_timeout:
                 if verbose:
@@ -440,6 +444,12 @@ def main():
                         help="Force --sparsify-mode to 0 or 1 (default: random 50/50)")
     parser.add_argument("--force-vivify", type=int, default=None,
                         help="Force --vivify to 0 or 1 (default: random ~30%% on)")
+    parser.add_argument("--sparsify-cumulative", type=float, default=0.5,
+                        help="Probability (0..1) of running cumulative-removal "
+                             "sparsify mode when sparsify-mode is on. Tests the "
+                             "user's hypothesis that Vivify-between-probes can "
+                             "make oracle_sparsify remove a clause not actually "
+                             "redundant in the original CNF.")
 
     args = parser.parse_args()
     args = auto_find_binaries(args)
