@@ -206,6 +206,16 @@ int main(int argc, char* argv[]) {
         .default_value(1)
         .scan<'i', int>();
 
+    program.add_argument("--sparsify-mode")
+        .help("Mimic oracle_sparsify: each original clause gets an indicator "
+              "variable appended, and indicators are kept 'active' via "
+              "SetAssumpLit(..., freeze=false) (level-2 soft assumption). "
+              "Vivify calls between Solves are then expected to preserve the "
+              "active state. Mismatch vs CaDiCaL on the original CNF + tmp "
+              "asserts the soft-assumption / Vivify interaction bug.")
+        .default_value(0)
+        .scan<'i', int>();
+
     program.add_argument("--freeze-rate")
         .help("Probability (0..100) per iteration of FreezeUnit'ing a random "
               "lit consistent with the baseline model — mimics the "
@@ -248,6 +258,7 @@ int main(int argc, char* argv[]) {
     int vivify_initial = program.get<int>("--vivify-initial");
     int soundness_check = program.get<int>("--soundness-check");
     int freeze_rate = program.get<int>("--freeze-rate");
+    int sparsify_mode = program.get<int>("--sparsify-mode");
     vector<int8_t> frozen_var; // frozen_var[v] = 1 if already SetAssumpLit'd
 
     // Baseline: ground truth for the input CNF (no assumptions). If Vivify
@@ -327,8 +338,147 @@ int main(int argc, char* argv[]) {
                  << endl;
     }
 
-    // 2. Create oracle
     std::mt19937 rng(seed);
+
+    // ============================================================
+    // Sparsify-mode: mimic oracle_sparsify's indicator-var pattern.
+    // Each original clause gets a fresh indicator var v_i; the clause becomes
+    // [orig_lits, PosLit(v_i)]. We then soft-assign NegLit(v_i) (i.e. v_i = false)
+    // via SetAssumpLit(..., freeze=false), which lives at level 2. With every
+    // indicator forced false, every augmented clause is equivalent to the
+    // original — so Solve(tmp) on the augmented oracle must agree with
+    // CaDiCaL on (orig CNF + tmp).
+    //
+    // Bug under test: Vivify calls UnDecide(2), which clears all level-2
+    // assignments — wiping the soft indicator state. Subsequent Solves can
+    // then trivially satisfy any clause by setting its indicator true,
+    // returning SAT where the original is UNSAT.
+    // ============================================================
+    if (sparsify_mode) {
+        if (K < 0) {
+            K = std::uniform_int_distribution<int>(1, 200)(rng);
+            if (verb >= 1) cout << "c [sparsify-mode] Random iterations: " << K << endl;
+        }
+        const int orig_vars = cnf.num_vars;
+        const int n_cls = (int)cnf.clauses.size();
+        const int aug_vars = orig_vars + n_cls;
+
+        vector<vector<Lit>> aug_clauses;
+        aug_clauses.reserve(n_cls);
+        for (int i = 0; i < n_cls; i++) {
+            auto cl = cnf.clauses[i];
+            cl.push_back(PosLit(orig_vars + 1 + i));
+            aug_clauses.push_back(std::move(cl));
+        }
+
+        sspp::oracle::Oracle oracle(aug_vars, aug_clauses);
+        if (verb >= 2) oracle.SetVerbosity(1);
+        oracle.SetCacheCutoff(program.get<int>("--cache-cutoff"));
+        oracle.SetDbCleanInterval(program.get<int>("--db-clean-interval"));
+        oracle.SetTier1MaxGlue(program.get<int>("--tier1-max-glue"));
+        oracle.SetTier2MaxGlue(program.get<int>("--tier2-max-glue"));
+        oracle.SetRestartFactor(program.get<int>("--restart-factor"));
+
+        // Soft-assign every indicator var to FALSE → every clause is "active".
+        for (int i = 0; i < n_cls; i++) {
+            oracle.SetAssumpLit(NegLit(orig_vars + 1 + i), /*freeze=*/false);
+        }
+        cout << "c [sparsify-mode] Soft-assigned " << n_cls
+             << " indicators; aug_vars=" << aug_vars
+             << " CurLevel after SetAssumpLit loop=" << oracle.CurLevel() << endl;
+
+        // Optional initial Vivify (most likely to trip the bug immediately).
+        if (vivify_initial && vivify_enabled) {
+            if (verb >= 1) cout << "c [sparsify-mode] initial Vivify" << endl;
+            oracle.reset_mems();
+            oracle.Vivify(100000000);
+        }
+
+        int s_sat = 0, s_unsat = 0, s_unknown = 0;
+        for (int iter = 0; iter < K; iter++) {
+            // Optional Vivify before Solve.
+            if (vivify_enabled && vivify_before
+                && std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
+                if (verb >= 1) cout << "c [sparsify-mode] iter " << iter << " Vivify(before)" << endl;
+                oracle.reset_mems();
+                oracle.Vivify(100000000);
+            }
+
+            // Pick a random clause ci and "tentatively remove" it: flip its
+            // indicator from FALSE (soft, active) to TRUE (soft, removed) via
+            // SetAssumpLit(PosLit(ind_ci), freeze=false). Then Solve(tmp=~lits(ci)).
+            // This mirrors the oracle_sparsify "is this clause needed?" probe.
+            //
+            // Ground truth: CaDiCaL on (original CNF \ {clause ci} + tmp).
+            // Because clause ci is removed, the relaxed problem can be SAT
+            // even though the original was UNSAT — exactly the regime where
+            // a Vivify that produced a spurious unconditional copy of clause
+            // ci ("orig_lits" without the indicator) would make the oracle
+            // incorrectly report UNSAT.
+            int ci = std::uniform_int_distribution<int>(0, n_cls - 1)(rng);
+            const Lit pos_ind = PosLit(orig_vars + 1 + ci);
+            oracle.SetAssumpLit(pos_ind, /*freeze=*/false);
+
+            vector<Lit> tmp;
+            vector<int> dimacs_tmp;
+            for (int dl : cnf.dimacs_clauses[ci]) {
+                int neg = -dl;
+                dimacs_tmp.push_back(neg);
+                tmp.push_back(dimacs_to_oracle_lit(neg));
+            }
+
+            int64_t mems = 100000000LL;
+            oracle.reset_mems();
+            auto res = oracle.Solve(tmp, /*usecache=*/false, mems);
+
+            // Restore indicator back to FALSE (active) so successive probes
+            // start from a consistent state.
+            const Lit neg_ind = NegLit(orig_vars + 1 + ci);
+            oracle.SetAssumpLit(neg_ind, /*freeze=*/false);
+
+            if (vivify_enabled
+                && std::uniform_int_distribution<int>(0, 99)(rng) < vivify_freq) {
+                if (verb >= 1) cout << "c [sparsify-mode] iter " << iter << " Vivify(after)" << endl;
+                oracle.reset_mems();
+                oracle.Vivify(100000000);
+            }
+
+            if (res.isUnknown()) { s_unknown++; continue; }
+            int got = res.isTrue() ? 10 : 20;
+
+            // Cross-check vs CaDiCaL on (orig CNF \ {clause ci}) + tmp.
+            CaDiCaL::Solver cad;
+            for (int k = 0; k < (int)cnf.dimacs_clauses.size(); k++) {
+                if (k == ci) continue;
+                for (int l : cnf.dimacs_clauses[k]) cad.add(l);
+                cad.add(0);
+            }
+            for (int l : dimacs_tmp) { cad.add(l); cad.add(0); }
+            int cr = cad.solve();
+
+            if (cr != 0 && cr != got) {
+                cerr << "BUG [sparsify-mode] iter " << iter
+                     << ": oracle=" << (got == 10 ? "SAT" : "UNSAT")
+                     << " cadical=" << (cr == 10 ? "SAT" : "UNSAT")
+                     << " probe-clause-idx=" << ci << " tmp:";
+                for (int l : dimacs_tmp) cerr << " " << l;
+                cerr << endl;
+                return 1;
+            }
+            if (got == 10) s_sat++; else s_unsat++;
+            if (verb >= 1)
+                cout << "c [sparsify-mode] iter " << iter << " ci=" << ci
+                     << " -> " << (got == 10 ? "SAT" : "UNSAT")
+                     << " (cadical " << (cr == 10 ? "SAT" : cr == 20 ? "UNSAT" : "?") << ")" << endl;
+        }
+
+        cout << "c [sparsify-mode] Results: SAT=" << s_sat
+             << " UNSAT=" << s_unsat << " UNKNOWN=" << s_unknown << endl;
+        cout << "PASS" << endl;
+        return 0;
+    }
+
+    // 2. Create oracle
     if (K < 0) {
         K = std::uniform_int_distribution<int>(1, 1000)(rng);
         if (verb >= 1) cout << "c Random iterations: " << K << endl;

@@ -104,7 +104,7 @@ def run_solver(binary, cnf_path, timeout, extra_args=None):
         result = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             timeout=timeout,
             universal_newlines=True)
         return result.stdout, result.returncode, False
@@ -251,7 +251,10 @@ def fuzz_one(args, test_num, seed, counters):
 
         # Run oracle (randomly enable Vivify to exercise that path)
         rng = random.Random(seed)
-        vivify = 1 if rng.random() < 0.3 else 0
+        if args.force_vivify is not None:
+            vivify = args.force_vivify
+        else:
+            vivify = 1 if rng.random() < 0.3 else 0
         oracle_verb = "2" if verbose else "0"
         # Randomly choose a cutoff preset so we exercise extreme regimes
         # (very-low → constant DB churn, tiny tiers; high → defaults).
@@ -325,10 +328,15 @@ def fuzz_one(args, test_num, seed, counters):
             assump_k = random.choice([1, 10, 100, 200])
             if verbose:
                 print("  Running assumption-based fuzz (K=%d)..." % assump_k)
+            if args.force_sparsify is not None:
+                sparsify_mode = args.force_sparsify
+            else:
+                sparsify_mode = 1 if random.random() < 0.5 else 0
             assump_out, assump_rc, assump_timeout = run_solver(
                 args.assump_fuzz, cnf_path, args.tlimit,
                 ["-k", str(assump_k), "-v", "2", "-s", str(seed),
-                 "--vivify", str(vivify)] + cutoff_args)
+                 "--vivify", str(vivify),
+                 "--sparsify-mode", str(sparsify_mode)] + cutoff_args)
 
             if assump_timeout:
                 if verbose:
@@ -339,13 +347,17 @@ def fuzz_one(args, test_num, seed, counters):
                 print(assump_out)
                 saved = save_failing_cnf(cnf_path, test_num, seed)
                 print("CNF saved to:", saved)
-                print("To reproduce directly: %s -k %d -s %d -v 2 %s" % (
-                    args.assump_fuzz, assump_k, seed, saved))
+                print("To reproduce directly: %s -k %d -s %d -v 2 --sparsify-mode %d %s" % (
+                    args.assump_fuzz, assump_k, seed, sparsify_mode, saved))
                 return False
             else:
+                # DEBUG: dump sparsify-mode output lines to confirm exercise
+                for line in assump_out.split("\n"):
+                    if "[sparsify-mode]" in line:
+                        print("  " + line)
                 # Parse SAT/UNSAT/UNKNOWN counts from assump_fuzz output
                 for line in assump_out.split("\n"):
-                    if line.startswith("c Results:"):
+                    if line.startswith("c Results:") or line.startswith("c [sparsify-mode] Results:"):
                         import re
                         m = re.search(r'SAT=(\d+)\s+UNSAT=(\d+)\s+UNKNOWN=(\d+)', line)
                         if m:
@@ -424,6 +436,10 @@ def main():
                         help="Path to cnf-fuzz-biere binary (auto-detected if not given)")
     parser.add_argument("--assump-fuzz", type=str, default=None, dest="assump_fuzz",
                         help="Path to assump_fuzz_oracle binary (auto-detected if not given)")
+    parser.add_argument("--force-sparsify", type=int, default=None,
+                        help="Force --sparsify-mode to 0 or 1 (default: random 50/50)")
+    parser.add_argument("--force-vivify", type=int, default=None,
+                        help="Force --vivify to 0 or 1 (default: random ~30%% on)")
 
     args = parser.parse_args()
     args = auto_find_binaries(args)
