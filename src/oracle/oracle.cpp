@@ -1291,6 +1291,33 @@ int Oracle::Vivify(int64_t max_mems) {
     if (unsat) return 0;
     assert(CurLevel() == 1);
 
+    // Hide level-2 soft-assumption assignments for the duration of Vivify.
+    // Vivify's shortening reasoning reads LitVal without checking the
+    // assignment level; if a soft-assumption (from SetAssumpLit(..., false))
+    // sits at level 2, it looks identical to a root unit to that reasoning,
+    // and Vivify will emit shortened clauses as "entailed" that actually
+    // depend on the current soft-assumption state. Those clauses outlive any
+    // subsequent change of that state (e.g. oracle_sparsify flipping an
+    // indicator to "removed"), producing the SAT→UNSAT corruption the
+    // assump_fuzz_oracle --sparsify-mode harness reproduces.
+    //
+    // SetAssumpLit(freeze=false) has already cleared watches for both
+    // polarities of each soft-assumed var, so no propagation currently fires
+    // through them. Zeroing lit_val here is therefore only visible to Vivify's
+    // own probe/propagate walk, and just makes those lits look undef for
+    // shortening purposes. We restore on exit.
+    struct SavedSoft { Var v; int8_t val_pos; };
+    vector<SavedSoft> saved_soft;
+    for (Var v = 1; v <= (Var)vars; v++) {
+        if (vs[v].level == 2) {
+            saved_soft.push_back({v, (int8_t)lit_val[PosLit(v)]});
+            lit_val[PosLit(v)] = 0;
+            lit_val[NegLit(v)] = 0;
+        }
+    }
+    if (verb >= 1) std::cout << "c [oracle] Vivify hid " << saved_soft.size()
+                             << " level-2 soft-assumption vars" << std::endl;
+
     const int64_t mems_start = stats.mems;
     int removed_lits_irred = 0, removed_lits_red = 0;
     int vivified_irred = 0, vivified_red = 0;
@@ -1431,6 +1458,16 @@ int Oracle::Vivify(int64_t max_mems) {
                   << "; removed sat-at-root irred: " << removed_irred
                   << " red: " << removed_red
                   << " mems " << (stats.mems - mems_start) << std::endl;
+    }
+    // Restore level-2 soft-assumption state. We also re-stamp vs[v].level,
+    // because Vivify's probing path (Decide + UnDecide(2)) pushes and pops
+    // these vars through `decided`, and UnDecide resets level to 0 along the
+    // way — wiping the soft-assumption state we're supposed to be preserving.
+    for (const auto& s : saved_soft) {
+        lit_val[PosLit(s.v)] = s.val_pos;
+        lit_val[NegLit(s.v)] = -s.val_pos;
+        vs[s.v].level = 2;
+        vs[s.v].reason = 0;
     }
     return removed_lits_irred + removed_lits_red;
 }
