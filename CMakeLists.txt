@@ -526,6 +526,27 @@ if(GMPXX_LIBRARY)
     set_property(TARGET PkgConfig::GMP PROPERTY INTERFACE_LINK_LIBRARIES "${GMPXX_LIBRARY}" ${_gmp_iface_libs})
 endif()
 
+# pkg_check_modules resolves libraries via pkg-config, which ignores
+# CMAKE_FIND_LIBRARY_SUFFIXES and may return .so paths even when we need
+# .a for a fully static binary.  Override GMP target here.
+if(STATIC_BINARY)
+    find_library(_GMP_STATIC_LIB NAMES libgmp.a
+        HINTS /usr/local/lib ${GMP_LIBRARY_DIRS} NO_DEFAULT_PATH)
+    if(NOT _GMP_STATIC_LIB)
+        find_library(_GMP_STATIC_LIB NAMES libgmp.a HINTS ${GMP_LIBRARY_DIRS})
+    endif()
+    if(_GMP_STATIC_LIB)
+        if(GMPXX_LIBRARY)
+            set_property(TARGET PkgConfig::GMP PROPERTY INTERFACE_LINK_LIBRARIES
+                "${GMPXX_LIBRARY}" "${_GMP_STATIC_LIB}")
+        else()
+            set_property(TARGET PkgConfig::GMP PROPERTY INTERFACE_LINK_LIBRARIES "${_GMP_STATIC_LIB}")
+        endif()
+        message(STATUS "Static GMP: ${_GMP_STATIC_LIB}")
+    else()
+        message(WARNING "Static libgmp.a not found; static link may fail")
+    endif()
+endif()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
