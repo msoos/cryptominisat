@@ -74,16 +74,10 @@ void Oracle::AddSolToCache() {
         rebuild_cache_lookup();
     }
 
-    // Bulk append: resize once then fill, avoiding per-var capacity checks
-    // and push_back branches. Cache entries are written often during
-    // oracle-vivif (one per SAT result), so shaving constants here helps.
-    const size_t old_sz = sol_cache.size();
-    sol_cache.resize(old_sz + stride);
-    uint8_t* dst = sol_cache.data() + old_sz;
-    dst[0] = 255; // 0th variable, nonsense
+    sol_cache.push_back(255); // 0th variable, nonsense
     for (Var i = 1; i <= vars; i++) {
         assert(vs[i].phase == 0 || vs[i].phase == 1);
-        dst[i] = vs[i].phase;
+        sol_cache.push_back(vs[i].phase);
     }
     assert(sol_cache.size()%stride == 0);
 
