@@ -157,7 +157,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
     const double end_vivif_time = cpu_time();
-    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL * solver->conf.oracle_mult;
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*30LL*1000LL*1000LL * solver->conf.oracle_mult;
     bool early_aborted_bin = true;
     oracle.reset_mems();
     double start_bin_time = cpu_time();
@@ -170,20 +170,29 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
                 for (auto l2 : clause) {
                     uint32_t v1 = orc_to_lit(l1).var();
                     uint32_t v2 = orc_to_lit(l2).var();
-                    if (v1 < v2) pg[v1][v2]++;
+                    if (v2 > v1) pg[v1][v2]++;
                 }
             }
         }
         vector<VarPair> varp;
-        for (uint32_t v1 = 0; v1 < nVars(); v1++)
-            for (uint32_t v2 = 0; v2 < nVars(); v2++)
-                if (v1 < v2 && pg[v1][v2] > 0) varp.push_back({v1, v2, pg[v1][v2]});
+        for (uint32_t v1 = 0; v1 < nVars(); v1++) {
+            for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
+                if (pg[v1][v2] > 0) {
+                    varp.push_back({v1, v2, pg[v1][v2]});
+                } else {
+                    /* varp.push_back({v1, v2, 0}); */
+                }
+            }
+        }
         pg.clear();
         pg.shrink_to_fit();
 
         // Actually seems to slow it down. Strange. TODO
         /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
         /*         return a.score > b.score;}); */
+        /* for(const auto& vp: varp) { */
+        /*     cout << "vp.score: " << vp.score << " v1: " << vp.v1 << " v2: " << vp.v2 << endl; */
+        /* } */
         verb_print(1, "[oracle-bin] potential pairs: " << varp.size()
                 << " T: " << (cpu_time()-pg_start_time));
 
