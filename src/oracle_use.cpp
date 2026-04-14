@@ -131,7 +131,6 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (oracle.getStats().mems > mems_before_vivif) {
                 oracle.Vivify(mems_for_vivif/10);
                 mems_before_vivif = oracle.getStats().mems + mems_for_vivif;
-                goto end1;
             }
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
