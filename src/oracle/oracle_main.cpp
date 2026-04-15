@@ -200,6 +200,7 @@ int main(int argc, char* argv[]) {
     // Create and configure oracle
     sspp::oracle::Oracle oracle(cnf.num_vars, cnf.clauses);
     oracle.SetVerbosity(verb >= 2 ? 1 : 0);
+    oracle.SetStrictMode(true);
     oracle.SetCacheCutoff(cf_cache);
     oracle.SetDbCleanInterval(cf_db_clean);
     oracle.SetTier1MaxGlue(cf_t1);

@@ -112,22 +112,30 @@ void Oracle::ClearSolCache() {
 }
 
 void Oracle::PruneSolCacheForVar(Var v, uint8_t phase) {
-    if (sol_cache.empty()) return;
+    const std::pair<Var, uint8_t> one[1] = {{v, phase}};
+    PruneSolCacheForVars(one, 1);
+}
+
+void Oracle::PruneSolCacheForVars(const std::pair<Var, uint8_t>* vps, size_t n) {
+    if (sol_cache.empty() || n == 0) return;
     const uint32_t stride = vars+1;
     assert(sol_cache.size()%stride == 0);
     const size_t num_entries = sol_cache.size()/stride;
     size_t write = 0;
     for (size_t read = 0; read < num_entries; read++) {
-        if (sol_cache[read*stride + v] == phase) {
-            if (write != read) {
-                std::memmove(&sol_cache[write*stride],
-                             &sol_cache[read*stride], stride);
-            }
-            write++;
+        bool keep = true;
+        const uint8_t* e = &sol_cache[read*stride];
+        for (size_t k = 0; k < n; k++) {
+            if (e[vps[k].first] != vps[k].second) { keep = false; break; }
         }
+        if (!keep) continue;
+        if (write != read) {
+            std::memmove(&sol_cache[write*stride],
+                         &sol_cache[read*stride], stride);
+        }
+        write++;
     }
     sol_cache.resize(write * stride);
-    // cached_solution may point into the old layout; invalidate it.
     cached_solution = nullptr;
     rebuild_cache_lookup();
 }
@@ -489,96 +497,85 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
     assert(CurLevel() == 1);
     Var v = VarOf(lit);
     assert(prop_q.empty());
-    if (unsat) return;
-    // Var may already be at level 1 if a previous SetAssumpLit's propagation
-    // implied it. Honor existing assignment: no-op if compatible, unsat if not.
-    if (vs[v].level == 1) {
-        if (LitVal(lit) < 0) unsat = true;
-        return;
+    if (strict_mode) {
+        if (unsat) return;
+        // Var may already be at level 1 if a previous SetAssumpLit's
+        // propagation implied it. Honor existing assignment: no-op if
+        // compatible, unsat if not.
+        if (vs[v].level == 1) {
+            if (LitVal(lit) < 0) unsat = true;
+            return;
+        }
+    } else {
+        assert(vs[v].level != 1);
     }
     assert(vs[v].reason == 0);
 
-    // For freeze=true, derive root-level implications *before* touching
-    // watches. Learned clauses may contain `lit` alongside other vars
-    // (e.g. binaries from backbone propagation); dropping watches without
-    // propagating would lose those implications. Then fall through to the
-    // watch-purge loop below so frozen lits are physically removed from
-    // clause bodies — same behavior the pre-f6b0a2d1 code had, just with
-    // propagation correctness preserved.
-    vector<Var> purge_vars;
-    if (freeze) {
+    // Strict mode only: for freeze=true, derive root-level implications
+    // *before* touching watches — learned clauses may contain `lit` alongside
+    // other vars (e.g. binaries from backbone propagation), and dropping
+    // watches without propagating would lose those implications. Extra vars
+    // propagated to level 1 then also get their watches purged.
+    // Fast mode: pre-f6b0a2d1 behavior — purge watches for `v` only.
+    vector<Var> strict_purge_vars;
+    if (strict_mode && freeze) {
         const size_t pre_decided = decided.size();
         Assign(lit, 0, 1);
         if (Propagate(1)) { unsat = true; return; }
         assert(prop_q.empty());
-        purge_vars.assign(decided.begin() + pre_decided, decided.end());
-    } else {
-        purge_vars.push_back(v);
+        strict_purge_vars.assign(decided.begin() + pre_decided, decided.end());
     }
 
-    for (Var pv : purge_vars) {
+    auto purge_watches_for = [&](Var pv) {
         for (Lit tl : {PosLit(pv), NegLit(pv)}) {
             const auto& wt = watches[tl];
             for (size_t wi = 0; wi < wt.size(); wi++) {
                 const Watch w = wt[wi];
                 if (wi + 1 < wt.size()) cmsat_prefetch(clauses.data() + wt[wi+1].cls);
                 stats.mems++;
-                if (w.size <= 2) {
-                    // Binary clause learned during oracle solving (e.g. from
-                    // backbone unit propagation). The other literal is already
-                    // assigned at level 1 — just drop the watch.
-                    continue;
-                }
+                if (w.size <= 2) continue;
                 size_t pos = w.cls;
                 size_t opos = w.cls+1;
-                if (clauses[pos] != tl) {
-                    pos++;
-                    opos--;
-                }
+                if (clauses[pos] != tl) { pos++; opos--; }
                 assert(clauses[pos] == tl);
                 size_t f = 0;
                 for (size_t i = w.cls+2; clauses[i]; i++) {
-                    if (LitVal(clauses[i]) == 0) {
-                        f = i;
-                    }
+                    if (LitVal(clauses[i]) == 0) f = i;
                 }
-                if (!f) {
-                    // All non-watch literals are assigned (e.g. due to learned units
-                    // from backbone detection). The clause must be satisfied by some
-                    // assigned literal — just drop the watch.
-                    #ifdef VERBOSE_DEBUG
-                    bool sat = false;
-                    for (size_t i = w.cls; clauses[i]; i++) {
-                        if (LitVal(clauses[i]) == 1) { sat = true; break; }
-                    }
-                    assert(sat);
-                    #endif
-                    continue;
-                }
+                if (!f) continue;
                 swap(clauses[f], clauses[pos]);
                 watches[clauses[pos]].push_back({w.cls, clauses[opos], w.size});
             }
             watches[tl].clear();
         }
+    };
+
+    if (strict_mode && freeze) {
+        for (Var pv : strict_purge_vars) purge_watches_for(pv);
+    } else {
+        purge_watches_for(v);
     }
 
-    if (freeze) {
-        // Frozen vars are permanent units; drop them from decided[] (same
-        // convention the old freeze path used — no watches remain to walk).
-        // Prune sol_cache for each newly-committed phase.
-        for (Var pv : purge_vars) {
-            PruneSolCacheForVar(pv, vs[pv].phase);
+    if (strict_mode && freeze) {
+        // Strict freeze: frozen vars are permanent units; drop them from
+        // decided[] (no watches remain to walk). Batch the sol_cache prune.
+        vector<std::pair<Var, uint8_t>> phases;
+        phases.reserve(strict_purge_vars.size());
+        for (Var pv : strict_purge_vars) {
+            phases.push_back({pv, vs[pv].phase});
             for (size_t i = decided.size(); i-- > 0; ) {
                 if (decided[i] == pv) { decided.erase(decided.begin() + i); break; }
             }
         }
+        PruneSolCacheForVars(phases.data(), phases.size());
         return;
     }
 
     assert(watches[lit].empty());
     assert(watches[Neg(lit)].empty());
     assert(prop_q.empty());
-    Assign(lit, 0, 2);
+    if (freeze) { Assign(lit, 0, 1); }
+    else { Assign(lit, 0, 2); }
     assert(decided.back() == VarOf(lit));
     decided.pop_back();
     assert(prop_q.back() == Neg(lit));
@@ -668,25 +665,25 @@ bool Oracle::LitReduntant(Lit lit) {
         assert(vs[v].reason);
         size_t rc = vs[v].reason;
         assert(LitVal(lit) == -1);
-        // Do NOT mutate clauses[] here. ResizeClauseDb detects reason
-        // clauses by checking clauses[rc] (and clauses[rc+1] for binaries)
-        // — a swap to ternary+ clauses moves the propagated lit to rc+1
-        // and ResizeClauseDb misses it, marks the clause deletable, and
-        // the vs[v].reason pointer becomes stale. Instead, iterate the
-        // clause verbatim and skip the single lit that equals Neg(lit).
-        //
-        // Skip any lit that is NOT currently false — in a well-formed
-        // CDCL state every antecedent should be false, but batched
-        // decisions + re-assignment across levels can leave a reason
-        // clause with a stale-true antecedent (same var re-assigned at
-        // a different level after its original propagation). Processing
-        // such a lit would push a non-false entry to redu_s and trip
-        // the `LitVal(lit) == -1` invariant below. Skipping it is safe:
-        // the learned clause is already being built from the resolution
-        // of other (still-false) lits.
-        for (size_t k = rc; clauses[k]; k++) {
-            if (clauses[k] == Neg(lit)) continue;
-            if (LitVal(clauses[k]) != -1) continue;
+        if (!strict_mode) {
+            if (clauses[rc] != Neg(lit)) {
+                swap(clauses[rc], clauses[rc+1]);
+            }
+            assert(clauses[rc] == Neg(lit));
+        }
+        // Strict mode: do NOT mutate clauses[] here (ResizeClauseDb detects
+        // reason clauses via clauses[rc]/rc+1; a swap in ternary+ clauses
+        // would make it mark the clause deletable and the reason pointer
+        // goes stale). Also skip non-false lits — batched-decision patterns
+        // can leave a reason clause with a stale-true antecedent, and
+        // processing it would trip the LitVal==-1 invariant below.
+        // Fast mode: start iteration at rc+1 (Neg(lit) is at rc), no filter.
+        const size_t k_start = strict_mode ? rc : rc + 1;
+        for (size_t k = k_start; clauses[k]; k++) {
+            if (strict_mode) {
+                if (clauses[k] == Neg(lit)) continue;
+                if (LitVal(clauses[k]) != -1) continue;
+            }
             Var tv = VarOf(clauses[k]);
             if (!in_cc[clauses[k]] && vs[tv].level > 1) {
                 // Check memoized marks first
@@ -1211,11 +1208,14 @@ bool Oracle::FreezeUnit(Lit unit) {
     // The freeze (and any level-1 propagation it triggered) may have
     // invalidated cached full solutions. Drop any entries that now
     // contradict the newly-committed level-1 assignments.
-    if (!sol_cache.empty()) {
+    if (strict_mode && !sol_cache.empty()) {
+        vector<std::pair<Var, uint8_t>> phases;
+        phases.reserve(decided.size() - pre_decided);
         for (size_t i = pre_decided; i < decided.size(); i++) {
             const Var v = decided[i];
-            PruneSolCacheForVar(v, vs[v].phase);
+            phases.push_back({v, vs[v].phase});
         }
+        PruneSolCacheForVars(phases.data(), phases.size());
     }
     return true;
 }

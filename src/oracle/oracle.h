@@ -208,7 +208,18 @@ public:
     const Stats& getStats() const {return stats;}
     void reset_mems() {stats.mems = 0;}
 
+ public:
+    // When true, take the slower but defensively-correct code paths added
+    // post-f6b0a2d1 (freeze does Assign+Propagate+watch-cleanup+sol-cache
+    // prune; LitReduntant skips non-false antecedents; FreezeUnit prunes
+    // sol_cache). These fire rarely in typical workloads but are required
+    // for correctness under certain backbone/batched-decision patterns.
+    // Off by default — oracle_main / fuzzers flip it on; oracle_use keeps
+    // the pre-f6b0a2d1 fast path.
+    void SetStrictMode(bool s) { strict_mode = s; }
+
  private:
+    bool strict_mode = false;
     uint32_t verb = 0;
     uint32_t cache_cutoff = 1000;
     uint32_t db_clean_interval = 10000;
@@ -300,6 +311,7 @@ public:
     // after the cache has accumulated entries, otherwise SatByCache may
     // return a stale solution that violates the freeze.
     void PruneSolCacheForVar(Var v, uint8_t phase);
+    void PruneSolCacheForVars(const std::pair<Var, uint8_t>* vps, size_t n);
 };
 
 

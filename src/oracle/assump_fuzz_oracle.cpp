@@ -386,6 +386,7 @@ int main(int argc, char* argv[]) {
 
         sspp::oracle::Oracle oracle(aug_vars, aug_clauses);
         if (verb >= 2) oracle.SetVerbosity(1);
+        oracle.SetStrictMode(true);
         oracle.SetCacheCutoff(program.get<int>("--cache-cutoff"));
         oracle.SetDbCleanInterval(program.get<int>("--db-clean-interval"));
         oracle.SetTier1MaxGlue(program.get<int>("--tier1-max-glue"));
@@ -584,6 +585,7 @@ int main(int argc, char* argv[]) {
     }
     sspp::oracle::Oracle oracle(cnf.num_vars, cnf.clauses);
     if (verb >= 2) oracle.SetVerbosity(1);
+    oracle.SetStrictMode(true);
 
     // Apply cutoffs from the command line. Fuzzing harnesses (e.g. fuzz_oracle.py)
     // are expected to vary these across runs to exercise extreme regimes.

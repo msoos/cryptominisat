@@ -185,12 +185,12 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         pg.shrink_to_fit();
 
         // Actually seems to slow it down. Strange. TODO
-        std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) {
-                if (a.score == b.score) {
-                    if (a.v1 == b.v1) return a.v2 < b.v2;
-                    return a.v1 < b.v1;
-                }
-                return a.score > b.score;});
+        /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
+        /*         if (a.score == b.score) { */
+        /*             if (a.v1 == b.v1) return a.v2 < b.v2; */
+        /*             return a.v1 < b.v1; */
+        /*         } */
+        /*         return a.score > b.score;}); */
         /* for(const auto& vp: varp) { */
         /*     cout << "vp.score: " << vp.score << " v1: " << vp.v1 << " v2: " << vp.v2 << endl; */
         /* } */
