@@ -273,11 +273,11 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             Clause* cl2 = solver->add_clause_int(tmp2);
             assert(!cl2);
             if (!okay()) return false;
-        } else if (cl.size() == 2) {
-             Clause* cl2 = solver->add_clause_int(tmp2, true);
-             assert(!cl2);
-             if (!okay()) return false;
-        }
+        } /*else if (cl.size() == 2) { */
+        /*      Clause* cl2 = solver->add_clause_int(tmp2, true); */
+        /*      assert(!cl2); */
+        /*      if (!okay()) return false; */
+        /* } */
     }
     execute_inprocess_strategy(false, "must-scc-vrepl");
     if (!okay()) return okay();
