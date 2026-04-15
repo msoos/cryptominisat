@@ -185,8 +185,12 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         pg.shrink_to_fit();
 
         // Actually seems to slow it down. Strange. TODO
-        /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
-        /*         return a.score > b.score;}); */
+        std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) {
+                if (a.score == b.score) {
+                    if (a.v1 == b.v1) return a.v2 < b.v2;
+                    return a.v1 < b.v1;
+                }
+                return a.score > b.score;});
         /* for(const auto& vp: varp) { */
         /*     cout << "vp.score: " << vp.score << " v1: " << vp.v1 << " v2: " << vp.v2 << endl; */
         /* } */
@@ -269,14 +273,10 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             Clause* cl2 = solver->add_clause_int(tmp2);
             assert(!cl2);
             if (!okay()) return false;
-        } else if (conf.oracle_get_learnts) {
-            ClauseStats s;
-            s.which_red_array = 2;
-            s.id = ++clauseID;
-            s.glue = cl.size();
-            Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
-            if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
-            if (!okay()) return false;
+        } else if (cl.size() == 2) {
+             Clause* cl2 = solver->add_clause_int(tmp2, true);
+             assert(!cl2);
+             if (!okay()) return false;
         }
     }
     execute_inprocess_strategy(false, "must-scc-vrepl");
