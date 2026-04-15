@@ -43,10 +43,13 @@ def auto_find_binaries(args):
     build_dir = os.path.join(script_dir, "..", "..", "build")
     build_dir = os.path.abspath(build_dir)
 
+    # build_dir first: the oracle executable is installed at build/oracle by
+    # the oracle-bin target, while build/cmsat5-src/oracle is a stale artifact
+    # from an older target layout that doesn't accept --vivify and friends.
     search = [
+        build_dir,
         os.path.join(build_dir, "cmsat5-src"),
         os.path.join(build_dir, "tests", "cnf-utils"),
-        build_dir,
     ]
 
     if args.oracle is None:

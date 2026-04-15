@@ -497,83 +497,92 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
         return;
     }
     assert(vs[v].reason == 0);
-    // For freeze=true, we need to derive all root-level implications of the
-    // newly-frozen unit. Learned clauses may contain `lit` alongside other
-    // vars (e.g., binary clauses from backbone propagation), and dropping
-    // watches without propagation loses those implications. Assign + Propagate
-    // at level 1 first; the watch-cleanup below then runs against an up-to-date
-    // state.
+
+    // For freeze=true, derive root-level implications *before* touching
+    // watches. Learned clauses may contain `lit` alongside other vars
+    // (e.g. binaries from backbone propagation); dropping watches without
+    // propagating would lose those implications. Then fall through to the
+    // watch-purge loop below so frozen lits are physically removed from
+    // clause bodies — same behavior the pre-f6b0a2d1 code had, just with
+    // propagation correctness preserved.
+    vector<Var> purge_vars;
     if (freeze) {
+        const size_t pre_decided = decided.size();
         Assign(lit, 0, 1);
         if (Propagate(1)) { unsat = true; return; }
         assert(prop_q.empty());
-        // Remove `lit` from the decided[] stack since it's a permanent unit,
-        // not a decision; any level-1 implications from Propagate stay on
-        // decided[] (they too are root-level permanent).
-        for (size_t i = decided.size(); i-- > 0; ) {
-            if (decided[i] == v) {
-                decided.erase(decided.begin() + i);
-                break;
+        purge_vars.assign(decided.begin() + pre_decided, decided.end());
+    } else {
+        purge_vars.push_back(v);
+    }
+
+    for (Var pv : purge_vars) {
+        for (Lit tl : {PosLit(pv), NegLit(pv)}) {
+            const auto& wt = watches[tl];
+            for (size_t wi = 0; wi < wt.size(); wi++) {
+                const Watch w = wt[wi];
+                if (wi + 1 < wt.size()) cmsat_prefetch(clauses.data() + wt[wi+1].cls);
+                stats.mems++;
+                if (w.size <= 2) {
+                    // Binary clause learned during oracle solving (e.g. from
+                    // backbone unit propagation). The other literal is already
+                    // assigned at level 1 — just drop the watch.
+                    continue;
+                }
+                size_t pos = w.cls;
+                size_t opos = w.cls+1;
+                if (clauses[pos] != tl) {
+                    pos++;
+                    opos--;
+                }
+                assert(clauses[pos] == tl);
+                size_t f = 0;
+                for (size_t i = w.cls+2; clauses[i]; i++) {
+                    if (LitVal(clauses[i]) == 0) {
+                        f = i;
+                    }
+                }
+                if (!f) {
+                    // All non-watch literals are assigned (e.g. due to learned units
+                    // from backbone detection). The clause must be satisfied by some
+                    // assigned literal — just drop the watch.
+                    #ifdef VERBOSE_DEBUG
+                    bool sat = false;
+                    for (size_t i = w.cls; clauses[i]; i++) {
+                        if (LitVal(clauses[i]) == 1) { sat = true; break; }
+                    }
+                    assert(sat);
+                    #endif
+                    continue;
+                }
+                swap(clauses[f], clauses[pos]);
+                watches[clauses[pos]].push_back({w.cls, clauses[opos], w.size});
+            }
+            watches[tl].clear();
+        }
+    }
+
+    if (freeze) {
+        // Frozen vars are permanent units; drop them from decided[] (same
+        // convention the old freeze path used — no watches remain to walk).
+        // Prune sol_cache for each newly-committed phase.
+        for (Var pv : purge_vars) {
+            PruneSolCacheForVar(pv, vs[pv].phase);
+            for (size_t i = decided.size(); i-- > 0; ) {
+                if (decided[i] == pv) { decided.erase(decided.begin() + i); break; }
             }
         }
-        PruneSolCacheForVar(VarOf(lit), IsPos(lit) ? 1 : 0);
         return;
     }
-    for (Lit tl : {PosLit(v), NegLit(v)}) {
-        const auto& wt = watches[tl];
-        for (size_t wi = 0; wi < wt.size(); wi++) {
-            const Watch w = wt[wi];
-            if (wi + 1 < wt.size()) cmsat_prefetch(clauses.data() + wt[wi+1].cls);
-            stats.mems++;
-            if (w.size <= 2) {
-                // Binary clause learned during oracle solving (e.g. from
-                // backbone unit propagation). The other literal is already
-                // assigned at level 1 — just drop the watch.
-                continue;
-            }
-            size_t pos = w.cls;
-            size_t opos = w.cls+1;
-            if (clauses[pos] != tl) {
-                pos++;
-                opos--;
-            }
-            assert(clauses[pos] == tl);
-            size_t f = 0;
-            for (size_t i = w.cls+2; clauses[i]; i++) {
-                if (LitVal(clauses[i]) == 0) {
-                    f = i;
-                }
-            }
-            if (!f) {
-                // All non-watch literals are assigned (e.g. due to learned units
-                // from backbone detection). The clause must be satisfied by some
-                // assigned literal — just drop the watch.
-                #ifdef VERBOSE_DEBUG
-                bool sat = false;
-                for (size_t i = w.cls; clauses[i]; i++) {
-                    if (LitVal(clauses[i]) == 1) { sat = true; break; }
-                }
-                assert(sat);
-                #endif
-                continue;
-            }
-            swap(clauses[f], clauses[pos]);
-            watches[clauses[pos]].push_back({w.cls, clauses[opos], w.size});
-        }
-        watches[tl].clear();
-    }
+
     assert(watches[lit].empty());
     assert(watches[Neg(lit)].empty());
     assert(prop_q.empty());
-    if (freeze) { Assign(lit, 0, 1); }
-    else { Assign(lit, 0, 2); }
+    Assign(lit, 0, 2);
     assert(decided.back() == VarOf(lit));
     decided.pop_back();
     assert(prop_q.back() == Neg(lit));
     prop_q.pop_back();
-    // A freeze permanently commits lit. Any cached solution with lit in the
-    // opposite phase is no longer valid, so drop those entries now.
-    if (freeze) PruneSolCacheForVar(VarOf(lit), IsPos(lit) ? 1 : 0);
 }
 
 void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
