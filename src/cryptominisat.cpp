@@ -1496,19 +1496,6 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
 
-DLL_PUBLIC SATSolver::OuterVarFeats SATSolver::get_var_feats()
-{
-    actually_add_clauses_to_threads(data);
-    auto raw = data->solvers[data->which_solved]->get_outside_var_feats();
-    SATSolver::OuterVarFeats out;
-    out.pos        = std::move(raw.pos);
-    out.neg        = std::move(raw.neg);
-    out.bin        = std::move(raw.bin);
-    out.longcls    = std::move(raw.longcls);
-    out.inv_sz_sum = std::move(raw.inv_sz_sum);
-    return out;
-}
-
 DLL_PUBLIC vector<OrGate> SATSolver::get_recovered_or_gates()
 {
     actually_add_clauses_to_threads(data);

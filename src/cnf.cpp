@@ -713,65 +713,6 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     return inc_outer;
 }
 
-CNF::OuterVarFeats CNF::get_outside_var_feats()
-{
-    const uint32_t nv_inner = nVars();
-    const uint32_t nv_outer = nVarsOuter();
-    OuterVarFeats inner;
-    inner.pos.assign(nv_inner, 0);
-    inner.neg.assign(nv_inner, 0);
-    inner.bin.assign(nv_inner, 0);
-    inner.longcls.assign(nv_inner, 0);
-    inner.inv_sz_sum.assign(nv_inner, 0.0);
-
-    if (okay()) {
-        // Binary irred clauses via watches; only count each clause once
-        // (when l < lit2).
-        for(uint32_t i = 0; i < nv_inner*2; i++) {
-            const Lit l = Lit::toLit(i);
-            for(const auto& x: watches[l]) {
-                if (x.isBin() && !x.red() && l < x.lit2()) {
-                    const Lit other = x.lit2();
-                    if (l.sign()) inner.neg[l.var()]++; else inner.pos[l.var()]++;
-                    if (other.sign()) inner.neg[other.var()]++; else inner.pos[other.var()]++;
-                    inner.bin[l.var()]++;
-                    inner.bin[other.var()]++;
-                    inner.inv_sz_sum[l.var()]     += 0.5;
-                    inner.inv_sz_sum[other.var()] += 0.5;
-                }
-            }
-        }
-        // Long irred clauses
-        for(const auto& offs: longIrredCls) {
-            Clause* cl = cl_alloc.ptr(offs);
-            const uint32_t sz = cl->size();
-            const double inv = sz ? 1.0 / (double)sz : 0.0;
-            for(const auto& l: *cl) {
-                if (l.sign()) inner.neg[l.var()]++; else inner.pos[l.var()]++;
-                inner.longcls[l.var()]++;
-                inner.inv_sz_sum[l.var()] += inv;
-            }
-        }
-    }
-
-    // Map inner -> outer
-    OuterVarFeats outer;
-    outer.pos.assign(nv_outer, 0);
-    outer.neg.assign(nv_outer, 0);
-    outer.bin.assign(nv_outer, 0);
-    outer.longcls.assign(nv_outer, 0);
-    outer.inv_sz_sum.assign(nv_outer, 0.0);
-    for(uint32_t v = 0; v < nv_inner; v++) {
-        const uint32_t ov = map_inter_to_outer(v);
-        outer.pos[ov]        = inner.pos[v];
-        outer.neg[ov]        = inner.neg[v];
-        outer.bin[ov]        = inner.bin[v];
-        outer.longcls[ov]    = inner.longcls[v];
-        outer.inv_sz_sum[ov] = inner.inv_sz_sum[v];
-    }
-    return outer;
-}
-
 vector<uint32_t> CNF::get_outside_var_incidence_also_red()
 {
     vector<uint32_t> inc;
