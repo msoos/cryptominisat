@@ -273,11 +273,15 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             Clause* cl2 = solver->add_clause_int(tmp2);
             assert(!cl2);
             if (!okay()) return false;
-        } /*else if (cl.size() == 2) { */
-        /*      Clause* cl2 = solver->add_clause_int(tmp2, true); */
-        /*      assert(!cl2); */
-        /*      if (!okay()) return false; */
-        /* } */
+        } else if (conf.oracle_get_learnts) {
+            ClauseStats s;
+            s.which_red_array = 2;
+            s.id = ++clauseID;
+            s.glue = cl.size();
+            Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
+            if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
+            if (!okay()) return false;
+        }
     }
     execute_inprocess_strategy(false, "must-scc-vrepl");
     if (!okay()) return okay();
