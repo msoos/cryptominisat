@@ -17,7 +17,11 @@ rm -rf utils
 rm -rf Make*
 rm -rf deps
 rm -rf _deps
-emcmake cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="${EMINSTALL}" -DENABLE_TESTING=OFF -DPOLYS=OFF -Dcadical_DIR="${SAT_DIR}/cadical/build" -Dcadiback_DIR="${SAT_DIR}/cadiback" ..
+emcmake cmake -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="${EMINSTALL}" \
+    -DENABLE_TESTING=OFF -DPOLYS=OFF \
+    -Dcadical_DIR="${SAT_DIR}/cadical/build" \
+    -Dcadiback_DIR="${SAT_DIR}/cadiback" ..
 emmake make -j$(nproc)
 emmake make install
 cp cryptominisat5.wasm "${SAT_DIR}/cryptominisat/html"
