@@ -286,14 +286,9 @@ void Oracle::ResizeClauseDb() {
             if (frozen_sat) assert(!impll);
 
             // Tiered clause reduction (CaDiCaL-style):
-            // Tier 1 (glue <= 3): always keep
-            // Tier 2 (glue <= 6): keep if used recently (used > 0), decrement used
-            // Tier 3 (glue > 6): delete if not used since last reduce
-            //
-            // Tier 1 cutoff is 3 (was 2). On clients that do many related
-            // solves with shared structure (e.g. arjun's slow backward
-            // independence test), the slightly-higher-glue clauses still
-            // encode reusable facts and the extra retention helps.
+            // Tier 1 : always keep
+            // Tier 2 : keep if used recently (used > 0), decrement used
+            // Tier 3 : delete if not used since last reduce
             bool should_delete = false;
             if (frozen_sat) {
                 should_delete = true;
@@ -1032,11 +1027,6 @@ TriState Oracle::HardSolve(int64_t max_mems, int64_t mems_startup) {
             UnDecide(3);
             cur_level = 2;
             stats.restarts++;
-            // Reduce the clause db less aggressively (was 10000). On many
-            // related solves the db churns rapidly when the threshold is
-            // small; bumping it reduces churn and lets useful learned
-            // clauses survive longer at the cost of slightly higher peak
-            // memory.
             if (total_confls > last_db_clean + db_clean_interval) {
                 last_db_clean = total_confls;
                 oclv("c [oracle] Resizing cldb"
@@ -1121,12 +1111,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
     redu_seen.resize(vars*2+2);
     in_cc.resize(vars*2+2);
     minimize_mark.resize(vars+1, 0);
-    // setting magic constants
-    // restart_factor controls Luby-style restart cadence (next_restart =
-    // confls + luby * restart_factor). 200 was empirically faster than 100
-    // on arjun's slow backward independence test, where many related solves
-    // benefit from longer search runs between restarts.
-    restart_factor = 400;
+    restart_factor = 100;
 
     clauses.push_back(0);
     clause_pos.push_back(0);

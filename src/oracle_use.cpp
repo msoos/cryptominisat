@@ -128,10 +128,10 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         }
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             if (oracle.getStats().mems > tot_vivif_mems) goto end1;
-            if (oracle.getStats().mems > mems_before_vivif) {
-                oracle.Vivify(mems_for_vivif/10);
-                mems_before_vivif = oracle.getStats().mems + mems_for_vivif;
-            }
+            /* if (oracle.getStats().mems > mems_before_vivif) { */
+            /*     oracle.Vivify(mems_for_vivif/10); */
+            /*     mems_before_vivif = oracle.getStats().mems + mems_for_vivif; */
+            /* } */
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
             auto ret = oracle.Solve(assump, true,mems_per_call);
@@ -157,7 +157,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
     const double end_vivif_time = cpu_time();
-    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*30LL*1000LL*1000LL * solver->conf.oracle_mult;
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL * solver->conf.oracle_mult;
     bool early_aborted_bin = true;
     oracle.reset_mems();
     double start_bin_time = cpu_time();
@@ -170,18 +170,15 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
                 for (auto l2 : clause) {
                     uint32_t v1 = orc_to_lit(l1).var();
                     uint32_t v2 = orc_to_lit(l2).var();
-                    if (v2 > v1) pg[v1][v2]++;
+                    if (v1 < v2) pg[v1][v2]++;
                 }
             }
         }
         vector<VarPair> varp;
         for (uint32_t v1 = 0; v1 < nVars(); v1++) {
             for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
-                if (pg[v1][v2] > 0) {
+                if (pg[v1][v2] > 0)
                     varp.push_back({v1, v2, pg[v1][v2]});
-                } else {
-                    /* varp.push_back({v1, v2, 0}); */
-                }
             }
         }
         pg.clear();
@@ -559,17 +556,10 @@ bool Solver::oracle_sparsify(bool fast)
                 findWatchedOfBin(watches, lit2, lit1, false, c.bin.ID).mark_bin_cl();
             }
         }
-        if (oracle.getStats().mems > mems_before_vivif) {
-            // Safe to Vivify here. Vivify only emits clauses entailed by the
-            // oracle's CNF, and (since 8f5340c2f) it ignores level-2 soft
-            // assumptions — so its strengthenings don't depend on the current
-            // indicator state. Any clause we later decide to remove is
-            // therefore entailed by the *original* CNF, not just by the
-            // Vivify-shortened view. Verified empirically by the
-            // --sparsify-cumulative fuzzer mode in assump_fuzz_oracle.
-            oracle.Vivify(mems_for_vivif/10);
-            mems_before_vivif = oracle.getStats().mems+mems_for_vivif;
-        }
+        /* if (oracle.getStats().mems > mems_before_vivif) { */
+        /*     oracle.Vivify(mems_for_vivif/10); */
+        /*     mems_before_vivif = oracle.getStats().mems+mems_for_vivif; */
+        /* } */
 
         if (oracle.getStats().mems > mems_per_call) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");

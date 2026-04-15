@@ -211,8 +211,8 @@ public:
  private:
     uint32_t verb = 0;
     uint32_t cache_cutoff = 1000;
-    uint32_t db_clean_interval = 20000;
-    int tier1_max_glue = 5;
+    uint32_t db_clean_interval = 10000;
+    int tier1_max_glue = 2;
     int tier2_max_glue = 6;
     size_t total_confls = 0;
     size_t last_db_clean = 0;
