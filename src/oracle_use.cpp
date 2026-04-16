@@ -109,6 +109,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
+    /* oracle.SetStrictMode(true); */
     oracle.SetVerbosity(2);
 
     int64_t mems_for_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult/20.0;
@@ -434,6 +435,7 @@ bool Solver::oracle_sparsify(bool fast)
 
     // The "+tot_cls" is for indicator variables
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
+    /* oracle.SetStrictMode(true); */
     oracle.SetVerbosity(2);
     vector<sspp::Lit> tmp;
     vector<vector<sspp::Lit>> cls;
