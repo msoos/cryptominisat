@@ -1766,8 +1766,6 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "oracle-vivif-veryfast") {
             bool backbone_found = false;
             if (nVars() > 10) oracle_vivif(2, backbone_found);
-            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) intree->intree_probe();
-            if (nVars() > 10) oracle_vivif(2, backbone_found);
         } else if (token == "oracle-sparsify") {
             if (nVars() > 10) { oracle_sparsify();
             }
