@@ -395,6 +395,13 @@ set_target_properties(oracle PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/oracle/oracle.h"
 )
+# On MinGW both DLL and EXE import libs share the liboracle.dll.a name,
+# so the oracle library and oracle-bin executable (OUTPUT_NAME=oracle)
+# collide on the import lib. Rename the library's output on Windows to
+# avoid the clash, mirroring the cryptominisat5/cryptominisat5win pattern.
+if(WIN32)
+    set_target_properties(oracle PROPERTIES OUTPUT_NAME oraclewin)
+endif()
 install(TARGETS oracle
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
