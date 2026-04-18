@@ -41,6 +41,14 @@
 #define oclv2(x) do {} while(0)
 #endif
 
+#if defined(_WIN32)
+    #define ORACLE_PUBLIC __declspec(dllexport)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define ORACLE_PUBLIC __attribute__((visibility("default")))
+#else
+    #define ORACLE_PUBLIC
+#endif
+
 using std::array;
 
 namespace sspp {
@@ -131,7 +139,7 @@ inline std::ostream& operator<<(std::ostream& os, const TriState& ts) {
     return os;
 }
 
-struct Stats {
+struct ORACLE_PUBLIC Stats {
     int64_t mems = 0;
     int64_t decisions = 0;
     int64_t propagations = 0;
@@ -170,7 +178,7 @@ struct CInfo {
 };
 
 
-class Oracle {
+class ORACLE_PUBLIC Oracle {
 public:
     Oracle(int vars_, const vector<vector<Lit>>& clauses_);
     Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_);
