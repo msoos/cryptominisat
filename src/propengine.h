@@ -260,6 +260,9 @@ public:
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
     vector<GaussQData> gqueuedata;
+    // Scratch list of matrix indices touched during a single gauss_jordan_elim
+    // call. Allows per-call bookkeeping to skip the many untouched matrices.
+    vec<uint32_t> touched_matrices_gje;
 
 protected:
     friend class DataSync;

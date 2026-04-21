@@ -32,7 +32,7 @@ struct GaussQData {
     uint32_t new_resp_var;                     // do elimination variable
     uint32_t new_resp_row ;         // do elimination row
     PropBy confl;              // returning conflict
-    gauss_res ret; //final return value to Searcher
+    gauss_res ret = gauss_res::none; //final return value to Searcher
     uint32_t currLevel; //level at which the variable was decided on
 
 
@@ -41,6 +41,10 @@ struct GaussQData {
     uint32_t engaus_disable_checks = 0;
     bool disabled = false;  // Can be disabled. In this case, all xor constraints
                             // are reattached as plain XOR constraints
+
+    // Lazy per-gauss_jordan_elim-call flag: true iff this matrix has been
+    // reset+updated in the current call. Cleared at end of each call.
+    bool touched_this_call = false;
 
     void reset()
     {

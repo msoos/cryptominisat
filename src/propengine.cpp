@@ -163,12 +163,11 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
     if (gmatrices.empty() && xorclauses.empty()) return PropBy();
 
-    // reset gqueuedata and update set vars in gmatrices
-    for(uint32_t i = 0; i < gqueuedata.size(); i++) {
-        if (gqueuedata[i].disabled || !gmatrices[i]->is_initialized()) continue;
-        gqueuedata[i].reset();
-        gmatrices[i]->update_cols_vals_set();
-    }
+    // Lazy per-call bookkeeping: matrices are reset and update_cols_vals_set'd
+    // only when first consulted through gwatches[pv] in this call. Matrices not
+    // watching pv keep their previous state (update_cols_vals_set is idempotent
+    // via last_val_update, so deferring catches up later with no extra work).
+    assert(touched_matrices_gje.size() == 0);
 
     bool confl_in_gauss = false;
     assert(gwatches.size() > pv);
@@ -233,13 +232,25 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             }
         } else {
             SLOW_DEBUG_DO(assert(i->matrix_num < gmatrices.size()));
-            if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
-            gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
-            gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
-            gqueuedata[i->matrix_num].do_eliminate = false;
-            gqueuedata[i->matrix_num].currLevel = currLevel;
+            const uint32_t matnum = i->matrix_num;
+            if (!gmatrices[matnum]->is_initialized()) continue; //remove watch and continue
+            GaussQData& gqd = gqueuedata[matnum];
+            if (gqd.disabled) continue;
 
-            if (gmatrices[i->matrix_num]->find_truths( i, j, pv, i->row_n, gqueuedata[i->matrix_num])) {
+            // Lazy init on first touch in this call.
+            if (!gqd.touched_this_call) {
+                gqd.reset();
+                gmatrices[matnum]->update_cols_vals_set();
+                gqd.touched_this_call = true;
+                touched_matrices_gje.push(matnum);
+            }
+
+            gqd.new_resp_var = numeric_limits<uint32_t>::max();
+            gqd.new_resp_row = numeric_limits<uint32_t>::max();
+            gqd.do_eliminate = false;
+            gqd.currLevel = currLevel;
+
+            if (gmatrices[matnum]->find_truths(i, j, pv, i->row_n, gqd)) {
                 continue;
             } else {
                 confl_in_gauss = true;
@@ -252,31 +263,36 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
     for (; i != end; i++) *j++ = *i;
     ws.shrink(i-j);
-    if (confl != PropBy()) return confl;
+    if (confl != PropBy()) {
+        for (uint32_t m = 0; m < touched_matrices_gje.size(); m++)
+            gqueuedata[touched_matrices_gje[m]].touched_this_call = false;
+        touched_matrices_gje.clear();
+        return confl;
+    }
 
-    for (size_t g = 0; g < gqueuedata.size(); g++) {
-        if (gqueuedata[g].disabled || !gmatrices[g]->is_initialized())
-            continue;
-
-        if (gqueuedata[g].do_eliminate) {
-            gmatrices[g]->eliminate_col(pv, gqueuedata[g]);
-            confl_in_gauss |= (gqueuedata[g].ret == gauss_res::confl);
+    for (uint32_t m = 0; m < touched_matrices_gje.size(); m++) {
+        const uint32_t g = touched_matrices_gje[m];
+        GaussQData& gqd = gqueuedata[g];
+        if (gqd.do_eliminate) {
+            gmatrices[g]->eliminate_col(pv, gqd);
+            confl_in_gauss |= (gqd.ret == gauss_res::confl);
         }
     }
 
-    for (GaussQData& gqd: gqueuedata) {
-        if (gqd.disabled) continue;
+    PropBy result;
+    for (uint32_t m = 0; m < touched_matrices_gje.size(); m++) {
+        GaussQData& gqd = gqueuedata[touched_matrices_gje[m]];
 
         //There was a conflict but this is not that matrix.
         //Just skip.
         if (confl_in_gauss && gqd.ret != gauss_res::confl) continue;
 
         switch (gqd.ret) {
-            case gauss_res::confl :{
+            case gauss_res::confl :
                 gqd.num_conflicts++;
                 qhead = trail.size();
-                return gqd.confl;
-            }
+                result = gqd.confl;
+                goto done;
 
             case gauss_res::prop:
                 gqd.num_props++;
@@ -288,10 +304,14 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
             default:
                 assert(false);
-                return PropBy();
+                goto done;
         }
     }
-    return PropBy();
+done:
+    for (uint32_t m = 0; m < touched_matrices_gje.size(); m++)
+        gqueuedata[touched_matrices_gje[m]].touched_this_call = false;
+    touched_matrices_gje.clear();
+    return result;
 }
 
 lbool PropEngine::bnn_prop(
