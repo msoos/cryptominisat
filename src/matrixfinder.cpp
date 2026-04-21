@@ -306,6 +306,9 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
                 cout << solver->conf.prefix << "[matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
+            if (solver->conf.doSLS)
+                verb_print(1, "[matrix] disabling SLS since matrix is found");
+            solver->conf.doSLS = false;
         } else {
             for(auto& x: xorsInMatrix[i]) {
                 x.in_matrix = PLAIN_XOR_SENTINEL;
