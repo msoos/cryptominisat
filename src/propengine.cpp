@@ -179,7 +179,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
     PropBy confl;
     for (; i != end; i++) {
-        if (i->matrix_num == 1000) {
+        if (i->matrix_num == PLAIN_XOR_SENTINEL) {
             const uint32_t at = i->row_n;
             auto& x = xorclauses[at];
             bool which; // which watch is this
@@ -215,7 +215,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
                 x.prop_confl_watch = !which;
-                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
+                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(PLAIN_XOR_SENTINEL, at));
                 *j++ = *i;
                 goto next;
             }
@@ -223,7 +223,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             if (rhs != x.rhs) {
                 /* cout << "conflict because of xor: " << x << endl; */
                 x.prop_confl_watch = 2 + which;
-                confl = PropBy(1000, at);
+                confl = PropBy(PLAIN_XOR_SENTINEL, at);
                 *j++ = *i;
                 i++;
                 break;
@@ -1074,7 +1074,7 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 
 vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
     frat_func_start();
-    if (reason.get_matrix_num() == 1000) {
+    if (reason.get_matrix_num() == PLAIN_XOR_SENTINEL) {
         auto& x = xorclauses[reason.get_row_num()];
         if (frat->enabled()) {
             if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;

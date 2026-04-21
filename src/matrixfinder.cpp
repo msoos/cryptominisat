@@ -308,7 +308,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             assert(solver->gmatrices.size() == realMatrixNum);
         } else {
             for(auto& x: xorsInMatrix[i]) {
-                x.in_matrix = 1000;
+                x.in_matrix = PLAIN_XOR_SENTINEL;
                 solver->xorclauses.push_back(x);
             }
             if (solver->conf.verbosity && unused_matrix_printed < 10) {

@@ -177,7 +177,7 @@ inline Watched* findWatchedOfBinMaybe(
 }
 
 static inline bool findWXCl(const vec<GaussWatched>& gws, const uint32_t at) {
-    for(const auto& gw: gws) if (gw.matrix_num == 1000 && gw.row_n == at) return true;
+    for(const auto& gw: gws) if (gw.matrix_num == PLAIN_XOR_SENTINEL && gw.row_n == at) return true;
     return false;
 }
 
@@ -187,7 +187,7 @@ static inline void removeWXCl(vec<vec<GaussWatched>>& wsFull
 ) {
     auto& gws = wsFull[var];
     auto i = gws.begin(), end = gws.end();
-    for (; i != end && !(i->matrix_num == 1000 && i->row_n == at); i++);
+    for (; i != end && !(i->matrix_num == PLAIN_XOR_SENTINEL && i->row_n == at); i++);
     assert(i != end);
     auto j = i;
     i++;

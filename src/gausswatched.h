@@ -33,12 +33,18 @@ THE SOFTWARE.
 #include "Vec.h"
 
 namespace CMSat {
+    // Sentinel value for matrix_num/in_matrix indicating the watch/xor is a
+    // plain (non-matrix) xor clause. Must be a value no real matrix index can
+    // take, since --maxnummatrices can be set very large. Also must fit in
+    // PropBy::data1 which is a 31-bit bitfield, hence INT32_MAX.
+    static constexpr uint32_t PLAIN_XOR_SENTINEL = std::numeric_limits<int32_t>::max();
+
     struct GaussWatched{
         GaussWatched(uint32_t r, uint32_t m):
             row_n(r) , matrix_num(m)
         {}
         static GaussWatched plain_xor(uint32_t at) {
-            return GaussWatched(at, 1000);
+            return GaussWatched(at, PLAIN_XOR_SENTINEL);
         }
 
         uint32_t row_n;        // watch row

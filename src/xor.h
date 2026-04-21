@@ -23,6 +23,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "solvertypes.h"
+#include "gausswatched.h"
 
 #include <cstdint>
 #include <limits>
@@ -85,7 +86,7 @@ public:
     vector<Lit> reason_cl;
     int32_t reason_cl_ID = 0;
     uint32_t watched[2] = {0,0};
-    uint32_t in_matrix = 1000;
+    uint32_t in_matrix = PLAIN_XOR_SENTINEL;
     int32_t xid = 0;
 };
 

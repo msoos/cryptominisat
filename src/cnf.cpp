@@ -470,7 +470,7 @@ void CNF::find_all_attached() const {
 
     for(size_t var = 0; var < gwatches.size(); var++) {
         for(const auto& w: gwatches[var]) {
-            if (w.matrix_num < 1000) {
+            if (w.matrix_num != PLAIN_XOR_SENTINEL) {
                 /* assert(gmatrices.size() > w.matrix_num); */
             } else {
                 assert(w.row_n < xorclauses.size());
@@ -531,7 +531,7 @@ void CNF::check_wrong_attach() const {
             assert(x.watched[at] < x.size());
             bool found = false;
             const uint32_t v = x[x.watched[at]];
-            for(const auto& w: gwatches[v]) if (w.matrix_num ==  1000 && w.row_n == i) {found=true;break;}
+            for(const auto& w: gwatches[v]) if (w.matrix_num == PLAIN_XOR_SENTINEL && w.row_n == i) {found=true;break;}
             if (!found) cout << "ERROR. var " << v+1 << " not in watch for XOR: " << x << endl;
             assert(found);
         }
