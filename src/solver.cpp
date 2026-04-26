@@ -2770,8 +2770,10 @@ bool Solver::add_bnn_clause_outside( const vector<Lit>& lits, const int32_t cuto
 
     vector<Lit> lits2(lits);
     add_clause_helper(lits2);
-    out = map_outer_to_inter(out);
-    out = varReplacer->get_lit_replaced_with(out);
+    if (out != lit_Undef) {
+        out = map_outer_to_inter(out);
+        out = varReplacer->get_lit_replaced_with(out);
+    }
     add_bnn_clause_inter(lits2, cutoff, out);
 
     return ok;
