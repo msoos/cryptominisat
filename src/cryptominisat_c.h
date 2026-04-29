@@ -63,6 +63,7 @@ CMS_DLL_PUBLIC void cmsat_free(SATSolver* s) NOEXCEPT;
 CMS_DLL_PUBLIC unsigned cmsat_nvars(const SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC bool cmsat_add_clause(SATSolver* self, const c_Lit* lits, size_t num_lits) NOEXCEPT;
 CMS_DLL_PUBLIC bool cmsat_add_xor_clause(SATSolver* self, const unsigned* vars, size_t num_vars, bool rhs) NOEXCEPT;
+CMS_DLL_PUBLIC bool cmsat_add_bnn_clause(SATSolver* self, const c_Lit* lits, size_t num_lits, int cutoff) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_new_vars(SATSolver* self, const size_t n) NOEXCEPT;
 
 CMS_DLL_PUBLIC c_lbool cmsat_solve(SATSolver* self) NOEXCEPT;
@@ -86,6 +87,9 @@ CMS_DLL_PUBLIC void set_up_for_arjun(SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_yes_comphandler(SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC c_lbool cmsat_simplify(SATSolver* self, const c_Lit* assumptions, size_t num_assumptions) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_max_time(SATSolver* self, double max_time) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_interrupt_asap(SATSolver* self) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_max_confl(SATSolver* self, uint64_t max_confl) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_timeout_all_calls(SATSolver* self, double secs) NOEXCEPT;
 
 #ifdef __cplusplus
 } // end extern c

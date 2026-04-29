@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "cryptominisat_c.h"
 #include "constants.h"
 #include "cryptominisat.h"
+#include <cstdint>
 
 
 // C wrappers for SATSolver so that it can be used from other languages (e.g. Rust)
@@ -96,6 +97,10 @@ extern "C"
         return self->add_xor_clause(wrap(vars, num_vars), rhs);
     } NOEXCEPT_END
 
+    DLL_PUBLIC bool cmsat_add_bnn_clause(SATSolver* self, const c_Lit* lits, size_t num_lits, int cutoff) NOEXCEPT_START {
+        return self->add_bnn_clause(wrap(fromc(lits), num_lits), cutoff);
+    } NOEXCEPT_END
+
     DLL_PUBLIC void cmsat_new_vars(SATSolver* self, const size_t n) NOEXCEPT_START {
         self->new_vars(n);
     } NOEXCEPT_END
@@ -166,5 +171,17 @@ extern "C"
 
     DLL_PUBLIC void cmsat_set_max_time(SATSolver* self, double max_time) NOEXCEPT_START {
         self->set_max_time(max_time);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_max_confl(SATSolver* self, uint64_t max_confl) NOEXCEPT_START {
+        self->set_max_confl(max_confl);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_timeout_all_calls(SATSolver* self, double secs) NOEXCEPT_START {
+        self->set_timeout_all_calls(secs);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_interrupt_asap(SATSolver* self) NOEXCEPT_START {
+        self->interrupt_asap();
     } NOEXCEPT_END
 }
