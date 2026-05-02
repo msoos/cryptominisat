@@ -41,16 +41,18 @@ void CMSat::Lucky::doit()
 
     double my_time = cpu_time();
 
-    if (check_all(true)) goto end;
-    if (check_all(false)) goto end;
-    if (search_fwd_sat(true)) goto end;
-    if (search_fwd_sat(false)) goto end;
-    if (search_backw_sat(true)) goto end;
-    if (search_backw_sat(false)) goto end;
-    if (horn_sat(true)) goto end;
-    if (horn_sat(false)) goto end;
+    // Try each lucky strategy in order; the first one to find a model wins.
+    [&] {
+        if (check_all(true))       return;
+        if (check_all(false))      return;
+        if (search_fwd_sat(true))  return;
+        if (search_fwd_sat(false)) return;
+        if (search_backw_sat(true))  return;
+        if (search_backw_sat(false)) return;
+        if (horn_sat(true))  return;
+        if (horn_sat(false)) return;
+    }();
 
-    end:
     double time_used = cpu_time() - my_time;
     if (solver->conf.verbosity) {
         cout << "c [lucky] finished "

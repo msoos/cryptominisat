@@ -102,18 +102,18 @@ class SCCFinder {
 
     private:
         void tarjan(const uint32_t vertex);
-        bool depth_warning_issued;
+        bool depth_warning_issued = false;
         void doit(const Lit lit, const uint32_t vertex);
         void add_bin_xor_in_tmp();
 
         //temporaries
-        uint32_t globalIndex;
+        uint32_t globalIndex = 0;
         vector<uint32_t> index;
         vector<uint32_t> lowlink;
         std::stack<uint32_t, vector<uint32_t> > stack;
         vector<char> stackIndicator;
         vector<uint32_t> tmp;
-        uint32_t depth;
+        uint32_t depth = 0;
 
         Solver* solver;
         std::set<BinaryXor> binxors;
@@ -124,13 +124,14 @@ class SCCFinder {
 };
 
 inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
+    const uint32_t v_prime = lit.toInt();
     // Was successor v' visited?
-    if (index[lit.toInt()] ==  numeric_limits<uint32_t>::max()) {
-        tarjan(lit.toInt());
+    if (index[v_prime] == numeric_limits<uint32_t>::max()) {
+        tarjan(v_prime);
         depth--;
-        lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
-    } else if (stackIndicator[lit.toInt()])  {
-        lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
+        lowlink[vertex] = std::min(lowlink[vertex], lowlink[v_prime]);
+    } else if (stackIndicator[v_prime]) {
+        lowlink[vertex] = std::min(lowlink[vertex], lowlink[v_prime]);
     }
 }
 

@@ -67,16 +67,9 @@ public:
 
     void clear()
     {
-        //Clear touchedBitset
-        for(vector<uint32_t>::const_iterator
-            it = touched.begin(), end = touched.end()
-            ; it != end
-            ; ++it
-        ) {
-            touchedBitset[*it] = 0;
+        for (const uint32_t v: touched) {
+            touchedBitset[v] = 0;
         }
-
-        //Clear touched
         touched.clear();
     }
 
@@ -142,16 +135,9 @@ public:
 
     void clear()
     {
-        //Clear touchedBitset
-        for(vector<uint32_t>::const_iterator
-            it = touched.begin(), end = touched.end()
-            ; it != end
-            ; ++it
-        ) {
-            touchedBitset[*it] = 0;
+        for (const uint32_t v: touched) {
+            touchedBitset[v] = 0;
         }
-
-        //Clear touched
         touched.clear();
     }
 

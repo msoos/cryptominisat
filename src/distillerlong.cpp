@@ -370,19 +370,17 @@ bool DistillerLong::distill_long_cls_all(
 bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, bool only_remove) {
     frat_func_start();
     bool time_out = false;
-    auto i = cls.begin();
-    auto j = i;
-    for (auto end = cls.end(); i != end; ++i) {
-        VERBOSE_PRINT("At offset: " << *i);
+    size_t kept = 0;
+    for (size_t at = 0; at < cls.size(); at++) {
+        const ClOffset offset = cls[at];
+        VERBOSE_PRINT("At offset: " << offset);
 
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
-            *j++ = *i;
+            cls[kept++] = offset;
             continue;
         }
 
-        //Get pointer
-        ClOffset offset = *i;
         Clause& cl = *solver->cl_alloc.ptr(offset);
 
         //if done enough, stop doing it
@@ -407,11 +405,12 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         assert(cl.size() > 2);
 
         //Try to distill clause
-        ClOffset offset2 = try_distill_clause_and_return_new( offset, &cl.stats , also_remove, only_remove);
+        const ClOffset offset2 = try_distill_clause_and_return_new(
+            offset, &cl.stats, also_remove, only_remove);
 
-        if (offset2 != CL_OFFSET_MAX) *j++ = offset2;
+        if (offset2 != CL_OFFSET_MAX) cls[kept++] = offset2;
     }
-    cls.resize(cls.size()- (i-j));
+    cls.resize(kept);
 
     frat_func_end();
     return time_out;

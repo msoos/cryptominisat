@@ -68,9 +68,9 @@ void updateArrayMapCopy(T& toUpdate, const vector< uint32_t >& mapper)
 template<typename T>
 void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    for(size_t i = 0; i < toUpdate.size(); i++) {
-        if (toUpdate[i].var() < mapper.size()) {
-            toUpdate[i] = getUpdatedLit(toUpdate[i], mapper);
+    for (auto& l: toUpdate) {
+        if (l.var() < mapper.size()) {
+            l = getUpdatedLit(l, mapper);
         }
     }
 }
@@ -78,9 +78,9 @@ void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
 template<typename T>
 void updateVarsMap(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    for(size_t i = 0; i < toUpdate.size(); i++) {
-        if (toUpdate[i] < mapper.size()) {
-            toUpdate[i] = getUpdatedVar(toUpdate[i], mapper);
+    for (auto& v: toUpdate) {
+        if (v < mapper.size()) {
+            v = getUpdatedVar(v, mapper);
         }
     }
 }

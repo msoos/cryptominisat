@@ -25,9 +25,9 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <algorithm>
 #include <cstring>
-#include <limits>
 #include <cassert>
 #include <cmath>
+#include <sstream>
 #include "solvertypes.h"
 #include "clause.h"
 #include "solver.h"
@@ -58,11 +58,28 @@ using std::endl;
 
 #define MAXSIZE ((1ULL << (EFFECTIVELY_USEABLE_BITS))-1)
 
-ClauseAllocator::ClauseAllocator() :
-    dataStart(nullptr)
-    , size(0)
-    , capacity(0)
-    , currentlyUsedSize(0)
+namespace {
+// Number of BASE_DATA_TYPE elements needed to hold a clause of `num_lits`
+// literals (Clause header + literals, rounded up).
+inline uint64_t clause_storage_elems(uint32_t num_lits)
+{
+    const uint64_t bytes_needed = sizeof(Clause) + sizeof(Lit) * num_lits;
+    return (bytes_needed + sizeof(BASE_DATA_TYPE) - 1) / sizeof(BASE_DATA_TYPE);
+}
+
+// Read the relocated offset that move_cl() stored into the first lit(s) of
+// `old`. Mirrors the encoding done in move_cl().
+inline ClOffset read_reloced_offset(const Clause* old)
+{
+    ClOffset new_offset = (*old)[0].toInt();
+    #ifdef LARGE_OFFSETS
+    new_offset += ((uint64_t)(*old)[1].toInt()) << 32;
+    #endif
+    return new_offset;
+}
+} // namespace
+
+ClauseAllocator::ClauseAllocator()
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
 }
@@ -79,9 +96,7 @@ void* ClauseAllocator::allocEnough(
     uint32_t num_lits
 ) {
     //Try to quickly find a place at the end of a dataStart
-    uint64_t neededbytes = sizeof(Clause) + sizeof(Lit)*num_lits;
-    uint64_t needed
-        = neededbytes/sizeof(BASE_DATA_TYPE) + (bool)(neededbytes % sizeof(BASE_DATA_TYPE));
+    const uint64_t needed = clause_storage_elems(num_lits);
 
     if (size + needed > capacity) {
         //Grow by default, but don't go under or over the limits
@@ -95,24 +110,17 @@ void* ClauseAllocator::allocEnough(
 
         //Oops, not enough space anyway
         if (newcapacity < size + needed) {
-            std::cerr
-            << "ERROR: memory manager can't handle the load."
+            std::stringstream msg;
+            msg << "ERROR: memory manager can't handle the load."
 #ifndef LARGE_OFFSETS
-            << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
+                << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
 #endif
-            << " size: " << size
-            << " needed: " << needed
-            << " newcapacity: " << newcapacity
-            << endl;
-            std::cout
-            << "ERROR: memory manager can't handle the load."
-#ifndef LARGE_OFFSETS
-            << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
-#endif
-            << " size: " << size
-            << " needed: " << needed
-            << " newcapacity: " << newcapacity
-            << endl;
+                << " size: " << size
+                << " needed: " << needed
+                << " newcapacity: " << newcapacity;
+            // Print to both streams so it shows up regardless of which is captured.
+            std::cerr << msg.str() << endl;
+            std::cout << msg.str() << endl;
 
             throw std::bad_alloc();
         }
@@ -144,7 +152,7 @@ void* ClauseAllocator::allocEnough(
     currentlyUsedSize += needed;
 
     #ifdef USE_VALGRIND
-    VALGRIND_MAKE_MEM_UNDEFINED((char*)pointer, neededbytes);
+    VALGRIND_MAKE_MEM_UNDEFINED((char*)pointer, sizeof(Clause) + sizeof(Lit)*num_lits);
     #endif
     return pointer;
 }
@@ -177,11 +185,9 @@ void ClauseAllocator::clauseFree(Clause* cl)
 {
     assert(!cl->freed());
     cl->set_freed();
-    uint64_t est_num_cl = cl->size();
-    est_num_cl = std::max(est_num_cl, (uint64_t)3); //we sometimes allow gauss to allocate 3-long clauses
-    uint64_t bytes_freed = sizeof(Clause) + est_num_cl*sizeof(Lit);
-    uint64_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
-    currentlyUsedSize -= elems_freed;
+    //we sometimes allow gauss to allocate 3-long clauses
+    const uint32_t est_num_cl = std::max<uint32_t>(cl->size(), 3);
+    currentlyUsedSize -= clause_storage_elems(est_num_cl);
 
     #ifdef VALGRIND_MAKE_MEM_UNDEFINED
     VALGRIND_MAKE_MEM_UNDEFINED(((char*)cl)+sizeof(Clause), cl->size()*sizeof(Lit));
@@ -199,8 +205,7 @@ ClOffset ClauseAllocator::move_cl(
     , ClOffset*& new_ptr
     , Clause* old
 ) {
-    uint64_t bytesNeeded = sizeof(Clause) + old->size()*sizeof(Lit);
-    uint64_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
+    const uint64_t sizeNeeded = clause_storage_elems(old->size());
     memcpy(new_ptr, old, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
     ClOffset new_offset = new_ptr-newDataStart;
@@ -222,17 +227,11 @@ void ClauseAllocator::move_one_watchlist(
         if (w.isClause()) {
             Clause* old = ptr(w.get_offset());
             assert(!old->freed());
-            Lit blocked = w.getBlockedLit();
-            if (old->reloced) {
-                ClOffset new_offset = (*old)[0].toInt();
-                #ifdef LARGE_OFFSETS
-                new_offset += ((uint64_t)(*old)[1].toInt())<<32;
-                #endif
-                w = Watched(new_offset, blocked);
-            } else {
-                ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
-                w = Watched(new_offset, blocked);
-            }
+            const Lit blocked = w.getBlockedLit();
+            const ClOffset new_offset = old->reloced
+                ? read_reloced_offset(old)
+                : move_cl(newDataStart, new_ptr, old);
+            w = Watched(new_offset, blocked);
         }
     }
 }
@@ -271,7 +270,6 @@ void ClauseAllocator::consolidate(
 
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
 
-    vector<bool> visited(solver->watches.size(), 0);
     for(auto& ws: solver->watches) {
         move_one_watchlist(ws, newDataStart, new_ptr);
     }
@@ -292,11 +290,7 @@ void ClauseAllocator::consolidate(
             ) {
                 Clause* old = ptr(vdata.reason.get_offset());
                 assert(!old->freed());
-                ClOffset new_offset = (*old)[0].toInt();
-                #ifdef LARGE_OFFSETS
-                new_offset += ((uint64_t)(*old)[1].toInt())<<32;
-                #endif
-                vdata.reason = PropBy(new_offset);
+                vdata.reason = PropBy(read_reloced_offset(old));
             } else {
                 vdata.reason = PropBy();
             }
@@ -344,14 +338,9 @@ void ClauseAllocator::update_offsets(
 
     for(ClOffset& offs: offsets) {
         Clause* old = ptr(offs);
-        if (!old->reloced) {
-            offs = move_cl(newDataStart, new_ptr, old);
-        } else {
-            offs = (*old)[0].toInt();
-            #ifdef LARGE_OFFSETS
-            offs += ((uint64_t)(*old)[1].toInt())<<32;
-            #endif
-        }
+        offs = old->reloced
+            ? read_reloced_offset(old)
+            : move_cl(newDataStart, new_ptr, old);
     }
 }
 

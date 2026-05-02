@@ -43,9 +43,8 @@ ClauseCleaner::ClauseCleaner(Solver* _solver) :
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBin());
-    if (solver->value(lit) == l_True) return true;
-    if (solver->value(watched.lit2()) == l_True) return true;
-    return false;
+    return solver->value(lit) == l_True
+        || solver->value(watched.lit2()) == l_True;
 }
 
 void ClauseCleaner::clean_binary_implicit(
@@ -103,24 +102,19 @@ void ClauseCleaner::clean_implicit_clauses()
 
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
-    size_t wsLit = 0;
-    size_t wsLit2 = 2;
-    for (size_t end = solver->watches.size()
-        ; wsLit != end
-        ; wsLit++, wsLit2++
-    ) {
-        if (wsLit2 < end
-            && !solver->watches[Lit::toLit(wsLit2)].empty()
-        ) {
-            solver->watches.prefetch(Lit::toLit(wsLit2).toInt());
+    const size_t end = solver->watches.size();
+    constexpr size_t prefetch_distance = 2;
+    for (size_t wsLit = 0; wsLit < end; wsLit++) {
+        // Prefetch a few watchlists ahead to hide memory latency.
+        const size_t prefetch_at = wsLit + prefetch_distance;
+        if (prefetch_at < end && !solver->watches[Lit::toLit(prefetch_at)].empty()) {
+            solver->watches.prefetch(prefetch_at);
         }
 
-        const Lit lit = Lit::toLit(wsLit);
-        watch_subarray ws = solver->watches[lit];
-        if (ws.empty())
-            continue;
+        watch_subarray ws = solver->watches[Lit::toLit(wsLit)];
+        if (ws.empty()) continue;
 
-        clean_implicit_watchlist(ws, lit);
+        clean_implicit_watchlist(ws, Lit::toLit(wsLit));
     }
     impl_data.update_solver_stats(solver);
 
@@ -219,15 +213,13 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
     assert(solver->prop_at_head());
     verb_print(15, "Cleaning clauses in vector<ClOffset>");
 
-    vector<ClOffset>::iterator s, ss, end;
-    size_t at = 0;
-    for (s = ss = cs.begin(), end = cs.end();  s != end; ++s, ++at) {
+    size_t kept = 0;
+    for (size_t at = 0; at < cs.size(); at++) {
         if (at + 1 < cs.size()) {
-            Clause* pre_cl = solver->cl_alloc.ptr(cs[at+1]);
-            cmsat_prefetch(pre_cl);
+            cmsat_prefetch(solver->cl_alloc.ptr(cs[at + 1]));
         }
 
-        const ClOffset off = *s;
+        const ClOffset off = cs[at];
         Clause& cl = *solver->cl_alloc.ptr(off);
 
         const Lit origLit1 = cl[0];
@@ -243,10 +235,10 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
             else solver->litStats.irredLits -= origSize;
             delayed_free.push_back(off);
         } else {
-            *ss++ = *s;
+            cs[kept++] = off;
         }
     }
-    cs.resize(cs.size() - (s-ss));
+    cs.resize(kept);
 }
 
 bool ClauseCleaner::clean_clause(Clause& cl)

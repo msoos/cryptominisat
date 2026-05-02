@@ -49,67 +49,56 @@ void VarDistGen::calc()
     data.clear();
     data.resize(solver->nVars());
 
+    // True iff lit is satisfied under the variable's stable polarity.
+    auto sat_under_stable = [&](Lit l) {
+        return solver->varData[l.var()].stable_polarity ^ !l.sign();
+    };
+    auto bump_sat_falsify = [&](auto& side, Lit l) {
+        if (sat_under_stable(l)) side.satisfies_cl++;
+        else                     side.falsifies_cl++;
+    };
+
     for(auto& off: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(off);
-        double tot_var_acts = compute_tot_act_vsids(cl);
+        const double tot_var_acts = compute_tot_act_vsids(cl);
 
         for(Lit l: *cl) {
-            data[l.var()].irred.num_times_in_long_clause++;
-            data[l.var()].irred.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
-            if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
-                data[l.var()].irred.satisfies_cl++;
-            } else {
-                data[l.var()].irred.falsifies_cl++;
-            }
-            data[l.var()].irred.sum_var_act_of_cls += tot_var_acts;
+            auto& side = data[l.var()].irred;
+            side.num_times_in_long_clause++;
+            side.tot_num_lit_of_long_cls_it_appears_in += cl->size();
+            bump_sat_falsify(side, l);
+            side.sum_var_act_of_cls += tot_var_acts;
         }
     }
 
     for(auto& x: solver->longRedCls) {
         for(auto& off: x) {
             Clause* cl = solver->cl_alloc.ptr(off);
-            double tot_var_acts = compute_tot_act_vsids(cl);
+            const double tot_var_acts = compute_tot_act_vsids(cl);
+            const double log_max = std::log2(solver->max_cl_act + 10e-300);
             for(Lit l: *cl) {
-                data[l.var()].red.num_times_in_long_clause++;
-                data[l.var()].red.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
-                if (std::log2(solver->max_cl_act+10e-300) != 0) {
-                    data[l.var()].tot_act_long_red_cls +=
-                        std::log2((double)cl->stats.activity+10e-300)
-                            /std::log2(solver->max_cl_act+10e-300);
+                auto& d = data[l.var()];
+                auto& side = d.red;
+                side.num_times_in_long_clause++;
+                side.tot_num_lit_of_long_cls_it_appears_in += cl->size();
+                if (log_max != 0) {
+                    d.tot_act_long_red_cls +=
+                        std::log2((double)cl->stats.activity + 10e-300) / log_max;
                 }
-
-                if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
-                    data[l.var()].red.satisfies_cl++;
-                } else {
-                    data[l.var()].red.falsifies_cl++;
-                }
-                data[l.var()].red.sum_var_act_of_cls += tot_var_acts;
+                bump_sat_falsify(side, l);
+                side.sum_var_act_of_cls += tot_var_acts;
             }
         }
     }
 
     for(uint32_t i = 0; i < solver->nVars()*2; i++) {
-        Lit l = Lit::toLit(i);
+        const Lit l = Lit::toLit(i);
         for(Watched& w: solver->watches[l]) {
-            if (w.isBin() && l < w.lit2()) {
-                if (w.red()) {
-                    data[l.var()].red.num_times_in_bin_clause++;
-                    data[l.var()].red.tot_num_lit_of_bin_it_appears_in+=2;
-                    if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
-                        data[l.var()].red.satisfies_cl++;
-                    } else {
-                        data[l.var()].red.falsifies_cl++;
-                    }
-                } else {
-                    data[l.var()].irred.num_times_in_bin_clause++;
-                    data[l.var()].irred.tot_num_lit_of_bin_it_appears_in+=2;
-                    if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
-                        data[l.var()].irred.satisfies_cl++;
-                    } else {
-                        data[l.var()].irred.falsifies_cl++;
-                    }
-                }
-            }
+            if (!w.isBin() || !(l < w.lit2())) continue;
+            auto& side = w.red() ? data[l.var()].red : data[l.var()].irred;
+            side.num_times_in_bin_clause++;
+            side.tot_num_lit_of_bin_it_appears_in += 2;
+            bump_sat_falsify(side, l);
         }
     }
 
