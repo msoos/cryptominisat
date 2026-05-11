@@ -1,6 +1,5 @@
 # Config file for the Build-tree cryptominisat5 package (not relocatable).
 include(CMakeFindDependencyMacro)
-find_dependency(Threads)
 find_dependency(PkgConfig)
 if(NOT TARGET PkgConfig::GMP)
     pkg_check_modules(GMP REQUIRED IMPORTED_TARGET gmp)
