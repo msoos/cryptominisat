@@ -1,6 +1,12 @@
 # Config file for the cryptominisat5 package.
 @PACKAGE_INIT@
 
+include(CMakeFindDependencyMacro)
+find_dependency(PkgConfig)
+if(NOT TARGET PkgConfig::GMP)
+    pkg_check_modules(GMP REQUIRED IMPORTED_TARGET gmp)
+endif()
+
 set_and_check(CRYPTOMINISAT5_INCLUDE_DIRS "@PACKAGE_CRYPTOMINISAT5_INSTALL_INCLUDEDIR@")
 include("${CMAKE_CURRENT_LIST_DIR}/cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_LIBRARIES cryptominisat5)

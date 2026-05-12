@@ -267,15 +267,15 @@ if(FINAL_PREDICTOR)
     )
 endif()
 
-# indicate that we depend on pthread, and compile in the actual library
+# pthread is an implementation detail; GMP leaks through solvertypesmini.h
 target_link_libraries(cryptominisat5
     PRIVATE
         ${cryptoms_lib_link_libs}
         ${LOUVAIN_COMMUNITIES_LIBRARIES}
         cadiback
         cadical
-    PUBLIC
         Threads::Threads
+    PUBLIC
         PkgConfig::GMP
 )
 
