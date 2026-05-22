@@ -359,8 +359,7 @@ use, specify options prior to running make in a clean subdirectory: `cmake
 <options> ..`
 
 - `-DBUILD_SHARED_LIBS=<ON/OFF>` -- build shared (ON, default) or static (OFF) library and binary.
-- `-DSTATS=<ON/OFF>` -- advanced statistics (slower). Needs [louvain
-  communities](https://github.com/meelgroup/louvain-community) installed.
+- `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on
   most problems)
