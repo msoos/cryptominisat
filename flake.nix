@@ -2,14 +2,13 @@
   description = "an advanced incremental SAT solver";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    cadical = {
-      url = "github:meelgroup/cadical/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     cadiback = {
       url = "github:meelgroup/cadiback/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # cadiback already depends on cadical; reuse that exact input rather than
+    # declaring our own, so flake.lock pins a single cadical revision.
+    cadical.follows = "cadiback/cadical";
   };
   outputs =
     {
