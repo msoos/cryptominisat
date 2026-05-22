@@ -101,15 +101,19 @@ else()
 endif()
 
 if(STATIC_BINARY AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    message(STATUS "Linking cryptominisat5 binary statically")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+    message(STATUS "Linking cryptominisat5 binary fully statically")
+    set(CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
 
-    # gcc's spec uses linker-script wrappers (libgcc_s_asneeded.so,
-    # libatomic_asneeded.so) that have no static counterpart. CMake captures
-    # them in CMAKE_<LANG>_IMPLICIT_LINK_LIBRARIES and propagates them to
-    # consumers — under -static the linker then fails to find libgcc_s_asneeded.a.
-    list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES   gcc_s_asneeded atomic_asneeded)
-    list(REMOVE_ITEM CMAKE_CXX_IMPLICIT_LINK_LIBRARIES gcc_s          atomic_asneeded)
+    # CMake probes the compiler without -static, so its captured
+    # CMAKE_<LANG>_IMPLICIT_LINK_LIBRARIES name the *shared* libgcc/libatomic
+    # variants (gcc_s, gcc_s_asneeded, atomic_asneeded) whose .a counterparts
+    # don't exist. Under -static -static-libgcc -static-libstdc++ the gcc/clang
+    # driver links libgcc.a + libgcc_eh.a + libstdc++.a itself, so we don't
+    # need CMake to re-inject anything. Clear both lists outright rather than
+    # playing whack-a-mole with distro-specific names.
+    set(CMAKE_C_IMPLICIT_LINK_LIBRARIES   "")
+    set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 endif()
 
 find_package(Threads REQUIRED)
