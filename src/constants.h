@@ -187,7 +187,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define print_simp_stats(when, tok) \
     verb_print(2, "[simp-stats] " << when << " " << tok \
         << " irred_bins " << solver->binTri.irredBins \
-        << " irred_long_cls " << solver->longIrredCls.size() \
+        << " irred_long_cls " << solver->get_num_long_irred_cls() \
         << " irred_long_lits " << solver->litStats.irredLits \
         << " free_vars " << solver->get_num_free_vars() \
         << " elimed_vars " << solver->get_num_vars_elimed() \

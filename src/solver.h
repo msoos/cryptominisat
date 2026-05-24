@@ -155,6 +155,9 @@ class Solver : public Searcher
         void     print_clause_stats() const;
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
+        // Live irred long clauses across solver and (if active) OccSimplifier.
+        // During occ-* steps, OccSimplifier owns them and longIrredCls is empty.
+        size_t get_num_long_irred_cls() const;
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;

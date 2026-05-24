@@ -220,6 +220,10 @@ public:
     bool setup();
     void finish_up(size_t origTrailSize);
 
+    // Count live irred long clauses currently held in OccSimplifier::clauses
+    // (during occ-* steps, solver->longIrredCls is empty — they live here)
+    size_t num_irred_long_cls_in_occur() const;
+
     //Ternary resolution. Should be private but testing needs it to be public
     bool ternary_res();
 

@@ -2478,6 +2478,12 @@ size_t Solver::get_num_free_vars() const
     return nVarsOuter() - get_num_nonfree_vars();
 }
 
+size_t Solver::get_num_long_irred_cls() const
+{
+    return longIrredCls.size() +
+        (occsimplifier ? occsimplifier->num_irred_long_cls_in_occur() : 0);
+}
+
 void Solver::print_clause_stats() const
 {
     //Irredundant

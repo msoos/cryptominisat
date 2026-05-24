@@ -593,6 +593,16 @@ void OccSimplifier::check_cls_sanity() {
         for ([[maybe_unused]] const auto& v: x) assert(solver->varData[v].removed == Removed::none);
 }
 
+size_t OccSimplifier::num_irred_long_cls_in_occur() const {
+    size_t count = 0;
+    for (const ClOffset offs: clauses) {
+        const Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->get_removed() || cl->freed() || cl->red()) continue;
+        count++;
+    }
+    return count;
+}
+
 void OccSimplifier::add_back_to_solver() {
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();

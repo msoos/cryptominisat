@@ -47,6 +47,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     if (!okay()) return okay();
     if (nVars() == 0) return okay();
     double my_time = cpu_time();
+    print_simp_stats("BEFORE", "backbone-simpl");
 
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
@@ -197,6 +198,7 @@ end:
             <<  " num bins: " << num_bins_added
             << " T: " << std::fixed << std::setprecision(2)
             << cpu_time() - my_time);
+    print_simp_stats("AFTER", "backbone-simpl");
     return okay();
 }
 
