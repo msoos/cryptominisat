@@ -184,7 +184,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= a) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
-#define print_simp_stats(when, tok) \
+#define print_simp_stats_emit(when, tok) \
     verb_print(2, "[simp-stats] " << when << " " << tok \
         << " irred_bins " << solver->binTri.irredBins \
         << " irred_long_cls " << solver->get_num_long_irred_cls() \
@@ -194,7 +194,22 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
         << " replaced_vars " << solver->varReplacer->get_num_replaced_vars() \
         << " units " << solver->trail_size() \
         << " mem_MB " << (rss_mem_used() / (1024ULL * 1024ULL)) \
-        << " T: " << std::setprecision(3) << cpu_time() << std::setprecision(2))
+        << " T: " << std::setprecision(3) << cpu_time() << std::setprecision(2) \
+        << " depth " << solver->simp_stats_depth)
+
+// Bracket a preprocessing step with BEFORE/AFTER lines that include the
+// nesting depth. depth=0 is a top-level step; depth>=1 is nested inside
+// another wrapper (and its work is already counted by its parent).
+#define print_simp_stats_before(tok) do { \
+    print_simp_stats_emit("BEFORE", tok); \
+    solver->simp_stats_depth++; \
+} while (0)
+
+#define print_simp_stats_after(tok) do { \
+    assert(solver->simp_stats_depth > 0); \
+    solver->simp_stats_depth--; \
+    print_simp_stats_emit("AFTER", tok); \
+} while (0)
 
 #ifdef DEBUG_WATCHED
 #define DEBUG_WATCHED_DO(x) do { x; } while (0)

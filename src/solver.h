@@ -158,6 +158,12 @@ class Solver : public Searcher
         // Live irred long clauses across solver and (if active) OccSimplifier.
         // During occ-* steps, OccSimplifier owns them and longIrredCls is empty.
         size_t get_num_long_irred_cls() const;
+
+        // Nesting depth of currently-open [simp-stats] wrappers. Maintained by
+        // print_simp_stats_before/after. depth=0 lines are the top-level
+        // preprocessing steps; depth>=1 are nested children whose work is
+        // already counted by their parent.
+        uint32_t simp_stats_depth = 0;
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;
