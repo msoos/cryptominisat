@@ -27,56 +27,38 @@ nix shell github:msoos/cryptominisat
 
 Then you will have `cryptominisat` binary available and ready to use.
 
-You can also run CryptoMiniSat from your web browser, without installing
-anything, [here](https://www.msoos.org/cryptominisat/).
-
 ### Building from source
 
-Install system dependencies first:
+The build uses CMake and automatically fetches and compiles its `cadical` and
+`cadiback` dependencies, so no manual C++ dependency setup is needed beyond GMP
+and zlib. Install system packages:
+
 ```shell
 # Debian/Ubuntu
-sudo apt-get install build-essential cmake git libgmp-dev
+sudo apt-get install build-essential cmake ninja-build git libgmp-dev zlib1g-dev
 
 # macOS (brew)
-brew install cmake gmp
+brew install cmake ninja gmp
+
+# Windows: install MSYS2 (https://www.msys2.org/), then from the MINGW64 shell:
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja \
+          mingw-w64-x86_64-gmp mingw-w64-x86_64-zlib git
 ```
 
-Then build — cadical and cadiback are fetched and built automatically:
+Then build (same commands on Linux, macOS, and Windows/MSYS2):
 ```shell
 git clone https://github.com/msoos/cryptominisat
 cd cryptominisat
 mkdir build && cd build
-cmake ..
-make -j8
-```
-
-If you already have cadical and cadiback built somewhere, point cmake at them to skip the auto-fetch:
-```shell
-cmake .. -Dcadical_DIR=/path/to/cadical/build -Dcadiback_DIR=/path/to/cadiback
-make -j8
-```
-
-### Building on Windows (MSYS2/MINGW64)
-
-Install [MSYS2](https://www.msys2.org/), then from the MINGW64 shell install dependencies:
-```shell
-pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja \
-          mingw-w64-x86_64-make mingw-w64-x86_64-gmp mingw-w64-x86_64-zlib make
-```
-
-Then build:
-```shell
-git clone --recurse-submodules https://github.com/msoos/cryptominisat
-cd cryptominisat
-mkdir build && cd build
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . -v
+cmake --build .
 ```
 
-For a fully static binary (no external DLL dependencies at runtime), add `-DBUILD_SHARED_LIBS=OFF`:
+For a fully static binary (no shared-library or DLL dependencies at runtime),
+add `-DBUILD_SHARED_LIBS=OFF`:
 ```shell
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..
-cmake --build . -v
+cmake --build .
 ```
 
 ## Command-line usage
@@ -167,7 +149,7 @@ python -m build --wheel --no-isolation   # wheel lands in dist/
 pip install dist/pycryptosat-*.whl
 ```
 
-### Incremental Library Usage
+## Incremental Library Usage
 The library uses a variable numbering scheme that starts from 0. Since 0 cannot
 be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
 such, the 1st CNF above would become:
@@ -316,18 +298,20 @@ xors in it (either in CNF or XOR+CNF form) and either run with default setup,
 or, tune it to your heart's desire:
 ```plain
 Gauss options:
-  --iterreduce arg (=1)       Reduce iteratively the matrix that is updated.We
-                              effectively are moving the start to the last
-                              column updated
-  --maxmatrixrows arg (=3000) Set maximum no. of rows for gaussian matrix. Too
-                              large matrixes should be discarded for reasons of
-                              efficiency
-  --autodisablegauss arg (=1) Automatically disable gauss when performing badly
-  --minmatrixrows arg (=5)    Set minimum no. of rows for gaussian matrix.
-                              Normally, too small matrixes are discarded for
-                              reasons of efficiency
-  --savematrix arg (=2)       Save matrix every Nth decision level
-  --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
+  --maxmatrixrows arg (=2000)    Set maximum no. of rows for gaussian matrix.
+                                 Too large matrices should be discarded for
+                                 reasons of efficiency
+  --maxmatrixcols arg (=1000)    Set maximum no. of columns for gaussian
+                                 matrix. Too large matrices should be discarded
+                                 for reasons of efficiency
+  --autodisablegauss arg (=1)    Automatically disable gauss when performing
+                                 badly
+  --minmatrixrows arg (=3)       Set minimum no. of rows for gaussian matrix.
+                                 Normally, too small matrices are discarded for
+                                 reasons of efficiency
+  --maxnummatrices arg (=5)      Maximum number of matrices to treat.
+  --gaussusefulcutoff arg (=0.2) Turn off Gauss if less than this many
+                                 usefulness ratio is recorded
 ```
 
 In particular, you may want to set `--autodisablegauss 0` in case you are sure it'll help.
@@ -370,7 +354,7 @@ use, specify options prior to running make in a clean subdirectory: `cmake
 - `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains `libcadiback.a`). Auto-fetched and built if not set.
 
 ## C usage
-See src/cryptominisat_c.h.in for details. This is an experimental feature.
+See src/cryptominisat_c.h for details. This is an experimental feature.
 
 ## License
 Everything that is needed to build by default is MIT licensed. If you
