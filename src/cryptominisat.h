@@ -87,7 +87,6 @@ namespace CMSat {
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
-        const std::vector<Lit>& get_decisions_reaching_model() const; //get decisions that lead to model. may NOT work, in case the decisions needed were internal, extended variables. exit(-1)'s in case of such a case. you MUST check decisions_reaching_computed().
 
         ////////////////////////////
         // Debug all calls for later replay with --debuglit FILENAME
@@ -242,7 +241,6 @@ namespace CMSat {
         std::vector<uint32_t> get_lit_incidence();
 
         std::vector<uint32_t> get_var_incidence_also_red();
-        std::vector<double> get_vsids_scores();
 
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
@@ -280,12 +278,6 @@ namespace CMSat {
         std::vector<uint32_t> get_elimed_vars() const;
         std::vector<std::vector<Lit>> get_cls_defining_var(uint32_t v) const;
         void reverse_bce();
-
-        // Solution reconstruction after minimization
-        std::string serialize_solution_reconstruction_data() const;
-        static void* create_extend_solution_setup(std::string& data);
-        static std::pair<lbool, std::vector<lbool>> extend_solution(void* s, const std::vector<lbool>& simp_sol);
-        static void delete_extend_solution_setup(void* s);
 
         /////////////////////
         // Backwards compatibility, implemented using the above "small clauses" functions
