@@ -187,7 +187,7 @@ endif()
 
 if(BREAKID_LIBRARIES)
     set(cryptoms_lib_files ${cryptoms_lib_files} cms_breakid.cpp)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
+    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} breakid)
 endif()
 
 if(STATS)

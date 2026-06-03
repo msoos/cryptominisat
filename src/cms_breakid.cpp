@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "cms_breakid.h"
 #include "solver.h"
 #include "clausecleaner.h"
-#include "breakid/breakid.hpp"
+#include "breakid.hpp"
 #include "varupdatehelper.h"
 #include "varreplacer.h"
 #include "occsimplifier.h"
@@ -224,7 +224,7 @@ bool BreakID::doit()
     breakid->set_useMatrixDetection(solver->conf.breakid_matrix_detect);
     breakid->set_symBreakingFormLength(solver->conf.breakid_max_constr_per_permut);
     breakid->start_dynamic_cnf(solver->nVars());
-    verb_print(1, "[breakid] version " << breakid->get_sha1_version());
+    verb_print(1, "[breakid] version " << breakid->get_version_sha1());
 
     // We can fail adding clauses if they are UNSAT under the current assumptions
     if (!add_clauses()) {
