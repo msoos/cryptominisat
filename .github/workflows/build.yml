@@ -107,6 +107,7 @@ jobs:
         -DENABLE_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
+        -DNOBREAKID=OFF \
         -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
         -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
         -S ..

@@ -514,8 +514,26 @@ if(NOT NOMPI)
 endif()
 
 if(NOT NOBREAKID)
-    find_package(breakid CONFIG REQUIRED HINTS "${breakid_DIR}")
-    message(STATUS "BreakID -- found version ${BREAKID_VERSION_MAJOR}.${BREAKID_VERSION_MINOR}")
+    if(NOT TARGET breakid)
+        if(breakid_DIR)
+            find_package(breakid CONFIG REQUIRED HINTS "${breakid_DIR}")
+            message(STATUS "BreakID: using pre-built at ${breakid_DIR}")
+        else()
+            FetchContent_Declare(breakid
+                GIT_REPOSITORY https://github.com/meelgroup/breakid
+                GIT_TAG        master
+                GIT_SHALLOW    TRUE)
+            FetchContent_MakeAvailable(breakid)
+            message(STATUS "BreakID: fetched from GitHub")
+        endif()
+    endif()
+    # find_package() exports BREAKID_LIBRARIES/BREAKID_INCLUDE_DIRS; the
+    # FetchContent path instead exposes the `breakid` target directly, carrying
+    # its include dirs as usage requirements. src/CMakeLists.txt gates on
+    # BREAKID_LIBRARIES, so set it to the target name in the FetchContent case.
+    if(NOT BREAKID_LIBRARIES)
+        set(BREAKID_LIBRARIES breakid)
+    endif()
     message(STATUS "BreakID -- libraries: ${BREAKID_LIBRARIES}")
     message(STATUS "BreakID -- include dirs: ${BREAKID_INCLUDE_DIRS}")
     add_compile_definitions(USE_BREAKID)
