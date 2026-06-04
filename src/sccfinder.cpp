@@ -36,8 +36,7 @@ using std::cout;
 using std::endl;
 
 SCCFinder::SCCFinder(Solver* _solver) :
-    globalIndex(0)
-    , solver(_solver)
+    solver(_solver)
 {}
 
 bool SCCFinder::performSCC(uint64_t* bogoprops_given)
@@ -48,24 +47,23 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     depth_warning_issued = false;
     const double my_time = cpu_time();
 
+    const uint32_t num_lits = solver->nVars() * 2;
+    const auto unset = numeric_limits<uint32_t>::max();
+
     globalIndex = 0;
-    index.clear();
-    index.resize(solver->nVars()*2, numeric_limits<uint32_t>::max());
-    lowlink.clear();
-    lowlink.resize(solver->nVars()*2, numeric_limits<uint32_t>::max());
-    stackIndicator.clear();
-    stackIndicator.resize(solver->nVars()*2, false);
+    index.assign(num_lits, unset);
+    lowlink.assign(num_lits, unset);
+    stackIndicator.assign(num_lits, 0);
     assert(stack.empty());
 
     depth = 0;
-    for (uint32_t vertex = 0; vertex < solver->nVars()*2; vertex++) {
+    for (uint32_t vertex = 0; vertex < num_lits; vertex++) {
         //Start a DFS at each node we haven't visited yet
-        const uint32_t v = vertex>>1;
-        if (solver->value(v) != l_Undef) {
+        if (solver->value(Lit::toLit(vertex).var()) != l_Undef) {
             continue;
         }
         assert(depth == 0);
-        if (index[vertex] == numeric_limits<uint32_t>::max()) {
+        if (index[vertex] == unset) {
             tarjan(vertex);
             depth--;
             assert(stack.empty());
@@ -148,11 +146,12 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
 void SCCFinder::add_bin_xor_in_tmp()
 {
+    const Lit head = Lit::toLit(tmp[0]);
     for (uint32_t i = 1; i < tmp.size(); i++) {
-        bool rhs = Lit::toLit(tmp[0]).sign()
-            ^ Lit::toLit(tmp[i]).sign();
+        const Lit other = Lit::toLit(tmp[i]);
+        const bool rhs = head.sign() ^ other.sign();
 
-        BinaryXor binxor(Lit::toLit(tmp[0]).var(), Lit::toLit(tmp[i]).var(), rhs);
+        BinaryXor binxor(head.var(), other.var(), rhs);
         binxors.insert(binxor);
 
         //Both are UNDEF, so this is a proper binary XOR
@@ -180,7 +179,7 @@ void SCCFinder::Stats::print_short(const Solver* solver) const
     << " BP " << bogoprops/(1000*1000) << "M"
     << solver->conf.print_times(cpu_time));
 
-    if (solver && solver->sqlStats) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "scc"

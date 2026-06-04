@@ -78,13 +78,8 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
 bool InTree::watches_only_contains_nonbin(const Lit lit) const
 {
     watch_subarray_const ws = solver->watches[lit];
-    for(const Watched w: ws) {
-        if (w.isBin()) {
-            return false;
-        }
-    }
-
-    return true;
+    return std::none_of(ws.begin(), ws.end(),
+                        [](const Watched& w) { return w.isBin(); });
 }
 
 bool InTree::check_timeout_due_to_hyperbin()

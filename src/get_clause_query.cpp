@@ -90,9 +90,7 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
             ret_set.insert(v);
         }
     }
-    vector<uint32_t> ret;
-    for(uint32_t v: ret_set) ret.push_back(v);
-    return ret;
+    return {ret_set.begin(), ret_set.end()};
 }
 
 bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bool& rhs) {
