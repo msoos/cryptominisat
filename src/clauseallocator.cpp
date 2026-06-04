@@ -185,7 +185,6 @@ void ClauseAllocator::clauseFree(Clause* cl)
 {
     assert(!cl->freed());
     cl->set_freed();
-    //we sometimes allow gauss to allocate 3-long clauses
     const uint32_t est_num_cl = std::max<uint32_t>(cl->size(), 3);
     currentlyUsedSize -= clause_storage_elems(est_num_cl);
 
