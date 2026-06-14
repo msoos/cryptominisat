@@ -1124,7 +1124,6 @@ bool OccSimplifier::eliminate_vars()
     assert(picovars_used.empty());
     var_to_picovar.clear();
     var_to_picovar.resize(solver->nVars(), 0);
-    turned_off_irreg_gate = false;
 
     //Set-up
     double my_time = cpu_time();
@@ -1290,6 +1289,7 @@ bool OccSimplifier::eliminate_vars()
         if (grow == 0) grow = 3;
         else grow *= 1.5;
         grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
+
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
         assert(added_irred_bin.empty());
@@ -3338,15 +3338,15 @@ bool OccSimplifier::find_irreg_gate(
 ) {
     bvestats.irreg_gate_entered++;
     // Too expensive
-    if (turned_off_irreg_gate ||
+    if (bvestats.turned_off_irreg_gate ||
             bvestats.pico_conflicts > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000 ||
             bvestats.picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)30000) {
-        if (!turned_off_irreg_gate) {
+        if (!bvestats.turned_off_irreg_gate) {
             verb_print(1, "[occ-bve] turning OFF picosat-based irreg-gate-find"
               << " confl:" << print_value_kilo_mega(bvestats.pico_conflicts)
               << " lits: " << print_value_kilo_mega(bvestats.picolits_added));
         }
-        turned_off_irreg_gate = true;
+        bvestats.turned_off_irreg_gate = true;
         return false;
     }
     bvestats.irreg_gate_tried++;

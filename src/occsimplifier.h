@@ -89,6 +89,7 @@ struct BVEStats
     uint64_t irreg_gate_entered = 0;
     uint64_t picolits_added = 0;
     uint64_t pico_conflicts = 0;
+    bool turned_off_irreg_gate = false;
 
     BVEStats& operator+=(const BVEStats& other);
 
@@ -422,7 +423,6 @@ private:
         vec<Watched>& out_b
     );
     void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
-    bool turned_off_irreg_gate = false;
     bool resolve_gate;
     bool find_irreg_gate(
         Lit elim_lit,
