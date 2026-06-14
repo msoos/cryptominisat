@@ -1124,7 +1124,6 @@ bool OccSimplifier::eliminate_vars()
     assert(picovars_used.empty());
     var_to_picovar.clear();
     var_to_picovar.resize(solver->nVars(), 0);
-    picolits_added = 0;
     turned_off_irreg_gate = false;
 
     //Set-up
@@ -1325,6 +1324,7 @@ end:
     verb_print(1, "#T-o: " << (time_out ? "Y" : "N"));
     verb_print(1, "#T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%");
     verb_print(1, "#T  : " << time_used);
+    if (solver->conf.verbosity >= 1) bvestats.print(solver->conf.prefix);
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVarsOuter(), this);
@@ -1510,7 +1510,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
 }
 
 int OccSimplifier::lit_to_picolit(const Lit l) {
-    picolits_added++;
+    bvestats.picolits_added++;
     auto f = var_to_picovar[l.var()];
     int picolit = 0;
     if (f == 0) {
@@ -3336,14 +3336,25 @@ bool OccSimplifier::find_irreg_gate(
     , vec<Watched>& out_a
     , vec<Watched>& out_b
 ) {
+    bvestats.irreg_gate_entered++;
     // Too expensive
-    if (turned_off_irreg_gate || picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
+    if (turned_off_irreg_gate ||
+            bvestats.pico_conflicts > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000 ||
+            bvestats.picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)30000) {
         if (!turned_off_irreg_gate) {
-            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection, added lits: " << print_value_kilo_mega(picolits_added));
+            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection"
+              << " confl:" << print_value_kilo_mega(bvestats.pico_conflicts)
+              << " lits: " << print_value_kilo_mega(bvestats.picolits_added));
         }
         turned_off_irreg_gate = true;
         return false;
     }
+    bvestats.irreg_gate_tried++;
+    if (bvestats.irreg_gate_tried % 2000 == 0)
+        verb_print(1, "[occ-bve] irreg-gate-find"
+               << " lits: " << bvestats.picolits_added/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * 30.0
+               << " conflK: " << bvestats.pico_conflicts/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK);
+
     if (a.size() + b.size() > 100) return false;
 
     bool found = false;
@@ -3378,8 +3389,13 @@ bool OccSimplifier::find_irreg_gate(
         found = true;
         resolve_gate = true;
     }
+    bvestats.pico_conflicts += picosat_conflicts(picosat);
     picosat_reset(picosat);
     picosat = nullptr;
+    bvestats.irreg_gate_found += found;
+
+    if (found)
+        verb_print(3, "[occ] Found irregular gate for " << elim_lit << " with " << out_a.size() << " cls in A and " << out_b.size() << " cls in B");
 
     return found;
 }
@@ -4242,6 +4258,13 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
 
+    //Too expensive to check, it's futile
+    if ((uint64_t)neg * (uint64_t)pos
+        >= solver->conf.varelim_cutoff_too_many_clauses
+    ) {
+        return false;
+    }
+
     // A smaller OR gate will lead to less BIN (and 1 long) clause.
     //The total size of the resolvent is
     // |G_a|*|R_NOTa| + |G_NOTa|*|R_a|.
@@ -4254,12 +4277,6 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     std::sort(poss.begin(), poss.end(), sort_smallest_first(solver->cl_alloc));
     std::sort(negs.begin(), negs.end(), sort_smallest_first(solver->cl_alloc));
 
-    //Too expensive to check, it's futile
-    if ((uint64_t)neg * (uint64_t)pos
-        >= solver->conf.varelim_cutoff_too_many_clauses
-    ) {
-        return false;
-    }
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;

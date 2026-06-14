@@ -8137,6 +8137,12 @@ picosat_added_original_clauses (PS * ps)
   return (int) ps->oadded;
 }
 
+unsigned long
+picosat_conflicts (PS * ps)
+{
+    return ps->conflicts;
+}
+
 void
 picosat_stats (PS * ps)
 {
