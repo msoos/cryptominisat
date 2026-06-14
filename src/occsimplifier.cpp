@@ -3342,7 +3342,7 @@ bool OccSimplifier::find_irreg_gate(
             bvestats.pico_conflicts > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000 ||
             bvestats.picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)30000) {
         if (!turned_off_irreg_gate) {
-            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection"
+            verb_print(1, "[occ-bve] turning OFF picosat-based irreg-gate-find"
               << " confl:" << print_value_kilo_mega(bvestats.pico_conflicts)
               << " lits: " << print_value_kilo_mega(bvestats.picolits_added));
         }
@@ -3350,7 +3350,7 @@ bool OccSimplifier::find_irreg_gate(
         return false;
     }
     bvestats.irreg_gate_tried++;
-    if (bvestats.irreg_gate_tried % 2000 == 0)
+    if (bvestats.irreg_gate_tried % 2500 == 0)
         verb_print(1, "[occ-bve] irreg-gate-find"
                << " lits: " << bvestats.picolits_added/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * 30.0
                << " conflK: " << bvestats.pico_conflicts/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK);
