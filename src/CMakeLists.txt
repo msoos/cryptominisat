@@ -349,17 +349,30 @@ set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat5")
 add_custom_target(CopyPublicHeaders_cryptominisat5 ALL)
 foreach(public_header ${cryptominisat5_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
-    add_custom_command(TARGET CopyPublicHeaders_cryptominisat5 PRE_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E make_directory
-                               "${HEADER_DEST}"
-                       COMMAND ${CMAKE_COMMAND} -E echo
-                       "Symlinking ${HEADER_NAME} to ${HEADER_DEST}"
-                       COMMAND ${CMAKE_COMMAND} -E remove
-                               "${HEADER_DEST}/${HEADER_NAME}"
-                       COMMAND ${CMAKE_COMMAND} -E create_symlink
-                               "${public_header}"
-                               "${HEADER_DEST}/${HEADER_NAME}"
-                      )
+    if(WIN32)
+        # Windows: use copy instead of symlink (symlinks require Developer Mode)
+        add_custom_command(TARGET CopyPublicHeaders_cryptominisat5 PRE_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E make_directory
+                                   "${HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E echo
+                           "Copying ${HEADER_NAME} to ${HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                                   "${public_header}"
+                                   "${HEADER_DEST}/${HEADER_NAME}"
+                          )
+    else()
+        add_custom_command(TARGET CopyPublicHeaders_cryptominisat5 PRE_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E make_directory
+                                   "${HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E echo
+                           "Symlinking ${HEADER_NAME} to ${HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E remove
+                                   "${HEADER_DEST}/${HEADER_NAME}"
+                           COMMAND ${CMAKE_COMMAND} -E create_symlink
+                                   "${public_header}"
+                                   "${HEADER_DEST}/${HEADER_NAME}"
+                          )
+    endif()
 endforeach()
 
 generate_export_header(cryptominisat5)
@@ -414,17 +427,30 @@ set(ORACLE_HEADER_DEST "${PROJECT_BINARY_DIR}/include/oracle")
 add_custom_target(CopyPublicHeaders_oracle ALL)
 foreach(public_header ${oracle_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
-    add_custom_command(TARGET CopyPublicHeaders_oracle PRE_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E make_directory
-                               "${ORACLE_HEADER_DEST}"
-                       COMMAND ${CMAKE_COMMAND} -E echo
-                       "Symlinking ${HEADER_NAME} to ${ORACLE_HEADER_DEST}"
-                       COMMAND ${CMAKE_COMMAND} -E remove
-                               "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
-                       COMMAND ${CMAKE_COMMAND} -E create_symlink
-                               "${public_header}"
-                               "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
-                      )
+    if(WIN32)
+        # Windows: use copy instead of symlink (symlinks require Developer Mode)
+        add_custom_command(TARGET CopyPublicHeaders_oracle PRE_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E make_directory
+                                   "${ORACLE_HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E echo
+                           "Copying ${HEADER_NAME} to ${ORACLE_HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                                   "${public_header}"
+                                   "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
+                          )
+    else()
+        add_custom_command(TARGET CopyPublicHeaders_oracle PRE_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E make_directory
+                                   "${ORACLE_HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E echo
+                           "Symlinking ${HEADER_NAME} to ${ORACLE_HEADER_DEST}"
+                           COMMAND ${CMAKE_COMMAND} -E remove
+                                   "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
+                           COMMAND ${CMAKE_COMMAND} -E create_symlink
+                                   "${public_header}"
+                                   "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
+                          )
+    endif()
 endforeach()
 
 add_executable(oracle-bin
