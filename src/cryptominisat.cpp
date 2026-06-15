@@ -667,6 +667,22 @@ DLL_PUBLIC void SATSolver::set_bve_too_large_resolvent(int too_large_resolvent)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_kitten_gate_ticksK(int ticksK)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.kitten_gate_ticksK = ticksK;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_kitten_gate_limitM(int limitM)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.kitten_gate_limitM = limitM;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_greedy_undef()
 {
     assert(false && "ERROR: Unfortunately, greedy undef is broken, please don't use it");
@@ -1343,13 +1359,6 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
 {
     for (auto & solver : data->solvers) {
         solver->conf.min_bva_gain = min_bva_gain;
-    }
-}
-
-void DLL_PUBLIC SATSolver::set_bve_nonstop(bool nonstop)
-{
-    for (auto & solver : data->solvers) {
-        solver->conf.non_stop_bve = nonstop;
     }
 }
 
