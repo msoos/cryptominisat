@@ -654,8 +654,22 @@ if(BUILD_PYTHON_EXTENSION)
         # Create an IMPORTED target for python3.dll so CMake handles
         # the linking correctly (resolves __imp_ stubs for MinGW).
         add_library(python3_shared SHARED IMPORTED)
-        set_target_properties(python3_shared PROPERTIES
-            IMPORTED_LOCATION "${_py_base}/python3.dll")
+        set_property(TARGET python3_shared PROPERTY IMPORTED_LOCATION "${_py_base}/python3.dll")
+        if(EXISTS "${_py_base}/libs/python3.lib")
+            set_property(TARGET python3_shared PROPERTY IMPORTED_IMPLIB "${_py_base}/libs/python3.lib")
+        else()
+            # NuGet Python may lack python3.lib. Generate one with dlltool.
+            set(_py_implib "${CMAKE_CURRENT_BINARY_DIR}/libpython3.a")
+            execute_process(COMMAND gendef - "${_py_base}/python3.dll"
+                OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
+                RESULT_VARIABLE _rc)
+            if(_rc EQUAL 0)
+                execute_process(COMMAND dlltool -m i386:x86-64
+                    -d "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
+                    -l "${_py_implib}" -D "${_py_base}/python3.dll")
+            endif()
+            set_property(TARGET python3_shared PROPERTY IMPORTED_IMPLIB "${_py_implib}")
+        endif()
 
         add_library(pycryptosat MODULE python/src/pycryptosat.cpp)
         target_include_directories(pycryptosat PRIVATE
