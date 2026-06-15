@@ -81,10 +81,18 @@ jobs:
 
       - name: Build wheels (Windows)
         if: contains(matrix.os, 'windows')
-        uses: pypa/cibuildwheel@v3.1.0
-        env:
-          CIBW_ARCHS_WINDOWS: native
-          CIBW_ENVIRONMENT: "CC=gcc\nCXX=g++\nCMAKE_GENERATOR=Ninja\nPKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig\nMSYS=winsymlinks:nativestrict\nSKBUILD_CMAKE_ARGS=-DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF"
+        shell: bash
+        run: |
+          export CC=gcc
+          export CXX=g++
+          export CMAKE_GENERATOR=Ninja
+          export PKG_CONFIG_PATH="${{ env.MINGW_PREFIX }}/lib/pkgconfig"
+          export MSYS=winsymlinks:nativestrict
+          export SKBUILD_CMAKE_ARGS="-DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF"
+          export CIBW_ARCHS_WINDOWS=native
+          export CIBW_BUILD="cp39-* cp310-* cp311-* cp312-* cp313-*"
+          pip install cibuildwheel==3.1.0
+          python -m cibuildwheel --platform windows --output-dir wheelhouse .
 
       - uses: actions/upload-artifact@v4
         with:
