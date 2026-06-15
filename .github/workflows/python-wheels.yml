@@ -80,6 +80,7 @@ jobs:
           CIBW_ARCHS_MACOS: native   # arm64 on macos-14, x86_64 on macos-15-intel
           CIBW_ARCHS_WINDOWS: native # AMD64 on windows-latest
           CIBW_ENVIRONMENT_WINDOWS: |
+            PATH=${{ env.MINGW_BIN }};$PATH
             CMAKE_GENERATOR=Ninja
             PKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig
             MSYS=winsymlinks:nativestrict
