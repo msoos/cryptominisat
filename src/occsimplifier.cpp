@@ -3406,12 +3406,12 @@ bool OccSimplifier::find_irreg_gate(
         bvestats.turned_off_irreg_gate = true;
         return false;
     }
-    bvestats.irreg_gate_tried++;
     if (bvestats.irreg_gate_tried % 2500 == 0)
         verb_print(1, "[occ-bve] irreg-gate-find"
                << " ticksM: " << bvestats.kitten_ticks/1e6 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.kitten_gate_limitM);
 
     if (a.size() + b.size() > 100) return false;
+    bvestats.irreg_gate_tried++;
 
     const bool found = find_irreg_gate_kitten(elim_lit, a, b, out_a, out_b);
     bvestats.irreg_gate_found += found;
