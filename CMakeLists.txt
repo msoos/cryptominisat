@@ -656,12 +656,9 @@ if(BUILD_PYTHON_EXTENSION)
             "${_py_base}/include"
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
-        target_link_libraries(pycryptosat PRIVATE cryptominisat5)
-        # MinGW can't use MSVC .lib; let __imp_ symbols resolve at runtime
-        # from the already-loaded python3.dll.
+        target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_base}/python3.dll")
         target_link_options(pycryptosat PRIVATE
-            "SHELL:-Wl,--enable-auto-import"
-            "SHELL:-Wl,--unresolved-symbols=ignore-in-shared-libs")
+            "SHELL:-Wl,--enable-auto-import")
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
         find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
