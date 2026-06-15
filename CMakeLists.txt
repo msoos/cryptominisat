@@ -663,6 +663,7 @@ if(BUILD_PYTHON_EXTENSION)
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
         target_link_libraries(pycryptosat PRIVATE cryptominisat5 python3_shared)
+        target_link_options(pycryptosat PRIVATE "-Wl,--enable-auto-import")
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
         find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
