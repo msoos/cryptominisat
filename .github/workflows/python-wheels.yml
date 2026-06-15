@@ -84,12 +84,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.1.0
         env:
           CIBW_ARCHS_WINDOWS: native
-          CC: gcc
-          CXX: g++
-          CMAKE_GENERATOR: Ninja
-          PKG_CONFIG_PATH: ${{ env.MINGW_PREFIX }}/lib/pkgconfig
-          MSYS: winsymlinks:nativestrict
-          SKBUILD_CMAKE_ARGS: -DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF
+          CIBW_ENVIRONMENT: "CC=gcc\nCXX=g++\nCMAKE_GENERATOR=Ninja\nPKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig\nMSYS=winsymlinks:nativestrict\nSKBUILD_CMAKE_ARGS=-DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF"
 
       - uses: actions/upload-artifact@v4
         with:
