@@ -59,6 +59,16 @@ jobs:
           echo "CC=gcc" >> $GITHUB_ENV
           echo "CXX=g++" >> $GITHUB_ENV
 
+      - name: Set cibuildwheel env (Windows)
+        if: contains(matrix.os, 'windows')
+        run: |
+          echo "CIBW_ENVIRONMENT<<CIBWEOF" >> $GITHUB_ENV
+          echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig" >> $GITHUB_ENV
+          echo "MSYS=winsymlinks:nativestrict" >> $GITHUB_ENV
+          echo "SKBUILD_CMAKE_ARGS=-DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF" >> $GITHUB_ENV
+          echo "CIBWEOF" >> $GITHUB_ENV
+
       - name: Cache ccache
         uses: actions/cache@v4
         with:
@@ -79,12 +89,6 @@ jobs:
           CIBW_ARCHS_LINUX: native   # x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm
           CIBW_ARCHS_MACOS: native   # arm64 on macos-14, x86_64 on macos-15-intel
           CIBW_ARCHS_WINDOWS: native # AMD64 on windows-latest
-          CIBW_ENVIRONMENT_WINDOWS: |
-            PATH=${{ env.MINGW_BIN }};$PATH
-            CMAKE_GENERATOR=Ninja
-            PKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig
-            MSYS=winsymlinks:nativestrict
-            SKBUILD_CMAKE_ARGS=-DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF
 
       - uses: actions/upload-artifact@v4
         with:
