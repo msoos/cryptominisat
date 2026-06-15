@@ -651,33 +651,17 @@ if(BUILD_PYTHON_EXTENSION)
             "import sys; print(sys.base_prefix)"
             OUTPUT_VARIABLE _py_base OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-        # Create an IMPORTED target for python3.dll so CMake handles
-        # the linking correctly (resolves __imp_ stubs for MinGW).
-        add_library(python3_shared SHARED IMPORTED)
-        set_property(TARGET python3_shared PROPERTY IMPORTED_LOCATION "${_py_base}/python3.dll")
-        if(EXISTS "${_py_base}/libs/python3.lib")
-            set_property(TARGET python3_shared PROPERTY IMPORTED_IMPLIB "${_py_base}/libs/python3.lib")
-        else()
-            # NuGet Python may lack python3.lib. Generate one with dlltool.
-            set(_py_implib "${CMAKE_CURRENT_BINARY_DIR}/libpython3.a")
-            execute_process(COMMAND gendef - "${_py_base}/python3.dll"
-                OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
-                RESULT_VARIABLE _rc)
-            if(_rc EQUAL 0)
-                execute_process(COMMAND dlltool -m i386:x86-64
-                    -d "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
-                    -l "${_py_implib}" -D "${_py_base}/python3.dll")
-            endif()
-            set_property(TARGET python3_shared PROPERTY IMPORTED_IMPLIB "${_py_implib}")
-        endif()
-
         add_library(pycryptosat MODULE python/src/pycryptosat.cpp)
         target_include_directories(pycryptosat PRIVATE
             "${_py_base}/include"
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
-        target_link_libraries(pycryptosat PRIVATE cryptominisat5 python3_shared)
-        target_link_options(pycryptosat PRIVATE "-Wl,--enable-auto-import")
+        target_link_libraries(pycryptosat PRIVATE cryptominisat5)
+        # MinGW can't use MSVC .lib; let __imp_ symbols resolve at runtime
+        # from the already-loaded python3.dll.
+        target_link_options(pycryptosat PRIVATE
+            "SHELL:-Wl,--enable-auto-import"
+            "SHELL:-Wl,--unresolved-symbols=ignore-in-shared-libs")
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
         find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
