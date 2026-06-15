@@ -645,20 +645,17 @@ add_subdirectory(src cmsat5-src)
 # =============================================================================
 option(BUILD_PYTHON_EXTENSION "Build the pycryptosat Python extension module" OFF)
 if(BUILD_PYTHON_EXTENSION)
+    # On Windows NuGet/portable Python, sysconfig may not report LIBDIR
+    # so find_package(Python Development) fails.  Set paths manually
+    # and include FindPython/Support directly for python_add_library.
     find_package(Python REQUIRED COMPONENTS Interpreter)
     if(WIN32)
-        # NuGet/portable Python on Windows may not expose dev libraries
-        # via sysconfig (no libs/python3.lib).  Build include/lib paths
-        # manually from the interpreter's base prefix.
         execute_process(COMMAND "${Python_EXECUTABLE}" -c
             "import sys; print(sys.base_prefix)"
             OUTPUT_VARIABLE _py_base OUTPUT_STRIP_TRAILING_WHITESPACE)
         set(Python_INCLUDE_DIRS "${_py_base}/include")
-        # MinGW can link directly against the DLL.
         set(Python_LIBRARIES "${_py_base}/python3.dll")
-        # Must call find_package with Development (even if non-required)
-        # to make python_add_library available.
-        find_package(Python COMPONENTS Development)
+        include("${CMAKE_ROOT}/Modules/FindPython/Support.cmake")
     else()
         find_package(Python REQUIRED COMPONENTS Development.Module)
     endif()
