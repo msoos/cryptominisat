@@ -209,6 +209,7 @@ endif()
 add_library(cryptominisat5
     ${cryptoms_lib_files}
     cryptominisat.cpp
+    signalcode.cpp
 )
 
 set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES

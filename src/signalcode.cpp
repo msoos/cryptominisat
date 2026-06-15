@@ -38,6 +38,7 @@ using namespace CMSat;
 
 SATSolver* solverToInterrupt;
 int need_clean_exit;
+double wallclock_time_started = 0.0;
 std::string redDumpFname;
 std::string irredDumpFname;
 

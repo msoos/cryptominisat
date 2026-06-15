@@ -46,7 +46,6 @@ using namespace CMSat;
 using std::cout;
 using std::cerr;
 using std::endl;
-double wallclock_time_started = 0.0;
 
 struct WrongParam {
     WrongParam(const string& _param, const string& _msg) : param(_param) , msg(_msg) {}
