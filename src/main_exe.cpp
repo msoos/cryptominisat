@@ -42,7 +42,7 @@ int main(int argc, char** argv)
         main.conf.verbStats = 2;
         main.parseCommandLine();
 
-        setup_signal_handler();
+        signal(SIGINT, SIGINT_handler);
         ret = main.solve();
     } catch (CMSat::TooManyVarsError& e) {
         std::cerr << "ERROR! Variable requested is far too large" << std::endl;

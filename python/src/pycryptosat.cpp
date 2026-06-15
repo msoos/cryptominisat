@@ -25,6 +25,7 @@ THE SOFTWARE.
 **********************************/
 
 #include <Python.h>
+#include <signal.h>
 #include <structmember.h>
 #include <limits>
 #include <cassert>
@@ -829,7 +830,10 @@ MODULE_INIT_FUNC(pycryptosat)
     }
 
     // Set up Ctrl+C (SIGINT) handler so long solve() calls can be aborted.
-    setup_signal_handler();
+    // g_python_lib tells SIGINT_handler not to call _exit() — in library
+    // mode we only set the interrupt flag and let the solver return l_Undef.
+    g_python_lib = true;
+    signal(SIGINT, SIGINT_handler);
 
     return m;
 }
