@@ -27,6 +27,12 @@ THE SOFTWARE.
 #include <unistd.h>
 #endif
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
 
 using namespace CMSat;
 
@@ -37,6 +43,35 @@ std::string irredDumpFname;
 
 using std::cout;
 using std::endl;
+
+#ifdef _WIN32
+static BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+{
+    if (fdwCtrlType == CTRL_C_EVENT || fdwCtrlType == CTRL_BREAK_EVENT) {
+        std::cerr << "*** INTERRUPTED ***" << std::endl;
+        if (solverToInterrupt) {
+            // Set the atomic interrupt flag; the solver's search loop
+            // will detect this, abort cleanly, return l_Undef, and the
+            // normal exit path will print stats.
+            solverToInterrupt->interrupt_asap();
+        } else {
+            // No solver yet (e.g. still parsing); just exit.
+            exit(1);
+        }
+        return TRUE;  // signal handled, don't call next handler
+    }
+    return FALSE;  // pass to next handler (logoff, shutdown, etc.)
+}
+#endif
+
+void setup_signal_handler()
+{
+#ifdef _WIN32
+    SetConsoleCtrlHandler(CtrlHandler, TRUE);
+#else
+    signal(SIGINT, SIGINT_handler);
+#endif
+}
 
 void SIGINT_handler(int)
 {

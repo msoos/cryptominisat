@@ -35,4 +35,9 @@ extern int need_clean_exit;
 extern double wallclock_time_started;
 void SIGINT_handler(int);
 
+// Platform-specific signal/interrupt setup.
+// On Windows this uses SetConsoleCtrlHandler (proper Ctrl+C handling).
+// On POSIX this uses signal(SIGINT, ...).
+void setup_signal_handler();
+
 #endif //SIGNALCODE_H_
