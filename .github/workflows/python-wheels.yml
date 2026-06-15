@@ -42,14 +42,20 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-gmp
             mingw-w64-x86_64-zlib
-            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-ccache
+
+      - name: Get MSYS2 MinGW prefix (Windows)
+        if: contains(matrix.os, 'windows')
+        shell: msys2 {0}
+        run: |
+          echo "MINGW_PREFIX=$(cygpath -m /mingw64)" >> $GITHUB_ENV
+          echo "MINGW_BIN=$(cygpath -m /mingw64)/bin" >> $GITHUB_ENV
 
       - name: Add MinGW to PATH (Windows)
         if: contains(matrix.os, 'windows')
-        shell: bash
         run: |
-          echo "C:/msys64/mingw64/bin" >> $GITHUB_PATH
+          echo "${{ env.MINGW_BIN }}" >> $GITHUB_PATH
           echo "CC=gcc" >> $GITHUB_ENV
           echo "CXX=g++" >> $GITHUB_ENV
 
@@ -75,7 +81,7 @@ jobs:
           CIBW_ARCHS_WINDOWS: native # AMD64 on windows-latest
           CIBW_ENVIRONMENT_WINDOWS: |
             CMAKE_GENERATOR=Ninja
-            PKG_CONFIG_PATH=C:/msys64/mingw64/lib/pkgconfig
+            PKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig
             MSYS=winsymlinks:nativestrict
             SKBUILD_CMAKE_ARGS=-DBUILD_PYTHON_EXTENSION=ON;-DENABLE_TESTING=OFF;-DBUILD_SHARED_LIBS=OFF;-DSTATIC_BINARY=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DIPASIR=OFF
 
