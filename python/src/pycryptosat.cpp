@@ -589,10 +589,21 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     solverToInterrupt = self->cmsat;
+
+    // Save Python's SIGINT handler and install ours for the duration
+    // of the solve.  g_python_lib tells SIGINT_handler to only set the
+    // interrupt flag rather than calling _exit().
+    g_python_lib = true;
+    sighandler_t prev_handler = signal(SIGINT, SIGINT_handler);
+
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
     Py_END_ALLOW_THREADS
+
+    // Restore Python's original SIGINT handler.
+    signal(SIGINT, prev_handler);
+    g_python_lib = false;
     solverToInterrupt = nullptr;
 
     self->cmsat->set_verbosity(self->verbose);
@@ -828,12 +839,6 @@ MODULE_INIT_FUNC(pycryptosat)
         Py_DECREF(m);
         return NULL;
     }
-
-    // Set up Ctrl+C (SIGINT) handler so long solve() calls can be aborted.
-    // g_python_lib tells SIGINT_handler not to call _exit() — in library
-    // mode we only set the interrupt flag and let the solver return l_Undef.
-    g_python_lib = true;
-    signal(SIGINT, SIGINT_handler);
 
     return m;
 }
