@@ -64,3 +64,11 @@ repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 # GMP is not a macOS system library; brew installs it and delocate bundles it.
 before-all = "brew install gmp ccache || true"
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+
+[tool.cibuildwheel.windows]
+# MinGW/MSYS2 toolchain (GCC, GMP, zlib, pkg-config) is installed by the
+# workflow step before cibuildwheel runs.  CMake uses the Ninja generator
+# with the MinGW compilers (set via CIBW_ENVIRONMENT_WINDOWS in the workflow).
+# delvewheel automatically bundles MinGW runtime DLLs (libstdc++, libgmp, etc.).
+test-command = "cd %TEMP% && pytest {project}/python/tests"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"

@@ -18,7 +18,7 @@ jobs:
       matrix:
         # Each runner builds for its native architecture.
         # Linux aarch64 uses a native ARM GitHub-hosted runner.
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-14, macos-15-intel]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-14, macos-15-intel, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +29,29 @@ jobs:
         if: contains(matrix.os, 'macos')
         run: |
           brew install gmp || true
+
+      - name: Set up MSYS2 (Windows)
+        if: contains(matrix.os, 'windows')
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-ccache
+
+      - name: Add MinGW to PATH (Windows)
+        if: contains(matrix.os, 'windows')
+        shell: bash
+        run: |
+          echo "C:/msys64/mingw64/bin" >> $GITHUB_PATH
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       - name: Cache ccache
         uses: actions/cache@v4
@@ -49,6 +72,10 @@ jobs:
         env:
           CIBW_ARCHS_LINUX: native   # x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm
           CIBW_ARCHS_MACOS: native   # arm64 on macos-14, x86_64 on macos-15-intel
+          CIBW_ARCHS_WINDOWS: native # AMD64 on windows-latest
+          CIBW_ENVIRONMENT_WINDOWS: |
+            CMAKE_GENERATOR=Ninja
+            PKG_CONFIG_PATH=C:/msys64/mingw64/lib/pkgconfig
 
       - uses: actions/upload-artifact@v4
         with:
