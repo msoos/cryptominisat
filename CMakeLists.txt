@@ -641,44 +641,37 @@ add_subdirectory(src cmsat5-src)
 # =============================================================================
 # Python extension module (pycryptosat)
 # Activated by scikit-build-core via -DBUILD_PYTHON_EXTENSION=ON.
-# Requires CMake >= 3.18 (python_add_library).
 # =============================================================================
 option(BUILD_PYTHON_EXTENSION "Build the pycryptosat Python extension module" OFF)
 if(BUILD_PYTHON_EXTENSION)
-    # On Windows NuGet/portable Python, sysconfig may not report LIBDIR
-    # so find_package(Python Development) fails.  Set paths manually
-    # and include FindPython/Support directly for python_add_library.
-    find_package(Python REQUIRED COMPONENTS Interpreter)
     if(WIN32)
+        # NuGet Python lacks dev libraries; build manually with add_library.
+        find_package(Python REQUIRED COMPONENTS Interpreter)
         execute_process(COMMAND "${Python_EXECUTABLE}" -c
             "import sys; print(sys.base_prefix)"
             OUTPUT_VARIABLE _py_base OUTPUT_STRIP_TRAILING_WHITESPACE)
-        set(Python_INCLUDE_DIRS "${_py_base}/include")
-        set(Python_LIBRARIES "${_py_base}/python3.dll")
-        include("${CMAKE_ROOT}/Modules/FindPython/Support.cmake")
+
+        add_library(pycryptosat MODULE python/src/pycryptosat.cpp)
+        target_include_directories(pycryptosat PRIVATE
+            "${_py_base}/include"
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR})
+        target_link_libraries(pycryptosat PRIVATE
+            cryptominisat5 "${_py_base}/python3.dll")
+        set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
-        find_package(Python REQUIRED COMPONENTS Development.Module)
+        find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+        python_add_library(pycryptosat MODULE WITH_SOABI
+            python/src/pycryptosat.cpp)
+        target_include_directories(pycryptosat PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR})
+        target_link_libraries(pycryptosat PRIVATE cryptominisat5)
     endif()
 
-    # pycryptosat.cpp uses only the raw Python C API; GitSHA1 symbols are
-    # already provided by the cryptominisat5 static library.
-    python_add_library(pycryptosat MODULE WITH_SOABI
-        python/src/pycryptosat.cpp
-    )
-
     target_compile_definitions(pycryptosat PRIVATE
-        CMS_FULL_VERSION="${CMS_FULL_VERSION}"
-    )
-
-    target_include_directories(pycryptosat PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}
-    )
-
-    target_link_libraries(pycryptosat PRIVATE cryptominisat5)
+        CMS_FULL_VERSION="${CMS_FULL_VERSION}")
     target_compile_features(pycryptosat PRIVATE cxx_std_17)
-
-    # Only install the extension into the wheel (not the static lib / headers / binary).
     install(TARGETS pycryptosat DESTINATION . COMPONENT python)
 endif()
 
