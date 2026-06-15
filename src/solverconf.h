@@ -330,9 +330,11 @@ class DLL_PUBLIC SolverConf
         int velim_resolvent_too_large; //-1 == no limit
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
-        int picosat_gate_limitK;
-        int picosat_confl_limit;
         int varelim_check_resolvent_subs;
+
+        //kitten-based irregular-gate finding
+        int kitten_gate_ticksK;  //per-call kitten ticks limit
+        int kitten_gate_limitM;  //total kitten ticks budget
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;

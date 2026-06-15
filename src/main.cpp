@@ -727,6 +727,14 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.varelim_check_resolvent_subs = fc_int(a);})
         .default_value(conf.varelim_check_resolvent_subs)
         .help("BVE should check whether resolvents subsume others and check for exact size increase");
+    program.add_argument("--kittengateticks")
+        .action([&](const auto& a) {conf.kitten_gate_ticksK = fc_int(a);})
+        .default_value(conf.kitten_gate_ticksK)
+        .help("Per-call kitten ticks limit for irregular-gate finding, in thousands");
+    program.add_argument("--kittengatelimit")
+        .action([&](const auto& a) {conf.kitten_gate_limitM = fc_int(a);})
+        .default_value(conf.kitten_gate_limitM)
+        .help("Total kitten ticks budget for irregular-gate finding, in millions");
 
     /* po::options_description xorOptions("XOR-related options"); */
     program.add_argument("--xor")

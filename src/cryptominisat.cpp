@@ -611,21 +611,6 @@ DLL_PUBLIC void SATSolver::set_gates(const bool gates)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
-{
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.conf.picosat_gate_limitK = lim;
-    }
-}
-DLL_PUBLIC void SATSolver::set_picosat_confl_limit(const uint32_t lim)
-{
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.conf.picosat_confl_limit = lim;
-    }
-}
-
 DLL_PUBLIC void SATSolver::set_weaken_time_limitM(const uint32_t lim)
 {
     for (auto & solver : data->solvers) {
@@ -1089,7 +1074,7 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
 DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
 {
     std::stringstream ss;
-    ss << prefix << "Using VMTF, picosat, CaDiCaL, and CadiBack code by Armin Biere" << endl;
+    ss << prefix << "Using VMTF, kitten, CaDiCaL, and CadiBack code by Armin Biere" << endl;
     #ifdef USE_BREAKID
     ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
     ss << prefix << "Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;

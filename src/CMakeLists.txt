@@ -133,11 +133,16 @@ set(cryptoms_lib_files
     gaussian.cpp
     packedrow.cpp
     matrixfinder.cpp
-    mpicosat/mpicosat.c
-    mpicosat/version.c
+    kitten/kitten.c
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
+
+# kitten is vendored from kissat (src/kitten/), built as a standalone library
+# (no kissat deps, no main()). The only change from upstream is the KITTEN_NO_MAIN
+# guard in kitten.c -- see src/kitten/kitten.c:2269.
+set_source_files_properties(kitten/kitten.c PROPERTIES
+    COMPILE_DEFINITIONS "STAND_ALONE_KITTEN;KITTEN_NO_MAIN")
 
 if(GPU)
     set(cryptoms_lib_files
@@ -328,7 +333,6 @@ if(IPASIR)
 endif()
 
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h)
-cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/mpicosat/mpicosat.h)
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h)
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h)
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h)

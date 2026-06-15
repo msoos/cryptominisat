@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "touchlist.h"
 #include "watched.h"
 #include "watcharray.h"
-struct PicoSAT;
+struct kitten;
 
 namespace CMSat {
 
@@ -87,8 +87,7 @@ struct BVEStats
     uint64_t irreg_gate_found = 0;
     uint64_t irreg_gate_tried = 0;
     uint64_t irreg_gate_entered = 0;
-    uint64_t picolits_added = 0;
-    uint64_t pico_conflicts = 0;
+    uint64_t kitten_ticks = 0;
     bool turned_off_irreg_gate = false;
 
     BVEStats& operator+=(const BVEStats& other);
@@ -136,11 +135,14 @@ public:
     vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
     void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
-    uint32_t add_cls_to_picosat_definable(const Lit wsLit);
-    PicoSAT* picosat = nullptr;
-    int lit_to_picolit(const Lit l);
-    vector<int> var_to_picovar;
-    vector<uint32_t> picovars_used;
+
+    //kitten (vendored from kissat) used to find irregular gates & definability,
+    //replacing the previously-used picosat
+    struct kitten* gate_kitten = nullptr;
+    unsigned lit_to_kittenlit(const Lit l);
+    uint32_t add_cls_to_kitten_definable(const Lit wsLit);
+    vector<unsigned> var_to_kittenvar; //0 == unused, else compact-var-id + 1
+    vector<uint32_t> kittenvars_used;
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
@@ -422,7 +424,6 @@ private:
         vec<Watched>& out_a,
         vec<Watched>& out_b
     );
-    void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
     bool resolve_gate;
     bool find_irreg_gate(
         Lit elim_lit,
@@ -430,6 +431,16 @@ private:
         watch_subarray_const b,
         vec<Watched>& out_a,
         vec<Watched>& out_b);
+    bool find_irreg_gate_kitten(
+        Lit elim_lit,
+        watch_subarray_const a,
+        watch_subarray_const b,
+        vec<Watched>& out_a,
+        vec<Watched>& out_b);
+    //appends (id -> Watched) to id_to_cl for each clause added to kitten
+    void add_kitten_cls(
+        const vec<Watched>& ws, const Lit elim_lit,
+        unsigned& id, vector<Watched>& id_to_cl);
     bool find_equivalence_gate(
         Lit lit
         , watch_subarray_const a

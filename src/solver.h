@@ -48,7 +48,6 @@ using std::vector;
 using std::pair;
 using std::string;
 using std::array;
-struct PicoSAT;
 
 namespace CMSat {
 
@@ -361,8 +360,8 @@ class Solver : public Searcher
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         bool full_probe(const bool bin_only);
 
-        int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
-        PicoSAT* build_picosat();
+        //convert an internal Lit to a DIMACS-style signed int (1-based, signed)
+        static int to_dimacs_lit(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
         void copy_to_simp(SATSolver* s2);
         bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
         bool removed_var_ext(uint32_t var) const;
