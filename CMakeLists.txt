@@ -655,8 +655,7 @@ if(BUILD_PYTHON_EXTENSION)
         # the linking correctly (resolves __imp_ stubs for MinGW).
         add_library(python3_shared SHARED IMPORTED)
         set_target_properties(python3_shared PROPERTIES
-            IMPORTED_LOCATION "${_py_base}/python3.dll"
-            IMPORTED_IMPLIB   "${_py_base}/libs/python3.lib")
+            IMPORTED_LOCATION "${_py_base}/python3.dll")
 
         add_library(pycryptosat MODULE python/src/pycryptosat.cpp)
         target_include_directories(pycryptosat PRIVATE
