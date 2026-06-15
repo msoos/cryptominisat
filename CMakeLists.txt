@@ -656,8 +656,23 @@ if(BUILD_PYTHON_EXTENSION)
             "${_py_base}/include"
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
-        target_link_libraries(pycryptosat PRIVATE
-            cryptominisat5 "${_py_base}/python3.dll")
+
+        # Generate MinGW import library from the MSVC-compiled python3.dll.
+        # gendef extracts symbols, dlltool creates the .a that MinGW's ld needs.
+        set(_py_implib "${CMAKE_CURRENT_BINARY_DIR}/libpython3.a")
+        execute_process(COMMAND gendef - "${_py_base}/python3.dll"
+            OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
+            RESULT_VARIABLE _gendef_rc)
+        if(_gendef_rc EQUAL 0)
+            execute_process(COMMAND dlltool -d "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
+                -l "${_py_implib}" -D "${_py_base}/python3.dll"
+                RESULT_VARIABLE _dlltool_rc)
+        endif()
+        if(_gendef_rc EQUAL 0 AND _dlltool_rc EQUAL 0)
+            target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_implib}")
+        else()
+            target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_base}/python3.dll")
+        endif()
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
         find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
