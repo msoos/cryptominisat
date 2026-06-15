@@ -41,6 +41,11 @@ using std::endl;
 
 void SIGINT_handler(int)
 {
+    // Re-register: on some platforms (MinGW, System V) signal() resets
+    // to SIG_DFL after invocation.  Without this, the second Ctrl+C
+    // kills the process instead of interrupting cleanly.
+    signal(SIGINT, SIGINT_handler);
+
     SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
