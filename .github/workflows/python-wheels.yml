@@ -54,6 +54,7 @@ jobs:
 
       - name: Add MinGW to PATH (Windows)
         if: contains(matrix.os, 'windows')
+        shell: bash
         run: |
           echo "${{ env.MINGW_BIN }}" >> $GITHUB_PATH
           echo "CC=gcc" >> $GITHUB_ENV
@@ -61,8 +62,11 @@ jobs:
 
       - name: Set cibuildwheel env (Windows)
         if: contains(matrix.os, 'windows')
+        shell: bash
         run: |
           echo "CIBW_ENVIRONMENT<<CIBWEOF" >> $GITHUB_ENV
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
           echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=${{ env.MINGW_PREFIX }}/lib/pkgconfig" >> $GITHUB_ENV
           echo "MSYS=winsymlinks:nativestrict" >> $GITHUB_ENV
