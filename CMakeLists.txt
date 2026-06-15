@@ -664,14 +664,15 @@ if(BUILD_PYTHON_EXTENSION)
             OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
             RESULT_VARIABLE _gendef_rc)
         if(_gendef_rc EQUAL 0)
-            execute_process(COMMAND dlltool -d "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
+            execute_process(COMMAND dlltool -m i386:x86-64
+                -d "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
                 -l "${_py_implib}" -D "${_py_base}/python3.dll"
                 RESULT_VARIABLE _dlltool_rc)
         endif()
         if(_gendef_rc EQUAL 0 AND _dlltool_rc EQUAL 0)
             target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_implib}")
         else()
-            target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_base}/python3.dll")
+            target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_base}/libs/python3.lib")
         endif()
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
