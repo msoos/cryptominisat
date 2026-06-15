@@ -672,6 +672,8 @@ if(BUILD_PYTHON_EXTENSION)
 
     target_compile_definitions(pycryptosat PRIVATE
         CMS_FULL_VERSION="${CMS_FULL_VERSION}")
+    target_compile_options(pycryptosat PRIVATE
+        "-D__declspec(x)=")  # prevent __imp_ stubs (MinGW vs MSVC DLLs)
     target_compile_features(pycryptosat PRIVATE cxx_std_17)
     install(TARGETS pycryptosat DESTINATION . COMPONENT python)
 endif()
