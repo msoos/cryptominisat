@@ -656,6 +656,9 @@ if(BUILD_PYTHON_EXTENSION)
         set(Python_INCLUDE_DIRS "${_py_base}/include")
         # MinGW can link directly against the DLL.
         set(Python_LIBRARIES "${_py_base}/python3.dll")
+        # Must call find_package with Development (even if non-required)
+        # to make python_add_library available.
+        find_package(Python COMPONENTS Development)
     else()
         find_package(Python REQUIRED COMPONENTS Development.Module)
     endif()
