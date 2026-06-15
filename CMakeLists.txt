@@ -645,17 +645,16 @@ add_subdirectory(src cmsat5-src)
 # =============================================================================
 option(BUILD_PYTHON_EXTENSION "Build the pycryptosat Python extension module" OFF)
 if(BUILD_PYTHON_EXTENSION)
-    find_package(Python REQUIRED COMPONENTS Interpreter)
     # On Windows NuGet/portable Python, sysconfig may not report LIBDIR.
-    # Set Python_ROOT_DIR from sys.base_prefix to help FindPython locate
-    # the development libraries (python3.lib, headers).
-    if(WIN32)
+    # Compute Python_ROOT_DIR from sys.base_prefix before calling
+    # find_package so CMake can locate python3.lib and headers.
+    if(WIN32 AND Python_EXECUTABLE)
         execute_process(COMMAND "${Python_EXECUTABLE}" -c
             "import sys; print(sys.base_prefix)"
             OUTPUT_VARIABLE _py_base OUTPUT_STRIP_TRAILING_WHITESPACE)
         set(Python_ROOT_DIR "${_py_base}")
     endif()
-    find_package(Python REQUIRED COMPONENTS Development.Module)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
     # pycryptosat.cpp uses only the raw Python C API; GitSHA1 symbols are
     # already provided by the cryptominisat5 static library.
