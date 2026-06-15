@@ -648,15 +648,24 @@ if(BUILD_PYTHON_EXTENSION)
         # NuGet Python lacks dev libraries; build manually with add_library.
         find_package(Python REQUIRED COMPONENTS Interpreter)
         execute_process(COMMAND "${Python_EXECUTABLE}" -c
-            "import sys; print(sys.base_prefix)"
-            OUTPUT_VARIABLE _py_base OUTPUT_STRIP_TRAILING_WHITESPACE)
+            "import sys; print(sys.base_prefix); print(f'{sys.version_info.major}{sys.version_info.minor}')"
+            OUTPUT_VARIABLE _py_info OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REGEX REPLACE "\n" ";" _py_info "${_py_info}")
+        list(GET _py_info 0 _py_base)
+        list(GET _py_info 1 _py_ver)
+        # python3.dll (stable ABI) only exports buffer protocol from 3.11+.
+        # Use the versioned DLL for full API coverage.
+        set(_py_dll "${_py_base}/python${_py_ver}.dll")
+        if(NOT EXISTS "${_py_dll}")
+            set(_py_dll "${_py_base}/python3.dll")
+        endif()
 
         add_library(pycryptosat MODULE python/src/pycryptosat.cpp)
         target_include_directories(pycryptosat PRIVATE
             "${_py_base}/include"
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
-        target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_base}/python3.dll")
+        target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_dll}")
         target_link_options(pycryptosat PRIVATE
             "SHELL:-Wl,--enable-auto-import")
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
