@@ -651,29 +651,19 @@ if(BUILD_PYTHON_EXTENSION)
             "import sys; print(sys.base_prefix)"
             OUTPUT_VARIABLE _py_base OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+        # Create an IMPORTED target for python3.dll so CMake handles
+        # the linking correctly (resolves __imp_ stubs for MinGW).
+        add_library(python3_shared SHARED IMPORTED)
+        set_target_properties(python3_shared PROPERTIES
+            IMPORTED_LOCATION "${_py_base}/python3.dll"
+            IMPORTED_IMPLIB   "${_py_base}/libs/python3.lib")
+
         add_library(pycryptosat MODULE python/src/pycryptosat.cpp)
         target_include_directories(pycryptosat PRIVATE
             "${_py_base}/include"
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
-
-        # Generate MinGW import library from the MSVC-compiled python3.dll.
-        # gendef extracts symbols, dlltool creates the .a that MinGW's ld needs.
-        set(_py_implib "${CMAKE_CURRENT_BINARY_DIR}/libpython3.a")
-        execute_process(COMMAND gendef - "${_py_base}/python3.dll"
-            OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
-            RESULT_VARIABLE _gendef_rc)
-        if(_gendef_rc EQUAL 0)
-            execute_process(COMMAND dlltool -m i386:x86-64
-                -d "${CMAKE_CURRENT_BINARY_DIR}/python3.def"
-                -l "${_py_implib}" -D "${_py_base}/python3.dll"
-                RESULT_VARIABLE _dlltool_rc)
-        endif()
-        if(_gendef_rc EQUAL 0 AND _dlltool_rc EQUAL 0)
-            target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_implib}")
-        else()
-            target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_base}/libs/python3.lib")
-        endif()
+        target_link_libraries(pycryptosat PRIVATE cryptominisat5 python3_shared)
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
         find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
