@@ -665,9 +665,24 @@ if(BUILD_PYTHON_EXTENSION)
             "${_py_base}/include"
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR})
-        target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_dll}")
-        target_link_options(pycryptosat PRIVATE
-            "SHELL:-Wl,--enable-auto-import")
+        # Create a proper import library for the Python DLL to avoid
+        # --enable-auto-import which can pull symbols from unrelated
+        # DLLs on PATH at runtime (causing debug/release mixing crashes).
+        get_filename_component(_py_dll_name "${_py_dll}" NAME_WE)
+        set(_py_def "${CMAKE_CURRENT_BINARY_DIR}/${_py_dll_name}.def")
+        set(_py_implib "${CMAKE_CURRENT_BINARY_DIR}/lib${_py_dll_name}.dll.a")
+        add_custom_command(OUTPUT "${_py_def}"
+            COMMAND gendef "${_py_dll}"
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            DEPENDS "${_py_dll}"
+            COMMENT "Generating .def from ${_py_dll}")
+        add_custom_command(OUTPUT "${_py_implib}"
+            COMMAND dlltool -d "${_py_def}" -l "${_py_implib}" -D "${_py_dll}"
+            DEPENDS "${_py_def}"
+            COMMENT "Creating import library for ${_py_dll}")
+        add_custom_target(_py_implib_target DEPENDS "${_py_implib}")
+        add_dependencies(pycryptosat _py_implib_target)
+        target_link_libraries(pycryptosat PRIVATE cryptominisat5 "${_py_implib}")
         set_target_properties(pycryptosat PROPERTIES PREFIX "" SUFFIX ".pyd")
     else()
         find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
