@@ -2,7 +2,7 @@ name: Build and publish Python wheels
 
 on:
   push:
-    branches: ["master", "add-windows-python-wheels", "add-python-ctrl-c"]
+    branches: ["master"]
     tags:
       - 'release/v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
