@@ -681,8 +681,11 @@ if(BUILD_PYTHON_EXTENSION)
 
     target_compile_definitions(pycryptosat PRIVATE
         CMS_FULL_VERSION="${CMS_FULL_VERSION}")
+    # MinGW can't use MSVC .lib to resolve __imp_ stubs.  Undefine
+    # dllimport from Python API macros but keep dllexport for PyInit_.
     target_compile_options(pycryptosat PRIVATE
-        "-D__declspec(x)=")  # prevent __imp_ stubs (MinGW vs MSVC DLLs)
+        "-DPyAPI_FUNC(RTYPE)=RTYPE"
+        "-DPyAPI_DATA(RTYPE)=extern RTYPE")
     target_compile_features(pycryptosat PRIVATE cxx_std_17)
     install(TARGETS pycryptosat DESTINATION . COMPONENT python)
 endif()
