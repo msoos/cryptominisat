@@ -351,7 +351,7 @@ private:
 
     /////////////////////
     //Variable elimination
-    uint32_t grow = 0; /// maximum grow rate for clauses
+    int32_t grow = 0; /// maximum grow rate for clauses
     vector<uint64_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {

@@ -1143,7 +1143,7 @@ bool OccSimplifier::eliminate_vars()
 
     //Go through the ordered list of variables to eliminate
     int64_t last_elimed = 1;
-    grow = 0;
+    grow = -2;
     uint32_t n_cls_last  = sum_irred_cls_longs() + solver->binTri.irredBins;
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
@@ -1287,10 +1287,14 @@ bool OccSimplifier::eliminate_vars()
         n_cls_last = n_cls_now;
         n_vars_last = n_vars_now;
 
-        if ((int)grow >= solver->conf.min_bva_gain) break;
-        if (grow == 0) grow = 3;
+
+        cout << "c grow: " << grow << " min_bva_gain: " << solver->conf.min_bva_gain << endl;
+        if (grow >= solver->conf.min_bva_gain) break;
+        if (grow < 0) grow = 0;
+        else if (grow == 0) grow = 3;
         else grow *= 1.5;
         grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
+        cout << "c grow for next iter: " << grow << endl;
 
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());

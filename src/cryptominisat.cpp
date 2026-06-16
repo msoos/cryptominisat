@@ -1355,7 +1355,7 @@ DLL_PUBLIC void SATSolver::reverse_bce() {
 
 }
 
-void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
+void DLL_PUBLIC SATSolver::set_min_bva_gain(int32_t min_bva_gain)
 {
     for (auto & solver : data->solvers) {
         solver->conf.min_bva_gain = min_bva_gain;

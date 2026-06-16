@@ -154,7 +154,7 @@ namespace CMSat {
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
         void set_simplify(const bool simp);
         void set_find_xors(bool do_find_xors);
-        void set_min_bva_gain(uint32_t min_bva_gain);
+        void set_min_bva_gain(int32_t min_bva_gain);
         void set_kitten_gate_ticksK(int ticksK); //per-call kitten ticks limit for irreg-gate finding, in thousands
         void set_kitten_gate_limitM(int limitM); //total kitten ticks budget for irreg-gate finding, in millions
         void set_varelim_check_resolvent_subs(bool varelim_check_resolvent_subs); //check subumption and literal during varelim
