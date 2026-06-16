@@ -99,6 +99,25 @@ jobs:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
 
+  publish-test:
+    name: Test publish (dry-run)
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    # Run on every push/PR so non-maintainers can verify publish would succeed.
+    if: "! (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release/v'))"
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Validate wheels with twine
+        run: |
+          pip install twine
+          twine check dist/*.whl
+
   publish:
     name: Publish to PyPI
     needs: build_wheels
