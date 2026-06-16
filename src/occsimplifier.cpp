@@ -3350,8 +3350,15 @@ bool OccSimplifier::find_irreg_gate(
     out_a.clear();
     out_b.clear();
 
-    assert(picosat == nullptr);
+    // Use Windows HeapAlloc to avoid MSVCRT malloc contention under threads
+    #ifdef _WIN32
+    auto picosat_m = [](void*,size_t s) -> void* { return HeapAlloc(GetProcessHeap(), 0, s); };
+    auto picosat_r = [](void*,void* p,size_t,size_t s) -> void* { return p ? HeapReAlloc(GetProcessHeap(), 0, p, s) : HeapAlloc(GetProcessHeap(), 0, s); };
+    auto picosat_f = [](void*,void* p,size_t) { if(p) HeapFree(GetProcessHeap(), 0, p); };
+    picosat = picosat_minit(nullptr, picosat_m, picosat_r, picosat_f);
+    #else
     picosat = picosat_init();
+    #endif
     int ret = picosat_enable_trace_generation(picosat);
     assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
 
