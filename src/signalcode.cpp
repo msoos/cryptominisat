@@ -28,6 +28,10 @@ THE SOFTWARE.
 #endif
 
 using namespace CMSat;
+using std::cout;
+using std::endl;
+
+namespace CMSat {
 
 SATSolver* solverToInterrupt;
 int need_clean_exit;
@@ -35,9 +39,6 @@ double wallclock_time_started = 0.0;
 bool g_python_lib = false;
 std::string redDumpFname;
 std::string irredDumpFname;
-
-using std::cout;
-using std::endl;
 
 void SIGINT_handler(int)
 {
@@ -79,3 +80,5 @@ void SIGINT_handler(int)
         #endif
     }
 }
+
+} // namespace CMSat
