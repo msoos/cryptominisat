@@ -90,6 +90,7 @@ MPICOSAT_DLL_PUBLIC PicoSAT * picosat_minit (void * state,
 			 picosat_free);
 
 MPICOSAT_DLL_PUBLIC void picosat_reset (PicoSAT *);         /* destructor */
+MPICOSAT_DLL_PUBLIC unsigned long picosat_conflicts(PicoSAT *);
 
 /*------------------------------------------------------------------------*/
 /* The following five functions are essentially parameters to 'init', and

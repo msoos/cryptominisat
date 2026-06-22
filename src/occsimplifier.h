@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <set>
 
 #include "clause.h"
+#include "constants.h"
 #include "solvertypes.h"
 #include "heap.h"
 #include "touchlist.h"
@@ -83,6 +84,12 @@ struct BVEStats
     uint64_t triedToElimVars = 0;
     uint64_t newClauses = 0;
     uint64_t gatefind_timeouts = 0;
+    uint64_t irreg_gate_found = 0;
+    uint64_t irreg_gate_tried = 0;
+    uint64_t irreg_gate_entered = 0;
+    uint64_t picolits_added = 0;
+    uint64_t pico_conflicts = 0;
+    bool turned_off_irreg_gate = false;
 
     BVEStats& operator+=(const BVEStats& other);
 
@@ -93,17 +100,16 @@ struct BVEStats
             << " tested: " << testedToElimVars << endl;
     }
 
-    void print() const {
-        print_stats_line("c timeouted" , stats_line_percent(varElimTimeOut, numCalls) , "% called");
-        print_stats_line("c v-elimed" , numVarsElimed , "% vars");
-        print_stats_line("c cl-new" , newClauses);
-        print_stats_line("c tried to elim" , triedToElimVars);
-        print_stats_line("c cl-elim-bin" , clauses_elimed_bin);
-        print_stats_line("c cl-elim-long" , clauses_elimed_long);
-        print_stats_line("c cl-elim-avg-s",
-            ((double)clauses_elimed_sumsize
-            /(double)(clauses_elimed_bin + clauses_elimed_long))
-        );
+    void print(const string& prefix) const {
+        print_stats_line(prefix + "timeouted" , stats_line_percent(varElimTimeOut, numCalls) , "% called");
+        print_stats_line(prefix + "v-elimed" , numVarsElimed , "% vars");
+        print_stats_line(prefix + "cl-new" , newClauses);
+        print_stats_line(prefix + "tried to elim" , triedToElimVars);
+        print_stats_line(prefix + "cl-elim-bin" , clauses_elimed_bin);
+        print_stats_line(prefix + "cl-elim-long" , clauses_elimed_long);
+        print_stats_line(prefix + "cl-elim-avg-s",
+                safe_div(clauses_elimed_sumsize,clauses_elimed_bin + clauses_elimed_long));
+        cout << prefix << "irreg-gate-found / tried / entered: " << irreg_gate_found << " / " << irreg_gate_tried << "/ " << irreg_gate_entered << endl;
     }
     void clear() {
         *this = BVEStats{};
@@ -133,7 +139,6 @@ public:
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = nullptr;
     int lit_to_picolit(const Lit l);
-    uint64_t picolits_added = 0;
     vector<int> var_to_picovar;
     vector<uint32_t> picovars_used;
 
@@ -418,7 +423,6 @@ private:
         vec<Watched>& out_b
     );
     void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
-    bool turned_off_irreg_gate = false;
     bool resolve_gate;
     bool find_irreg_gate(
         Lit elim_lit,
