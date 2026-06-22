@@ -1297,6 +1297,7 @@ bool OccSimplifier::eliminate_vars()
         if (grow == 0) grow = 3;
         else grow *= 1.5;
         grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
+
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
         assert(added_irred_bin.empty());
@@ -1332,9 +1333,10 @@ end:
         << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << (time_remain*100.0) << "%");
     if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
+        if (solver->conf.verbosity >= 3) {
             runStats.print(solver->nVarsOuter(), this);
-        else
+            bvestats.print(solver->conf.prefix);
+        } else
             runStats.print_extra_times(solver->conf.prefix.c_str());
     }
     if (solver->sqlStats) {
@@ -1525,7 +1527,7 @@ void OccSimplifier::register_lit_to_picovar(const Lit l) {
 }
 
 int OccSimplifier::lit_to_picolit(const Lit l) {
-    picolits_added++;
+    bvestats.picolits_added++;
     release_assert(var_to_picovar[l.var()] != 0 && "lit not pre-registered with picosat");
     return var_to_picovar[l.var()] * (l.sign() ? -1 : 1);
 }
@@ -3434,15 +3436,23 @@ bool OccSimplifier::find_irreg_gate(
     , vec<Watched>& out_a
     , vec<Watched>& out_b
 ) {
+    bvestats.irreg_gate_entered++;
     // Too expensive
-    if (turned_off_irreg_gate || picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
-        if (!turned_off_irreg_gate) {
+    if (bvestats.turned_off_irreg_gate ||
+            bvestats.picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
+        if (!bvestats.turned_off_irreg_gate) {
             verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection, added lits: "
-                << print_value_kilo_mega(picolits_added, false));
+                << print_value_kilo_mega(bvestats.picolits_added, false));
         }
-        turned_off_irreg_gate = true;
+        bvestats.turned_off_irreg_gate = true;
         return false;
     }
+    bvestats.irreg_gate_tried++;
+    if (bvestats.irreg_gate_tried % 2500 == 0)
+        verb_print(1, "[occ-bve] irreg-gate-find"
+               << " lits: " << bvestats.picolits_added/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * 30.0
+               << " conflK: " << bvestats.pico_conflicts/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK);
+
     if (a.size() + b.size() > 100) return false;
 
     bool found = false;
@@ -3479,8 +3489,13 @@ bool OccSimplifier::find_irreg_gate(
         found = true;
         resolve_gate = true;
     }
+    bvestats.pico_conflicts += picosat_conflicts(picosat);
     picosat_reset(picosat);
     picosat = nullptr;
+    bvestats.irreg_gate_found += found;
+
+    if (found)
+        verb_print(3, "[occ] Found irregular gate for " << elim_lit << " with " << out_a.size() << " cls in A and " << out_b.size() << " cls in B");
 
     return found;
 }
@@ -4371,6 +4386,13 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
 
+    //Too expensive to check, it's futile
+    if ((uint64_t)neg * (uint64_t)pos
+        >= solver->conf.varelim_cutoff_too_many_clauses
+    ) {
+        return false;
+    }
+
     // A smaller OR gate will lead to less BIN (and 1 long) clause.
     //The total size of the resolvent is
     // |G_a|*|R_NOTa| + |G_NOTa|*|R_a|.
@@ -4383,12 +4405,6 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     std::sort(poss.begin(), poss.end(), sort_smallest_first(solver->cl_alloc));
     std::sort(negs.begin(), negs.end(), sort_smallest_first(solver->cl_alloc));
 
-    //Too expensive to check, it's futile
-    if ((uint64_t)neg * (uint64_t)pos
-        >= solver->conf.varelim_cutoff_too_many_clauses
-    ) {
-        return false;
-    }
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;
