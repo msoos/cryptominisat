@@ -611,21 +611,6 @@ DLL_PUBLIC void SATSolver::set_gates(const bool gates)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
-{
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.conf.picosat_gate_limitK = lim;
-    }
-}
-DLL_PUBLIC void SATSolver::set_picosat_confl_limit(const uint32_t lim)
-{
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.conf.picosat_confl_limit = lim;
-    }
-}
-
 DLL_PUBLIC void SATSolver::set_weaken_time_limitM(const uint32_t lim)
 {
     for (auto & solver : data->solvers) {
@@ -679,6 +664,22 @@ DLL_PUBLIC void SATSolver::set_bve_too_large_resolvent(int too_large_resolvent)
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
         s.conf.velim_resolvent_too_large = too_large_resolvent;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_kitten_gate_ticksK(int ticksK)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.kitten_gate_ticksK = ticksK;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_kitten_gate_limitM(int limitM)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.kitten_gate_limitM = limitM;
     }
 }
 
@@ -1089,7 +1090,7 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
 DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
 {
     std::stringstream ss;
-    ss << prefix << "Using VMTF, picosat, CaDiCaL, and CadiBack code by Armin Biere" << endl;
+    ss << prefix << "Using VMTF, kitten, CaDiCaL, and CadiBack code by Armin Biere" << endl;
     #ifdef USE_BREAKID
     ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
     ss << prefix << "Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
@@ -1354,17 +1355,10 @@ DLL_PUBLIC void SATSolver::reverse_bce() {
 
 }
 
-void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
+void DLL_PUBLIC SATSolver::set_min_bva_gain(int32_t min_bva_gain)
 {
     for (auto & solver : data->solvers) {
         solver->conf.min_bva_gain = min_bva_gain;
-    }
-}
-
-void DLL_PUBLIC SATSolver::set_bve_nonstop(bool nonstop)
-{
-    for (auto & solver : data->solvers) {
-        solver->conf.non_stop_bve = nonstop;
     }
 }
 

@@ -69,9 +69,6 @@ THE SOFTWARE.
 #include "lucky.h"
 #include "get_clause_query.h"
 #include "community_finder.h"
-extern "C" {
-#include "mpicosat/mpicosat.h"
-}
 #include "cryptominisat.h"
 
 #ifdef USE_BREAKID
@@ -3418,33 +3415,6 @@ lbool Solver::bnn_eval(BNN& bnn)
     return l_Undef;
 }
 
-
-PicoSAT* Solver::build_picosat()
-{
-    PicoSAT* picosat = picosat_init();
-    for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat);
-
-    for(auto const& off: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(off);
-        for(auto const& l1: *cl) {
-            picosat_add(picosat, PICOLIT(l1));
-        }
-        picosat_add(picosat, 0);
-    }
-    for(uint32_t i = 0; i < nVars()*2; i++) {
-        Lit l1 = Lit::toLit(i);
-        for(auto const& w: watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
-            const Lit l2 = w.lit2();
-            if (l1 > l2) continue;
-
-            picosat_add(picosat, PICOLIT(l1));
-            picosat_add(picosat, PICOLIT(l2));
-            picosat_add(picosat, 0);
-        }
-    }
-    return picosat;
-}
 
 #ifdef ARJUN_SERIALIZE
 string Solver::serialize_solution_reconstruction_data() const

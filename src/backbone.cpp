@@ -50,7 +50,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     print_simp_stats_before("backbone-simpl");
 
     vector<int> cnf;
-    /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
     CCNROraclePre ccnr(this);
     vector<vector<sspp::Lit>> cls;
     vector<sspp::Lit> cctmp;
@@ -60,7 +59,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
         Clause* cl = cl_alloc.ptr(off);
         for(auto const& l1: *cl) {
             num_lits++;
-            cnf.push_back(PICOLIT(l1));
+            cnf.push_back(to_dimacs_lit(l1));
             cctmp.push_back(orclit(l1));
         }
         cnf.push_back(0);
@@ -74,8 +73,8 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
             if (l1 > l2) continue;
 
             num_lits+=2;
-            cnf.push_back(PICOLIT(l1));
-            cnf.push_back(PICOLIT(l2));
+            cnf.push_back(to_dimacs_lit(l1));
+            cnf.push_back(to_dimacs_lit(l2));
             cnf.push_back(0);
 
             cctmp.clear();
@@ -87,7 +86,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     for(uint32_t i = 0; i < nVars(); i++) {
         if (value(i) == l_Undef) continue;
         auto l = Lit(i, value(i) == l_False);
-        cnf.push_back(PICOLIT(l));
+        cnf.push_back(to_dimacs_lit(l));
         cnf.push_back(0);
         cls.push_back({orclit(l)});
     }

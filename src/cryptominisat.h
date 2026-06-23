@@ -154,15 +154,14 @@ namespace CMSat {
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
         void set_simplify(const bool simp);
         void set_find_xors(bool do_find_xors);
-        void set_min_bva_gain(uint32_t min_bva_gain);
-        void set_bve_nonstop(bool nonstop = false);
+        void set_min_bva_gain(int32_t min_bva_gain);
+        void set_kitten_gate_ticksK(int ticksK); //per-call kitten ticks limit for irreg-gate finding, in thousands
+        void set_kitten_gate_limitM(int limitM); //total kitten ticks budget for irreg-gate finding, in millions
         void set_varelim_check_resolvent_subs(bool varelim_check_resolvent_subs); //check subumption and literal during varelim
         void set_max_red_linkin_size(uint32_t sz);
         void set_seed(const uint32_t seed);
         void set_renumber(const bool renumber);
         void set_weaken_time_limitM(const uint32_t lim);
-        void set_picosat_gate_limitK(const uint32_t lim);
-        void set_picosat_confl_limit(const uint32_t lim);
         void set_occ_based_lit_rem_time_limitM(const uint32_t lim);
         void set_orig_global_timeout_multiplier(const double mult);
         void set_oracle_get_learnts(bool val);
