@@ -1679,8 +1679,8 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
 
         if (added == 0) continue;
 
-        kitten_set_ticks_limit(gate_kitten,
-            (uint64_t)solver->conf.kitten_gate_ticksK * 1000ULL);
+        // Individual limit is not multiplied by 1e3, or global limit multiplier
+        kitten_set_ticks_limit(gate_kitten, (uint64_t)solver->conf.kitten_ticks_limitK);
         const int kret = kitten_solve(gate_kitten);
         kitten_ran++;
         if (kret == 20 /*UNSAT -> v is definable from the sampling vars*/) {
@@ -1773,8 +1773,8 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
             continue;
         }
 
-        kitten_set_ticks_limit(gate_kitten,
-            (uint64_t)solver->conf.kitten_gate_ticksK * 1000ULL);
+        // Individual limit is not multiplied by 1e3, or global limit multiplier
+        kitten_set_ticks_limit(gate_kitten, solver->conf.kitten_ticks_limitK);
         const int kret = kitten_solve(gate_kitten);
         kitten_ran++;
         if (kret == 20 /*UNSAT -> v is definable*/) {
@@ -3372,8 +3372,8 @@ bool OccSimplifier::find_irreg_gate_kitten(
     for(const auto v: kittenvars_used) var_to_kittenvar[v] = 0;
     kittenvars_used.clear();
 
-    kitten_set_ticks_limit(gate_kitten,
-        (uint64_t)solver->conf.kitten_gate_ticksK * 1000ULL);
+    // Individual limit is not multiplied by 1e3, or global limit multiplier
+    kitten_set_ticks_limit(gate_kitten, solver->conf.kitten_ticks_limitK);
     const int st = kitten_solve(gate_kitten);
     if (st == 20 /*KITTEN UNSAT -> elim_lit has a functional definition (gate)*/) {
         uint64_t learned;
@@ -3402,7 +3402,7 @@ bool OccSimplifier::find_irreg_gate(
     bvestats.irreg_gate_entered++;
     // Too expensive
     if (bvestats.turned_off_irreg_gate ||
-            bvestats.kitten_ticks > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.kitten_gate_limitM * (double)1e6) {
+            bvestats.kitten_ticks > solver->conf.global_timeout_multiplier * solver->conf.kitten_ticks_limitK * 1e3) {
         if (!bvestats.turned_off_irreg_gate) {
             verb_print(1, "[occ-bve] turning OFF kitten-based irreg-gate-find"
               << " ticks:" << print_value_kilo_mega(bvestats.kitten_ticks));
@@ -3412,7 +3412,7 @@ bool OccSimplifier::find_irreg_gate(
     }
     if (bvestats.irreg_gate_tried % 2500 == 0)
         verb_print(1, "[occ-bve] irreg-gate-find"
-               << " ticksM: " << bvestats.kitten_ticks/1e6 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.kitten_gate_limitM);
+               << " ticksK: " << bvestats.kitten_ticks/1e3 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.kitten_ticks_limitK);
 
     if (a.size() + b.size() > 100) return false;
     bvestats.irreg_gate_tried++;

@@ -667,19 +667,11 @@ DLL_PUBLIC void SATSolver::set_bve_too_large_resolvent(int too_large_resolvent)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_kitten_gate_ticksK(int ticksK)
+DLL_PUBLIC void SATSolver::set_kitten_ticksK(int64_t ticks_k)
 {
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        s.conf.kitten_gate_ticksK = ticksK;
-    }
-}
-
-DLL_PUBLIC void SATSolver::set_kitten_gate_limitM(int limitM)
-{
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.conf.kitten_gate_limitM = limitM;
+        s.conf.kitten_ticks_limitK = ticks_k;
     }
 }
 

@@ -333,8 +333,7 @@ class DLL_PUBLIC SolverConf
         int varelim_check_resolvent_subs;
 
         //kitten-based irregular-gate finding
-        int kitten_gate_ticksK;  //per-call kitten ticks limit
-        int kitten_gate_limitM;  //total kitten ticks budget
+        int64_t kitten_ticks_limitK;
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
