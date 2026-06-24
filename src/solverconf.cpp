@@ -195,7 +195,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_linkin_limit_MB(1000)
         , varelim_gate_find_limit(800)
         , varelim_check_resolvent_subs(false)
-        , kitten_ticks_limitK(20000)
+        , kitten_ticks_limitK(200000)
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
