@@ -1134,8 +1134,6 @@ bool OccSimplifier::eliminate_vars()
     assert(picovars_used.empty());
     var_to_picovar.clear();
     var_to_picovar.resize(solver->nVars(), 0);
-    picolits_added = 0;
-    turned_off_irreg_gate = false;
 
     //Set-up
     double my_time = cpu_time();
