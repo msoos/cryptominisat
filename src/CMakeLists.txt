@@ -346,6 +346,12 @@ get_target_property(cryptominisat5_public_headers cryptominisat5 PUBLIC_HEADER)
 # The cryptominisat5Config.cmake we generate in the build directory depends on
 # this.
 # -----------------------------------------------------------------------------
+# Symlinks need a privilege on Windows (Developer Mode/admin); copy there instead.
+if(WIN32)
+    set(CMS_HEADER_LINK_CMD copy_if_different)
+else()
+    set(CMS_HEADER_LINK_CMD create_symlink)
+endif()
 set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat5")
 add_custom_target(CopyPublicHeaders_cryptominisat5 ALL)
 foreach(public_header ${cryptominisat5_public_headers})
@@ -357,7 +363,7 @@ foreach(public_header ${cryptominisat5_public_headers})
                        "Symlinking ${HEADER_NAME} to ${HEADER_DEST}"
                        COMMAND ${CMAKE_COMMAND} -E remove
                                "${HEADER_DEST}/${HEADER_NAME}"
-                       COMMAND ${CMAKE_COMMAND} -E create_symlink
+                       COMMAND ${CMAKE_COMMAND} -E ${CMS_HEADER_LINK_CMD}
                                "${public_header}"
                                "${HEADER_DEST}/${HEADER_NAME}"
                       )
@@ -421,7 +427,7 @@ foreach(public_header ${oracle_public_headers})
                        "Symlinking ${HEADER_NAME} to ${ORACLE_HEADER_DEST}"
                        COMMAND ${CMAKE_COMMAND} -E remove
                                "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
-                       COMMAND ${CMAKE_COMMAND} -E create_symlink
+                       COMMAND ${CMAKE_COMMAND} -E ${CMS_HEADER_LINK_CMD}
                                "${public_header}"
                                "${ORACLE_HEADER_DEST}/${HEADER_NAME}"
                       )
