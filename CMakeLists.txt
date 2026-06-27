@@ -645,6 +645,10 @@ add_subdirectory(src cmsat5-src)
 # =============================================================================
 option(BUILD_PYTHON_EXTENSION "Build the pycryptosat Python extension module" OFF)
 if(BUILD_PYTHON_EXTENSION)
+    if(WIN32 AND NOT MSVC)
+        # Let MinGW's FindPython locate the MSVC-built CPython import lib (pythonXX.lib).
+        list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
+    endif()
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
     # pycryptosat.cpp uses only the raw Python C API; GitSHA1 symbols are
