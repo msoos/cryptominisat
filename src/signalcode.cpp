@@ -27,22 +27,30 @@ THE SOFTWARE.
 #include <unistd.h>
 #endif
 
-
 using namespace CMSat;
-
-SATSolver* solverToInterrupt;
-int need_clean_exit;
-std::string redDumpFname;
-std::string irredDumpFname;
-
 using std::cout;
 using std::endl;
 
-void SIGINT_handler(int)
+namespace CMSat {
+
+DLL_PUBLIC SATSolver* solverToInterrupt;
+DLL_PUBLIC int need_clean_exit;
+DLL_PUBLIC double wallclock_time_started = 0.0;
+DLL_PUBLIC bool interrupt_only = false;
+std::string redDumpFname;
+std::string irredDumpFname;
+
+DLL_PUBLIC void SIGINT_handler(int)
 {
     SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
+
+    if (interrupt_only) {
+        if (solver) solver->interrupt_asap();
+        return;
+    }
+
     if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
         solver->interrupt_asap();
         std::cerr
@@ -67,3 +75,5 @@ void SIGINT_handler(int)
         #endif
     }
 }
+
+} // namespace CMSat

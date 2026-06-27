@@ -25,11 +25,13 @@ THE SOFTWARE.
 **********************************/
 
 #include <Python.h>
+#include <signal.h>
 #include <structmember.h>
 #include <limits>
 #include <cassert>
 #include <algorithm>
 #include "../../src/cryptominisat.h"
+#include "../../src/signalcode.h"
 using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"
@@ -586,10 +588,18 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    solverToInterrupt = self->cmsat;
+    interrupt_only = true;
+    sighandler_t prev_handler = signal(SIGINT, SIGINT_handler);
+
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
     Py_END_ALLOW_THREADS
+
+    signal(SIGINT, prev_handler);
+    interrupt_only = false;
+    solverToInterrupt = nullptr;
 
     self->cmsat->set_verbosity(self->verbose);
     self->cmsat->set_max_time(self->time_limit);
