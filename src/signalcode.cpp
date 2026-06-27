@@ -33,14 +33,14 @@ using std::endl;
 
 namespace CMSat {
 
-SATSolver* solverToInterrupt;
-int need_clean_exit;
-double wallclock_time_started = 0.0;
-bool interrupt_only = false;
+DLL_PUBLIC SATSolver* solverToInterrupt;
+DLL_PUBLIC int need_clean_exit;
+DLL_PUBLIC double wallclock_time_started = 0.0;
+DLL_PUBLIC bool interrupt_only = false;
 std::string redDumpFname;
 std::string irredDumpFname;
 
-void SIGINT_handler(int)
+DLL_PUBLIC void SIGINT_handler(int)
 {
     SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;

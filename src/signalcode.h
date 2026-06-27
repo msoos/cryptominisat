@@ -24,15 +24,16 @@ THE SOFTWARE.
 #define SIGNALCODE_H_
 
 #include <string>
+#include "constants.h"
 
 namespace CMSat {
     class SATSolver;
 
-    extern SATSolver* solverToInterrupt;
-    extern int need_clean_exit;
-    extern double wallclock_time_started;
-    extern bool interrupt_only;
-    void SIGINT_handler(int);
+    extern DLL_PUBLIC SATSolver* solverToInterrupt;
+    extern DLL_PUBLIC int need_clean_exit;
+    extern DLL_PUBLIC double wallclock_time_started;
+    extern DLL_PUBLIC bool interrupt_only;
+    DLL_PUBLIC void SIGINT_handler(int);
 }
 
 #endif //SIGNALCODE_H_
