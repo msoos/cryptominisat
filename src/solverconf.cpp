@@ -282,7 +282,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,sub-impl,"
             "breakid,"
              //occurrence based
-            "occ-backw-sub-str,occ-clean-implicit,occ-gate-eq,occ-bve,"//occ-gates,"
+            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
             "occ-bva,occ-ternary-res,occ-xor,card-find,"
             //consolidate after OCC
             "cl-consolidate,"

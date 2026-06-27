@@ -246,7 +246,7 @@ private:
 
     bool startup = false;
     bool backward_sub_str();
-    bool eq_gates();
+    bool gate_based_eqlit();
     void backward_sub();
     bool execute_simplifier_strategy(const string& strategy);
     bool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed);
@@ -277,7 +277,6 @@ private:
     uint64_t clause_lits_added;
     int64_t  strengthening_time_limit;
     int64_t  gate_based_litrem_time_limit;
-    int64_t  eq_gates_time_limit;
     int64_t  subsumption_time_limit;
     int64_t  norm_varelim_time_limit;
     int64_t  resolvent_sub_time_limit;

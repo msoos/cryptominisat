@@ -2043,175 +2043,76 @@ bool OccSimplifier::cl_rem_with_or_gates()
     return solver->okay();
 }
 
-// Runs the gate detectors one-by-one over every variable. Whenever two
-// literals "a" and "b" turn out to be defined by the same function, i.e.
-// a = f(X) and b = f(X), we know a == b
-bool OccSimplifier::eq_gates() {
+bool OccSimplifier::gate_based_eqlit() {
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
-    assert(toClear.empty());
 
-    const double my_time = cpu_time();
-    auto* old_limit_to_decrease = limit_to_decrease;
-    limit_to_decrease = &eq_gates_time_limit;
+    double my_time = cpu_time();
+    gateFinder = new GateFinder(this, solver);
+    gateFinder->find_all();
+    vector<OrGate> gates = gateFinder->get_gates();
+    gateFinder->cleanup();
+    delete gateFinder;
+    gateFinder = nullptr;
 
-    uint32_t eq = 0;
-    bool ok = true;
-    vector<Lit> lits;
-    auto add_cl = [&](Lit l, Lit l2) {
-        lits.clear();
-        lits.push_back(l);
-        lits.push_back(l2);
-        auto* cl = solver->add_clause_int(
-            lits //Literals in new clause
+    auto old_limit_to_decrease = limit_to_decrease;
+    limit_to_decrease = &gate_based_litrem_time_limit;
+
+    // Fill occ list
+    for(auto& g: gates) std::sort(g.lits.begin(), g.lits.end());
+    map<Lit, vector<uint32_t>> lit_to_gates; //lit -> gate num
+    for(uint32_t i = 0; i < gates.size(); i++) {
+        lit_to_gates[gates[i].lits[0]].push_back(i);
+    }
+
+    vector<Lit> finalLits;
+    auto myadd = [&](Lit l, Lit l2) {
+        finalLits.clear();
+        finalLits.push_back(l);
+        finalLits.push_back(l2);
+        auto newCl = solver->add_clause_int(
+            finalLits //Literals in new clause
             , false //Is the new clause redundant?
             , nullptr //orig stats
             , false //Should clause be attached if long?
-            , &lits //Return final set of literals here
+            , &finalLits //Return final set of literals here
         );
-        assert(cl == nullptr);
-        if (lits.size() == 2) {
-            n_occurs[lits[0].toInt()]++;
-            n_occurs[lits[1].toInt()]++;
-            added_irred_bin.emplace_back(lits[0], lits[1]);
+        assert(newCl == nullptr);
+
+        if (finalLits.size() == 2) {
+            n_occurs[finalLits[0].toInt()]++;
+            n_occurs[finalLits[1].toInt()]++;
+            added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
         }
     };
 
-    // Assert a == b by adding (~a V b) and (~b V a).
-    auto add_eq = [&](Lit a, Lit b) -> bool {
-        if (a.var() == b.var()) return true;
-        add_cl(~a, b);
-        if (!solver->okay()) return false;
-        add_cl(~b, a);
-        if (!solver->okay()) return false;
-        eq++;
-        return true;
-    };
-
-    // XOR: key = sorted set of the *other* vars in the XOR.
-    //      value = (var, rhs) such that  var = XOR(other vars) ^ rhs.
-    std::map<vector<uint32_t>, std::pair<uint32_t, bool>> xor_defs;
-
-    // ITE: key = {x.toInt(), T.toInt(), E.toInt()} of the canonical ITE.
-    //      value = the literal "out" such that  out = ITE(x, T, E).
-    std::map<std::array<uint32_t, 3>, uint32_t> ite_defs;
-
-    vector<uint32_t> keyvars;
-    for(uint32_t v = 0; v < solver->nVars() && ok; v++) {
-        if (*limit_to_decrease < 0) break;
-        if (solver->value(v) != l_Undef ||
-            solver->varData[v].removed != Removed::none)
-        {
-            continue;
-        }
-
-        const Lit lit(v, false);
-        *limit_to_decrease -= (int64_t)solver->watches[lit].size();
-        *limit_to_decrease -= (int64_t)solver->watches[~lit].size();
-        clean_from_red_or_removed(solver->watches[lit], poss);
-        clean_from_red_or_removed(solver->watches[~lit], negs);
-        clean_from_satisfied(poss);
-        clean_from_satisfied(negs);
-        if (poss.empty() || negs.empty()) continue;
-
-        // ---- XOR gate: v = XOR(other vars) ^ rhs ----
-        if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)
-            && !gates_poss.empty()
-            && gates_poss[0].isClause())
-        {
-            const Clause* cl = solver->cl_alloc.ptr(gates_poss[0].get_offset());
-            bool parity = false;
-            keyvars.clear();
-            for(const Lit l: *cl) {
-                parity ^= l.sign();
-                if (l.var() != v) keyvars.push_back(l.var());
-            }
-            std::sort(keyvars.begin(), keyvars.end());
-            const bool rhs = !parity;
-            auto it = xor_defs.find(keyvars);
-            if (it == xor_defs.end()) {
-                xor_defs.insert(std::make_pair(keyvars, std::make_pair(v, rhs)));
-            } else {
-                // Lit(v,false) ^ Lit(ov,false) = rhs ^ orhs
-                const uint32_t ov = it->second.first;
-                const bool orhs = it->second.second;
-                if (!add_eq(Lit(v, false), Lit(ov, rhs ^ orhs))) ok = false;
+    // Check if any equvalent
+    uint32_t eq = 0;
+    for(uint32_t i = 0; i < gates.size(); i++) {
+        const auto& g = gates[i];
+        Lit l = g.lits[0];
+        const auto it = lit_to_gates.find(l);
+        if (it == lit_to_gates.end()) continue;
+        for(uint32_t i2 = 0; i2 < it->second.size(); i2++) {
+            const auto& g2 = gates[(it->second)[i2]];
+            if (g2.lits == g.lits) {
+                // rhs must be equivalent
+                if (g2.rhs == g.rhs) continue;
+                myadd(g.rhs, ~g2.rhs);
+                if (!solver->okay()) goto end;
+                myadd(~g.rhs, g2.rhs);
+                if (!solver->okay()) goto end;
+                eq++;
             }
         }
-        if (!ok) break;
-
-        // ---- ITE gate: a = ITE(x, T, E), tried in both polarities of v ----
-        for(int dir = 0; dir < 2 && ok; dir++) {
-            const Lit elim_lit = (dir == 0) ? lit : ~lit;
-            watch_subarray_const wa = (dir == 0) ? poss : negs;
-            watch_subarray_const wb = (dir == 0) ? negs : poss;
-            if (!find_ite_gate(elim_lit, wa, wb, gates_poss, gates_negs)) continue;
-            if (gates_poss.size() != 2) continue;
-
-            const Clause* c0 = solver->cl_alloc.ptr(gates_poss[0].get_offset());
-            const Clause* c1 = solver->cl_alloc.ptr(gates_poss[1].get_offset());
-            if (c0->size() != 3 || c1->size() != 3) continue;
-
-            // The two non-elim literals of each clause.
-            Lit r0[2];
-            Lit r1[2];
-            uint32_t n0 = 0;
-            uint32_t n1 = 0;
-            for(const Lit l: *c0) if (l != elim_lit && n0 < 2) r0[n0++] = l;
-            for(const Lit l: *c1) if (l != elim_lit && n1 < 2) r1[n1++] = l;
-            if (n0 != 2 || n1 != 2) continue;
-
-            // x is the variable shared by both clauses (must be exactly one).
-            uint32_t var_x = var_Undef;
-            uint32_t shared = 0;
-            for(auto i : r0) {
-                for(auto j : r1) {
-                    if (i.var() == j.var()) { shared++; var_x = i.var(); }
-                }
-            }
-            if (shared != 1) continue;
-
-            const Lit x0 = (r0[0].var() == var_x) ? r0[0] : r0[1];
-            const Lit f0 = (r0[0].var() == var_x) ? r0[1] : r0[0];
-            const Lit f1 = (r1[0].var() == var_x) ? r1[1] : r1[0];
-            if (x0 == ((r1[0].var() == var_x) ? r1[0] : r1[1])) continue; //must be opposite signs
-
-            // a = ITE(x, T, E):  when x true a = T, when x false a = E.
-            // The clause holding ~x (relative to the positive x) carries T.
-            const Lit a = ~elim_lit;
-            Lit T;
-            Lit E;
-            if (x0 == Lit(var_x, true)) { T = f0; E = f1; } //c0 holds ~x
-            else                        { T = f1; E = f0; } //c1 holds ~x
-
-            if (T == E) continue; //degenerate: a == T, plain equivalence
-            if (T.var() == a.var() || E.var() == a.var() || var_x == a.var()) continue;
-
-            // Canonicalize: force x positive (already chosen) and the
-            // then-branch T positive, folding any flip into the output literal.
-            const Lit x_canon(var_x, false);
-            Lit Tc = T;
-            Lit Ec = E;
-            Lit out = a;
-            if (T.sign()) { Tc = ~T; Ec = ~E; out = ~a; } //~a = ITE(x, ~T, ~E)
-            const std::array<uint32_t, 3> key{
-                {x_canon.toInt(), Tc.toInt(), Ec.toInt()}};
-
-            auto it = ite_defs.find(key);
-            if (it == ite_defs.end()) {
-                ite_defs.insert(std::make_pair(key, out.toInt()));
-            } else {
-                const Lit prev = Lit::toLit(it->second);
-                if (!add_eq(prev, out)) ok = false; //prev == out
-            }
-        }
-        if (!ok) break;
     }
 
+    end:
     added_long_cl.clear();
     added_irred_bin.clear();
+
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
@@ -2221,12 +2122,13 @@ bool OccSimplifier::eq_gates() {
     }
 
     const double time_used = cpu_time() - my_time;
-    verb_print(1, "[occ-gate-eq]" << " eq: " << eq
+    verb_print(1, "[occ-gate-based-eqlit]" << " eq: " << eq
         << solver->conf.print_times(time_used, false));
+    assert(limit_to_decrease == &gate_based_litrem_time_limit);
     limit_to_decrease = old_limit_to_decrease;
 
     if (solver->sqlStats)
-        solver->sqlStats->time_passed_min(solver, "occ-gate-eq", time_used);
+        solver->sqlStats->time_passed_min( solver , "occ-gate-based-eqlit" , time_used);
 
     return solver->okay();
 }
@@ -2450,8 +2352,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
-        } else if (token == "occ-gate-eq") {
-            if (solver->conf.doFindAndReplaceEqLits) eq_gates();
+        } else if (token == "occ-gate-based-eqlit") {
+            if (solver->conf.doFindAndReplaceEqLits)
+                gate_based_eqlit();
         } else if (token == "occ-bve-empty") {
             if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
         } else if (token == "occ-bve") {
@@ -3213,7 +3116,6 @@ void OccSimplifier::set_limits()
     strengthening_time_limit   = 200LL*1000LL*solver->conf.strengthening_time_limitM
         *solver->conf.global_timeout_multiplier;
     gate_based_litrem_time_limit = strengthening_time_limit;
-    eq_gates_time_limit = strengthening_time_limit;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
     resolvent_sub_time_limit    = 500LL*1000LL*solver->conf.varelim_time_limitM
