@@ -376,7 +376,6 @@ add_executable(cryptominisat5-bin
     main.cpp
     main_common.cpp
     main_exe.cpp
-    signalcode.cpp
 )
 
 add_library(oracle
