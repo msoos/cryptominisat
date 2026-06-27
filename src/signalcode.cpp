@@ -36,7 +36,7 @@ namespace CMSat {
 SATSolver* solverToInterrupt;
 int need_clean_exit;
 double wallclock_time_started = 0.0;
-bool g_python_lib = false;
+bool interrupt_only = false;
 std::string redDumpFname;
 std::string irredDumpFname;
 
@@ -46,13 +46,8 @@ void SIGINT_handler(int)
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
 
-    if (g_python_lib) {
-        // Library mode (Python): only set the interrupt flag, let the
-        // solver return l_Undef cleanly.  Do NOT call _exit() — that
-        // would kill the Python process.
-        if (solver) {
-            solver->interrupt_asap();
-        }
+    if (interrupt_only) {
+        if (solver) solver->interrupt_asap();
         return;
     }
 
