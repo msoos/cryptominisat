@@ -1509,19 +1509,19 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     return or_gates;
 }
 
-int OccSimplifier::lit_to_picolit(const Lit l) {
-    picolits_added++;
+void OccSimplifier::register_lit_to_picovar(const Lit l) {
     auto f = var_to_picovar[l.var()];
-    int picolit = 0;
     if (f == 0) {
         int v = picosat_inc_max_var(picosat);
         var_to_picovar[l.var()] = v;
         picovars_used.push_back(l.var());
-        picolit = v * (l.sign() ? -1 : 1);
-    } else {
-        picolit = f * (l.sign() ? -1 : 1);
     }
-    return picolit;
+}
+
+int OccSimplifier::lit_to_picolit(const Lit l) {
+    picolits_added++;
+    release_assert(var_to_picovar[l.var()] != 0 && "lit not pre-registered with picosat");
+    return var_to_picovar[l.var()] * (l.sign() ? -1 : 1);
 }
 
 uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
@@ -1663,12 +1663,18 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
 
         if (picosat == nullptr) picosat = picosat_init();
         assert(picovars_used.empty());
+        pre_register_picosat_vars(solver->watches[l], l);
+        pre_register_picosat_vars(solver->watches[~l], ~l);
         uint32_t added = add_cls_to_picosat_definable(l);
         added += add_cls_to_picosat_definable(~l);
         for(const auto x: picovars_used) var_to_picovar[x] = 0;
         picovars_used.clear();
 
-        if (added == 0) continue;
+        if (added == 0) {
+            picosat_reset(picosat);
+            picosat = nullptr;
+            continue;
+        }
 
         int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
         picosat_ran++;
@@ -1759,12 +1765,16 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
         }
 
         assert(picovars_used.empty());
+        pre_register_picosat_vars(solver->watches[l], l);
+        pre_register_picosat_vars(solver->watches[~l], ~l);
         uint32_t added = add_cls_to_picosat_definable(l);
         added += add_cls_to_picosat_definable(~l);
         for(const auto x: picovars_used) var_to_picovar[x] = 0;
         picovars_used.clear();
 
         if (added == 0) {
+            picosat_reset(picosat);
+            picosat = nullptr;
             no_cls_matching_filter++;
             ret.push_back(v);
             continue;
@@ -3300,6 +3310,25 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t id
     newly_elimed_cls_IDs.push_back(id);
 }
 
+void OccSimplifier::pre_register_picosat_vars(
+    const vec<Watched>& ws, const Lit elim_lit)
+{
+    for(const auto& w: ws) {
+        if (w.isClause()) {
+            Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+            assert(!cl.get_removed());
+            assert(!cl.red());
+            for(const auto& l: cl) {
+                if (l.var() != elim_lit.var())
+                    register_lit_to_picovar(l);
+            }
+        } else if (w.isBin()) {
+            if (w.red()) continue;
+            register_lit_to_picovar(w.lit2());
+        }
+    }
+}
+
 void OccSimplifier::add_picosat_cls(
     const vec<Watched>& ws, const Lit elim_lit,
     unordered_map<int, Watched>& picosat_cl_to_cms_cl)
@@ -3358,6 +3387,8 @@ bool OccSimplifier::find_irreg_gate(
     unordered_map<int, Watched> a_map;
     unordered_map<int, Watched> b_map;
     assert(picovars_used.empty());
+    pre_register_picosat_vars(a, elim_lit);
+    pre_register_picosat_vars(b, elim_lit);
     add_picosat_cls(a, elim_lit, a_map);
     add_picosat_cls(b, elim_lit, b_map);
     for(const auto v: picovars_used) var_to_picovar[v] = 0;

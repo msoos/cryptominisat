@@ -418,6 +418,8 @@ private:
         vec<Watched>& out_b
     );
     void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
+    void pre_register_picosat_vars(const vec<Watched>& ws, const Lit elim_lit);
+    void register_lit_to_picovar(const Lit l);
     bool turned_off_irreg_gate = false;
     bool resolve_gate;
     bool find_irreg_gate(
