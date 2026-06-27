@@ -64,3 +64,7 @@ repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 # GMP is not a macOS system library; brew installs it and delocate bundles it.
 before-all = "brew install gmp ccache || true"
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+
+[tool.cibuildwheel.windows]
+# MinGW/GCC build (MSVC can't build gmpxx); toolchain set in CIBW_ENVIRONMENT_WINDOWS.
+test-command = "pytest {project}/python/tests"
