@@ -44,6 +44,21 @@ jobs:
             mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-ccache
 
+      - name: Put MSYS2 MinGW toolchain on PATH (Windows)
+        if: contains(matrix.os, 'windows')
+        shell: pwsh
+        # Set these via GITHUB_PATH/GITHUB_ENV rather than CIBW_ENVIRONMENT_WINDOWS:
+        # cibuildwheel parses CIBW_ENVIRONMENT through a bash-like parser that mangles
+        # Windows backslash paths, so the prepended MinGW dir never reaches PATH and the
+        # build falls back to the runner's pre-installed C:\mingw64 (no pkgconf/gmp).
+        # The build subprocess inherits these instead, so the right toolchain is used.
+        run: |
+          "${{ steps.msys2.outputs.msys2-location }}\mingw64\bin" >> $env:GITHUB_PATH
+          "PKG_CONFIG_PATH=${{ steps.msys2.outputs.msys2-location }}\mingw64\lib\pkgconfig" >> $env:GITHUB_ENV
+          "CC=gcc" >> $env:GITHUB_ENV
+          "CXX=g++" >> $env:GITHUB_ENV
+          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+
       - name: Cache ccache
         uses: actions/cache@v4
         with:
@@ -64,10 +79,7 @@ jobs:
           CIBW_ARCHS_LINUX: native   # x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm
           CIBW_ARCHS_MACOS: native   # arm64 on macos-14, x86_64 on macos-15-intel
           CIBW_ARCHS_WINDOWS: AMD64
-          CIBW_ENVIRONMENT_WINDOWS: >-
-            PATH="${{ steps.msys2.outputs.msys2-location }}\mingw64\bin;$PATH"
-            PKG_CONFIG_PATH="${{ steps.msys2.outputs.msys2-location }}\mingw64\lib\pkgconfig"
-            CC=gcc CXX=g++ CMAKE_GENERATOR=Ninja
+          # MSYS2 toolchain/PATH for Windows is set via GITHUB_PATH/GITHUB_ENV above.
 
       - uses: actions/upload-artifact@v4
         with:
