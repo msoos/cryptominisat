@@ -1,0 +1,6 @@
+c RUN: not %solver --verb=0 --assump %S/Inputs/assump-trailing.txt %s 2>&1 | %OutputCheck %s
+p cnf 3 2
+1 2 0
+-2 3 0
+c A line with trailing characters after the integer (e.g. "1 2") must error out
+c CHECK: ^ERROR! Could not parse assumptions file .* at line 1: expected a single integer literal, got '1 2'$

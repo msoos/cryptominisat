@@ -1,0 +1,6 @@
+c RUN: not %solver --verb=0 --assump %S/Inputs/does-not-exist.txt %s 2>&1 | %OutputCheck %s
+p cnf 3 2
+1 2 0
+-2 3 0
+c A non-existent assumptions file must error out, not be silently ignored
+c CHECK: ^ERROR! Could not open assumptions file

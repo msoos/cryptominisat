@@ -233,6 +233,57 @@ static double fc_double(const std::string& s) {
     return val;
 }
 
+void Main::readInAssumptions()
+{
+    if (assump_filename.empty()) return;
+
+    std::ifstream tmp;
+    tmp.open(assump_filename.c_str());
+    if (!tmp.is_open()) {
+        std::cerr
+        << "ERROR! Could not open assumptions file '"
+        << assump_filename
+        << "' for reading: " << strerror(errno) << endl;
+        std::exit(1);
+    }
+
+    std::string line;
+    size_t line_no = 0;
+    while(std::getline(tmp, line)) {
+        line_no++;
+
+        //Trim leading/trailing whitespace, skip empty/blank lines
+        const auto first = line.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos) continue;
+        const auto last = line.find_last_not_of(" \t\r\n");
+        const std::string token = line.substr(first, last - first + 1);
+
+        int x = 0;
+        try {
+            x = fc_int(token);
+        } catch (const std::invalid_argument&) {
+            std::cerr
+            << "ERROR! Could not parse assumptions file '"
+            << assump_filename
+            << "' at line " << line_no
+            << ": expected a single integer literal, got '"
+            << token << "'" << endl;
+            std::exit(1);
+        }
+        if (x == 0) {
+            std::cerr
+            << "ERROR! Invalid assumption in file '"
+            << assump_filename
+            << "' at line " << line_no
+            << ": literal must not be 0" << endl;
+            std::exit(1);
+        }
+
+        cout << "Assume: " << x << endl;
+        assumps.push_back(Lit(std::abs(x)-1, x < 0));
+    }
+}
+
 /* clang-format off */
 void Main::add_supported_options() {
     program.add_argument("--version", "-v")
@@ -1251,54 +1302,7 @@ int Main::solve()
     //Parse in DIMACS (maybe gzipped) files
     //solver->log_to_file("mydump.cnf");
     parseInAllFiles(solver);
-    if (!assump_filename.empty()) {
-        std::ifstream tmp;
-        tmp.open(assump_filename.c_str());
-        if (!tmp.is_open()) {
-            std::cerr
-            << "ERROR! Could not open assumptions file '"
-            << assump_filename
-            << "' for reading: " << strerror(errno) << endl;
-            std::exit(1);
-        }
-
-        std::string temp;
-        size_t line_no = 0;
-        while(std::getline(tmp, temp)) {
-            line_no++;
-
-            //Trim leading/trailing whitespace
-            const auto first = temp.find_first_not_of(" \t\r\n");
-            if (first == std::string::npos) continue; //skip empty/blank lines
-            const auto last = temp.find_last_not_of(" \t\r\n");
-            const char* begin = temp.data() + first;
-            const char* end = temp.data() + last + 1;
-
-            int x = 0;
-            const auto res = std::from_chars(begin, end, x);
-            if (res.ec != std::errc() || res.ptr != end) {
-                std::cerr
-                << "ERROR! Could not parse assumptions file '"
-                << assump_filename
-                << "' at line " << line_no
-                << ": expected a single integer literal, got '"
-                << temp << "'" << endl;
-                std::exit(1);
-            }
-            if (x == 0) {
-                std::cerr
-                << "ERROR! Invalid assumption in file '"
-                << assump_filename
-                << "' at line " << line_no
-                << ": literal must not be 0" << endl;
-                std::exit(1);
-            }
-
-            cout << "Assume: " << x << endl;
-            Lit l = Lit(std::abs(x)-1, x < 0);
-            assumps.push_back(l);
-        }
-    }
+    readInAssumptions();
 
     lbool ret = multi_solutions();
     if (ret == l_Undef && conf.verbosity) {

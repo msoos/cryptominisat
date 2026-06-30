@@ -77,6 +77,7 @@ class Main: public MainCommon
         void readInAFile(SATSolver* solver2, const string& filename);
         void readInStandardInput(SATSolver* solver2);
         void parseInAllFiles(SATSolver* solver2);
+        void readInAssumptions();
 
         //Helper functions
         void printResultFunc(

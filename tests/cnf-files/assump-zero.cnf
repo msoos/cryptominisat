@@ -1,0 +1,6 @@
+c RUN: not %solver --verb=0 --assump %S/Inputs/assump-zero.txt %s 2>&1 | %OutputCheck %s
+p cnf 3 2
+1 2 0
+-2 3 0
+c The literal 0 is not a valid assumption and must error out
+c CHECK: ^ERROR! Invalid assumption in file .* at line 2: literal must not be 0$

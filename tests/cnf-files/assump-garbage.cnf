@@ -1,0 +1,6 @@
+c RUN: not %solver --verb=0 --assump %S/Inputs/assump-garbage.txt %s 2>&1 | %OutputCheck %s
+p cnf 3 2
+1 2 0
+-2 3 0
+c A line that is not a single integer literal must error out with a line number
+c CHECK: ^ERROR! Could not parse assumptions file .* at line 2: expected a single integer literal, got 'foo'$
