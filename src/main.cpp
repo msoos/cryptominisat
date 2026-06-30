@@ -1252,18 +1252,52 @@ int Main::solve()
     //solver->log_to_file("mydump.cnf");
     parseInAllFiles(solver);
     if (!assump_filename.empty()) {
-        std::ifstream* tmp = new std::ifstream;
-        tmp->open(assump_filename.c_str());
+        std::ifstream tmp;
+        tmp.open(assump_filename.c_str());
+        if (!tmp.is_open()) {
+            std::cerr
+            << "ERROR! Could not open assumptions file '"
+            << assump_filename
+            << "' for reading: " << strerror(errno) << endl;
+            std::exit(1);
+        }
+
         std::string temp;
-        while(std::getline(*tmp, temp)) {
-            //Do with temp
-            int x = std::stoi(temp);
+        size_t line_no = 0;
+        while(std::getline(tmp, temp)) {
+            line_no++;
+
+            //Trim leading/trailing whitespace
+            const auto first = temp.find_first_not_of(" \t\r\n");
+            if (first == std::string::npos) continue; //skip empty/blank lines
+            const auto last = temp.find_last_not_of(" \t\r\n");
+            const char* begin = temp.data() + first;
+            const char* end = temp.data() + last + 1;
+
+            int x = 0;
+            const auto res = std::from_chars(begin, end, x);
+            if (res.ec != std::errc() || res.ptr != end) {
+                std::cerr
+                << "ERROR! Could not parse assumptions file '"
+                << assump_filename
+                << "' at line " << line_no
+                << ": expected a single integer literal, got '"
+                << temp << "'" << endl;
+                std::exit(1);
+            }
+            if (x == 0) {
+                std::cerr
+                << "ERROR! Invalid assumption in file '"
+                << assump_filename
+                << "' at line " << line_no
+                << ": literal must not be 0" << endl;
+                std::exit(1);
+            }
+
             cout << "Assume: " << x << endl;
             Lit l = Lit(std::abs(x)-1, x < 0);
             assumps.push_back(l);
         }
-
-        delete tmp;
     }
 
     lbool ret = multi_solutions();
