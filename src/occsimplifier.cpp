@@ -2165,7 +2165,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     //           and have a V b = d  --> i.e. a V b V -d exists
     //      and we could replace (a V b V -c) with d V -c
     //      and we could replace (a V b V -d) with c V -d
-    //      which would loose the definiton of c->a V b and d-> a V b
+    //      which would loose the definition of c->a V b and d-> a V b
     for(const auto& g: gates) assert(std::is_sorted(g.lits.begin(), g.lits.end()));
     std::sort(gates.begin(), gates.end(), OrGateSorterLHS());
     gates.erase(unique(gates.begin(), gates.end(), GateLHSEq()),gates.end());
