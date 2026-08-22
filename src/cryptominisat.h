@@ -110,6 +110,8 @@ namespace CMSat {
 
         void set_num_threads(unsigned n); //Number of threads to use. Must be set before any vars/clauses are added
         void set_allow_otf_gauss(); //allow on-the-fly gaussian elimination
+        void set_max_num_matrices(uint32_t val); //max number of gaussian elimination matrices
+        void set_min_matrix_rows(uint32_t val); //below this many rows, a matrix is discarded
         /**
          * CPU time (in seconds) that can be consumed before the next call to solve() must return
          *
@@ -132,6 +134,7 @@ namespace CMSat {
         CMSat::PolarityMode get_polarity_mode() const;
         void set_no_simplify(); //never simplify
         void set_no_simplify_at_startup(); //doesn't simplify at start, faster startup time
+        void set_simplify_at_startup(int val); //simplify at the very start
         void set_no_equivalent_lit_replacement(); //don't replace equivalent literals
         void set_no_bva(); //No bounded variable addition
         void set_no_bve(); //No bounded variable elimination

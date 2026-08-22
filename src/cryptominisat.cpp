@@ -586,6 +586,30 @@ DLL_PUBLIC void SATSolver::set_no_simplify_at_startup()
     }
 }
 
+DLL_PUBLIC void SATSolver::set_simplify_at_startup(int val)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.simplify_at_startup = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_max_num_matrices(uint32_t val)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.gaussconf.max_num_matrices = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_min_matrix_rows(uint32_t val)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.gaussconf.min_matrix_rows = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_no_equivalent_lit_replacement()
 {
     set_scc(0);
