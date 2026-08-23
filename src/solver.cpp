@@ -1223,6 +1223,12 @@ void Solver::check_xor_cut_config_sanity() const
         std::cerr << "ERROR: MAX_XOR_RECOVER_SIZE  must be at least 4. It's currently: " << MAX_XOR_RECOVER_SIZE << endl;
         exit(-1);
     }
+
+    if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
+        std::cerr << "ERROR: maximum XOR size to find (" << conf.maxXorToFind
+        << ") cannot be larger than MAX_XOR_RECOVER_SIZE (" << MAX_XOR_RECOVER_SIZE << ")" << endl;
+        exit(-1);
+    }
 }
 
 void Solver::check_and_upd_config_parameters()

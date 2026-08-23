@@ -130,7 +130,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define EFFECTIVELY_USEABLE_BITS 30
 #endif
 
-#define MAX_XOR_RECOVER_SIZE 8
+#define MAX_XOR_RECOVER_SIZE 12
 
 #if defined _WIN32
     #define DLL_PUBLIC __declspec(dllexport)
