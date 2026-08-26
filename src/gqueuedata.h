@@ -41,6 +41,7 @@ struct GaussQData {
     uint32_t engaus_disable_checks = 0;
     bool disabled = false;  // Can be disabled. In this case, all xor constraints
                             // are reattached as plain XOR constraints
+    bool disable_pending = false; // must_disable() fired, disable at dec level 0
 
     // Lazy per-gauss_jordan_elim-call flag: true iff this matrix has been
     // reset+updated in the current call. Cleared at end of each call.

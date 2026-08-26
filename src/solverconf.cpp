@@ -246,7 +246,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //XOR
         , doFindXors       (true)
-        , maxXorToFind     (7)
+        , maxXorToFind     (MAX_XOR_RECOVER_SIZE)
         , maxXorToFindSlow (5)
         , maxXORMatrix     (400ULL)
         , xor_finder_time_limitM(400)

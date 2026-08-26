@@ -1438,14 +1438,15 @@ void EGaussian::check_cols_unset_vals()
 bool EGaussian::must_disable(GaussQData& gqd)
 {
     assert(initialized);
+    const auto& gconf = solver->conf.gaussconf;
     gqd.engaus_disable_checks++;
-    if ((gqd.engaus_disable_checks & 0x3ff) == 0x3ff //only check once in a while
-    ) {
+    if (gqd.engaus_disable_checks >= gconf.autodisable_check_every) { //only check once in a while
+        gqd.engaus_disable_checks = 0;
         uint64_t egcalled = elim_called + find_truth_ret_satisfied_precheck+find_truth_called_propgause;
-        uint32_t limit = (double)egcalled*solver->conf.gaussconf.min_usefulness_cutoff;
+        uint32_t limit = (double)egcalled*gconf.min_usefulness_cutoff;
         uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
         //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
-        if (egcalled > 200 && useful < limit) {
+        if (egcalled > gconf.autodisable_min_calls && useful < limit) {
             if (solver->conf.verbosity) {
                 const double perc =
                     stats_line_percent(useful, egcalled);
@@ -1469,6 +1470,7 @@ void CMSat::EGaussian::move_back_xor_clauses() {
         solver->xorclauses.push_back(std::move(x));
         if (ok) solver->attach_xor_clause(solver->xorclauses.size()-1);
     }
+    xorclauses.clear(); //don't move them back twice
 }
 
 

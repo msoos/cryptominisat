@@ -1042,6 +1042,14 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.gaussconf.min_usefulness_cutoff = fc_double(a);})
         .default_value(conf.gaussconf.min_usefulness_cutoff)
         .help("Turn off Gauss if less than this many usefulness ratio is recorded");
+    program.add_argument("--gaussmincalls")
+        .action([&](const auto& a) {conf.gaussconf.autodisable_min_calls = fc_int(a);})
+        .default_value(conf.gaussconf.autodisable_min_calls)
+        .help("Only consider disabling a matrix after this many Gauss calls");
+    program.add_argument("--gausscheckevery")
+        .action([&](const auto& a) {conf.gaussconf.autodisable_check_every = fc_int(a);})
+        .default_value(conf.gaussconf.autodisable_check_every)
+        .help("Check whether to disable a matrix every this many conflicts");
     program.add_argument("--dumpresult")
         .action([&](const auto& a) {result_fname = a;})
         .help("Write solution(s) to this file");

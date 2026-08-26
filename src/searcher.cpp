@@ -1215,6 +1215,20 @@ void Searcher::print_order_heap()
     }
 }
 
+// Disables a single matrix at dec level 0, re-attaching its XORs as
+// plain XOR clauses. The matrix object is kept so its watches can be
+// removed lazily by gauss_jordan_elim().
+bool Searcher::disable_gauss_matrix(const uint32_t i)
+{
+    assert(decisionLevel() == 0);
+    auto& gqd = gqueuedata[i];
+    assert(!gqd.disabled);
+    gmatrices[i]->delete_reasons();
+    gqd.disabled = true;
+    gmatrices[i]->move_back_xor_clauses();
+    return okay();
+}
+
 void Searcher::check_need_gauss_jordan_disable()
 {
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
@@ -1222,7 +1236,8 @@ void Searcher::check_need_gauss_jordan_disable()
         if (gqd.disabled) continue;
 
         if (conf.gaussconf.autodisable && gmatrices[i]->must_disable(gqd)) {
-            //XORs are detached into the matrix, so tear down at dec level 0
+            //XORs are detached into the matrix, so disable at dec level 0
+            gqd.disable_pending = true;
             gauss_disable_pending = true;
             params.must_stop = true;
         }
@@ -1306,12 +1321,14 @@ lbool Searcher::search()
     assert(search_ret == l_Undef);
     if (gauss_disable_pending) {
         gauss_disable_pending = false;
-        verb_print(1, "[gauss] disabling matrices in this round, they are performing badly");
-        if (!clear_gauss_matrices(false)) {
-            search_ret = l_False;
-            goto end;
+        for(uint32_t i = 0; i < gqueuedata.size(); i++) {
+            if (!gqueuedata[i].disable_pending) continue;
+            gqueuedata[i].disable_pending = false;
+            if (!disable_gauss_matrix(i)) {
+                search_ret = l_False;
+                goto end;
+            }
         }
-        xorclauses_updated = false; //XORs unchanged, don't re-init matrices
     }
     SLOW_DEBUG_DO(check_no_zero_ID_bins());
     SLOW_DEBUG_DO(check_no_duplicate_lits_anywhere());
