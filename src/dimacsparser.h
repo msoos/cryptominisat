@@ -498,6 +498,18 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             vector<uint32_t> opt_sampl_vars;
             if (!parseIndependentSet(in, opt_sampl_vars)) { return false; }
             solver->set_opt_sampl_vars(opt_sampl_vars);
+        } else if (str2 == "exist") {
+            // complement of "optshow", informational only
+            in.skipWhitespace();
+            vector<uint32_t> exist_vars;
+            if (!parseIndependentSet(in, exist_vars)) { return false; }
+        } else if (str2 == "no-touch") {
+            in.skipWhitespace();
+            vector<uint32_t> no_touch_vars;
+            if (!parseIndependentSet(in, no_touch_vars)) { return false; }
+            // holders that don't know about it ignore the header
+            if constexpr (requires { solver->set_no_touch_vars(no_touch_vars); })
+                solver->set_no_touch_vars(no_touch_vars);
         } else {
             cerr << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
             exit(-1);
