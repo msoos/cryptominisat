@@ -1222,11 +1222,9 @@ void Searcher::check_need_gauss_jordan_disable()
         if (gqd.disabled) continue;
 
         if (conf.gaussconf.autodisable && gmatrices[i]->must_disable(gqd)) {
-            verb_print(1, "TODO disable matrix, performing badly");
-            /* assert(false && "can't deal with this right now"); */
-            /* gqd.disabled = true; */
-            /* gqd.reset(); */
-            /* gmatrices[i]->update_cols_vals_set(); */
+            //XORs are detached into the matrix, so tear down at dec level 0
+            gauss_disable_pending = true;
+            params.must_stop = true;
         }
     }
 }
@@ -1306,6 +1304,15 @@ lbool Searcher::search()
     }
     assert(solver->prop_at_head());
     assert(search_ret == l_Undef);
+    if (gauss_disable_pending) {
+        gauss_disable_pending = false;
+        verb_print(1, "[gauss] disabling matrices in this round, they are performing badly");
+        if (!clear_gauss_matrices(false)) {
+            search_ret = l_False;
+            goto end;
+        }
+        xorclauses_updated = false; //XORs unchanged, don't re-init matrices
+    }
     SLOW_DEBUG_DO(check_no_zero_ID_bins());
     SLOW_DEBUG_DO(check_no_duplicate_lits_anywhere());
     SLOW_DEBUG_DO(assert(check_order_heap_sanity()));
@@ -2495,6 +2502,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     SLOW_DEBUG_DO(check_no_removed_or_freed_cl_in_watch());
     verb_print(6, __func__ << " called");
 
+    gauss_disable_pending = false; //stale, matrices are new
     resetStats();
     lbool status = l_Undef;
 

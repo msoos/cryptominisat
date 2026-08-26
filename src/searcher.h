@@ -138,6 +138,7 @@ class Searcher : public HyperEngine
         bool clear_gauss_matrices(const bool destruct);
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
+        bool gauss_disable_pending = false;
 
         double get_cla_inc() const
         {
