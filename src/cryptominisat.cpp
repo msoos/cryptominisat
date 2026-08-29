@@ -1089,7 +1089,11 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
 DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
 {
     std::stringstream ss;
+    #ifdef USE_CADIBACK
     ss << prefix << "Using VMTF, picosat, CaDiCaL, and CadiBack code by Armin Biere" << endl;
+    #else
+    ss << prefix << "Using VMTF, picosat, and CaDiCaL code by Armin Biere" << endl;
+    #endif
     #ifdef USE_BREAKID
     ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
     ss << prefix << "Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;

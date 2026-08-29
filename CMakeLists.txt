@@ -457,32 +457,42 @@ set(breakid_DIR  "" CACHE PATH "breakid install/build prefix (contains lib/cmake
 set(cadical_DIR  "" CACHE PATH "cadical install/build prefix (contains lib/cmake/cadical/). Auto-resolved if empty.")
 set(cadiback_DIR "" CACHE PATH "cadiback install/build prefix (contains lib/cmake/cadiback/). Auto-resolved if empty.")
 
+# CaDiCaL is only ever reached through CadiBack, from the "backbone"
+# simplification token and the backbone_simpl() API. With this ON, neither
+# library is fetched or linked and backbone simplification becomes a no-op.
+option(NOCADICAL "Disable CaDiCaL and CadiBack (backbone simplification)" OFF)
+
 include(FetchContent)
-if(NOT TARGET cadical)
-    if(cadical_DIR)
-        find_package(cadical CONFIG REQUIRED HINTS "${cadical_DIR}")
-        message(STATUS "CaDiCaL: using pre-built at ${cadical_DIR}")
-    else()
-        FetchContent_Declare(cadical
-            GIT_REPOSITORY https://github.com/meelgroup/cadical
-            GIT_TAG        master
-            GIT_SHALLOW    TRUE)
-        FetchContent_MakeAvailable(cadical)
-        message(STATUS "CaDiCaL: fetched from GitHub")
+if(NOT NOCADICAL)
+    if(NOT TARGET cadical)
+        if(cadical_DIR)
+            find_package(cadical CONFIG REQUIRED HINTS "${cadical_DIR}")
+            message(STATUS "CaDiCaL: using pre-built at ${cadical_DIR}")
+        else()
+            FetchContent_Declare(cadical
+                GIT_REPOSITORY https://github.com/meelgroup/cadical
+                GIT_TAG        master
+                GIT_SHALLOW    TRUE)
+            FetchContent_MakeAvailable(cadical)
+            message(STATUS "CaDiCaL: fetched from GitHub")
+        endif()
     endif()
-endif()
-if(NOT TARGET cadiback)
-    if(cadiback_DIR)
-        find_package(cadiback CONFIG REQUIRED HINTS "${cadiback_DIR}")
-        message(STATUS "CaDiBaCk: using pre-built at ${cadiback_DIR}")
-    else()
-        FetchContent_Declare(cadiback
-            GIT_REPOSITORY https://github.com/meelgroup/cadiback
-            GIT_TAG        main
-            GIT_SHALLOW    TRUE)
-        FetchContent_MakeAvailable(cadiback)
-        message(STATUS "CaDiBaCk: fetched from GitHub")
+    if(NOT TARGET cadiback)
+        if(cadiback_DIR)
+            find_package(cadiback CONFIG REQUIRED HINTS "${cadiback_DIR}")
+            message(STATUS "CaDiBaCk: using pre-built at ${cadiback_DIR}")
+        else()
+            FetchContent_Declare(cadiback
+                GIT_REPOSITORY https://github.com/meelgroup/cadiback
+                GIT_TAG        main
+                GIT_SHALLOW    TRUE)
+            FetchContent_MakeAvailable(cadiback)
+            message(STATUS "CaDiBaCk: fetched from GitHub")
+        endif()
     endif()
+    add_compile_definitions(USE_CADIBACK)
+else()
+    message(STATUS "CaDiCaL/CadiBack: disabled, backbone simplification will be a no-op")
 endif()
 
 include(CheckFloatPrecision)

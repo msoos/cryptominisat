@@ -352,6 +352,10 @@ use, specify options prior to running make in a clean subdirectory: `cmake
   interface support
 - `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory (contains `libcadical.a`). Auto-fetched and built if not set.
 - `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains `libcadiback.a`). Auto-fetched and built if not set.
+- `-DNOCADICAL=<ON/OFF>` -- build without CaDiCaL and CadiBack (OFF by default).
+  Neither library is fetched or linked, and the `backbone` simplification step
+  (schedule token `backbone`, and the `backbone_simpl()` API call) becomes a
+  no-op. Nothing else in the solver uses them.
 
 ## C usage
 See src/cryptominisat_c.h for details. This is an experimental feature.
