@@ -222,6 +222,26 @@ public:
     void enqueue_light(const Lit p);
     void new_decision_level();
     vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
+    void collect_trail_seg_hints(uint32_t start, vector<int32_t>& units, vector<int32_t>& rsns,
+                                 const uint32_t skip_var = var_Undef);
+    void collect_decision_reasons(vector<int32_t>& out, const uint32_t skip_var = var_Undef);
+    uint32_t trail_begin_of_level(const uint32_t lev) const { return trail_lim[lev]; }
+    int32_t get_confl_id(const PropBy confl, vector<int32_t>& units);
+    //register clause `id` (already in the proof) as THE unit clause of p's
+    //var and enqueue -- instead of enqueue() emitting a hint-less copy
+    template<bool inprocess>
+    void enqueue_registered_unit(const Lit p, const int32_t id) {
+        assert(frat->enabled());
+        const uint32_t v = p.var();
+        assert(unit_cl_IDs[v] == 0);
+        assert(unit_cl_XIDs[v] == 0);
+        unit_cl_IDs[v] = id;
+        const auto xid = ++clauseXID;
+        if (!frat->incremental())
+            *frat << implyxfromcls << xid << p << fratchain << id << fin;
+        unit_cl_XIDs[v] = xid;
+        enqueue<inprocess>(p, 0, PropBy(), false);
+    }
 
     /////////////////////
     // Branching

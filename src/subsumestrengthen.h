@@ -59,7 +59,8 @@ public:
     );
     bool backw_sub_str_with_impl(
         const vector<Lit>& lits,
-        Sub1Ret& ret_sub_str);
+        Sub1Ret& ret_sub_str,
+        const int32_t impl_id = 0);
     bool backw_sub_str_with_long(
         ClOffset offset,
         Sub1Ret& ret_sub_str);

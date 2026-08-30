@@ -167,6 +167,7 @@ bool InTree::intree_probe() {
 
     tree_look();
     unmark_all_bins();
+    if (solver->frat->enabled()) solver->flush_ghost_hyper_bins();
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
@@ -280,6 +281,8 @@ bool InTree::handle_lit_popped_from_queue(
         || depth_failed.back() == 1
     ) {
         //l is failed.
+        if (solver->frat->enabled())
+            capture_failed_hints(lit, other_lit, ID, depth_failed.back() == 1, PropBy());
         failed.push_back(~lit);
         verb_print(10,"Failed :" << ~lit << " level: " << solver->decisionLevel());
         return false;
@@ -317,6 +320,8 @@ bool InTree::handle_lit_popped_from_queue(
 
         if (!ok && !timeout) {
             depth_failed.back() = 1;
+            if (solver->frat->enabled())
+                capture_failed_hints(lit, other_lit, ID, false, solver->last_bfs_confl);
             failed.push_back(~lit);
             if (solver->conf.verbosity >= 10) {
                 cout << "(timeout?) Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
@@ -328,35 +333,102 @@ bool InTree::handle_lit_popped_from_queue(
             removedRedBin += b;
         }
         solver->uselessBin.clear();
+        //FRAT: their adds were emitted at creation, delete before dropping
+        for(const auto& b: solver->needToAddBinClause)
+            *solver->frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
         solver->needToAddBinClause.clear();
     }
 
     return timeout;
 }
 
+//FRAT hints while the probe's trail is still intact: units, the tree-edge
+//bins (deepest first), then all trail reasons, then the conflict if any
+void InTree::capture_failed_hints(
+    [[maybe_unused]] const Lit lit, const Lit other_lit, const int32_t edge_id,
+    const bool par_fail, const PropBy confl)
+{
+    failed_hints.emplace_back();
+    FailedHints& h = failed_hints.back();
+    if (par_fail) {
+        //parent is in `failed` before us, its unit ID resolved at emission
+        h.parent = other_lit;
+        h.edge_id = edge_id;
+        return;
+    }
+
+    //the deepest decision's reason is a stale edge unless `lit` was enqueued
+    //(which rewires it); the edge_id param covers that edge either way
+    const uint32_t skip_var =
+        (confl.isnullptr() && other_lit != lit_Undef) ? other_lit.var() : var_Undef;
+    vector<int32_t> units, edges, rsns;
+    if (other_lit != lit_Undef) edges.push_back(edge_id);
+    solver->collect_decision_reasons(edges, skip_var);
+    solver->collect_trail_seg_hints(
+        solver->trail_begin_of_level(0), units, rsns, skip_var);
+    int32_t cid = 0;
+    if (!confl.isnullptr()) cid = solver->get_confl_id(confl, units);
+    h.chain = units;
+    h.chain.insert(h.chain.end(), edges.begin(), edges.end());
+    h.chain.insert(h.chain.end(), rsns.begin(), rsns.end());
+    if (cid != 0) h.chain.push_back(cid);
+}
+
+void InTree::emit_failed_hints(const size_t at)
+{
+    const FailedHints& h = failed_hints[at];
+    *solver->frat << fratchain;
+    if (h.parent != lit_Undef) {
+        assert(solver->unit_cl_IDs[h.parent.var()] != 0);
+        *solver->frat << solver->unit_cl_IDs[h.parent.var()] << h.edge_id;
+    } else {
+        for(const auto& id: h.chain) *solver->frat << id;
+    }
+}
+
 bool InTree::empty_failed_list()
 {
     assert(solver->decisionLevel() == 0);
-    for(const Lit lit: failed) {
+    const bool fr = solver->frat->enabled();
+    for(size_t at = 0; at < failed.size(); at++) {
+        const Lit lit = failed[at];
         if (!solver->ok) {
             return false;
         }
 
         if (solver->value(lit) == l_Undef) {
-            solver->enqueue<true>(lit);
+            if (fr) {
+                const auto id = ++solver->clauseID;
+                *solver->frat << add << id << lit;
+                emit_failed_hints(at);
+                *solver->frat << fin;
+                solver->enqueue_registered_unit<true>(lit, id);
+            } else {
+                solver->enqueue<true>(lit);
+            }
             solver->ok = solver->propagate<true>().isnullptr();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            //*(solver->frat) << add << ++solver->clauseID << ~lit << fin;
-            *solver->frat << add << ++solver->clauseID <<fin;
+            const auto uid = ++solver->clauseID;
+            *solver->frat << add << uid << lit;
+            if (fr) emit_failed_hints(at);
+            *solver->frat << fin;
+            *solver->frat << add << ++solver->clauseID;
+            if (fr) {
+                assert(solver->unit_cl_IDs[lit.var()] != 0);
+                *solver->frat << fratchain
+                    << solver->unit_cl_IDs[lit.var()] << uid;
+            }
+            *solver->frat << fin;
             set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
             return false;
         }
     }
     failed.clear();
+    failed_hints.clear();
 
     return true;
 }

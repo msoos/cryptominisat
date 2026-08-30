@@ -530,6 +530,8 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
 bool ClauseCleaner::full_clean(Clause& cl)
 {
     (*solver->frat) << deldelay << cl << fin;
+    const int32_t orig_id = cl.stats.id;
+    solver->chain.clear();
 
     Lit *i = cl.begin();
     Lit *j = i;
@@ -540,13 +542,17 @@ bool ClauseCleaner::full_clean(Clause& cl)
 
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
+        } else if (solver->frat->enabled()) {
+            solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
         }
     }
 
     if (i != j) {
         cl.shrink(i-j);
         INC_ID(cl);
-        (*solver->frat) << add << cl << fin << findelay;
+        (*solver->frat) << add << cl << fratchain;
+        for(auto const& id: solver->chain) (*solver->frat) << id;
+        (*solver->frat) << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
         return false;
@@ -559,8 +565,8 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 1) {
-        solver->enqueue<true>(cl[0]);
-        *solver->frat << del << cl << fin; // double unit delete
+        if (solver->frat->enabled()) solver->enqueue_registered_unit<true>(cl[0], cl.stats.id);
+        else solver->enqueue<true>(cl[0]);
         return true;
     }
 

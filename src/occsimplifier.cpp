@@ -312,6 +312,8 @@ bool OccSimplifier::clean_clause(
     assert(!cl.get_removed());
     assert(!cl.freed());
     (*solver->frat) << deldelay << cl << fin;
+    const int32_t orig_id = cl.stats.id;
+    solver->chain.clear();
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -326,6 +328,9 @@ bool OccSimplifier::clean_clause(
         }
 
         if (solver->value(*i) == l_True) satisfied = true;
+        else if (solver->frat->enabled()) {
+            solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
+        }
 
         removeWCl(solver->watches[*i], offset);
         if (!cl.red()) {
@@ -351,7 +356,9 @@ bool OccSimplifier::clean_clause(
     verb_print(6, "-> Clause became after cleaning:" << cl);
     if (i-j > 0) {
         INC_ID(cl);
-        (*solver->frat) << add << cl << fin << findelay;
+        (*solver->frat) << add << cl << fratchain;
+        for(auto const& id: solver->chain) (*solver->frat) << id;
+        (*solver->frat) << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
@@ -363,8 +370,8 @@ bool OccSimplifier::clean_clause(
             return false;
 
         case 1: {
-            solver->enqueue<false>(cl[0]);
-            *solver->frat << del << cl << fin; // double unit delete
+            if (solver->frat->enabled()) solver->enqueue_registered_unit<false>(cl[0], cl.stats.id);
+            else solver->enqueue<false>(cl[0]);
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur<false>(limit_to_decrease);
             return solver->okay();
@@ -373,10 +380,9 @@ bool OccSimplifier::clean_clause(
         case 2: {
             solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.id);
             if (!cl.red()) {
-                std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
-                added_irred_bin.push_back(tmp);
-                n_occurs[tmp.first.toInt()]++;
-                n_occurs[tmp.second.toInt()]++;
+                added_irred_bin.push_back({cl[0], cl[1], cl.stats.id});
+                n_occurs[cl[0].toInt()]++;
+                n_occurs[cl[1].toInt()]++;
             }
             unlink_clause(offset, false,  false, only_set_is_removed);
             return true;
@@ -399,6 +405,8 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     assert(cl.size() > 2);
 
     (*solver->frat) << deldelay << cl << fin;
+    const int32_t orig_id = cl.stats.id;
+    solver->chain.clear();
 
     //Remove all lits from stats
     //we will re-attach the clause either way
@@ -415,6 +423,8 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
+        } else if (solver->frat->enabled()) {
+            solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
         }
     }
     cl.shrink(i-j);
@@ -423,7 +433,9 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     //Drat
     if (i - j > 0) {
         INC_ID(cl);
-        *solver->frat << add << cl << fin << findelay;
+        *solver->frat << add << cl << fratchain;
+        for(auto const& id: solver->chain) (*solver->frat) << id;
+        (*solver->frat) << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
@@ -896,11 +908,12 @@ bool OccSimplifier::sub_str_with_added_long_and_bin(const bool verbose)
 
         //NOTE: added_irred_bin CAN CHANGE while this is running!!
         for (size_t i = 0; i < added_irred_bin.size(); i++) {
-            tmp_bin_cl[0] = added_irred_bin[i].first;
-            tmp_bin_cl[1] = added_irred_bin[i].second;
+            tmp_bin_cl[0] = added_irred_bin[i].lit1;
+            tmp_bin_cl[1] = added_irred_bin[i].lit2;
 
             Sub1Ret ret;
-            if (!sub_str->backw_sub_str_with_impl(tmp_bin_cl, ret)) return false;
+            if (!sub_str->backw_sub_str_with_impl(tmp_bin_cl, ret, added_irred_bin[i].id))
+                return false;
         }
         added_irred_bin.clear();
     }
@@ -2094,7 +2107,7 @@ bool OccSimplifier::gate_based_eqlit() {
         if (finalLits.size() == 2) {
             n_occurs[finalLits[0].toInt()]++;
             n_occurs[finalLits[1].toInt()]++;
-            added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
+            added_irred_bin.push_back({finalLits[0], finalLits[1], solver->clauseID});
         }
     };
 
@@ -2639,7 +2652,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
 
         tmp_tern_res.assign(newcl.lits.begin(), newcl.lits.begin() + newcl.size);
 
-        Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, &stats, true);
+        const vector<int32_t> hints = {newcl.parents.first, newcl.parents.second};
+        Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, &stats, true, &hints);
         if (newCl) {
             #ifdef STATS_NEEDED
             newCl->stats.locked_for_data_gen =
@@ -2714,6 +2728,7 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
                 *limit_to_decrease-=20;
 
                 Tri newcl;
+                newcl.parents = {cl->stats.id, cl2->stats.id};
                 for(Lit l: *cl) {
                     if (l.var() != lit_clash.var())
                         newcl.lits[newcl.size++] = l;
@@ -3969,6 +3984,10 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     return conflicted;
 }
 
+int32_t OccSimplifier::watch_cl_id(const Watched& w) const {
+    return w.isBin() ? w.get_id() : solver->cl_alloc.ptr(w.get_offset())->stats.id;
+}
+
 bool OccSimplifier::generate_resolvents_weakened(
     vector<Lit>& tmp_poss,
     vector<Lit>& tmp_negs,
@@ -4042,7 +4061,8 @@ bool OccSimplifier::generate_resolvents_weakened(
             }
 
             ClauseStats stats;
-            resolvents.add_resolvent(dummy, stats);
+            resolvents.add_resolvent(dummy, stats,
+                {watch_cl_id(tmp_poss2[pos_at]), watch_cl_id(tmp_negs2[negs_at])});
         }
     }
 
@@ -4094,7 +4114,7 @@ bool OccSimplifier::generate_resolvents(
                     solver->cl_alloc.ptr(pos.get_offset())->stats,
                     solver->cl_alloc.ptr(neg.get_offset())->stats);
             }
-            resolvents.add_resolvent(dummy, stats);
+            resolvents.add_resolvent(dummy, stats, {watch_cl_id(pos), watch_cl_id(neg)});
         }
     }
 
@@ -4407,6 +4427,7 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
 bool OccSimplifier::add_varelim_resolvent(
     vector<Lit>& finalLits
     , const ClauseStats& stats
+    , const std::pair<int32_t, int32_t>& parents
 ) {
     assert(solver->okay());
     assert(solver->prop_at_head());
@@ -4421,6 +4442,7 @@ bool OccSimplifier::add_varelim_resolvent(
         << endl;
     }
 
+    const vector<int32_t> hints = {parents.first, parents.second};
     ClauseStats backup_stats(stats);
     newCl = solver->add_clause_int(
         finalLits //Literals in new clause
@@ -4428,6 +4450,8 @@ bool OccSimplifier::add_varelim_resolvent(
         , &backup_stats//Statistics for this new clause (usage, etc.)
         , false //Should clause be attached if long?
         , &finalLits //Return final set of literals here
+        , true, lit_Undef, false, false
+        , &hints
     );
 
     if (solver->okay()) {
@@ -4450,7 +4474,7 @@ bool OccSimplifier::add_varelim_resolvent(
     } else if (finalLits.size() == 2) {
         n_occurs[finalLits[0].toInt()]++;
         n_occurs[finalLits[1].toInt()]++;
-        added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
+        added_irred_bin.push_back({finalLits[0], finalLits[1], solver->clauseID});
 
         // 8 = watch space
         varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(8);
@@ -4703,7 +4727,8 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 
     //Add resolvents
     while(!resolvents.empty()) {
-        if (!add_varelim_resolvent(resolvents.back_lits(), resolvents.back_stats())) goto end;
+        if (!add_varelim_resolvent(resolvents.back_lits(), resolvents.back_stats(),
+                                   resolvents.back_hints())) goto end;
         resolvents.pop();
     }
 
@@ -5184,7 +5209,8 @@ Clause* OccSimplifier::full_add_clause(
     const vector<Lit>& tmp_cl,
     vector<Lit>& final_lits,
     ClauseStats* cl_stats,
-    bool red)
+    bool red,
+    const vector<int32_t>* hints)
 {
     Clause* newCl = solver->add_clause_int(
         tmp_cl//Literals in new clause
@@ -5192,6 +5218,8 @@ Clause* OccSimplifier::full_add_clause(
         , cl_stats
         , false //Should clause be attached if long?
         , &final_lits
+        , true, lit_Undef, false, false
+        , hints
     );
 
     if (solver->okay()) {
@@ -5205,7 +5233,7 @@ Clause* OccSimplifier::full_add_clause(
         if (final_lits.size() == 2 && !red) {
             n_occurs[final_lits[0].toInt()]++;
             n_occurs[final_lits[1].toInt()]++;
-            added_irred_bin.push_back(std::make_pair(final_lits[0], final_lits[1]));
+            added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clauseID});
         }
     } else {
         link_in_clause(*newCl);
@@ -5220,7 +5248,8 @@ Clause* OccSimplifier::full_add_clause(
 bool OccSimplifier::remove_literal(
     ClOffset offset,
     const Lit toRemoveLit,
-    bool only_set_is_removed)
+    bool only_set_is_removed,
+    const int32_t strengthener_id)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
     VERBOSE_PRINT("-> Strenghtening clause :" << cl << " with lit: " << toRemoveLit);
@@ -5228,12 +5257,17 @@ bool OccSimplifier::remove_literal(
     *limit_to_decrease -= 5;
 
     (*solver->frat) << deldelay << cl << fin;
+    const int32_t orig_id = cl.stats.id;
     cl.strengthen(toRemoveLit);
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
 
     INC_ID(cl);
-    (*solver->frat) << add << cl << fin << findelay;
+    (*solver->frat) << add << cl;
+    if (solver->frat->enabled() && strengthener_id != 0) {
+        (*solver->frat) << fratchain << strengthener_id << orig_id;
+    }
+    (*solver->frat) << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;
         elim_calc_need_update.touch(toRemoveLit.var());

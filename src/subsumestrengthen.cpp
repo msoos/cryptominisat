@@ -175,7 +175,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             ret_sub_str.sub++;
         } else { //Strengthen
             VERBOSE_PRINT("strenghtened clause " << cl2);
-            if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
+            if (!simplifier->remove_literal(offset2, subsLits[j], true, cl.stats.id)) {
                 return false;
             }
             ret_sub_str.str++;
@@ -660,7 +660,8 @@ void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
 //Implicit input here is ALWAY irred
 bool SubsumeStrengthen::backw_sub_str_with_impl(
     const vector<Lit>& lits,
-    Sub1Ret& ret_sub_str
+    Sub1Ret& ret_sub_str,
+    const int32_t impl_id
 ) {
     subs.clear();
     subsLits.clear();
@@ -684,8 +685,15 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 lbool val = solver->value(subsLits[j]);
                 const int32_t ID = ++solver->clauseID;
                 if (val == l_False) {
-                    (*solver->frat) << add << ID << subsLits[j] << fin;
-                    (*solver->frat) << add << ++solver->clauseID << fin;
+                    (*solver->frat) << add << ID << subsLits[j];
+                    if (solver->frat->enabled() && impl_id != 0)
+                        (*solver->frat) << fratchain << impl_id << subs[j].ws.get_id();
+                    (*solver->frat) << fin;
+                    (*solver->frat) << add << ++solver->clauseID;
+                    if (solver->frat->enabled())
+                        (*solver->frat) << fratchain
+                            << solver->unit_cl_IDs[subsLits[j].var()] << ID;
+                    (*solver->frat) << fin;
                     set_unsat_cl_id(solver->clauseID);
                     solver->ok = false;
                     return false;
@@ -728,7 +736,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 cout << "strenghtened clause " << cl2 << endl;
             }
             #endif
-            if (!simplifier->remove_literal(offset2, subsLits[j], true)) return false;
+            if (!simplifier->remove_literal(offset2, subsLits[j], true, impl_id)) return false;
             ret_sub_str.str++;
 
             //If we are waaay over time, just exit
@@ -792,7 +800,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
         tmpLits = {std::min(lit, tmp[i].lit2()), std::max(lit, tmp[i].lit2())};
 
         Sub1Ret ret;
-        if (!backw_sub_str_with_impl(tmpLits, ret)) return false;
+        if (!backw_sub_str_with_impl(tmpLits, ret, tmp[i].get_id())) return false;
         subsumedBin += ret.sub;
         strBin += ret.str;
 

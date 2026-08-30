@@ -105,6 +105,8 @@ class Solver : public Searcher
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = nullptr, const string* strategy = nullptr);
         void  set_shared_data(SharedData* shared_data);
         vector<Lit> probe_inter_tmp;
+        vector<int32_t> probe_hints_pos; ///< FRAT chain of the positive probe
+        vector<int32_t> probe_hints_neg; ///< FRAT chain of the negative probe
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
         void set_outer_lit_weight(const Lit lit, const float weight);
@@ -210,7 +212,7 @@ class Solver : public Searcher
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
-        bool fully_enqueue_this(const Lit lit_ID);
+        bool fully_enqueue_this(const Lit lit, const vector<int32_t>* hints = nullptr);
 
         //State load/unload
         string serialize_solution_reconstruction_data() const;
@@ -283,6 +285,7 @@ class Solver : public Searcher
             , const Lit frat_first = lit_Undef
             , const bool sorted = false
             , const bool remove_frat = false
+            , const vector<int32_t>* hints = nullptr ///< strict FRAT hints for `lits`
         );
         void add_bnn_clause_inter(
             vector<Lit>& lits,

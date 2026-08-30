@@ -695,7 +695,8 @@ class Tester:
             consoleOutputGrep = p.communicate()[0]
 
             fname_xlrup = unique_file("xlrup-file")
-            toexec = "./frat-xor elab {clean} {cnf} {xlrup}"
+            # --full -ss: every step must carry complete, in-order hints
+            toexec = "./frat-xor elab {clean} --full -ss {cnf} {xlrup}"
             toexec = toexec.format(cnf=fname, clean=fname_cleanproof, xlrup=fname_xlrup)
             print("Checking with FRAT.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
@@ -756,7 +757,7 @@ class Tester:
                 f.write("\n")
                 f.write('%s "$CNF" "$FRAT"\n' % base_cmd)
                 f.write('grep -v "^c" "$FRAT" > "$CLEAN"\n')
-                f.write('./frat-xor elab "$CLEAN" "$CNF" "$XLRUP"\n')
+                f.write('./frat-xor elab "$CLEAN" --full -ss "$CNF" "$XLRUP"\n')
                 f.write('./cake_xlrup "$CNF" "$XLRUP"\n')
                 f.write("\n")
                 f.write('rm -f "$FRAT" "$CLEAN" "$XLRUP"\n')

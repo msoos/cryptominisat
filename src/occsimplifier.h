@@ -204,7 +204,12 @@ public:
                                // the clauses that have been added as resolvents
     vector<uint32_t> n_occurs;
     TouchList removed_cl_with_var;
-    vector<std::pair<Lit, Lit>> added_irred_bin;
+    struct AddedBin {
+        Lit lit1;
+        Lit lit2;
+        int32_t id;
+    };
+    vector<AddedBin> added_irred_bin;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc
@@ -244,7 +249,8 @@ private:
     bool gate_based_eqlit();
     void backward_sub();
     bool execute_simplifier_strategy(const string& strategy);
-    bool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed);
+    bool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed,
+                        const int32_t strengthener_id = 0);
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;
@@ -254,6 +260,7 @@ private:
     struct Tri {
         std::array<Lit, 3> lits;
         uint32_t size = 0;
+        std::pair<int32_t, int32_t> parents; ///< FRAT hints
     };
     vector<Tri> cl_to_add_ternary;
 
@@ -333,7 +340,8 @@ private:
         const vector<Lit>& tmp_cl,
         vector<Lit>& finalLits,
         ClauseStats* cl_stats,
-        bool red
+        bool red,
+        const vector<int32_t>* hints = nullptr
     );
 
     ///////
@@ -451,7 +459,9 @@ private:
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
+    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
+                                      const std::pair<int32_t, int32_t>& parents);
+    int32_t     watch_cl_id(const Watched& w) const;
     void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
 
@@ -468,23 +478,29 @@ private:
         bool empty() const { return sz == 0; }
         uint32_t size() const { return sz; }
 
-        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
+        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats,
+                           const std::pair<int32_t, int32_t> hints)
+        {
             if (lits.size() <= sz) {
                 lits.resize(sz + 1);
                 cl_stats.resize(sz + 1);
+                hint_ids.resize(sz + 1);
             }
             lits[sz] = res;
             cl_stats[sz] = stats;
+            hint_ids[sz] = hints;
             sz++;
         }
         vector<Lit>& back_lits() { assert(sz > 0); return lits[sz-1]; }
         const ClauseStats& back_stats() const { assert(sz > 0); return cl_stats[sz-1]; }
+        const std::pair<int32_t, int32_t>& back_hints() const { assert(sz > 0); return hint_ids[sz-1]; }
         void pop() { assert(sz > 0); sz--; }
 
     private:
         uint32_t sz = 0;
         vector<vector<Lit>> lits;
         vector<ClauseStats> cl_stats;
+        vector<std::pair<int32_t, int32_t>> hint_ids; ///< FRAT: the two parents
     };
     Resolvents resolvents;
     uint32_t calc_data_for_heuristic(const Lit lit);

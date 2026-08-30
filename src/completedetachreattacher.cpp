@@ -156,6 +156,8 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     }
     assert(ps.size() > 2);
 
+    const int32_t orig_id = ps.stats.id;
+    solver->chain.clear();
     Lit *i = ps.begin();
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
@@ -165,6 +167,8 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
         }
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
+        } else if (solver->frat->enabled()) {
+            solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
         }
     }
     ps.shrink(i-j);
@@ -172,7 +176,9 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     //Drat
     if (i != j) {
         INC_ID(*cl);
-        (*solver->frat) << add << *cl << fin << findelay;
+        (*solver->frat) << add << *cl << fratchain;
+        for(auto const& id: solver->chain) (*solver->frat) << id;
+        (*solver->frat) << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
@@ -184,8 +190,8 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
             return false;
 
         case 1:
-            solver->enqueue<true>(ps[0]);
-            (*solver->frat) << del << *cl << fin; //double unit delete
+            if (solver->frat->enabled()) solver->enqueue_registered_unit<true>(ps[0], ps.stats.id);
+            else solver->enqueue<true>(ps[0]);
             return false;
 
         case 2: {

@@ -307,6 +307,7 @@ Clause* Solver::add_clause_int(
     , const Lit frat_first
     , const bool sorted
     , const bool remove_frat
+    , const vector<int32_t>* hints
 ) {
     assert(okay());
     assert(decisionLevel() == 0);
@@ -325,6 +326,18 @@ Clause* Solver::add_clause_int(
     //If caller required final set of lits, return it.
     if (finalLits) *finalLits = ps;
 
+    //unit IDs falsifying the lits that sort_and_clean_clause stripped;
+    //they must come before any caller-supplied hints
+    const auto stripped_units = [&]() {
+        for(const Lit l: lits) {
+            if (value(l) == l_False) {
+                assert(varData[l.var()].level == 0);
+                assert(unit_cl_IDs[l.var()] != 0);
+                *frat << unit_cl_IDs[l.var()];
+            }
+        }
+    };
+
     int32_t ID;
     if (remove_frat) {
         assert(cl_stats);
@@ -333,7 +346,13 @@ Clause* Solver::add_clause_int(
         ID = cl_stats->id;
         if (ps != lits) {
             ID = ++clauseID;
-            *frat << add << ID << ps << fin;
+            *frat << add << ID << ps;
+            if (frat->enabled()) {
+                *frat << fratchain;
+                stripped_units();
+                *frat << cl_stats->id;
+            }
+            *frat << fin;
             *frat << del << cl_stats->id << lits << fin;
         }
     } else {
@@ -350,7 +369,13 @@ Clause* Solver::add_clause_int(
                 std::swap(ps[0], ps[i]);
             }
 
-            *frat << add << ID << ps << fin;
+            *frat << add << ID << ps;
+            if (frat->enabled() && hints && !hints->empty()) {
+                *frat << fratchain;
+                stripped_units();
+                for(const auto& h: *hints) { assert(h != 0); *frat << h; }
+            }
+            *frat << fin;
             if (frat_first != lit_Undef) {
                 std::swap(ps[0], ps[i]);
             }
@@ -367,12 +392,13 @@ Clause* Solver::add_clause_int(
                 << " that became an empty clause at toplevel --> UNSAT" << endl;
             }
             return nullptr;
-        case 1:
+        case 1: {
             assert(decisionLevel() == 0);
-            enqueue<false>(ps[0]);
-            *frat << del << ID << ps[0] << fin; // double unit delete
+            if (frat->enabled() && add_frat) enqueue_registered_unit<false>(ps[0], ID);
+            else enqueue<false>(ps[0]);
             if (attach_long) ok = (propagate<true>().isnullptr());
             return nullptr;
+        }
         case 2:
             attach_bin_clause(ps[0], ps[1], red, ID);
             return nullptr;
@@ -2683,7 +2709,7 @@ bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
     return true;
 }
 
-bool Solver::fully_enqueue_this(const Lit lit)
+bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
 {
     assert(decisionLevel() == 0);
     assert(ok);
@@ -2691,14 +2717,28 @@ bool Solver::fully_enqueue_this(const Lit lit)
     const lbool val = value(lit);
     if (val == l_Undef) {
         assert(varData[lit.var()].removed == Removed::none);
-        enqueue<false>(lit);
+        if (frat->enabled() && hints) {
+            const auto id = ++clauseID;
+            *frat << add << id << lit << fratchain;
+            for(const auto& h: *hints) *frat << h;
+            *frat << fin;
+            enqueue_registered_unit<false>(lit, id);
+        } else {
+            enqueue<false>(lit);
+        }
         ok = propagate<true>().isnullptr();
 
         if (!ok) {
             return false;
         }
     } else if (val == l_False) {
-        *frat << add << ++clauseID << fin;
+        *frat << add << ++clauseID;
+        if (frat->enabled() && hints) {
+            *frat << fratchain << unit_cl_IDs[lit.var()];
+            for(const auto& h: *hints) *frat << h;
+        }
+        *frat << fin;
+        if (unsat_cl_ID == 0) set_unsat_cl_id(clauseID);
         ok = false;
         return false;
     }

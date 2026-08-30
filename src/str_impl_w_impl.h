@@ -64,7 +64,12 @@ private:
 
         //For delayed enqueue and binary adding
         //Used for strengthening
-        vector<Lit> toEnqueue;
+        struct ToEnq {
+            Lit lit;
+            int32_t h1; ///< FRAT hints: the two bins justifying the unit
+            int32_t h2;
+        };
+        vector<ToEnq> toEnqueue;
         vector<BinaryClause> binsToAdd;
 
         void clear()

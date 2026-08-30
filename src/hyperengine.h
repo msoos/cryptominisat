@@ -53,10 +53,20 @@ public:
     set<BinaryClause> uselessBin;
 
     ///Add hyper-binary clause given this bin clause
-    void  add_hyper_bin(Lit p);
+    void  add_hyper_bin(Lit p, const Clause* cl = nullptr);
 
     ///Add hyper-binary clause given this large clause
     void  add_hyper_bin(Lit p, const Clause& cl);
+
+    //FRAT
+    PropBy last_bfs_confl; ///< conflict that made propagate_bfs fail
+    struct GhostBin { int32_t id; Lit l1; Lit l2; };
+    vector<GhostBin> ghost_hyper_bins; ///< emitted but never-attached hyper-bins
+    void flush_ghost_hyper_bins() {
+        for(const auto& g: ghost_hyper_bins)
+            *frat << del << g.id << g.l1 << g.l2 << fin;
+        ghost_hyper_bins.clear();
+    }
 
     void  enqueue_with_acestor_info(
         const Lit p, const Lit ancestor, const bool redStep, const int32_t ID);
@@ -90,6 +100,8 @@ private:
     );
 
     vector<Lit> currAncestors;
+    vector<Lit> tmp_orig_ancestors;   ///< FRAT: saved before deepest_common_ancestor() destroys them
+    vector<int32_t> tmp_anc_chain;
 };
 
 }

@@ -439,14 +439,21 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     uint32_t orig_size = cl.size();
     uint32_t i = 0;
     uint32_t j = 0;
+    uint32_t seg_start = 0;
+    hint_units.clear();
     for (uint32_t sz = cl.size(); i < sz; i++) {
         if (solver->value(cl[i]) == l_True) goto rem;
         if (solver->value(cl[i]) == l_Undef) cl[j++] = cl[i];
+        else if (solver->frat->enabled()) {
+            //dropped level-0 false lit, hint its unit clause
+            hint_units.push_back(solver->unit_cl_IDs[cl[i].var()]);
+        }
     }
     cl.resize(j);
     assert(cl.size() > 1); //this must have already been propagated
 
     solver->new_decision_level();
+    seg_start = solver->getTrailSize();
     i = 0;
     j = 0;
 
@@ -559,6 +566,20 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         }
     }*/
 
+    //strict hints while the trail is still intact: units, propagation
+    //reasons in trail order, closing clause (conflict/true-lit reason/orig)
+    hints.clear();
+    if (solver->frat->enabled()) {
+        vector<int32_t> rsns;
+        solver->collect_trail_seg_hints(seg_start, hint_units, rsns);
+        int32_t final_id;
+        if (!confl.isnullptr()) final_id = solver->get_confl_id(confl, hint_units);
+        else final_id = stats->id;
+        hints = hint_units;
+        hints.insert(hints.end(), rsns.begin(), rsns.end());
+        hints.push_back(final_id);
+    }
+
     solver->cancelUntil<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
     runStats.numLitsRem += orig_size - cl.size();
@@ -583,7 +604,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
 #endif
     solver->free_cl(offset, false);
-    Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
+    Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats,
+        true, nullptr, true, lit_Undef, false, false, &hints);
     *solver->frat << findelay;
 
     if (cl2 != nullptr) {

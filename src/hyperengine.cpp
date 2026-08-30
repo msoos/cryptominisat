@@ -161,14 +161,28 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 }
 
 //Add binary clause to deepest common ancestor
-void HyperEngine::add_hyper_bin(const Lit p)
+void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
 {
     propStats.otfHyperTime += 2;
+
+    //FRAT: level-0 units and the ID of the source clause, hinted last
+    const auto src_cl_hints = [&]() {
+        if (cl) {
+            for(const Lit l: *cl) {
+                if (varData[l.var()].level == 0) {
+                    assert(unit_cl_IDs[l.var()] != 0);
+                    *frat << unit_cl_IDs[l.var()];
+                }
+            }
+            *frat << cl->stats.id;
+        }
+    };
 
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
     const int32_t ID = ++clauseID;
     if (currAncestors.size() > 1) {
+        if (frat->enabled()) tmp_orig_ancestors = currAncestors;
         deepestAncestor = deepest_common_ancestor();
 
         #ifdef VERBOSE_DEBUG_FULLPROP
@@ -176,6 +190,24 @@ void HyperEngine::add_hyper_bin(const Lit p)
         << ~deepestAncestor << " ID: " << ID << endl;
         #endif
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
+        if (frat->enabled()) {
+            //hints: per ancestor, its bin chain down from the common
+            //ancestor, then the source clause
+            *frat << add << ID << p << ~deepestAncestor << fratchain;
+            for(const Lit a: tmp_orig_ancestors) {
+                tmp_anc_chain.clear();
+                Lit x = a;
+                while (x != deepestAncestor) {
+                    const PropBy& r = varData[x.var()].reason;
+                    tmp_anc_chain.push_back(r.get_id());
+                    x = r.getAncestor();
+                }
+                for(auto it = tmp_anc_chain.rbegin(); it != tmp_anc_chain.rend(); ++it)
+                    *frat << *it;
+            }
+            src_cl_hints();
+            *frat << fin;
+        }
 
         hyperBinNotAdded = false;
     } else {
@@ -190,6 +222,14 @@ void HyperEngine::add_hyper_bin(const Lit p)
         #endif
         deepestAncestor = currAncestors[0];
         hyperBinNotAdded = true;
+        if (frat->enabled()) {
+            //materialize the never-attached bin: it serves as a reason, so
+            //hint chains may go through its ID. Deleted at the end of intree.
+            *frat << add << ID << p << ~deepestAncestor << fratchain;
+            src_cl_hints();
+            *frat << fin;
+            ghost_hyper_bins.push_back({ID, p, ~deepestAncestor});
+        }
     }
 
     enqueue_with_acestor_info(p, deepestAncestor, true, ID);
@@ -392,12 +432,13 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
         }
     }
 
-    add_hyper_bin(p);
+    add_hyper_bin(p, &cl);
 }
 
 //Analyze why did we fail at decision level 1
 Lit HyperEngine::analyzeFail(const PropBy propBy)
 {
+    last_bfs_confl = propBy;
     //Clear out the datastructs we will be usin
     currAncestors.clear();
 
@@ -535,6 +576,8 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
         //must ALWAYS be true
         if (it != needToAddBinClause.end()) {
             propStats.otfHyperTime += 2;
+            //FRAT: its add was emitted at creation, delete it
+            *frat << del << it->get_id() << it->getLit1() << it->getLit2() << fin;
             needToAddBinClause.erase(it);
         }
         //This will subsume the clause later, so don't remove it

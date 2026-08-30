@@ -59,8 +59,10 @@ bool StrImplWImpl::str_impl_w_impl()
     }
 
     //Enqueue delayed values
-    if (!solver->fully_enqueue_these(str_impl_data.toEnqueue))
-        goto end;
+    for(const auto& e: str_impl_data.toEnqueue) {
+        const vector<int32_t> hints = {e.h1, e.h2};
+        if (!solver->fully_enqueue_this(e.lit, &hints)) goto end;
+    }
 
     //Add delayed binary clauses
     for(const BinaryClause& bin: str_impl_data.binsToAdd) {
@@ -165,7 +167,7 @@ void StrImplWImpl::strengthen_bin_with_bin(
     //Enqeue literal
     if (rem) {
         str_impl_data.remLitFromBin++;
-        str_impl_data.toEnqueue.push_back(lit);
+        str_impl_data.toEnqueue.push_back({lit, i->get_id(), i2->get_id()});
     }
     *j++ = *i;
 }

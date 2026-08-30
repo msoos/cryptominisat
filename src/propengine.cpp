@@ -1092,6 +1092,100 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 }
 
 
+//Strict FRAT hints for the propagations in trail[start..): unit IDs of
+//level-0 lits in the reasons go to `units`, reason IDs in trail order to `rsns`
+void PropEngine::collect_trail_seg_hints(
+    const uint32_t start, vector<int32_t>& units, vector<int32_t>& rsns,
+    const uint32_t skip_var)
+{
+    assert(frat->enabled());
+    for(uint32_t i = start; i < trail.size(); i++) {
+        if (trail[i].lit.var() == skip_var) continue;
+        const PropBy r = varData[trail[i].lit.var()].reason;
+        if (r.isnullptr()) continue;
+        int32_t id;
+        switch (r.getType()) {
+            case binary_t:
+                id = r.get_id();
+                if (varData[r.lit2().var()].level == 0) {
+                    assert(unit_cl_IDs[r.lit2().var()] != 0);
+                    units.push_back(unit_cl_IDs[r.lit2().var()]);
+                }
+                break;
+            case clause_t: {
+                Clause* cl = cl_alloc.ptr(r.get_offset());
+                id = cl->stats.id;
+                for (const Lit x: *cl) {
+                    if (varData[x.var()].level == 0) {
+                        assert(unit_cl_IDs[x.var()] != 0);
+                        units.push_back(unit_cl_IDs[x.var()]);
+                    }
+                }
+                break;
+            }
+            case xor_t: {
+                auto cl = get_xor_reason(r, id);
+                for (const Lit x: *cl) {
+                    if (varData[x.var()].level == 0) {
+                        assert(unit_cl_IDs[x.var()] != 0);
+                        units.push_back(unit_cl_IDs[x.var()]);
+                    }
+                }
+                break;
+            }
+            default: release_assert(false);
+        }
+        rsns.push_back(id);
+    }
+}
+
+//FRAT: reasons of all current decisions, deepest first. During intree these
+//are the rewired tree-edge bins
+void PropEngine::collect_decision_reasons(vector<int32_t>& out, const uint32_t skip_var)
+{
+    for(int32_t i = (int32_t)trail_lim.size()-1; i >= 0; i--) {
+        if (trail_lim[i] >= trail.size()) continue; //empty level
+        const Lit d = trail[trail_lim[i]].lit;
+        if (d.var() == skip_var) continue;
+        const PropBy r = varData[d.var()].reason;
+        if (r.isnullptr()) continue;
+        out.push_back(r.get_id());
+    }
+}
+
+//ID of the conflicting clause; its level-0 lits' unit IDs go to `units`
+int32_t PropEngine::get_confl_id(const PropBy confl, vector<int32_t>& units)
+{
+    assert(frat->enabled());
+    int32_t id;
+    const auto unit_of = [&](const Lit x) {
+        if (varData[x.var()].level == 0) {
+            assert(unit_cl_IDs[x.var()] != 0);
+            units.push_back(unit_cl_IDs[x.var()]);
+        }
+    };
+    switch (confl.getType()) {
+        case binary_t:
+            id = confl.get_id();
+            unit_of(failBinLit);
+            unit_of(confl.lit2());
+            break;
+        case clause_t: {
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
+            id = cl->stats.id;
+            for (const Lit x: *cl) unit_of(x);
+            break;
+        }
+        case xor_t: {
+            auto cl = get_xor_reason(confl, id);
+            for (const Lit x: *cl) unit_of(x);
+            break;
+        }
+        default: release_assert(false);
+    }
+    return id;
+}
+
 vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
     frat_func_start();
     if (reason.get_matrix_num() == PLAIN_XOR_SENTINEL) {

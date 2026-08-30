@@ -113,12 +113,33 @@ bool Solver::full_probe(const bool bin_only)
 template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_props)
 {
     propStats.bogoProps+=2;
+    const bool fr = frat->enabled();
+
+    //FRAT chain of a finished probe: units, reasons in trail order, and the
+    //conflicting clause if any. Needs full propagation so reasons are set.
+    const auto capture_probe_chain =
+        [&](const uint32_t start, const PropBy confl, vector<int32_t>& out)
+    {
+        out.clear();
+        vector<int32_t> rsns;
+        collect_trail_seg_hints(start, out, rsns);
+        int32_t cid = 0;
+        if (!confl.isnullptr()) cid = get_confl_id(confl, out);
+        out.insert(out.end(), rsns.begin(), rsns.end());
+        if (cid != 0) out.push_back(cid);
+    };
 
     //Probe l
     uint32_t old_trail_size = trail.size();
     new_decision_level();
-    enqueue_light(l);
-    PropBy p = propagate_light<bin_only>();
+    PropBy p;
+    if (fr) {
+        enqueue<true>(l);
+        p = propagate<true>();
+    } else {
+        enqueue_light(l);
+        p = propagate_light<bin_only>();
+    }
     min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         toClear.push_back(trail[i].lit);
@@ -129,20 +150,27 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         seen[var] = 1+(int)trail[i].lit.sign();
         seen2[var] |= 1+(int)trail[i].lit.sign();
     }
+    if (fr) capture_probe_chain(old_trail_size, p, probe_hints_pos);
     cancelUntil_light();
 
     //Check result
     if (!p.isnullptr()) {
         vector<Lit> lits = {~l};
-        add_clause_int(lits);
+        add_clause_int(lits, false, nullptr, true, nullptr, true, lit_Undef,
+                       false, false, fr ? &probe_hints_pos : nullptr);
         goto end;
     }
 
     //Probe ~l
     old_trail_size = trail.size();
     new_decision_level();
-    enqueue_light(~l);
-    p = propagate_light<bin_only>();
+    if (fr) {
+        enqueue<true>(~l);
+        p = propagate<true>();
+    } else {
+        enqueue_light(~l);
+        p = propagate_light<bin_only>();
+    }
     min_props = std::min<uint32_t>(min_props, trail.size() - old_trail_size);
     probe_inter_tmp.clear();
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
@@ -160,12 +188,14 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
             probe_inter_tmp.push_back(~lit);
         }
     }
+    if (fr) capture_probe_chain(old_trail_size, p, probe_hints_neg);
     cancelUntil_light();
 
     //Check result
     if (!p.isnullptr()) {
         vector<Lit> lits = {l};
-        add_clause_int(lits);
+        add_clause_int(lits, false, nullptr, true, nullptr, true, lit_Undef,
+                       false, false, fr ? &probe_hints_neg : nullptr);
         goto end;
     }
 
@@ -175,11 +205,28 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         if (bp_lit != lit_Undef) {
             //I am not going to deal with the messy version of it already being set
             if (value(bp_lit) == l_Undef) {
-                *solver->frat << add << ++clauseID << ~l << bp_lit << fin;
+                //(~l, bp) follows from the l-probe, (l, bp) from the ~l-probe
+                *solver->frat << add << ++clauseID << ~l << bp_lit;
+                if (fr) {
+                    *solver->frat << fratchain;
+                    for(const auto& h: probe_hints_pos) *solver->frat << h;
+                }
+                *solver->frat << fin;
                 const int32_t c1 = clauseID;
-                *solver->frat << add << ++clauseID << l << bp_lit << fin;
+                *solver->frat << add << ++clauseID << l << bp_lit;
+                if (fr) {
+                    *solver->frat << fratchain;
+                    for(const auto& h: probe_hints_neg) *solver->frat << h;
+                }
+                *solver->frat << fin;
                 const int32_t c2 = clauseID;
-                enqueue<true>(bp_lit);
+                if (fr) {
+                    const auto id = ++clauseID;
+                    *solver->frat << add << id << bp_lit << fratchain << c1 << c2 << fin;
+                    enqueue_registered_unit<true>(bp_lit, id);
+                } else {
+                    enqueue<true>(bp_lit);
+                }
                 *solver->frat << del << c1 << ~l << bp_lit << fin;
                 *solver->frat << del << c2 << l << bp_lit << fin;
             }
@@ -196,10 +243,12 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
             bp_lit = probe_inter_tmp[i];
             vector<Lit> lits(2);
             lits[0] = l; lits[1] = ~bp_lit;
-            add_clause_int(lits);
+            add_clause_int(lits, false, nullptr, true, nullptr, true, lit_Undef,
+                           false, false, fr ? &probe_hints_neg : nullptr);
             if (okay()) {
                 lits[0]^=true; lits[1]^=true;
-                add_clause_int(lits);
+                add_clause_int(lits, false, nullptr, true, nullptr, true, lit_Undef,
+                               false, false, fr ? &probe_hints_pos : nullptr);
             }
             if (!okay()) goto end;
         }

@@ -73,6 +73,8 @@ class DistillerLong {
             , const ClauseStats* const stats
             , const bool also_remove, const bool only_remove
         );
+        vector<int32_t> hint_units;
+        vector<int32_t> hints;
         bool distill_long_cls_all(
             vector<ClOffset>& offs, double time_mult,
             bool also_remove,

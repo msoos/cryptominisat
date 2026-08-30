@@ -103,6 +103,7 @@ void DistillerLongWithImpl::strengthen_clause_with_watch(
         if (seen[(~wit->lit2()).toInt()]) {
             thisremLitBin++;
             seen[(~wit->lit2()).toInt()] = 0;
+            if (solver->frat->enabled()) str_bin_ids.push_back(wit->get_id());
         }
     }
 }
@@ -190,6 +191,7 @@ bool DistillerLongWithImpl::sub_str_cl_with_watch( ClOffset& offset , const bool
     tmpStats.triedCls++;
     isSubsumed = false;
     thisremLitBin = 0;
+    str_bin_ids.clear();
 
     //Fill 'seen'
     lits2.clear();
@@ -229,7 +231,15 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
     ClauseStats backup_stats(cl.stats);
-    Clause* c2 = solver->add_clause_int(lits, cl.red(), &backup_stats);
+    //strict hints: the strengthening bins in reverse removal order, orig last
+    vector<int32_t> hints;
+    if (solver->frat->enabled()) {
+        hints.assign(str_bin_ids.rbegin(), str_bin_ids.rend());
+        hints.push_back(cl.stats.id);
+    }
+    Clause* c2 = solver->add_clause_int(lits, cl.red(), &backup_stats,
+        true, nullptr, true, lit_Undef, false, false,
+        solver->frat->enabled() ? &hints : nullptr);
     if (c2 != nullptr) {
         solver->detachClause(offset);
         // new clause will inherit this clause's ID

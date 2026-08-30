@@ -124,6 +124,7 @@ class DistillerLongWithImpl {
         WatchBasedData watch_based_data;
         bool isSubsumed;
         size_t thisremLitBin;
+        vector<int32_t> str_bin_ids; ///< FRAT: strengthening bins, in removal order
         void str_and_sub_using_watch(
             Clause& cl
             , const Lit lit

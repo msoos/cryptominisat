@@ -3537,6 +3537,8 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
         if (check_for_set_values
             && (val1 == l_True || val2 == l_True)
         ) {
+            //FRAT: emitted at creation, delete the never-attached bin
+            *solver->frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
             continue;
         }
 
@@ -3544,8 +3546,13 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
             assert(val1 == l_Undef && val2 == l_Undef);
         }
 
-        auto const ID = ++clauseID;
-        *solver->frat << add << ID << b.getLit1() << b.getLit2() << fin;
+        int32_t ID;
+        if (solver->frat->enabled()) {
+            //the add was emitted with hints at creation, keep its ID
+            ID = b.get_id();
+        } else {
+            ID = ++clauseID;
+        }
         solver->attach_bin_clause(b.getLit1(), b.getLit2(), true, ID, false);
         added++;
     }

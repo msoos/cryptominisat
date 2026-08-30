@@ -90,6 +90,18 @@ private:
 
     vector<Lit> roots;
     vector<Lit> failed;
+    //FRAT hints for each entry of `failed`. If parent != lit_Undef the chain
+    //is [parent's unit (looked up at emission), edge_id]
+    struct FailedHints {
+        Lit parent = lit_Undef;
+        int32_t edge_id = 0;
+        vector<int32_t> chain;
+    };
+    vector<FailedHints> failed_hints;
+    void capture_failed_hints(const Lit lit, const Lit other_lit,
+                              const int32_t edge_id, const bool par_fail,
+                              const PropBy confl);
+    void emit_failed_hints(const size_t at);
     vector<ResetReason> reset_reason_stack;
     deque<QueueElem> queue;
     vector<char> depth_failed;
