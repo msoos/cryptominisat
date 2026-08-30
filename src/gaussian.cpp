@@ -540,8 +540,13 @@ gret EGaussian::init_adjust_matrix() {
                     *solver->frat << implyclfromx << ID << tmp_clause[0] << fratchain << reason.xid << fin;
                     *solver->frat << delx << reason << fin;
                     del_unit_cls.push_back(make_pair(ID, tmp_clause[0]));
+                    //the registered unit survives, del_unit_cls deletes ID
+                    const int32_t id2 = ++solver->clauseID;
+                    *solver->frat << add << id2 << tmp_clause[0] << fratchain << ID << fin;
+                    solver->enqueue_registered_unit<false>(tmp_clause[0], id2);
+                } else {
+                    solver->enqueue<false>(tmp_clause[0]);
                 }
-                solver->enqueue<false>(tmp_clause[0]);
 
                 VERBOSE_PRINT("-> UNIT during adjust: " << tmp_clause[0]);
                 VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
@@ -752,8 +757,13 @@ bool EGaussian::find_truths(
             if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                 VERBOSE_PRINT("-> conflict at toplevel during find_truths");
                 int32_t out_id;
-                get_reason(row_n, out_id);
-                *solver->frat << add << ++solver->clauseID << fin;
+                vector<Lit>* rcl = get_reason(row_n, out_id);
+                *solver->frat << add << ++solver->clauseID << fratchain;
+                for(const Lit l: *rcl) {
+                    assert(solver->unit_cl_IDs[l.var()] != 0);
+                    *solver->frat << solver->unit_cl_IDs[l.var()];
+                }
+                *solver->frat << out_id << fin;
                 set_unsat_cl_id(solver->clauseID);
             }
 
@@ -1031,10 +1041,14 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         if (solver->decisionLevel() == 0 && solver->frat->enabled() && !unsat_set) {
                             VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
                             int32_t ID;
-                            get_reason(row_i, ID); // needed to make below step valid
-                                                   // but we don't really need the reason
+                            vector<Lit>* rcl = get_reason(row_i, ID);
                             int32_t fin_ID = ++solver->clauseID;
-                            *solver->frat << add << fin_ID << fin;
+                            *solver->frat << add << fin_ID << fratchain;
+                            for(const Lit l: *rcl) {
+                                assert(solver->unit_cl_IDs[l.var()] != 0);
+                                *solver->frat << solver->unit_cl_IDs[l.var()];
+                            }
+                            *solver->frat << ID << fin;
                             set_unsat_cl_id(fin_ID);
                             unsat_set = true;
                         }

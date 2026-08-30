@@ -880,16 +880,24 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
                 *limit_to_decrease -= 1;
                 if (!prop_long_cl_occur<inprocess>(w.get_offset())) ret = false;
             }
-            if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w)) ret = false;
+            if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w, p)) ret = false;
             assert(!w.isBNN());
         }
     }
     assert(gmatrices.empty());
 
     if (decisionLevel() == 0 && !ret) {
-        *frat << add << ++clauseID << fin;
+        *frat << add << ++clauseID;
+        if (frat->enabled()) {
+            assert(last_occ_confl_id != 0);
+            *frat << fratchain;
+            for(const auto& u: last_occ_confl_units) *frat << u;
+            *frat << last_occ_confl_id;
+        }
+        *frat << fin;
         set_unsat_cl_id(clauseID);
     }
+    if (decisionLevel() == 0) { last_occ_confl_id = 0; last_occ_confl_units.clear(); }
 
     return ret;
 }
@@ -899,11 +907,23 @@ template bool PropEngine::propagate_occur<false>(int64_t*);
 
 template<bool inprocess>
 inline bool PropEngine::prop_bin_cl_occur(
-    const Watched& ws)
+    const Watched& ws, const Lit p)
 {
     const lbool val = value(ws.lit2());
-    if (val == l_False) return false;
-    if (val == l_Undef) enqueue<inprocess>(ws.lit2());
+    if (val == l_False) {
+        if (frat->enabled() && last_occ_confl_id == 0) {
+            last_occ_confl_id = ws.get_id();
+            last_occ_confl_units.clear();
+            if (varData[p.var()].level == 0)
+                last_occ_confl_units.push_back(unit_cl_IDs[p.var()]);
+            if (varData[ws.lit2().var()].level == 0)
+                last_occ_confl_units.push_back(unit_cl_IDs[ws.lit2().var()]);
+        }
+        return false;
+    }
+    if (val == l_Undef)
+        enqueue<inprocess>(ws.lit2(), decisionLevel(),
+                           PropBy(~p, ws.red(), false, false, ws.get_id()));
     return true;
 }
 
@@ -929,10 +949,21 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
         }
     }
     if (satcl) return true;
-    if (numUndef == 0) return false; //Problem is UNSAT
+    if (numUndef == 0) {
+        //Problem is UNSAT (at toplevel) or vivification conflict
+        if (frat->enabled() && last_occ_confl_id == 0) {
+            last_occ_confl_id = cl.stats.id;
+            last_occ_confl_units.clear();
+            for (const Lit lit: cl) {
+                if (varData[lit.var()].level == 0)
+                    last_occ_confl_units.push_back(unit_cl_IDs[lit.var()]);
+            }
+        }
+        return false;
+    }
     if (numUndef > 1) return true;
 
-    enqueue<inprocess>(lastUndef);
+    enqueue<inprocess>(lastUndef, decisionLevel(), PropBy(offset));
     return true;
 }
 

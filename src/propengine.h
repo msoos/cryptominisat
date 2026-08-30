@@ -302,6 +302,8 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
     vector<int32_t>     tmp_unit_hints;   ///< FRAT hints for level-0 units
+    int32_t             last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
+    vector<int32_t>     last_occ_confl_units;
 
     friend class EGaussian;
 
@@ -396,7 +398,7 @@ private:
     Solver* solver;
 
     template<bool inprocess>
-    bool prop_bin_cl_occur(const Watched& ws);
+    bool prop_bin_cl_occur(const Watched& ws, const Lit p);
     template<bool inprocess>
     bool prop_long_cl_occur(const ClOffset offset);
     template<bool inprocess>
