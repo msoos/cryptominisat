@@ -175,7 +175,9 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             ret_sub_str.sub++;
         } else { //Strengthen
             VERBOSE_PRINT("strenghtened clause " << cl2);
-            if (!simplifier->remove_literal(offset2, subsLits[j], true, cl.stats.id)) {
+            const vector<int32_t> h = {cl.stats.id, cl2.stats.id};
+            if (!simplifier->remove_literal(offset2, subsLits[j], true,
+                    solver->frat->enabled() ? &h : nullptr)) {
                 return false;
             }
             ret_sub_str.str++;
@@ -736,7 +738,9 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 cout << "strenghtened clause " << cl2 << endl;
             }
             #endif
-            if (!simplifier->remove_literal(offset2, subsLits[j], true, impl_id)) return false;
+            const vector<int32_t> h = {impl_id, cl2.stats.id};
+            if (!simplifier->remove_literal(offset2, subsLits[j], true,
+                    solver->frat->enabled() && impl_id != 0 ? &h : nullptr)) return false;
             ret_sub_str.str++;
 
             //If we are waaay over time, just exit

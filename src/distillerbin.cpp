@@ -211,10 +211,20 @@ bool DistillerBin::try_distill_bin(
             //clause can be removed
             confl = PropBy(ClOffset(0));
         } else if (solver->value(lit2) == l_False) {
-            //Unit derived
+            //Unit derived. Hints: the propagations from ~lit1, then the bin
+            vector<int32_t> hints;
+            if (solver->frat->enabled()) {
+                vector<int32_t> rsns;
+                solver->collect_trail_seg_hints(
+                    solver->trail_begin_of_level(0), hints, rsns);
+                hints.insert(hints.end(), rsns.begin(), rsns.end());
+                hints.push_back(w.get_id());
+            }
             solver->cancelUntil<false, true>(0);
             vector<Lit> x = {lit1};
-            solver->add_clause_int(x);
+            solver->add_clause_int(x, false, nullptr, true, nullptr, true,
+                lit_Undef, false, false,
+                solver->frat->enabled() ? &hints : nullptr);
             solver->detach_bin_clause(lit1, lit2, false, w.get_id());
             (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
             runStats.numClShorten++;

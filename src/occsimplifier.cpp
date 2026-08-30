@@ -2238,6 +2238,19 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             }
             shortened++;
             (*solver->frat) << deldelay << *cl << fin;
+            const int32_t lrog_orig_id = cl->stats.id;
+            //hints: the gate bins (rhs | ~l) for each gate lit, then orig
+            solver->chain.clear();
+            if (solver->frat->enabled()) {
+                for(auto const& l: gate.lits) {
+                    int32_t bid = 0;
+                    for(const auto& wb: solver->watches[gate.rhs]) {
+                        if (wb.isBin() && wb.lit2() == ~l) { bid = wb.get_id(); break; }
+                    }
+                    assert(bid != 0 && "gate bin must exist");
+                    solver->chain.push_back(bid);
+                }
+            }
 
             VERBOSE_DEBUG_DO(solver->print_clause("shortening", *cl));
             for(auto const& l: gate.lits) {
@@ -2263,7 +2276,9 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 cl->recalc_abstraction();
             }
             INC_ID(*cl);
-            (*solver->frat) << add << *cl << fin << findelay;
+            (*solver->frat) << add << *cl << fratchain;
+            for(auto const& id: solver->chain) (*solver->frat) << id;
+            (*solver->frat) << lrog_orig_id << fin << findelay;
             VERBOSE_DEBUG_DO(solver->print_clause("shortened", *cl));
             if (!clean_clause(off, true)) {
                 for(auto const& l: gate.lits) seen[l.toInt()] = 0;
@@ -3956,6 +3971,9 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     bool conflicted = false;
     bool found_it = false;
     bool can_remove_cl = false;
+    occ_vivif_hints.clear();
+    solver->last_occ_confl_id = 0;
+    solver->last_occ_confl_units.clear();
     for(Lit l: *cl) {
         if (l != occ_cl.lit) l = ~l;
         else found_it = true;
@@ -3977,6 +3995,28 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     if (!conflicted && !can_remove_cl) {
         assert(found_it);
         conflicted = !solver->propagate_occur<true>(limit_to_decrease);
+    }
+    if (conflicted && solver->frat->enabled()) {
+        //strict chain for the vivified clause: units, the original clause
+        //(unit-propagating the kept lit), the propagations, the conflict
+        vector<int32_t> units, rsns;
+        for(const Lit l: *cl) {
+            if (solver->value(l) != l_Undef && solver->varData[l.var()].level == 0) {
+                assert(solver->unit_cl_IDs[l.var()] != 0);
+                units.push_back(solver->unit_cl_IDs[l.var()]);
+            }
+        }
+        solver->collect_trail_seg_hints(
+            solver->trail_begin_of_level(0), units, rsns);
+        occ_vivif_hints = units;
+        occ_vivif_hints.push_back(cl->stats.id);
+        occ_vivif_hints.insert(occ_vivif_hints.end(), rsns.begin(), rsns.end());
+        if (solver->last_occ_confl_id != 0) {
+            occ_vivif_hints.insert(occ_vivif_hints.end(),
+                solver->last_occ_confl_units.begin(),
+                solver->last_occ_confl_units.end());
+            occ_vivif_hints.push_back(solver->last_occ_confl_id);
+        }
     }
     solver->cancelUntil<false, true>(0);
 
@@ -4612,7 +4652,8 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
 
             if (*limit_to_decrease > 0 && try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
-                remove_literal(offset, lit, true);
+                remove_literal(offset, lit, true,
+                    solver->frat->enabled() ? &occ_vivif_hints : nullptr);
                 if (!solver->okay()) goto end;
                 removed++;
             }
@@ -5249,7 +5290,7 @@ bool OccSimplifier::remove_literal(
     ClOffset offset,
     const Lit toRemoveLit,
     bool only_set_is_removed,
-    const int32_t strengthener_id)
+    const vector<int32_t>* hints)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
     VERBOSE_PRINT("-> Strenghtening clause :" << cl << " with lit: " << toRemoveLit);
@@ -5257,15 +5298,15 @@ bool OccSimplifier::remove_literal(
     *limit_to_decrease -= 5;
 
     (*solver->frat) << deldelay << cl << fin;
-    const int32_t orig_id = cl.stats.id;
     cl.strengthen(toRemoveLit);
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
 
     INC_ID(cl);
     (*solver->frat) << add << cl;
-    if (solver->frat->enabled() && strengthener_id != 0) {
-        (*solver->frat) << fratchain << strengthener_id << orig_id;
+    if (solver->frat->enabled() && hints) {
+        (*solver->frat) << fratchain;
+        for(const auto& h: *hints) (*solver->frat) << h;
     }
     (*solver->frat) << fin << findelay;
     if (!cl.red()) {

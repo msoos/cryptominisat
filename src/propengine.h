@@ -226,6 +226,8 @@ public:
                                  const uint32_t skip_var = var_Undef);
     void collect_decision_reasons(vector<int32_t>& out, const uint32_t skip_var = var_Undef);
     uint32_t trail_begin_of_level(const uint32_t lev) const { return trail_lim[lev]; }
+    int32_t last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
+    vector<int32_t> last_occ_confl_units;
     int32_t get_confl_id(const PropBy confl, vector<int32_t>& units);
     //register clause `id` (already in the proof) as THE unit clause of p's
     //var and enqueue -- instead of enqueue() emitting a hint-less copy
@@ -302,8 +304,6 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
     vector<int32_t>     tmp_unit_hints;   ///< FRAT hints for level-0 units
-    int32_t             last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
-    vector<int32_t>     last_occ_confl_units;
 
     friend class EGaussian;
 

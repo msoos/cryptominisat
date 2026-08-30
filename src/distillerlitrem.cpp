@@ -265,6 +265,18 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     // distill_use=true disables Gaussian elimination, which is needed for FRAT
     // correctness: XOR-derived conflicts can't be captured in RUP proofs
     PropBy confl = solver->propagate<true, true, true>();
+    //strict hints while the trail is intact: units, the original clause
+    //(unit-propagating torem), the propagation reasons, the conflict
+    vector<int32_t> hints;
+    if (solver->frat->enabled() && !confl.isnullptr()) {
+        vector<int32_t> rsns;
+        solver->collect_trail_seg_hints(
+            solver->trail_begin_of_level(0), hints, rsns);
+        const int32_t cid = solver->get_confl_id(confl, hints);
+        hints.push_back(cl.stats.id);
+        hints.insert(hints.end(), rsns.begin(), rsns.end());
+        hints.push_back(cid);
+    }
     solver->cancelUntil<false, true>(0);
 
      //Couldn't remove literal
@@ -300,7 +312,9 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     // so let's set this to 0, this way, when we free() it, it won't be
     // deleted as per cl_last_in_solver
     solver->free_cl(offset, false);
-    Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
+    Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats,
+        true, nullptr, true, lit_Undef, false, false,
+        solver->frat->enabled() ? &hints : nullptr);
     (*solver->frat) << findelay;
     assert(solver->trail_size() == origTrailSize);
 

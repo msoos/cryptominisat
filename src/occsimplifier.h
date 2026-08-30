@@ -250,7 +250,8 @@ private:
     void backward_sub();
     bool execute_simplifier_strategy(const string& strategy);
     bool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed,
-                        const int32_t strengthener_id = 0);
+                        const vector<int32_t>* hints = nullptr);
+    vector<int32_t> occ_vivif_hints; ///< FRAT chain of the last occ vivification
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;
