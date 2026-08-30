@@ -841,6 +841,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.bump_reason_depth = fc_int(a);})
         .default_value(conf.bump_reason_depth)
         .help("Bump vars in reasons of learnt clause lits up to this depth. 0 = off");
+    program.add_argument("--shrink")
+        .action([&](const auto& a) {conf.do_shrink_uip = fc_int(a);})
+        .default_value(conf.do_shrink_uip)
+        .help("All-UIP shrinking of learnt clauses");
     program.add_argument("--maxgluehistltlimited")
         .action([&](const auto& a) {conf.max_glue_cutoff_gluehistltlimited = fc_int(a);})
         .default_value(conf.max_glue_cutoff_gluehistltlimited)

@@ -308,6 +308,9 @@ class DLL_PUBLIC SolverConf
         //Reason-side bumping, as in CaDiCaL. 0 = off
         uint32_t  bump_reason_depth;
 
+        //All-UIP shrinking of learnt clauses, as in CaDiCaL
+        int       do_shrink_uip;
+
         //chrono bt
         int diff_declev_for_chrono;
         int do_chrono_reuse_trail;

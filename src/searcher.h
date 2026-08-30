@@ -203,6 +203,17 @@ class Searcher : public HyperEngine
         uint32_t chrono_reuse_trail_level(const uint32_t jump, const uint32_t max_level);
         uint32_t reuse_trail_level();
         bool must_do_level0_work() const;
+        template<bool inprocess> void shrink_learnt_clause();
+        template<bool inprocess>
+        bool try_shrink_block(
+            const uint32_t block_begin
+            , const uint32_t block_end
+            , const uint32_t blevel
+            , const uint32_t max_trail
+            , const uint32_t abstract_levels
+            , Lit& replace_with);
+        vector<uint32_t> shrink_seen2_clear;
+        vector<int32_t> tmp_shrink_chain;
 
         /////////////////
         // Polarities

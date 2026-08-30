@@ -41,6 +41,8 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     litsRedFinal += other.litsRedFinal;
     recMinCl += other.recMinCl;
     recMinLitRem += other.recMinLitRem;
+    shrinkCl += other.shrinkCl;
+    shrinkLitRem += other.shrinkLitRem;
 
     permDiff_attempt  += other.permDiff_attempt;
     permDiff_rem_lits += other.permDiff_rem_lits;
@@ -103,6 +105,8 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     litsRedFinal -= other.litsRedFinal;
     recMinCl -= other.recMinCl;
     recMinLitRem -= other.recMinLitRem;
+    shrinkCl -= other.shrinkCl;
+    shrinkLitRem -= other.shrinkLitRem;
 
     permDiff_attempt  -= other.permDiff_attempt;
     permDiff_rem_lits -= other.permDiff_rem_lits;
@@ -274,6 +278,18 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
     print_stats_line(prefix + "recurs-min lits"
         , recMinLitRem
         , stats_line_percent(recMinLitRem, litsRedNonMin)
+        , "% less overall"
+    );
+
+    print_stats_line(prefix + "shrink effective"
+        , shrinkCl
+        , stats_line_percent(shrinkCl, conflicts)
+        , "% attempt successful"
+    );
+
+    print_stats_line(prefix + "shrink lits"
+        , shrinkLitRem
+        , stats_line_percent(shrinkLitRem, litsRedNonMin)
         , "% less overall"
     );
 

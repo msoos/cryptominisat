@@ -534,13 +534,205 @@ void Searcher::minimize_learnt_clause()
     } else {
         normalClMinim();
     }
+    stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
+    stats.recMinLitRem += origSize - learnt_clause.size();
+
+    if (conf.do_shrink_uip) shrink_learnt_clause<inprocess>();
+
     for (const Lit lit: toClear) {
         seen[lit.var()] = 0;
     }
     toClear.clear();
+}
 
-    stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
-    stats.recMinLitRem += origSize - learnt_clause.size();
+//Try to replace all clause lits of one level with that level's UIP.
+//seen = in clause or proven redundant, seen2 = shrinkable (this block)
+template<bool inprocess>
+bool Searcher::try_shrink_block(
+    const uint32_t block_begin
+    , const uint32_t block_end
+    , const uint32_t blevel
+    , const uint32_t max_trail
+    , const uint32_t abstract_levels
+    , Lit& replace_with
+) {
+    assert(shrink_seen2_clear.empty());
+    uint32_t open = 0;
+    for (uint32_t k = block_begin; k < block_end; k++) {
+        const uint32_t v = learnt_clause[k].var();
+        seen2[v] = 1;
+        shrink_seen2_clear.push_back(v);
+        open++;
+    }
+
+    tmp_shrink_chain.clear();
+    uint32_t pos = max_trail;
+    Lit uip = lit_Undef;
+    bool ok = true;
+
+    while (true) {
+        while (!seen2[trail[pos].lit.var()]) {
+            if (pos == 0) { ok = false; break; }
+            pos--;
+        }
+        if (!ok) break;
+        uip = trail[pos].lit;
+        open--;
+        if (open == 0) break;
+
+        const PropBy reason = varData[uip.var()].reason;
+        const PropByType type = reason.getType();
+        if (type == null_clause_t) { ok = false; break; }
+
+        Lit* lits = nullptr;
+        size_t size = 0;
+        int32_t id = 0;
+        switch (type) {
+            case binary_t:
+                size = 1;
+                id = reason.get_id();
+                break;
+
+            case clause_t: {
+                Clause* cl = cl_alloc.ptr(reason.get_offset());
+                lits = cl->begin();
+                size = cl->size()-1;
+                id = cl->stats.id;
+                break;
+            }
+
+            case xor_t: {
+                auto cl = get_xor_reason(reason, id);
+                lits = cl->data();
+                size = cl->size()-1;
+                break;
+            }
+
+            case bnn_t: {
+                assert(!frat->enabled());
+                auto cl = get_bnn_reason(bnns[reason.getBNNidx()], uip);
+                lits = cl->data();
+                size = cl->size()-1;
+                break;
+            }
+
+            default: release_assert(false);
+        }
+
+        for (size_t k2 = 0; k2 < size; k2++) {
+            const Lit q = (type == binary_t) ? reason.lit2() : lits[k2+1];
+            const uint32_t qv = q.var();
+            const uint32_t qlev = varData[qv].level;
+            if (qlev == 0 || seen2[qv]) continue;
+            if (qlev == blevel) {
+                seen2[qv] = 1;
+                shrink_seen2_clear.push_back(qv);
+                open++;
+                continue;
+            }
+            if (qlev > blevel) { ok = false; break; }
+
+            //lower level: in clause/proven redundant, or provably redundant
+            if (seen[qv]) continue;
+            if (varData[qv].reason.isnullptr()
+                || !litRedundant(q, abstract_levels)
+            ) {
+                ok = false;
+                break;
+            }
+            seen[qv] = 1;
+            toClear.push_back(q);
+        }
+        if (!ok) break;
+        if (id != 0) tmp_shrink_chain.push_back(id);
+        assert(pos > 0);
+        pos--;
+    }
+
+    for (const uint32_t v: shrink_seen2_clear) {
+        seen2[v] = 0;
+        //shrunken-away lits are implied by the block UIP, keep as redundant
+        if (ok && !seen[v]) {
+            seen[v] = 1;
+            toClear.push_back(Lit(v, false));
+        }
+    }
+    shrink_seen2_clear.clear();
+    if (!ok) return false;
+
+    replace_with = ~uip;
+    if (!seen[uip.var()]) {
+        seen[uip.var()] = 1;
+        toClear.push_back(uip);
+    }
+    for (const auto& id2: tmp_shrink_chain) chain.push_back(id2);
+
+    if (!inprocess) {
+        switch (branch_strategy) {
+            case branch::vsids:
+                vsids_bump_var_act<inprocess>(uip.var());
+                break;
+            case branch::vmtf:
+                implied_by_learnts.push_back(uip.var());
+                break;
+            default:
+                break;
+        }
+    }
+    return true;
+}
+
+//All-UIP shrinking [FengBacchus-SAT'20], as in CaDiCaL's shrink.cpp
+template<bool inprocess>
+void Searcher::shrink_learnt_clause()
+{
+    if (learnt_clause.size() < 3) return;
+
+    //[0] is the 1UIP, sort the rest by (level, trail pos) descending
+    std::sort(learnt_clause.begin()+1, learnt_clause.end(),
+        [this](const Lit a, const Lit b) {
+            const auto& va = varData[a.var()];
+            const auto& vb = varData[b.var()];
+            if (va.level != vb.level) return va.level > vb.level;
+            return va.sublevel > vb.sublevel;
+        });
+
+    uint32_t abstract_levels = 0;
+    for (size_t i = 1; i < learnt_clause.size(); i++) {
+        abstract_levels |= abstractLevel(learnt_clause[i].var());
+    }
+
+    uint32_t removed = 0;
+    uint32_t j = 1;
+    uint32_t i = 1;
+    while (i < learnt_clause.size()) {
+        const uint32_t blevel = varData[learnt_clause[i].var()].level;
+        const uint32_t max_trail = varData[learnt_clause[i].var()].sublevel;
+        uint32_t block_end = i+1;
+        while (block_end < learnt_clause.size()
+            && varData[learnt_clause[block_end].var()].level == blevel
+        ) {
+            block_end++;
+        }
+
+        Lit replace_with = lit_Undef;
+        if (block_end - i >= 2
+            && try_shrink_block<inprocess>(
+                i, block_end, blevel, max_trail, abstract_levels, replace_with)
+        ) {
+            learnt_clause[j++] = replace_with;
+            removed += block_end - i - 1;
+        } else {
+            for (uint32_t k = i; k < block_end; k++) {
+                learnt_clause[j++] = learnt_clause[k];
+            }
+        }
+        i = block_end;
+    }
+    learnt_clause.resize(j);
+
+    stats.shrinkCl += (removed > 0);
+    stats.shrinkLitRem += removed;
 }
 
 inline void Searcher::minimize_using_bins()
