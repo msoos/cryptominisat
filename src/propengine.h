@@ -474,11 +474,17 @@ inline PropResult PropEngine::prop_normal_helper(
         if (k == middle) k = end2;
     }
     if (k != end2) {
-        //Literal is either unset or satisfied, attach to other watchlist
         c.searched_pos = std::min<uint32_t>(k - begin, (1U<<21)-1);
-        c[1] = *k;
-        *k = ~p;
-        watches[c[1]].push(Watched(offset, c[0]));
+        if (value(*k) == l_True) {
+            //Replacement is satisfied, keep watch, only update blocking lit
+            *j = Watched(offset, *k);
+            j++;
+        } else {
+            //Literal is unset, attach to other watchlist
+            c[1] = *k;
+            *k = ~p;
+            watches[c[1]].push(Watched(offset, c[0]));
+        }
         return PROP_NOTHING;
     }
 
