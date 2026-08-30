@@ -214,13 +214,19 @@ class Searcher : public HyperEngine
             , Lit& replace_with);
         vector<uint32_t> shrink_seen2_clear;
 
-        //FRAT: strict, in-order hint chain rebuilding
-        void rebuild_chain_strict(const PropBy confl);
+        //FRAT: strict, in-order hint chains, collected during analysis.
+        //Every hint is reason(v) of a trail var v recorded as (sublevel, ID);
+        //emitted as: units, binmin (reverse), reasons sorted by sublevel,
+        //conflicting clause's ID last.
+        void emit_chain_sorted();
         void build_level0_confl_chain(const PropBy confl);
-        vector<std::pair<uint32_t, int32_t>> binmin_chain;
-        vector<int32_t> tmp_chain_units;
-        vector<int32_t> tmp_chain_rev;
-        vector<uint32_t> tmp_chain_clear;
+        vector<std::pair<uint32_t, int32_t>> chain_reasons;
+        vector<int32_t> chain_units;
+        vector<int32_t> binmin_chain;
+        int32_t chain_confl_id = 0;
+        //shrink-block temps, committed to the above only on block success
+        vector<std::pair<uint32_t, int32_t>> tmp_block_reasons;
+        vector<int32_t> tmp_block_units;
 
         //OTFS
         Clause* otfs_strengthen(const ClOffset offset, const Lit p);
