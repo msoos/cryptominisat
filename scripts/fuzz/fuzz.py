@@ -382,7 +382,7 @@ class Tester:
         cmd += "--gluecut0 %d " % gluecut0
         cmd += "--gluecut1 %d " % (gluecut0 + random.choice([0, 1, 3, 20]))
         cmd += "--lev1usewithin %d " % random.choice([100, 70000, 10000000])
-        cmd += "--maxgluehistltlimited %d " % random.choice([1, 5, 50, 99999])
+        cmd += "--maxgluehistltlimited %d " % random.choice([1, 5, 50, 1000])
         cmd += "--decbased %d " % random.choice([0, 1])
 
         # inprocessing scheduling limits
