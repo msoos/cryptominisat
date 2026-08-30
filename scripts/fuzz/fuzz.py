@@ -343,6 +343,9 @@ class Tester:
 
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
+        cmd += "--chronoreusetrail %d " % random.choice([1, 1, 0])
+        cmd += "--restartreusetrail %d " % random.choice([1, 1, 0])
+        cmd += "--bumpreasondepth %d " % random.choice([0, 1, 1, 2])
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.only_sampling:
