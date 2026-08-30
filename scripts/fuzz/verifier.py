@@ -284,6 +284,10 @@ class solution_parser:
                     print("ERROR: solution twice in solver output!")
                     exit(400)
 
+                if 'INDETERMINATE' in line:
+                    # no solution found (e.g. --maxconfl/--maxtime hit)
+                    continue
+
                 if 'UNSAT' in line:
                     unsat = True
                     satunsatfound = True
@@ -331,9 +335,8 @@ class solution_parser:
         if (ignoreNoSolution is True and
                 (satunsatfound is False or (
                     unsat is False and vlinefound is False))):
-            print("Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc.")
-            print("Making it look like an UNSAT, so no checks!")
-            return True, [], None
+            print("No solution printed -- limited run or timeout. No checks.")
+            return None, [], None
 
         if (satunsatfound is False):
             print("Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?")

@@ -206,6 +206,7 @@ class Tester:
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.only_sampling = False
+        self.limited_run = False
         self.sampling_vars = []
         self.this_gauss_on = False
         self.num_threads = 1
@@ -244,8 +245,13 @@ class Tester:
             print("available schedule options: %s" % opts)
 
         sched = []
-        for _ in range(int(random.gammavariate(12, 0.7))):
-            sched.append(random.choice(opts))
+        if random.randint(0, 3) == 0:
+            # every pass once, in fully random order
+            sched = list(opts)
+            random.shuffle(sched)
+        else:
+            for _ in range(int(random.gammavariate(12, 0.7))):
+                sched.append(random.choice(opts))
 
         # just so that XOR is really found and used, so we can fuzz it
         if "autodisablegauss" in self.extra_opts_supported:
@@ -286,7 +292,7 @@ class Tester:
         sched_opts += "occ-bve-empty, occ-ternary-res, occ-gate-based-eqlit,"
         sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
-        sched_opts += "renumber, must-renumber,"
+        sched_opts += "renumber, must-renumber, louvain-comms,"
         sched_opts += "card-find, breakid, cl-consolidate,"
         sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
 
@@ -305,6 +311,14 @@ class Tester:
         return cmd
 
     def random_options(self):
+        # deliberately NOT fuzzed:
+        #   --help/--version/--dumpresult/--clearinter/--printgatedot: not solving-related
+        #   --printsol 0: the verifier needs the 'v' lines
+        #   --maxsol/--nobansol: changes output contract, verifier cannot check
+        #   --assump/--debuglib/--sampling/--threads: handled elsewhere
+        #   --breakid*: BreakID is not compiled into normal builds
+        #   'sls'/'lucky' schedule tokens: assert(false) in solver
+        #   --slsbumptype 2, --distillsort 3: assert/exit by design
         self.sqlitedbfname = None
         cmd = " --zero-exit-status "
 
@@ -347,6 +361,92 @@ class Tester:
         cmd += "--restartreusetrail %d " % random.choice([1, 1, 0])
         cmd += "--bumpreasondepth %d " % random.choice([0, 1, 1, 2])
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
+
+        # VERY short runs -- solver stops with INDETERMINATE, no checks possible
+        if self.limited_run:
+            if random.randint(0, 1):
+                cmd += "--maxconfl %d " % random.choice([0, 1, 5, 50, 500, 5000, 50000])
+            else:
+                cmd += "--maxtime %d " % random.choice([0, 1, 2, 5])
+
+        # restarts & branching
+        cmd += "--random %d " % random.choice([0, 1, random.randint(0, 1000000)])
+        cmd += "--branchstr %s " % random.choice(
+            ["vmtf", "vsids", "vmtf+vsids", "vsids+vmtf",
+             "vmtf+vsids+rand", "rand+vsids", "vmtf+rand"])
+        cmd += "--rstfirst %d " % random.choice([1, 10, 100, 10000])
+        cmd += "--ratiogluegeom %d " % random.choice([1, 5, 60])
+        cmd += "--blockingglue %d " % random.choice([0, 1, 1])
+        cmd += "--lwrbndblkrest %d " % random.choice([0, 100, 10000, 10000000])
+        gluecut0 = random.choice([1, 2, 3, 5, 25])
+        cmd += "--gluecut0 %d " % gluecut0
+        cmd += "--gluecut1 %d " % (gluecut0 + random.choice([0, 1, 3, 20]))
+        cmd += "--lev1usewithin %d " % random.choice([100, 70000, 10000000])
+        cmd += "--maxgluehistltlimited %d " % random.choice([1, 5, 50, 99999])
+        cmd += "--decbased %d " % random.choice([0, 1])
+
+        # inprocessing scheduling limits
+        cmd += "--allpresimp %d " % random.choice([0, 0, 1])
+        cmd += "--nonstop %d " % random.choice([0]*9 + [1])
+        cmd += "--maxnumsimppersolve %d " % random.choice([1, 3, 25, 1000])
+        cmd += "--confbtwsimpinc %s " % random.choice([1.0, 1.4, 4])
+        cmd += "--mustconsolidate %d " % random.choice([0]*9 + [1])
+        cmd += "--fullwatchconseveryn %d " % random.choice([100, 4000000])
+        cmd += "--transred %d " % random.choice([0, 1])
+        cmd += "--intreemaxm %d " % random.choice([0, 1, 400])
+        cmd += "--cardfind %d " % random.choice([0, 0, 1])
+
+        # SLS details
+        cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr", "ccnr_yalsat"])
+        cmd += "--slseveryn %d " % random.choice([1, 2, 30])
+        cmd += "--slsmaxmem %d " % random.choice([1, 10, 500])
+        cmd += "--slstobump %d " % random.choice([0, 1, 100, 10000])
+        cmd += "--slstobumpmaxpervar %d " % random.choice([1, 100])
+        cmd += "--slsbumptype %d " % random.choice([1, 3, 4, 5, 6])
+        cmd += "--slsccnraspire %d " % random.choice([0, 1])
+
+        # distill details
+        cmd += "--distillbin %d " % random.choice([0, 1])
+        cmd += "--distillmaxm %d " % random.choice([0, 1, 200])
+        cmd += "--distillincconf %s " % random.choice([0, 0.1, 10])
+        cmd += "--distillminconf %d " % random.choice([1, 10000])
+        cmd += "--distilltier0ratio %s " % random.choice([0.01, 1, 10])
+        cmd += "--distilltier1ratio %s " % random.choice([0, 0.03, 3])
+        cmd += "--distillirredalsoremratio %s " % random.choice([0.1, 1.2])
+        cmd += "--distillirrednoremratio %s " % random.choice([0.1, 1])
+        cmd += "--distillshuffleeveryn %d " % random.choice([1, 3, 1000])
+        cmd += "--distillsort %d " % random.choice([0, 1, 2, 4])
+
+        # occ / varelim / bva limits
+        cmd += "--bva %d " % random.choice([0, 0, 1])
+        cmd += "--bvalim %d " % random.choice([0, 5, 250000])
+        cmd += "--bva2lit %d " % random.choice([0, 1])
+        cmd += "--bvato %d " % random.choice([0, 2, 50])
+        cmd += "--emptyelim %d " % random.choice([0, 1])
+        cmd += "--eratio %s " % random.choice([0, 0.3, 1.6, 10])
+        cmd += "--varelimto %d " % random.choice([0, 10, 750])
+        cmd += "--varelimmaxmb %d " % random.choice([0, 1, 1000])
+        cmd += "--gatefindto %d " % random.choice([0, 1, 200])
+        cmd += "--weakentimelim %d " % random.choice([0, 1, 300])
+        cmd += "--substimelim %d " % random.choice([0, 1, 300])
+        cmd += "--substimelimbinratio %s " % random.choice([0, 0.1, 1])
+        cmd += "--substimelimlongratio %s " % random.choice([0, 0.9, 1])
+        cmd += "--strstimelim %d " % random.choice([0, 1, 300])
+        cmd += "--sublonggothrough %d " % random.choice([0, 1, 3])
+        cmd += "--strmaxt %d " % random.choice([0, 1, 20])
+        cmd += "--implstrto %d " % random.choice([0, 1, 200])
+        cmd += "--ternbincreate %d " % random.choice([0, 1])
+
+        # xor find limits
+        cmd += "--maxxorsize %d " % random.choice([3, 4, 5, 7, 12])
+        cmd += "--xorfindtout %d " % random.choice([0, 1, 400])
+
+        # output/printing code paths
+        cmd += "--verbstat %d " % random.choice([0, 1, 2, 3])
+        cmd += "--verbrestart %d " % random.choice([0, 0, 1])
+        cmd += "--verballrestarts %d " % random.choice([0, 0, 1])
+        cmd += "--restartprint %d " % random.choice([1, 100, 8192])
+        cmd += "--printtimes %d " % random.choice([0, 1])
 
         if self.only_sampling:
             cmd += "--sampling "
@@ -393,6 +493,13 @@ class Tester:
                     # "Set minimum no. of rows for gaussian matrix.
                     cmd += "--minmatrixrows %s " % int(random.gammavariate(1, 15.0))
 
+                if random.randint(0, 3) == 0:
+                    cmd += "--maxmatrixcols %d " % random.choice([0, 10, 1000])
+                    cmd += "--gaussusefulcutoff %s " % random.choice([0.1, 0.2, 1.0])
+                    cmd += "--gaussmincalls %d " % random.choice([1, 200])
+                    cmd += "--gausscheckevery %d " % random.choice([1, 1024])
+                    cmd += "--autodisablegauss %d " % random.choice([0, 1])
+
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0 and self.num_threads == 1:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
@@ -415,6 +522,8 @@ class Tester:
 
                 cmd += "--%s %d " % (opt, random.choice([0, 1, 1, 1, 1]))
 
+        # fuzz schedules independently of the option block above
+        if random.choice([True, True, False]):
             cmd += self.rnd_schedule_all()
 
         return cmd
@@ -563,6 +672,10 @@ class Tester:
         unsat, solution, _ = self.sol_parser.parse_solution_from_output(
             consoleOutput.split("\n"), self.ignoreNoSolution)
 
+        # limited run finished without a solution, nothing to check
+        if unsat is None:
+            return
+
         if not unsat:
             if len(self.sampling_vars) != 0:
                 self.sol_parser.sampling_vars_solution_check(fname, self.sampling_vars, solution)
@@ -666,8 +779,13 @@ class Tester:
             self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
+        # limited runs: fuzz VERY short searches via --maxconfl/--maxtime
+        # no FRAT (incomplete proof) and no debuglib (INDETERMINATE parts)
+        self.limited_run = random.randint(0, 5) == 0
+        self.ignoreNoSolution = self.limited_run
+
         # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        if self.num_threads == 1:
+        if self.num_threads == 1 and not self.limited_run:
             self.frat = random.randint(0, 10) < 5
         else:
             self.frat = False
@@ -703,7 +821,7 @@ class Tester:
         os.unlink(fname)
         fname = fname_shuffled
 
-        if not self.frat and not self.only_sampling:
+        if not self.frat and not self.only_sampling and not self.limited_run:
             print("->Multipart test")
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest-interspersed")
