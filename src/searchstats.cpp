@@ -43,6 +43,9 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     recMinLitRem += other.recMinLitRem;
     shrinkCl += other.shrinkCl;
     shrinkLitRem += other.shrinkLitRem;
+    otfsStr += other.otfsStr;
+    otfsLitsRem += other.otfsLitsRem;
+    otfsDriving += other.otfsDriving;
 
     permDiff_attempt  += other.permDiff_attempt;
     permDiff_rem_lits += other.permDiff_rem_lits;
@@ -107,6 +110,9 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     recMinLitRem -= other.recMinLitRem;
     shrinkCl -= other.shrinkCl;
     shrinkLitRem -= other.shrinkLitRem;
+    otfsStr -= other.otfsStr;
+    otfsLitsRem -= other.otfsLitsRem;
+    otfsDriving -= other.otfsDriving;
 
     permDiff_attempt  -= other.permDiff_attempt;
     permDiff_rem_lits -= other.permDiff_rem_lits;
@@ -291,6 +297,12 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
         , shrinkLitRem
         , stats_line_percent(shrinkLitRem, litsRedNonMin)
         , "% less overall"
+    );
+
+    print_stats_line(prefix + "otfs str/driving"
+        , otfsStr
+        , otfsDriving
+        , "strengthened/driving"
     );
 
     print_stats_line(prefix + "permDiff call%"

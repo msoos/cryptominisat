@@ -215,6 +215,14 @@ class Searcher : public HyperEngine
         vector<uint32_t> shrink_seen2_clear;
         vector<int32_t> tmp_shrink_chain;
 
+        //OTFS
+        Clause* otfs_strengthen(const ClOffset offset, const Lit p);
+        vector<uint32_t> otfs_cur_lev_seen;
+        vector<Lit> otfs_tmp_lits;
+        uint32_t otfs_antec_nonzero = 0;
+        bool otfs_driving = false;
+        ClOffset otfs_driving_cl = 0;
+
         /////////////////
         // Polarities
         bool   pick_polarity(const uint32_t var);

@@ -65,6 +65,9 @@ public:
     uint64_t recMinLitRem = 0;
     uint64_t shrinkCl = 0;
     uint64_t shrinkLitRem = 0;
+    uint64_t otfsStr = 0;
+    uint64_t otfsLitsRem = 0;
+    uint64_t otfsDriving = 0;
     uint64_t permDiff_attempt = 0;
     uint64_t permDiff_success = 0;
     uint64_t permDiff_rem_lits = 0;

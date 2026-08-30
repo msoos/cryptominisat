@@ -183,6 +183,7 @@ inline void Searcher::add_lit_to_learnt(
         }
         return;
     }
+    otfs_antec_nonzero++;
 
     if (seen[var]) return;
     seen[var] = 1;
@@ -213,6 +214,7 @@ inline void Searcher::add_lit_to_learnt(
 
     if (varData[var].level >= nDecisionLevel) {
         pathC++;
+        otfs_cur_lev_seen.push_back(var);
     } else {
         learnt_clause.push_back(lit);
     }
@@ -516,7 +518,10 @@ void Searcher::add_lits_to_learnt(
                 assert(false);
                 break;
         }
-        if (p == lit_Undef || i > 0) {
+        //skip the pivot by value: after OTFS a stale reason may not contain p
+        if (p == lit_Undef
+            || (confl.getType() == binary_t ? i > 0 : x != p)
+        ) {
             add_lit_to_learnt<inprocess>(x, nDecisionLevel);
         }
         i++;
@@ -807,6 +812,8 @@ void Searcher::create_learnt_clause(PropBy confl)
     int index = trail.size() - 1;
     Lit p = lit_Undef;
     implied_by_learnts.clear();
+    otfs_cur_lev_seen.clear();
+    otfs_driving = false;
 
     // Get decision level to go back to
     Lit lit0 = lit_Error;
@@ -837,9 +844,48 @@ void Searcher::create_learnt_clause(PropBy confl)
 
     // 1st UIP clause generation
     learnt_clause.push_back(lit_Undef); //make space for ~p
-    do {
+    for (;;) {
         VERBOSE_PRINT("p is: " << p);
+        otfs_antec_nonzero = (p == lit_Undef) ? 0 : 1;
         add_lits_to_learnt<inprocess>(confl, p, nDecisionLevel);
+
+        //OTFS: resolvent equals antecedent minus p, strengthen the antecedent
+        if (!inprocess && conf.do_otfs
+            && p != lit_Undef
+            && confl.getType() == clause_t
+            && otfs_antec_nonzero > 2
+            && pathC + learnt_clause.size() - 1 < otfs_antec_nonzero
+            && pathC + learnt_clause.size() - 1 >= 3
+        ) {
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
+            bool otfs_ok = (*cl)[0] == p;
+            #ifdef STATS_NEEDED
+            otfs_ok = otfs_ok && !cl->stats.locked_for_data_gen;
+            #endif
+            if (otfs_ok) {
+                otfs_strengthen(confl.get_offset(), p);
+                for (const uint32_t v: otfs_cur_lev_seen) seen[v] = 0;
+                otfs_cur_lev_seen.clear();
+                for (const Lit l: learnt_clause) {
+                    if (l != lit_Undef) seen[l.var()] = 0;
+                }
+                if (pathC == 1) {
+                    //strengthened clause is asserting, it drives, learn nothing
+                    learnt_clause.clear();
+                    otfs_driving = true;
+                    otfs_driving_cl = confl.get_offset();
+                    stats.otfsDriving++;
+                    return;
+                }
+                //restart analysis with the strengthened clause as conflict
+                learnt_clause.clear();
+                learnt_clause.push_back(lit_Undef);
+                chain.clear();
+                pathC = 0;
+                p = lit_Undef;
+                continue;
+            }
+        }
 
         // Select next implication to look at
         do {
@@ -857,9 +903,71 @@ void Searcher::create_learnt_clause(PropBy confl)
 
         //Okay, one more path done
         pathC--;
-    } while (pathC > 0);
-    assert(pathC == 0);
+        if (pathC == 0) break;
+    }
     learnt_clause[0] = ~p;
+}
+
+//OTFS: remove p and level-0 lits from an attached clause, in place
+Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
+{
+    Clause& cl = *cl_alloc.ptr(offset);
+    assert(cl.size() > 2);
+    assert(!cl.freed() && !cl.get_removed());
+    const Lit ow0 = cl[0];
+    const Lit ow1 = cl[1];
+
+    if (frat->enabled()) *frat << deldelay << cl << fin;
+
+    otfs_tmp_lits.clear();
+    for (const Lit l: cl) {
+        if (l == p) continue;
+        if (varData[l.var()].level == 0) {
+            assert(value(l) == l_False);
+            continue;
+        }
+        otfs_tmp_lits.push_back(l);
+    }
+    assert(otfs_tmp_lits.size() >= 3);
+
+    //watch the two highest (level, trail pos) lits, [0] is the highest
+    for (uint32_t w = 0; w < 2; w++) {
+        uint32_t best = w;
+        for (uint32_t i2 = w+1; i2 < otfs_tmp_lits.size(); i2++) {
+            const auto& va = varData[otfs_tmp_lits[i2].var()];
+            const auto& vb = varData[otfs_tmp_lits[best].var()];
+            if (va.level > vb.level
+                || (va.level == vb.level && va.sublevel > vb.sublevel)
+            ) {
+                best = i2;
+            }
+        }
+        std::swap(otfs_tmp_lits[w], otfs_tmp_lits[best]);
+    }
+
+    const uint32_t removed_num = cl.size() - otfs_tmp_lits.size();
+    for (uint32_t i2 = 0; i2 < otfs_tmp_lits.size(); i2++) cl[i2] = otfs_tmp_lits[i2];
+    cl.resize(otfs_tmp_lits.size());
+    if (cl.red()) litStats.redLits -= removed_num;
+    else litStats.irredLits -= removed_num;
+
+    cl.stats.id = ++clauseID;
+    if (frat->enabled()) {
+        *frat << add << cl.stats.id << otfs_tmp_lits;
+        add_chain();
+        *frat << fin;
+        *frat << findelay;
+    }
+
+    //re-watch: blocked lits may be stale, so re-add both
+    removeWCl(watches[ow0], offset);
+    removeWCl(watches[ow1], offset);
+    watches[cl[0]].push(Watched(offset, cl[1]));
+    watches[cl[1]].push(Watched(offset, cl[0]));
+
+    stats.otfsStr++;
+    stats.otfsLitsRem += removed_num;
+    return &cl;
 }
 
 void Searcher::simple_create_learnt_clause(
@@ -1076,6 +1184,25 @@ void Searcher::analyze_conflict(
 
     print_debug_resolution_data(confl);
     create_learnt_clause<inprocess>(confl);
+    if (otfs_driving) {
+        //no clause was learnt, the strengthened clause drives
+        if (!inprocess && branch_strategy == branch::vmtf) {
+            std::sort(implied_by_learnts.begin(),
+                      implied_by_learnts.end(),
+                      vmtf_bump_sort(vmtf_btab));
+            for (const auto& v: implied_by_learnts) vmtf_bump_queue(v);
+        }
+        implied_by_learnts.clear();
+        #ifdef STATS_NEEDED_BRANCH
+        for(auto& lev: level_used_for_cl) level_used_for_cl_arr[lev] = 0;
+        level_used_for_cl.clear();
+        #endif
+        out_btlevel = 0;
+        glue = 0;
+        glue_before_minim = 0;
+        size_before_minim = 0;
+        return;
+    }
     stats.litsRedNonMin += learnt_clause.size();
 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     glue_before_minim = calc_glue(learnt_clause);
@@ -2146,6 +2273,19 @@ bool Searcher::handle_conflict(PropBy confl)
         , glue_before_minim         //return glue before minimization here
         , size_before_minim         //return glue before minimization here
     );
+    if (otfs_driving) {
+        //OTFS strengthened an existing clause into the asserting clause
+        Clause* cl = cl_alloc.ptr(otfs_driving_cl);
+        assert(varData[(*cl)[0].var()].level > varData[(*cl)[1].var()].level);
+        const uint32_t new_btlevel = varData[(*cl)[1].var()].level;
+        cancelUntil(new_btlevel);
+        assert(value((*cl)[0]) == l_Undef);
+        enqueue<false>((*cl)[0], new_btlevel, PropBy(otfs_driving_cl));
+        if (branch_strategy == branch::vsids) vsids_decay_var_act();
+        decayClauseAct<false>();
+        frat_func_end();
+        return true;
+    }
     solver->datasync->signal_new_long_clause(learnt_clause);
 
     uint32_t connects_num_communities = 0;

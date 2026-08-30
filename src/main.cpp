@@ -845,6 +845,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_shrink_uip = fc_int(a);})
         .default_value(conf.do_shrink_uip)
         .help("All-UIP shrinking of learnt clauses");
+    program.add_argument("--otfs")
+        .action([&](const auto& a) {conf.do_otfs = fc_int(a);})
+        .default_value(conf.do_otfs)
+        .help("On-the-fly strengthening of clauses during conflict analysis");
     program.add_argument("--maxgluehistltlimited")
         .action([&](const auto& a) {conf.max_glue_cutoff_gluehistltlimited = fc_int(a);})
         .default_value(conf.max_glue_cutoff_gluehistltlimited)

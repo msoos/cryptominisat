@@ -311,6 +311,9 @@ class DLL_PUBLIC SolverConf
         //All-UIP shrinking of learnt clauses, as in CaDiCaL
         int       do_shrink_uip;
 
+        //On-the-fly strengthening during conflict analysis, as in CaDiCaL
+        int       do_otfs;
+
         //chrono bt
         int diff_declev_for_chrono;
         int do_chrono_reuse_trail;

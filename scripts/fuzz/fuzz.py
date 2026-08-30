@@ -361,6 +361,7 @@ class Tester:
         cmd += "--restartreusetrail %d " % random.choice([1, 1, 0])
         cmd += "--bumpreasondepth %d " % random.choice([0, 1, 1, 2])
         cmd += "--shrink %d " % random.choice([0, 1, 1, 1])
+        cmd += "--otfs %d " % random.choice([0, 1, 1, 1])
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         # VERY short runs -- solver stops with INDETERMINATE, no checks possible
