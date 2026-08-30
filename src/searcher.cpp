@@ -1309,6 +1309,62 @@ void Searcher::check_need_gauss_jordan_disable()
     }
 }
 
+//Level-0 work is pending, restart must go to level 0
+bool Searcher::must_do_level0_work() const
+{
+    if (fast_backw.fast_backw_on || !assumptions.empty()) return true;
+    if (!xorclauses.empty() || !gmatrices.empty() || !bnns.empty()) return true;
+    if (gauss_disable_pending) return true;
+    if (solver->datasync->enabled()) return true;
+    //branch strategy switch needs an empty trail, heaps are not rebuilt
+    if (sumConflicts >= branch_strategy_change) return true;
+    if (!conf.never_stop_search) {
+        if (conf.do_distill_clauses && sumConflicts > next_cls_distill) return true;
+        if (conf.do_full_probe && sumConflicts > next_full_probe) return true;
+        if (conf.do_distill_bin_clauses && sumConflicts > next_bins_distill) return true;
+        if (conf.do_distill_clauses && sumConflicts > next_sub_str_with_bin) return true;
+        if (conf.doStrSubImplicit && sumConflicts > next_str_impl_with_impl) return true;
+        if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && sumConflicts > next_intree)
+            return true;
+    }
+    if (conf.doSLS && sumConflicts > next_sls) return true;
+    return false;
+}
+
+//Marijn Heule's reuse trail on restart, as in CaDiCaL
+uint32_t Searcher::reuse_trail_level()
+{
+    if (decisionLevel() == 0) return 0;
+    const bool use_vsids = branch_strategy == branch::vsids;
+
+    uint32_t next = var_Undef;
+    if (use_vsids) {
+        while (!order_heap_vsids.empty()) {
+            const uint32_t v = order_heap_vsids[0];
+            if (value(v) == l_Undef) { next = v; break; }
+            order_heap_vsids.removeMin();
+        }
+    } else if (branch_strategy == branch::vmtf) {
+        next = vmtf_pick_var();
+    } else {
+        return 0;
+    }
+    if (next == var_Undef) return 0;
+
+    uint32_t res = 0;
+    while (res < decisionLevel()) {
+        const uint32_t v = trail[trail_lim[res]].lit.var();
+        //with chrono BT this slot may not be a real decision
+        if (varData[v].level != res+1 || !varData[v].reason.isnullptr()) break;
+        const bool keep = use_vsids
+            ? var_act_vsids[v] >= var_act_vsids[next]
+            : vmtf_btab[v] >= vmtf_btab[next];
+        if (!keep) break;
+        res++;
+    }
+    return res;
+}
+
 lbool Searcher::search()
 {
     assert(ok);
@@ -1374,8 +1430,19 @@ lbool Searcher::search()
     }
     max_confl_this_restart -= (int64_t)params.confl_this_rst;
 
-    cancelUntil(0);
+    {
+        uint32_t reuse_lev = 0;
+        if (conf.do_restart_reuse_trail && !must_do_level0_work()) {
+            reuse_lev = reuse_trail_level();
+        }
+        cancelUntil(reuse_lev);
+    }
     confl = propagate<false>();
+    if (!confl.isnullptr() && decisionLevel() > 0) {
+        //reused trail turned out bad, do a full restart
+        cancelUntil(0);
+        confl = propagate<false>();
+    }
     if (!confl.isnullptr() || !solver->datasync->syncData()) {
         assert(!frat->enabled() || unsat_cl_ID != 0);
         ok = false;
@@ -2634,20 +2701,23 @@ lbool Searcher::solve(const uint64_t _max_confls) {
 
     SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
     while(stats.conflicts < max_confl_per_search_solve_call && status == l_Undef) {
-        if (!conf.never_stop_search &&
-                (distill_clauses_if_needed() == l_False
-                || !full_probe_if_needed()
-                || !distill_bins_if_needed()
-                || !sub_str_with_bin_if_needed()
-                || !str_impl_with_impl_if_needed()
-                || !intree_if_needed())
-          ) {
-            assert(!frat->enabled() || unsat_cl_ID != 0);
-            status = l_False;
-            goto end;
+        //trail may be non-empty due to restart trail reuse
+        if (decisionLevel() == 0) {
+            if (!conf.never_stop_search &&
+                    (distill_clauses_if_needed() == l_False
+                    || !full_probe_if_needed()
+                    || !distill_bins_if_needed()
+                    || !sub_str_with_bin_if_needed()
+                    || !str_impl_with_impl_if_needed()
+                    || !intree_if_needed())
+              ) {
+                assert(!frat->enabled() || unsat_cl_ID != 0);
+                status = l_False;
+                goto end;
+            }
+            SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
+            sls_if_needed();
         }
-        SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
-        sls_if_needed();
 
         assert(watches.get_smudged_list().empty());
         params.clear();
@@ -2883,6 +2953,12 @@ void Searcher::finish_up_solve(const lbool status) {
             assert(confl.isnullptr());
         }
     } else if (status == l_Undef) {
+        //trail may be reused, undo that
+        if (decisionLevel() != 0) {
+            cancelUntil(0);
+            PropBy confl = propagate<false>();
+            assert(confl.isnullptr());
+        }
         assert(decisionLevel() == 0);
         assert(solver->prop_at_head());
     }

@@ -855,6 +855,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_chrono_reuse_trail = fc_int(a);})
         .default_value(conf.do_chrono_reuse_trail)
         .help("On backjump, only backtrack to the level of the best-ranked var above the jump level");
+    program.add_argument("--restartreusetrail")
+        .action([&](const auto& a) {conf.do_restart_reuse_trail = fc_int(a);})
+        .default_value(conf.do_restart_reuse_trail)
+        .help("On restart, keep decisions that would be re-made anyway");
 
 #ifdef USE_SQLITE3
     /* po::options_description sqlOptions("SQL options"); */
