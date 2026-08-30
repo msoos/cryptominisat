@@ -228,7 +228,9 @@ public:
     uint32_t trail_begin_of_level(const uint32_t lev) const { return trail_lim[lev]; }
     int32_t last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
     vector<int32_t> last_occ_confl_units;
+    Lit get_fail_bin_lit() const { return failBinLit; }
     int32_t get_confl_id(const PropBy confl, vector<int32_t>& units);
+    int32_t get_reason_id(const PropBy r, vector<int32_t>& units);
     //register clause `id` (already in the proof) as THE unit clause of p's
     //var and enqueue -- instead of enqueue() emitting a hint-less copy
     template<bool inprocess>

@@ -1184,6 +1184,38 @@ void PropEngine::collect_decision_reasons(vector<int32_t>& out, const uint32_t s
     }
 }
 
+//ID of a reason clause; its level-0 lits' unit IDs go to `units`
+int32_t PropEngine::get_reason_id(const PropBy r, vector<int32_t>& units)
+{
+    assert(frat->enabled());
+    int32_t id;
+    const auto unit_of = [&](const Lit x) {
+        if (value(x) != l_Undef && varData[x.var()].level == 0) {
+            assert(unit_cl_IDs[x.var()] != 0);
+            units.push_back(unit_cl_IDs[x.var()]);
+        }
+    };
+    switch (r.getType()) {
+        case binary_t:
+            id = r.get_id();
+            unit_of(r.lit2());
+            break;
+        case clause_t: {
+            Clause* cl = cl_alloc.ptr(r.get_offset());
+            id = cl->stats.id;
+            for (const Lit x: *cl) unit_of(x);
+            break;
+        }
+        case xor_t: {
+            auto cl = get_xor_reason(r, id);
+            for (const Lit x: *cl) unit_of(x);
+            break;
+        }
+        default: release_assert(false);
+    }
+    return id;
+}
+
 //ID of the conflicting clause; its level-0 lits' unit IDs go to `units`
 int32_t PropEngine::get_confl_id(const PropBy confl, vector<int32_t>& units)
 {

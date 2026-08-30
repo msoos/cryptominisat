@@ -573,7 +573,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         vector<int32_t> rsns;
         solver->collect_trail_seg_hints(seg_start, hint_units, rsns);
         int32_t final_id;
-        if (!confl.isnullptr()) final_id = solver->get_confl_id(confl, hint_units);
+        if (True_confl) final_id = solver->get_reason_id(confl, hint_units);
+        else if (!confl.isnullptr()) final_id = solver->get_confl_id(confl, hint_units);
         else final_id = stats->id;
         hints = hint_units;
         hints.insert(hints.end(), rsns.begin(), rsns.end());
