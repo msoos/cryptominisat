@@ -165,6 +165,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Glues
         , update_glues_on_analyze(true)
         , max_glue_cutoff_gluehistltlimited(50)
+        , bump_reason_depth(1)
 
         //Chono BT
         , diff_declev_for_chrono (20)

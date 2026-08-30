@@ -793,6 +793,67 @@ struct vmtf_bump_sort {
     const vector<uint64_t>& vmtf_btab;
 };
 
+//Bump vars in the reasons of the learnt clause, as in CaDiCaL
+void Searcher::bump_reason_side_lit(const Lit lit, const uint32_t depth)
+{
+    if (varData[lit.var()].level == 0) return;
+    const PropBy& reason = varData[lit.var()].reason;
+    const PropByType type = reason.getType();
+
+    Lit* lits = nullptr;
+    size_t size = 0;
+    switch (type) {
+        case binary_t:
+            size = 1;
+            break;
+
+        case clause_t: {
+            Clause* cl = cl_alloc.ptr(reason.get_offset());
+            lits = cl->begin();
+            size = cl->size()-1;
+            break;
+        }
+
+        //XOR/BNN reasons are expensive to recover, skip them
+        default:
+            return;
+    }
+
+    for (size_t i = 0; i < size; i++) {
+        const Lit q = (type == binary_t) ? reason.lit2() : lits[i+1];
+        const uint32_t var = q.var();
+        if (seen[var] || varData[var].level == 0) continue;
+        seen[var] = 1;
+        toClear.push_back(q);
+
+        switch (branch_strategy) {
+            case branch::vsids:
+                vsids_bump_var_act<false>(var);
+                break;
+            case branch::vmtf:
+                implied_by_learnts.push_back(var);
+                break;
+            default:
+                break;
+        }
+        if (depth >= 2) bump_reason_side_lit(q, depth-1);
+    }
+}
+
+void Searcher::bump_reason_side_lits()
+{
+    assert(toClear.empty());
+    for (const Lit l: learnt_clause) {
+        seen[l.var()] = 1;
+        toClear.push_back(l);
+    }
+    const uint32_t depth = conf.bump_reason_depth
+        + (polarity_mode == PolarityMode::polarmode_stable);
+    for (const Lit l: learnt_clause) bump_reason_side_lit(l, depth);
+    for (const Lit l: toClear) seen[l.var()] = 0;
+    toClear.clear();
+}
+
 template<bool inprocess>
 void Searcher::analyze_conflict(
     const PropBy confl,
@@ -879,6 +940,10 @@ void Searcher::analyze_conflict(
     }
     level_used_for_cl.clear();
     #endif
+
+    if (!inprocess && conf.bump_reason_depth > 0 && branch_strategy != branch::rand) {
+        bump_reason_side_lits();
+    }
 
     out_btlevel = find_backtrack_level_of_learnt();
     if (!inprocess) {

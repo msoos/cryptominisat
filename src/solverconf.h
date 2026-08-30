@@ -305,6 +305,9 @@ class DLL_PUBLIC SolverConf
         int       update_glues_on_analyze;
         uint32_t  max_glue_cutoff_gluehistltlimited;
 
+        //Reason-side bumping, as in CaDiCaL. 0 = off
+        uint32_t  bump_reason_depth;
+
         //chrono bt
         int diff_declev_for_chrono;
 

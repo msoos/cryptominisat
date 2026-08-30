@@ -837,6 +837,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.update_glues_on_analyze = fc_int(a);})
         .default_value(conf.update_glues_on_analyze)
         .help("Update glues while analyzing");
+    program.add_argument("--bumpreasondepth")
+        .action([&](const auto& a) {conf.bump_reason_depth = fc_int(a);})
+        .default_value(conf.bump_reason_depth)
+        .help("Bump vars in reasons of learnt clause lits up to this depth. 0 = off");
     program.add_argument("--maxgluehistltlimited")
         .action([&](const auto& a) {conf.max_glue_cutoff_gluehistltlimited = fc_int(a);})
         .default_value(conf.max_glue_cutoff_gluehistltlimited)
