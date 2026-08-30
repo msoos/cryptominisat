@@ -374,6 +374,7 @@ public:
     uint32_t reloced:1;
     uint32_t disabled:1;
     uint32_t tried_to_remove:1;
+    uint32_t searched_pos:21; //saved watch search position [Gent'13]
 
     Lit* getData()
     {
@@ -408,6 +409,7 @@ public:
         reloced = false;
         disabled = false;
         tried_to_remove = 0;
+        searched_pos = 0;
 
         std::copy(ps.begin(), ps.end(), getData());
     }

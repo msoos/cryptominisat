@@ -460,18 +460,26 @@ inline PropResult PropEngine::prop_normal_helper(
         return PROP_NOTHING;
     }
 
-    // Look for new watch:
-    for (Lit *k = c.begin() + 2, *end2 = c.end()
-        ; k != end2
-        ; k++
-    ) {
+    // Look for new watch, resume at saved position [Gent'13]
+    Lit* const begin = c.begin();
+    Lit* const end2 = c.end();
+    uint32_t pos = c.searched_pos;
+    if (pos < 2 || pos >= c.size()) pos = 2;
+    Lit* const middle = begin + pos;
+    Lit* k = middle;
+    while (k != end2 && value(*k) == l_False) k++;
+    if (k == end2) {
+        k = begin + 2;
+        while (k != middle && value(*k) == l_False) k++;
+        if (k == middle) k = end2;
+    }
+    if (k != end2) {
         //Literal is either unset or satisfied, attach to other watchlist
-        if (value(*k) != l_False) {
-            c[1] = *k;
-            *k = ~p;
-            watches[c[1]].push(Watched(offset, c[0]));
-            return PROP_NOTHING;
-        }
+        c.searched_pos = std::min<uint32_t>(k - begin, (1U<<21)-1);
+        c[1] = *k;
+        *k = ~p;
+        watches[c[1]].push(Watched(offset, c[0]));
+        return PROP_NOTHING;
     }
 
     return PROP_TODO;
