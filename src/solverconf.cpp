@@ -263,7 +263,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_scc_depth (10000)
 
         //Iterative Alo Scheduling
-        , simplify_at_startup(true)
+        , simplify_at_startup(false)
         , simplify_at_every_startup(false)
         , do_simplify_problem(true)
         , full_simplify_at_startup(false)
@@ -272,9 +272,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)
-        //Only recover XORs: cheap on large easy instances, and BVE/subsumption
-        //before recovery mangles the XOR encoding
-        , simplify_schedule_startup("occ-xor")
+        , simplify_schedule_startup(
+            "sub-impl, occ-backw-sub,"
+            "scc-vrepl,"
+            "breakid, "
+            "occ-bve,occ-xor"
+        )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
             //"scc-vrepl,"
