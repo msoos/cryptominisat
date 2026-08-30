@@ -310,6 +310,7 @@ class DLL_PUBLIC SolverConf
 
         //chrono bt
         int diff_declev_for_chrono;
+        int do_chrono_reuse_trail;
 
         //decision-based conflict clause generation
         int       do_decision_based_cl;

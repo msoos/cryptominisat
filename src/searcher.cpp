@@ -1829,6 +1829,33 @@ Clause* Searcher::handle_last_confl(
     return cl;
 }
 
+//CaDiCaL's 'chronoreusetrail': backtrack only to the level of the best var above jump
+uint32_t Searcher::chrono_reuse_trail_level(const uint32_t jump, const uint32_t max_level)
+{
+    if (jump >= max_level) return jump;
+    const bool use_vsids = branch_strategy == branch::vsids;
+    if (!use_vsids && branch_strategy != branch::vmtf) return jump;
+
+    uint32_t best_var = var_Undef;
+    uint32_t best_pos = 0;
+    for (uint32_t i = trail_lim[jump]; i < trail.size(); i++) {
+        const uint32_t v = trail[i].lit.var();
+        if (best_var != var_Undef) {
+            const bool better = use_vsids
+                ? var_act_vsids[v] > var_act_vsids[best_var]
+                : vmtf_btab[v] > vmtf_btab[best_var];
+            if (!better) continue;
+        }
+        best_var = v;
+        best_pos = i;
+    }
+    if (best_var == var_Undef) return jump;
+
+    uint32_t res = jump;
+    while (res < max_level && trail_lim[res] <= best_pos) res++;
+    return res;
+}
+
 bool Searcher::handle_conflict(PropBy confl)
 {
     stats.conflicts++;
@@ -1901,7 +1928,16 @@ bool Searcher::handle_conflict(PropBy confl)
         cancelUntil(data.nHighestLevel -1);
     } else {
         non_chrono_backtrack++;
-        cancelUntil(backtrack_level);
+        uint32_t bt_level = backtrack_level;
+        if (conf.do_chrono_reuse_trail
+            && conf.diff_declev_for_chrono > -1
+            && xorclauses.empty()
+            && gmatrices.empty()
+            && bnns.empty()
+        ) {
+            bt_level = chrono_reuse_trail_level(backtrack_level, data.nHighestLevel-1);
+        }
+        cancelUntil(bt_level);
     }
 
     assert(value(learnt_clause[0]) == l_Undef);

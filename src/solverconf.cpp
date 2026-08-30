@@ -169,6 +169,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Chono BT
         , diff_declev_for_chrono (20)
+        , do_chrono_reuse_trail(1)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01

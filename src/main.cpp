@@ -851,6 +851,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.diff_declev_for_chrono = fc_int(a);})
         .default_value(conf.diff_declev_for_chrono)
         .help("Difference in decision level is more than this, perform chronological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).");
+    program.add_argument("--chronoreusetrail")
+        .action([&](const auto& a) {conf.do_chrono_reuse_trail = fc_int(a);})
+        .default_value(conf.do_chrono_reuse_trail)
+        .help("On backjump, only backtrack to the level of the best-ranked var above the jump level");
 
 #ifdef USE_SQLITE3
     /* po::options_description sqlOptions("SQL options"); */

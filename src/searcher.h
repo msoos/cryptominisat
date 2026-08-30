@@ -200,6 +200,7 @@ class Searcher : public HyperEngine
         void bump_var_importance_all(const uint32_t var);
         void bump_reason_side_lits();
         void bump_reason_side_lit(const Lit lit, const uint32_t depth);
+        uint32_t chrono_reuse_trail_level(const uint32_t jump, const uint32_t max_level);
 
         /////////////////
         // Polarities
