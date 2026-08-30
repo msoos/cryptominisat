@@ -2393,7 +2393,8 @@ REENTER:
 		{
 		  litlevel = LIT2VAR (lit)->level;
 		  assert (litlevel <= ps->LEVEL);
-		  while (ps->levels + litlevel >= ps->levelshead)
+		  /* NULL + offset is UB, use ptr difference */
+		  while ((ptrdiff_t) litlevel >= ps->levelshead - ps->levels)
 		    {
 		      if (ps->levelshead >= ps->eolevels)
 			ENLARGE (ps->levels, ps->levelshead, ps->eolevels);
