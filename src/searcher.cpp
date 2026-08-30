@@ -571,7 +571,9 @@ bool Searcher::try_shrink_block(
     }
 
     tmp_shrink_chain.clear();
-    uint32_t pos = max_trail;
+    //sublevels are only an upper bound: chrono backtrack moves trail
+    //entries down without updating them. Walking down is still correct.
+    uint32_t pos = std::min<uint32_t>(max_trail, trail.size()-1);
     Lit uip = lit_Undef;
     bool ok = true;
 
