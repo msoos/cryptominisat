@@ -243,6 +243,16 @@ class VarReplacer
 
         //FRAT
         vector<tuple<int32_t, Lit, Lit>> bins_for_frat;
+        //FRAT: per-var direct equivalence bins {(~v | r), (v | ~r)}
+        vector<std::pair<int32_t, int32_t>> eqbin_ids;
+        void emit_direct_eqbins();
+        int32_t eqbin_for(const Lit l) const {
+            if (l.var() >= eqbin_ids.size()) return 0;
+            return l.sign() ? eqbin_ids[l.var()].second : eqbin_ids[l.var()].first;
+        }
+        vector<int32_t> tmp_upd_eqbins; ///< eqbins of the lits replaced in the current clause
+        int32_t last_eqbin_a = 0; ///< (~lit1 | lit2) of the last replace() call
+        int32_t last_eqbin_b = 0; ///< (lit1 | ~lit2) of the last replace() call
 
         //Stats
         void printReplaceStats() const;

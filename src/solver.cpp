@@ -2709,6 +2709,56 @@ bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
     return true;
 }
 
+//Strict hints for the UP-implied bin (a v b), derived by propagating
+//{~a, ~b} at a fresh decision level. Trail is restored.
+void Solver::prop_hints_for_bin(const Lit a, const Lit b, vector<int32_t>& hints)
+{
+    assert(frat->enabled());
+    assert(decisionLevel() == 0);
+    hints.clear();
+    //subsumed by an existing unit?
+    if (value(a) == l_True) {
+        assert(unit_cl_IDs[a.var()] != 0);
+        hints.push_back(unit_cl_IDs[a.var()]);
+        return;
+    }
+    if (value(b) == l_True) {
+        assert(unit_cl_IDs[b.var()] != 0);
+        hints.push_back(unit_cl_IDs[b.var()]);
+        return;
+    }
+
+    new_decision_level();
+    const uint32_t seg = trail.size();
+    if (value(a) == l_Undef) enqueue<true>(~a);
+    if (value(b) == l_Undef) enqueue<true>(~b);
+    const PropBy p = propagate<true>();
+
+    vector<int32_t> rsns;
+    collect_trail_seg_hints(seg, hints, rsns);
+    int32_t cid = 0;
+    if (!p.isnullptr()) cid = get_confl_id(p, hints);
+    //~a and/or ~b may hold at level 0 already
+    if (value(a) == l_False && varData[a.var()].level == 0)
+        hints.push_back(unit_cl_IDs[a.var()]);
+    if (value(b) == l_False && varData[b.var()].level == 0)
+        hints.push_back(unit_cl_IDs[b.var()]);
+    cancelUntil<false, true>(0);
+    assert(cid != 0 && "the bin was not UP-implied");
+    hints.insert(hints.end(), rsns.begin(), rsns.end());
+    hints.push_back(cid);
+}
+
+//Emit `add id (a v b)` with strict propagation-derived hints
+void Solver::emit_bin_by_prop(const int32_t id, const Lit a, const Lit b)
+{
+    vector<int32_t> hints;
+    prop_hints_for_bin(a, b, hints);
+    *frat << add << id << a << b << fratchain;
+    for(const auto& h: hints) *frat << h;
+    *frat << fin;
+}
+
 bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
 {
     assert(decisionLevel() == 0);

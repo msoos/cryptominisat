@@ -141,27 +141,48 @@ void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
 }
 
 bool VarReplacer::enqueueDelayedEnqueue() {
-    for (auto& [lit, id] : delayedEnqueue) {
-        lit = get_lit_replaced_with(lit);
+    const bool fr = solver->frat->enabled();
+    for (auto& [lit0, id] : delayedEnqueue) {
+        const Lit lit = get_lit_replaced_with(lit0);
+        const int32_t eqbin = (fr && lit != lit0) ? eqbin_for(lit0) : 0;
 
         if (!solver->ok) {
             //if we are UNSAT, just delete them
-            *solver->frat << del << id << lit << fin;
+            *solver->frat << del << id << lit0 << fin;
             continue;
         }
 
         if (solver->value(lit) == l_Undef) {
-            solver->enqueue<false>(lit);
-            // enqueue will add unit, we can delete below
-            *solver->frat << del << id << lit << fin;
+            if (fr) {
+                if (lit != lit0) {
+                    //re-derive the unit under the replacement
+                    const auto nid = ++solver->clauseID;
+                    *solver->frat << add << nid << lit
+                        << fratchain << eqbin << id << fin;
+                    solver->enqueue_registered_unit<false>(lit, nid);
+                    *solver->frat << del << id << lit0 << fin;
+                } else {
+                    //the delayed unit becomes THE unit clause of the var
+                    solver->enqueue_registered_unit<false>(lit, id);
+                }
+            } else {
+                solver->enqueue<false>(lit);
+            }
         } else if (solver->value(lit) == l_False) {
-            *solver->frat << add << ++solver->clauseID << fin;
-            *solver->frat << del << id << lit << fin;
+            *solver->frat << add << ++solver->clauseID;
+            if (fr) {
+                assert(solver->unit_cl_IDs[lit.var()] != 0);
+                *solver->frat << fratchain << solver->unit_cl_IDs[lit.var()];
+                if (eqbin != 0) *solver->frat << eqbin;
+                *solver->frat << id;
+            }
+            *solver->frat << fin;
+            *solver->frat << del << id << lit0 << fin;
             set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
         } else {
             //it's already set, delete
-            *solver->frat << del << id << lit << fin;
+            *solver->frat << del << id << lit0 << fin;
         }
     }
     delayedEnqueue.clear();
@@ -209,6 +230,7 @@ bool VarReplacer::perform_replace() {
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
     if (solver->conf.verbosity >= 5) printReplaceStats();
 
+    if (solver->frat->enabled()) emit_direct_eqbins();
     update_all_vardata();
     check_no_replaced_var_set();
 
@@ -280,6 +302,26 @@ bool VarReplacer::perform_replace() {
     return solver->okay();
 }
 
+//For every var newly replaced this round, emit direct bins (~v | r) and
+//(v | ~r) with propagation-derived hints. Runs while clauses are unchanged.
+void VarReplacer::emit_direct_eqbins()
+{
+    eqbin_ids.assign(solver->nVars(), {0, 0});
+    for(uint32_t v = 0; v < solver->nVars(); v++) {
+        if (solver->varData[v].removed != Removed::none) continue;
+        const Lit l(v, false);
+        const Lit r = get_lit_replaced_with(l);
+        if (r == l) continue;
+        const int32_t id_a = ++solver->clauseID;
+        solver->emit_bin_by_prop(id_a, ~l, r);
+        const int32_t id_b = ++solver->clauseID;
+        solver->emit_bin_by_prop(id_b, l, ~r);
+        eqbin_ids[v] = {id_a, id_b};
+        bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id_a, ~l, r});
+        bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id_b, l, ~r});
+    }
+}
+
 void VarReplacer::delete_frat_cls()
 {
     if (!solver->frat->incremental()) // for incremental we need to keep the reason for equivalences
@@ -287,6 +329,7 @@ void VarReplacer::delete_frat_cls()
 	  *solver->frat << del << std::get<0>(f) << std::get<1>(f) << std::get<2>(f) << fin;
       }
     bins_for_frat.clear();
+    eqbin_ids.clear();
 }
 
 // Returns FALSE if the XOR needs to be removed
@@ -318,10 +361,12 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     vector<Lit> bin(2);
                     bin[0] = Lit(origv, false); bin[1] = l2 ^ true;
                     const auto id1 = ++solver->clauseID;
-                    *solver->frat << add << id1 << bin << fin;
+                    *solver->frat << add << id1 << bin
+                        << fratchain << eqbin_ids[origv].second << fin;
                     const auto id2 = ++solver->clauseID;
                     bin[0] ^= true; bin[1] ^= true;
-                    *solver->frat << add << id2 << bin << fin;
+                    *solver->frat << add << id2 << bin
+                        << fratchain << eqbin_ids[origv].first << fin;
                     const auto bin_XID = ++solver->clauseXID;
                     //     Yes, "1 2 0"  && "-1 -2 0" is the same as "x 1 2 0"
                     // And Yes, "1 -2 0" && "-1  2 0" is the same as "x 1 -2 0"
@@ -394,7 +439,14 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        *solver->frat << add << ++solver->clauseID << lit2 << fin;
+        *solver->frat << add << ++solver->clauseID << lit2;
+        if (solver->frat->enabled()) {
+            *solver->frat << fratchain;
+            if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
+            if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+            *solver->frat << i->get_id();
+        }
+        *solver->frat << fin;
         delayedEnqueue.emplace_back(lit2, solver->clauseID);
         remove = true;
     }
@@ -421,8 +473,14 @@ inline void VarReplacer::updateBin(
         //we need a better mechanism than reloc, or we need to teach the tool reloc
         const int32_t orig_ID = i->get_id();
         const int32_t ID = ++solver->clauseID;
-        /* cout << "orig ID: " << orig_ID << " origl1, l2: " << origLit1 << "," << origLit2 << " lit1, lit2: " << lit1 << "," << lit2 << " new ID: " << ID << endl; */
-        *solver->frat<< add << ID << lit1 << lit2 << fin;
+        *solver->frat<< add << ID << lit1 << lit2;
+        if (solver->frat->enabled()) {
+            *solver->frat << fratchain;
+            if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
+            if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+            *solver->frat << orig_ID;
+        }
+        *solver->frat << fin;
         *solver->frat<< del << i->get_id() << origLit1 << origLit2 << fin;
         Watched* i2 = findWatchedOfBinMaybe(solver->watches, origLit2, origLit1, i->red(), orig_ID);
         if (i2) i2->set_ID(ID);
@@ -600,9 +658,11 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
         const Lit origLit1 = c[0];
         const Lit origLit2 = c[1];
 
+        tmp_upd_eqbins.clear();
         for (Lit& l: c) {
             if (isReplaced_fast(l)) {
                 changed = true;
+                if (solver->frat->enabled()) tmp_upd_eqbins.push_back(eqbin_for(l));
                 l = get_lit_replaced_with_fast(l);
                 runStats.replacedLits++;
             }
@@ -645,6 +705,8 @@ bool VarReplacer::handleUpdatedClause(
     , const Lit origLit2
 ) {
     assert(!c.get_removed());
+    const int32_t orig_id = c.stats.id;
+    solver->chain.clear();
     bool satisfied = false;
     std::sort(c.begin(), c.end());
     Lit p;
@@ -658,6 +720,8 @@ bool VarReplacer::handleUpdatedClause(
         }
         else if (solver->value(c[i]) != l_False && c[i] != p) {
             c[j++] = p = c[i];
+        } else if (solver->frat->enabled() && solver->value(c[i]) == l_False) {
+            solver->chain.push_back(solver->unit_cl_IDs[c[i].var()]);
         }
     }
     c.shrink(i - j);
@@ -682,7 +746,14 @@ bool VarReplacer::handleUpdatedClause(
     }
 
     INC_ID(c);
-    (*solver->frat) << add << c << fin << findelay;
+    (*solver->frat) << add << c;
+    if (solver->frat->enabled()) {
+        (*solver->frat) << fratchain;
+        for(const auto& id: solver->chain) (*solver->frat) << id;
+        for(const auto& id: tmp_upd_eqbins) (*solver->frat) << id;
+        (*solver->frat) << orig_id;
+    }
+    (*solver->frat) << fin << findelay;
 
     runStats.bogoprops += 3;
     switch(c.size()) {
@@ -821,18 +892,30 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 {
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
+        //lit2 == ~lit1, so these two 'bins' are one-literal clauses
+        const int32_t b1 = ++solver->clauseID;
+        const int32_t b2 = ++solver->clauseID;
+        if (solver->frat->enabled()) {
+            solver->emit_bin_by_prop(b1, ~lit1, lit2);
+            solver->emit_bin_by_prop(b2, lit1, ~lit2);
+        }
+        const int32_t u1 = ++solver->clauseID;
+        *solver->frat << add << u1 << lit1;
+        if (solver->frat->enabled()) *solver->frat << fratchain << b2;
+        *solver->frat << fin;
+        const int32_t u2 = ++solver->clauseID;
+        *solver->frat << add << u2 << ~lit1;
+        if (solver->frat->enabled()) *solver->frat << fratchain << b1;
+        *solver->frat << fin;
+        *solver->frat << add << ++solver->clauseID;
+        if (solver->frat->enabled()) *solver->frat << fratchain << u1 << u2;
+        *solver->frat << fin;
         (*solver->frat)
-        << add << ++solver->clauseID << ~lit1 << lit2 << fin
-        << add << ++solver->clauseID << lit1 << ~lit2 << fin
-        << add << ++solver->clauseID << lit1 << fin
-        << add << ++solver->clauseID << ~lit1 << fin
-        << add << ++solver->clauseID << fin
-        << del << solver->clauseID-1 << ~lit1 << fin
-        << del << solver->clauseID-2 << lit1 << fin
-        << del << solver->clauseID-3 << lit1 << ~lit2 << fin
-        << del << solver->clauseID-4 << ~lit1 << lit2 << fin;
-        // the UNSAT one, i.e. solver->clauseID-1 does not need to be deleted,
-        //   it's automatically deleted
+        << del << u2 << ~lit1 << fin
+        << del << u1 << lit1 << fin
+        << del << b2 << lit1 << ~lit2 << fin
+        << del << b1 << ~lit1 << lit2 << fin;
+        // the UNSAT one does not need to be deleted, it's automatic
         set_unsat_cl_id(solver->clauseID);
         solver->ok = false;
         return false;
@@ -845,17 +928,42 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 bool VarReplacer::replace_vars_already_set(
     const Lit lit1
     , const lbool val1
-    , const Lit /*lit2*/
+    , const Lit lit2
     , const lbool val2
 ) {
     if (val1 != val2) {
-
+        //contradictory: units for both lits exist, the equivalence bins from
+        //replace() close the loop
+        const int32_t u1 = ++solver->clauseID;
+        *solver->frat << add << u1 << ~lit1;
+        if (solver->frat->enabled()) {
+            *solver->frat << fratchain;
+            if (val1 == l_True) {
+                //~lit1 via (~lit1 | lit2) and unit(~lit2)
+                *solver->frat << last_eqbin_a << solver->unit_cl_IDs[lit2.var()];
+            } else {
+                *solver->frat << solver->unit_cl_IDs[lit1.var()];
+            }
+            *solver->frat << fin;
+        } else *solver->frat << fin;
+        const int32_t u2 = ++solver->clauseID;
+        *solver->frat << add << u2 << lit1;
+        if (solver->frat->enabled()) {
+            *solver->frat << fratchain;
+            if (val1 == l_True) {
+                *solver->frat << solver->unit_cl_IDs[lit1.var()];
+            } else {
+                //lit1 via (lit1 | ~lit2) and unit(lit2)
+                *solver->frat << last_eqbin_b << solver->unit_cl_IDs[lit2.var()];
+            }
+            *solver->frat << fin;
+        } else *solver->frat << fin;
+        *solver->frat << add << ++solver->clauseID;
+        if (solver->frat->enabled()) *solver->frat << fratchain << u1 << u2;
+        *solver->frat << fin;
         (*solver->frat)
-        << add << ++solver->clauseID << ~lit1 << fin
-        << add << ++solver->clauseID << lit1 << fin
-        << add << ++solver->clauseID << fin
-        << del << solver->clauseID-1 << lit1 << fin
-        << del << solver->clauseID-2 << ~lit1 << fin;
+        << del << u2 << lit1 << fin
+        << del << u1 << ~lit1 << fin;
         set_unsat_cl_id(solver->clauseID);
         solver->ok = false;
     }
@@ -872,12 +980,27 @@ bool VarReplacer::handleOneSet(
 ) {
     if (solver->ok) {
         Lit toEnqueue;
+        int32_t hint_bin;
+        int32_t hint_unit;
         if (val1 != l_Undef) {
             toEnqueue = lit2 ^ (val1 == l_False);
+            //lit1 true: lit2 via (~lit1 | lit2); lit1 false: ~lit2 via (lit1 | ~lit2)
+            hint_bin = (val1 == l_True) ? last_eqbin_a : last_eqbin_b;
+            hint_unit = solver->unit_cl_IDs[lit1.var()];
         } else {
             toEnqueue = lit1 ^ (val2 == l_False);
+            //lit2 true: lit1 via (lit1 | ~lit2); lit2 false: ~lit1 via (~lit1 | lit2)
+            hint_bin = (val2 == l_True) ? last_eqbin_b : last_eqbin_a;
+            hint_unit = solver->unit_cl_IDs[lit2.var()];
         }
-        solver->enqueue<false>(toEnqueue);
+        if (solver->frat->enabled()) {
+            const auto id = ++solver->clauseID;
+            *solver->frat << add << id << toEnqueue
+                << fratchain << hint_bin << hint_unit << fin;
+            solver->enqueue_registered_unit<false>(toEnqueue, id);
+        } else {
+            solver->enqueue<false>(toEnqueue);
+        }
         solver->ok = (solver->propagate<false>().isnullptr());
     }
     return solver->okay();
@@ -904,9 +1027,12 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
 
     int32_t ID = ++solver->clauseID;
     int32_t id2 = ++solver->clauseID;
-    (*solver->frat)
-    << add << ID << ~lit1 << lit2 << fin
-    << add << id2 << lit1 << ~lit2 << fin;
+    if (solver->frat->enabled()) {
+        solver->emit_bin_by_prop(ID, ~lit1, lit2);
+        solver->emit_bin_by_prop(id2, lit1, ~lit2);
+    }
+    last_eqbin_a = ID;  //(~lit1 | lit2)
+    last_eqbin_b = id2; //(lit1 | ~lit2)
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id2, lit1, ~lit2});
 
@@ -1009,14 +1135,22 @@ void VarReplacer::checkUnsetSanity()
 
 bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
 {
+    //the SCC-found equivalence bins are UP-implied by the implication cycle
+    vector<int32_t> hints;
+    const bool fr = solver->frat->enabled();
+
     ps_tmp[0] = Lit(bin_xor.vars[0], false);
     ps_tmp[1] = Lit(bin_xor.vars[1], true ^ bin_xor.rhs);
-    solver->add_clause_int(ps_tmp);
+    if (fr) solver->prop_hints_for_bin(ps_tmp[0], ps_tmp[1], hints);
+    solver->add_clause_int(ps_tmp, false, nullptr, true, nullptr, true,
+                           lit_Undef, false, false, fr ? &hints : nullptr);
     if (!solver->ok) return false;
 
     ps_tmp[0] = Lit(bin_xor.vars[0], true);
     ps_tmp[1] = Lit(bin_xor.vars[1], false ^ bin_xor.rhs);
-    solver->add_clause_int(ps_tmp);
+    if (fr) solver->prop_hints_for_bin(ps_tmp[0], ps_tmp[1], hints);
+    solver->add_clause_int(ps_tmp, false, nullptr, true, nullptr, true,
+                           lit_Undef, false, false, fr ? &hints : nullptr);
     if (!solver->ok) return false;
 
     return true;
