@@ -281,6 +281,7 @@ protected:
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
+    vector<int32_t>     tmp_unit_hints;   ///< FRAT hints for level-0 units
 
     friend class EGaussian;
 
@@ -581,26 +582,39 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
 
     if (level == 0 && frat->enabled())
     {   if (do_unit_frat) {
+            //hints: unit IDs of the reason's other lits first, reason ID last
+            int32_t reason_id = 0;
+            tmp_unit_hints.clear();
+            switch (from.getType()) {
+                case PropByType::binary_t:
+                    reason_id = from.get_id();
+                    tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
+                    break;
+                case PropByType::clause_t: {
+                    Clause* cl = cl_alloc.ptr(from.get_offset());
+                    reason_id = cl->stats.id;
+                    for(auto const& l: *cl)
+                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+                    break;
+                }
+                case PropByType::xor_t: {
+                    auto cl = get_xor_reason(from, reason_id);
+                    for(auto const& l: *cl)
+                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+                    break;
+                }
+                default: break; //null/BNN: no hints
+            }
+
             const auto id = ++clauseID;
             const auto xid = ++clauseXID;
-            /* chain.clear(); */
-            if (from.getType() == PropByType::binary_t) {
-                chain.push_back(from.get_id());
-                chain.push_back(unit_cl_IDs[from.lit2().var()]);
-            } else if (from.getType() == PropByType::clause_t) {
-                Clause* cl = cl_alloc.ptr(from.get_offset());
-                chain.push_back(cl->stats.id);
-                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
-            } else {
-                // These are too difficult and not worth it
+            *frat << add << id << p;
+            if (reason_id != 0) {
+                *frat << fratchain;
+                for(auto const& c: tmp_unit_hints) { assert(c != 0); *frat << c; }
+                *frat << reason_id;
             }
-
-            if (from.getType() == PropByType::xor_t) {
-                int32_t tmp_ID;
-                get_xor_reason(from, tmp_ID);
-            }
-
-            *frat << add << id << p << fin;
+            *frat << fin;
             if (frat && !frat->incremental())
               *frat << implyxfromcls << xid << p << fratchain << id << fin;
 

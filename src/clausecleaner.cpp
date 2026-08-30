@@ -276,9 +276,10 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         const auto orig_ID = cl.stats.id;
         INC_ID(cl);
         cl.shrink(i-j);
-        *solver->frat << add << cl << fratchain << orig_ID;
+        //strict hint order: unit IDs first, the original clause's ID last
+        *solver->frat << add << cl << fratchain;
         for(auto const& id: solver->chain) (*solver->frat) << id;
-        (*solver->frat) << fin << findelay;
+        (*solver->frat) << orig_ID << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }

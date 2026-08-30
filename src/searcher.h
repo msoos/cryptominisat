@@ -213,7 +213,14 @@ class Searcher : public HyperEngine
             , const uint32_t abstract_levels
             , Lit& replace_with);
         vector<uint32_t> shrink_seen2_clear;
-        vector<int32_t> tmp_shrink_chain;
+
+        //FRAT: strict, in-order hint chain rebuilding
+        void rebuild_chain_strict(const PropBy confl);
+        void build_level0_confl_chain(const PropBy confl);
+        vector<std::pair<uint32_t, int32_t>> binmin_chain;
+        vector<int32_t> tmp_chain_units;
+        vector<int32_t> tmp_chain_rev;
+        vector<uint32_t> tmp_chain_clear;
 
         //OTFS
         Clause* otfs_strengthen(const ClOffset offset, const Lit p);

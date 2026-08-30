@@ -174,15 +174,7 @@ inline void Searcher::add_lit_to_learnt(
     }
     #endif
 
-    if (varData[var].level == 0) {
-        if (frat->enabled()) {
-            assert(value(var) != l_Undef);
-            assert(unit_cl_IDs[var] != 0);
-            chain.push_back(unit_cl_IDs[var]);
-            VERBOSE_PRINT("Chain adding ID: " << unit_cl_IDs[var] << " due to unit clause, var: " << var+1);
-        }
-        return;
-    }
+    if (varData[var].level == 0) return;
     otfs_antec_nonzero++;
 
     if (seen[var]) return;
@@ -247,7 +239,6 @@ void Searcher::normalClMinim()
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
         Lit *lits = nullptr;
-        int32_t id;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
             //decision clause
@@ -258,18 +249,17 @@ void Searcher::normalClMinim()
         switch (type) {
             case binary_t:
                 size = 1;
-                id = reason.get_id();
                 break;
 
             case clause_t: {
                 Clause* cl2 = cl_alloc.ptr(reason.get_offset());
                 lits = cl2->begin();
                 size = cl2->size()-1;
-                id = cl2->stats.id;
                 break;
             }
 
             case xor_t: {
+                int32_t id;
                 auto cl = get_xor_reason(reason, id);
                 lits = cl->data();
                 size = cl->size()-1;
@@ -307,13 +297,119 @@ void Searcher::normalClMinim()
             if (!seen[p.var()] && varData[p.var()].level > 0) {
                 learnt_clause[j++] = learnt_clause[i];
                 break;
-            } else {
-                VERBOSE_PRINT("Chain adding ID: " << id << " due to normal CL minim, lit: " << p <<  " removed");
-                chain.push_back(id);
             }
         }
     }
     learnt_clause.resize(j);
+}
+
+//Rebuilds `chain` for the learnt clause in strict LRAT hint order: unit IDs
+//first, then reason IDs in trail order, conflicting clause's ID last.
+//Must run after all minimization but before backtracking.
+void Searcher::rebuild_chain_strict(const PropBy confl)
+{
+    assert(frat->enabled());
+    chain.clear();
+    tmp_chain_units.clear();
+    tmp_chain_rev.clear();
+    tmp_chain_clear.clear();
+
+    //2 = falsified by the learnt clause or derived by a binmin_chain step
+    for (const Lit l: learnt_clause) {
+        seen2[l.var()] = 2;
+        tmp_chain_clear.push_back(l.var());
+    }
+    for (const auto& bm: binmin_chain) {
+        seen2[bm.first] = 2;
+        tmp_chain_clear.push_back(bm.first);
+    }
+
+    uint32_t pending = 0;
+    const auto mark = [&](const Lit l) {
+        const uint32_t v = l.var();
+        if (seen2[v] != 0) return;
+        tmp_chain_clear.push_back(v);
+        if (varData[v].level == 0) {
+            seen2[v] = 3;
+            assert(unit_cl_IDs[v] != 0);
+            tmp_chain_units.push_back(unit_cl_IDs[v]);
+        } else {
+            seen2[v] = 1;
+            pending++;
+        }
+    };
+
+    const auto resolve = [&](const PropBy pb) -> int32_t {
+        int32_t id;
+        switch (pb.getType()) {
+            case binary_t:
+                id = pb.get_id();
+                mark(pb.lit2());
+                break;
+            case clause_t: {
+                Clause* cl = cl_alloc.ptr(pb.get_offset());
+                id = cl->stats.id;
+                for (const Lit l: *cl) mark(l);
+                break;
+            }
+            case xor_t: {
+                auto cl = get_xor_reason(pb, id);
+                for (const Lit l: *cl) mark(l);
+                break;
+            }
+            default: release_assert(false);
+        }
+        return id;
+    };
+
+    if (confl.getType() == binary_t) mark(failBinLit);
+    tmp_chain_rev.push_back(resolve(confl));
+    for (int64_t i = (int64_t)trail.size()-1; i >= 0 && pending > 0; i--) {
+        const uint32_t v = trail[i].lit.var();
+        if (seen2[v] != 1) continue;
+        pending--;
+        const PropBy reason = varData[v].reason;
+        assert(!reason.isnullptr());
+        tmp_chain_rev.push_back(resolve(reason));
+    }
+    assert(pending == 0);
+    for (const uint32_t v: tmp_chain_clear) seen2[v] = 0;
+
+    chain = tmp_chain_units;
+    for (auto it = binmin_chain.rbegin(); it != binmin_chain.rend(); ++it)
+        chain.push_back(it->second);
+    for (auto it = tmp_chain_rev.rbegin(); it != tmp_chain_rev.rend(); ++it)
+        chain.push_back(*it);
+}
+
+//Chain for a conflict where every literal is at level 0: unit IDs first,
+//then the conflicting clause's ID
+void Searcher::build_level0_confl_chain(const PropBy confl)
+{
+    assert(frat->enabled());
+    chain.clear();
+    int32_t id;
+    switch (confl.getType()) {
+        case binary_t:
+            id = confl.get_id();
+            chain.push_back(unit_cl_IDs[failBinLit.var()]);
+            chain.push_back(unit_cl_IDs[confl.lit2().var()]);
+            break;
+        case clause_t: {
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
+            id = cl->stats.id;
+            for (const Lit l: *cl) chain.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        case xor_t: {
+            auto cl = get_xor_reason(confl, id);
+            for (const Lit l: *cl) chain.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        default: return; //no hints for BNN & co.
+    }
+    for (const auto& x: chain) assert(x != 0);
+    chain.push_back(id);
 }
 
 void Searcher::debug_print_resolving_clause(const PropBy confl) const
@@ -393,7 +489,7 @@ void Searcher::add_lits_to_learnt(
 
     Lit* lits = nullptr;
     size_t size = 0;
-    int32_t id;
+    [[maybe_unused]] int32_t id;
     switch (confl.getType()) {
         case binary_t : {
             id = confl.get_id();
@@ -488,9 +584,6 @@ void Searcher::add_lits_to_learnt(
         case null_clause_t:
         default: release_assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
-    VERBOSE_PRINT("Chain adding ID: " << id << " due to resolution on lit: " << p);
-    chain.push_back(id);
-
     size_t i = 0;
     bool cont = true;
     Lit x = lit_Undef;
@@ -570,7 +663,6 @@ bool Searcher::try_shrink_block(
         open++;
     }
 
-    tmp_shrink_chain.clear();
     //sublevels are only an upper bound: chrono backtrack moves trail
     //entries down without updating them. Walking down is still correct.
     uint32_t pos = std::min<uint32_t>(max_trail, trail.size()-1);
@@ -593,22 +685,20 @@ bool Searcher::try_shrink_block(
 
         Lit* lits = nullptr;
         size_t size = 0;
-        int32_t id = 0;
         switch (type) {
             case binary_t:
                 size = 1;
-                id = reason.get_id();
                 break;
 
             case clause_t: {
                 Clause* cl = cl_alloc.ptr(reason.get_offset());
                 lits = cl->begin();
                 size = cl->size()-1;
-                id = cl->stats.id;
                 break;
             }
 
             case xor_t: {
+                int32_t id;
                 auto cl = get_xor_reason(reason, id);
                 lits = cl->data();
                 size = cl->size()-1;
@@ -651,7 +741,6 @@ bool Searcher::try_shrink_block(
             toClear.push_back(q);
         }
         if (!ok) break;
-        if (id != 0) tmp_shrink_chain.push_back(id);
         assert(pos > 0);
         pos--;
     }
@@ -672,8 +761,6 @@ bool Searcher::try_shrink_block(
         seen[uip.var()] = 1;
         toClear.push_back(uip);
     }
-    for (const auto& id2: tmp_shrink_chain) chain.push_back(id2);
-
     if (!inprocess) {
         switch (branch_strategy) {
             case branch::vsids:
@@ -882,7 +969,6 @@ void Searcher::create_learnt_clause(PropBy confl)
                 //restart analysis with the strengthened clause as conflict
                 learnt_clause.clear();
                 learnt_clause.push_back(lit_Undef);
-                chain.clear();
                 pathC = 0;
                 p = lit_Undef;
                 continue;
@@ -955,9 +1041,8 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
 
     cl.stats.id = ++clauseID;
     if (frat->enabled()) {
-        *frat << add << cl.stats.id << otfs_tmp_lits;
-        add_chain();
-        *frat << fin;
+        //no usable strict chain mid-analysis, the elaborator derives it
+        *frat << add << cl.stats.id << otfs_tmp_lits << fin;
         *frat << findelay;
     }
 
@@ -1180,6 +1265,7 @@ void Searcher::analyze_conflict(
 
     learnt_clause.clear();
     chain.clear();
+    binmin_chain.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
     assert(decisionLevel() > 0);
@@ -1296,7 +1382,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
     analyze_stack.clear();
     analyze_stack.push(p);
-    uint32_t old_chain_size = chain.size();
 
     size_t top = toClear.size();
     while (!analyze_stack.empty()) {
@@ -1312,7 +1397,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         //Must have a reason
         assert(!reason.isnullptr());
 
-        int32_t ID;
         size_t size;
         Lit* lits = nullptr;
         switch (type) {
@@ -1320,11 +1404,11 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 Clause* cl = cl_alloc.ptr(reason.get_offset());
                 lits = cl->begin();
                 size = cl->size()-1;
-                ID = cl->stats.id;
                 break;
             }
 
             case xor_t: {
+                int32_t ID;
                 auto cl = get_xor_reason(reason, ID);
                 lits = cl->data();
                 size = cl->size()-1;
@@ -1341,7 +1425,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
             case binary_t:
                 size = 1;
-                ID = reason.get_id();
                 break;
 
             case null_clause_t:
@@ -1377,18 +1460,12 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     seen[p2.var()] = 1;
                     analyze_stack.push(p2);
                     toClear.push_back(p2);
-
-                    chain.push_back(ID);
-                    VERBOSE_PRINT("TMP Chain adding ID: " << ID << " due to minimization, litRed on var: " << p2);
                 } else {
                     //Return to where we started before function executed
                     for (size_t j = top; j < toClear.size(); j++) {
                         seen[toClear[j].var()] = 0;
                     }
                     toClear.resize(top);
-
-                    VERBOSE_PRINT("Chain clearing past " << chain.size()-old_chain_size << " TMPs.");
-                    chain.resize(old_chain_size);
                     return false;
                 }
             }
@@ -2257,7 +2334,10 @@ bool Searcher::handle_conflict(PropBy confl)
         verb_print(10, "find_conflict_level() gives 0, so UNSAT for whole formula. "
                 "decLevel: " << decisionLevel());
         if (unsat_cl_ID == 0) {
-            *frat << add << ++clauseID << fin;
+            if (frat->enabled()) build_level0_confl_chain(confl);
+            *frat << add << ++clauseID;
+            add_chain();
+            *frat << fin;
             set_unsat_cl_id(clauseID);
         }
         solver->ok = false;
@@ -2317,6 +2397,8 @@ bool Searcher::handle_conflict(PropBy confl)
             assert(varData[l.var()].reason == PropBy());
         }
     }
+
+    if (frat->enabled()) rebuild_chain_strict(confl);
 
     // check chrono backtrack condition
     if (conf.diff_declev_for_chrono > -1
@@ -3401,6 +3483,9 @@ void Searcher::binary_based_morem_minim(vector<Lit>& cl)
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
                     seen[(~i->lit2()).toInt()] = 0;
+                    if (frat->enabled()) {
+                        binmin_chain.push_back({(~i->lit2()).var(), i->get_id()});
+                    }
                 }
                 continue;
             }
@@ -3541,10 +3626,12 @@ PropBy Searcher::propagate() {
                 const auto propby = varData[trail[i].lit.var()].reason;
                 if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, id);
             }
-            if (ret.getType() == PropByType::xor_t) get_xor_reason(ret, id);
             // We need this check, because apparently GJ can set unsat during prop
             if (unsat_cl_ID == 0) {
-                *frat << add << ++clauseID << fin;
+                build_level0_confl_chain(ret);
+                *frat << add << ++clauseID;
+                add_chain();
+                *frat << fin;
                 set_unsat_cl_id(clauseID);
             }
         }
