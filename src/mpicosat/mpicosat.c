@@ -3436,6 +3436,7 @@ satisfied (PS * ps)
     return 0;
   assert (!ps->conflict);
   assert (bcp_queue_is_empty (ps));
+  if (!ps->trail) return !ps->max_var; /* NULL + offset is UB */
   return ps->thead == ps->trail + ps->max_var;	/* all assigned */
 }
 
