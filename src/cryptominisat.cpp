@@ -432,6 +432,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         SolverConf conf = data->solvers[i]->getConf();
         if (i >= 1) {
             conf.verbosity = 0;
+            conf.print_all_restarts = 0;
             conf.doFindXors = 0;
         }
         data->solvers[i]->setConf(conf);
