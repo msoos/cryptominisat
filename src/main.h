@@ -106,7 +106,7 @@ class Main: public MainCommon
 
 
         //Files to read & write
-        int xlrup_mode = 0;
+        int xlrup_mode = 1;
         bool fileNamePresent;
         string result_fname;
         string input_file;

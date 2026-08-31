@@ -296,8 +296,8 @@ void Main::add_supported_options() {
         .help("[0-10] Verbosity of solver. 0 = only solution");
     program.add_argument("--xlrup")
         .action([&](const auto& a) {xlrup_mode = fc_int(a);})
-        .default_value(0)
-        .help("Emit the proof in XLRUP format (checkable directly by cake_xlrup) instead of FRAT [0..1]")
+        .default_value(1)
+        .help("Emit the proof in XLRUP format, checkable directly by cake_xlrup. Set to 0 to emit raw FRAT instead, for debugging proof generation with frat-rs [0..1]")
         .metavar("{0,1}");
     program.add_argument("--maxtime")
         .help("Stop solving after this much time (s)")
@@ -1080,7 +1080,7 @@ void Main::add_supported_options() {
         .help("Write solution(s) to this file");
 
     //these a kind of special and determine positional options' meanings
-    program.add_argument("files").remaining().help("input file and FRAT output");
+    program.add_argument("files").remaining().help("input file and proof output (XLRUP by default, see --xlrup)");
 }
 /* clang-format on */
 
@@ -1108,7 +1108,7 @@ void Main::check_options_correctness()
             << " DIMACS with XOR extension" << endl << endl;
 
             cout
-            << "cryptominisat5 [options] inputfile [frat-file]" << endl << endl;
+            << "cryptominisat5 [options] inputfile [proof-file]" << endl << endl;
 
             cout << program << endl;
             cout << "Normal run schedules:" << endl;
