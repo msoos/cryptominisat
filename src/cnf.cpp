@@ -622,6 +622,12 @@ void CNF::add_frat(FILE* os) {
     frat->set_sqlstats_ptr(sqlStats);
 }
 
+void CNF::add_xlrup(FILE* os) {
+    if (frat) delete frat;
+    frat = new XLRUPFile(inter_to_outerMain);
+    frat->setFile(os);
+}
+
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
 {

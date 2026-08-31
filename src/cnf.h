@@ -131,6 +131,10 @@ public:
     //frat
     Frat* frat;
     void add_frat(FILE* os);
+    void add_xlrup(FILE* os);
+    //XLRUP: input clauses are numbered by file position
+    int32_t input_cl_ids_reserved = 0;
+    int32_t next_input_cl_id = 1;
 
     //Clauses
     vector<ClOffset> longIrredCls;

@@ -752,7 +752,12 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
 bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool red, bool restore)
 {
     ClauseStats clstats;
-    clstats.id = ++clauseID;
+    if (!restore && next_input_cl_id <= input_cl_ids_reserved) {
+        //XLRUP: inputs numbered by file position
+        clstats.id = next_input_cl_id++;
+    } else {
+        clstats.id = ++clauseID;
+    }
     if (!restore)
       *frat << "add_clause_outer\n" << origcl << clstats.id << outer_ps << fin;
     if (red) clstats.which_red_array = 2;

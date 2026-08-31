@@ -294,6 +294,11 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.verbosity = fc_int(a);})
         .default_value(conf.verbosity)
         .help("[0-10] Verbosity of solver. 0 = only solution");
+    program.add_argument("--xlrup")
+        .action([&](const auto& a) {xlrup_mode = fc_int(a);})
+        .default_value(0)
+        .help("Emit the proof in XLRUP format (checkable directly by cake_xlrup) instead of FRAT [0..1]")
+        .metavar("{0,1}");
     program.add_argument("--maxtime")
         .help("Stop solving after this much time (s)")
         .scan<'g', double>();
@@ -1297,7 +1302,10 @@ int Main::solve()
     wallclock_time_started = real_time_sec();
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
-    if (fratf) solver->set_frat(fratf);
+    if (fratf) {
+        if (xlrup_mode) solver->set_xlrup(fratf);
+        else solver->set_frat(fratf);
+    }
     if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
     if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));
 

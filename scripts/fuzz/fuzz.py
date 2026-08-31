@@ -554,6 +554,9 @@ class Tester:
         command += options.extra_options + " "
         command += fixed_opts + " "
         self.last_solver_base_cmd = command
+        if fname_frat:
+            # proofs are emitted in XLRUP, checked directly by cake_xlrup
+            command += " --xlrup 1 "
         if fname is not None:
             command += " %s " % fname
         if fname_frat:
@@ -686,24 +689,11 @@ class Tester:
 
             return
 
-        # it's UNSAT, let's check with FRAT
+        # it's UNSAT, the solver emitted XLRUP: check it with the verified
+        # checker directly, NO elaboration (frat-rs) involved
         if fname_frat:
-            fname_cleanproof = unique_file("clean-proof")
-            toexec = "grep -v \"^c\" {fname_frat} > {clean}"
-            toexec = toexec.format(cnf=fname, fname_frat=fname_frat, clean=fname_cleanproof)
-            p = subprocess.Popen(toexec, stdout=subprocess.PIPE, universal_newlines=True, shell=True)
-            consoleOutputGrep = p.communicate()[0]
-
-            fname_xlrup = unique_file("xlrup-file")
-            # --full -ss: every step must carry complete, in-order hints
-            toexec = "./frat-xor elab {clean} --full -ss {cnf} {xlrup}"
-            toexec = toexec.format(cnf=fname, clean=fname_cleanproof, xlrup=fname_xlrup)
-            print("Checking with FRAT.. ", toexec)
-            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
-            consoleOutput2 = p.communicate()[0]
-
-            toexec = "./cake_xlrup {cnf} {xlrup}"
-            toexec = toexec.format(cnf=fname, xlrup=fname_xlrup)
+            toexec = "./cake_xlrup {cnf} {proof}"
+            toexec = toexec.format(cnf=fname, proof=fname_frat)
             print("Checking with cake_xlrup.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput3 = p.communicate()[0]
@@ -718,12 +708,10 @@ class Tester:
 
             # Check whether we have found a verification code
             if foundVerif is False:
-                print("verifier error! It says: %s" % consoleOutput2)
+                print("verifier error! It says: %s" % consoleOutput3)
                 self.write_repro_script(fname, fname_frat)
-                assert foundVerif, "Cannot find FRAT verification code!"
+                assert foundVerif, "Cannot find XLRUP verification code!"
             else:
-                os.unlink(fname_xlrup)
-                os.unlink(fname_cleanproof)
                 print("OK, XLRUP  says: %s" % fratLine)
 
         if options.gauss:
@@ -751,16 +739,12 @@ class Tester:
             f.write("set -x\n")
             f.write('CNF="${1:-%s}"\n' % fname)
             if fname_frat:
-                f.write("FRAT=$(mktemp --suffix=.frat)\n")
-                f.write("CLEAN=$(mktemp --suffix=.cnf)\n")
                 f.write("XLRUP=$(mktemp --suffix=.xlrup)\n")
                 f.write("\n")
-                f.write('%s "$CNF" "$FRAT"\n' % base_cmd)
-                f.write('grep -v "^c" "$FRAT" > "$CLEAN"\n')
-                f.write('./frat-xor elab "$CLEAN" --full -ss "$CNF" "$XLRUP"\n')
+                f.write('%s --xlrup 1 "$CNF" "$XLRUP"\n' % base_cmd)
                 f.write('./cake_xlrup "$CNF" "$XLRUP"\n')
                 f.write("\n")
-                f.write('rm -f "$FRAT" "$CLEAN" "$XLRUP"\n')
+                f.write('rm -f "$XLRUP"\n')
             else:
                 f.write('%s "$CNF"\n' % base_cmd)
         os.chmod(script_path, 0o755)

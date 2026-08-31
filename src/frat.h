@@ -430,4 +430,196 @@ private:
     SQLStats* sqlStats = nullptr;
 };
 
+//Emits the XLRUP format directly, so `cake_xlrup` can check the proof with
+//no elaboration. Buffers one step at a time; `o`/`f` clause steps and
+//relocs are dropped (inputs are numbered by file position).
+class XLRUPFile: public Frat
+{
+public:
+    explicit XLRUPFile(vector<uint32_t>& _inter_to_outerMain) :
+        inter_to_outer(_inter_to_outerMain)
+    {}
+    ~XLRUPFile() override { flush(); }
+
+    bool enabled() override { return true; }
+    void setFile(FILE* _file) override { file = _file; }
+    FILE* getFile() override { return file; }
+    void flush() override { if (file) fflush(file); }
+    bool something_delayed() override { return delayed_filled; }
+    void forget_delay() override { delayed_filled = false; filling_delayed = false; }
+
+    Frat& operator<<(const int32_t id) override
+    {
+        Step& st = cur();
+        assert(id != 0);
+        if (st.in_hints) st.hints.push_back(id);
+        else { assert(!st.have_id); st.id = id; st.have_id = true; }
+        return *this;
+    }
+
+    Frat& operator<<(const Lit l) override { cur().lits.push_back(l); return *this; }
+
+    Frat& operator<<(const vector<Lit>& cl) override
+    {
+        for(const Lit l: cl) cur().lits.push_back(l);
+        return *this;
+    }
+
+    Frat& operator<<(const Clause& cl) override
+    {
+        Step& st = cur();
+        assert(!st.have_id);
+        st.id = cl.stats.id;
+        st.have_id = true;
+        for(const Lit l: cl) st.lits.push_back(l);
+        return *this;
+    }
+
+    Frat& operator<<(const Xor& x) override
+    {
+        Step& st = cur();
+        assert(!st.have_id);
+        st.id = x.xid;
+        st.have_id = true;
+        for(uint32_t i = 0; i < x.size(); i++) {
+            Lit l = Lit(x[i], false);
+            if (i == 0 && !x.rhs) l ^= true;
+            st.lits.push_back(l);
+        }
+        return *this;
+    }
+
+    Frat& operator<<(const char*) override { return *this; }
+    Frat& operator<<(const FratOutcome) override { return *this; }
+
+    Frat& operator<<(const FratFlag flag) override
+    {
+        switch (flag) {
+            case FratFlag::deldelay:
+                assert(!delayed_filled);
+                delayed = Step();
+                delayed.kind = del;
+                filling_delayed = true;
+                break;
+            case FratFlag::deldelayx:
+                assert(!delayed_filled);
+                delayed = Step();
+                delayed.kind = delx;
+                filling_delayed = true;
+                break;
+            case FratFlag::findelay:
+                assert(delayed_filled);
+                write_step(delayed);
+                forget_delay();
+                break;
+            case FratFlag::fratchain:
+                cur().in_hints = true;
+                break;
+            case FratFlag::fin:
+                if (filling_delayed) {
+                    filling_delayed = false;
+                    delayed_filled = true;
+                } else {
+                    write_step(current);
+                    current = Step();
+                }
+                break;
+            default:
+                //step-opening flags
+                if (filling_delayed) break; //deldelay only streams id+lits
+                current = Step();
+                current.kind = flag;
+                break;
+        }
+        return *this;
+    }
+
+private:
+    struct Step {
+        FratFlag kind = fin;
+        int32_t id = 0;
+        bool have_id = false;
+        bool in_hints = false;
+        vector<Lit> lits;
+        vector<int32_t> hints;
+    };
+
+    Step& cur() { return filling_delayed ? delayed : current; }
+
+    void put_lit(const Lit l)
+    {
+        const uint32_t v = inter_to_outer[l.var()] + 1;
+        fprintf(file, " %s%d", l.sign() ? "-" : "", v);
+    }
+
+    void write_step(const Step& st)
+    {
+        if (done) return;
+        switch (st.kind) {
+            case FratFlag::add:
+                fprintf(file, "%d", st.id);
+                for(const Lit l: st.lits) put_lit(l);
+                fprintf(file, " 0");
+                for(const auto& h: st.hints) fprintf(file, " %d", h);
+                fprintf(file, " 0\n");
+                if (st.lits.empty()) done = true;
+                break;
+            case FratFlag::addx:
+                fprintf(file, "x %d", st.id);
+                for(const Lit l: st.lits) put_lit(l);
+                fprintf(file, " 0");
+                for(const auto& h: st.hints) fprintf(file, " %d", h);
+                fprintf(file, " 0\n");
+                break;
+            case FratFlag::implyclfromx:
+                fprintf(file, "i cx %d", st.id);
+                for(const Lit l: st.lits) put_lit(l);
+                fprintf(file, " 0");
+                for(const auto& h: st.hints) fprintf(file, " %d", h);
+                fprintf(file, " 0\n");
+                if (st.lits.empty()) done = true;
+                break;
+            case FratFlag::implyxfromcls:
+                fprintf(file, "i x %d", st.id);
+                for(const Lit l: st.lits) put_lit(l);
+                fprintf(file, " 0");
+                for(const auto& h: st.hints) fprintf(file, " %d", h);
+                fprintf(file, " 0\n");
+                break;
+            case FratFlag::del:
+            case FratFlag::weakencl:
+                fprintf(file, "%d d %d 0\n", st.id, st.id);
+                break;
+            case FratFlag::delx:
+                fprintf(file, "x d %d 0\n", st.id);
+                break;
+            case FratFlag::origclx:
+                fprintf(file, "o x %d", st.id);
+                for(const Lit l: st.lits) put_lit(l);
+                fprintf(file, " 0\n");
+                break;
+            //dropped: inputs are numbered by position, no finalization
+            case FratFlag::origcl:
+            case FratFlag::finalcl:
+            case FratFlag::finalx:
+            case FratFlag::restorecl:
+            case FratFlag::assump:
+            case FratFlag::unsatcore:
+            case FratFlag::modelF:
+            case FratFlag::fin:
+                break;
+            default:
+                release_assert(false && "step not supported in XLRUP mode");
+        }
+    }
+
+    FILE* file = nullptr;
+    Step current;
+    Step delayed;
+    bool filling_delayed = false;
+    bool delayed_filled = false;
+    bool done = false;
+    vector<uint32_t>& inter_to_outer;
+};
+
 }

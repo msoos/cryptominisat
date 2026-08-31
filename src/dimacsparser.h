@@ -284,6 +284,8 @@ bool DimacsParser<C, S>::parse_header(C& in)
         if (solver->nVars() < (size_t)num_header_vars) {
             solver->new_vars(num_header_vars-solver->nVars());
         }
+        //XLRUP proofs number input clauses by file position
+        solver->reserve_input_clause_ids(num_header_cls);
     } else {
         std::cerr
         << "PARSE ERROR! Unexpected char (hex: " << std::hex

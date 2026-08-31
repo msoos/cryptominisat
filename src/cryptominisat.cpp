@@ -1176,6 +1176,34 @@ DLL_PUBLIC void SATSolver::set_frat(FILE* os)
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 
+DLL_PUBLIC void SATSolver::set_xlrup(FILE* os)
+{
+    if (data->solvers.size() > 1) {
+        std::cerr << "ERROR: XLRUP cannot be used in multi-threaded mode" << endl;
+        exit(-1);
+    }
+    if (nVars() > 0) {
+        std::cerr << "ERROR: XLRUP cannot be set after variables have been added" << endl;
+        exit(-1);
+    }
+
+    data->solvers[0]->conf.doBreakid = false;
+    data->solvers[0]->add_xlrup(os);
+    data->solvers[0]->conf.do_hyperbin_and_transred = true;
+}
+
+DLL_PUBLIC void SATSolver::reserve_input_clause_ids(const uint32_t num_cls)
+{
+    if (data->solvers.size() != 1) return;
+    Solver* s = data->solvers[0];
+    if (!s->frat->enabled()) return;
+    //only the first header of the first parse reserves
+    if (s->clauseID != 0 || s->input_cl_ids_reserved != 0) return;
+    s->clauseID = num_cls;
+    s->input_cl_ids_reserved = num_cls;
+    s->next_input_cl_id = 1;
+}
+
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
 {
