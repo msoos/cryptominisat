@@ -445,33 +445,49 @@ void Main::add_supported_options() {
 
     /* po::options_description restartOptions("Restart options"); */
     program.add_argument("--restart")
-        .default_value("auto")
-        .help("{geom, glue, luby}  Restart strategy to follow.");
-    program.add_argument("--rstfirst")
-       .action([&](const auto& a) {conf.restart_first = fc_int(a);})
-       .default_value(conf.restart_first)
-       .help("The size of the base restart");
-    program.add_argument("--gluehist")
-        .action([&](const auto& a) {conf.shortTermHistorySize = fc_int(a);})
-        .default_value(conf.shortTermHistorySize)
-        .help("The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer");
-    program.add_argument("--lwrbndblkrest")
-       .action([&](const auto& a) {conf.lower_bound_for_blocking_restart = fc_int(a);})
-       .default_value(conf.lower_bound_for_blocking_restart)
-       .help("Lower bound on blocking restart -- don't block before this many conflicts");
-    program.add_argument("--locgmult" )
-       .action([&](const auto& a) {conf.local_glue_multiplier = fc_double(a);})
-       .default_value(conf.local_glue_multiplier)
-       /* .s_local_glue_multiplier.str()*/
-       .help("The multiplier used to determine if we should restart during glue-based restart");
-    program.add_argument("--ratiogluegeom")
-        .action([&](const auto& a) {conf.ratio_glue_geom = fc_double(a);})
-        .default_value(conf.ratio_glue_geom)
-        .help("Ratio of glue vs geometric restarts -- more is more glue");
-    program.add_argument("--blockingglue")
-        .action([&](const auto& a) {conf.do_blocking_restart = fc_int(a);})
-        .default_value(conf.do_blocking_restart)
-        .help("Do blocking restart for glues");
+        .action([&](const auto& a) {conf.do_restart = fc_int(a);})
+        .default_value(conf.do_restart)
+        .help("Enable restarts");
+    program.add_argument("--restartint")
+        .action([&](const auto& a) {conf.restartint = fc_int(a);})
+        .default_value(conf.restartint)
+        .help("Minimum number of conflicts between restarts");
+    program.add_argument("--restartmargin")
+        .action([&](const auto& a) {conf.restartmargin = fc_double(a);})
+        .default_value(conf.restartmargin)
+        .help("Percent the fast glue EMA must be above the slow one to restart");
+    program.add_argument("--emagluefast")
+        .action([&](const auto& a) {conf.emagluefast = fc_double(a);})
+        .default_value(conf.emagluefast)
+        .help("Window size of the fast glue EMA");
+    program.add_argument("--emaglueslow")
+        .action([&](const auto& a) {conf.emaglueslow = fc_double(a);})
+        .default_value(conf.emaglueslow)
+        .help("Window size of the slow glue EMA");
+    program.add_argument("--stabilize")
+        .action([&](const auto& a) {conf.do_stabilize = fc_int(a);})
+        .default_value(conf.do_stabilize)
+        .help("Alternate stable (reluctant doubling) and focused (glue EMA) phases");
+    program.add_argument("--stabilizeint")
+        .action([&](const auto& a) {conf.stabilizeint = fc_int(a);})
+        .default_value(conf.stabilizeint)
+        .help("Length of first stabilizing phase, in conflicts");
+    program.add_argument("--stabilizefactor")
+        .action([&](const auto& a) {conf.stabilizefactor = fc_double(a);})
+        .default_value(conf.stabilizefactor)
+        .help("Multiplier of stabilizing phase length at each phase change");
+    program.add_argument("--stabilizemaxint")
+        .action([&](const auto& a) {conf.stabilizemaxint = fc_int(a);})
+        .default_value(conf.stabilizemaxint)
+        .help("Maximum stabilizing phase length");
+    program.add_argument("--reluctant")
+        .action([&](const auto& a) {conf.reluctantint = fc_int(a);})
+        .default_value(conf.reluctantint)
+        .help("Reluctant doubling base period for stable-phase restarts, 0 = never restart there");
+    program.add_argument("--reluctantmax")
+        .action([&](const auto& a) {conf.reluctantmax = fc_int(a);})
+        .default_value(conf.reluctantmax)
+        .help("Maximum reluctant doubling period multiplier");
 
     /* po::options_description reduceDBOptions("Redundant clause options"); */
     program.add_argument("--gluecut0")
@@ -854,10 +870,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_otfs = fc_int(a);})
         .default_value(conf.do_otfs)
         .help("On-the-fly strengthening of clauses during conflict analysis");
-    program.add_argument("--maxgluehistltlimited")
-        .action([&](const auto& a) {conf.max_glue_cutoff_gluehistltlimited = fc_int(a);})
-        .default_value(conf.max_glue_cutoff_gluehistltlimited)
-        .help("Maximum glue used by glue-based restart strategy when populating glue history.");
 
     /* po::options_description chrono_bt_opts("Propagation options"); */
     program.add_argument("--diffdeclevelchrono")
@@ -1126,20 +1138,6 @@ void Main::check_options_correctness()
     }
 }
 
-void Main::parse_restart_type()
-{
-    string type = program.get<string>("restart");
-    if (type == "geom")
-        conf.restartType = Restart::geom;
-    else if (type == "luby")
-        conf.restartType = Restart::luby;
-    else if (type == "glue")
-        conf.restartType = Restart::glue;
-    else if (type == "auto")
-        conf.restartType = Restart::automatic;
-    else throw WrongParam("restart", "unknown restart type");
-}
-
 void Main::parse_polarity_type()
 {
     string mode = program.get<string>("polar");
@@ -1178,11 +1176,6 @@ void Main::manually_parse_some_options()
         conf.doBreakid = false;
     }
     #endif
-
-    if (conf.max_glue_cutoff_gluehistltlimited > 1000) {
-        cout << "ERROR: 'Maximum supported glue size is currently 1000" << endl;
-        exit(-1);
-    }
 
     if (conf.which_sls != "yalsat" &&
         conf.which_sls != "walksat" &&
@@ -1229,7 +1222,6 @@ void Main::manually_parse_some_options()
     }
 
     parse_polarity_type();
-    parse_restart_type();
 
     try {
         auto files = program.get<std::vector<std::string>>("files");

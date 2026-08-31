@@ -48,8 +48,6 @@ public:
     void print(uint64_t props, bool do_print_times, const string& prefix) const;
 
     //Restart stats
-    uint64_t blocked_restart = 0;
-    uint64_t blocked_restart_same = 0;
     uint64_t numRestarts = 0;
 
     //Decisions

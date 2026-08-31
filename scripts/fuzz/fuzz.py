@@ -376,15 +376,18 @@ class Tester:
         cmd += "--branchstr %s " % random.choice(
             ["vmtf", "vsids", "vmtf+vsids", "vsids+vmtf",
              "vmtf+vsids+rand", "rand+vsids", "vmtf+rand"])
-        cmd += "--rstfirst %d " % random.choice([1, 10, 100, 10000])
-        cmd += "--ratiogluegeom %d " % random.choice([1, 5, 60])
-        cmd += "--blockingglue %d " % random.choice([0, 1, 1])
-        cmd += "--lwrbndblkrest %d " % random.choice([0, 100, 10000, 10000000])
+        cmd += "--restart %d " % random.choice([0, 1, 1, 1])
+        cmd += "--restartint %d " % random.choice([1, 2, 2, 10, 500])
+        cmd += "--restartmargin %s " % random.choice([0, 10, 10, 25, 100])
+        cmd += "--stabilize %d " % random.choice([0, 1, 1, 1])
+        cmd += "--stabilizeint %d " % random.choice([1, 100, 1000, 1000])
+        cmd += "--stabilizefactor %s " % random.choice([1.1, 2.0, 2.0, 10])
+        cmd += "--reluctant %d " % random.choice([0, 1, 1024, 1024, 4096])
+        cmd += "--reluctantmax %d " % random.choice([2, 1048576, 1048576])
         gluecut0 = random.choice([1, 2, 3, 5, 25])
         cmd += "--gluecut0 %d " % gluecut0
         cmd += "--gluecut1 %d " % (gluecut0 + random.choice([0, 1, 3, 20]))
         cmd += "--lev1usewithin %d " % random.choice([100, 70000, 10000000])
-        cmd += "--maxgluehistltlimited %d " % random.choice([1, 5, 50, 1000])
         cmd += "--decbased %d " % random.choice([0, 1])
 
         # inprocessing scheduling limits
@@ -459,14 +462,12 @@ class Tester:
             cmd += "--terntimelim %d " % random.choice([1, 10, 100])
             cmd += "--ternkeep %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--terncreate %d " % random.choice([0, 0.001, 0.5, 300])
-            cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.05, 10)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
-            cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby"])
+            cmd += "--emagluefast %d " % random.choice([2, 33, 33, 100])
+            cmd += "--emaglueslow %d " % random.choice([1000, 100000, 100000])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
-            cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])

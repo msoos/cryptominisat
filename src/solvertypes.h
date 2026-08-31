@@ -45,26 +45,6 @@ enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
 enum class gauss_res {none, confl, prop};
 enum class branch {vsids=1, rand=2, vmtf=3};
 
-inline std::string restart_type_to_string(const Restart type) {
-    switch(type) {
-        case Restart::glue:
-            return "glue";
-        case Restart::automatic:
-            release_assert(false);
-            return "";
-        case Restart::geom:
-            return "geometric";
-        case Restart::luby:
-            return "luby";
-        case Restart::fixed:
-            return "fixed";
-        case Restart::never:
-            return "never";
-        default:
-            release_assert(false && "Unknown restart type");
-    }
-}
-
 inline std::string branch_type_to_string(const branch type) {
     switch(type) {
         case branch::vsids:

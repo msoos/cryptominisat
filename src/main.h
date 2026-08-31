@@ -60,7 +60,6 @@ class Main: public MainCommon
         string var_elim_strategy;
         void check_options_correctness();
         void manually_parse_some_options();
-        void parse_restart_type();
         void parse_polarity_type();
         void parse_sampling_vars();
         void check_num_threads_sanity(const unsigned thread_num) const;

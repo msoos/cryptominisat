@@ -27,8 +27,6 @@ using namespace CMSat;
 SearchStats& SearchStats::operator+=(const SearchStats& other)
 {
     numRestarts += other.numRestarts;
-    blocked_restart += other.blocked_restart;
-    blocked_restart_same += other.blocked_restart_same;
 
     //Decisions
     decisions += other.decisions;
@@ -94,8 +92,6 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
 SearchStats& SearchStats::operator-=(const SearchStats& other)
 {
     numRestarts -= other.numRestarts;
-    blocked_restart -= other.blocked_restart;
-    blocked_restart_same -= other.blocked_restart_same;
 
     //Decisions
     decisions -= other.decisions;
@@ -170,12 +166,6 @@ void SearchStats::printCommon(uint64_t props, bool do_print_times, const string&
         , numRestarts
         , float_div(conflicts, numRestarts)
         , "confls per restart"
-
-    );
-    print_stats_line(prefix + "blocked restarts"
-        , blocked_restart
-        , float_div(blocked_restart, numRestarts)
-        , "per normal restart"
 
     );
     if (do_print_times)

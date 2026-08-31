@@ -81,7 +81,7 @@ public:
 
     virtual void restart(
         const uint32_t restartID
-        , const Restart rest_type
+        , const uint32_t rest_stable
         , const PropStats& thisPropStats
         , const SearchStats& thisStats
         , const Solver* solver

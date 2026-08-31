@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "hyperengine.h"
 #include "searchstats.h"
 #include "searchhist.h"
+#include "ema.h"
 #include <random>
 
 #ifdef CMS_TESTING_ENABLED
@@ -79,7 +80,6 @@ class Searcher : public HyperEngine
         void dump_search_loop_stats(double my_time);
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
-        uint64_t luby_loop_num = 0;
         void set_seed(const uint32_t seed);
 
 
@@ -101,7 +101,6 @@ class Searcher : public HyperEngine
         void     print_clause_stats() const;
         uint64_t sumRestarts() const;
         const SearchHist& getHistory() const;
-        void print_local_restart_budget();
 
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
@@ -400,22 +399,34 @@ class Searcher : public HyperEngine
             bool must_stop;
             uint64_t confl_this_rst;
             uint64_t max_confl_to_do;
-            Restart rest_type = Restart::never;
         };
         SearchParams params;
-        int64_t increasing_phase_size;
-        int64_t max_confl_this_restart;
+
+        //CaDiCaL-style restart scheduling: Glucose-style glue EMAs during
+        //focused phases, reluctant doubling during stable phases
+        struct RestartSched {
+            struct GlueAvgs {
+                EMA fast;
+                EMA slow;
+            };
+            GlueAvgs cur;
+            GlueAvgs saved;
+            uint32_t swapped = 0;
+            Reluctant reluctant;
+            bool stable = false;
+            bool inited = false;
+            uint64_t lim_restart = 0;
+            uint64_t lim_stabilize = 0;
+            uint64_t inc_stabilize = 0;
+        };
+        RestartSched rst;
+        void init_restart_sched();
+        void swap_restart_averages();
+        bool stabilizing();
+        bool restarting();
         void  check_need_restart();
-        void  check_blocking_restart();
-        bool blocked_restart = false;
         uint64_t max_confl_per_search_solve_call;
         uint32_t num_search_called = 0;
-        double luby(double y, int x);
-        CMSat::Restart cur_rest_type;
-        uint32_t restart_strategy_change = 0;
-        uint32_t restart_strategy_at = 0;
-        void adjust_restart_strategy_cutoffs();
-        void setup_restart_strategy(const bool force);
 
         ///////
         // GPU

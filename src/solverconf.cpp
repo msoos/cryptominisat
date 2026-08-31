@@ -123,18 +123,19 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
         //test conducted: out-drat-check-8359337.wlm01-1-drat0
 
-        //Restarting
-        , restart_first(100)
-        , restart_inc(1.1)
-        , restartType(Restart::automatic)
-        , do_blocking_restart(1)
-        , blocking_restart_trail_hist_length(5000)
-        , blocking_restart_multip(1.4)
-        , fixed_restart_num_confl(100)
-        , local_glue_multiplier(0.80)
+        //Restarts, as in CaDiCaL
+        , do_restart(1)
+        , restartint(2)
+        , restartmargin(10)
+        , emagluefast(33)
+        , emaglueslow(1e5)
+        , do_stabilize(1)
+        , stabilizeint(1000)
+        , stabilizefactor(2.0)
+        , stabilizemaxint(2000000000ULL)
+        , reluctantint(1024)
+        , reluctantmax(1048576)
         , shortTermHistorySize (50)
-        , lower_bound_for_blocking_restart(10000)
-        , ratio_glue_geom(5)
         , doAlwaysFMinim(false)
 
         //branch strategy
@@ -164,7 +165,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Glues
         , update_glues_on_analyze(true)
-        , max_glue_cutoff_gluehistltlimited(50)
         , bump_reason_depth(1)
         , do_shrink_uip(1)
         , do_otfs(1)

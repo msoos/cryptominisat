@@ -81,7 +81,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     var_inc_vsids = 1;
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-    hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
+    hist.setSize(conf.shortTermHistorySize);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     polarity_mode = conf.polarity_mode;
 
@@ -1571,25 +1571,6 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
     out_conflict.resize(j);
 }
 
-void Searcher::check_blocking_restart()
-{
-    if (conf.do_blocking_restart
-        && sumConflicts > conf.lower_bound_for_blocking_restart
-        && hist.glueHist.isvalid()
-        && hist.trailDepthHistLonger.isvalid()
-        && decisionLevel() > 0
-        && !trail_lim.empty()
-        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
-    ) {
-        hist.glueHist.clear();
-        if (!blocked_restart) {
-            stats.blocked_restart_same++;
-        }
-        blocked_restart = true;
-        stats.blocked_restart++;
-    }
-}
-
 void Searcher::print_order_heap()
 {
     switch(branch_strategy) {
@@ -1764,7 +1745,7 @@ lbool Searcher::search()
             }
         }
     }
-    max_confl_this_restart -= (int64_t)params.confl_this_rst;
+    rst.lim_restart = sumConflicts + conf.restartint;
 
     {
         uint32_t reuse_lev = 0;
@@ -1899,12 +1880,12 @@ void Searcher::update_history_stats(
     hist.backtrackLevelHistLT.push(backtrack_level);
     hist.conflSizeHistLT.push(learnt_clause.size());
     hist.trailDepthHistLT.push(trail.size());
-    if (params.rest_type == Restart::glue) {
-        hist.glueHistLTLimited.push(
-            std::min<size_t>(glue, conf.max_glue_cutoff_gluehistltlimited));
-    }
     hist.glueHistLT.push(glue);
     hist.glueHist.push(glue);
+
+    //restart scheduling
+    rst.cur.fast.update(glue);
+    rst.cur.slow.update(glue);
     hist.connects_num_communities_histLT.push(connects_num_communities);
 
     //Global stats from cnf.h
@@ -2031,7 +2012,7 @@ void Searcher::dump_sql_clause_data(
         , old_decision_level
         , trail.size()
         , params.confl_this_rst
-        , (int)params.rest_type
+        , (int)rst.stable
         , hist
         , is_decision
         , connects_num_communities
@@ -2519,7 +2500,7 @@ void Searcher::print_restart_stat_line() const
 void Searcher::print_restart_stats_base() const
 {
     cout << solver->conf.prefix << "rst "
-         << " " << std::setw(4) << restart_type_to_short_string(params.rest_type)
+         << " " << std::setw(4) << (rst.stable ? "stb" : "foc")
          << " " << std::setw(4) << polarity_mode_to_short_string(polarity_mode)
          << " " << std::setw(4) << branch_strategy_str_short
          << " " << std::setw(5) << sumRestarts();
@@ -2574,7 +2555,7 @@ inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
     SearchStats thisStats = stats - lastSQLGlobalStats;
     solver->sqlStats->restart(
         restartID
-        , params.rest_type
+        , rst.stable
         , thisPropStats
         , thisStats
         , solver
@@ -2616,7 +2597,7 @@ void Searcher::reduce_db_if_needed()
     ) {
         #ifdef STATS_NEEDED
         if (solver->sqlStats) {
-            solver->reduceDB->dump_sql_cl_data((int)params.rest_type);
+            solver->reduceDB->dump_sql_cl_data((int)rst.stable);
         }
         #endif
         #ifdef FINAL_PREDICTOR
@@ -2803,7 +2784,6 @@ void Searcher::setup_branch_strategy()
     branch_strategy = select[which].branch;
     branch_strategy_str = select[which].descr;
     branch_strategy_str_short = select[which].descr_short;
-    setup_restart_strategy(true);
 
     verb_print(1, "[branch]"
         <<  " adjusting to: " << branch_type_to_string(branch_strategy)
@@ -2898,12 +2878,7 @@ void Searcher::setup_polarity_strategy()
     if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
         longest_trail_ever_stable = 0;
 
-        if ((polarity_strategy_at % 4) == 0) {
-            polarity_mode = PolarityMode::polarmode_best;
-            params.rest_type = Restart::geom;
-            increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
-            max_confl_this_restart = increasing_phase_size;
-        }
+        if ((polarity_strategy_at % 4) == 0) polarity_mode = PolarityMode::polarmode_best;
         if ((polarity_strategy_at % 4) == 1) polarity_mode = PolarityMode::polarmode_stable;
         if ((polarity_strategy_at % 4) == 2) polarity_mode = PolarityMode::polarmode_best_inv;
         if ((polarity_strategy_at % 4) == 3) polarity_mode = PolarityMode::polarmode_saved;
@@ -3046,7 +3021,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     lbool status = l_Undef;
 
     setup_branch_strategy();
-    setup_restart_strategy(false);
+    init_restart_sched();
     setup_polarity_strategy();
     STATS_DO(check_calc_satzilla_features(true));
     #ifdef STATS_NEEDED_BRANCH
@@ -3079,9 +3054,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
         status = search();
         if (status == l_Undef) {
             setup_branch_strategy();
-            setup_restart_strategy(false);
             setup_polarity_strategy();
-            adjust_restart_strategy_cutoffs();
         }
         SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
 
@@ -3093,125 +3066,64 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     return status;
 }
 
-double Searcher::luby(double y, int x)
+void Searcher::init_restart_sched()
 {
-    int size = 1;
-    int seq;
-    for (seq = 0
-        ; size < x + 1
-        ; seq++
-    ) {
-        size = 2 * size + 1;
-    }
+    if (rst.inited) return;
+    rst.inited = true;
 
-    while (size - 1 != x) {
-        size = (size - 1) >> 1;
-        seq--;
-        x = x % size;
-    }
-
-    return std::pow(y, seq);
-}
-
-void Searcher::setup_restart_strategy(bool force)
-{
-    if (!force && sumConflicts < restart_strategy_change) return;
-    restart_strategy_at++;
-    restart_strategy_change = sumConflicts + 30000;
-    restart_strategy_change *= 1.2;
-
-    increasing_phase_size = conf.restart_first;
-    max_confl_this_restart = conf.restart_first;
-    if (conf.restartType == Restart::fixed) {
-        params.rest_type = Restart::fixed;
-        max_confl_this_restart = conf.fixed_restart_num_confl;
-    } else if (conf.restartType == Restart::never) {
-        params.rest_type = Restart::never;
-        max_confl_this_restart = numeric_limits<int64_t>::max();
+    rst.cur.fast = EMA(conf.emagluefast);
+    rst.cur.slow = EMA(conf.emaglueslow);
+    rst.lim_restart = sumConflicts + conf.restartint;
+    rst.inc_stabilize = conf.stabilizeint;
+    rst.lim_stabilize = sumConflicts + rst.inc_stabilize;
+    if (conf.do_stabilize && conf.reluctantint) {
+        rst.reluctant.enable(conf.reluctantint, conf.reluctantmax);
     } else {
-        if (branch_strategy == branch::vsids) restart_strategy_at = 2;
-        if (branch_strategy == branch::vmtf) restart_strategy_at = (restart_strategy_at % 2);
-
-        if (conf.restartType == Restart::glue) restart_strategy_at = 0;
-        if (conf.restartType == Restart::luby) restart_strategy_at = 1;
-        if (conf.restartType == Restart::geom) restart_strategy_at = 2;
-
-        if (restart_strategy_at == 0) {
-            params.rest_type = Restart::glue;
-            max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
-        } else if (restart_strategy_at == 1) {
-            params.rest_type = Restart::luby;
-            luby_loop_num = 0;
-            max_confl_this_restart = luby(2, luby_loop_num) * (double)conf.restart_first;
-            luby_loop_num++;
-        } else if (restart_strategy_at == 2) {
-            params.rest_type = Restart::geom;
-            increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
-            max_confl_this_restart = increasing_phase_size;
-        }
+        rst.reluctant.disable();
     }
-
-    verb_print(2, "[restart] adjusting strategy. "
-    << " restart_strategy_change:" << restart_strategy_change
-    << " restart_strategy_at: " << restart_strategy_at
-    << " chosen: " << restart_type_to_string(params.rest_type));
-
-    print_local_restart_budget();
 }
 
-void Searcher::adjust_restart_strategy_cutoffs()
+//The averages are local to the stable/focused phase: on phase change we
+//save the current ones and restore those of the previous same-kind phase
+void Searcher::swap_restart_averages()
 {
-    //Haven't finished the phase. Keep rolling.
-    if (max_confl_this_restart > 0)
-        return;
-
-    switch (params.rest_type) {
-        //max_confl_this_restart -- for this phase of search
-        //increasing_phase_size - a value that rolls and increases
-        //                        it's start at conf.restart_first and never
-        //                        reset
-        case Restart::luby:
-            max_confl_this_restart = luby(2, luby_loop_num) * (double)conf.restart_first;
-            luby_loop_num++;
-            break;
-
-        case Restart::geom:
-            increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
-            max_confl_this_restart = increasing_phase_size;
-            break;
-
-        case Restart::glue:
-            max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
-            break;
-
-        case Restart::fixed:
-            max_confl_this_restart = conf.fixed_restart_num_confl;
-            break;
-
-        case Restart::never:
-            max_confl_this_restart = 1000ULL*1000ULL*1000ULL;
-            break;
-
-        default:
-            release_assert(false);
+    std::swap(rst.cur, rst.saved);
+    if (rst.swapped == 0) {
+        rst.cur.fast = EMA(conf.emagluefast);
+        rst.cur.slow = EMA(conf.emaglueslow);
     }
-
-    print_local_restart_budget();
+    rst.swapped++;
 }
 
-inline void Searcher::print_local_restart_budget()
+//Chanseok Oh's alternation of long quiet ("stable") phases with almost no
+//restarts and Glucose-style restart-happy ("focused") phases, as in CaDiCaL
+bool Searcher::stabilizing()
 {
-    if (conf.verbosity >= 2 || conf.print_all_restarts) {
-        cout << conf.prefix << "[restart] at confl " << solver->sumConflicts << " -- "
-        << " local restart type: "
-        << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
-        << " budget: " << std::setw(9) << max_confl_this_restart
-        << std::right
-        << " branching: " << std::setw(2) << branch_type_to_string(branch_strategy)
-        << "   decay: "
-        << std::setw(4) << std::setprecision(4) << var_decay
-        << endl;
+    if (!conf.do_stabilize) return false;
+    if (sumConflicts >= rst.lim_stabilize) {
+        rst.stable = !rst.stable;
+        rst.inc_stabilize =
+            std::min<uint64_t>(rst.inc_stabilize * conf.stabilizefactor, conf.stabilizemaxint);
+        rst.lim_stabilize = sumConflicts + std::max<uint64_t>(rst.inc_stabilize, 1);
+        swap_restart_averages();
+        verb_print(2, "[restart] "
+            << (rst.stable ? "stable" : "focused") << " phase, until confl "
+            << rst.lim_stabilize);
     }
+    return rst.stable;
+}
+
+//Glucose-style restart scheme from the POS'15 paper: restart if the fast
+//glue EMA is a margin above the slow one. In stable phases restart on
+//reluctant doubling instead.
+bool Searcher::restarting()
+{
+    if (!conf.do_restart) return false;
+    if (decisionLevel() < assumptions.size() + 2) return false;
+    if (stabilizing()) return rst.reluctant;
+    if (sumConflicts <= rst.lim_restart) return false;
+    const double margin = (100.0 + conf.restartmargin) / 100.0;
+    return rst.cur.fast >= margin * rst.cur.slow;
 }
 
 void Searcher::check_need_restart() {
@@ -3224,17 +3136,8 @@ void Searcher::check_need_restart() {
         }
     }
 
-    //dynamic
-    if (params.rest_type == Restart::glue) {
-        check_blocking_restart();
-        if (hist.glueHist.isvalid()
-            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()) {
-            params.must_stop = true;
-        }
-    }
-
-    //respect restart phase's limit
-    if ((int64_t)params.confl_this_rst > max_confl_this_restart) params.must_stop = true;
+    rst.reluctant.tick();
+    if (restarting()) params.must_stop = true;
 
     //respect Searcher's limit
     if (params.confl_this_rst > params.max_confl_to_do) {

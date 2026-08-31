@@ -1264,11 +1264,6 @@ void Solver::check_xor_cut_config_sanity() const
 
 void Solver::check_and_upd_config_parameters()
 {
-    if (conf.max_glue_cutoff_gluehistltlimited > 1000) {
-        cout << "ERROR: 'Maximum supported glue size is currently 1000" << endl;
-        exit(-1);
-    }
-
     if (conf.shortTermHistorySize <= 0) {
         std::cerr << "ERROR: You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
         exit(-1);
@@ -1298,11 +1293,6 @@ void Solver::check_and_upd_config_parameters()
 
     if (conf.sampling_vars_set) {
         SLOW_DEBUG_DO(for(uint32_t v: conf.sampling_vars) assert(v < nVarsOuter()));
-    }
-
-    if (conf.blocking_restart_trail_hist_length == 0) {
-        std::cerr << "ERROR: Blocking restart length must be at least 0" << endl;
-        exit(-1);
     }
 
     check_xor_cut_config_sanity();
@@ -1355,7 +1345,6 @@ void Solver::reset_for_solving() {
     longest_trail_ever_best = 0;
     longest_trail_ever_inv = 0;
     polarity_strategy_change = 0;
-    increasing_phase_size = conf.restart_first;
     set_assumptions();
     uneliminate_sampling_set();
     #ifdef SLOW_DEBUG
@@ -1372,7 +1361,6 @@ void Solver::reset_for_solving() {
     check_and_upd_config_parameters();
 
     //Reset parameters
-    luby_loop_num = 0;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     verb_print(6, __func__ << " called");

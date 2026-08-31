@@ -53,15 +53,6 @@ inline unsigned clean_to_int(ClauseClean t)
     return 255;
 }
 
-enum class Restart {
-    glue = 0
-    , geom = 1
-    , luby = 2
-    , fixed = 3
-    , never = 4
-    , automatic = 5
-};
-
 inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
 {
     switch(polarmode) {
@@ -85,27 +76,6 @@ inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
             return "rnd";
         default:
             release_assert(false && "Unknown polarity mode");
-    }
-}
-
-inline std::string restart_type_to_short_string(const Restart type)
-{
-    switch(type) {
-        case Restart::glue:
-            return "glue";
-        case Restart::geom:
-            return "geom";
-        case Restart::luby:
-            return "luby";
-        case Restart::fixed:
-            return "fixd";
-        case Restart::never:
-            return "neve";
-        case Restart::automatic:
-            release_assert(false);
-            return "";
-        default:
-            release_assert(false && "Unknown restart type");
     }
 }
 
@@ -133,24 +103,6 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
             return "rnd";
         default:
             release_assert(false && "Unknown polarity mode");
-    }
-}
-
-inline std::string getNameOfRestartType(Restart rest_type)
-{
-    switch(rest_type) {
-        case Restart::glue :
-            return "glue";
-        case Restart::geom:
-            return "geometric";
-        case Restart::luby:
-            return "luby";
-        case Restart::fixed:
-            return "fixed";
-        case Restart::never:
-            return "never";
-        default:
-            release_assert(false && "Unknown clause cleaning type?");
     }
 }
 
@@ -260,19 +212,20 @@ class DLL_PUBLIC SolverConf
         double   adjust_glue_if_too_many_tier0;
         uint64_t min_num_confl_adjust_glue_cutoff;
 
-        //For restarting
-        unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
-        double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
-        Restart  restartType;   ///<If set, the solver will always choose the given restart strategy
-        int      do_blocking_restart;
-        unsigned blocking_restart_trail_hist_length;
-        double   blocking_restart_multip;
-        uint32_t fixed_restart_num_confl;
+        //Restarts, as in CaDiCaL
+        int      do_restart;       ///<Enable restarts
+        unsigned restartint;       ///<Minimum number of conflicts between restarts
+        double   restartmargin;    ///<Percent the fast glue EMA must be above the slow one to restart
+        double   emagluefast;      ///<Window of the fast glue EMA
+        double   emaglueslow;      ///<Window of the slow glue EMA
+        int      do_stabilize;     ///<Alternate stable (reluctant doubling) and focused (glue EMA) phases
+        uint64_t stabilizeint;     ///<Length of first stabilizing phase, in conflicts
+        double   stabilizefactor;  ///<Multiplier of phase length at each phase change
+        uint64_t stabilizemaxint;  ///<Maximum phase length
+        unsigned reluctantint;     ///<Reluctant doubling base period for stable-phase restarts, 0=never restart
+        uint64_t reluctantmax;     ///<Maximum reluctant doubling period multiplier
 
-        double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
-        unsigned lower_bound_for_blocking_restart;
-        double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
         int doAlwaysFMinim;
 
         //Branch strategy
@@ -303,7 +256,6 @@ class DLL_PUBLIC SolverConf
 
         //Glues
         int       update_glues_on_analyze;
-        uint32_t  max_glue_cutoff_gluehistltlimited;
 
         //Reason-side bumping, as in CaDiCaL. 0 = off
         uint32_t  bump_reason_depth;

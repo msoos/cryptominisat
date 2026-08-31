@@ -49,7 +49,6 @@ struct SearchHist {
     //About the confl generated
     bqueue<uint32_t>    glueHist;          ///< Conflict glue history (this restart only)
     AvgCalc<uint32_t>   glueHistLT;        ///< Conflict glue history (all restarts)
-    AvgCalc<uint32_t>   glueHistLTLimited; //As before, but ONLY glue-based restart, max 50 glue
 
     AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history (this restart only)
     AvgCalc<uint32_t>   conflSizeHistLT;     ///< Conflict size history (all restarts)
@@ -111,10 +110,10 @@ struct SearchHist {
         #endif
     }
 
-    void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
+    void setSize(const size_t shortTermHistorySize)
     {
         glueHist.clearAndResize(shortTermHistorySize);
-        trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
+        trailDepthHistLonger.clearAndResize(shortTermHistorySize);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHist.clearAndResize(shortTermHistorySize);

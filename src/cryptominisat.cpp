@@ -176,7 +176,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             //Minisat-like
             conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
             conf.inc_max_temp_lev2_red_cls = 1.02;
@@ -255,7 +254,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 11: {
             conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::geom;
 
             conf.inc_max_temp_lev2_red_cls = 1.01;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
@@ -273,7 +271,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 13: {
             //Minisat-like
             conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
             conf.inc_max_temp_lev2_red_cls = 1.02;
@@ -341,11 +338,10 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 20: {
-            //Luby
+            //Rare restarts
             conf.branch_strategy_setup = "vmtf";
-            conf.restart_inc = 1.5;
-            conf.restart_first = 100;
-            conf.restartType = Restart::luby;
+            conf.restartint = 100;
+            conf.restartmargin = 25;
 //             conf.polar_stable_every_n = 2;
             break;
         }
@@ -371,12 +367,12 @@ void update_config(SolverConf& conf, unsigned thread_num)
         default: {
             conf.varElimRatioPerIter = 0.1*(thread_num % 9);
             if (thread_num % 4 == 0) {
-                conf.restartType = Restart::glue;
+                conf.restartmargin = 5 + 5*(thread_num % 5);
             }
             if (thread_num % 5 == 0) {
-                conf.restartType = Restart::geom;
+                conf.do_stabilize = 0;
             }
-            conf.restart_first = 100 * (0.5*(thread_num % 5));
+            conf.restartint = 2 + (thread_num % 5);
             conf.doMinimRedMoreMore = ((thread_num % 5) == 1);
             break;
         }
@@ -1435,14 +1431,16 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
         SolverConf conf = solver->getConf();
         conf.doSLS = false;
         conf.doBreakid = false;
-        conf.restartType = Restart::fixed;
+        //restart every fixed_restart conflicts: negative margin always fires
+        conf.do_stabilize = 0;
+        conf.restartint = fixed_restart;
+        conf.restartmargin = -100;
         conf.never_stop_search = true;
         conf.branch_strategy_setup = "rand";
         conf.simplify_at_startup = false;
         conf.doFindAndReplaceEqLits = false;
         conf.do_distill_clauses = false;
         conf.doFindXors = false;
-        conf.fixed_restart_num_confl = fixed_restart;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_weighted;
 
         solver->setConf(conf);
@@ -1475,7 +1473,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
-        /* conf.restartType = Restart::geom; */
 //         conf.branch_strategy_setup = "vsids1";
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
@@ -1502,7 +1499,6 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 
         //conf.do_simplify_problem = false; //no simplification without explicity calling it
 //         conf.varElimRatioPerIter = 1;
-        conf.restartType = Restart::geom;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_best;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;

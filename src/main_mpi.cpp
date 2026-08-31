@@ -52,11 +52,11 @@ vector<lbool> solve(lbool& solution_val)
         conf.origSeed = mpiRank*2000; //this will be added T that is the thread number within the MPI
         if (mpiRank % 6 == 3) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
-            conf.restartType = CMSat::Restart::geom;
+            conf.restartmargin = 25;
         }
         if (mpiRank % 6 == 4) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-            conf.restartType = CMSat::Restart::glue;
+            conf.do_stabilize = 0;
         }
     }
 
