@@ -1416,7 +1416,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.orig_global_timeout_multiplier = 1.5;
         conf.min_bva_gain = 1;
         conf.xor_finder_time_limitM = 400;
-//         conf.polar_stable_every_n = 100000; //i.e. never
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
 
@@ -1428,7 +1427,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
-//         conf.branch_strategy_setup = "vsids1";
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
         conf.diff_declev_for_chrono = -1;
