@@ -121,8 +121,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     reduceDB = new ReduceDB(this);
 
     set_up_sql_writer();
-    next_lev1_reduce = conf.every_lev1_reduce;
-    next_lev2_reduce =  conf.every_lev2_reduce;
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     next_pred_reduce =  conf.every_pred_reduce;
     #endif
@@ -760,7 +758,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
     }
     if (!restore)
       *frat << "add_clause_outer\n" << origcl << clstats.id << outer_ps << fin;
-    if (red) clstats.which_red_array = 2;
+    if (red) clstats.which_red_array = 0;
 
     VERBOSE_PRINT("Adding clause " << ps);
     const size_t origTrailSize = trail.size();
@@ -799,7 +797,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
     if (cl != nullptr) {
         ClOffset offset = cl_alloc.get_offset(cl);
         if (!red) longIrredCls.push_back(offset);
-        else longRedCls[2].push_back(offset);
+        else longRedCls[0].push_back(offset);
     }
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
@@ -1633,7 +1631,6 @@ lbool Solver::iterate_until_solved() {
         sumPropStats += propStats;
         propStats.clear();
         Searcher::resetStats();
-        check_too_many_in_tier0();
 
         //Solution has been found
         if (status != l_Undef) break;
@@ -1663,33 +1660,6 @@ lbool Solver::iterate_until_solved() {
     return status;
 }
 
-void Solver::check_too_many_in_tier0()
-{
-    //For both of these, it makes no sense:
-    // * for STATS_NEEDED, we have many in Tier0 because of locking-in
-    // * for FINAL_PREDICT Tier0 works completely differently
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    return;
-    #endif
-
-    if (conf.glue_put_lev0_if_below_or_eq == 2
-        || sumConflicts < conf.min_num_confl_adjust_glue_cutoff
-        || adjusted_glue_cutoff_if_too_many
-        || conf.adjust_glue_if_too_many_tier0 >= 1.0
-    ) {
-        return;
-    }
-
-    double perc = float_div(sumSearchStats.red_cl_in_which0, sumConflicts);
-    if (perc > conf.adjust_glue_if_too_many_tier0) {
-        conf.glue_put_lev0_if_below_or_eq--;
-        adjusted_glue_cutoff_if_too_many = true;
-        if (conf.verbosity) {
-            cout << "c Adjusted glue cutoff to " << conf.glue_put_lev0_if_below_or_eq
-            << " due to too many low glues: " << perc*100.0 << " %" << endl;
-        }
-    }
-}
 
 void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution) {
     verb_print(10, __func__ << " called with status: " << status);

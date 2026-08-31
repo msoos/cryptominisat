@@ -82,7 +82,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     hist.setSize(conf.shortTermHistorySize);
-    cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     polarity_mode = conf.polarity_mode;
 
     next_cls_distill = 5000.0*conf.global_next_multiplier;
@@ -398,37 +397,30 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 #endif
 }
 
-void Searcher::update_glue_from_analysis(Clause* cl)
+//Improve glue and lift into a better tier, as in CaDiCaL
+void Searcher::promote_clause(Clause* cl, const uint32_t new_glue)
 {
     assert(cl->red());
-    if (cl->stats.is_ternary_resolvent) {
-        return;
-    }
-    const unsigned new_glue = calc_glue(*cl);
+    if (cl->stats.keep) return;
+    if (cl->stats.is_ternary_resolvent) return;
+    if (new_glue >= cl->stats.glue) return;
+    if (new_glue <= conf.reducetier1glue) cl->stats.keep = 1;
+    else if (cl->stats.glue > conf.reducetier2glue && new_glue <= conf.reducetier2glue)
+        cl->stats.used = 2;
+    cl->stats.glue = new_glue;
+}
 
-    if (new_glue < cl->stats.glue) {
-        if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
-            cl->stats.ttl = 1;
-            #if defined(STATS_NEEDED)
-            red_stats_extra[cl->stats.extra_pos].ttl_stats = cl->stats.glue - new_glue;
-            #endif
-        }
-        cl->stats.glue = new_glue;
-
-        #ifndef FINAL_PREDICTOR
-        if (cl->stats.locked_for_data_gen) {
-            assert(cl->stats.which_red_array == 0);
-        } else if (new_glue <= conf.glue_put_lev0_if_below_or_eq) {
-            //move to lev0 if very low glue
-            cl->stats.which_red_array = 0;
-        } else if (new_glue <= conf.glue_put_lev1_if_below_or_eq
-                && conf.glue_put_lev1_if_below_or_eq != 0
-        ) {
-            //move to lev1 if low glue
-            cl->stats.which_red_array = 1;
-        }
-        #endif
-     }
+//Mark clause used, recompute glue and promote if it shrank, as in CaDiCaL
+void Searcher::bump_clause(Clause* cl)
+{
+    const uint32_t used = cl->stats.used;
+    cl->stats.used = 1;
+    if (cl->stats.keep) return;
+    if (cl->stats.is_ternary_resolvent) return;
+    if (!cl->red()) return;
+    const uint32_t new_glue = calc_glue(*cl);
+    if (new_glue < cl->stats.glue) promote_clause(cl, new_glue);
+    else if (used && cl->stats.glue <= conf.reducetier2glue) cl->stats.used = 2;
 }
 
 template<bool inprocess>
@@ -489,28 +481,12 @@ void Searcher::add_lits_to_learnt(
             if (!inprocess) cl->stats.uip1_used++;
             #endif
 
-            //If STATS_NEEDED then bump acitvity of ALL clauses
-            //and set stats on all clauses
-            if (!inprocess
-                && cl->red()
-                #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
-                && cl->stats.which_red_array != 0
+            if (!inprocess && cl->red()) {
+                bump_clause(cl);
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+                cl->stats.last_touched_any = sumConflicts;
+                bump_cl_act<inprocess>(cl);
                 #endif
-            ) {
-                if (conf.update_glues_on_analyze) update_glue_from_analysis(cl);
-
-                #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
-                if (cl->stats.which_red_array == 1)
-                #endif
-                    cl->stats.last_touched_any = sumConflicts;
-
-                //If stats or predictor, bump all because during final
-                //we will need this data and during dump when stats is on
-                //we also need this data.
-                #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
-                if (cl->stats.which_red_array == 2)
-                #endif
-                    bump_cl_act<inprocess>(cl);
             }
             break;
         }
@@ -1241,7 +1217,7 @@ void Searcher::analyze_conflict(
     glue = calc_glue(learnt_clause);
     print_fully_minimized_learnt_clause();
 
-    if (glue <= (conf.glue_put_lev0_if_below_or_eq+2)) {
+    if (glue <= conf.max_glue_more_minim) {
         bool doit = false;
         if (conf.doMinimRedMoreMore == 1 && learnt_clause.size() <= conf.max_size_more_minim) {
             doit = true;
@@ -1933,10 +1909,9 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
-            #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
-            if (cl->stats.which_red_array == 2)
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            bump_cl_act<inprocess>(cl);
             #endif
-                bump_cl_act<inprocess>(cl);
 
             #ifdef STATS_NEEDED
             red_stats_extra[cl->stats.extra_pos].antec_data = antec_data;
@@ -2146,7 +2121,6 @@ Clause* Searcher::handle_last_confl(
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
-        unsigned which_arr = 2;
 
         #ifdef STATS_NEEDED
         ext_stats.connects_num_communities = connects_num_communities;
@@ -2155,29 +2129,15 @@ Clause* Searcher::handle_last_confl(
             (double)rnd_uint(solver->mtrand,100000)/100000.0 < conf.lock_for_data_gen_ratio;
         #endif
 
+        //keep/used as in CaDiCaL's new_clause() + new_driving_clause()
+        cl->stats.keep = glue <= conf.reducetier1glue;
+        cl->stats.used = 1 + (glue <= conf.reducetier2glue);
 
-        #ifndef FINAL_PREDICTOR
-        if (cl->stats.locked_for_data_gen) {
-            which_arr = 0;
-        } else if (glue <= conf.glue_put_lev0_if_below_or_eq) {
-            which_arr = 0;
-        } else if (
-            glue <= conf.glue_put_lev1_if_below_or_eq
-            && conf.glue_put_lev1_if_below_or_eq != 0
-        ) {
-            which_arr = 1;
-        } else {
-            which_arr = 2;
-        }
+        #ifdef FINAL_PREDICTOR
+        cl->stats.which_red_array = 2;
         #else
-        which_arr = 2;
+        cl->stats.which_red_array = 0;
         #endif
-
-        if (which_arr == 0) {
-            stats.red_cl_in_which0++;
-        }
-
-        cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
     }
 
@@ -2584,11 +2544,6 @@ void Searcher::print_restart_stat()
     }
 }
 
-void Searcher::reset_temp_cl_num()
-{
-    cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-}
-
 void Searcher::reduce_db_if_needed()
 {
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -2609,25 +2564,14 @@ void Searcher::reduce_db_if_needed()
     #endif
 
     #ifndef FINAL_PREDICTOR
-    if (conf.every_lev1_reduce != 0
-        && sumConflicts >= next_lev1_reduce
+    auto& rdb = *solver->reduceDB;
+    if (rdb.lim_reduce == 0) rdb.lim_reduce = sumConflicts + conf.reduceint;
+    if (conf.reduce
+        && !longRedCls[0].empty()
+        && sumConflicts >= rdb.lim_reduce
     ) {
-        solver->reduceDB->handle_lev1();
-        next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
-    }
-
-    if (conf.every_lev2_reduce != 0) {
-        if (sumConflicts >= next_lev2_reduce) {
-            solver->reduceDB->handle_lev2();
-            cl_alloc.consolidate(solver);
-            next_lev2_reduce = sumConflicts + conf.every_lev2_reduce;
-        }
-    } else {
-        if (longRedCls[2].size() > cur_max_temp_red_lev2_cls) {
-            solver->reduceDB->handle_lev2();
-            cur_max_temp_red_lev2_cls *= conf.inc_max_temp_lev2_red_cls;
-            cl_alloc.consolidate(solver);
-        }
+        rdb.handle_reduce();
+        cl_alloc.consolidate(solver);
     }
     #endif
 }

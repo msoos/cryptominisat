@@ -490,36 +490,44 @@ void Main::add_supported_options() {
         .help("Maximum reluctant doubling period multiplier");
 
     /* po::options_description reduceDBOptions("Redundant clause options"); */
-    program.add_argument("--gluecut0")
-        .action([&](const auto& a) {conf.glue_put_lev0_if_below_or_eq = fc_int(a);})
-        .default_value(conf.glue_put_lev0_if_below_or_eq)
-        .help("Glue value for lev 0 ('keep') cut");
-    program.add_argument("--gluecut1")
-        .action([&](const auto& a) {conf.glue_put_lev1_if_below_or_eq = fc_int(a);})
-        .default_value(conf.glue_put_lev1_if_below_or_eq)
-        .help("Glue value for lev 1 cut ('give another shot')");
-    program.add_argument("--adjustglue")
-        .action([&](const auto& a) {conf.adjust_glue_if_too_many_tier0 = fc_double(a);})
-        .default_value(conf.adjust_glue_if_too_many_tier0)
-        .help("If more than this % of clauses is LOW glue (level 0) then lower the glue cutoff by 1 -- once and never again");
-    program.add_argument("--everylev1")
-        .action([&](const auto& a) {conf.every_lev1_reduce = fc_int(a);})
-        .default_value(conf.every_lev1_reduce)
-        .help("Reduce lev1 clauses every N");
-    program.add_argument("--everylev2")
-        .action([&](const auto& a) {conf.every_lev2_reduce = fc_int(a);})
-        .default_value(conf.every_lev2_reduce)
-        .help("Reduce lev2 clauses every N");
+    program.add_argument("--reduce")
+        .action([&](const auto& a) {conf.reduce = fc_int(a);})
+        .default_value(conf.reduce)
+        .help("Enable learnt clause DB reduction");
+    program.add_argument("--reduceint")
+        .action([&](const auto& a) {conf.reduceint = fc_int(a);})
+        .default_value(conf.reduceint)
+        .help("Base reduce interval, in conflicts");
+    program.add_argument("--reducetarget")
+        .action([&](const auto& a) {conf.reducetarget = fc_int(a);})
+        .default_value(conf.reducetarget)
+        .help("Percent of unused reduce candidates removed per reduce");
+    program.add_argument("--reducetier1glue")
+        .action([&](const auto& a) {conf.reducetier1glue = fc_int(a);})
+        .default_value(conf.reducetier1glue)
+        .help("Glue at/below which learnt clauses are kept forever");
+    program.add_argument("--reducetier2glue")
+        .action([&](const auto& a) {conf.reducetier2glue = fc_int(a);})
+        .default_value(conf.reducetier2glue)
+        .help("Glue at/below which learnt clauses get a double life");
+    program.add_argument("--flush")
+        .action([&](const auto& a) {conf.flush = fc_int(a);})
+        .default_value(conf.flush)
+        .help("Once in a while flush ALL unused redundant clauses");
+    program.add_argument("--flushfactor")
+        .action([&](const auto& a) {conf.flushfactor = fc_int(a);})
+        .default_value(conf.flushfactor)
+        .help("Flush interval multiplier");
+    program.add_argument("--flushint")
+        .action([&](const auto& a) {conf.flushint = fc_int(a);})
+        .default_value(conf.flushint)
+        .help("Initial flush interval, in conflicts");
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     program.add_argument("--everypred")
         .action([&](const auto& a) {conf.every_pred_reduce = fc_int(a);})
         .default_value(conf.every_pred_reduce)
         .help("Reduce final predictor (lev3) clauses every N, and produce data at every N in case of STATS_NEEDED");
     #endif
-    program.add_argument("--lev1usewithin")
-        .action([&](const auto& a) {conf.must_touch_lev1_within = fc_int(a);})
-        .default_value(conf.must_touch_lev1_within)
-        .help("Learnt clause must be used in lev1 within this timeframe or be dropped to lev2");
 
     /* po::options_description varPickOptions("Variable branching options"); */
     program.add_argument("--branchstr")
@@ -675,8 +683,6 @@ void Main::add_supported_options() {
         .help("Simp rounds increment by this power of N");
 
     /* po::options_description tern_res_options("Ternary resolution"); */
-    std::ostringstream tern_keep;
-    tern_keep << std::setprecision(2) << conf.ternary_keep_mult;
     std::ostringstream tern_max_create;
     tern_max_create << std::setprecision(2) << conf.ternary_max_create;
     program.add_argument("--tern")
@@ -687,10 +693,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.ternary_res_time_limitM = fc_ll(a);})
         .default_value(conf.ternary_res_time_limitM)
         .help("Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'");
-    program.add_argument("--ternkeep")
-        .action([&](const auto& a) {conf.ternary_keep_mult = fc_double(a);})
-        .default_value(conf.ternary_keep_mult)
-        .help("Keep ternary resolution clauses only if they are touched within this multiple of 'lev1usewithin'");
     program.add_argument("--terncreate")
         .action([&](const auto& a) {conf.ternary_max_create = fc_double(a);})
         .default_value(conf.ternary_max_create)
@@ -854,10 +856,6 @@ void Main::add_supported_options() {
         .help("Create decision-based conflict clauses when the UIP clause is too large");
 
     /* po::options_description propOptions("Glue options"); */
-    program.add_argument("--updateglueonanalysis")
-        .action([&](const auto& a) {conf.update_glues_on_analyze = fc_int(a);})
-        .default_value(conf.update_glues_on_analyze)
-        .help("Update glues while analyzing");
     program.add_argument("--bumpreasondepth")
         .action([&](const auto& a) {conf.bump_reason_depth = fc_int(a);})
         .default_value(conf.bump_reason_depth)

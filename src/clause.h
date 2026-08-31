@@ -120,7 +120,8 @@ struct ClauseStats
         glue = 1000;
         is_decision = false;
         marked_clause = false;
-        ttl = 0;
+        keep = false;
+        used = 0;
         which_red_array = 7; //intentionally breaking it so we catch bugs, 7 NEVER exists
         locked_for_data_gen = 0;
         is_ternary_resolvent = 0;
@@ -132,7 +133,8 @@ struct ClauseStats
     uint32_t glue:20;  //currently in code limited to 100'000
     uint32_t is_decision:1; //a "decision clause", i.e. made out of decisions leading to conflict, not resolution
     uint32_t marked_clause:1;
-    uint32_t ttl:1;
+    uint32_t keep:1;   //always keep, as in CaDiCaL (tier1, glue <= reducetier1glue)
+    uint32_t used:2;   //resolved in conflict analysis since last reduce, as in CaDiCaL
     uint32_t which_red_array:3;
     uint32_t locked_for_data_gen:1;
     uint32_t is_ternary_resolvent:1;
@@ -161,7 +163,8 @@ struct ClauseStats
         ret.last_touched_any = std::max(first.last_touched_any, second.last_touched_any);
         ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
         ret.is_ternary_resolvent = first.is_ternary_resolvent;
-        ret.ttl = std::max(first.ttl, second.ttl);
+        ret.keep = first.keep | second.keep;
+        ret.used = std::max(first.used, second.used);
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.uip1_used = first.uip1_used + second.uip1_used;

@@ -67,7 +67,6 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     otfSubsumedLong += other.otfSubsumedLong;
     otfSubsumedRed += other.otfSubsumedRed;
     otfSubsumedLitsGained += other.otfSubsumedLitsGained;
-    red_cl_in_which0 += other.red_cl_in_which0;
 
     //Hyper-bin & transitive reduction
     advancedPropCalled += other.advancedPropCalled;
@@ -131,7 +130,6 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     otfSubsumedLong -= other.otfSubsumedLong;
     otfSubsumedRed -= other.otfSubsumedRed;
     otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
-    red_cl_in_which0 -= other.red_cl_in_which0;
 
     //Hyper-bin & transitive reduction
     advancedPropCalled -= other.advancedPropCalled;
@@ -200,11 +198,6 @@ void SearchStats::print_short(uint64_t props, bool do_print_times, const string&
         , float_div(litsRedFinal, conflicts)
     );
 
-    print_stats_line(prefix + "red which0"
-        , red_cl_in_which0
-        , stats_line_percent(red_cl_in_which0, conflicts)
-        , "% of confl"
-    );
 }
 
 void SearchStats::print(uint64_t props, bool do_print_times, const string& prefix) const
@@ -232,11 +225,6 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
         , "% of conflicts"
     );
 
-    print_stats_line(prefix + "red which0"
-        , red_cl_in_which0
-        , stats_line_percent(red_cl_in_which0, conflicts)
-        , "% of confl"
-    );
 
     cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
     print_stats_line(prefix + "advProp called"

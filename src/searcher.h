@@ -341,7 +341,8 @@ class Searcher : public HyperEngine
         template<bool inprocess>
         void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
-        void update_glue_from_analysis(Clause* cl);
+        void bump_clause(Clause* cl);
+        void promote_clause(Clause* cl, const uint32_t new_glue);
         template<bool inprocess>
         void minimize_learnt_clause();
         void print_fully_minimized_learnt_clause() const;
@@ -368,7 +369,6 @@ class Searcher : public HyperEngine
         /////////////////////
         const SearchStats& get_stats() const;
         size_t mem_used() const;
-        void reset_temp_cl_num();
         void  resetStats(); //For connection with Solver
         double   startTime; ///<When solve() was started
 
@@ -376,8 +376,6 @@ class Searcher : public HyperEngine
         // Clause database reduction
         /////////////////////
         void reduce_db_if_needed();
-        uint64_t next_lev1_reduce;
-        uint64_t next_lev2_reduce;
         uint64_t next_pred_reduce;
 
         ///////////////

@@ -276,11 +276,11 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             if (!okay()) return false;
         } else if (conf.oracle_get_learnts) {
             ClauseStats s;
-            s.which_red_array = 2;
+            s.which_red_array = 0;
             s.id = ++clauseID;
             s.glue = cl.size();
             Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
-            if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
+            if (cl2) longRedCls[0].push_back(cl_alloc.get_offset(cl2));
             if (!okay()) return false;
         }
     }
@@ -624,8 +624,8 @@ bool Solver::oracle_sparsify(bool fast)
             if (conf.oracle_removed_is_learnt) {
                 cl->stats.marked_clause = false;
                 litStats.redLits += cl->size();
-                longRedCls[2].push_back(off);
-                cl->stats.which_red_array = 2;
+                longRedCls[0].push_back(off);
+                cl->stats.which_red_array = 0;
                 cl->isRed = true;
             } else {
                 cl_alloc.clauseFree(off);

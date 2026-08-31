@@ -329,8 +329,11 @@ class Tester:
         cmd += "--presimp %d " % random.choice([1]*10+[0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
-        cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
-        cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        cmd += "--reduce %d " % random.choice([0, 1, 1, 1])
+        cmd += "--reduceint %d " % random.choice([10, 100, 300, 300])
+        cmd += "--reducetarget %d " % random.choice([10, 75, 75, 100])
+        cmd += "--flush %d " % random.choice([0, 0, 0, 1])
+        cmd += "--flushint %d " % random.choice([1000, 100000])
         cmd += "--xor %d " % random.choice([0, 0, 1])
         cmd += "--maxxormat %d " % random.choice([0, 1, 10])
 
@@ -384,10 +387,9 @@ class Tester:
         cmd += "--stabilizefactor %s " % random.choice([1.1, 2.0, 2.0, 10])
         cmd += "--reluctant %d " % random.choice([0, 1, 1024, 1024, 4096])
         cmd += "--reluctantmax %d " % random.choice([2, 1048576, 1048576])
-        gluecut0 = random.choice([1, 2, 3, 5, 25])
-        cmd += "--gluecut0 %d " % gluecut0
-        cmd += "--gluecut1 %d " % (gluecut0 + random.choice([0, 1, 3, 20]))
-        cmd += "--lev1usewithin %d " % random.choice([100, 70000, 10000000])
+        tier1 = random.choice([1, 2, 2, 3])
+        cmd += "--reducetier1glue %d " % tier1
+        cmd += "--reducetier2glue %d " % (tier1 + random.choice([0, 1, 4, 4, 20]))
         cmd += "--decbased %d " % random.choice([0, 1])
 
         # inprocessing scheduling limits
@@ -460,15 +462,12 @@ class Tester:
         if random.choice([True, False]):
             cmd += "--tern %d " % random.choice([0, 1])
             cmd += "--terntimelim %d " % random.choice([1, 10, 100])
-            cmd += "--ternkeep %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--terncreate %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.05, 10)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             cmd += "--emagluefast %d " % random.choice([2, 33, 33, 100])
             cmd += "--emaglueslow %d " % random.choice([1000, 100000, 100000])
-            cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
-            cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
             cmd += "--occredmax %s " % random.randint(0, 100)

@@ -147,96 +147,131 @@ ReduceDB::~ReduceDB()
     #endif
 }
 
-void ReduceDB::sort_red_cls(ClauseClean clean_type)
+//CaDiCaL-style reduce: mark unused, non-keep clauses, kill worst reducetarget%
+void ReduceDB::mark_useless_redundant_clauses_as_garbage()
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Before sort" << endl;
-    uint64_t i = 0;
-    for(const auto& x: solver->longRedCls[2]) {
-        const ClOffset offset = x;
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        cout << i << " offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
-        << " act:" << std::setprecision(9) << cl->stats.activity
-        << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
-        << endl;
+    vector<ClOffset> stack;
+    stack.reserve(solver->longRedCls[0].size());
+    for (const ClOffset offs: solver->longRedCls[0]) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
+        if (solver->clause_locked(*cl, offs)) continue; //reasons are kept, as in CaDiCaL
+        const uint32_t used = cl->stats.used;
+        if (used) cl->stats.used = used - 1;
+        if (cl->stats.is_ternary_resolvent) {
+            //like CaDiCaL's hyper resolvents: kept one round unless used
+            if (!used) cl->stats.marked_clause = true;
+            continue;
+        }
+        if (used) continue;
+        if (cl->stats.keep) continue;
+        if (cl->stats.locked_for_data_gen) continue;
+        stack.push_back(offs);
     }
-    #endif
 
-    switch (clean_type) {
-        case ClauseClean::glue : {
-            std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
-                [this](const ClOffset x, const ClOffset y) {
-                    return solver->cl_alloc.ptr(x)->stats.glue < solver->cl_alloc.ptr(y)->stats.glue;
-                });
-            break;
-        }
+    //worst first: larger glue, then larger size, as in CaDiCaL
+    std::stable_sort(stack.begin(), stack.end(),
+        [this](const ClOffset a, const ClOffset b) {
+            const Clause* c = solver->cl_alloc.ptr(a);
+            const Clause* d = solver->cl_alloc.ptr(b);
+            if (c->stats.glue != d->stats.glue) return c->stats.glue > d->stats.glue;
+            return c->size() > d->size();
+        });
 
-        case ClauseClean::activity : {
-            std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
-                [this](const ClOffset x, const ClOffset y) {
-                    return solver->cl_alloc.ptr(x)->stats.activity > solver->cl_alloc.ptr(y)->stats.activity;
-                });
-            break;
-        }
+    size_t target = 1e-2 * (double)solver->conf.reducetarget * (double)stack.size();
+    if (target > stack.size()) target = stack.size();
+    cl_reduced = target;
+    for (size_t i = 0; i < target; i++)
+        solver->cl_alloc.ptr(stack[i])->stats.marked_clause = true;
+}
 
-        default: {
-            assert(false && "Unknown cleaning type");
-        }
+//CaDiCaL-style flush: remove ALL redundant clauses not recently used
+void ReduceDB::mark_clauses_to_be_flushed()
+{
+    for (const ClOffset offs: solver->longRedCls[0]) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (solver->clause_locked(*cl, offs)) continue;
+        const uint32_t used = cl->stats.used;
+        if (used) cl->stats.used = used - 1;
+        if (used) continue;
+        if (cl->stats.locked_for_data_gen) continue;
+        cl->stats.marked_clause = true;
+        cl_reduced++;
     }
 }
 
-//TODO maybe we chould count binary learnt clauses as well into the
-//kept no. of clauses as other solvers do
-void ReduceDB::handle_lev2()
+void ReduceDB::remove_marked_clauses()
 {
-    solver->dump_memory_stats_to_sql();
-    size_t orig_size = solver->longRedCls[2].size();
-
-    const double my_time = cpu_time();
-    assert(solver->watches.get_smudged_list().empty());
-
-    //lev2 -- clean
-    int64_t num_to_reduce = solver->longRedCls[2].size();
-    for(unsigned keep_type = 0
-        ; keep_type < sizeof(solver->conf.ratio_keep_clauses)/sizeof(double)
-        ; keep_type++
-    ) {
-        const uint64_t keep_num = (double)num_to_reduce*solver->conf.ratio_keep_clauses[keep_type];
-        if (keep_num == 0) {
+    auto& cls = solver->longRedCls[0];
+    size_t j = 0;
+    for (const ClOffset offs: cls) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (!cl->stats.marked_clause) {
+            cls[j++] = offs;
             continue;
         }
-        sort_red_cls(static_cast<ClauseClean>(keep_type));
-        mark_top_N_clauses_lev2(keep_num);
+        cl->stats.marked_clause = false;
+        solver->watches.smudge((*cl)[0]);
+        solver->watches.smudge((*cl)[1]);
+        solver->litStats.redLits -= cl->size();
+        *solver->frat << del << *cl << fin;
+        cl->set_removed();
+        delayed_clause_free.push_back(offs);
     }
+    cls.resize(j);
+}
+
+void ReduceDB::handle_reduce()
+{
+    solver->dump_memory_stats_to_sql();
+    const double my_time = cpu_time();
+    const size_t orig_size = solver->longRedCls[0].size();
+    assert(solver->watches.get_smudged_list().empty());
     assert(delayed_clause_free.empty());
-    cl_marked = 0;
-    cl_ttl = 0;
-    cl_locked_solver = 0;
-    remove_cl_from_lev2();
+    num_reductions++;
+
+    if (inc_flush == 0) {
+        inc_flush = solver->conf.flushint;
+        lim_flush = solver->conf.flushint;
+    }
+    const bool flush = solver->conf.flush && solver->sumConflicts >= lim_flush;
+    if (flush) num_flushes++;
+
+    cl_reduced = 0;
+    if (flush) mark_clauses_to_be_flushed();
+    else mark_useless_redundant_clauses_as_garbage();
+    remove_marked_clauses();
 
     solver->clean_occur_from_removed_clauses_only_smudged();
-    for(ClOffset offset: delayed_clause_free) {
-        solver->free_cl(offset);
-    }
+    for(ClOffset offset: delayed_clause_free) solver->free_cl(offset);
     delayed_clause_free.clear();
+    SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
 
-    #ifdef SLOW_DEBUG
-    solver->check_no_removed_or_freed_cl_in_watch();
-    #endif
+    //increasing intervals, as in CaDiCaL
+    int64_t delta = (int64_t)solver->conf.reduceint * (int64_t)(num_reductions + 1);
+    const uint64_t irred = solver->longIrredCls.size() + solver->binTri.irredBins;
+    if (irred > 100000) {
+        delta *= std::log10((double)irred / 1e4);
+        if (delta < 1) delta = 1;
+    }
+    lim_reduce = solver->sumConflicts + delta;
+    if (flush) {
+        inc_flush *= solver->conf.flushfactor;
+        lim_flush = solver->sumConflicts + inc_flush;
+    }
 
-    verb_print(2, "[DBclean lev2]"
+    verb_print(2, "[DBclean]"
+    << (flush ? " FLUSHED" : "")
     << " confl: " << solver->sumConflicts
     << " orig size: " << orig_size
-    << " marked: " << cl_marked
-    << " ttl:" << cl_ttl
-    << " locked_solver:" << cl_locked_solver
+    << " removed: " << cl_reduced
+    << " next reduce at confl: " << lim_reduce
     << solver->conf.print_times(cpu_time()-my_time));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
-            , "dbclean-lev2"
+            , "dbclean"
             , cpu_time()-my_time
         );
     }
@@ -474,86 +509,6 @@ void ReduceDB::dump_sql_cl_data(
 }
 #endif
 
-void ReduceDB::handle_lev1()
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "c handle_lev1()" << endl;
-    #endif
-
-    uint32_t moved_w0 = 0;
-    uint32_t used_recently = 0;
-    uint32_t non_recent_use = 0;
-    double my_time = cpu_time();
-    size_t orig_size = solver->longRedCls[1].size();
-
-    size_t j = 0;
-    for(size_t i = 0
-        ; i < solver->longRedCls[1].size()
-        ; i++
-    ) {
-        const ClOffset offset = solver->longRedCls[1][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        #ifdef VERBOSE_DEBUG
-        cout << "offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
-        << " act:" << std::setprecision(9) << cl->stats.activity
-        << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
-        << endl;
-        #endif
-
-        assert(!cl->stats.locked_for_data_gen);
-        if (cl->stats.which_red_array == 0) {
-            solver->longRedCls[0].push_back(offset);
-            moved_w0++;
-        } else if (cl->stats.which_red_array == 2) {
-            assert(false && "we should never move up through any other means");
-        } else {
-            uint32_t must_touch = solver->conf.must_touch_lev1_within;
-            if (cl->stats.is_ternary_resolvent) {
-                must_touch *= solver->conf.ternary_keep_mult; //this multiplier is 6 by default
-            }
-            if (!solver->clause_locked(*cl, offset)
-                && cl->stats.last_touched_any + must_touch < solver->sumConflicts
-            ) {
-                solver->longRedCls[2].push_back(offset);
-                cl->stats.which_red_array = 2;
-
-                //when stats are needed, activities are correctly updated
-                //across all clauses
-                //WARNING this changes the way things behave during STATS relative to non-STATS!
-                #ifndef STATS_NEEDED
-                cl->stats.activity = 0;
-                solver->bump_cl_act<false>(cl);
-                #endif
-                non_recent_use++;
-            } else {
-                solver->longRedCls[1][j++] = offset;
-                used_recently++;
-            }
-        }
-    }
-    solver->longRedCls[1].resize(j);
-
-    if (solver->conf.verbosity >= 2) {
-        cout << solver->conf.prefix << "[DBclean lev1]"
-        << " confl: " << solver->sumConflicts
-        << " orig size: " << orig_size
-        << " used recently: " << used_recently
-        << " not used recently: " << non_recent_use
-        << " moved w0: " << moved_w0
-        << solver->conf.print_times(cpu_time()-my_time)
-        << endl;
-    }
-
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "dbclean-lev1"
-            , cpu_time()-my_time
-        );
-    }
-    total_time += cpu_time()-my_time;
-}
 
 #ifdef FINAL_PREDICTOR
 void ReduceDB::pred_move_to_lev1_and_lev0()
@@ -1147,110 +1102,6 @@ void ReduceDB::handle_predictors()
 }
 #endif
 
-void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Marking top N clauses " << keep_num << endl;
-    #endif
-
-    size_t marked = 0;
-    for(size_t i = 0
-        ; i < solver->longRedCls[2].size() && marked < keep_num
-        ; i++
-    ) {
-        const ClOffset offset = solver->longRedCls[2][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        #ifdef VERBOSE_DEBUG
-        cout << "offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
-        << " act:" << std::setprecision(9) << cl->stats.activity
-        << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
-        << endl;
-        #endif
-
-        if (cl->stats.ttl > 0
-            || solver->clause_locked(*cl, offset)
-            || cl->stats.which_red_array != 2
-        ) {
-            //no need to mark, skip
-            #ifdef VERBOSE_DEBUG
-            cout << "Not marking Skipping "<< endl;
-            #endif
-            continue;
-        }
-
-        if (!cl->stats.marked_clause) {
-            marked++;
-            cl->stats.marked_clause = true;
-            #ifdef VERBOSE_DEBUG
-            cout << "Not marking Skipping "<< endl;
-            #endif
-        }
-    }
-}
-
-bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
-{
-    assert(cl->red());
-    return !cl->stats.marked_clause
-         && cl->stats.ttl == 0
-         && !solver->clause_locked(*cl, offset);
-}
-
-void ReduceDB::remove_cl_from_lev2() {
-    size_t i, j;
-    for (i = j = 0
-        ; i < solver->longRedCls[2].size()
-        ; i++
-    ) {
-        ClOffset offset = solver->longRedCls[2][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        assert(cl->size() > 2);
-
-        //move to another array
-        if (cl->stats.which_red_array < 2) {
-            cl->stats.marked_clause = 0;
-            solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-            continue;
-        }
-        assert(cl->stats.which_red_array == 2);
-
-        //Check if locked, or marked or ttl-ed
-        if (cl->stats.marked_clause) {
-            cl_marked++;
-        } else if (cl->stats.ttl != 0) {
-            cl_ttl++;
-        } else if (solver->clause_locked(*cl, offset)) {
-            cl_locked_solver++;
-        }
-
-        if (!cl_needs_removal(cl, offset)) {
-            if (cl->stats.ttl == 1) {
-                cl->stats.ttl = 0;
-            }
-            solver->longRedCls[2][j++] = offset;
-            cl->stats.marked_clause = 0;
-            continue;
-        }
-
-        //Stats Update
-        solver->watches.smudge((*cl)[0]);
-        solver->watches.smudge((*cl)[1]);
-        solver->litStats.redLits -= cl->size();
-
-        *solver->frat << del << *cl << fin;
-        cl->set_removed();
-        #ifdef VERBOSE_DEBUG
-        cout << "REMOVING offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
-        << " act:" << std::setprecision(9) << cl->stats.activity
-        << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
-        << endl;
-        #endif
-        delayed_clause_free.push_back(offset);
-    }
-    solver->longRedCls[2].resize(j);
-}
 
 ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& other)
 {

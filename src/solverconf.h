@@ -33,26 +33,6 @@ using std::string;
 
 namespace CMSat {
 
-enum class ClauseClean {
-    glue = 0
-    , activity = 1
-};
-
-inline unsigned clean_to_int(ClauseClean t)
-{
-    switch(t)
-    {
-        case ClauseClean::glue:
-            return 0;
-
-        case ClauseClean::activity:
-            return 1;
-    }
-
-    assert(false);
-    return 255;
-}
-
 inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
 {
     switch(polarmode) {
@@ -103,18 +83,6 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
             return "rnd";
         default:
             release_assert(false && "Unknown polarity mode");
-    }
-}
-
-inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
-{
-    switch(clauseCleaningType) {
-        case ClauseClean::glue :
-            return "glue";
-        case ClauseClean::activity:
-            return "activity";
-        default:
-            release_assert(false && "Unknown clause cleaning type?");
     }
 }
 
@@ -187,30 +155,19 @@ class DLL_PUBLIC SolverConf
         int   pred_distill_only_smallgue;
         int   pred_dontmove_until_timeinside;
 
-        //if non-zero, we reduce at every X conflicts.
-        //Reduced according to whether it's been used recently
-        //Otherwise, we *never* reduce
-        unsigned every_lev1_reduce;
-
-        //if non-zero, we reduce at every X conflicts.
-        //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
-        unsigned every_lev2_reduce;
         unsigned every_pred_reduce;
-
-        uint32_t must_touch_lev1_within;
-        unsigned  max_temp_lev2_learnt_clauses;
-        double    inc_max_temp_lev2_red_cls;
-
-        unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
-        unsigned glue_put_lev0_if_below_or_eq;
-        unsigned glue_put_lev1_if_below_or_eq;
         int      dump_pred_distrib;
-        double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
         double    clause_decay;
 
-        //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
-        double   adjust_glue_if_too_many_tier0;
-        uint64_t min_num_confl_adjust_glue_cutoff;
+        //Learnt clause DB reduction, as in CaDiCaL
+        int      reduce;           ///<Enable clause DB reduction
+        unsigned reduceint;        ///<Base reduce interval, in conflicts
+        unsigned reducetarget;     ///<Percent of unused candidates removed per reduce
+        unsigned reducetier1glue;  ///<Glue at/below which learnt clauses are kept forever
+        unsigned reducetier2glue;  ///<Glue at/below which learnt clauses get a double life
+        int      flush;            ///<Enable full flushing of unused redundant clauses
+        unsigned flushfactor;      ///<Flush interval multiplier
+        uint64_t flushint;         ///<Initial flush interval, in conflicts
 
         //Restarts, as in CaDiCaL
         int      do_restart;       ///<Enable restarts
@@ -255,7 +212,6 @@ class DLL_PUBLIC SolverConf
         uint64_t max_confl;
 
         //Glues
-        int       update_glues_on_analyze;
 
         //Reason-side bumping, as in CaDiCaL. 0 = off
         uint32_t  bump_reason_depth;
@@ -310,7 +266,6 @@ class DLL_PUBLIC SolverConf
         //Ternary resolution
         bool doTernary;
         long long ternary_res_time_limitM;
-        double ternary_keep_mult;
         double ternary_max_create;
         int    allow_ternary_bin_create;
 

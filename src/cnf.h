@@ -120,7 +120,6 @@ public:
     uint32_t latest_vardist_feature_calc = 0;
     uint64_t last_vardist_feature_calc_confl = 0;
 
-    unsigned  cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 
     //Note that this array can have the same internal variable more than
     //once, in case one has been replaced with the other. So if var 1 =  var 2

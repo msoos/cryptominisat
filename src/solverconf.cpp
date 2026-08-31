@@ -104,22 +104,21 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_distill_only_smallgue(false)
         , pred_dontmove_until_timeinside(1) //always move, don't wait
 
-        , every_lev1_reduce(10000) // kept for a while then moved to lev2
-        , every_lev2_reduce(15000) // cleared regularly
         , every_pred_reduce(10000) //5000 seems to work better
-        , must_touch_lev1_within(70000)
-
-        , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
-        , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
-        , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        , glue_put_lev0_if_below_or_eq(3) // never removed
-        , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
         #ifdef FINAL_PREDICTOR
         , dump_pred_distrib(0)
         #endif
         , clause_decay(0.999)
-        , adjust_glue_if_too_many_tier0(0.7)
-        , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
+
+        //Learnt clause DB reduction, as in CaDiCaL
+        , reduce(1)
+        , reduceint(300)
+        , reducetarget(75)
+        , reducetier1glue(2)
+        , reducetier2glue(6)
+        , flush(0)
+        , flushfactor(3)
+        , flushint(100000)
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
         //test conducted: out-drat-check-8359337.wlm01-1-drat0
 
@@ -164,7 +163,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_confl         (numeric_limits<uint64_t>::max())
 
         //Glues
-        , update_glues_on_analyze(true)
         , bump_reason_depth(1)
         , do_shrink_uip(1)
         , do_otfs(1)
@@ -215,7 +213,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Ternary resolution
         , doTernary(true)
         , ternary_res_time_limitM(100)
-        , ternary_keep_mult(5)
         , ternary_max_create(0.3)
         , allow_ternary_bin_create(false)
 
@@ -378,8 +375,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , origSeed(0)
         , prefix("c ")
 {
-    ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-    ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.44;
 }
 
 

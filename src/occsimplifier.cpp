@@ -2682,7 +2682,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #ifdef FINAL_PREDICTOR
         stats.which_red_array = 2;
         #else
-        stats.which_red_array = 1;
+        stats.which_red_array = 0;
         #endif
 
         #ifdef STATS_NEEDED

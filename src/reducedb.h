@@ -46,9 +46,8 @@ public:
     double get_total_time() const {
         return total_time;
     }
-    void handle_lev1();
-    void handle_lev2();
-    void gather_normal_cl_use_stats();
+    void handle_reduce();
+    uint64_t lim_reduce = 0; ///<Next reduce at this conflict count, as in CaDiCaL
     #ifdef FINAL_PREDICTOR
     void handle_predictors();
     #endif
@@ -84,20 +83,19 @@ private:
     vector<ClOffset> delayed_clause_free;
     double total_time = 0.0;
 
-    unsigned cl_marked;
-    unsigned cl_ttl;
-    unsigned cl_locked_solver;
-
     size_t last_reducedb_num_conflicts = 0;
-    bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
     ClauseStats reset_clause_dats(const uint32_t lev);
 
-    bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
-    void remove_cl_from_lev2();
-
-    void sort_red_cls(ClauseClean clean_type);
-    void mark_top_N_clauses_lev2(const uint64_t keep_num);
+    //CaDiCaL-style reduce & flush
+    uint64_t num_reductions = 0;
+    uint64_t num_flushes = 0;
+    uint64_t lim_flush = 0;
+    uint64_t inc_flush = 0;
+    size_t cl_reduced = 0;
+    void mark_useless_redundant_clauses_as_garbage();
+    void mark_clauses_to_be_flushed();
+    void remove_marked_clauses();
 
     #ifdef FINAL_PREDICTOR
     ClPredictorsAbst* predictors = nullptr;

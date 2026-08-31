@@ -178,9 +178,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.varElimRatioPerIter = 1;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.inc_max_temp_lev2_red_cls = 1.02;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 2: {
@@ -192,24 +189,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
             conf.branch_strategy_setup = "vsids";
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
-            conf.glue_put_lev0_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.03;
             break;
         }
         case 4: {
             //Similar to CMS 5.0
             conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 0.4;
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
             conf.do_bva = false;
-            conf.max_temp_lev2_learnt_clauses = 30000;
-            conf.glue_put_lev0_if_below_or_eq = 4;
 
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 5: {
@@ -226,18 +213,12 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 7: {
             conf.branch_strategy_setup = "vsids";
             conf.do_bva = false;
-            conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
-            conf.inc_max_temp_lev2_red_cls = 1.04;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             break;
         }
         case 8: {
             //Different glue limit
             conf.branch_strategy_setup = "vmtf";
-            conf.glue_put_lev0_if_below_or_eq = 2;
-            conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
         case 9: {
@@ -255,14 +236,10 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 1;
 
-            conf.inc_max_temp_lev2_red_cls = 1.01;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             break;
         }
         case 12: {
             conf.branch_strategy_setup = "vmtf";
-            conf.inc_max_temp_lev2_red_cls = 1.001;
 //             conf.polar_stable_every_n = 7;
 //             conf.polar_best_inv_every_n = 6;
             break;
@@ -273,9 +250,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.varElimRatioPerIter = 1;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.inc_max_temp_lev2_red_cls = 1.02;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 14: {
@@ -283,8 +257,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.branch_strategy_setup = "vsids";
             conf.do_bva = false;
             conf.doMinimRedMoreMore = 1;
-            conf.glue_put_lev0_if_below_or_eq = 4;
-            //conf.glue_put_lev2_if_below_or_eq = 8;
             conf.max_num_lits_more_more_red_min = 3;
             conf.max_glue_more_minim = 4;
             break;
@@ -292,23 +264,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 15: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
-            conf.glue_put_lev0_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.03;
 //             conf.polar_stable_every_n = 2;
             break;
         }
         case 16: {
             //Similar to CMS 5.0
             conf.varElimRatioPerIter = 0.4;
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.max_temp_lev2_learnt_clauses = 30000;
-            conf.glue_put_lev0_if_below_or_eq = 4;
 
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 17: {
@@ -318,10 +280,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 18: {
             conf.branch_strategy_setup = "vsids";
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-            conf.max_temp_lev2_learnt_clauses = 10000;
             break;
         }
 
@@ -348,8 +306,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 21: {
             conf.branch_strategy_setup = "vsids";
-            conf.glue_put_lev0_if_below_or_eq = 3;
-            conf.glue_put_lev1_if_below_or_eq = 5;
             break;
         }
 
