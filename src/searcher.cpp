@@ -3083,8 +3083,7 @@ void Searcher::init_restart_sched()
     }
 }
 
-//The averages are local to the stable/focused phase: on phase change we
-//save the current ones and restore those of the previous same-kind phase
+//EMAs are per-phase: restore those of the previous same-kind phase
 void Searcher::swap_restart_averages()
 {
     std::swap(rst.cur, rst.saved);
@@ -3095,8 +3094,7 @@ void Searcher::swap_restart_averages()
     rst.swapped++;
 }
 
-//Chanseok Oh's alternation of long quiet ("stable") phases with almost no
-//restarts and Glucose-style restart-happy ("focused") phases, as in CaDiCaL
+//Chanseok Oh's stable/focused phase alternation, as in CaDiCaL
 bool Searcher::stabilizing()
 {
     if (!conf.do_stabilize) return false;
@@ -3113,9 +3111,7 @@ bool Searcher::stabilizing()
     return rst.stable;
 }
 
-//Glucose-style restart scheme from the POS'15 paper: restart if the fast
-//glue EMA is a margin above the slow one. In stable phases restart on
-//reluctant doubling instead.
+//Glucose-style: restart if fast glue EMA is a margin above the slow one
 bool Searcher::restarting()
 {
     if (!conf.do_restart) return false;

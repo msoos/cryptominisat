@@ -402,8 +402,7 @@ class Searcher : public HyperEngine
         };
         SearchParams params;
 
-        //CaDiCaL-style restart scheduling: Glucose-style glue EMAs during
-        //focused phases, reluctant doubling during stable phases
+        //CaDiCaL-style restarts: glue EMAs when focused, reluctant doubling when stable
         struct RestartSched {
             struct GlueAvgs {
                 EMA fast;

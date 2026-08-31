@@ -27,8 +27,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-//Exponential moving average with ADAM-style bias-corrected
-//initialization, as in CaDiCaL [KingmaBa-ICLR'15]
+//Exponential moving average, ADAM-style bias-corrected, as in CaDiCaL
 struct EMA {
     double value = 0.0;  ///<unbiased (corrected) moving average
     double biased = 0.0;
@@ -59,9 +58,7 @@ struct EMA {
     }
 };
 
-//Donald Knuth's 'reluctant doubling' formulation of the Luby sequence,
-//as in CaDiCaL. tick() is called once per conflict; once countdown hits
-//zero the trigger is set and consumed via operator bool().
+//Knuth's 'reluctant doubling' Luby sequence, as in CaDiCaL
 class Reluctant {
     uint64_t u = 1;
     uint64_t v = 1;
