@@ -222,6 +222,7 @@ public:
     void enqueue_light(const Lit p);
     void new_decision_level();
     vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
+    vector<Lit> tmp_xor_reason;
     void collect_trail_seg_hints(uint32_t start, vector<int32_t>& units, vector<int32_t>& rsns,
                                  const uint32_t skip_var = var_Undef);
     uint32_t trail_begin_of_level(const uint32_t lev) const { return trail_lim[lev]; }

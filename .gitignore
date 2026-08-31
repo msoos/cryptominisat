@@ -52,3 +52,4 @@ html/cryptominisat5.wasm
 /scripts/fuzz/oracle_fuzz_failures
 /build_fuzz
 build_dbgfrat/
+/build_fratdbg

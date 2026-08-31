@@ -22,8 +22,7 @@ THE SOFTWARE.
 
 #include "main.h"
 #include "signalcode.h"
-#include <signal.h>
-#include <fenv.h>
+#include <csignal>
 
 int main(int argc, char** argv)
 {
@@ -39,6 +38,7 @@ int main(int argc, char** argv)
     try {
         Main main(argc, argv);
         main.conf.verbosity = 1;
+        main.conf.simplify_at_startup = 1;
         main.conf.verbStats = 2;
         main.parseCommandLine();
 

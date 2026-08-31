@@ -160,7 +160,8 @@ def minimize_schedule(repro_script, cnf_file):
 
 
 # Options that must not be set to 0/false during minimization.
-OPTION_BLACKLIST = {"--threads", "--savemem", "--yalsatmems", "--walksatruns"}
+OPTION_BLACKLIST = {"--threads", "--savemem", "--yalsatmems", "--walksatruns",
+                    "--xlrup", "--drat", "--frat", "--zero-exit-status"}
 
 
 def parse_option_candidates(repro_script):

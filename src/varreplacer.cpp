@@ -439,15 +439,20 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        *solver->frat << add << ++solver->clauseID << lit2;
-        if (solver->frat->enabled()) {
-            *solver->frat << fratchain;
-            if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
-            if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
-            *solver->frat << i->get_id();
+        //We see this binary from both watchlists. Derive&enqueue the unit only
+        //from the same direction that deletes the binary below -- otherwise the
+        //2nd derivation's hint would point to an already-deleted clause.
+        if (origLit1 < origLit2) {
+            *solver->frat << add << ++solver->clauseID << lit2;
+            if (solver->frat->enabled()) {
+                *solver->frat << fratchain;
+                if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
+                if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+                *solver->frat << i->get_id();
+            }
+            *solver->frat << fin;
+            delayedEnqueue.emplace_back(lit2, solver->clauseID);
         }
-        *solver->frat << fin;
-        delayedEnqueue.emplace_back(lit2, solver->clauseID);
         remove = true;
     }
 

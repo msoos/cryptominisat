@@ -2018,7 +2018,12 @@ bool OccSimplifier::cl_rem_with_or_gates()
                     }
 
                     auto s = ClauseStats::combineStats(cl1->stats, cl2->stats);
-                    full_add_clause(dummy, weaken_dummy, &s, false);
+                    //RUP chain, in propagation order: cl1 and cl2 force
+                    //~g.lits[0] and ~g.lits[1], then the gate's defining
+                    //clause conflicts.
+                    const vector<int32_t> hints =
+                        {cl1->stats.id, cl2->stats.id, g.id};
+                    full_add_clause(dummy, weaken_dummy, &s, false, &hints);
                     unlink_clause(w.get_offset(), true, false, true);
                     unlink_clause(w2.get_offset(), true, false, true);
                     removed++;

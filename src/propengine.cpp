@@ -1238,11 +1238,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
     frat_func_start();
     if (reason.get_matrix_num() == PLAIN_XOR_SENTINEL) {
         auto& x = xorclauses[reason.get_row_num()];
-        if (frat->enabled()) {
-            if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
-            x.reason_cl_ID = 0;
-        }
-        x.reason_cl.clear();
+        tmp_xor_reason.clear();
         uint32_t pc_var;
         if (x.prop_confl_watch < 2) {
             //propagation
@@ -1251,7 +1247,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             assert(value(pc_var) != l_Undef);
             const auto prop = Lit(pc_var, value(pc_var) == l_False);
             assert(value(prop) == l_True);
-            x.reason_cl.push_back(prop);
+            tmp_xor_reason.push_back(prop);
         } else {
             //conflict
             assert(x.prop_confl_watch < 4);
@@ -1260,7 +1256,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             assert(value(pc_var) != l_Undef);
             const auto confl = Lit(pc_var, value(pc_var) == l_True);
             assert(value(confl) == l_False);
-            x.reason_cl.push_back(confl);
+            tmp_xor_reason.push_back(confl);
         }
         bool rhs = false;
         for(const auto& v: x.vars) {
@@ -1269,11 +1265,11 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             assert(value(v) != l_Undef);
             auto lit = Lit(v, value(v) == l_True);
             assert(value(lit) == l_False);
-            x.reason_cl.push_back(lit);
+            tmp_xor_reason.push_back(lit);
         }
 #ifdef VERBOSE_DEBUG
-        cout << "XOR Reason: " << x.reason_cl << endl;
-        for(const auto& l: x.reason_cl) {
+        cout << "XOR Reason: " << tmp_xor_reason << endl;
+        for(const auto& l: tmp_xor_reason) {
             cout
             << "l: " << l
             << " value: " << value(l)
@@ -1288,9 +1284,20 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
         else assert(rhs != x.rhs && "It's a confl, so rhs must not match");
 
         if (frat->enabled()) {
-            x.reason_cl_ID = ++clauseID;
-            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.xid << fin;
+            //The same xor can be the reason for several lits of one trail
+            //segment. Re-emitting an identical reason under a fresh id would
+            //delete the id that hint chains collected earlier still point to,
+            //so only re-emit when the reason actually changed.
+            if (x.reason_cl_ID == 0 || x.reason_cl != tmp_xor_reason) {
+                if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
+                x.reason_cl = tmp_xor_reason;
+                x.reason_cl_ID = ++clauseID;
+                *frat << implyclfromx << x.reason_cl_ID << x.reason_cl
+                    << FratFlag::fratchain << x.xid << fin;
+            }
             ID = x.reason_cl_ID;
+        } else {
+            x.reason_cl = tmp_xor_reason;
         }
         frat_func_end();
         return &x.reason_cl;
