@@ -214,17 +214,22 @@ class Searcher : public HyperEngine
             , Lit& replace_with);
         vector<uint32_t> shrink_seen2_clear;
 
-        //FRAT: strict, in-order hint chains, collected during analysis.
-        //Every hint is reason(v) of a trail var v recorded as (sublevel, ID);
-        //emitted as: units, binmin (reverse), reasons sorted by sublevel,
-        //conflicting clause's ID last.
-        void emit_chain_sorted();
+        //FRAT: the strict, in-order hint chain of the clause being learnt,
+        //collected during analysis. Every hint is reason(v) of a trail var
+        //v, recorded as (sublevel, ID).
+        struct LratChain {
+            vector<std::pair<uint32_t, int32_t>> reasons;
+            vector<int32_t> units;   ///< level-0 unit clause IDs
+            vector<int32_t> binmin;  ///< binary-minim bins, in removal order
+            int32_t confl_id = 0;    ///< the conflicting clause
+            void clear();
+            //hint order: units, binmin reversed, reasons by trail
+            //position, the conflicting clause last
+            void to_hints(vector<int32_t>& out);
+        };
+        LratChain lrat;
         void build_level0_confl_chain(const PropBy confl);
-        vector<std::pair<uint32_t, int32_t>> chain_reasons;
-        vector<int32_t> chain_units;
-        vector<int32_t> binmin_chain;
-        int32_t chain_confl_id = 0;
-        //shrink-block temps, committed to the above only on block success
+        //shrink-block temps, committed into `lrat` only on block success
         vector<std::pair<uint32_t, int32_t>> tmp_block_reasons;
         vector<int32_t> tmp_block_units;
 

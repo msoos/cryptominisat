@@ -177,7 +177,7 @@ inline void Searcher::add_lit_to_learnt(
     if (varData[var].level == 0) {
         if (frat->enabled()) {
             assert(unit_cl_IDs[var] != 0);
-            chain_units.push_back(unit_cl_IDs[var]);
+            lrat.units.push_back(unit_cl_IDs[var]);
         }
         return;
     }
@@ -300,12 +300,12 @@ void Searcher::normalClMinim()
             continue;
         }
         if (frat->enabled()) {
-            chain_reasons.push_back({varData[learnt_clause[i].var()].sublevel, id});
+            lrat.reasons.push_back({varData[learnt_clause[i].var()].sublevel, id});
             for (size_t k = 0; k < size; k++) {
                 const Lit p = (type == binary_t) ? reason.lit2() : lits[k+1];
                 if (varData[p.var()].level == 0) {
                     assert(unit_cl_IDs[p.var()] != 0);
-                    chain_units.push_back(unit_cl_IDs[p.var()]);
+                    lrat.units.push_back(unit_cl_IDs[p.var()]);
                 }
             }
         }
@@ -313,22 +313,26 @@ void Searcher::normalClMinim()
     learnt_clause.resize(j);
 }
 
-//Assemble `chain` in strict LRAT hint order: unit IDs, binary-minim IDs in
-//reverse removal order, reason IDs sorted by trail position, conflicting
-//clause's ID last
-void Searcher::emit_chain_sorted()
+void Searcher::LratChain::clear()
 {
-    assert(frat->enabled());
-    chain = chain_units;
-    for (auto it = binmin_chain.rbegin(); it != binmin_chain.rend(); ++it)
-        chain.push_back(*it);
-    std::sort(chain_reasons.begin(), chain_reasons.end());
-    for (size_t i = 0; i < chain_reasons.size(); i++) {
-        if (i > 0 && chain_reasons[i] == chain_reasons[i-1]) continue;
-        chain.push_back(chain_reasons[i].second);
+    reasons.clear();
+    units.clear();
+    binmin.clear();
+    confl_id = 0;
+}
+
+void Searcher::LratChain::to_hints(vector<int32_t>& out)
+{
+    out = units;
+    for (auto it = binmin.rbegin(); it != binmin.rend(); ++it)
+        out.push_back(*it);
+    std::sort(reasons.begin(), reasons.end());
+    for (size_t i = 0; i < reasons.size(); i++) {
+        if (i > 0 && reasons[i] == reasons[i-1]) continue;
+        out.push_back(reasons[i].second);
     }
-    assert(chain_confl_id != 0);
-    chain.push_back(chain_confl_id);
+    assert(confl_id != 0);
+    out.push_back(confl_id);
 }
 
 //Chain for a conflict where every literal is at level 0: unit IDs first,
@@ -534,8 +538,8 @@ void Searcher::add_lits_to_learnt(
         default: release_assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
     if (frat->enabled()) {
-        if (p == lit_Undef) chain_confl_id = id;
-        else chain_reasons.push_back({varData[p.var()].sublevel, id});
+        if (p == lit_Undef) lrat.confl_id = id;
+        else lrat.reasons.push_back({varData[p.var()].sublevel, id});
     }
     size_t i = 0;
     bool cont = true;
@@ -725,8 +729,8 @@ bool Searcher::try_shrink_block(
         toClear.push_back(uip);
     }
     if (frat->enabled()) {
-        for (const auto& r: tmp_block_reasons) chain_reasons.push_back(r);
-        for (const auto& u: tmp_block_units) chain_units.push_back(u);
+        for (const auto& r: tmp_block_reasons) lrat.reasons.push_back(r);
+        for (const auto& u: tmp_block_units) lrat.units.push_back(u);
     }
     if (!inprocess) {
         switch (branch_strategy) {
@@ -896,9 +900,7 @@ void Searcher::create_learnt_clause(PropBy confl)
                 //restart analysis with the strengthened clause as conflict
                 learnt_clause.clear();
                 learnt_clause.push_back(lit_Undef);
-                chain_reasons.clear();
-                chain_units.clear();
-                chain_confl_id = 0;
+                lrat.clear();
                 pathC = 0;
                 p = lit_Undef;
                 continue;
@@ -973,7 +975,7 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
     if (frat->enabled()) {
         //the strengthened clause equals the current resolvent, so the
         //chain collected so far is exactly its derivation
-        emit_chain_sorted();
+        lrat.to_hints(chain);
         *frat << add << cl.stats.id << otfs_tmp_lits;
         add_chain();
         *frat << fin << findelay;
@@ -1198,10 +1200,7 @@ void Searcher::analyze_conflict(
 
     learnt_clause.clear();
     chain.clear();
-    chain_reasons.clear();
-    chain_units.clear();
-    binmin_chain.clear();
-    chain_confl_id = 0;
+    lrat.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
     assert(decisionLevel() > 0);
@@ -1310,8 +1309,8 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
     analyze_stack.push(p);
 
     size_t top = toClear.size();
-    const size_t chain_rsn_top = chain_reasons.size();
-    const size_t chain_unit_top = chain_units.size();
+    const size_t chain_rsn_top = lrat.reasons.size();
+    const size_t chain_unit_top = lrat.units.size();
     while (!analyze_stack.empty()) {
         #ifdef DEBUG_LITREDUNDANT
         cout << "At point in litRedundant: " << analyze_stack.top() << endl;
@@ -1362,7 +1361,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             default: release_assert(false);
         }
         if (frat->enabled()) {
-            chain_reasons.push_back({varData[p_analyze.var()].sublevel, ID});
+            lrat.reasons.push_back({varData[p_analyze.var()].sublevel, ID});
         }
 
         for (size_t i = 0
@@ -1390,7 +1389,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             if (varData[p2.var()].level == 0) {
                 if (frat->enabled()) {
                     assert(unit_cl_IDs[p2.var()] != 0);
-                    chain_units.push_back(unit_cl_IDs[p2.var()]);
+                    lrat.units.push_back(unit_cl_IDs[p2.var()]);
                 }
                 continue;
             }
@@ -1408,8 +1407,8 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                         seen[toClear[j].var()] = 0;
                     }
                     toClear.resize(top);
-                    chain_reasons.resize(chain_rsn_top);
-                    chain_units.resize(chain_unit_top);
+                    lrat.reasons.resize(chain_rsn_top);
+                    lrat.units.resize(chain_unit_top);
                     return false;
                 }
             }
@@ -2337,7 +2336,7 @@ bool Searcher::handle_conflict(PropBy confl)
         }
     }
 
-    if (frat->enabled()) emit_chain_sorted();
+    if (frat->enabled()) lrat.to_hints(chain);
 
     // check chrono backtrack condition
     if (conf.diff_declev_for_chrono > -1
@@ -3422,7 +3421,7 @@ void Searcher::binary_based_morem_minim(vector<Lit>& cl)
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
                     seen[(~i->lit2()).toInt()] = 0;
-                    if (frat->enabled()) binmin_chain.push_back(i->get_id());
+                    if (frat->enabled()) lrat.binmin.push_back(i->get_id());
                 }
                 continue;
             }
