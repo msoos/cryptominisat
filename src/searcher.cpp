@@ -2413,39 +2413,35 @@ void Searcher::check_calc_vardist_features(bool force)
 
 void Searcher::print_restart_header()
 {
-    //Print restart output header
-    if (((lastRestartPrintHeader == 0 && sumConflicts > 200) ||
-        (lastRestartPrintHeader + 1600000) < sumConflicts)
-        && conf.verbosity
-    ) {
-        cout
-        << "c"
-        << " " << std::setw(4) << "res"
-        << " " << std::setw(4) << "pol"
-        << " " << std::setw(4) << "bran"
-        << " " << std::setw(5) << "nres"
-        << " " << std::setw(5) << "conf"
-        << " " << std::setw(5) << "freevar"
-        << " " << std::setw(5) << "IrrL"
-        << " " << std::setw(5) << "IrrB"
-        << " " << std::setw(7) << "l/longC"
-        << " " << std::setw(7) << "l/allC";
+    cout
+    << "c"
+    << " " << std::setw(4) << "res"
+    << " " << std::setw(4) << "pol"
+    << " " << std::setw(4) << "bran"
+    << " " << std::setw(5) << "nres"
+    << " " << std::setw(5) << "conf"
+    << " " << std::setw(5) << "freevar"
+    << " " << std::setw(5) << "IrrL"
+    << " " << std::setw(5) << "IrrB"
+    << " " << std::setw(7) << "l/longC"
+    << " " << std::setw(7) << "l/allC";
 
-        for(size_t i = 0; i < longRedCls.size(); i++) {
-            cout << " " << std::setw(4) << "RedL" << i;
-        }
-
-        cout
-        << " " << std::setw(5) << "RedB"
-        << " " << std::setw(7) << "l/longC"
-        << " " << std::setw(7) << "l/allC"
-        << endl;
-        lastRestartPrintHeader = sumConflicts+1;
+    for(size_t i = 0; i < longRedCls.size(); i++) {
+        cout << " " << std::setw(4) << "RedL" << i;
     }
+
+    cout
+    << " " << std::setw(5) << "RedB"
+    << " " << std::setw(7) << "l/longC"
+    << " " << std::setw(7) << "l/allC"
+    << endl;
 }
 
-void Searcher::print_restart_stat_line() const
+void Searcher::print_restart_stat_line()
 {
+    if (restart_lines_since_header == 0) print_restart_header();
+    restart_lines_since_header = (restart_lines_since_header+1) % 20;
+
     print_restart_stats_base();
     if (conf.print_full_restart_stat) {
         solver->print_clause_stats();
@@ -2533,15 +2529,25 @@ inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
 
 void Searcher::print_restart_stat()
 {
-    //Print restart stat
-    if (conf.verbosity
-        && !conf.print_all_restarts
-//         && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
-//           < sumConflicts)
-    ) {
-        print_restart_stat_line();
-        lastRestartPrint = sumConflicts;
-    }
+    if (!conf.verbosity || conf.print_all_restarts) return;
+
+    const bool regime_changed =
+        rst.stable != last_print_stable
+        || last_rephase != last_print_rephase
+        || branch_strategy_str_short != last_print_branch;
+
+    // Reports get sparser as the run goes on, otherwise an hours-long solve
+    // emits one line per restart, i.e. hundreds of thousands of them.
+    const uint64_t every = std::max<uint64_t>(
+        conf.print_restart_line_every_n_confl, sumConflicts/64);
+
+    if (!regime_changed && sumConflicts < lastRestartPrint + every) return;
+
+    last_print_stable = rst.stable;
+    last_print_rephase = last_rephase;
+    last_print_branch = branch_strategy_str_short;
+    lastRestartPrint = sumConflicts;
+    print_restart_stat_line();
 }
 
 void Searcher::reduce_db_if_needed()
@@ -2745,7 +2751,6 @@ inline void Searcher::dump_search_loop_stats(double my_time)
     #endif
     #endif
 
-    print_restart_header();
     dump_search_sql(my_time);
     if (conf.verbosity && conf.print_all_restarts) {
         print_restart_stat_line();
@@ -3935,7 +3940,19 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
 }
 
 void Searcher::print_matrix_stats() {
-    for(EGaussian* g: gmatrices) if (g) g->print_matrix_stats(conf.verbosity);
+    uint32_t tot = 0;
+    for(const EGaussian* g: gmatrices) if (g) tot++;
+
+    uint32_t printed = 0;
+    for(EGaussian* g: gmatrices) {
+        if (!g) continue;
+        if (conf.verbosity == 1 && printed >= 10) {
+            verb_print(1, "[g] ... and " << (tot-printed) << " more matrices not shown");
+            break;
+        }
+        g->print_matrix_stats(conf.verbosity);
+        printed++;
+    }
 }
 
 void Searcher::check_assumptions_sanity() {

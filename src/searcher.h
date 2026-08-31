@@ -92,11 +92,14 @@ class Searcher : public HyperEngine
         // Stats
         //Restart print status
         uint64_t lastRestartPrint = 0;
-        uint64_t lastRestartPrintHeader = 0;
+        uint32_t restart_lines_since_header = 0;
+        bool     last_print_stable = false;
+        char     last_print_rephase = '-';
+        string   last_print_branch;
         void     print_restart_stat();
         void     print_iteration_solving_stats();
         void     print_restart_header();
-        void     print_restart_stat_line() const;
+        void     print_restart_stat_line();
         void     print_restart_stats_base() const;
         void     print_clause_stats() const;
         uint64_t sumRestarts() const;

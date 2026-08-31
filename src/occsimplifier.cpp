@@ -499,7 +499,7 @@ uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) c
 
 void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 {
-    verb_print(1, "[occ] mem usage for occur "
+    verb_print(2, "[occ] mem usage for occur "
         << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB");
 }
 
@@ -1270,14 +1270,10 @@ bool OccSimplifier::eliminate_vars()
         if (n_vars_now != 0) {
             var_dec_rate = (double)n_vars_last / n_vars_now;
         }
-        verb_print(1, "[occ-bve] iter v-elim " << last_elimed);
-        verb_print(1, "cl_inc_rate=" << cl_inc_rate
-        << ", var_dec_rate=" << var_dec_rate
-        << " (grow=" << grow << ")");
-
-        verb_print(1, "Reduced to " << solver->get_num_free_vars() << " vars"
-        << ", " << sum_irred_cls_longs() + solver->binTri.irredBins
-        << " cls (grow=" << grow << ")");
+        verb_print((last_elimed > 0 ? 1 : 2),
+        "[occ-bve] grow " << grow << " v-elim " << last_elimed
+        << " -> " << n_vars_now << " vars " << n_cls_now << " cls"
+        << " cl_inc_rate: " << cl_inc_rate << " var_dec_rate: " << var_dec_rate);
 
         if (varelim_num_limit < 0
             || varelim_linkin_limit_bytes < 0
@@ -1305,7 +1301,6 @@ bool OccSimplifier::eliminate_vars()
         assert(added_irred_bin.empty());
     }
 
-    verb_print(1, "x n vars       : " << solver->get_num_free_vars());
     #ifdef DEBUG_VARELIM
     verb_print(1, "x cls long     : " << sum_irred_cls_longs());
     verb_print(1, "x cls bin      : " << solver->binTri.irredBins);
@@ -1329,11 +1324,12 @@ end:
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = float_div(*limit_to_decrease, orig_norm_varelim_time_limit);
 
-    verb_print(1, "#try to eliminate: "<< print_value_kilo_mega(wenThrough));
-    verb_print(1, "#var-elim        : "<< print_value_kilo_mega(vars_elimed));
-    verb_print(1, "#T-o: " << (time_out ? "Y" : "N"));
-    verb_print(1, "#T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%");
-    verb_print(1, "#T  : " << time_used);
+    verb_print(1, "[occ-bve] tried: " << print_value_kilo_mega(wenThrough)
+        << " v-elim: " << print_value_kilo_mega(vars_elimed)
+        << " free-vars: " << solver->get_num_free_vars()
+        << " T: " << std::fixed << std::setprecision(2) << time_used
+        << " T-out: " << (time_out ? "Y" : "N")
+        << " T-r: " << (time_remain*100.0) << "%");
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVarsOuter(), this);
@@ -1416,7 +1412,7 @@ bool OccSimplifier::fill_occur_and_print_stats()
     }
 
     //Print memory usage after occur link-in
-    if (solver->conf.verbosity)
+    if (solver->conf.verbosity >= 2)
         solver->print_watch_mem_used(rss_mem_used());
 
     return true;
@@ -5248,12 +5244,9 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
 void OccSimplifier::Stats::print_extra_times(const char* prefix) const
 {
     cout << prefix
-    << "[occur] " << linkInTime+finalCleanupTime << " is overhead"
-    << endl;
-
-    cout << prefix
     << "[occur] link-in T: " << linkInTime
     << " cleanup T: " << finalCleanupTime
+    << " overhead T: " << linkInTime+finalCleanupTime
     << endl;
 }
 

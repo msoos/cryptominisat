@@ -693,12 +693,12 @@ bool DimacsParser<C, S>::parse_DIMACS(
 
     if (verbosity) {
         cout
-        << "c -- clauses added: " << norm_clauses_added << endl
-        << "c -- xor clauses added: " << xor_clauses_added << endl
+        << "c -- added: " << norm_clauses_added << " clauses"
+        << ", " << xor_clauses_added << " xor clauses"
         #ifdef ENABLE_BNN
-        << "c -- bnn clauses added: " << bnn_clauses_added << endl
+        << ", " << bnn_clauses_added << " bnn clauses"
         #endif
-        << "c -- vars added " << (solver->nVars() - origNumVars)
+        << ", " << (solver->nVars() - origNumVars) << " vars"
         << endl;
     }
 

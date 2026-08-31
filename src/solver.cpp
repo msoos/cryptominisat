@@ -1117,7 +1117,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
                 << std::setprecision(2));
         } else {
             verb_print(1,
-                "ecursive minimization cost OK: "
+                "recursive minimization cost OK: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
                 << "Kcost/(% lits removed)"
                 << std::setprecision(2));
@@ -1736,7 +1736,9 @@ lbool Solver::execute_inprocess_strategy(
         if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
             if (conf.perform_occur_based_simp && bnns.empty() && occsimplifier) {
                 occ_strategy_tokens = trim(occ_strategy_tokens);
-                verb_print(1, "Executing OCC strategy token(s): '" << occ_strategy_tokens);
+                string pr = occ_strategy_tokens;
+                if (!pr.empty() && pr.back() == ',') pr.pop_back();
+                verb_print(1, "Executing OCC strategy token(s): '" << pr << "'");
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
@@ -2173,7 +2175,7 @@ void Solver::print_full_stats(
 uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
 {
     size_t alloc = watches.mem_used_alloc();
-    print_stats_line(conf.prefix + "Mem for watch alloc"
+    print_stats_line(conf.prefix + "[mem] watch alloc"
         , alloc/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(alloc, rss_mem_used)
@@ -2181,7 +2183,7 @@ uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
     );
 
     size_t array = watches.mem_used_array();
-    print_stats_line(conf.prefix + "Mem for watch array"
+    print_stats_line(conf.prefix + "[mem] watch array"
         , array/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(array, rss_mem_used)

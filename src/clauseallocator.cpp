@@ -257,7 +257,7 @@ void ClauseAllocator::consolidate(
         && (float_div(currentlyUsedSize, size) > 0.8 || currentlyUsedSize < (100ULL*1000ULL))
     ) {
         if (solver->conf.verbosity >= 3 || lower_verb)
-            verb_print(1, "Not consolidating memory.");
+            verb_print(1, "[mem] not consolidating");
         return;
     }
     const double my_time = cpu_time();

@@ -230,6 +230,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     uint32_t unusedMatrix = 0;
     uint32_t too_few_rows_matrix = 0;
     uint32_t unused_matrix_printed = 0;
+    uint32_t good_matrix_printed = 0;
     for (int a = matrix_no-1; a >= 0; a--) {
         MatrixShape& m = matrix_shape[a];
         uint32_t i = m.num;
@@ -303,7 +304,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             solver->gmatrices.push_back(new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
             solver->gqueuedata.resize(solver->gmatrices.size());
             //print before "Good matrix", that line is only ended further below
-            if (solver->conf.verbosity)
+            if (solver->conf.verbosity && good_matrix_printed < 10)
                 cout << solver->conf.prefix << "[matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
@@ -327,6 +328,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
                     (unused_matrix_printed >= 10))
                 ) continue;
 
+            if (use_matrix && good_matrix_printed++ >= 10) continue;
             if (!use_matrix) unused_matrix_printed++;
 
             cout << std::setw(7) << m.rows << " x"
@@ -345,6 +347,10 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     }
     solver->attach_xorclauses();
 
+    if (good_matrix_printed > 10) {
+        verb_print(1, "[matrix] ... and " << (good_matrix_printed-10)
+            << " more good matrices not shown");
+    }
     if (unusedMatrix > 0) {
         verb_print(1, "[matrix] unused matrices: " << unusedMatrix
             <<  " of which too few rows: " << too_few_rows_matrix);

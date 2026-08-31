@@ -1159,6 +1159,23 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
     ss << "c [g " << matrix_no << "] ";
     const std::string pre = ss.str();
 
+    if (verbosity == 1) {
+        cout << pre
+        << num_rows << "x" << num_cols
+        << " dens: " << std::fixed << std::setprecision(4) << get_density()
+        << " find: " << print_value_kilo_mega(find_truth_called_propgause, false)
+        << " (prop " << std::setprecision(1)
+        << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
+        << "% confl "
+        << stats_line_percent(find_truth_ret_confl, find_truth_called_propgause)
+        << "%) elim: " << print_value_kilo_mega(elim_called, false)
+        << " (prop " << stats_line_percent(elim_ret_prop, elim_called)
+        << "% confl " << stats_line_percent(elim_ret_confl, elim_called)
+        << "%)" << endl;
+        cout << std::setprecision(2) << std::defaultfloat;
+        return;
+    }
+
     cout << std::left;
 
     if (verbosity >= 2) {
@@ -1166,10 +1183,8 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
         << print_value_kilo_mega(find_truth_ret_satisfied_precheck, false) << endl;
     }
 
-    if (verbosity >= 1) {
-        cout << pre << "truth-find prop checks  : "
-        << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
-    }
+    cout << pre << "truth-find prop checks  : "
+    << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
 
 
     if (verbosity >= 2) {
@@ -1209,7 +1224,7 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
         cout << pre << "--> lead to prop checks : "
         << print_value_kilo_mega(elim_called_propgause, false) << endl;
 
-        cout << pre << "---> of which satsified : "
+        cout << pre << "---> of which satisfied : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(elim_ret_satisfied, elim_called_propgause)
         << " %"
@@ -1230,20 +1245,6 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
         cout << pre << "---> of which confl     : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(elim_ret_confl, elim_called_propgause)
-        << " %"
-        << endl;
-    }
-
-    if (verbosity == 1) {
-        cout << pre << "---> which lead to prop : "
-        << std::setw(5) << std::setprecision(2) << std::right
-        << stats_line_percent(elim_ret_prop, elim_called)
-        << " %"
-        << endl;
-
-        cout << pre << "---> which lead to confl: "
-        << std::setw(5) << std::setprecision(2) << std::right
-        << stats_line_percent(elim_ret_confl, elim_called)
         << " %"
         << endl;
     }

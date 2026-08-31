@@ -182,7 +182,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #endif
 
 #define verb_print(a, x) \
-    do { if (solver->conf.verbosity >= a) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
+    do { if (solver->conf.verbosity >= (a)) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
 #define print_simp_stats_emit(when, tok) \
     verb_print(2, "[simp-stats] " << when << " " << tok \
