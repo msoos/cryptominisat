@@ -659,12 +659,26 @@ void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
     }
 }
 
+//is the bin clause `impl_id` over `lits` still attached?
+bool SubsumeStrengthen::impl_bin_alive(const vector<Lit>& lits, const int32_t impl_id) const
+{
+    if (lits.size() != 2) return true;
+    for (const auto& w: solver->watches[lits[0]]) {
+        if (w.isBin() && w.get_id() == impl_id) return true;
+    }
+    return false;
+}
+
 //Implicit input here is ALWAY irred
 bool SubsumeStrengthen::backw_sub_str_with_impl(
     const vector<Lit>& lits,
     Sub1Ret& ret_sub_str,
     const int32_t impl_id
 ) {
+    //the bin may be long deleted (dedup, satisfied) -- its id is dead for hints
+    if (solver->frat->enabled() && impl_id != 0 && !impl_bin_alive(lits, impl_id))
+        return solver->okay();
+
     subs.clear();
     subsLits.clear();
 
@@ -682,8 +696,10 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
     ) {
         if (subs[j].ws.isBin()) {
             if (subsLits[j] == lit_Undef) { //subsume
+                //a duplicate bin may BE our impl -- keep it, later hints use impl_id
+                if (subs[j].ws.get_id() == impl_id) continue;
                 remove_binary_cl(subs[j]);
-            } else { //strengthen
+            } else { //strengthen: the resolvent is the unit subsLits[j]
                 lbool val = solver->value(subsLits[j]);
                 const int32_t ID = ++solver->clauseID;
                 if (val == l_False) {
@@ -700,7 +716,15 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
-                    solver->enqueue<false>(subsLits[j]);
+                    if (solver->frat->enabled()) {
+                        (*solver->frat) << add << ID << subsLits[j];
+                        if (impl_id != 0)
+                            (*solver->frat) << fratchain << impl_id << subs[j].ws.get_id();
+                        (*solver->frat) << fin;
+                        solver->enqueue_registered_unit<false>(subsLits[j], ID);
+                    } else {
+                        solver->enqueue<false>(subsLits[j]);
+                    }
                     solver->ok = solver->propagate_occur<false>(simplifier->limit_to_decrease);
                     if (!solver->okay()) return false;
                 }
@@ -716,6 +740,9 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     simplifier->removed_cl_with_var.touch(subs[j].lit);
                     simplifier->removed_cl_with_var.touch(subs[j].ws.lit2());
                 }
+                //propagation above may have deleted our impl
+                if (solver->frat->enabled() && impl_id != 0 && !impl_bin_alive(lits, impl_id))
+                    break;
             }
             continue;
         }
@@ -742,6 +769,10 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             if (!simplifier->remove_literal(offset2, subsLits[j], true,
                     solver->frat->enabled() && impl_id != 0 ? &h : nullptr)) return false;
             ret_sub_str.str++;
+
+            //remove_literal may have propagated a unit and deleted our impl
+            if (solver->frat->enabled() && impl_id != 0 && !impl_bin_alive(lits, impl_id))
+                break;
 
             //If we are waaay over time, just exit
             if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL) break;

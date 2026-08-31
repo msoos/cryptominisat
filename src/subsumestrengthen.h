@@ -57,6 +57,7 @@ public:
         const vector<Lit>& lits,
         Sub1Ret& ret_sub_str
     );
+    bool impl_bin_alive(const vector<Lit>& lits, const int32_t impl_id) const;
     bool backw_sub_str_with_impl(
         const vector<Lit>& lits,
         Sub1Ret& ret_sub_str,
