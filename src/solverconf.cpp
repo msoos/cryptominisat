@@ -259,7 +259,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
-        , max_scc_depth (10000)
+        , max_scc_depth (30000)
 
         //Iterative Alo Scheduling
         , simplify_at_startup(false)
