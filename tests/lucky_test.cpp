@@ -58,7 +58,7 @@ TEST_F(lucky, pos1)
     s->add_clause_outside(str_to_cl("2, -3, -4, -5, -6"));
     s->add_clause_outside(str_to_cl("2, -3, -4, -5, -7"));
 
-    EXPECT_EQ(l->check_all(true), true);
+    EXPECT_EQ(l->trivially_satisfiable(true), 10);
 }
 
 TEST_F(lucky, pos2)
@@ -67,7 +67,7 @@ TEST_F(lucky, pos2)
     s->add_clause_outside(str_to_cl("-9, -2, -5, 6"));
     s->add_clause_outside(str_to_cl("-8, -4, -5, 7"));
 
-    EXPECT_EQ(l->check_all(true), true);
+    EXPECT_EQ(l->trivially_satisfiable(true), 10);
 }
 
 TEST_F(lucky, not_pos)
@@ -76,7 +76,7 @@ TEST_F(lucky, not_pos)
     s->add_clause_outside(str_to_cl("2, 3, 4, 5, 7"));
     s->add_clause_outside(str_to_cl("12, 13, 14, 15, 17"));
 
-    EXPECT_EQ(l->check_all(true), false);
+    EXPECT_EQ(l->trivially_satisfiable(true), 0);
 }
 
 TEST_F(lucky, neg)
@@ -85,7 +85,7 @@ TEST_F(lucky, neg)
     s->add_clause_outside(str_to_cl("2, 3, -4, 5, 7"));
     s->add_clause_outside(str_to_cl("12, 13, 14, 15, -17"));
 
-    EXPECT_EQ(l->check_all(false), true);
+    EXPECT_EQ(l->trivially_satisfiable(false), 10);
 }
 
 TEST_F(lucky, neg2)
@@ -94,7 +94,7 @@ TEST_F(lucky, neg2)
     s->add_clause_outside(str_to_cl("2, -4"));
     s->add_clause_outside(str_to_cl("12, -4"));
 
-    EXPECT_EQ(l->check_all(false), true);
+    EXPECT_EQ(l->trivially_satisfiable(false), 10);
 }
 
 TEST_F(lucky, fwd1)
@@ -104,7 +104,7 @@ TEST_F(lucky, fwd1)
     s->add_clause_outside(str_to_cl("-6, 7"));
     s->add_clause_outside(str_to_cl("7, -8"));
 
-    EXPECT_EQ(l->search_fwd_sat(true), true);
+    EXPECT_EQ(l->forward_satisfiable(true), 10);
 }
 
 TEST_F(lucky, fwd1_fail)
@@ -113,7 +113,7 @@ TEST_F(lucky, fwd1_fail)
     s->add_clause_outside(str_to_cl("-1, -4"));
     s->add_clause_outside(str_to_cl("-1, 4"));
 
-    EXPECT_EQ(l->search_fwd_sat(true), false);
+    EXPECT_EQ(l->forward_satisfiable(true), 0);
 }
 
 TEST_F(lucky, horn)
@@ -122,7 +122,7 @@ TEST_F(lucky, horn)
     s->add_clause_outside(str_to_cl("-1, -2, -3, 5"));
     s->add_clause_outside(str_to_cl("-5, -6, 7"));
 
-    EXPECT_EQ(l->horn_sat(true), true);
+    EXPECT_EQ(l->horn_satisfiable(true), 10);
 }
 
 int main(int argc, char **argv) {

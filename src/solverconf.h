@@ -151,6 +151,7 @@ class DLL_PUBLIC SolverConf
         int      do_rephase;       ///<Enable resetting the saved phases
         uint64_t rephaseint;       ///<Rephase interval, in conflicts
         int      phase;            ///<Default decision polarity
+        int      lucky;            ///<Search for lucky phases before the CDCL loop
         int      target_phases;    ///<Decide on target phases (1=stable phases only, 2=always)
 
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size

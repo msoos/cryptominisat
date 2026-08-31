@@ -456,6 +456,7 @@ class Searcher : public HyperEngine
         void   binary_based_morem_minim(vector<Lit>& cl);
 
         friend class Gaussian;
+        friend class Lucky;
         friend class DistillerLong;
         #ifdef CMS_TESTING_ENABLED
         FRIEND_TEST(SearcherTest, pickpolar_rnd);

@@ -24,26 +24,44 @@ THE SOFTWARE.
 #ifndef LUCKY_PHASES_H_
 #define LUCKY_PHASES_H_
 
+#include "solvertypes.h"
+
 namespace CMSat {
 
 class Solver;
+class Xor;
 
+// CaDiCaL's 'lucky_phases'
 class Lucky
 {
 public:
     Lucky(Solver* solver);
-    void doit();
 
-//private:
-    bool check_all(bool polar);
-    bool search_fwd_sat(bool polar);
-    bool search_backw_sat(bool polar);
-    bool horn_sat(bool polar);
+    // l_True if one of the checks satisfied the formula, in which case the
+    // model has been stored and the trail unwound. l_Undef otherwise.
+    lbool doit();
+
+    // 10 = satisfied, 0 = not lucky, -1 = terminated. As in CaDiCaL.
+    // Public so the tests can drive them one at a time.
+    int trivially_satisfiable(const bool polar);
+    int forward_satisfiable(const bool polar);
+    int backward_satisfiable(const bool polar);
+    int horn_satisfiable(const bool polar);
 
 private:
-    bool enqueue_and_prop_assumptions();
-    void set_polarities_to_enq_val();
+    int unlucky(const int res);
+    // False if we are back at level 0 because of a conflict, or because
+    // 'aborted' was set by an asynchronous termination.
+    bool assume(const Lit lit);
+    bool assume_rest(const bool polar);
+    bool all_same_sat_xors(const bool polar) const;
+    bool xors_satisfied() const;
+    bool terminated() const;
+    void found_model(const char* what, const bool polar);
+
     Solver* solver;
+    vector<Lit> to_set;
+    bool aborted = false;
 };
 
 }

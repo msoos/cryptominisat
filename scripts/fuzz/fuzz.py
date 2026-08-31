@@ -317,7 +317,7 @@ class Tester:
         #   --maxsol/--nobansol: changes output contract, verifier cannot check
         #   --assump/--debuglib/--sampling/--threads: handled elsewhere
         #   --breakid*: BreakID is not compiled into normal builds
-        #   'sls'/'lucky' schedule tokens: assert(false) in solver
+        #   'sls' schedule token: assert(false) in solver
         #   --distillsort 3: assert/exit by design
         self.sqlitedbfname = None
         cmd = " --zero-exit-status "
@@ -359,6 +359,7 @@ class Tester:
         cmd += "--rephase %d " % random.choice([0, 1, 1, 1])
         cmd += "--rephaseint %d " % random.choice([1, 100, 1000, 30000])
         cmd += "--phase %d " % random.choice([0, 1])
+        cmd += "--lucky %d " % random.choice([0, 1, 1, 1])
         cmd += "--target %d " % random.choice([0, 1, 1, 2])
 
         cmd += "--mustrenumber %d " % random.choice([0, 1])

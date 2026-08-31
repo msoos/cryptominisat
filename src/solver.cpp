@@ -1415,6 +1415,15 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
+    //CaDiCaL calls 'lucky_phases' here, after preprocessing and before the CDCL
+    //loop. Assumptions and BNNs are not handled, as in CaDiCaL.
+    if (status == l_Undef && conf.lucky && nVars() > 0
+        && assumptions.empty() && bnns.empty()
+    ) {
+        Lucky lucky(this);
+        status = lucky.doit();
+    }
+
     if (status == l_Undef) status = iterate_until_solved();
 
     end:
@@ -1804,10 +1813,6 @@ lbool Solver::execute_inprocess_strategy(
             /*     SLS sls(this); */
             /*     sls.run(0); */
             /* } */
-        } else if (token == "lucky") {
-            assert(false && "unsupported");
-//             Lucky lucky(solver);
-//             lucky.doit();
         } else if (token == "intree-probe") {
             if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
             if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) intree->intree_probe();

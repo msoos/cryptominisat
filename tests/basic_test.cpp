@@ -744,11 +744,13 @@ TEST(statistics, zero)
     s.set_no_simplify();
     s.new_vars(10);
 
+    //A clause-less formula is satisfied by the lucky phases before the CDCL
+    //loop ever runs, and those assignments are not search statistics
     lbool ret = s.solve();
     EXPECT_EQ(ret, l_True);
     EXPECT_EQ(s.get_sum_conflicts(), 0);
-    EXPECT_EQ(s.get_sum_propagations(), 10);
-    EXPECT_EQ(s.get_sum_decisions(), 10);
+    EXPECT_EQ(s.get_sum_propagations(), 0);
+    EXPECT_EQ(s.get_sum_decisions(), 0);
 }
 
 TEST(statistics, two_confl)

@@ -139,6 +139,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_rephase(1)
         , rephaseint(1000)
         , phase(0)
+        , lucky(1)
         , target_phases(1)
         , shortTermHistorySize (50)
         , doAlwaysFMinim(false)

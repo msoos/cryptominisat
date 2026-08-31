@@ -3551,6 +3551,10 @@ void Searcher::cancelUntil<true, false>(uint32_t level);
 template
 void Searcher::cancelUntil<false, true>(uint32_t level);
 
+//Lucky phases: assigns every variable, so the order heap must be filled back up
+template
+void Searcher::cancelUntil<true, true>(uint32_t level);
+
 template<bool do_insert_var_order, bool inprocess>
 void Searcher::cancelUntil(uint32_t blevel)
 {

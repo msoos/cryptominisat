@@ -628,6 +628,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.phase = fc_int(a);})
         .default_value(conf.phase)
         .help("Default decision polarity");
+    program.add_argument("--lucky")
+        .action([&](const auto& a) {conf.lucky = fc_int(a);})
+        .default_value(conf.lucky)
+        .help("Search for lucky phases before the CDCL loop");
     program.add_argument("--target")
         .action([&](const auto& a) {conf.target_phases = fc_int(a);})
         .default_value(conf.target_phases)
