@@ -318,7 +318,7 @@ class Tester:
         #   --assump/--debuglib/--sampling/--threads: handled elsewhere
         #   --breakid*: BreakID is not compiled into normal builds
         #   'sls'/'lucky' schedule tokens: assert(false) in solver
-        #   --slsbumptype 2, --distillsort 3: assert/exit by design
+        #   --distillsort 3: assert/exit by design
         self.sqlitedbfname = None
         cmd = " --zero-exit-status "
 
@@ -351,12 +351,15 @@ class Tester:
 
         # SLS
         cmd += "--sls %d " % random.choice([0, 1])
-        cmd += "--slsgetphase %d " % random.choice([0, 0, 0, 1])
-        cmd += "--yalsatmems %d " % random.choice([1, 2, 5])
-        cmd += "--walksatruns %d " % random.choice([2, 15, 20])
+        cmd += "--walknonstable %d " % random.choice([0, 1])
+        cmd += "--walkinitially %d " % random.choice([0, 1, 2, 5])
 
-        # polarities
-        cmd += "--polar %s " % random.choice(["true", "false", "rnd", "auto"])
+        # polarities & rephasing
+        cmd += "--polar %s " % random.choice(["true", "false", "rnd", "weight", "auto", "auto"])
+        cmd += "--rephase %d " % random.choice([0, 1, 1, 1])
+        cmd += "--rephaseint %d " % random.choice([1, 100, 1000, 30000])
+        cmd += "--phase %d " % random.choice([0, 1])
+        cmd += "--target %d " % random.choice([0, 1, 1, 2])
 
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
@@ -404,13 +407,13 @@ class Tester:
         cmd += "--cardfind %d " % random.choice([0, 0, 1])
 
         # SLS details
-        cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr", "ccnr_yalsat"])
-        cmd += "--slseveryn %d " % random.choice([1, 2, 30])
         cmd += "--slsmaxmem %d " % random.choice([1, 10, 500])
-        cmd += "--slstobump %d " % random.choice([0, 1, 100, 10000])
-        cmd += "--slstobumpmaxpervar %d " % random.choice([1, 100])
-        cmd += "--slsbumptype %d " % random.choice([1, 3, 4, 5, 6])
-        cmd += "--slsccnraspire %d " % random.choice([0, 1])
+        walkmineff = random.choice([1, 1000, 100000, 10000000])
+        cmd += "--walkmineff %d " % walkmineff
+        cmd += "--walkmaxeff %d " % random.choice([walkmineff, walkmineff*100])
+        cmd += "--walkreleff %d " % random.choice([1, 20, 1000])
+        cmd += "--walkseedphase %d " % random.choice([0, 1])
+        cmd += "--walkxorweight %d " % random.choice([0, 100, 500, 1000])
 
         # distill details
         cmd += "--distillbin %d " % random.choice([0, 1])

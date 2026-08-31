@@ -303,9 +303,6 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             solver->gmatrices.push_back(new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
             solver->gqueuedata.resize(solver->gmatrices.size());
             //print before "Good matrix", that line is only ended further below
-            if (solver->conf.doSLS)
-                verb_print(1, "[matrix] disabling SLS since matrix is found");
-            solver->conf.doSLS = false;
             if (solver->conf.verbosity)
                 cout << solver->conf.prefix << "[matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             realMatrixNum++;

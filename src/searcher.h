@@ -241,12 +241,23 @@ class Searcher : public HyperEngine
         ClOffset otfs_driving_cl = 0;
 
         /////////////////
-        // Polarities
+        // Polarities -- CaDiCaL's rephasing scheme, see rephase()
         bool   pick_polarity(const uint32_t var);
-        void   setup_polarity_strategy();
-        void   update_polarities_on_backtrack(const uint32_t btlevel);
-        uint32_t polarity_strategy_at = 0;
-        uint32_t polarity_strategy_change = 0;
+        bool   decide_phase(const uint32_t var, const bool target) const;
+        void   update_target_and_best();
+        bool   rephasing() const;
+        void   rephase();
+        void   rephase_if_needed();
+        void   rephase_as(const char type);
+        uint64_t lim_rephase = 0;
+        uint64_t num_rephased = 0;
+        uint64_t num_rephased_in[2] = {0, 0}; //indexed by rst.stable
+        uint64_t last_rephase_conflicts = 0;
+        char   rephased = 0;
+        char   last_rephase = '-'; //for reporting only
+        uint32_t no_conflict_until = 0; //largest trail prefix without conflict
+        uint32_t target_assigned = 0;
+        uint32_t best_assigned = 0;
 
         //Stats
         SearchStats stats;
@@ -278,10 +289,6 @@ class Searcher : public HyperEngine
         // sub-str with bin
         uint64_t next_intree = 0;
         bool intree_if_needed();
-
-        // SLS
-        uint64_t next_sls = 0;
-        void sls_if_needed();
 
         // Fast backward for Arjun
         lbool new_decision_fast_backw();
@@ -612,38 +619,33 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
+//CaDiCaL's 'decide_phase'
+inline bool Searcher::decide_phase(const uint32_t var, const bool target) const
+{
+    if (target && varData[var].target_polarity_set) return varData[var].target_polarity;
+    return varData[var].saved_polarity;
+}
+
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
-    switch(polarity_mode) {
+    switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;
 
         case PolarityMode::polarmode_pos:
             return true;
 
-        case PolarityMode::polarmode_rnd: {
+        case PolarityMode::polarmode_rnd:
             return rnd_uint(mtrand, 1);
-        }
-
-        case PolarityMode::polarmode_automatic:
-            assert(false);
-
-        case PolarityMode::polarmode_stable:
-            return varData[var].stable_polarity;
-
-        case PolarityMode::polarmode_best_inv:
-            return !varData[var].inv_polarity;
-
-        case PolarityMode::polarmode_best:
-            return varData[var].best_polarity;
-
-        case PolarityMode::polarmode_saved:
-            return varData[var].saved_polarity;
 
         case PolarityMode::polarmode_weighted: {
             float rnd = std::uniform_real_distribution<float>(0,1)(mtrand);
             return rnd < varData[var].weight;
         }
+
+        case PolarityMode::polarmode_automatic:
+            return decide_phase(var, conf.target_phases > 1 ||
+                    (rst.stable && conf.target_phases));
 
         default:
             assert(false);

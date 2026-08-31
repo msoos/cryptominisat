@@ -51,7 +51,7 @@ void VarDistGen::calc()
 
     // True iff lit is satisfied under the variable's stable polarity.
     auto sat_under_stable = [&](Lit l) {
-        return solver->varData[l.var()].stable_polarity ^ !l.sign();
+        return solver->varData[l.var()].saved_polarity ^ !l.sign();
     };
     auto bump_sat_falsify = [&](auto& side, Lit l) {
         if (sat_under_stable(l)) side.satisfies_cl++;

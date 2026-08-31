@@ -600,6 +600,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
+    if (!inprocess) varData[v].saved_polarity = !sign; //phase saving during search
     varData[v].reason = from;
     varData[v].level = level;
     varData[v].sublevel = trail.size();

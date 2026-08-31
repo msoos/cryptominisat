@@ -331,7 +331,7 @@ void Main::add_supported_options() {
         .help("Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea");
     program.add_argument("--polar")
         .default_value("auto")
-        .help("{true,false,rnd,auto,stable} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')");
+        .help("{true,false,rnd,weight,auto} Selects polarity mode. 'true'/'false' -> always branch positive/negative. 'weight' -> random, biased by the per-variable weight. 'auto' -> CaDiCaL's saved/target/best phases with rephasing");
     program.add_argument("--scc")
         .action([&](const auto& a) {conf.doFindAndReplaceEqLits = fc_int(a);})
         .default_value(conf.doFindAndReplaceEqLits)
@@ -581,47 +581,57 @@ void Main::add_supported_options() {
     program.add_argument("--sls")
         .action([&](const auto& a) {conf.doSLS = fc_int(a);})
         .default_value(conf.doSLS)
-        .help("Run SLS during simplification");
-    program.add_argument("--slstype")
-        .action([&](const auto& a) {conf.which_sls = a;})
-        .default_value(conf.which_sls)
-        .help("Which SLS to run. Allowed values: walksat, yalsat, ccnr, ccnr_yalsat");
+        .help("Run local search ('walk') during rephasing");
+    program.add_argument("--walknonstable")
+        .action([&](const auto& a) {conf.walknonstable = fc_int(a);})
+        .default_value(conf.walknonstable)
+        .help("Run local search during focused phases too");
+    program.add_argument("--walkseedphase")
+        .action([&](const auto& a) {conf.walkseedphase = fc_int(a);})
+        .default_value(conf.walkseedphase)
+        .help("Start local search off the CDCL phases, as CaDiCaL does");
+    program.add_argument("--walkinitially")
+        .action([&](const auto& a) {conf.walkinitially = fc_int(a);})
+        .default_value(conf.walkinitially)
+        .help("Local search rounds to run before simplifying and searching, 0=none");
+    program.add_argument("--walkxorweight")
+        .action([&](const auto& a) {conf.walkxorweight = fc_int(a);})
+        .default_value(conf.walkxorweight)
+        .help("Weight of XOR constraints in yalsat's break values, times 100 (range 0-1000)");
+    program.add_argument("--walkmineff")
+        .action([&](const auto& a) {conf.walkmineff = fc_int(a);})
+        .default_value(conf.walkmineff)
+        .help("Minimum local search effort, in yalsat mems");
+    program.add_argument("--walkmaxeff")
+        .action([&](const auto& a) {conf.walkmaxeff = fc_int(a);})
+        .default_value(conf.walkmaxeff)
+        .help("Maximum local search effort, in yalsat mems");
+    program.add_argument("--walkreleff")
+        .action([&](const auto& a) {conf.walkreleff = fc_int(a);})
+        .default_value(conf.walkreleff)
+        .help("Local search effort per mille of the search propagations done so far");
     program.add_argument("--slsmaxmem")
         .action([&](const auto& a) {conf.sls_memoutMB = fc_int(a);})
         .default_value(conf.sls_memoutMB)
-        .help("Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.");
-    program.add_argument("--slseveryn")
-        .action([&](const auto& a) {conf.sls_every_n = fc_int(a);})
-        .default_value(conf.sls_every_n)
-        .help("Run SLS solver every N simplifications only");
-    program.add_argument("--yalsatmems")
-        .action([&](const auto& a) {conf.yalsat_max_mems = fc_int(a);})
-        .default_value(conf.yalsat_max_mems)
-        .help("Run Yalsat with this many mems*million timeout. Limits time of yalsat run");
-    program.add_argument("--walksatruns")
-        .action([&](const auto& a) {conf.walksat_max_runs = fc_int(a);})
-        .default_value(conf.walksat_max_runs)
-        .help("Max 'runs' for WalkSAT. Limits time of WalkSAT run");
-    program.add_argument("--slsgetphase")
-        .action([&](const auto& a) {conf.sls_get_phase = fc_int(a);})
-        .default_value(conf.sls_get_phase)
-        .help("Get phase from SLS solver, set as new phase for CDCL");
-    program.add_argument("--slsccnraspire")
-        .action([&](const auto& a) {conf.sls_ccnr_asipire = fc_int(a);})
-        .default_value(conf.sls_ccnr_asipire)
-        .help("Turn aspiration on/off for CCNR");
-    program.add_argument("--slstobump")
-        .action([&](const auto& a) {conf.sls_how_many_to_bump = fc_int(a);})
-        .default_value(conf.sls_how_many_to_bump)
-        .help("How many variables to bump in CCNR");
-    program.add_argument("--slstobumpmaxpervar")
-        .action([&](const auto& a) {conf.sls_bump_var_max_n_times = fc_int(a);})
-        .default_value(conf.sls_bump_var_max_n_times)
-        .help("How many times to bump an individual variable's activity in CCNR");
-    program.add_argument("--slsbumptype")
-        .action([&](const auto& a) {conf.sls_bump_type = fc_int(a);})
-        .default_value(conf.sls_bump_type)
-        .help("How to calculate what variable to bump. 1 = clause-based, 2 = var-flip-based, 3 = var-score-based");
+        .help("Maximum number of MB to give to the local search solver. Skips local search if handing over the formula would need more.");
+
+    /* po::options_description rephase_options("Rephasing options"); */
+    program.add_argument("--rephase")
+        .action([&](const auto& a) {conf.do_rephase = fc_int(a);})
+        .default_value(conf.do_rephase)
+        .help("Enable resetting the saved phases");
+    program.add_argument("--rephaseint")
+        .action([&](const auto& a) {conf.rephaseint = fc_int(a);})
+        .default_value(conf.rephaseint)
+        .help("Rephase interval, in conflicts. The interval grows arithmetically.");
+    program.add_argument("--phase")
+        .action([&](const auto& a) {conf.phase = fc_int(a);})
+        .default_value(conf.phase)
+        .help("Default decision polarity");
+    program.add_argument("--target")
+        .action([&](const auto& a) {conf.target_phases = fc_int(a);})
+        .default_value(conf.target_phases)
+        .help("Decide on target phases. 0 = never, 1 = stable phases only, 2 = always");
 
     /* po::options_description probeOptions("Probing options"); */
     program.add_argument("--transred")
@@ -1143,7 +1153,6 @@ void Main::parse_polarity_type()
     else if (mode == "false") conf.polarity_mode = PolarityMode::polarmode_neg;
     else if (mode == "rnd") conf.polarity_mode = PolarityMode::polarmode_rnd;
     else if (mode == "auto") conf.polarity_mode = PolarityMode::polarmode_automatic;
-    else if (mode == "stable") conf.polarity_mode = PolarityMode::polarmode_best;
     else if (mode == "weight") conf.polarity_mode = PolarityMode::polarmode_weighted;
     else throw WrongParam(mode, "unknown polarity-mode");
 }
@@ -1175,24 +1184,8 @@ void Main::manually_parse_some_options()
     }
     #endif
 
-    if (conf.which_sls != "yalsat" &&
-        conf.which_sls != "walksat" &&
-        conf.which_sls != "ccnr_yalsat" &&
-        conf.which_sls != "ccnr")
-    {
-        cout << "ERROR: you gave '" << conf.which_sls << " for SLS with the option '--slstype'."
-        << " This is incorrect, we only accept 'yalsat' and 'walksat'"
-        << endl;
-    }
-
-
-    if (conf.yalsat_max_mems < 1) {
-        cout << "ERROR: '--walkmems' must be at least 1" << endl;
-        exit(-1);
-    }
-
-    if (conf.sls_every_n < 1) {
-        cout << "ERROR: '--walkeveryn' must be at least 1" << endl;
+    if (conf.walkmineff > conf.walkmaxeff) {
+        cout << "ERROR: '--walkmineff' must not be above '--walkmaxeff'" << endl;
         exit(-1);
     }
 

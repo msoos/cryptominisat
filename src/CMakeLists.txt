@@ -122,10 +122,10 @@ set(cryptoms_lib_files
     cardfinder.cpp
     cryptominisat_c.cpp
     sls.cpp
+    yalsat_cms.cpp
+    yals/yals.c
     sqlstats.cpp
     vardistgen.cpp
-    ccnr.cpp
-    ccnr_cms.cpp
     ccnr_oracle.cpp
     ccnr_oracle_pre.cpp
     lucky.cpp

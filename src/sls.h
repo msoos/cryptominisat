@@ -33,14 +33,25 @@ class SLS {
 public:
     SLS(Solver* solver);
     ~SLS() = default;
-    lbool run(const uint32_t num_sls_called);
+
+    // One local search round, as CaDiCaL's 'walk_round'. Overwrites the saved
+    // phases whenever a new global minimum of unsatisfied clauses is reached.
+    void run(const int64_t mems);
+
+    // CaDiCaL's 'walk': a round with the effort relative to the search so far.
+    void run_during_search();
+
+    // CaDiCaL's 'local_search': rounds run before the CDCL loop starts.
+    void run_initially();
+
     vector<vector<uint8_t>> run_alter(const int64_t mems, uint32_t num);
 
 private:
     Solver* solver;
 
-    lbool run_ccnr(const uint32_t num_sls_called);
-    uint64_t approx_mem_needed();
+    int64_t effort() const;
+    uint64_t approx_mem_needed() const;
+    bool enough_mem() const;
 };
 
 } //end namespace CMSat

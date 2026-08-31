@@ -134,6 +134,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , stabilizemaxint(2000000000ULL)
         , reluctantint(1024)
         , reluctantmax(1048576)
+
+        //Rephasing, as in CaDiCaL
+        , do_rephase(1)
+        , rephaseint(1000)
+        , phase(0)
+        , target_phases(1)
         , shortTermHistorySize (50)
         , doAlwaysFMinim(false)
 
@@ -304,18 +310,16 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(1.0)
 
-        //WalkSAT
+        //Local search, as in CaDiCaL
         , doSLS(true)
-        , sls_every_n(2)
-        , yalsat_max_mems(10)
+        , walknonstable(1)
+        , walkseedphase(0)
+        , walkinitially(2)
+        , walkxorweight(500)
+        , walkmineff(50000000)
+        , walkmaxeff(2000000000)
+        , walkreleff(20)
         , sls_memoutMB(500)
-        , walksat_max_runs(50)
-        , sls_get_phase(1)
-        , sls_ccnr_asipire(1)
-        , which_sls("ccnr")
-        , sls_how_many_to_bump(100)
-        , sls_bump_var_max_n_times(100)
-        , sls_bump_type(6)
 
         //Distillation
         , do_distill_clauses(true)

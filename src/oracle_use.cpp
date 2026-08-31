@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "ccnr_cms.h"
 #include "ccnr_oracle_pre.h"
 #include "constants.h"
 #include "frat.h"

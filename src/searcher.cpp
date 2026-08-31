@@ -82,7 +82,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     hist.setSize(conf.shortTermHistorySize);
-    polarity_mode = conf.polarity_mode;
 
     next_cls_distill = 5000.0*conf.global_next_multiplier;
     next_bins_distill = 12000.0*conf.global_next_multiplier;
@@ -90,7 +89,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     next_sub_str_with_bin = 25000.0*conf.global_next_multiplier;
     next_intree = 50000.0*conf.global_next_multiplier;
     next_str_impl_with_impl = 40000.0*conf.global_next_multiplier;
-    next_sls = 44000.0*conf.global_next_multiplier;
 }
 
 Searcher::~Searcher() { clear_gauss_matrices(true); }
@@ -1146,7 +1144,7 @@ void Searcher::bump_reason_side_lits()
         toClear.push_back(l);
     }
     const uint32_t depth = conf.bump_reason_depth
-        + (polarity_mode == PolarityMode::polarmode_stable);
+        + rst.stable;
     for (const Lit l: learnt_clause) bump_reason_side_lit(l, depth);
     for (const Lit l: toClear) seen[l.var()] = 0;
     toClear.clear();
@@ -1620,7 +1618,7 @@ bool Searcher::must_do_level0_work() const
         if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && sumConflicts > next_intree)
             return true;
     }
-    if (conf.doSLS && sumConflicts > next_sls) return true;
+    if (rephasing()) return true;
     return false;
 }
 
@@ -1688,7 +1686,9 @@ lbool Searcher::search()
             search_ret = l_False;
             goto end;
         }
-        if (confl.isnullptr()) confl = propagate<false>();
+        confl = propagate<false>();
+        no_conflict_until = confl.isnullptr() ? trail.size() :
+            (decisionLevel() == 0 ? 0 : trail_lim[decisionLevel()-1]);
         if (!confl.isnullptr()) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             hist.trailDepthHist.push(trail.size());
@@ -2461,7 +2461,7 @@ void Searcher::print_restart_stats_base() const
 {
     cout << solver->conf.prefix << "rst "
          << " " << std::setw(4) << (rst.stable ? "stb" : "foc")
-         << " " << std::setw(4) << polarity_mode_to_short_string(polarity_mode)
+         << " " << std::setw(4) << last_rephase
          << " " << std::setw(4) << branch_strategy_str_short
          << " " << std::setw(5) << sumRestarts();
 
@@ -2801,61 +2801,79 @@ bool Searcher::must_abort(const lbool status) {
     return false;
 }
 
-void Searcher::setup_polarity_strategy()
+/*
+CaDiCaL's rephasing: in an arithmetically increasing conflict interval the saved
+phases are reset to the original phase, its inverse, the flipped current phase,
+random phases, the best phase seen since the last reset, or the phase local
+search came up with. Stable and focused phases follow different schedules.
+*/
+bool Searcher::rephasing() const
 {
-    if (sumConflicts < polarity_strategy_change) return;
-    polarity_strategy_change = sumConflicts + 5000;
-    polarity_strategy_change *= 1.01;
-    polarity_strategy_at++;
+    if (!conf.do_rephase) return false;
+    if (conf.polarity_mode != PolarityMode::polarmode_automatic) return false;
+    return sumConflicts > lim_rephase;
+}
 
-    if ((polarity_strategy_at % 8) == 0) {
-        for(auto& v: varData) {
-            unif_uint_dist(u, 1);
-            v.best_polarity = u(mtrand);
-            v.stable_polarity = u(mtrand);
-            v.saved_polarity = u(mtrand);
-        }
-    }
-
-    //Set to default first
-    polarity_mode = conf.polarity_mode;
-    if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
-        longest_trail_ever_stable = 0;
-
-        if ((polarity_strategy_at % 4) == 0) polarity_mode = PolarityMode::polarmode_best;
-        if ((polarity_strategy_at % 4) == 1) polarity_mode = PolarityMode::polarmode_stable;
-        if ((polarity_strategy_at % 4) == 2) polarity_mode = PolarityMode::polarmode_best_inv;
-        if ((polarity_strategy_at % 4) == 3) polarity_mode = PolarityMode::polarmode_saved;
-//         if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_neg;
-//         if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_pos;
-    }
-
-    if (conf.verbosity >= 2) {
-        cout << "c [polar]"
-        << " polar mode: " << polarity_mode_to_long_string(polarity_mode)
-        << " polarity_strategy: " << polarity_strategy_at
-
-        << endl;
+//'O'riginal phase, its 'I'nverse, 'F'lipping the current one, a random one ('#'),
+//the 'B'est one seen since the last reset, or the one local search ('W') found
+void Searcher::rephase_as(const char type)
+{
+    switch (type) {
+        case 'O': for(auto& v: varData) v.saved_polarity = conf.phase; break;
+        case 'I': for(auto& v: varData) v.saved_polarity = !conf.phase; break;
+        case 'F': for(auto& v: varData) v.saved_polarity = !v.saved_polarity; break;
+        case '#': for(auto& v: varData) v.saved_polarity = rnd_uint(mtrand, 1); break;
+        case 'B': for(auto& v: varData)
+                      if (v.best_polarity_set) v.saved_polarity = v.best_polarity;
+                  break;
+        case 'W': { SLS sls(solver); sls.run_during_search(); break; }
+        default: assert(false);
     }
 }
 
-void Searcher::sls_if_needed()
+void Searcher::rephase()
+{
+    assert(decisionLevel() == 0);
+    num_rephased++;
+
+    for(auto& v: varData) v.target_polarity_set = false;
+    target_assigned = 0;
+
+    // The schedules of CaDiCaL's 'rephase': a one-off prefix, then a cycle.
+    const bool single = !conf.do_stabilize;
+    const bool walk = conf.doSLS && (single || rst.stable || conf.walknonstable);
+    const char* prefix;
+    const char* cycle;
+    if (single) {
+        prefix = "";
+        cycle = walk ? "IBWFBW#BWOBW" : "IBFB#BOB";
+    } else if (rst.stable) {
+        prefix = "OI";
+        cycle = walk ? "BWOBWI" : "BOBI";
+    } else {
+        prefix = "F";
+        cycle = walk ? "#BWFBW" : "#BFB";
+    }
+
+    const size_t count = num_rephased_in[rst.stable]++;
+    const size_t plen = strlen(prefix);
+    const char type = count < plen ? prefix[count] : cycle[(count-plen) % strlen(cycle)];
+    rephase_as(type);
+
+    lim_rephase = sumConflicts + conf.rephaseint * (num_rephased + 1);
+    last_rephase_conflicts = sumConflicts;
+    rephased = type;
+    last_rephase = type;
+
+    verb_print(2, "[rephase] " << type << " num: " << num_rephased
+        << " next at confl: " << lim_rephase);
+}
+
+void Searcher::rephase_if_needed()
 {
     assert(okay());
     assert(decisionLevel() == 0);
-    if (conf.doSLS &&
-        // If XORs are available, or there are BNNs, SLS will not work as intended
-        // HOWEVER, it seems to STILL help, likely by setting values randomly
-//         xorclause_orig.empty() &&
-//         bnns.empty() &&
-        sumConflicts > next_sls)
-    {
-        SLS sls(solver);
-        const lbool ret = sls.run(num_sls_called);
-        assert(ret != l_False);
-        num_sls_called++;
-        next_sls = sumConflicts + 44000.0*conf.global_next_multiplier;
-    }
+    if (rephasing()) rephase();
 }
 
 bool Searcher::intree_if_needed()
@@ -2966,7 +2984,6 @@ lbool Searcher::solve(const uint64_t _max_confls) {
 
     setup_branch_strategy();
     init_restart_sched();
-    setup_polarity_strategy();
     STATS_DO(check_calc_satzilla_features(true));
     #ifdef STATS_NEEDED_BRANCH
     check_calc_vardist_features(true);
@@ -2989,7 +3006,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
                 goto end;
             }
             SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
-            sls_if_needed();
+            rephase_if_needed();
         }
 
         assert(watches.get_smudged_list().empty());
@@ -2998,7 +3015,6 @@ lbool Searcher::solve(const uint64_t _max_confls) {
         status = search();
         if (status == l_Undef) {
             setup_branch_strategy();
-            setup_polarity_strategy();
         }
         SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
 
@@ -3018,6 +3034,7 @@ void Searcher::init_restart_sched()
     rst.cur.fast = EMA(conf.emagluefast);
     rst.cur.slow = EMA(conf.emaglueslow);
     rst.lim_restart = sumConflicts + conf.restartint;
+    lim_rephase = sumConflicts + conf.rephaseint;
     rst.inc_stabilize = conf.stabilizeint;
     rst.lim_stabilize = sumConflicts + rst.inc_stabilize;
     if (conf.do_stabilize && conf.reluctantint) {
@@ -3498,44 +3515,30 @@ void Searcher::consolidate_watches(const bool full)
     }
 }
 
-inline void Searcher::update_polarities_on_backtrack(const uint32_t btlevel)
+//CaDiCaL's 'update_target_and_best'
+inline void Searcher::update_target_and_best()
 {
-    if (polarity_mode == PolarityMode::polarmode_stable &&
-        longest_trail_ever_stable < trail.size())
-    {
-        for(const auto t: trail) {
-            if (t.lit == lit_Undef) continue;
-            varData[t.lit.var()].stable_polarity = !t.lit.sign();
-        }
-        longest_trail_ever_stable = trail.size();
+    const bool reset = rephased && sumConflicts > last_rephase_conflicts;
+    if (reset) {
+        target_assigned = 0;
+        if (rephased == 'B') best_assigned = 0;
+        rephased = 0;
     }
 
-    if (polarity_mode == PolarityMode::polarmode_best
-        && longest_trail_ever_best < trail.size())
-    {
-        for(const auto t: trail) {
-            if (t.lit == lit_Undef) continue;
-            varData[t.lit.var()].best_polarity = !t.lit.sign();
+    if (no_conflict_until > target_assigned) {
+        for(auto& v: varData) {
+            v.target_polarity = v.saved_polarity;
+            v.target_polarity_set = true;
         }
-        longest_trail_ever_best = trail.size();
+        target_assigned = no_conflict_until;
     }
 
-    if (polarity_mode == PolarityMode::polarmode_best_inv
-        && longest_trail_ever_inv < trail.size())
-    {
-        for(const auto t: trail) {
-            if (t.lit == lit_Undef) continue;
-            varData[t.lit.var()].inv_polarity = !t.lit.sign();
+    if (no_conflict_until > best_assigned) {
+        for(auto& v: varData) {
+            v.best_polarity = v.saved_polarity;
+            v.best_polarity_set = true;
         }
-        longest_trail_ever_inv = trail.size();
-    }
-
-    if (polarity_mode == PolarityMode::polarmode_saved) {
-        for(uint32_t i = trail_lim[btlevel]; i < trail.size(); i++) {
-            const auto t = trail[i];
-            if (t.lit == lit_Undef) continue;
-            varData[t.lit.var()].saved_polarity = !t.lit.sign();
-        }
+        best_assigned = no_conflict_until;
     }
 }
 
@@ -3558,7 +3561,10 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 
     if (decisionLevel() > blevel) {
-        if (!inprocess) update_polarities_on_backtrack(blevel);
+        if (!inprocess) {
+            update_target_and_best();
+            no_conflict_until = std::min<uint32_t>(no_conflict_until, trail_lim[blevel]);
+        }
 
         for (uint32_t i = 0; i < gmatrices.size(); i++)
             if (gmatrices[i] && !gqueuedata[i].disabled)

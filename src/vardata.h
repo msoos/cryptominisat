@@ -37,9 +37,10 @@ struct VarData
         is_bva = 0;
         occ_simp_tried = 0;
         saved_polarity = false;
-        stable_polarity = false;
+        target_polarity = false;
+        target_polarity_set = false;
         best_polarity = false;
-        inv_polarity = false;
+        best_polarity_set = false;
     }
 
     ///contains the decision level at which the assignment was made.
@@ -54,11 +55,13 @@ struct VarData
     ///Whether var has been eliminated (var-elim, different component, etc.)
     Removed removed = Removed::none;
 
-    ///The preferred polarity of each variable.
-    uint8_t stable_polarity:1;
+    //CaDiCaL's phases: 'saved' is always set, 'target' (largest conflict-free
+    //trail since the last rephase) and 'best' (largest ever) may be unset
     uint8_t saved_polarity:1;
+    uint8_t target_polarity:1;
+    uint8_t target_polarity_set:1;
     uint8_t best_polarity:1;
-    uint8_t inv_polarity:1;
+    uint8_t best_polarity_set:1;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
     uint8_t propagated:1 = false;

@@ -94,14 +94,11 @@ public:
     watch_array watches;
     vec<vec<GaussWatched>> gwatches;
     uint32_t num_sls_called = 0;
+    int64_t sls_minimum = std::numeric_limits<int64_t>::max(); //fewest unsat cls local search reached
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
     string branch_strategy_str = "VSIDS";
     string branch_strategy_str_short = "vs";
-    PolarityMode polarity_mode = PolarityMode::polarmode_automatic; //current polarity mode
-    uint32_t longest_trail_ever_stable = 0;
-    uint32_t longest_trail_ever_best = 0;
-    uint32_t longest_trail_ever_inv = 0;
     vector<uint32_t> depth; //for ancestors in intree probing
     uint32_t minNumVars = 0;
 

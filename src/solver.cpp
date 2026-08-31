@@ -1340,9 +1340,10 @@ lbool Solver::simplify_problem_outside(const string* strategy)
 }
 
 void Solver::reset_for_solving() {
-    longest_trail_ever_best = 0;
-    longest_trail_ever_inv = 0;
-    polarity_strategy_change = 0;
+    target_assigned = 0;
+    best_assigned = 0;
+    no_conflict_until = 0;
+    sls_minimum = numeric_limits<int64_t>::max();
     set_assumptions();
     uneliminate_sampling_set();
     #ifdef SLOW_DEBUG
@@ -1386,6 +1387,14 @@ lbool Solver::solve_with_assumptions(
     assert(prop_at_head());
     assert(okay());
     USE_BREAKID_DO(if (breakid) breakid->start_new_solving());
+
+    //CaDiCaL runs its initial local search after preprocessing; we run it before,
+    //as variable elimination and XOR recovery wreck the local search landscape.
+    //Only on the first solve call: later ones get the walks that rephasing does.
+    if (status == l_Undef && conf.doSLS && conf.walkinitially && num_sls_called == 0) {
+        SLS sls(this);
+        sls.run_initially();
+    }
 
     //Simplify in case simplify_at_startup is set
     if (status == l_Undef

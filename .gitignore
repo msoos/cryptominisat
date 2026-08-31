@@ -54,3 +54,5 @@ html/cryptominisat5.wasm
 build_dbgfrat/
 /build_fratdbg
 xnf-tests/
+/build_dbg
+/build_fuzz

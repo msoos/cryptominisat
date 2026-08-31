@@ -248,10 +248,6 @@ enum class PolarityMode {
     , polarmode_neg
     , polarmode_rnd
     , polarmode_automatic
-    , polarmode_stable
-    , polarmode_best_inv
-    , polarmode_best
-    , polarmode_saved
     , polarmode_weighted
 };
 

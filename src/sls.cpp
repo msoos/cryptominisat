@@ -22,87 +22,132 @@ THE SOFTWARE.
 
 #include "sls.h"
 #include "solver.h"
-#include "ccnr_cms.h"
-#include "solvertypesmini.h"
+#include "yalsat_cms.h"
+#include "sqlstats.h"
+#include "time_mem.h"
 
 using namespace CMSat;
 
-SLS::SLS(Solver* _solver) :
-    solver(_solver)
-{}
+SLS::SLS(Solver* _solver) : solver(_solver) {}
 
-lbool SLS::run(const uint32_t num_sls_called)
+//CaDiCaL's 'walk': effort relative to the search propagations done so far
+int64_t SLS::effort() const
 {
-    return run_ccnr(num_sls_called);
+    int64_t limit = (double)solver->sumPropagations * 1e-3 * solver->conf.walkreleff;
+    limit = std::max<int64_t>(limit, solver->conf.walkmineff);
+    limit = std::min<int64_t>(limit, solver->conf.walkmaxeff);
+    return limit;
 }
 
-vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num) {
+void SLS::run_during_search() { run(effort()); }
+
+//CaDiCaL's 'local_search': effort grows quadratically with the round number
+void SLS::run_initially()
+{
+    for(uint32_t i = 1; i <= solver->conf.walkinitially; i++) {
+        run((int64_t)solver->conf.walkmineff * i * i);
+        if (solver->sls_minimum == 0) break;
+    }
+}
+
+void SLS::run(const int64_t mems)
+{
+    assert(solver->decisionLevel() == 0);
+
+    //Local search does not do well on tiny formulas
+    if (solver->nVars() < 50 ||
+        solver->binTri.irredBins + solver->longIrredCls.size() < 10)
+    {
+        verb_print(1, "[sls] too few variables & clauses");
+        return;
+    }
+    if (!enough_mem()) return;
+
+    const double my_time = cpu_time();
+    CMS_yalsat sls(solver);
+    if (!sls.init_problem()) {
+        //it's actually l_False under assumptions, let the main solver deal with it
+        verb_print(1, "[sls] UNSAT under assumptions, returning to main solver");
+        return;
+    }
+    if (sls.get_num_cls() == 0) return;
+
+    //CaDiCaL's 'walk_round' starts off the CDCL phases. yalsat picks (and on its
+    //own restarts re-picks) the initial assignment itself, and forcing anything
+    //on it -- the CDCL phases or the previous round's outcome -- keeps it in the
+    //same basin and costs an order of magnitude here. Hence this is off, and the
+    //rounds of run_initially() are independent draws.
+    if (solver->conf.walkseedphase)
+        for(uint32_t v = 0; v < solver->nVars(); v++)
+            if (sls.has_value(v)) sls.set_phase(v, solver->decide_phase(v, true));
+
+    const int64_t minimum = sls.run(mems, solver->conf.origSeed + solver->num_sls_called);
+    solver->num_sls_called++;
+
+    const bool improved = minimum >= 0 && minimum < solver->sls_minimum;
+    if (improved) {
+        solver->sls_minimum = minimum;
+        for(uint32_t v = 0; v < solver->nVars(); v++)
+            if (sls.has_value(v)) solver->varData[v].saved_polarity = sls.value(v);
+    }
+
+    const double time_used = cpu_time()-my_time;
+    verb_print(1, "[sls] " << sls.get_num_cls() << " cls, "
+        << (minimum < 0 ? "no assignment" : "minimum " + std::to_string(minimum))
+        << (improved ? " (new global minimum)" : "")
+        << solver->conf.print_times(time_used));
+    if (minimum >= 0) {
+        int64_t cnf, xr;
+        const int64_t check = sls.count_unsat(cnf, xr);
+        assert(check == minimum); (void)check;
+        verb_print(2, "[sls] unsat: " << cnf << " CNF cls, " << xr << " XORs");
+    }
+    if (solver->sqlStats) solver->sqlStats->time_passed_min(solver, "sls", time_used);
+}
+
+vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num)
+{
     vector<vector<uint8_t>> sols;
     for(uint32_t i = 0; i < num; i++) {
-      CMS_ccnr ccnr(solver);
-      vector<uint8_t> sol;
-      auto ret = ccnr.main_alter(mems, sol);
-      if (ret == l_True) sols.push_back(sol);
+        CMS_yalsat sls(solver);
+        if (!sls.init_problem() || sls.get_num_cls() == 0) break;
+        if (sls.run(mems, solver->conf.origSeed + i) != 0) continue;
+
+        vector<uint8_t> sol(solver->nVars(), 0);
+        for(uint32_t v = 0; v < solver->nVars(); v++) {
+            if (sls.has_value(v)) sol[v] = sls.value(v);
+            else if (solver->value(v) != l_Undef) sol[v] = solver->value(v) == l_True;
+        }
+        sols.push_back(sol);
     }
     return sols;
 }
 
-lbool SLS::run_ccnr(const uint32_t num_sls_called)
+bool SLS::enough_mem() const
 {
-    CMS_ccnr ccnr(solver);
-    double mem_needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
-    double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
-    if (mem_needed_mb < maxmem) {
-        lbool ret = ccnr.main(num_sls_called);
-        return ret;
-    }
+    const double needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
+    const double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
+    if (needed_mb < maxmem) return true;
 
     verb_print(1, "[sls] would need "
-        << std::setprecision(2) << std::fixed << mem_needed_mb
+        << std::setprecision(2) << std::fixed << needed_mb
         << " MB but that's over limit of " << std::fixed << maxmem
         << " MB -- skipping");
-
-    return l_Undef;
+    return false;
 }
 
-uint64_t SLS::approx_mem_needed()
+uint64_t SLS::approx_mem_needed() const
 {
-    uint32_t numvars = solver->nVars();
+    const uint32_t numvars = solver->nVars();
     uint32_t numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
     uint64_t numliterals = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    for(const auto& x: solver->xorclauses) { numclauses++; numliterals += x.size(); }
+
     uint64_t needed = 0;
-
-    //LIT storage (all clause data)
-    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
-
-    //This is just an estimation of yalsat's memory needs.
-
-    //clause
-    needed += sizeof(Lit *) * numclauses;
-    //clsize
-    needed += sizeof(uint32_t) * numclauses;
-
-    //false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //map_cl_to_false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //numtruelit
-    needed += sizeof(uint32_t) * numclauses;
-
-    //occurrence
-    needed += sizeof(uint32_t *) * (2 * numvars);
-    //numoccurrence
-    needed += sizeof(uint32_t) * (2 * numvars);
-    //assigns
-    needed += sizeof(lbool) * numvars;
-    //breakcount
-    needed += sizeof(uint32_t) * numvars;
-    //makecount
-    needed += sizeof(uint32_t) * numvars;
-
-    //occur_list_alloc
-    needed += sizeof(uint32_t) * numliterals;
-
-
+    needed += numliterals*sizeof(int);       //literal storage, twice: clauses and occurrences
+    needed += numliterals*sizeof(int);
+    needed += numclauses*sizeof(int)*4;      //per-clause bookkeeping
+    needed += numvars*sizeof(int)*4;         //per-variable bookkeeping
+    needed += 2*numvars*(sizeof(int*)+sizeof(int));
     return needed;
 }

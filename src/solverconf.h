@@ -38,47 +38,12 @@ inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
             return "auto";
-        case PolarityMode::polarmode_stable :
-            return "stb";
-        case PolarityMode::polarmode_best_inv :
-            return "inv-bst";
-        case PolarityMode::polarmode_best :
-            return "best";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :
             return "pos";
-        case PolarityMode::polarmode_saved :
-            return "saved-polar";
         case PolarityMode::polarmode_weighted :
             return "weighted";
-        case PolarityMode::polarmode_rnd :
-            return "rnd";
-        default:
-            release_assert(false && "Unknown polarity mode");
-    }
-}
-
-inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
-{
-    switch(polarmode) {
-        case PolarityMode::polarmode_automatic :
-            release_assert(false);
-            return "";
-        case PolarityMode::polarmode_stable :
-            return "stb";
-        case PolarityMode::polarmode_best_inv :
-            return "ibes";
-        case PolarityMode::polarmode_best :
-            return "best";
-        case PolarityMode::polarmode_neg :
-            return "neg";
-        case PolarityMode::polarmode_pos :
-            return "pos";
-        case PolarityMode::polarmode_weighted :
-            return "wght";
-        case PolarityMode::polarmode_saved :
-            return "svd";
         case PolarityMode::polarmode_rnd :
             return "rnd";
         default:
@@ -181,6 +146,12 @@ class DLL_PUBLIC SolverConf
         uint64_t stabilizemaxint;  ///<Maximum phase length
         unsigned reluctantint;     ///<Reluctant doubling base period for stable-phase restarts, 0=never restart
         uint64_t reluctantmax;     ///<Maximum reluctant doubling period multiplier
+
+        //Rephasing, as in CaDiCaL
+        int      do_rephase;       ///<Enable resetting the saved phases
+        uint64_t rephaseint;       ///<Rephase interval, in conflicts
+        int      phase;            ///<Default decision polarity
+        int      target_phases;    ///<Decide on target phases (1=stable phases only, 2=always)
 
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         int doAlwaysFMinim;
@@ -344,18 +315,16 @@ class DLL_PUBLIC SolverConf
         double maxOccurRedLitLinkedM;
         double   subsume_gothrough_multip;
 
-        //Walksat
-        int doSLS;
-        uint32_t sls_every_n;
-        uint32_t yalsat_max_mems;
-        uint32_t sls_memoutMB;
-        uint32_t walksat_max_runs;
-        int      sls_get_phase;
-        int      sls_ccnr_asipire;
-        string   which_sls;
-        uint32_t sls_how_many_to_bump;
-        uint32_t sls_bump_var_max_n_times;
-        uint32_t sls_bump_type;
+        //Local search, as in CaDiCaL
+        int      doSLS;            ///<Enable local search ('walk') during rephasing
+        int      walknonstable;    ///<Also run local search during focused phases
+        int      walkseedphase;    ///<Start local search off the CDCL phases, as CaDiCaL does
+        uint32_t walkinitially;    ///<Local search rounds to run before simplifying and searching
+        uint32_t walkxorweight;    ///<Weight of XOR constraints in yalsat's break values, times 100
+        uint64_t walkmineff;       ///<Minimum local search effort, in yalsat mems
+        uint64_t walkmaxeff;       ///<Maximum local search effort, in yalsat mems
+        uint64_t walkreleff;       ///<Local search effort per mille of search propagations
+        uint32_t sls_memoutMB;     ///<Skip local search if handing over the formula needs more
 
         //Distillation
         int      do_distill_clauses;
