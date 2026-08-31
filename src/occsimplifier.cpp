@@ -356,9 +356,7 @@ bool OccSimplifier::clean_clause(
     verb_print(6, "-> Clause became after cleaning:" << cl);
     if (i-j > 0) {
         INC_ID(cl);
-        (*solver->frat) << add << cl << fratchain;
-        for(auto const& id: solver->chain) (*solver->frat) << id;
-        (*solver->frat) << orig_id << fin << findelay;
+        (*solver->frat) << add << cl << fratchain << solver->chain << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
@@ -433,9 +431,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     //Drat
     if (i - j > 0) {
         INC_ID(cl);
-        *solver->frat << add << cl << fratchain;
-        for(auto const& id: solver->chain) (*solver->frat) << id;
-        (*solver->frat) << orig_id << fin << findelay;
+        *solver->frat << add << cl << fratchain << solver->chain << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
@@ -2276,9 +2272,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 cl->recalc_abstraction();
             }
             INC_ID(*cl);
-            (*solver->frat) << add << *cl << fratchain;
-            for(auto const& id: solver->chain) (*solver->frat) << id;
-            (*solver->frat) << lrog_orig_id << fin << findelay;
+            (*solver->frat) << add << *cl << fratchain << solver->chain << lrog_orig_id << fin << findelay;
             VERBOSE_DEBUG_DO(solver->print_clause("shortened", *cl));
             if (!clean_clause(off, true)) {
                 for(auto const& l: gate.lits) seen[l.toInt()] = 0;
@@ -5312,10 +5306,7 @@ bool OccSimplifier::remove_literal(
 
     INC_ID(cl);
     (*solver->frat) << add << cl;
-    if (solver->frat->enabled() && hints) {
-        (*solver->frat) << fratchain;
-        for(const auto& h: *hints) (*solver->frat) << h;
-    }
+    if (solver->frat->enabled() && hints) (*solver->frat) << fratchain << *hints;
     (*solver->frat) << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;

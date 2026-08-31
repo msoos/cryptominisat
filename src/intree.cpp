@@ -367,9 +367,7 @@ bool InTree::empty_failed_list()
                 vector<int32_t> hints;
                 solver->prop_hints_for_unit(lit, hints);
                 const auto id = ++solver->clauseID;
-                *solver->frat << add << id << lit << fratchain;
-                for(const auto& h: hints) *solver->frat << h;
-                *solver->frat << fin;
+                *solver->frat << add << id << lit << fratchain << hints << fin;
                 solver->enqueue_registered_unit<true>(lit, id);
             } else {
                 solver->enqueue<true>(lit);

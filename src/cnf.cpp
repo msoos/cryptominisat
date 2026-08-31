@@ -850,11 +850,5 @@ void CNF::print_xors(const vector<Xor>& xors)
 }
 
 void CNF::add_chain() {
-    if (frat->enabled() && !chain.empty()) {
-        *frat << fratchain;
-        for(auto const& id: chain) {
-            assert(id != 0);
-            *frat << id;
-        }
-    }
+    if (frat->enabled() && !chain.empty()) *frat << fratchain << chain;
 }

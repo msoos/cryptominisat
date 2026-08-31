@@ -277,9 +277,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         INC_ID(cl);
         cl.shrink(i-j);
         //strict hint order: unit IDs first, the original clause's ID last
-        *solver->frat << add << cl << fratchain;
-        for(auto const& id: solver->chain) (*solver->frat) << id;
-        (*solver->frat) << orig_ID << fin << findelay;
+        *solver->frat << add << cl << fratchain << solver->chain << orig_ID << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
@@ -550,9 +548,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     if (i != j) {
         cl.shrink(i-j);
         INC_ID(cl);
-        (*solver->frat) << add << cl << fratchain;
-        for(auto const& id: solver->chain) (*solver->frat) << id;
-        (*solver->frat) << orig_id << fin << findelay;
+        (*solver->frat) << add << cl << fratchain << solver->chain << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
         return false;

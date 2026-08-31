@@ -50,6 +50,11 @@ public:
     virtual bool get_conf_id() { return false; }
     virtual bool something_delayed() { return false; }
     virtual Frat& operator<<(const int32_t) { return *this; }
+    Frat& operator<<(const vector<int32_t>& ids) {
+        if (!enabled()) return *this;
+        for(const auto& i: ids) { assert(i != 0); *this << i; }
+        return *this;
+    }
     virtual Frat& operator<<(const Lit) { return *this; }
     virtual Frat& operator<<(const Clause&) { return *this; }
     virtual Frat& operator<<(const Xor&) { return *this; }

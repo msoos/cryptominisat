@@ -748,10 +748,7 @@ bool VarReplacer::handleUpdatedClause(
     INC_ID(c);
     (*solver->frat) << add << c;
     if (solver->frat->enabled()) {
-        (*solver->frat) << fratchain;
-        for(const auto& id: solver->chain) (*solver->frat) << id;
-        for(const auto& id: tmp_upd_eqbins) (*solver->frat) << id;
-        (*solver->frat) << orig_id;
+        (*solver->frat) << fratchain << solver->chain << tmp_upd_eqbins << orig_id;
     }
     (*solver->frat) << fin << findelay;
 

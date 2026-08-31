@@ -373,7 +373,7 @@ Clause* Solver::add_clause_int(
             if (frat->enabled() && hints && !hints->empty()) {
                 *frat << fratchain;
                 stripped_units();
-                for(const auto& h: *hints) { assert(h != 0); *frat << h; }
+                *frat << *hints;
             }
             *frat << fin;
             if (frat_first != lit_Undef) {
@@ -2775,9 +2775,7 @@ void Solver::emit_bin_by_prop(const int32_t id, const Lit a, const Lit b)
 {
     vector<int32_t> hints;
     prop_hints_for_bin(a, b, hints);
-    *frat << add << id << a << b << fratchain;
-    for(const auto& h: hints) *frat << h;
-    *frat << fin;
+    *frat << add << id << a << b << fratchain << hints << fin;
 }
 
 bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
@@ -2790,9 +2788,7 @@ bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
         assert(varData[lit.var()].removed == Removed::none);
         if (frat->enabled() && hints) {
             const auto id = ++clauseID;
-            *frat << add << id << lit << fratchain;
-            for(const auto& h: *hints) *frat << h;
-            *frat << fin;
+            *frat << add << id << lit << fratchain << *hints << fin;
             enqueue_registered_unit<false>(lit, id);
         } else {
             enqueue<false>(lit);
@@ -2805,8 +2801,7 @@ bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
     } else if (val == l_False) {
         *frat << add << ++clauseID;
         if (frat->enabled() && hints) {
-            *frat << fratchain << unit_cl_IDs[lit.var()];
-            for(const auto& h: *hints) *frat << h;
+            *frat << fratchain << unit_cl_IDs[lit.var()] << *hints;
         }
         *frat << fin;
         if (unsat_cl_ID == 0) set_unsat_cl_id(clauseID);

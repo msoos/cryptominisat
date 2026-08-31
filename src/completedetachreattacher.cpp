@@ -176,9 +176,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     //Drat
     if (i != j) {
         INC_ID(*cl);
-        (*solver->frat) << add << *cl << fratchain;
-        for(auto const& id: solver->chain) (*solver->frat) << id;
-        (*solver->frat) << orig_id << fin << findelay;
+        (*solver->frat) << add << *cl << fratchain << solver->chain << orig_id << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }

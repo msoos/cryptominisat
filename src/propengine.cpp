@@ -890,9 +890,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
         *frat << add << ++clauseID;
         if (frat->enabled()) {
             assert(last_occ_confl_id != 0);
-            *frat << fratchain;
-            for(const auto& u: last_occ_confl_units) *frat << u;
-            *frat << last_occ_confl_id;
+            *frat << fratchain << last_occ_confl_units << last_occ_confl_id;
         }
         *frat << fin;
         set_unsat_cl_id(clauseID);

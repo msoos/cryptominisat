@@ -195,17 +195,11 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
             if (value(bp_lit) == l_Undef) {
                 //(~l, bp) follows from the l-probe, (l, bp) from the ~l-probe
                 *solver->frat << add << ++clauseID << ~l << bp_lit;
-                if (fr) {
-                    *solver->frat << fratchain;
-                    for(const auto& h: probe_hints_pos) *solver->frat << h;
-                }
+                if (fr) *solver->frat << fratchain << probe_hints_pos;
                 *solver->frat << fin;
                 const int32_t c1 = clauseID;
                 *solver->frat << add << ++clauseID << l << bp_lit;
-                if (fr) {
-                    *solver->frat << fratchain;
-                    for(const auto& h: probe_hints_neg) *solver->frat << h;
-                }
+                if (fr) *solver->frat << fratchain << probe_hints_neg;
                 *solver->frat << fin;
                 const int32_t c2 = clauseID;
                 if (fr) {
