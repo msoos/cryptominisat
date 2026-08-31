@@ -173,12 +173,15 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     }
     #endif
 
+    // setup_matrices_attach_remaining_cls() empties xorclauses and pushes back
+    // only the ones from unused matrices, so count them before the call
+    const size_t num_xors = solver->xorclauses.size();
     uint32_t numMatrixes = setup_matrices_attach_remaining_cls();
 
     const bool time_out =  false;
     const double time_used = cpu_time() - my_time;
     verb_print(1, "[matrix] Using " << numMatrixes
-        << " matrices recovered from " << solver->xorclauses.size() << " xors"
+        << " matrices recovered from " << num_xors << " xors"
         << solver->conf.print_times(time_used, time_out));
 
     if (solver->sqlStats) solver->sqlStats->time_passed_min( solver , "matrix find" , time_used);
