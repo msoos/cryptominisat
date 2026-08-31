@@ -135,7 +135,8 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     PropBy p;
     if (fr) {
         enqueue<true>(l);
-        p = propagate<true>();
+        //no gauss: cancelUntil_light cannot cancel it
+        p = propagate<true, true, true>();
     } else {
         enqueue_light(l);
         p = propagate_light<bin_only>();
@@ -166,7 +167,8 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     new_decision_level();
     if (fr) {
         enqueue<true>(~l);
-        p = propagate<true>();
+        //no gauss: cancelUntil_light cannot cancel it
+        p = propagate<true, true, true>();
     } else {
         enqueue_light(~l);
         p = propagate_light<bin_only>();
