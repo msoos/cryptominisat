@@ -927,6 +927,8 @@ bool VarReplacer::replace_vars_already_set(
     , const lbool val1
     , const Lit lit2
     , const lbool val2
+    , const int32_t eqbin_a
+    , const int32_t eqbin_b
 ) {
     if (val1 != val2) {
         //contradictory: units for both lits exist, the equivalence bins from
@@ -937,7 +939,7 @@ bool VarReplacer::replace_vars_already_set(
             *solver->frat << fratchain;
             if (val1 == l_True) {
                 //~lit1 via (~lit1 | lit2) and unit(~lit2)
-                *solver->frat << last_eqbin_a << solver->unit_cl_IDs[lit2.var()];
+                *solver->frat << eqbin_a << solver->unit_cl_IDs[lit2.var()];
             } else {
                 *solver->frat << solver->unit_cl_IDs[lit1.var()];
             }
@@ -951,7 +953,7 @@ bool VarReplacer::replace_vars_already_set(
                 *solver->frat << solver->unit_cl_IDs[lit1.var()];
             } else {
                 //lit1 via (lit1 | ~lit2) and unit(lit2)
-                *solver->frat << last_eqbin_b << solver->unit_cl_IDs[lit2.var()];
+                *solver->frat << eqbin_b << solver->unit_cl_IDs[lit2.var()];
             }
             *solver->frat << fin;
         } else *solver->frat << fin;
@@ -974,6 +976,8 @@ bool VarReplacer::handleOneSet(
     , const lbool val1
     , const Lit lit2
     , const lbool val2
+    , const int32_t eqbin_a
+    , const int32_t eqbin_b
 ) {
     if (solver->ok) {
         Lit toEnqueue;
@@ -982,12 +986,12 @@ bool VarReplacer::handleOneSet(
         if (val1 != l_Undef) {
             toEnqueue = lit2 ^ (val1 == l_False);
             //lit1 true: lit2 via (~lit1 | lit2); lit1 false: ~lit2 via (lit1 | ~lit2)
-            hint_bin = (val1 == l_True) ? last_eqbin_a : last_eqbin_b;
+            hint_bin = (val1 == l_True) ? eqbin_a : eqbin_b;
             hint_unit = solver->unit_cl_IDs[lit1.var()];
         } else {
             toEnqueue = lit1 ^ (val2 == l_False);
             //lit2 true: lit1 via (lit1 | ~lit2); lit2 false: ~lit1 via (~lit1 | lit2)
-            hint_bin = (val2 == l_True) ? last_eqbin_b : last_eqbin_a;
+            hint_bin = (val2 == l_True) ? eqbin_b : eqbin_a;
             hint_unit = solver->unit_cl_IDs[lit2.var()];
         }
         if (solver->frat->enabled()) {
@@ -1028,8 +1032,6 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
         solver->emit_bin_by_prop(ID, ~lit1, lit2);
         solver->emit_bin_by_prop(id2, lit1, ~lit2);
     }
-    last_eqbin_a = ID;  //(~lit1 | lit2)
-    last_eqbin_b = id2; //(lit1 | ~lit2)
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id2, lit1, ~lit2});
 
@@ -1042,14 +1044,14 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
 
     //Both are set
     if (val1 != l_Undef && val2 != l_Undef) {
-        return replace_vars_already_set(lit1, val1, lit2, val2);
+        return replace_vars_already_set(lit1, val1, lit2, val2, ID, id2);
     }
 
     //exactly one set
     if ((val1 != l_Undef && val2 == l_Undef)
         || (val2 != l_Undef && val1 == l_Undef)
     ) {
-        return handleOneSet(lit1, val1, lit2, val2);
+        return handleOneSet(lit1, val1, lit2, val2, ID, id2);
     }
 
     assert(val1 == l_Undef && val2 == l_Undef);

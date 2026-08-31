@@ -169,12 +169,16 @@ class VarReplacer
             , const lbool val1
             , const Lit lit2
             , const lbool val2
+            , const int32_t eqbin_a //(~lit1 | lit2)
+            , const int32_t eqbin_b //(lit1 | ~lit2)
         );
         bool handleOneSet(
             const Lit lit1
             , const lbool val1
             , const Lit lit2
             , const lbool val2
+            , const int32_t eqbin_a //(~lit1 | lit2)
+            , const int32_t eqbin_b //(lit1 | ~lit2)
         );
 
         //Temporary used in replaceImplicit
@@ -251,8 +255,6 @@ class VarReplacer
             return l.sign() ? eqbin_ids[l.var()].second : eqbin_ids[l.var()].first;
         }
         vector<int32_t> tmp_upd_eqbins; ///< eqbins of the lits replaced in the current clause
-        int32_t last_eqbin_a = 0; ///< (~lit1 | lit2) of the last replace() call
-        int32_t last_eqbin_b = 0; ///< (lit1 | ~lit2) of the last replace() call
 
         //Stats
         void printReplaceStats() const;
