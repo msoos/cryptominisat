@@ -2092,7 +2092,7 @@ bool OccSimplifier::gate_based_eqlit() {
     }
 
     vector<Lit> finalLits;
-    auto myadd = [&](Lit l, Lit l2) {
+    auto myadd = [&](Lit l, Lit l2, const vector<int32_t>& hints) {
         finalLits.clear();
         finalLits.push_back(l);
         finalLits.push_back(l2);
@@ -2102,6 +2102,8 @@ bool OccSimplifier::gate_based_eqlit() {
             , nullptr //orig stats
             , false //Should clause be attached if long?
             , &finalLits //Return final set of literals here
+            , true, lit_Undef, false, false
+            , &hints
         );
         assert(newCl == nullptr);
 
@@ -2110,6 +2112,27 @@ bool OccSimplifier::gate_based_eqlit() {
             n_occurs[finalLits[1].toInt()]++;
             added_irred_bin.push_back({finalLits[0], finalLits[1], solver->clauseID});
         }
+    };
+
+    // The gate's "<-" half: the binaries (rhs v ~l) for every l on the LHS.
+    // They are what forces the LHS false once rhs is, so the RUP chains below
+    // need their IDs. Returns false if any is gone (a unit may have satisfied
+    // it since the gates were found) -- then we skip the equivalence.
+    vector<int32_t> hints1, hints2;
+    auto gate_bin_ids = [&](const OrGate& g, vector<int32_t>& out) -> bool {
+        out.clear();
+        for(const Lit l: g.lits) {
+            bool found = false;
+            for(const Watched& w: solver->watches[g.rhs]) {
+                if (w.isBin() && !w.red() && w.lit2() == ~l) {
+                    out.push_back(w.get_id());
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
     };
 
     // Check if any equvalent
@@ -2124,9 +2147,14 @@ bool OccSimplifier::gate_based_eqlit() {
             if (g2.lits == g.lits) {
                 // rhs must be equivalent
                 if (g2.rhs == g.rhs) continue;
-                myadd(g.rhs, ~g2.rhs);
+                if (!gate_bin_ids(g, hints1) || !gate_bin_ids(g2, hints2)) continue;
+                //(g.rhs v ~g2.rhs): g's binaries force the LHS false, then
+                //g2's defining clause conflicts. And the other way around.
+                hints1.push_back(g2.id);
+                hints2.push_back(g.id);
+                myadd(g.rhs, ~g2.rhs, hints1);
                 if (!solver->okay()) goto end;
-                myadd(~g.rhs, g2.rhs);
+                myadd(~g.rhs, g2.rhs, hints2);
                 if (!solver->okay()) goto end;
                 eq++;
             }
