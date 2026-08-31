@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     try {
         Main main(argc, argv);
         main.conf.verbosity = 1;
-        main.conf.simplify_at_startup = 1;
+        main.conf.ssimplify_at_startup = 1;
         main.conf.verbStats = 2;
         main.parseCommandLine();
 
