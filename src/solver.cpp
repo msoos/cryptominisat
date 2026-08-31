@@ -2701,19 +2701,6 @@ void Solver::free_unused_watches()
     }
 }
 
-bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
-{
-    assert(ok);
-    assert(decisionLevel() == 0);
-    for(const auto& lit: toEnqueue) {
-        if (!fully_enqueue_this(lit)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 //Strict hints for the UP-implied bin (a v b), derived by propagating
 //{~a, ~b} at a fresh decision level. Trail is restored.
 void Solver::prop_hints_for_bin(const Lit a, const Lit b, vector<int32_t>& hints)

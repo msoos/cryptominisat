@@ -340,7 +340,6 @@ class Searcher : public HyperEngine
         void update_glue_from_analysis(Clause* cl);
         template<bool inprocess>
         void minimize_learnt_clause();
-        void minimize_using_bins();
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);

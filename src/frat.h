@@ -31,16 +31,6 @@ THE SOFTWARE.
 
 using std::vector;
 
-#if 0
-#define FRAT_PRINT(...) \
-    do { \
-        const uint32_t tmp_num = sprintf((char*)buf_ptr, __VA_ARGS__); \
-        buf_ptr+=tmp_num; \
-        buf_len+=tmp_num; \
-    } while (0)
-#else
-#define FRAT_PRINT(...) do {} while (0)
-#endif
 
 namespace CMSat {
 
@@ -71,16 +61,16 @@ public:
     virtual FILE* getFile() { return nullptr; }
     virtual void flush() {}
     virtual bool incremental() {return false;}
-
-    int buf_len;
-    unsigned char* drup_buf = nullptr;
-    unsigned char* buf_ptr = nullptr;
 };
 
 template<bool binfrat = false>
 class FratFile: public Frat
 {
 public:
+    int buf_len;
+    unsigned char* drup_buf = nullptr;
+    unsigned char* buf_ptr = nullptr;
+
     FratFile(vector<uint32_t>& _inter_to_outerMain) :
         inter_to_outerMain(_inter_to_outerMain)
     {
@@ -197,7 +187,6 @@ public:
                     else { buf_add('0'); buf_add('\n');}
                     if (buf_len > 1048576) { frat_flush(); }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
-                    FRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
                 cl_id = 0;
                 must_delete_next = false;

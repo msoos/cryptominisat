@@ -796,46 +796,6 @@ void Searcher::shrink_learnt_clause()
     stats.shrinkLitRem += removed;
 }
 
-inline void Searcher::minimize_using_bins()
-{
-    if (conf.doMinimRedMore
-        && learnt_clause.size() > 1
-    ) {
-        stats.permDiff_attempt++;
-        stats.moreMinimLitsStart += learnt_clause.size();
-        MYFLAG++;
-        const auto& ws  = watches[~learnt_clause[0]];
-        uint32_t nb = 0;
-        for (const Watched& w: ws) {
-            if (w.isBin()) {
-                Lit imp = w.lit2();
-                if (permDiff[imp.var()] == MYFLAG && value(imp) == l_True) {
-                    nb++;
-                    permDiff[imp.var()] = MYFLAG - 1;
-                }
-            } else {
-                break;
-            }
-        }
-        uint32_t l = learnt_clause.size() - 1;
-        if (nb > 0) {
-            for (uint32_t i = 1; i < learnt_clause.size() - nb; i++) {
-                if (permDiff[learnt_clause[i].var()] != MYFLAG) {
-                    Lit p = learnt_clause[l];
-                    learnt_clause[l] = learnt_clause[i];
-                    learnt_clause[i] = p;
-                    l--;
-                    i--;
-                }
-            }
-            learnt_clause.resize(learnt_clause.size()-nb);
-            stats.permDiff_success++;
-            stats.permDiff_rem_lits+=nb;
-        }
-        stats.moreMinimLitsEnd += learnt_clause.size();
-    }
-}
-
 void Searcher::print_fully_minimized_learnt_clause() const
 {
     if (conf.verbosity >= 6) {
@@ -1279,17 +1239,7 @@ void Searcher::analyze_conflict(
     minimize_learnt_clause<inprocess>();
     stats.litsRedFinal += learnt_clause.size();
 
-    //further minimisation 1 -- short, small glue clauses
-    glue = numeric_limits<uint32_t>::max();
-    if (learnt_clause.size() <= conf.max_size_more_minim) {
-        glue = calc_glue(learnt_clause);
-        if (glue <= conf.max_glue_more_minim) {
-            minimize_using_bins();
-        }
-    }
-    if (glue == numeric_limits<uint32_t>::max()) {
-        glue = calc_glue(learnt_clause);
-    }
+    glue = calc_glue(learnt_clause);
     print_fully_minimized_learnt_clause();
 
     if (glue <= (conf.glue_put_lev0_if_below_or_eq+2)) {
@@ -1572,9 +1522,6 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
     }
     seen[p.var()] = 0;
 
-    learnt_clause = out_conflict;
-    minimize_using_bins();
-    out_conflict = learnt_clause;
 }
 
 void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
