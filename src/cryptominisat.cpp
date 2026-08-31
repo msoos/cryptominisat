@@ -1415,7 +1415,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 1.5;
         conf.min_bva_gain = 1;
-        conf.doSLS = false;
         conf.xor_finder_time_limitM = 400;
 //         conf.polar_stable_every_n = 100000; //i.e. never
         uint32_t xor_cut = 4;
