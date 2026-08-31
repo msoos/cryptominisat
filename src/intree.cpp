@@ -352,19 +352,6 @@ void InTree::capture_failed_hints(
     failed_hints.emplace_back();
     FailedHints& h = failed_hints.back();
     h.unit_id = ++solver->clauseID;
-    #ifdef DEBUG_FRAT
-    if (getenv("CMS_DBG_CAPTURE") && h.unit_id == atoi(getenv("CMS_DBG_CAPTURE"))) {
-        cout << "CAPTURE unit_id=" << h.unit_id << " lit=" << lit
-             << " other=" << other_lit << " edge=" << edge_id
-             << " parfail=" << par_fail << " confl-null=" << confl.isnullptr() << endl;
-        for(uint32_t i2 = solver->trail_begin_of_level(0); i2 < solver->trail_size(); i2++) {
-            const Lit tl = solver->trail_at(i2);
-            cout << "  trail[" << i2 << "] " << tl
-                 << " lev=" << solver->varData[tl.var()].level
-                 << " reason=" << solver->varData[tl.var()].reason << endl;
-        }
-    }
-    #endif
     *solver->frat << add << h.unit_id << ~lit << fratchain;
     if (par_fail) {
         //parent's failed unit was emitted at its own capture
