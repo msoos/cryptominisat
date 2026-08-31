@@ -264,6 +264,7 @@ private:
         std::pair<int32_t, int32_t> parents; ///< FRAT hints
     };
     vector<Tri> cl_to_add_ternary;
+    vector<ClOffset> tern_res_offs;
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to

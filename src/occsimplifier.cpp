@@ -2679,10 +2679,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
             solver->red_stats_extra.push_back(stats_extra);
             newCl->stats.extra_pos = solver->red_stats_extra.size()-1;
             #endif
-            ClOffset off = solver->cl_alloc.get_offset(newCl);
-            if (!sub_str->backw_sub_str_with_long(off, sub1_ret)) {
-                return false;
-            }
+            tern_res_offs.push_back(solver->cl_alloc.get_offset(newCl));
         } else {
             if (!solver->okay()) return false;
         }
@@ -2690,6 +2687,17 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         ternary_res_cls_limit--;
     }
     cl_to_add_ternary.clear();
+
+    //sub-str only after ALL adds: it can delete a parent of a queued resolvent
+    for(const ClOffset off: tern_res_offs) {
+        const Clause* c = solver->cl_alloc.ptr(off);
+        if (c->freed() || c->get_removed()) continue;
+        if (!sub_str->backw_sub_str_with_long(off, sub1_ret)) {
+            tern_res_offs.clear();
+            return false;
+        }
+    }
+    tern_res_offs.clear();
 
     return solver->okay();
 }
