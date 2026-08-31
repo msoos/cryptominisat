@@ -483,7 +483,13 @@ public:
         return *this;
     }
 
-    Frat& operator<<(const char*) override { return *this; }
+    Frat& operator<<([[maybe_unused]] const char* str) override
+    {
+        #ifdef DEBUG_FRAT
+        if (file) fprintf(file, "c %s", str);
+        #endif
+        return *this;
+    }
     Frat& operator<<(const FratOutcome) override { return *this; }
 
     Frat& operator<<(const FratFlag flag) override
