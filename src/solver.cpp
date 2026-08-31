@@ -2701,58 +2701,49 @@ void Solver::free_unused_watches()
     }
 }
 
-//Strict hints for the UP-implied bin (a v b), derived by propagating
-//{~a, ~b} at a fresh decision level. Trail is restored.
 void Solver::prop_hints_for_bin(const Lit a, const Lit b, vector<int32_t>& hints)
 {
-    assert(frat->enabled());
-    assert(decisionLevel() == 0);
-    hints.clear();
-    //subsumed by an existing unit?
-    if (value(a) == l_True) {
-        assert(unit_cl_IDs[a.var()] != 0);
-        hints.push_back(unit_cl_IDs[a.var()]);
-        return;
-    }
-    if (value(b) == l_True) {
-        assert(unit_cl_IDs[b.var()] != 0);
-        hints.push_back(unit_cl_IDs[b.var()]);
-        return;
-    }
-
-    new_decision_level();
-    const uint32_t seg = trail.size();
-    if (value(a) == l_Undef) enqueue<true>(~a);
-    if (value(b) == l_Undef) enqueue<true>(~b);
-    const PropBy p = propagate<true>();
-
-    vector<int32_t> rsns;
-    collect_trail_seg_hints(seg, hints, rsns);
-    int32_t cid = 0;
-    if (!p.isnullptr()) cid = get_confl_id(p, hints);
-    //~a and/or ~b may hold at level 0 already
-    if (value(a) == l_False && varData[a.var()].level == 0)
-        hints.push_back(unit_cl_IDs[a.var()]);
-    if (value(b) == l_False && varData[b.var()].level == 0)
-        hints.push_back(unit_cl_IDs[b.var()]);
-    cancelUntil<false, true>(0);
-    assert(cid != 0 && "the bin was not UP-implied");
-    hints.insert(hints.end(), rsns.begin(), rsns.end());
-    hints.push_back(cid);
+    const vector<Lit> lits = {a, b};
+    release_assert(prop_hints_for_cl(lits, hints) && "the bin was not UP-implied");
 }
 
-//Strict hints for the UP-implied unit (a), derived by propagating ~a at a
-//fresh decision level. Trail is restored.
-void Solver::prop_hints_for_unit(const Lit a, vector<int32_t>& hints)
+//Units + propagation reasons of trail[start..) in order, then the
+//conflicting clause (if any) last
+void Solver::collect_seg_chain(const uint32_t start, const PropBy confl,
+                               vector<int32_t>& out)
+{
+    out.clear();
+    vector<int32_t> rsns;
+    collect_trail_seg_hints(start, out, rsns);
+    int32_t cid = 0;
+    if (!confl.isnullptr()) cid = get_confl_id(confl, out);
+    out.insert(out.end(), rsns.begin(), rsns.end());
+    if (cid != 0) out.push_back(cid);
+}
+
+//Strict hints for a UP-implied clause: assume the negation of each of its
+//lits at a fresh decision level, propagate, collect the derivation.
+//Trail is restored. Returns false if propagation did not conflict.
+bool Solver::prop_hints_for_cl(const vector<Lit>& cl_lits, vector<int32_t>& hints)
 {
     assert(frat->enabled());
     assert(decisionLevel() == 0);
-    assert(value(a) == l_Undef);
     hints.clear();
+
+    //subsumed by an existing unit?
+    for(const Lit l: cl_lits) {
+        if (value(l) == l_True) {
+            assert(unit_cl_IDs[l.var()] != 0);
+            hints.push_back(unit_cl_IDs[l.var()]);
+            return true;
+        }
+    }
 
     new_decision_level();
     const uint32_t seg = trail.size();
-    enqueue<true>(~a);
+    for(const Lit l: cl_lits) {
+        if (value(l) == l_Undef) enqueue<true>(~l);
+    }
     //plain propagation: distill_use would skip intree-marked bins
     const PropBy p = propagate<true>();
 
@@ -2760,10 +2751,23 @@ void Solver::prop_hints_for_unit(const Lit a, vector<int32_t>& hints)
     collect_trail_seg_hints(seg, hints, rsns);
     int32_t cid = 0;
     if (!p.isnullptr()) cid = get_confl_id(p, hints);
+    //some lits may be false at level 0 already
+    for(const Lit l: cl_lits) {
+        if (value(l) == l_False && varData[l.var()].level == 0)
+            hints.push_back(unit_cl_IDs[l.var()]);
+    }
     cancelUntil<false, true>(0);
-    release_assert(cid != 0 && "the unit was not UP-implied");
+    if (cid == 0) return false;
     hints.insert(hints.end(), rsns.begin(), rsns.end());
     hints.push_back(cid);
+    return true;
+}
+
+void Solver::prop_hints_for_unit(const Lit a, vector<int32_t>& hints)
+{
+    assert(value(a) == l_Undef);
+    const vector<Lit> lits = {a};
+    release_assert(prop_hints_for_cl(lits, hints) && "the unit was not UP-implied");
 }
 
 //Emit `add id (a v b)` with strict propagation-derived hints

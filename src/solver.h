@@ -213,8 +213,10 @@ class Solver : public Searcher
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_this(const Lit lit, const vector<int32_t>* hints = nullptr);
         void emit_bin_by_prop(const int32_t id, const Lit a, const Lit b);
+        bool prop_hints_for_cl(const vector<Lit>& cl_lits, vector<int32_t>& hints);
         void prop_hints_for_bin(const Lit a, const Lit b, vector<int32_t>& hints);
         void prop_hints_for_unit(const Lit a, vector<int32_t>& hints);
+        void collect_seg_chain(uint32_t start, const PropBy confl, vector<int32_t>& out);
 
         //State load/unload
         string serialize_solution_reconstruction_data() const;

@@ -115,20 +115,6 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     propStats.bogoProps+=2;
     const bool fr = frat->enabled();
 
-    //FRAT chain of a finished probe: units, reasons in trail order, and the
-    //conflicting clause if any. Needs full propagation so reasons are set.
-    const auto capture_probe_chain =
-        [&](const uint32_t start, const PropBy confl, vector<int32_t>& out)
-    {
-        out.clear();
-        vector<int32_t> rsns;
-        collect_trail_seg_hints(start, out, rsns);
-        int32_t cid = 0;
-        if (!confl.isnullptr()) cid = get_confl_id(confl, out);
-        out.insert(out.end(), rsns.begin(), rsns.end());
-        if (cid != 0) out.push_back(cid);
-    };
-
     //Probe l
     uint32_t old_trail_size = trail.size();
     new_decision_level();
@@ -151,7 +137,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         seen[var] = 1+(int)trail[i].lit.sign();
         seen2[var] |= 1+(int)trail[i].lit.sign();
     }
-    if (fr) capture_probe_chain(old_trail_size, p, probe_hints_pos);
+    if (fr) collect_seg_chain(old_trail_size, p, probe_hints_pos);
     cancelUntil_light();
 
     //Check result
@@ -190,7 +176,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
             probe_inter_tmp.push_back(~lit);
         }
     }
-    if (fr) capture_probe_chain(old_trail_size, p, probe_hints_neg);
+    if (fr) collect_seg_chain(old_trail_size, p, probe_hints_neg);
     cancelUntil_light();
 
     //Check result
