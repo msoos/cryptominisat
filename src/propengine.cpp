@@ -782,7 +782,8 @@ PropBy PropEngine::propagate_any_order()
     }
 
     #ifdef SLOW_DEBUG
-    if (confl.isnullptr()) {
+    //GJE is skipped above during distillation, so rows may be prop-pending
+    if (!distill_use && confl.isnullptr()) {
         for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].disabled) continue;
             gmatrices[g]->check_invariants();
