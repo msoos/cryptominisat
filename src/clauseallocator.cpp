@@ -313,7 +313,7 @@ void ClauseAllocator::consolidate(
             //yes, it can be 0 (only binary clauses, for example)
             log_2_size = std::log2(size);
         }
-        cout << solver->conf.prefix << "[mem] consolidate ";
+        cout << solver->conf.prefix << "[mem] consolidate";
         cout << " old-sz: " << print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE))
         << " new-sz: " << print_value_kilo_mega(size*sizeof(BASE_DATA_TYPE))
         << " new bits offs: " << std::fixed << std::setprecision(2) << log_2_size;

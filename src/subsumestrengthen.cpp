@@ -290,9 +290,9 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
     << " sub: " << ret.sub
     << " str: " << ret.str
     << " tried: " << wenThrough << "/" << simplifier->clauses.size()
-    << " ("
+    << " (" << std::setprecision(1) << std::fixed
     << stats_line_percent(wenThrough, simplifier->clauses.size())
-    << ") "
+    << "%)"
     << solver->conf.print_times(time_used, time_out, time_remain));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -457,10 +457,10 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
         const double time_used = cpu_time() - start_time;
         const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
         verb_print(1,
-            "[occ-backw-sub-str-w-added-long] "
+            "[occ-backw-sub-str-w-added-long]"
             << " sub: " << stat.sub
             << " str: " << stat.str
-            << " 0-depth ass: " << solver->trail_size() - origTrailSize
+            << " 0-depth-assigns: " << solver->trail_size() - origTrailSize
             << solver->conf.print_times(time_used, time_out, time_remain));
         if (solver->sqlStats) {
             solver->sqlStats->time_passed(
@@ -878,7 +878,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         << " subs: " << subsumedBin
         << " str: " << strBin
         << " tried: " << tried_bin_tri
-        << " 0-depth ass: " << solver->trail_size() - origTrailSize
+        << " 0-depth-assigns: " << solver->trail_size() - origTrailSize
         << solver->conf.print_times(time_used, time_out, time_remain));
 
     if (solver->sqlStats) {

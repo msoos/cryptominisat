@@ -449,7 +449,7 @@ void DistillerLongWithImpl::Stats::WatchBased::print_short(
 {
     verb_print(1, "[distill] watch-based "
     << std::setw(5) << type
-    << "-- "
+    << "--"
     << " cl tried " << std::setw(8) << triedCls
     << " cl-sh " << std::setw(5) << shrinked
     << " cl-rem " << std::setw(4) << numClSubsumed

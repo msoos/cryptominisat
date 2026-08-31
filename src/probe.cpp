@@ -88,12 +88,12 @@ bool Solver::full_probe(const bool bin_only)
     const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
 
     verb_print(1,
-        "[full-probe] "
+        "[full-probe]"
         << " bin_only: " << bin_only
         << " set: "
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " repl: " << (varReplacer->get_num_replaced_vars() - orig_repl)
-        << solver->conf.print_times(time_used,  time_out, time_remain));
+        << solver->conf.print_times(time_used, time_out, time_remain));
 
 
     if (solver->sqlStats) {

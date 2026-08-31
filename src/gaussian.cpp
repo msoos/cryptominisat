@@ -1168,9 +1168,9 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
         << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
         << "% confl "
         << stats_line_percent(find_truth_ret_confl, find_truth_called_propgause)
-        << "%) elim: " << print_value_kilo_mega(elim_called, false)
-        << " (prop " << stats_line_percent(elim_ret_prop, elim_called)
-        << "% confl " << stats_line_percent(elim_ret_confl, elim_called)
+        << "%) elim: " << print_value_kilo_mega(elim_called_propgause, false)
+        << " (prop " << stats_line_percent(elim_ret_prop, elim_called_propgause)
+        << "% confl " << stats_line_percent(elim_ret_confl, elim_called_propgause)
         << "%)" << endl;
         cout << std::setprecision(2) << std::defaultfloat;
         return;
@@ -1250,9 +1250,7 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
     }
 
     cout << std::left;
-    cout << pre << "size: "
-    << std::setw(5) << num_rows << " x "
-    << std::setw(5) << num_cols << endl;
+    cout << pre << "size: " << num_rows << " x " << num_cols << endl;
 
     double density = get_density();
 

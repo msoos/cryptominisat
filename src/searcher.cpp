@@ -3506,7 +3506,7 @@ void Searcher::consolidate_watches(const bool full)
         watches.consolidate();
     }
     double time_used = cpu_time() - t;
-    verb_print(1, "[consolidate] "
+    verb_print(1, "[mem] consolidate "
     << (full ? "full" : "mini")
     << conf.print_times(time_used));
 

@@ -3437,7 +3437,8 @@ bool OccSimplifier::find_irreg_gate(
     // Too expensive
     if (turned_off_irreg_gate || picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
         if (!turned_off_irreg_gate) {
-            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection, added lits: " << print_value_kilo_mega(picolits_added));
+            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection, added lits: "
+                << print_value_kilo_mega(picolits_added, false));
         }
         turned_off_irreg_gate = true;
         return false;

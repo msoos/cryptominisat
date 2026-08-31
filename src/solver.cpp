@@ -1113,13 +1113,13 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
             verb_print(1,
                 "recursive minimization too costly: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
-                << "Kcost/(% lits removed) --> disabling"
+                << "K cost/(% lits removed) --> disabling"
                 << std::setprecision(2));
         } else {
             verb_print(1,
                 "recursive minimization cost OK: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
-                << "Kcost/(% lits removed)"
+                << "K cost/(% lits removed)"
                 << std::setprecision(2));
         }
     }
@@ -1958,7 +1958,8 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
             conf.global_timeout_multiplier,
             conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
         );
-    verb_print(1, "global_timeout_multiplier: " << std::setprecision(4) <<  conf.global_timeout_multiplier);
+    verb_print(1, "[timeout] global_timeout_multiplier: "
+        << std::setprecision(4) << conf.global_timeout_multiplier);
 
     solveStats.num_simplify++;
     solveStats.num_simplify_this_solve_call++;
@@ -3172,7 +3173,7 @@ bool Solver::find_and_init_all_matrices() {
     frat_func_start();
     if (!xorclauses_updated) {
         if (conf.verbosity >= 2) {
-            cout << "c [find&init matx] XORs not updated-> not performing matrix init. Matrices: "
+            cout << "c [matrix] XORs not updated -> not performing matrix init. Matrices: "
                 << gmatrices.size() << endl;
         }
         return true;
@@ -3180,7 +3181,7 @@ bool Solver::find_and_init_all_matrices() {
     if (!clear_gauss_matrices(false)) return false; //attaches XORs actually
     detach_clauses_in_xors();
 
-    verb_print(1, "[find&init matx] performing matrix init");
+    verb_print(1, "[matrix] performing matrix init");
     MatrixFinder mfinder(solver);
     bool matrix_created;
     ok = mfinder.find_matrices(matrix_created);

@@ -279,7 +279,7 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
 void DistillerBin::Stats::print_short(const Solver* solver) const
 {
     verb_print(1, "[distill-bin]"
-    << " useful: "<< numClShorten+clRemoved
+    << " useful/checked/potential: " << numClShorten+clRemoved
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " cl-rem: " << clRemoved
