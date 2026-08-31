@@ -54,13 +54,6 @@ void SLS::run(const int64_t mems)
 {
     assert(solver->decisionLevel() == 0);
 
-    //Local search does not do well on tiny formulas
-    if (solver->nVars() < 50 ||
-        solver->binTri.irredBins + solver->longIrredCls.size() < 10)
-    {
-        verb_print(1, "[sls] too few variables & clauses");
-        return;
-    }
     if (!enough_mem()) return;
 
     const double my_time = cpu_time();
