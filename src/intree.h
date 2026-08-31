@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 #include <vector>
 #include <deque>
-#include <map>
 using std::vector;
 using std::deque;
 
@@ -91,17 +90,6 @@ private:
 
     vector<Lit> roots;
     vector<Lit> failed;
-    //FRAT: each entry of `failed` gets its unit emitted at capture time
-    struct FailedHints {
-        int32_t unit_id = 0;
-    };
-    vector<FailedHints> failed_hints;
-    std::map<uint32_t, int32_t> failed_ids; ///< var -> emitted failed-unit ID
-    void capture_failed_hints(const Lit lit, const Lit other_lit,
-                              const int32_t edge_id, const bool par_fail,
-                              const PropBy confl);
-    void ancestor_chain(const Lit t, vector<int32_t>& out);
-    vector<int32_t> tmp_walk;
     vector<ResetReason> reset_reason_stack;
     deque<QueueElem> queue;
     vector<char> depth_failed;

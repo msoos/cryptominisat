@@ -215,6 +215,7 @@ class Solver : public Searcher
         bool fully_enqueue_this(const Lit lit, const vector<int32_t>* hints = nullptr);
         void emit_bin_by_prop(const int32_t id, const Lit a, const Lit b);
         void prop_hints_for_bin(const Lit a, const Lit b, vector<int32_t>& hints);
+        void prop_hints_for_unit(const Lit a, vector<int32_t>& hints);
 
         //State load/unload
         string serialize_solution_reconstruction_data() const;

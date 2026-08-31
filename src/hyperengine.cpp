@@ -438,7 +438,6 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
 //Analyze why did we fail at decision level 1
 Lit HyperEngine::analyzeFail(const PropBy propBy)
 {
-    last_bfs_confl = propBy;
     //Clear out the datastructs we will be usin
     currAncestors.clear();
 

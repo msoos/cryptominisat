@@ -217,6 +217,11 @@ bool DistillerBin::try_distill_bin(
                 vector<int32_t> rsns;
                 solver->collect_trail_seg_hints(
                     solver->trail_begin_of_level(0), hints, rsns);
+                //lit2 may be false at level 0 already
+                if (solver->varData[lit2.var()].level == 0) {
+                    assert(solver->unit_cl_IDs[lit2.var()] != 0);
+                    hints.push_back(solver->unit_cl_IDs[lit2.var()]);
+                }
                 hints.insert(hints.end(), rsns.begin(), rsns.end());
                 hints.push_back(w.get_id());
             }

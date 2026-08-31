@@ -2754,6 +2754,31 @@ void Solver::prop_hints_for_bin(const Lit a, const Lit b, vector<int32_t>& hints
     hints.push_back(cid);
 }
 
+//Strict hints for the UP-implied unit (a), derived by propagating ~a at a
+//fresh decision level. Trail is restored.
+void Solver::prop_hints_for_unit(const Lit a, vector<int32_t>& hints)
+{
+    assert(frat->enabled());
+    assert(decisionLevel() == 0);
+    assert(value(a) == l_Undef);
+    hints.clear();
+
+    new_decision_level();
+    const uint32_t seg = trail.size();
+    enqueue<true>(~a);
+    //plain propagation: distill_use would skip intree-marked bins
+    const PropBy p = propagate<true>();
+
+    vector<int32_t> rsns;
+    collect_trail_seg_hints(seg, hints, rsns);
+    int32_t cid = 0;
+    if (!p.isnullptr()) cid = get_confl_id(p, hints);
+    cancelUntil<false, true>(0);
+    release_assert(cid != 0 && "the unit was not UP-implied");
+    hints.insert(hints.end(), rsns.begin(), rsns.end());
+    hints.push_back(cid);
+}
+
 //Emit `add id (a v b)` with strict propagation-derived hints
 void Solver::emit_bin_by_prop(const int32_t id, const Lit a, const Lit b)
 {

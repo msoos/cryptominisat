@@ -59,7 +59,6 @@ public:
     void  add_hyper_bin(Lit p, const Clause& cl);
 
     //FRAT
-    PropBy last_bfs_confl; ///< conflict that made propagate_bfs fail
     struct GhostBin { int32_t id; Lit l1; Lit l2; };
     vector<GhostBin> ghost_hyper_bins; ///< emitted but never-attached hyper-bins
     void flush_ghost_hyper_bins() {

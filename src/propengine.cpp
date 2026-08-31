@@ -1170,20 +1170,6 @@ void PropEngine::collect_trail_seg_hints(
     }
 }
 
-//FRAT: reasons of all current decisions, deepest first. During intree these
-//are the rewired tree-edge bins
-void PropEngine::collect_decision_reasons(vector<int32_t>& out, const uint32_t skip_var)
-{
-    for(int32_t i = (int32_t)trail_lim.size()-1; i >= 0; i--) {
-        if (trail_lim[i] >= trail.size()) continue; //empty level
-        const Lit d = trail[trail_lim[i]].lit;
-        if (d.var() == skip_var) continue;
-        const PropBy r = varData[d.var()].reason;
-        if (r.isnullptr()) continue;
-        out.push_back(r.get_id());
-    }
-}
-
 //ID of a reason clause; its level-0 lits' unit IDs go to `units`
 int32_t PropEngine::get_reason_id(const PropBy r, vector<int32_t>& units)
 {

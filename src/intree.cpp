@@ -281,8 +281,6 @@ bool InTree::handle_lit_popped_from_queue(
         || depth_failed.back() == 1
     ) {
         //l is failed.
-        if (solver->frat->enabled())
-            capture_failed_hints(lit, other_lit, ID, depth_failed.back() == 1, PropBy());
         failed.push_back(~lit);
         verb_print(10,"Failed :" << ~lit << " level: " << solver->decisionLevel());
         return false;
@@ -320,12 +318,14 @@ bool InTree::handle_lit_popped_from_queue(
 
         if (!ok && !timeout) {
             depth_failed.back() = 1;
-            if (solver->frat->enabled())
-                capture_failed_hints(lit, other_lit, ID, false, solver->last_bfs_confl);
             failed.push_back(~lit);
             if (solver->conf.verbosity >= 10) {
                 cout << "(timeout?) Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
             }
+            //FRAT: attach the pending hyper-bins even on failure -- they are
+            //what makes the failure visible to plain unit propagation later
+            if (solver->frat->enabled())
+                hyperbin_added += solver->hyper_bin_res_all(false);
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);
             auto [a, b] = solver->remove_useless_bins(true);
@@ -342,95 +342,35 @@ bool InTree::handle_lit_popped_from_queue(
     return timeout;
 }
 
-//Emit the failed unit's `add` right away, while the hint clauses (hyper
-//bins etc.) still exist in the proof. Hints: units, the tree-edge bins
-//(deepest first), then all trail reasons, then the conflict if any
-void InTree::capture_failed_hints(
-    const Lit lit, const Lit other_lit, const int32_t edge_id,
-    const bool par_fail, const PropBy confl)
-{
-    failed_hints.emplace_back();
-    FailedHints& h = failed_hints.back();
-    h.unit_id = ++solver->clauseID;
-    *solver->frat << add << h.unit_id << ~lit << fratchain;
-    if (par_fail) {
-        //parent's failed unit was emitted at its own capture
-        const auto it = failed_ids.find(other_lit.var());
-        assert(it != failed_ids.end());
-        *solver->frat << it->second << edge_id << fin;
-        failed_ids[lit.var()] = h.unit_id;
-        return;
-    }
-
-    //the deepest decision's reason is a stale edge unless `lit` was enqueued
-    //(which rewires it); the edge_id param covers that edge either way
-    const uint32_t skip_var =
-        (confl.isnullptr() && other_lit != lit_Undef) ? other_lit.var() : var_Undef;
-    vector<int32_t> units, edges, cone;
-    if (other_lit != lit_Undef) edges.push_back(edge_id);
-    solver->collect_decision_reasons(edges, skip_var);
-    //BFS trail order is not dependency order (hyper-bin rewiring), so the
-    //cone is collected via ancestor-bin walks instead
-    int32_t cid = 0;
-    if (!confl.isnullptr()) {
-        cid = solver->get_confl_id(confl, units);
-        switch (confl.getType()) {
-            case binary_t:
-                ancestor_chain(~solver->get_fail_bin_lit(), cone);
-                ancestor_chain(~confl.lit2(), cone);
-                break;
-            case clause_t: {
-                const Clause& cl = *solver->cl_alloc.ptr(confl.get_offset());
-                for(const Lit m: cl) ancestor_chain(~m, cone);
-                break;
-            }
-            default: release_assert(false);
-        }
-    } else {
-        //value(lit) was l_False: derive ~lit, conflicting with assumed lit
-        ancestor_chain(~lit, cone);
-    }
-    for(const auto& id: units) *solver->frat << id;
-    for(const auto& id: edges) *solver->frat << id;
-    for(const auto& id: cone) *solver->frat << id;
-    if (cid != 0) *solver->frat << cid;
-    *solver->frat << fin;
-    failed_ids[lit.var()] = h.unit_id;
-}
-
-//The bin chain deriving trail lit t from its level's decision, pushed
-//decision-side first. During intree, all reasons are (ancestor) bins.
-void InTree::ancestor_chain(const Lit t, vector<int32_t>& out)
-{
-    tmp_walk.clear();
-    Lit x = t;
-    uint32_t guard = 0;
-    while (true) {
-        if (solver->value(x) == l_Undef) break;
-        if (solver->varData[x.var()].level == 0) break; //covered by units
-        const PropBy r = solver->varData[x.var()].reason;
-        if (r.isnullptr()) break; //decision, covered by the edges
-        assert(r.getType() == binary_t);
-        tmp_walk.push_back(r.get_id());
-        x = r.getAncestor();
-        release_assert(guard++ <= solver->nVars());
-    }
-    out.insert(out.end(), tmp_walk.rbegin(), tmp_walk.rend());
-}
-
 bool InTree::empty_failed_list()
 {
     assert(solver->decisionLevel() == 0);
     const bool fr = solver->frat->enabled();
-    for(size_t at = 0; at < failed.size(); at++) {
-        const Lit lit = failed[at];
+    if (fr && !failed.empty()) {
+        //Attach pending hyper-bins and surface any level-0 conflict: with
+        //them attached, every tree-derived failure is visible to plain unit
+        //propagation, so the units below can be derived by one propagation.
+        hyperbin_added += solver->hyper_bin_res_all(false);
+        solver->ok = solver->propagate<true>().isnullptr();
+        if (!solver->ok) {
+            failed.clear();
+            return false;
+        }
+    }
+    for(const Lit lit: failed) {
         if (!solver->ok) {
             return false;
         }
 
         if (solver->value(lit) == l_Undef) {
             if (fr) {
-                solver->enqueue_registered_unit<true>(lit, failed_hints[at].unit_id);
+                vector<int32_t> hints;
+                solver->prop_hints_for_unit(lit, hints);
+                const auto id = ++solver->clauseID;
+                *solver->frat << add << id << lit << fratchain;
+                for(const auto& h: hints) *solver->frat << h;
+                *solver->frat << fin;
+                solver->enqueue_registered_unit<true>(lit, id);
             } else {
                 solver->enqueue<true>(lit);
             }
@@ -438,26 +378,16 @@ bool InTree::empty_failed_list()
             if (!solver->ok) {
                 return false;
             }
-        } else if (solver->value(lit) == l_True) {
-            //became set meanwhile, our emitted unit is a redundant copy
-            if (fr) *solver->frat << del << failed_hints[at].unit_id << lit << fin;
-        } else {
-            assert(solver->value(lit) == l_False);
-            *solver->frat << add << ++solver->clauseID;
-            if (fr) {
-                assert(solver->unit_cl_IDs[lit.var()] != 0);
-                *solver->frat << fratchain
-                    << solver->unit_cl_IDs[lit.var()] << failed_hints[at].unit_id;
-            }
-            *solver->frat << fin;
+        } else if (solver->value(lit) == l_False) {
+            //with frat on, the propagation above conflicts instead
+            assert(!fr);
+            *solver->frat << add << ++solver->clauseID << fin;
             set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
             return false;
         }
     }
     failed.clear();
-    failed_hints.clear();
-    failed_ids.clear();
 
     return true;
 }
