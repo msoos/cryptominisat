@@ -44,106 +44,23 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-struct ClauseSizeSorterLargestFirst
+//CaDiCaL's vivify_more_noccs: literal order for the trie effect. Higher
+//Jeroslow-Wang-style score first; ties broken as in CaDiCaL.
+struct LitScoreDescSort
 {
-    ClauseSizeSorterLargestFirst(const ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
+    LitScoreDescSort(const vector<uint64_t>& _lit_scores) :
+        lit_scores(_lit_scores)
     {}
 
-    const ClauseAllocator& cl_alloc;
-
-    bool operator()(const ClOffset off1, const ClOffset off2) const
-    {
-        const Clause* cl1 = cl_alloc.ptr(off1);
-        const Clause* cl2 = cl_alloc.ptr(off2);
-
-        //Correct order if c1's size is larger
-        return cl1->size() > cl2->size();
-    }
-};
-
-#ifdef FINAL_PREDICTOR
-struct ClauseSorterFirstInSolver
-{
-    ClauseSorterFirstInSolver(const ClauseAllocator& _cl_alloc, const vector<ClauseStatsExtra>& _extras) :
-        cl_alloc(_cl_alloc),
-        extras(_extras)
-    {}
-
-    const ClauseAllocator& cl_alloc;
-    const vector<ClauseStatsExtra>& extras;
-
-    bool operator()(const ClOffset off1, const ClOffset off2) const
-    {
-        const Clause* cl1 = cl_alloc.ptr(off1);
-        const Clause* cl2 = cl_alloc.ptr(off2);
-
-        const auto& extra1 = extras[cl1->stats.extra_pos];
-        const auto& extra2 = extras[cl2->stats.extra_pos];
-
-        //Correct order if c1 was introduced earlier goes first
-        return extra1.introduced_at_conflict < extra2.introduced_at_conflict;
-    }
-};
-#endif
-
-struct ClauseSorterSmallGlueFirst
-{
-    ClauseSorterSmallGlueFirst(const ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
-    {}
-
-    const ClauseAllocator& cl_alloc;
-
-    bool operator()(const ClOffset off1, const ClOffset off2) const
-    {
-        const Clause* cl1 = cl_alloc.ptr(off1);
-        const Clause* cl2 = cl_alloc.ptr(off2);
-
-        //Correct order if c1's glue is smaller
-        return cl1->stats.glue < cl2->stats.glue;
-    }
-};
-
-#ifdef FINAL_PREDICTOR
-struct ClauseSorterBestPredFirst
-{
-    ClauseSorterBestPredFirst(const ClauseAllocator& _cl_alloc, vector<ClauseStatsExtra>& _extra_data) :
-        cl_alloc(_cl_alloc),
-        extra_data(_extra_data)
-    {}
-
-    const ClauseAllocator& cl_alloc;
-    const vector<ClauseStatsExtra>& extra_data;
-
-    bool operator()(const ClOffset off1, const ClOffset off2) const
-    {
-        const Clause* cl1 = cl_alloc.ptr(off1);
-        const Clause* cl2 = cl_alloc.ptr(off2);
-        const auto& ext1 = extra_data[cl1->stats.extra_pos];
-        const auto& ext2 = extra_data[cl2->stats.extra_pos];
-
-        if (cl1->size() != cl2->size()) {
-            return cl1->size() > cl2->size();
-        }
-        //Correct order if c1's predicted use is larger
-        return ext1.pred_short_use  > ext2.pred_short_use;
-    }
-};
-#endif
-
-struct LitCountDescSort
-{
-    LitCountDescSort(const vector<uint64_t>& _lit_counts) :
-        lit_counts(_lit_counts)
-    {}
-
-    bool operator()(const Lit& lit1, const Lit& lit2) {
-        return lit_counts[lit1.toInt()] > lit_counts[lit2.toInt()];
+    bool operator()(const Lit& a, const Lit& b) const {
+        const uint64_t n = lit_scores[a.toInt()];
+        const uint64_t m = lit_scores[b.toInt()];
+        if (n != m) return n > m;
+        if (a.var() == b.var()) return !a.sign(); //positive first
+        return a.var() < b.var(); //smaller index first
     }
 
-
-    const vector<uint64_t>& lit_counts;
+    const vector<uint64_t>& lit_scores;
 };
 
 DistillerLong::DistillerLong(Solver* _solver) :
@@ -268,44 +185,10 @@ bool DistillerLong::distill_long_cls_all(
     oldBogoProps = solver->propStats.bogoProps;
     runStats.numCalled += 1;
 
-    //Shuffle only when it's non-learnt run (i.e. also_remove)
-    if (//Don't shuffle when it's very-very large, too expensive
-        offs.size() < 100ULL*1000ULL*1000ULL)
-    {
-        if (solver->conf.distill_sort == 0) {
-            //Nothing
-
-        } else if (solver->conf.distill_sort == 1) {
-            std::sort(offs.begin(),
-                offs.end(),
-                ClauseSizeSorterLargestFirst(solver->cl_alloc)
-            );
-        } else if (solver->conf.distill_sort == 2) {
-            std::sort(offs.begin(), offs.end(), ClauseSorterSmallGlueFirst(solver->cl_alloc));
-        } else if (solver->conf.distill_sort == 3) {
-            #ifdef FINAL_PREDICTOR
-            if (red) {
-                //This ensures fixed order. Otherwise, due to reducedb's ordering clauses around, it'd always be very hectic order, effectively random order
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSorterFirstInSolver(solver->cl_alloc, solver->red_stats_extra)
-                );
-            }
-            #else
-            cout << "ERROR: only distill sort 0, 1 and 2 are recognized" << endl;
-            exit(-1);
-            #endif
-        } else if (solver->conf.distill_sort == 4) {
-            bool rnd_sort = rnd_uint(solver->mtrand, solver->conf.distill_rand_shuffle_order_every_n) == 0;
-            if (rnd_sort) std::shuffle(offs.begin(), offs.end(), solver->mtrand);
-            else std::sort(offs.begin(), offs.end(), ClauseSizeSorterLargestFirst(solver->cl_alloc));
-        }
-    }
-
-    //Prioritize
-    lit_counts.clear();
-    lit_counts.resize(solver->nVars()*2, 0);
+    //Select candidates. prio 0: not checked since their bit was cleared,
+    //as CaDiCaL's 'vivify' bit; prio 1: the rest (irred only)
     vector<ClOffset> todo;
+    vector<uint32_t> todo_prio;
     todo.reserve(offs.size());
     for(uint32_t prio = 0; prio < (red ? 1: 2); prio ++) {
         uint32_t j = 0;
@@ -329,8 +212,8 @@ bool DistillerLong::distill_long_cls_all(
             }
 
             if (ok) {
-                for(const auto& l: *cl) lit_counts[l.toInt()]++;
                 todo.push_back(offs[i]);
+                todo_prio.push_back(prio);
                 VERBOSE_PRINT("Adding this one to TODO");
             } else {
                 offs[j++] = offs[i];
@@ -339,6 +222,50 @@ bool DistillerLong::distill_long_cls_all(
         }
         offs.resize(j);
     }
+
+    //CaDiCaL's noccs: capped Jeroslow-Wang score of each literal over the
+    //candidates. Kept for the whole round; try_distill re-sorts each clause
+    //by it so consecutive clauses share decision prefixes (the trie effect)
+    lit_counts.clear();
+    lit_counts.resize(solver->nVars()*2, 0);
+    for(const ClOffset off: todo) {
+        const Clause& cl = *solver->cl_alloc.ptr(off);
+        const uint64_t score = cl.size() >= 12 ? 1ULL : 1ULL << (12-cl.size());
+        for(const Lit l: cl) lit_counts[l.toInt()] += score;
+    }
+
+    //Sort the schedule as CaDiCaL's vivify_clause_later: unchecked first,
+    //small glue (red), short, then lexicographically by the literal order
+    //so clauses with shared prefixes are tried back-to-back
+    {
+        const LitScoreDescSort lit_sort(lit_counts);
+        vector<vector<Lit>> slits(todo.size());
+        vector<uint32_t> order(todo.size());
+        for(uint32_t i = 0; i < todo.size(); i++) {
+            order[i] = i;
+            const Clause& cl = *solver->cl_alloc.ptr(todo[i]);
+            slits[i].assign(cl.begin(), cl.end());
+            std::sort(slits[i].begin(), slits[i].end(), lit_sort);
+        }
+        std::stable_sort(order.begin(), order.end(),
+            [&](const uint32_t a, const uint32_t b) {
+                if (todo_prio[a] != todo_prio[b]) return todo_prio[a] < todo_prio[b];
+                const Clause& c = *solver->cl_alloc.ptr(todo[a]);
+                const Clause& d = *solver->cl_alloc.ptr(todo[b]);
+                if (red && c.stats.glue != d.stats.glue)
+                    return c.stats.glue < d.stats.glue;
+                if (c.size() != d.size()) return c.size() < d.size();
+                for(uint32_t i = 0; i < c.size(); i++) {
+                    if (slits[a][i] != slits[b][i])
+                        return lit_sort(slits[a][i], slits[b][i]);
+                }
+                return false;
+            });
+        vector<ClOffset> todo2(todo.size());
+        for(uint32_t i = 0; i < todo.size(); i++) todo2[i] = todo[order[i]];
+        todo = std::move(todo2);
+    }
+
     const uint32_t orig_todo_size = todo.size();
     runStats.potentialClauses += orig_todo_size;
 
@@ -428,6 +355,9 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
     }
     cls.resize(kept);
 
+    //decisions may have been left in place for reuse between candidates
+    solver->cancelUntil<false, true>(0);
+
     frat_func_end();
     return time_out;
 }
@@ -438,58 +368,80 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 ) {
     frat_func_start();
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
     bool True_confl = false;
     PropBy confl;
 
     //Disable this clause
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    Lit cl_lit1 = cl[0];
-    Lit cl_lit2 = cl[1];
+    const Lit cl_lit1 = cl[0];
+    const Lit cl_lit2 = cl[1];
+    const uint32_t orig_size = cl.size();
     cl.disabled = true;
     *solver->frat << deldelay << cl << fin;
     const bool red = cl.red();
     if (red) assert(!also_remove);
     VERBOSE_PRINT("Trying to distill clause:" << cl);
 
-    uint32_t orig_size = cl.size();
-    uint32_t i = 0;
-    uint32_t j = 0;
-    uint32_t seg_start = 0;
+    const auto remove_cl = [&]() {
+        solver->cancelUntil<false, true>(0);
+        solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
+        *solver->frat << findelay;
+        solver->free_cl(offset);
+        runStats.clRemoved++;
+        frat_func_end();
+        return CL_OFFSET_MAX;
+    };
+
+    //Copy the non-fixed literals to 'sorted', as CaDiCaL's vivify_clause.
+    //Fixed-true: clause is satisfied; fixed-false: drop with a unit hint
     hint_units.clear();
-    for (uint32_t sz = cl.size(); i < sz; i++) {
-        if (solver->value(cl[i]) == l_True) goto rem;
-        if (solver->value(cl[i]) == l_Undef) cl[j++] = cl[i];
-        else if (solver->frat->enabled()) {
-            //dropped level-0 false lit, hint its unit clause
-            hint_units.push_back(solver->unit_cl_IDs[cl[i].var()]);
+    sorted.clear();
+    for (const Lit l: cl) {
+        const lbool val = solver->value(l);
+        if (val != l_Undef && solver->varData[l.var()].level == 0) {
+            if (val == l_True) return remove_cl();
+            if (solver->frat->enabled())
+                hint_units.push_back(solver->unit_cl_IDs[l.var()]);
+        } else {
+            sorted.push_back(l);
         }
     }
-    cl.resize(j);
-    assert(cl.size() > 1); //this must have already been propagated
+    assert(sorted.size() > 1); //fixed-false lits must have been propagated
 
-    solver->new_decision_level();
-    seg_start = solver->getTrailSize();
-    i = 0;
-    j = 0;
+    //Sort by the global literal order so the decision prefix lines up
+    //with the previous candidate's
+    std::sort(sorted.begin(), sorted.end(), LitScoreDescSort(lit_counts));
 
-    // Sort them differently once in a while, so all literals have a chance of
-    // being removed
-    if (solver->conf.distill_sort == 4 &&
-        cl.size() < 500) //Don't sort them if they are too large, it can be really slow
-    {
-        //Sort them differently once in a while, so all literals have a chance of
-        //being removed
-        if (offset % 2  == 0) std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
-        else std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
+    //If this clause forced one of its literals on the reused trail, it may
+    //not be used to prove itself redundant: backtrack below that level
+    if (solver->decisionLevel() > 0 && solver->clause_locked(cl, offset)) {
+        assert(solver->varData[cl[0].var()].level > 0);
+        solver->cancelUntil<false, true>(solver->varData[cl[0].var()].level - 1);
     }
 
-    for (uint32_t sz = cl.size(); i < sz; i++) {
-        const Lit lit = cl[i];
-        lbool val = solver->value(lit);
+    //Reuse the decisions of the previous candidate as long as they match
+    //our sorted literals, as CaDiCaL does (the trie effect)
+    if (solver->decisionLevel() > 0) {
+        uint32_t match = 0;
+        for (const Lit l: sorted) {
+            if (match >= solver->decisionLevel()) break;
+            const Lit dec = solver->trail_at(solver->trail_begin_of_level(match));
+            if (dec == ~l) match++;
+            else break;
+        }
+        if (match < solver->decisionLevel()) solver->cancelUntil<false, true>(match);
+    }
+
+    const uint32_t seg_start =
+        solver->decisionLevel() > 0 ? solver->trail_begin_of_level(0) : solver->getTrailSize();
+    uint32_t num_dropped = orig_size - sorted.size(); //fixed-false lits
+    kept_lits.clear();
+    for (const Lit lit: sorted) {
+        const lbool val = solver->value(lit);
         if (val == l_Undef) {
+            solver->new_decision_level();
             solver->enqueue<true>(~lit);
-            cl[j++] = cl[i];
+            kept_lits.push_back(lit);
 
             maxNumProps -= 5;
             if (!red && also_remove) {
@@ -501,86 +453,46 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             }
             if (!confl.isnullptr()) break;
         } else if (val == l_False) {
-            // if we don't want to shorten, then don't remove literals
-            if (only_remove) cl[j++] = cl[i];
+            if (solver->varData[lit.var()].reason.isnullptr()) {
+                //one of our own (possibly reused) decisions
+                kept_lits.push_back(lit);
+            } else if (only_remove) {
+                // if we don't want to shorten, then don't remove literals
+                kept_lits.push_back(lit);
+            } else {
+                num_dropped++;
+            }
         } else {
             assert(val == l_True);
-            cl[j++] = cl[i];
+            kept_lits.push_back(lit);
             True_confl = true;
-            confl = solver->varData[cl[i].var()].reason;
+            confl = solver->varData[lit.var()].reason;
             break;
         }
     }
     assert(solver->ok);
-    cl.resize(j);
 
-    //Actually, we can remove the clause!
     VERBOSE_PRINT("also_remove: " << also_remove
         << "red: " << red
         << "True_confl: " << True_confl
         << "confl.isnullptr(): " << confl.isnullptr());
 
-
+    //Actually, we can remove the clause!
     if (also_remove && !red && !True_confl && !confl.isnullptr()) {
         VERBOSE_PRINT("CL Removed.");
-        rem:
-        solver->cancelUntil<false, true>(0);
-        solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-        *solver->frat << findelay;
-        solver->free_cl(offset);
-        runStats.clRemoved++;
-        frat_func_end();
-        return CL_OFFSET_MAX;
+        return remove_cl();
     }
 
-    //Couldn't simplify the clause
-    if (j == orig_size && !True_confl && confl.isnullptr()) {
+    //Couldn't simplify the clause. Keep the trail for the next candidate
+    if (num_dropped == 0 && kept_lits.size() == orig_size
+        && !True_confl && confl.isnullptr()
+    ) {
         VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
-        solver->cancelUntil<false, true>(0);
-        std::swap(*std::find(cl.begin(), cl.end(), cl_lit1), cl[0]);
-        std::swap(*std::find(cl.begin(), cl.end(), cl_lit2), cl[1]);
         solver->frat->forget_delay();
         frat_func_end();
         return offset;
     }
-
-    #ifdef VERBOSE_DEBUG
-    if (j < i) {
-        cout
-        << "c Distillation branch effective." << endl
-        << "c --> shortened cl:" << cl<< endl
-        << "c --> orig size:" << orig_size << endl
-        << "c --> new size:" << j << endl;
-    } else {
-        cout
-        << "c Distillation branch NOT effective." << endl
-        << "c --> orig size:" << orig_size << endl;
-    }
-    #endif
-
-    bool lits_set = false;
-    //TODO BNN removed this, but needs to be fixed.
-    /*if (red && j > 1 && (!confl.isnullptr() || True_confl)) {
-        #ifdef VERBOSE_DEBUG
-        cout
-        << "c Distillation even more effective." << endl
-        << "c --> orig shortened cl:" << cl << endl;
-        #endif
-        maxNumProps -= 20;
-        lits.clear();
-        if (True_confl) {
-            lits.push_back(cl[cl.size()-1]);
-        }
-        solver->simple_create_learnt_clause(confl, lits, True_confl);
-        if (lits.size() < cl.size()) {
-            #ifdef VERBOSE_DEBUG
-            cout
-            << "c --> more shortened cl:" << lits << endl;
-            #endif
-            lits_set = true;
-        }
-    }*/
 
     //strict hints while the trail is still intact: units, propagation
     //reasons in trail order, closing clause (conflict/true-lit reason/orig)
@@ -599,14 +511,12 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     solver->cancelUntil<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-    runStats.numLitsRem += orig_size - cl.size();
+    runStats.numLitsRem += orig_size - kept_lits.size();
     runStats.numClShorten++;
 
     //Make new clause
-    if (!lits_set) {
-        lits.resize(cl.size());
-        std::copy(cl.begin(), cl.end(), lits.begin());
-    }
+    lits.resize(kept_lits.size());
+    std::copy(kept_lits.begin(), kept_lits.end(), lits.begin());
 
     // we have to copy because the re-alloc can invalidate the data
     ClauseStats backup_stats(*stats);

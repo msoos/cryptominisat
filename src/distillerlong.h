@@ -85,7 +85,9 @@ class DistillerLong {
         uint64_t last_red_props = 0;
 
         //For distill
-        vector<uint64_t> lit_counts;
+        vector<uint64_t> lit_counts; ///<Per-literal JW-style scores, as CaDiCaL's noccs
+        vector<Lit> sorted;          ///<Candidate's lits in global literal order
+        vector<Lit> kept_lits;
         vector<Lit> lits;
         uint64_t oldBogoProps;
         int64_t maxNumProps;

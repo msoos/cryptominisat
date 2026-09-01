@@ -318,7 +318,6 @@ class Tester:
         #   --assump/--debuglib/--sampling/--threads: handled elsewhere
         #   --breakid*: BreakID is not compiled into normal builds
         #   'sls' schedule token: assert(false) in solver
-        #   --distillsort 3: assert/exit by design
         self.sqlitedbfname = None
         cmd = " --zero-exit-status "
 
@@ -424,8 +423,6 @@ class Tester:
         cmd += "--distillredreleff %s " % random.choice([0, 20, 1000])
         cmd += "--distillirredalsoremratio %s " % random.choice([0.1, 1.2])
         cmd += "--distillirrednoremratio %s " % random.choice([0.1, 1])
-        cmd += "--distillshuffleeveryn %d " % random.choice([1, 3, 1000])
-        cmd += "--distillsort %d " % random.choice([0, 1, 2, 4])
 
         # occ / varelim / bva limits
         cmd += "--bva %d " % random.choice([0, 0, 1])

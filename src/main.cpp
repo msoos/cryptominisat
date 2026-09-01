@@ -977,14 +977,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.distill_irred_noremove_ratio = fc_double(a);})
         .default_value(conf.distill_irred_noremove_ratio)
         .help("How much of irred to distill when doing no removal");
-    program.add_argument("--distillshuffleeveryn")
-        .action([&](const auto& a) {conf.distill_rand_shuffle_order_every_n = fc_int(a);})
-        .default_value(conf.distill_rand_shuffle_order_every_n)
-        .help("Shuffle to-be-distilled clauses every N cases randomly");
-    program.add_argument("--distillsort")
-        .action([&](const auto& a) {conf.distill_sort = fc_int(a);})
-        .default_value(conf.distill_sort)
-        .help("Distill sorting type");
     ;
 
     /* po::options_description mem_save_opts("Memory saving options"); */

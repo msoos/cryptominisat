@@ -1420,7 +1420,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         assert(xor_cut >= 3);
 
         //Distill
-        conf.distill_sort = 4;
         conf.distill_long_cls_time_limitM = 10ULL;
 
         conf.simplify_at_startup = 1;
@@ -1453,7 +1452,6 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.diff_declev_for_chrono = -1;
 
         //Distill
-        conf.distill_sort = 4;
         conf.distill_long_cls_time_limitM = 10ULL;
 
         data->solvers[i]->setConf(conf);

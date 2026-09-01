@@ -337,8 +337,6 @@ class DLL_PUBLIC SolverConf
         unsigned distill_red_releff;   ///<Per-mille of props since last round, as CaDiCaL's vivifyreleff
         double distill_irred_alsoremove_ratio;
         double distill_irred_noremove_ratio;
-        int    distill_rand_shuffle_order_every_n;
-        int    distill_sort;
 
         //Memory savings
         int       doRenumberVars;
