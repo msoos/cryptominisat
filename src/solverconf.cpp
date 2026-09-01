@@ -138,7 +138,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Rephasing, as in CaDiCaL
         , do_rephase(1)
         , rephaseint(1000)
-        , phase(0)
+        , phase(1) //positive, as in CaDiCaL
         , lucky(1)
         , target_phases(1)
         , shortTermHistorySize (50)

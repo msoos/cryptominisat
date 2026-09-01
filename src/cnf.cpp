@@ -135,6 +135,8 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
     unit_cl_XIDs.insert(unit_cl_XIDs.end(), n, 0);
     for(uint32_t i = 0; i < n; i++) {
         varData.push_back(VarData(varData.size()));
+        //CaDiCaL's initial phase: positive by default
+        varData.back().saved_polarity = conf.phase;
     }
     depth.insert(depth.end(), n, 0);
 }
