@@ -471,6 +471,7 @@ class Searcher : public HyperEngine
         //Clause activites
         double cla_inc;
         template<bool inprocess> void decayClauseAct();
+        void rescale_cl_act();
 
         //SQL
         void dump_search_sql(const double my_time);
@@ -594,23 +595,26 @@ inline void Searcher::bump_cl_act(Clause* cl)
         max_cl_act = new_val;
     }
 
-    if (cl->stats.activity > 1e20F ) {
-        // Rescale. For STATS_NEEDED we rescale ALL
-        #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)
-        for(ClOffset offs: longRedCls[2]) {
+    if (cl->stats.activity > 1e20F) rescale_cl_act();
+}
+
+inline void Searcher::rescale_cl_act()
+{
+    // For STATS_NEEDED we rescale ALL
+    #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)
+    for(ClOffset offs: longRedCls[2]) {
+        cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
+    }
+    #else
+    for(auto& lrcs: longRedCls) {
+        for(ClOffset offs: lrcs) {
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
-        #else
-        for(auto& lrcs: longRedCls) {
-            for(ClOffset offs: lrcs) {
-                cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
-            }
-        }
-        #endif
-        cla_inc *= 1e-20;
-        max_cl_act *= 1e-20;
-        assert(cla_inc != 0);
     }
+    #endif
+    cla_inc *= 1e-20;
+    max_cl_act *= 1e-20;
+    assert(cla_inc != 0);
 }
 
 template<bool inprocess>
@@ -620,6 +624,7 @@ inline void Searcher::decayClauseAct()
         return;
 
     cla_inc *= (1 / conf.clause_decay);
+    if (cla_inc > 1e20) rescale_cl_act();
 }
 
 //CaDiCaL's 'decide_phase'

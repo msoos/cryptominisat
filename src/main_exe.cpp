@@ -20,19 +20,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#if defined(__GNUC__) && defined(__linux__)
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <cfenv>
+#endif
+
 #include "main.h"
 #include "signalcode.h"
 #include <csignal>
 
 int main(int argc, char** argv)
 {
-// --> HAD to be disabled due to python module
-//     #if defined(__GNUC__) && defined(__linux__)
-//     feenableexcept(FE_INVALID   |
-//                    FE_DIVBYZERO |
-//                    FE_OVERFLOW
-//     );
-//     #endif
+    // Only for the executable: the python module must not trap, as numpy &
+    // friends rely on FP exceptions being masked
+    #if defined(__GNUC__) && defined(__linux__)
+    feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW);
+    #endif
 
     int ret = -1;
     try {
