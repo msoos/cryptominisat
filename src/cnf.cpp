@@ -350,6 +350,31 @@ void CNF::check_all_clause_attached() const {
     check_all_xorclause_attached();
 }
 
+//seen/seen2 are shared scratch: every user must leave them all-zero
+void CNF::check_seen_clean() const
+{
+    for (uint32_t i = 0; i < seen.size(); i++) {
+        if (seen[i] != 0) {
+            cout << "ERROR: seen[" << i << "] is " << seen[i]
+                 << " but must be 0 -- a previous user did not clean up" << endl;
+            assert(false);
+            std::exit(-1);
+        }
+    }
+}
+
+void CNF::check_seen2_clean() const
+{
+    for (uint32_t i = 0; i < seen2.size(); i++) {
+        if (seen2[i] != 0) {
+            cout << "ERROR: seen2[" << i << "] is " << (int)seen2[i]
+                 << " but must be 0 -- a previous user did not clean up" << endl;
+            assert(false);
+            std::exit(-1);
+        }
+    }
+}
+
 void CNF::check_no_idx_in_watchlist() const {
     for(const auto& ws: watches) for(const auto& w: ws) assert(!w.isIdx());
 }

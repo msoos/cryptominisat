@@ -3675,6 +3675,7 @@ void Solver::copy_to_simp(SATSolver* s2)
 }
 
 bool Solver::check_clause_represented_by_xor(const Clause& cl) {
+    SLOW_DEBUG_DO(check_seen2_clean());
     for(const auto& l: cl) if (!seen[l.var()]) return false;
 
     bool rhs = true;

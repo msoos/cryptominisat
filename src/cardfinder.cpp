@@ -375,6 +375,8 @@ void CardFinder::find_pairwise_atmost1()
 
 void CardFinder::find_cards()
 {
+    SLOW_DEBUG_DO(solver->check_seen_clean());
+    SLOW_DEBUG_DO(solver->check_seen2_clean());
     cards.clear();
     double my_time = cpu_time();
 
@@ -413,4 +415,6 @@ void CardFinder::find_cards()
         << solver->conf.print_times(cpu_time()-my_time)
         << endl;
     }
+    SLOW_DEBUG_DO(solver->check_seen_clean());
+    SLOW_DEBUG_DO(solver->check_seen2_clean());
 }

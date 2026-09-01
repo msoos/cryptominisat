@@ -725,6 +725,7 @@ bool Searcher::try_shrink_block(
 template<bool inprocess>
 void Searcher::shrink_learnt_clause()
 {
+    SLOW_DEBUG_DO(check_seen2_clean());
     if (learnt_clause.size() < 3) return;
 
     //[0] is the 1UIP, sort the rest by (level, trail pos) descending

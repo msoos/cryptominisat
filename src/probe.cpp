@@ -31,6 +31,8 @@ bool Solver::full_probe(const bool bin_only)
 {
     assert(okay());
     assert(decisionLevel() == 0);
+    SLOW_DEBUG_DO(check_seen_clean());
+    SLOW_DEBUG_DO(check_seen2_clean());
     frat_func_start();
 
     const size_t orig_num_free_vars = solver->get_num_free_vars();
@@ -80,7 +82,9 @@ bool Solver::full_probe(const bool bin_only)
     }
 
     cleanup:
-    std::fill(seen2.begin(), seen2.end(), 0);
+    clear_probe_seen2();
+    SLOW_DEBUG_DO(check_seen_clean());
+    SLOW_DEBUG_DO(check_seen2_clean());
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = 1.0-float_div(
@@ -135,6 +139,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         //seen[x] == 2 -> propagated as NEG
         const auto var = trail[i].lit.var();
         seen[var] = 1+(int)trail[i].lit.sign();
+        if (!seen2[var]) probe_seen2_touched.push_back(var);
         seen2[var] |= 1+(int)trail[i].lit.sign();
     }
     if (fr) collect_seg_chain(old_trail_size, p, probe_hints_pos);
@@ -164,6 +169,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         Lit lit = trail[i].lit;
         uint32_t var = trail[i].lit.var();
+        if (!seen2[var]) probe_seen2_touched.push_back(var);
         seen2[var] |= 1+(int)trail[i].lit.sign();
         if (seen[var] == 0) continue;
 
@@ -266,6 +272,15 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
     }
 
     probe_inter<false>(l, min_props);
+    clear_probe_seen2();
+    SLOW_DEBUG_DO(check_seen_clean());
+    SLOW_DEBUG_DO(check_seen2_clean());
     if (!okay()) return l_False;
     return l_Undef;
+}
+
+void Solver::clear_probe_seen2()
+{
+    for (const uint32_t v: probe_seen2_touched) seen2[v] = 0;
+    probe_seen2_touched.clear();
 }

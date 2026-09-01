@@ -420,6 +420,8 @@ class Solver : public Searcher
         bool oracle_sparsify(bool fast = false);
         void print_cs_ordering(const vector<OracleDat>& cs) const;
         template<bool bin_only> bool probe_inter(const Lit l, uint32_t& min_props);
+        vector<uint32_t> probe_seen2_touched;
+        void clear_probe_seen2();
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();

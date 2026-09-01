@@ -51,6 +51,8 @@ DistillerLongWithImpl::DistillerLongWithImpl(Solver* _solver) :
 
 bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthen)
 {
+    SLOW_DEBUG_DO(solver->check_seen_clean());
+    SLOW_DEBUG_DO(solver->check_seen2_clean());
     assert(solver->ok);
     numCalls++;
     if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
@@ -87,6 +89,8 @@ end:
         else
             runStats.print_short(solver);
     }
+    SLOW_DEBUG_DO(solver->check_seen_clean());
+    SLOW_DEBUG_DO(solver->check_seen2_clean());
     runStats.clear();
     frat_func_end();
 
