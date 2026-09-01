@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "reducedb.h"
 #include "sqlstats.h"
 
 #include <iomanip>
@@ -187,7 +188,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         //Redundant
         if (!distill_long_cls_all(
             solver->longRedCls[0],
-            solver->conf.distill_red_tier0_ratio,
+            1.0,
             false, //dont' remove (it's always redundant)
             only_rem_cl,
             red,
@@ -200,7 +201,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
 
         if (!distill_long_cls_all(
             solver->longRedCls[1],
-            solver->conf.distill_red_tier1_ratio,
+            1.0,
             false, //dont' remove (it's always redundant)
             only_rem_cl,
             red,
@@ -237,16 +238,28 @@ bool DistillerLong::distill_long_cls_all(
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
-    maxNumProps =
-        solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
-        *solver->conf.global_timeout_multiplier;
+    if (red) {
+        //CaDiCaL's vivify budget for redundant rounds: relative to the
+        //propagations done since the last round, clamped, then the
+        //'vivifyredeff' 75-per-mille share
+        int64_t lim = (int64_t)(solver->propStats.propagations - last_red_props);
+        last_red_props = solver->propStats.propagations;
+        lim *= 1e-3 * (double)solver->conf.distill_red_releff;
+        lim = std::max<int64_t>(lim, 60LL*1000LL);
+        lim = std::min<int64_t>(lim, 60LL*1000LL*1000LL);
+        maxNumProps = lim * 75LL / 1000LL;
+    } else {
+        maxNumProps =
+            solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
+            *solver->conf.global_timeout_multiplier;
 
-    if (solver->litStats.irredLits + solver->litStats.redLits <
-            (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
-    ) {
-        maxNumProps *=2;
+        if (solver->litStats.irredLits + solver->litStats.redLits <
+                (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
+        ) {
+            maxNumProps *=2;
+        }
+        maxNumProps *= time_mult;
     }
-    maxNumProps *= time_mult;
     orig_maxNumProps = maxNumProps;
 
     //stats setup
@@ -300,6 +313,7 @@ bool DistillerLong::distill_long_cls_all(
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
                 && !solver->satisfied(*cl)
+                && (!red || solver->reduceDB->likely_to_be_kept(*cl))
             ) {
                 if (also_remove) {
                     if (cl->tried_to_remove == prio) {

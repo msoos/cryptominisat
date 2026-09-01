@@ -82,6 +82,7 @@ class DistillerLong {
             bool red, uint32_t red_lev = numeric_limits<uint32_t>::max());
         bool go_through_clauses(vector<ClOffset>& cls, const bool also_remove, const bool only_remove);
         Solver* solver;
+        uint64_t last_red_props = 0;
 
         //For distill
         vector<uint64_t> lit_counts;

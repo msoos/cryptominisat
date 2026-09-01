@@ -1422,8 +1422,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         //Distill
         conf.distill_sort = 4;
         conf.distill_long_cls_time_limitM = 10ULL;
-        conf.distill_red_tier0_ratio = 0.7;
-        conf.distill_red_tier1_ratio = 0.07;
 
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
@@ -1457,8 +1455,6 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         //Distill
         conf.distill_sort = 4;
         conf.distill_long_cls_time_limitM = 10ULL;
-        conf.distill_red_tier0_ratio = 0.7;
-        conf.distill_red_tier1_ratio = 0.07;
 
         data->solvers[i]->setConf(conf);
     }

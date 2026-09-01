@@ -183,6 +183,14 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     cl_reduced = target;
     for (size_t i = 0; i < target; i++)
         solver->cl_alloc.ptr(stack[i])->stats.marked_clause = true;
+
+    //CaDiCaL's lim.keptglue/keptsize, used to pick vivification candidates
+    lim_keptglue = lim_keptsize = 0;
+    for (size_t i = target; i < stack.size(); i++) {
+        const Clause* cl = solver->cl_alloc.ptr(stack[i]);
+        lim_keptglue = std::max(lim_keptglue, cl->stats.glue);
+        lim_keptsize = std::max<uint32_t>(lim_keptsize, cl->size());
+    }
 }
 
 //CaDiCaL-style flush: remove ALL redundant clauses not recently used

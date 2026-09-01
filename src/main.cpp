@@ -965,14 +965,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.distill_min_confl = fc_ll(a);})
         .default_value(conf.distill_min_confl)
         .help("Minimum number of conflicts between OTF distill");
-    program.add_argument("--distilltier0ratio")
-        .action([&](const auto& a) {conf.distill_red_tier0_ratio = fc_double(a);})
-        .default_value(conf.distill_red_tier0_ratio)
-        .help("How much of tier 0 to distill");
-    program.add_argument("--distilltier1ratio")
-        .action([&](const auto& a) {conf.distill_red_tier1_ratio = fc_double(a);})
-        .default_value(conf.distill_red_tier1_ratio)
-        .help("How much of tier 1 to distill");
+    program.add_argument("--distillredreleff")
+        .action([&](const auto& a) {conf.distill_red_releff = fc_int(a);})
+        .default_value(conf.distill_red_releff)
+        .help("Per-mille of search props to spend distilling red cls");
     program.add_argument("--distillirredalsoremratio")
         .action([&](const auto& a) {conf.distill_irred_alsoremove_ratio = fc_double(a);})
         .default_value(conf.distill_irred_alsoremove_ratio)

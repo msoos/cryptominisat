@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include "varupdatehelper.h"
 #include "completedetachreattacher.h"
 #include "subsumestrengthen.h"
+#include "reducedb.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
@@ -2939,26 +2940,33 @@ bool OccSimplifier::fill_occur() {
     verb_print(1, "[occ] Linked in RED   BIN by default: " << solver->binTri.redBins);
     print_linkin_data(link_in_data_irred);
 
-    //Add redundant to occur
+    //Add redundant to occur. Only the likely-kept ones: linking in the
+    //whole DB makes every occ-based pass go over it all
     if (solver->conf.maxRedLinkInSize > 0) {
-        memUsage = calc_mem_usage_of_occur(solver->longRedCls[0]);
+        vector<ClOffset> occ_link;
+        vector<ClOffset> rest;
+        for(const ClOffset offs: solver->longRedCls[0]) {
+            const Clause* cl = solver->cl_alloc.ptr(offs);
+            if (solver->reduceDB->likely_to_be_kept(*cl)) occ_link.push_back(offs);
+            else rest.push_back(offs);
+        }
+
+        memUsage = calc_mem_usage_of_occur(occ_link);
         print_mem_usage_of_occur(memUsage);
         bool linkin = true;
         if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
             linkin = false;
         }
         //Sort, so we get the shortest ones in at least
-        uint32_t arr_to_link = 0;
-        std::sort(solver->longRedCls[arr_to_link].begin(), solver->longRedCls[arr_to_link].end()
-            , ClauseSizeSorter(solver->cl_alloc));
+        std::sort(occ_link.begin(), occ_link.end(), ClauseSizeSorter(solver->cl_alloc));
 
         link_in_data_red = link_in_clauses(
-            solver->longRedCls[arr_to_link]
+            occ_link
             , linkin
             , solver->conf.maxRedLinkInSize
             , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
         );
-        solver->longRedCls[arr_to_link].clear();
+        solver->longRedCls[0] = rest;
     }
 
     //Don't really link in the rest

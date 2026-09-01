@@ -3098,7 +3098,8 @@ void Searcher::check_need_restart() {
         }
     }
 
-    rst.reluctant.tick();
+    //CaDiCaL ticks reluctant only during stable phases
+    if (rst.stable) rst.reluctant.tick();
     if (restarting()) params.must_stop = true;
 
     //respect Searcher's limit
