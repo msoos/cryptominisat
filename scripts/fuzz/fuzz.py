@@ -87,6 +87,9 @@ def set_up_parser():
     parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
                       help="Concentrate fuzzing sampling variables")
+    parser.add_option("--assumps", dest="only_assumps", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing solving under many assumptions")
     parser.add_option("--maxth", "-m", dest="max_threads", default=20,
                       type=int, help="Max number of threads")
 
@@ -206,6 +209,7 @@ class Tester:
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.only_sampling = False
+        self.assumps_from_model = False
         self.limited_run = False
         self.sampling_vars = []
         self.this_gauss_on = False
@@ -634,6 +638,30 @@ class Tester:
         os.unlink(out_fname)
         return consoleOutput, retcode
 
+    def get_model(self, fname):
+        # Plain run, default options: returns {var: bool} or None if the
+        # formula is UNSAT or we ran out of time.
+        out_fname = unique_file("model", ".out")
+        toexec = "./doalarm -t real %d %s --verb 0 %s 1> %s 2> /dev/null" % (
+            options.maxtime, options.solver, fname, out_fname)
+        print("Solving for an assumption oracle: %s" % toexec)
+        os.system(toexec)
+        with open(out_fname, "r") as f:
+            lines = f.read().splitlines()
+        os.unlink(out_fname)
+
+        # doalarm killed it -> no output at all, and the parser exits on that
+        if not lines:
+            print("No model to draw assumptions from, fuzzing them randomly")
+            return None
+
+        unsat, solution, _ = self.sol_parser.parse_solution_from_output(lines, True)
+        if unsat is None or unsat:
+            print("No model to draw assumptions from, fuzzing them randomly")
+            return None
+        print("Got a model over %d vars to draw assumptions from" % len(solution))
+        return solution
+
     def check(self, fname, fname_frat=None,
               checkAgainst=None,
               fixed_opts="",
@@ -672,7 +700,9 @@ class Tester:
             must_check_unsat = True
             if options.gauss:
                 must_check_unsat = random.choice([False]*15+[True])
-            self.sol_parser.check_debug_lib(checkAgainst, must_check_unsat)
+            self.sol_parser.check_debug_lib(
+                checkAgainst, must_check_unsat,
+                must_be_sat=self.assumps_from_model)
 
         print("Checking console output...")
         unsat, solution, _ = self.sol_parser.parse_solution_from_output(
@@ -778,13 +808,18 @@ class Tester:
         else:
             self.frat = False
 
+        if options.only_assumps:
+            self.frat = False
+            self.limited_run = False
+            self.ignoreNoSolution = False
+
         if options.only_sampling:
             self.frat = False
             self.only_sampling = True
 
         self.sqlitedbfname = None
 
-        if self.frat:
+        if self.frat or options.only_assumps:
             self.only_sampling = False
         else:
             self.only_sampling = random.choice([True, False, False, False, False])
@@ -809,12 +844,23 @@ class Tester:
         os.unlink(fname)
         fname = fname_shuffled
 
+        self.assumps_from_model = False
         if not self.frat and not self.only_sampling and not self.limited_run:
             print("->Multipart test")
             self.needDebugLib = True
+
+            # Draw the assumptions from a model of the whole CNF: every
+            # interspersed solve() must then return SAT. Catches wrong
+            # UNSAT-under-assumptions, which plain fuzzing rarely hits
+            # because it only ever assumes a handful of random literals.
+            model = None
+            if options.only_assumps or random.randint(0, 3) == 0:
+                model = self.get_model(fname)
+                self.assumps_from_model = model is not None
+
             interspersed_fname = unique_file("fuzzTest-interspersed")
             seed_for_inters = random.randint(0, 1000000)
-            intersperse(fname, interspersed_fname, seed_for_inters)
+            intersperse(fname, interspersed_fname, seed_for_inters, model)
             print("Interspersed: ./intersperse.py %s %s %d" % (fname,
                                                                interspersed_fname,
                                                                seed_for_inters))

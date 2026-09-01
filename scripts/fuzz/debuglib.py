@@ -183,6 +183,22 @@ class debuglib:
         return assumps
 
     @staticmethod
+    def assumps_from_model(maxvar, model):
+        # A subset of a model of the whole CNF also satisfies any prefix of it,
+        # so solve() under these assumptions MUST come back SAT.
+        cands = [v for v in range(1, maxvar + 1) if v in model]
+        if not cands:
+            return ""
+        random.shuffle(cands)
+        # cover both regimes: few assumptions (real search) and many (mostly
+        # propagation), since the two stress different parts of the solver
+        frac = random.choice([random.uniform(0.02, 0.2),
+                              random.uniform(0.2, 0.6),
+                              random.uniform(0.6, 0.98)])
+        keep = max(1, int(len(cands) * frac))
+        return "".join("%d " % (v if model[v] else -v) for v in cands[:keep])
+
+    @staticmethod
     def file_len_no_comment(fname):
         i = 0
         with open(fname) as f:
@@ -195,10 +211,12 @@ class debuglib:
         return i
 
     @staticmethod
-    def main(fname1, fname2):
+    def main(fname1, fname2, model=None):
 
         # approx number of solve()-s to add
-        if random.randint(0, 1) == 1:
+        if model is not None:
+            num_to_add = random.randint(3, 30)
+        elif random.randint(0, 1) == 1:
             num_to_add = random.randint(0, 10)
         else:
             num_to_add = 0
@@ -225,14 +243,20 @@ class debuglib:
 
             at += 1
             if at >= nextToAdd:
-                assumps = debuglib.generate_random_assumps(maxvar)
-                if random.choice([True, False]):
+                if model is not None:
+                    assumps = debuglib.assumps_from_model(maxvar, model)
+                    if random.choice([True, False]):
+                        fout.write("c Solver::simplify( )\n")
                     fout.write("c Solver::solve( %s )\n" % assumps)
-                elif random.choice([True, False]):
-                    fout.write("c Solver::simplify( %s )\n" % assumps)
                 else:
-                    fout.write("c Solver::simplify( %s )\n" % assumps)
-                    fout.write("c Solver::solve( %s )\n" % assumps)
+                    assumps = debuglib.generate_random_assumps(maxvar)
+                    if random.choice([True, False]):
+                        fout.write("c Solver::solve( %s )\n" % assumps)
+                    elif random.choice([True, False]):
+                        fout.write("c Solver::simplify( %s )\n" % assumps)
+                    else:
+                        fout.write("c Solver::simplify( %s )\n" % assumps)
+                        fout.write("c Solver::solve( %s )\n" % assumps)
 
                 nextToAdd = at + \
                     random.randint(1, int(file_len / num_to_add) + 1)
@@ -246,7 +270,7 @@ class debuglib:
         fin.close()
 
 
-def intersperse(fname1, fname2, seed):
+def intersperse(fname1, fname2, seed, model=None):
     random.seed(int(seed))
-    debuglib.main(fname1, fname2)
+    debuglib.main(fname1, fname2, model)
 

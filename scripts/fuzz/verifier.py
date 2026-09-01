@@ -203,7 +203,7 @@ class solution_parser:
         # check if the other solver agrees with us
         return otherSolverUNSAT
 
-    def check_debug_lib(self, fname, must_check_unsat=True):
+    def check_debug_lib(self, fname, must_check_unsat=True, must_be_sat=False):
         largestPart = self._find_largest_debuglib_part(fname)
         for debugLibPart in range(1, largestPart + 1):
             fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
@@ -227,6 +227,12 @@ class solution_parser:
                 self.test_found_solution(solution, fname, debugLibPart)
             else:
                 print("debugLib is UNSAT")
+                if must_be_sat:
+                    print("Grave bug: assumptions are a subset of a known "
+                          "solution, yet the solver returned UNSAT!")
+                    print("Assumptions: %s" % assumps)
+                    print("Conflict: %s" % conflict)
+                    exit(-1)
                 if must_check_unsat:
                     assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
                     self._check_assumps_inside_conflict(assumps, conflict)
