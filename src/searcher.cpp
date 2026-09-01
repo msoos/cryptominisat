@@ -1608,7 +1608,7 @@ bool Searcher::must_do_level0_work() const
     if (gauss_disable_pending) return true;
     if (solver->datasync->enabled()) return true;
     //branch strategy switch needs an empty trail, heaps are not rebuilt
-    if (sumConflicts >= branch_strategy_change) return true;
+    if (pick_branch_strategy() != branch_strategy) return true;
     if (!conf.never_stop_search) {
         if (conf.do_distill_clauses && sumConflicts > next_cls_distill) return true;
         if (conf.do_full_probe && sumConflicts > next_full_probe) return true;
@@ -2652,94 +2652,37 @@ void Searcher::rebuildOrderHeapVMTF(vector<uint32_t>& vs)
     for(auto const& v: vs) vmtf_init_enqueue(v);
 }
 
-struct branch_type_total{
-    branch_type_total() {}
-    branch_type_total (CMSat::branch _branch,
-                       string _descr, string _descr_short) :
-        branch(_branch),
-        descr(_descr),
-        descr_short(_descr_short)
-    {}
-    explicit branch_type_total(CMSat::branch _branch) :
-        branch(_branch)
-    {}
-
-    CMSat::branch branch = CMSat::branch::vsids;
-    string descr;
-    string descr_short;
-};
+//CaDiCaL ties branching to the phase: VMTF while focused, VSIDS scores
+//while stable. A setup string naming only one strategy fixes it.
+CMSat::branch Searcher::pick_branch_strategy() const
+{
+    const bool has_vsids = conf.branch_strategy_setup.find("vsids") != string::npos;
+    const bool has_vmtf = conf.branch_strategy_setup.find("vmtf") != string::npos;
+    if (has_vsids && has_vmtf)
+        return (rst.stable && conf.do_stabilize) ? branch::vsids : branch::vmtf;
+    if (has_vsids) return branch::vsids;
+    if (has_vmtf) return branch::vmtf;
+    return branch::rand;
+}
 
 void Searcher::setup_branch_strategy()
 {
-    if (sumConflicts < branch_strategy_change) return;
-    branch_strategy_change += 5000;
-    branch_strategy_change *= 1.1;
-    branch_strategy_at++;
+    const auto want = pick_branch_strategy();
+    if (want == branch_strategy) return;
 
-    size_t smallest = 0;
-    size_t start = 0;
-    vector<branch_type_total> select;
-    if (conf.verbosity >= 3) {
-        cout << "c [branch] orig text: " << conf.branch_strategy_setup << endl;
-        cout << "c [branch] selection: ";
-    }
-
-    while(smallest !=std::string::npos) {
-        smallest = std::string::npos;
-
-        size_t vsids = conf.branch_strategy_setup.find("vsids", start);
-        smallest = std::min(vsids, smallest);
-
-        size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
-        smallest = std::min(vmtf, smallest);
-
-        size_t rand = conf.branch_strategy_setup.find("rand", start);
-        smallest = std::min(rand, smallest);
-
-        if (smallest == std::string::npos) {
-            break;
-        }
-
-        if (conf.verbosity >= 3 && !select.empty()) {
-            cout << "+";
-        }
-
-
-        if (smallest == vsids) {
-            select.push_back(branch_type_total(branch::vsids, "VSIDS", "vs"));
-            if (conf.verbosity >= 3) cout << select[select.size()-1].descr;
-        }
-        else if (smallest == vmtf) {
-            select.push_back(branch_type_total(branch::vmtf, "VMTF", "vmt"));
-            if (conf.verbosity >= 3) cout << select[select.size()-1].descr;
-        }
-        else if (smallest == rand) {
-            select.push_back(branch_type_total(branch::rand, "RAND", "rand"));
-            if (conf.verbosity >= 3) cout << select[select.size()-1].descr;
-        } else {
-            assert(false);
-        }
-
-        //Search for next one. The strings are quite distinct, this works.
-        start = smallest + 3;
-    }
-    if (conf.verbosity >= 3) {
-        cout << " -- total: " << select.size() << endl;
-    }
-
-    assert(!select.empty());
-
-    uint32_t which = branch_strategy_at % select.size();
     const auto old_branch_strategy = branch_strategy;
-    branch_strategy = select[which].branch;
-    branch_strategy_str = select[which].descr;
-    branch_strategy_str_short = select[which].descr_short;
+    branch_strategy = want;
+    switch (want) {
+        case branch::vsids: branch_strategy_str = "VSIDS"; branch_strategy_str_short = "vs"; break;
+        case branch::vmtf: branch_strategy_str = "VMTF"; branch_strategy_str_short = "vmt"; break;
+        case branch::rand: branch_strategy_str = "RAND"; branch_strategy_str_short = "rnd"; break;
+        default: assert(false);
+    }
 
     verb_print(1, "[branch]"
         <<  " adjusting to: " << branch_type_to_string(branch_strategy)
         <<  " (from: " << branch_type_to_string(old_branch_strategy) << ")"
-        << " var_decay:" << var_decay
-        << " descr: " << select[which].descr);
+        << " var_decay:" << var_decay);
 }
 
 inline void Searcher::dump_search_loop_stats(double my_time)

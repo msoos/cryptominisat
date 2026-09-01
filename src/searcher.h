@@ -187,9 +187,8 @@ class Searcher : public HyperEngine
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(const uint32_t var, const branch str) const;
         void check_all_in_vmtf_branch_strategy(const vector<uint32_t>& vars);
-        uint32_t branch_strategy_change = 0;
-        uint32_t branch_strategy_at = 0;
         void setup_branch_strategy();
+        CMSat::branch pick_branch_strategy() const;
         void rebuildOrderHeap();
         void rebuildOrderHeapVMTF(vector<uint32_t>& vs);
         void print_order_heap();
