@@ -457,6 +457,14 @@ set(breakid_DIR  "" CACHE PATH "breakid install/build prefix (contains lib/cmake
 set(cadical_DIR  "" CACHE PATH "cadical install/build prefix (contains lib/cmake/cadical/). Auto-resolved if empty.")
 set(cadiback_DIR "" CACHE PATH "cadiback install/build prefix (contains lib/cmake/cadiback/). Auto-resolved if empty.")
 
+# CaDiCaL and CadiBack are private to libcryptominisat5, but a static library
+# cannot keep them private: the consumer links their archives itself, and a
+# consumer that also carries a CaDiCaL of its own then has two definitions of
+# every symbol. Renaming the bundled copy's namespace at compile time makes
+# the copies coexist; see where it is applied below.
+set(CADICAL_SYM_NAMESPACE "" CACHE STRING
+    "Rename the bundled CaDiCaL's namespace so it cannot collide with a consumer's own CaDiCaL (empty: no rename)")
+
 include(FetchContent)
 if(NOT TARGET cadical)
     if(cadical_DIR)
@@ -469,6 +477,7 @@ if(NOT TARGET cadical)
             GIT_SHALLOW    TRUE)
         FetchContent_MakeAvailable(cadical)
         message(STATUS "CaDiCaL: fetched from GitHub")
+        set(CMS_BUILDS_CADICAL TRUE)
     endif()
 endif()
 if(NOT TARGET cadiback)
@@ -482,7 +491,36 @@ if(NOT TARGET cadiback)
             GIT_SHALLOW    TRUE)
         FetchContent_MakeAvailable(cadiback)
         message(STATUS "CaDiBaCk: fetched from GitHub")
+        set(CMS_BUILDS_CADIBACK TRUE)
     endif()
+endif()
+
+if(CADICAL_SYM_NAMESPACE)
+    if(NOT CMS_BUILDS_CADICAL OR NOT CMS_BUILDS_CADIBACK)
+        message(FATAL_ERROR
+            "CADICAL_SYM_NAMESPACE renames CaDiCaL at compile time, so it "
+            "only applies when CaDiCaL and CadiBack are fetched and built "
+            "here. Unset cadical_DIR/cadiback_DIR, or drop the option.")
+    endif()
+    # The namespace is an ordinary identifier, so the preprocessor renames it
+    # throughout, headers included; string literals such as the signature are
+    # untouched. Reap is the one type CaDiCaL declares at global scope, so it
+    # needs its own rename. CadiBack compiles against cadical.hpp and must see
+    # the same definitions.
+    foreach(_tgt cadical cadiback)
+        target_compile_definitions(${_tgt} PRIVATE
+            "CaDiCaL=${CADICAL_SYM_NAMESPACE}"
+            "Reap=${CADICAL_SYM_NAMESPACE}_Reap")
+    endforeach()
+    # The C API is extern "C", out of any namespace's reach. Nothing here
+    # calls it, and its unchanged names would collide with the consumer's
+    # copy, so it is dropped from the build.
+    set_source_files_properties(
+        "${cadical_SOURCE_DIR}/src/ccadical.cpp"
+        "${cadical_SOURCE_DIR}/src/ipasir.cpp"
+        TARGET_DIRECTORY cadical
+        PROPERTIES HEADER_FILE_ONLY ON)
+    message(STATUS "CaDiCaL/CadiBack: namespace renamed to ${CADICAL_SYM_NAMESPACE}")
 endif()
 
 include(CheckFloatPrecision)

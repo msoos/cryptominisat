@@ -352,6 +352,12 @@ use, specify options prior to running make in a clean subdirectory: `cmake
   interface support
 - `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory (contains `libcadical.a`). Auto-fetched and built if not set.
 - `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains `libcadiback.a`). Auto-fetched and built if not set.
+- `-DCADICAL_SYM_NAMESPACE=<name>` -- compile the bundled CaDiCaL and CadiBack
+  with the `CaDiCaL` namespace renamed to `<name>`, and without CaDiCaL's C
+  API files (which nothing here calls). A consumer that links a static
+  cryptominisat5 next to a CaDiCaL of its own then gets no symbol collisions.
+  Empty by default (no rename); refused together with
+  `cadical_DIR`/`cadiback_DIR`, which name pre-built copies.
 
 ## C usage
 See src/cryptominisat_c.h for details. This is an experimental feature.
