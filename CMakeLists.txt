@@ -485,13 +485,6 @@ if(NOT TARGET cadiback)
     endif()
 endif()
 
-include(CheckFloatPrecision)
-check_float_precision()
-if(HAVE__FPU_SETCW)
-    add_compile_definitions(YALSAT_FPU)
-    message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
-endif()
-
 # -----------------------------------------------------------------------------
 # MIT option
 # -----------------------------------------------------------------------------

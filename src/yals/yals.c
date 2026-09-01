@@ -26,10 +26,6 @@
 
 #include <stdlib.h>
 
-#if defined(__linux__)
-#include <fpu_control.h>	// Set FPU to double precision on Linux.
-#endif
-
 /*------------------------------------------------------------------------*/
 
 #define YALS_INT64_MAX		(0x7fffffffffffffffll)
@@ -418,9 +414,6 @@ typedef unsigned short U2;
 typedef unsigned int U4;
 
 typedef struct FPU {
-#ifdef __linux__
-  fpu_control_t control;
-#endif
   int saved;
 } FPU;
 
@@ -591,26 +584,12 @@ void yals_msg (Yals * yals, int level, const char * fmt, ...) {
 /*------------------------------------------------------------------------*/
 
 static void yals_set_fpu (Yals * yals) {
-#ifdef __linux__
-  fpu_control_t control;
-  _FPU_GETCW (yals->fpu.control);
-  control = yals->fpu.control;
-  control &= ~_FPU_EXTENDED;
-  control &= ~_FPU_SINGLE;
-  control |= _FPU_DOUBLE;
-  _FPU_SETCW (control);
-  yals_msg (yals, 1, "set FPU mode to use double precision");
-#endif
   yals->fpu.saved = 1;
 }
 
 static void yals_reset_fpu (Yals * yals) {
   (void) yals;
   assert (yals->fpu.saved);
-#ifdef __linux__
-  _FPU_SETCW (yals->fpu.control);
-  yals_msg (yals, 1, "reset FPU to original double precision mode");
-#endif
 }
 
 /*------------------------------------------------------------------------*/
@@ -1159,7 +1138,7 @@ static int yals_pick_clause (Yals * yals) {
       if (yals->unsat.queue.count > 1 &&
           yals_rand_mod (yals, 100) < (cidx >= yals->nclauses ? 50 : 50)
           ) {
-      
+
 //      if (yals->unsat.queue.count > 1 &&
 //          yals_rand_mod (yals, 100) >= yals->opts.unfairfreq.val) {
         //lnk = yals->unsat.queue.first;
@@ -1301,7 +1280,7 @@ yals_compute_score_from_weighted_break (Yals * yals, float w) {
   unsigned w_rem = (unsigned)((w - (unsigned)w) * 100);
   s_lo = (w_rem < yals->exp.max.two) ?
           PEEK (yals->exp.table.two, w_rem) : yals->exp.eps.two;
-  
+
   s = s_hi * s_lo;
 
   LOG ("weighted break %f gives score %g", w, s);
@@ -1425,7 +1404,7 @@ static int yals_pick_literal (Yals * yals, int cidx) {
 
     CLEAR (yals->scores);
   }
-  
+
   CLEAR (yals->cands);
   CLEAR (yals->breaks);
 
