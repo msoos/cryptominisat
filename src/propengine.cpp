@@ -262,7 +262,20 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     }
 
     for (; i != end; i++) *j++ = *i;
-    ws.shrink(i-j);
+    const uint32_t dropped = i-j;
+    ws.shrink(dropped);
+
+    // Entries after a dropped one have shifted down, so the matrices' watch
+    // position hints for them are stale. Restamp -- this is cheap next to the
+    // find_truths() calls we just made over the very same list.
+    if (dropped != 0) {
+        for(uint32_t k = 0; k < ws.size(); k++) {
+            if (ws[k].matrix_num != PLAIN_XOR_SENTINEL) {
+                gmatrices[ws[k].matrix_num]->set_watch_hint(ws[k].row_n, pv, k);
+            }
+        }
+    }
+
     if (confl != PropBy()) {
         for (uint32_t m = 0; m < touched_matrices_gje.size(); m++)
             gqueuedata[touched_matrices_gje[m]].touched_this_call = false;

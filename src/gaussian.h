@@ -93,6 +93,13 @@ class EGaussian {
     void update_matrix_no(uint32_t n);
     void check_watchlist_sanity();
     uint32_t get_matrix_no();
+
+    ///Tell us that the watch of ROW_N on VAR now sits at position AT. Ignored
+    ///unless it's the row's non-responsible watch, the only one we track.
+    void set_watch_hint(const uint32_t row_n, const uint32_t var, const uint32_t at) {
+        if (row_n < row_to_var_non_resp.size() &&
+            row_to_var_non_resp[row_n] == var) row_to_nonresp_watch_hint[row_n] = at;
+    }
     void finalize_frat();
     void delete_reasons();
     void move_back_xor_clauses();
@@ -103,6 +110,7 @@ class EGaussian {
     Solver* solver;   // original sat solver
 
     //Cleanup
+    void watch_nonresp(const uint32_t row_n, const uint32_t var);
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
     void delete_gausswatch(const uint32_t  row_n);
@@ -175,6 +183,12 @@ class EGaussian {
     ///row_to_var_non_resp[ROW] gives VAR it's NOT responsible for
     ///we always WATCH this variable
     vector<uint32_t> row_to_var_non_resp;
+
+    ///Where that watch sits inside gwatches[row_to_var_non_resp[ROW]]. Only a
+    ///hint: it's verified before use and we fall back to a linear scan. Needed
+    ///because the ~200 non-responsible columns carry all the non-resp watches,
+    ///so these watchlists are long and scanning them dominated the runtime.
+    vector<uint32_t> row_to_nonresp_watch_hint;
 
 
     PackedMatrix mat;
