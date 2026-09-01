@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "reducedb.h"
 #include "sqlstats.h"
 
 #include <algorithm>
@@ -325,6 +326,9 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
         //Check status
         offset = clauses[i];
         if (need_to_finish) goto copy;
+        //don't spend the budget on reds that won't survive the next reduce
+        if (red && !solver->reduceDB->likely_to_be_kept(*solver->cl_alloc.ptr(offset)))
+            goto copy;
         if (sub_str_cl_with_watch(offset, also_strengthen)) {
             solver->detachClause(offset);
             solver->free_cl(offset);

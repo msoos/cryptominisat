@@ -199,6 +199,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         globalStats += runStats;
         runStats.clear();
 
+        #ifdef FINAL_PREDICTOR //only predictor builds populate longRedCls[1]
         if (!distill_long_cls_all(
             solver->longRedCls[1],
             1.0,
@@ -211,6 +212,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         }
         globalStats += runStats;
         runStats.clear();
+        #endif
     }
 
 end:
@@ -312,8 +314,8 @@ bool DistillerLong::distill_long_cls_all(
             VERBOSE_PRINT("Clause at " << i << " is:  " << *cl);
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
-                && !solver->satisfied(*cl)
                 && (!red || solver->reduceDB->likely_to_be_kept(*cl))
+                && !solver->satisfied(*cl)
             ) {
                 if (also_remove) {
                     if (cl->tried_to_remove == prio) {
