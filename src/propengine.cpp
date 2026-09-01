@@ -1126,10 +1126,11 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 //level-0 lits in the reasons go to `units`, reason IDs in trail order to `rsns`
 void PropEngine::collect_trail_seg_hints(
     const uint32_t start, vector<int32_t>& units, vector<int32_t>& rsns,
-    const uint32_t skip_var)
+    const uint32_t skip_var, const uint32_t end_at)
 {
     assert(frat->enabled());
-    for(uint32_t i = start; i < trail.size(); i++) {
+    const uint32_t end = std::min<uint32_t>(end_at, trail.size());
+    for(uint32_t i = start; i < end; i++) {
         if (trail[i].lit.var() == skip_var) continue;
         const PropBy r = varData[trail[i].lit.var()].reason;
         if (r.isnullptr()) continue;

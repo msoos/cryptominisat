@@ -969,6 +969,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.distill_red_releff = fc_int(a);})
         .default_value(conf.distill_red_releff)
         .help("Per-mille of search props to spend distilling red cls");
+    program.add_argument("--distillinst")
+        .action([&](const auto& a) {conf.distill_instantiate = fc_int(a);})
+        .default_value(conf.distill_instantiate)
+        .help("Try to remove the last literal during distillation");
     program.add_argument("--distillirredalsoremratio")
         .action([&](const auto& a) {conf.distill_irred_alsoremove_ratio = fc_double(a);})
         .default_value(conf.distill_irred_alsoremove_ratio)

@@ -335,6 +335,7 @@ class DLL_PUBLIC SolverConf
         double distill_increase_conf_ratio;
         long distill_min_confl;
         unsigned distill_red_releff;   ///<Per-mille of props since last round, as CaDiCaL's vivifyreleff
+        int    distill_instantiate;    ///<Try removing the last literal, as CaDiCaL's vivifyinst
         double distill_irred_alsoremove_ratio;
         double distill_irred_noremove_ratio;
 

@@ -700,8 +700,54 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         }
     }
 
+    //CaDiCaL's vivify instantiation: no conflict and the last literal is a
+    //plain decision. Try assigning it true: a conflict proves the clause
+    //with the last literal flipped, and resolving that with this clause
+    //removes the literal.
+    if (!subsumed && !only_remove && solver->conf.distill_instantiate) {
+        const Lit last = sorted.back();
+        if (solver->value(last) == l_False
+            && solver->varData[last.var()].reason.isnullptr()
+            && solver->varData[last.var()].level == solver->decisionLevel()
+        ) {
+            solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+            solver->new_decision_level();
+            solver->enqueue<true>(last);
+            maxNumProps -= 5;
+            PropBy confl2;
+            if (!red && also_remove) confl2 = solver->propagate<true, false, true>();
+            else confl2 = solver->propagate<true, true, true>();
+            if (!confl2.isnullptr()) {
+                //chain: prefix reasons, this clause (it forces 'last' under
+                //the negated shortened clause), the instantiate-level
+                //reasons, and the conflict
+                hints.clear();
+                if (solver->frat->enabled()) {
+                    vector<int32_t> rsns;
+                    const uint32_t inst_start =
+                        solver->trail_begin_of_level(solver->decisionLevel()-1);
+                    solver->collect_trail_seg_hints(
+                        seg_start, hint_units, rsns, var_Undef, inst_start);
+                    rsns.push_back(stats->id);
+                    solver->collect_trail_seg_hints(inst_start, hint_units, rsns);
+                    rsns.push_back(solver->get_confl_id(confl2, hint_units));
+                    hints = hint_units;
+                    hints.insert(hints.end(), rsns.begin(), rsns.end());
+                }
+                const auto it = std::find(kept_lits.begin(), kept_lits.end(), last);
+                assert(it != kept_lits.end());
+                kept_lits.erase(it);
+                have_analysis = true; //kept_lits & hints are set
+            } else {
+                solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+            }
+        }
+    }
+
     //Couldn't simplify the clause. Keep the trail for the next candidate
-    if (!subsumed && num_dropped == 0 && kept_lits.size() == orig_size) {
+    if (!subsumed && !have_analysis
+        && num_dropped == 0 && kept_lits.size() == orig_size
+    ) {
         VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
         solver->frat->forget_delay();

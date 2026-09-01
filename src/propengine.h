@@ -224,7 +224,8 @@ public:
     vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
     vector<Lit> tmp_xor_reason;
     void collect_trail_seg_hints(uint32_t start, vector<int32_t>& units, vector<int32_t>& rsns,
-                                 const uint32_t skip_var = var_Undef);
+                                 const uint32_t skip_var = var_Undef,
+                                 const uint32_t end_at = numeric_limits<uint32_t>::max());
     uint32_t trail_begin_of_level(const uint32_t lev) const { return trail_lim[lev]; }
     Lit trail_at(const uint32_t at) const { return trail[at].lit; }
     int32_t last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
