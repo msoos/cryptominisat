@@ -245,6 +245,19 @@ public:
         return (mp[i/64] >> (i%64)) & 1;
     }
 
+    ///Call f(index) for every set bit, in increasing index order
+    template<class F>
+    void for_each_set_bit(F f) const
+    {
+        for (int i = 0; i < size; i++) {
+            uint64_t tmp = (uint64_t)mp[i];
+            while (tmp) {
+                f((uint32_t)i*64 + __builtin_ctzll(tmp));
+                tmp &= tmp-1;
+            }
+        }
+    }
+
     template<class T>
     void set(
         const T& v,
@@ -271,33 +284,19 @@ public:
         vector<char> &var_has_resp_row,
         uint32_t& non_resp_var);
 
-    // using find nonbasic value after watch list is enter
+    ///Row of the compacted [I|D] matrix: this holds only D, the row's single
+    ///responsible column is RESP_VAR. Watch/propagate/conflict-check it.
     gret propGause(
         const vector<lbool>& assigns,
-        const vector<uint32_t>& col_to_var,
-        vector<char> &var_has_resp_row,
+        const vector<uint32_t>& dcol_to_var,
+        const vector<char>& var_has_resp_row,
+        const uint32_t resp_var,
         uint32_t& new_resp_var,
         PackedRow& tmp_col,
         PackedRow& cols_vals,
         PackedRow& cols_unset,
         Lit& ret_lit_prop
-    );
-
-    void get_reason(
-        vector<Lit>& tmp_clause,
-        const vector<lbool>& assigns,
-        const vector<uint32_t>& col_to_var,
-        PackedRow& cols_vals,
-        PackedRow& tmp_col2,
-        Lit prop
-    );
-    void get_reason_xor(
-        Xor& tmp_xor,
-        [[maybe_unused]] const vector<lbool>& assigns,
-        const vector<uint32_t>& col_to_var,
-        PackedRow& cols_vals,
-        PackedRow& tmp_col2
-    );
+    ) const;
 
     uint32_t popcnt() const;
     uint32_t popcnt_at_least_2() const;

@@ -180,6 +180,10 @@ class EGaussian {
     ///we always WATCH this variable
     vector<char> var_has_resp_row;
 
+    ///row_to_resp_var[ROW] gives the VAR this row IS responsible for, i.e. the
+    ///row's single column of the identity part. var_Undef for all-zero rows.
+    vector<uint32_t> row_to_resp_var;
+
     ///row_to_var_non_resp[ROW] gives VAR it's NOT responsible for
     ///we always WATCH this variable
     vector<uint32_t> row_to_var_non_resp;
@@ -190,6 +194,14 @@ class EGaussian {
     ///so these watchlists are long and scanning them dominated the runtime.
     vector<uint32_t> row_to_nonresp_watch_hint;
 
+
+    ///Once compacted, `mat` holds only D: num_rows x num_dcols bits. Rows are
+    ///indexed by "dcol", a slot in D, not by matrix column.
+    bool compact = false;
+    uint32_t num_dcols = 0;
+    vector<uint32_t> var_to_dcol; ///VAR -> slot in D, or unassigned_col if responsible/not ours
+    vector<uint32_t> dcol_to_var; ///slot in D -> VAR
+    void compactify();
 
     PackedMatrix mat;
 
@@ -207,7 +219,7 @@ class EGaussian {
     PackedRow *cols_vals = nullptr;
     PackedRow *cols_unset = nullptr;
     PackedRow *tmp_col = nullptr;
-    PackedRow *tmp_col2 = nullptr;
+    PackedRow *tmp_row = nullptr;
     void update_cols_vals_set(const Lit lit1);
     void create_temps();
     void free_temps();
@@ -238,9 +250,9 @@ inline double EGaussian::get_density()
     }
 
     uint32_t pop = 0;
-    for (const auto& row: mat) {
-        pop += row.popcnt();
-    }
+    for (const auto& row: mat) pop += row.popcnt();
+    //the identity part isn't stored, so add its one bit per non-empty row back
+    if (compact) for(const auto& v: row_to_resp_var) pop += (v != var_Undef);
     return (double)pop/(double)(num_rows*num_cols);
 }
 

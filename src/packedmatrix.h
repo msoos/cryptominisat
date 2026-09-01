@@ -102,6 +102,13 @@ public:
         return *this;
     }
 
+    void swap(PackedMatrix& b)
+    {
+        std::swap(mp, b.mp);
+        std::swap(numRows, b.numRows);
+        std::swap(numCols, b.numCols);
+    }
+
     inline PackedRow operator[](const uint32_t i)
     {
         #ifdef DEBUG_MATRIX

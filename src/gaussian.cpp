@@ -202,6 +202,7 @@ void EGaussian::select_columnorder() {
 
 void EGaussian::fill_matrix() {
     assert(solver->prop_at_head());
+    compact = false;
     var_to_col.clear();
 
     // decide which variable in matrix column and the number of rows
@@ -326,6 +327,7 @@ bool EGaussian::full_init(bool& created) {
     free_temps(); create_temps();
     delete_reasons(); xor_reasons.resize(num_rows);
 
+    compactify();
     after_init_density = get_density();
 
     initialized = true;
@@ -334,6 +336,53 @@ bool EGaussian::full_init(bool& created) {
 
     frat_func_end();
     return solver->okay();
+}
+
+///Squeeze the matrix down to just D. Gauss-Jordan leaves it in RREF, i.e.
+///[I|D] with a permuted identity, so the identity part carries no information
+///that row_to_resp_var doesn't already hold. Dropping it turns the 5722-bit
+///rows of a bivium matrix into 221-bit ones.
+void EGaussian::compactify()
+{
+    assert(!compact);
+    assert(num_rows > 0 && num_cols > 0);
+
+    var_to_dcol.clear();
+    var_to_dcol.resize(solver->nVars(), unassigned_col);
+    dcol_to_var.clear();
+    for(uint32_t c = 0; c < num_cols; c++) {
+        const uint32_t v = col_to_var[c];
+        if (var_has_resp_row[v]) continue;
+        var_to_dcol[v] = dcol_to_var.size();
+        dcol_to_var.push_back(v);
+    }
+    num_dcols = dcol_to_var.size();
+
+    row_to_resp_var.clear();
+    row_to_resp_var.resize(num_rows, var_Undef);
+    PackedMatrix newmat;
+    newmat.resize(num_rows, num_dcols);
+    for(uint32_t r = 0; r < num_rows; r++) {
+        PackedRow to = newmat[r];
+        to.setZero();
+        to.rhs() = mat[r].rhs();
+        const uint32_t row = r;
+        mat[r].for_each_set_bit([&](const uint32_t c) {
+            const uint32_t v = col_to_var[c];
+            if (var_to_dcol[v] != unassigned_col) to.setBit(var_to_dcol[v]);
+            else {
+                assert(row_to_resp_var[row] == var_Undef &&
+                    "RREF: a row can own only one column");
+                row_to_resp_var[row] = v;
+            }
+        });
+    }
+    mat.swap(newmat);
+
+    compact = true;
+    free_temps(); create_temps();
+    verb_print(2, "[g " << matrix_no << "] compacted to " << num_rows << "x"
+        << num_dcols << " (from " << num_rows << "x" << num_cols << ")");
 }
 
 void EGaussian::free_temps()
@@ -347,14 +396,15 @@ void EGaussian::free_temps()
     cols_vals = nullptr;
     delete tmp_col;
     tmp_col = nullptr;
-    delete tmp_col2;
-    tmp_col2 = nullptr;
+    delete tmp_row;
+    tmp_row = nullptr;
 }
 
 void EGaussian::create_temps()
 {
     assert(tofree.empty());
-    uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
+    const uint32_t width = compact ? num_dcols : num_cols;
+    const uint32_t num_64b = width/64+(bool)(width%64);
 
     int64_t* x = new int64_t[num_64b+1];
     tofree.push_back(x);
@@ -370,7 +420,7 @@ void EGaussian::create_temps()
 
     x = new int64_t[num_64b+1];
     tofree.push_back(x);
-    tmp_col2 = new PackedRow(num_64b, x);
+    tmp_row = new PackedRow(num_64b, x);
 
     /* cols_unset->setZero(); */
     cols_unset->rhs() = 0;
@@ -378,8 +428,8 @@ void EGaussian::create_temps()
     cols_vals->rhs() = 0;
     /* tmp_col->setZero(); */
     tmp_col->rhs() = 0;
-    /* tmp_col2->setZero(); */
-    tmp_col2->rhs() = 0;
+    /* tmp_row->setZero(); */
+    tmp_row->rhs() = 0;
 }
 
 void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
@@ -456,16 +506,23 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_id) {
         *solver->frat << del << xor_reasons[row].id << xor_reasons[row].reason << fin;
     }
 
+    assert(compact);
     vector<Lit>& tofill = xor_reasons[row].reason;
     tofill.clear();
 
-    mat[row].get_reason(
-        tofill,
-        solver->assigns,
-        col_to_var,
-        *cols_vals,
-        *tmp_col2,
-        xor_reasons[row].propagated);
+    const Lit prop = xor_reasons[row].propagated;
+    auto add = [&](const uint32_t var, const bool is_true) {
+        if (var == prop.var()) {
+            tofill.push_back(prop);
+            std::swap(tofill[0], tofill.back());
+        } else tofill.push_back(Lit(var, is_true));
+    };
+    assert(row_to_resp_var[row] != var_Undef);
+    add(row_to_resp_var[row], solver->value(row_to_resp_var[row]) == l_True);
+    mat[row].for_each_set_bit([&](const uint32_t d) {
+        add(dcol_to_var[d], (*cols_vals)[d]); });
+    SLOW_DEBUG_DO(for(uint32_t i = 1; i < tofill.size(); i++)
+        assert(solver->value(tofill[i].var()) != l_Undef));
 
     if (solver->frat->enabled()) {
         Xor reason = xor_reason_create(row);
@@ -483,13 +540,22 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_id) {
 }
 
 Xor EGaussian::xor_reason_create(const uint32_t row_n) {
-    bool rhs = mat[row_n].rhs();
-    assert(!(rhs == false && mat[row_n].popcnt() == 0)); // trivial clause not supported here
     assert(solver->frat->enabled());
     frat_func_start();
 
     Xor reason;
-    mat[row_n].get_reason_xor(reason, solver->assigns, col_to_var, *cols_vals, *tmp_col2);
+    if (compact) {
+        assert(row_to_resp_var[row_n] != var_Undef);
+        reason.vars.push_back(row_to_resp_var[row_n]);
+        mat[row_n].for_each_set_bit([&](const uint32_t d) {
+            reason.vars.push_back(dcol_to_var[d]); });
+    } else {
+        mat[row_n].for_each_set_bit([&](const uint32_t c) {
+            reason.vars.push_back(col_to_var[c]); });
+    }
+    reason.rhs = mat[row_n].rhs();
+    // trivial clause not supported here
+    assert(!(reason.rhs == false && reason.vars.empty()));
     INC_XID(reason);
     *solver->frat << addx << reason << fratchain;
     const uint64_t* rp = reason_mat.data() + (size_t)row_n*reason_stride;
@@ -729,7 +795,7 @@ bool EGaussian::find_truths(
     assert(initialized);
 
     #ifdef LAZY_DELETE_HACK
-    if (!mat[row_n][var_to_col[var]]) {
+    if (!mat[row_n][var_to_dcol[var]]) {
         //lazy delete
         return true;
     }
@@ -768,8 +834,9 @@ bool EGaussian::find_truths(
     SLOW_DEBUG_DO(check_cols_unset_vals());
     const gret ret = mat[row_n].propGause(
         solver->assigns,
-        col_to_var,
+        dcol_to_var,
         var_has_resp_row,
+        row_to_resp_var[row_n],
         new_resp_var,
         *tmp_col,
         *cols_vals,
@@ -904,10 +971,11 @@ bool EGaussian::find_truths(
 
 inline void EGaussian::update_cols_vals_set(const Lit lit1)
 {
-    cols_unset->clearBit(var_to_col[lit1.var()]);
-    if (!lit1.sign()) {
-        cols_vals->setBit(var_to_col[lit1.var()]);
-    }
+    //may be the row's responsible var, which D doesn't track
+    const uint32_t d = var_to_dcol[lit1.var()];
+    if (d == unassigned_col) return;
+    cols_unset->clearBit(d);
+    if (!lit1.sign()) cols_vals->setBit(d);
 }
 
 void EGaussian::update_cols_vals_set(bool force)
@@ -919,13 +987,11 @@ void EGaussian::update_cols_vals_set(bool force)
         cols_vals->setZero();
         cols_unset->setOne();
 
-        for(uint32_t col = 0; col < col_to_var.size(); col++) {
-            uint32_t var = col_to_var[col];
+        for(uint32_t d = 0; d < num_dcols; d++) {
+            const uint32_t var = dcol_to_var[d];
             if (solver->value(var) != l_Undef) {
-                cols_unset->clearBit(col);
-                if (solver->value(var) == l_True) {
-                    cols_vals->setBit(col);
-                }
+                cols_unset->clearBit(d);
+                if (solver->value(var) == l_True) cols_vals->setBit(d);
             }
         }
         last_val_update = solver->trail.size();
@@ -935,17 +1001,13 @@ void EGaussian::update_cols_vals_set(bool force)
 
     assert(solver->trail.size() >= last_val_update);
     for(uint32_t i = last_val_update; i < solver->trail.size(); i++) {
-        uint32_t var = solver->trail[i].lit.var();
-        if (var_to_col.size() <= var) {
-            continue;
-        }
-        uint32_t col = var_to_col[var];
-        if (col != unassigned_col) {
+        const uint32_t var = solver->trail[i].lit.var();
+        if (var_to_dcol.size() <= var) continue;
+        const uint32_t d = var_to_dcol[var];
+        if (d != unassigned_col) {
             assert (solver->value(var) != l_Undef);
-            cols_unset->clearBit(col);
-            if (solver->value(var) == l_True) {
-                cols_vals->setBit(col);
-            }
+            cols_unset->clearBit(d);
+            if (solver->value(var) == l_True) cols_vals->setBit(d);
         }
     }
     last_val_update = solver->trail.size();
@@ -983,16 +1045,38 @@ void EGaussian::prop_lit(
 void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 {
     const uint32_t new_resp_row_n = gqd.new_resp_row;
+    const uint32_t elim_var = gqd.new_resp_var;
+    const uint32_t dcol = var_to_dcol[elim_var];
+    assert(dcol != unassigned_col);
     PackedMatrix::iterator rowI = mat.begin();
     PackedMatrix::iterator end = mat.end();
-    const uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
+    const bool frat = solver->frat->enabled();
     uint32_t row_i = 0;
     bool unsat_set = false;
+
+    // This is a simplex basis exchange: P leaves the basis, ELIM_VAR enters
+    // it. Every row holding ELIM_VAR gets the pivot row XORed in and thereby
+    // gains P -- the pivot row being the only one that had P -- so column P
+    // ends up being bit for bit what column ELIM_VAR was. The D slot therefore
+    // needs no recomputation at all, it only changes meaning, provided we keep
+    // the XOR from clearing it.
+    *tmp_row = mat[new_resp_row_n];
+    tmp_row->clearBit(dcol);
+
+    var_to_dcol[elim_var] = unassigned_col;
+    var_to_dcol[p] = dcol;
+    dcol_to_var[dcol] = p;
+    row_to_resp_var[new_resp_row_n] = elim_var;
+
+    // P is assigned -- that it got assigned is why we are here at all
+    cols_unset->clearBit(dcol);
+    if (solver->value(p) == l_True) cols_vals->setBit(dcol);
+    else cols_vals->clearBit(dcol);
 
     #ifdef VERBOSE_DEBUG
     cout
     << "mat[" << matrix_no << "] "
-    << "** eliminating this column: " << new_resp_col << endl
+    << "** eliminating this D slot: " << dcol << endl
     << "-> row that will be the SOLE one having a 1: " << gqd.new_resp_row << endl
     << "-> var associated with col: " << gqd.new_resp_var+1
     <<  endl;
@@ -1001,38 +1085,37 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
     while (rowI != end) {
         //Row has a '1' in eliminating column, and it's not the row responsible
-        if (new_resp_row_n != row_i && (*rowI)[new_resp_col]) {
+        if (new_resp_row_n != row_i && (*rowI)[dcol]) {
 
             // detect original non-basic watch list change or not
-            uint32_t orig_non_resp_var = row_to_var_non_resp[row_i];
-            uint32_t orig_non_resp_col = var_to_col[orig_non_resp_var];
-            assert((*rowI)[orig_non_resp_col]);
+            const uint32_t orig_non_resp_var = row_to_var_non_resp[row_i];
+            const bool watched_elim_var = (orig_non_resp_var == elim_var);
+            SLOW_DEBUG_DO(assert(watched_elim_var ||
+                (*rowI)[var_to_dcol[orig_non_resp_var]]));
             VERBOSE_PRINT("--> This row " << row_i
                 << " is being watched on var: " << orig_non_resp_var + 1
                 << " i.e. it must contain '1' for this var's column");
 
-            assert(satisfied_xors[row_i] == 0);
-            (*rowI).xor_in(*(mat.begin() + new_resp_row_n));
-            if (solver->frat->enabled()) xor_in_bdd(row_i, new_resp_row_n);
+            SLOW_DEBUG_DO(assert(satisfied_xors[row_i] == 0));
+            (*rowI).xor_in(*tmp_row);
+            if (frat) xor_in_bdd(row_i, new_resp_row_n);
 
             elim_xored_rows++;
 
             //NOTE: responsible variable cannot be eliminated of course
             //      (it's the only '1' in that column).
             //      But non-responsible can be eliminated. So let's check that
-            //      and then deal with it if we have to
-            if (!(*rowI)[orig_non_resp_col]) {
+            //      and then deal with it if we have to. The slot now stands for
+            //      P, which this row does have, so the watched var is gone
+            //      exactly when it was ELIM_VAR or when its own bit got cleared.
+            if (watched_elim_var || !(*rowI)[var_to_dcol[orig_non_resp_var]]) {
 
-                #ifdef VERBOSE_DEBUG
-                cout
-                << "--> This row " << row_i
-                << " can no longer be watched (non-responsible), it has no '1' at col " << orig_non_resp_col
-                << " (var " << col_to_var[orig_non_resp_col]+1 << ")"
-                << " fixing up..."<< endl;
-                #endif
+                VERBOSE_PRINT("--> This row " << row_i
+                    << " can no longer be watched (non-responsible), it has no"
+                    << " '1' for var " << orig_non_resp_var+1 << " fixing up...");
 
                 // Delete original non-responsible var from watch list
-                if (orig_non_resp_var != gqd.new_resp_var) {
+                if (!watched_elim_var) {
                     #ifndef LAZY_DELETE_HACK
                     delete_gausswatch(row_i);
                     #endif
@@ -1049,8 +1132,9 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                 #endif
                 const gret ret = (*rowI).propGause(
                     solver->assigns,
-                    col_to_var,
+                    dcol_to_var,
                     var_has_resp_row,
+                    row_to_resp_var[row_i],
                     new_non_resp_var,
                     *tmp_col,
                     *cols_vals,
@@ -1168,14 +1252,20 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 }
 
 void EGaussian::print_matrix() {
-    uint32_t row = 0;
-    for (PackedMatrix::iterator it = mat.begin(); it != mat.end();
-         ++it, row++) {
-        cout << *it << " -- row:" << row;
-        if (row >= num_rows) {
-            cout << " (considered past the end)";
+    for (uint32_t row = 0; row < num_rows; row++) {
+        cout << "row:" << row << " ";
+        if (compact) {
+            cout << "resp: ";
+            if (row_to_resp_var[row] == var_Undef) cout << "-";
+            else cout << row_to_resp_var[row]+1;
+            cout << " D:";
+            mat[row].for_each_set_bit([&](const uint32_t d) {
+                cout << " " << dcol_to_var[d]+1; });
+        } else {
+            mat[row].for_each_set_bit([&](const uint32_t c) {
+                cout << " " << col_to_var[c]+1; });
         }
-        cout << endl;
+        cout << " rhs: " << mat[row].rhs() << endl;
     }
 }
 
@@ -1330,19 +1420,16 @@ void EGaussian::check_no_prop_or_unsat_rows()
 {
     VERBOSE_PRINT("mat[" << matrix_no << "] checking invariants...");
 
+    assert(compact);
     for(uint32_t row = 0; row < num_rows; row++) {
         uint32_t bits_unset = 0;
         bool val = mat[row].rhs();
-        for(uint32_t col = 0; col < num_cols; col++) {
-            if (mat[row][col]) {
-                uint32_t var = col_to_var[col];
-                if (solver->value(var) == l_Undef) {
-                    bits_unset++;
-                } else {
-                    val ^= (solver->value(var) == l_True);
-                }
-            }
-        }
+        auto acc = [&](const uint32_t var) {
+            if (solver->value(var) == l_Undef) bits_unset++;
+            else val ^= (solver->value(var) == l_True);
+        };
+        if (row_to_resp_var[row] != var_Undef) acc(row_to_resp_var[row]);
+        mat[row].for_each_set_bit([&](const uint32_t d) { acc(dcol_to_var[d]); });
 
         bool error = false;
         if (bits_unset == 1) {
@@ -1383,49 +1470,28 @@ void EGaussian::check_watchlist_sanity()
     }
 }
 
+///In the compact form "one row per responsible column" is structural, so what
+///is left to check is that the col<->slot and row->responsible maps agree.
 void EGaussian::check_tracked_cols_only_one_set()
 {
-    vector<uint32_t> row_resp_for_var(num_rows, var_Undef);
-    for(uint32_t col = 0; col < num_cols; col++) {
-        uint32_t var = col_to_var[col];
-        if (var_has_resp_row[var]) {
-            uint32_t num_ones = 0;
-            uint32_t found_row = var_Undef;
-            for(uint32_t row = 0; row < num_rows; row++) {
-                if (mat[row][col]) {
-                    num_ones++;
-                    found_row = row;
-                }
-            }
-            if (num_ones == 0) {
-                cout
-                << "mat[" << matrix_no << "] "
-                << "WARNING: Tracked col " << col
-                << " var: " << var+1
-                << " has 0 rows' bit set to 1..."
-                << endl;
-            }
-            if (num_ones > 1) {
-                cout
-                << "mat[" << matrix_no << "] "
-                << "ERROR: Tracked col " << col
-                << " var: " << var+1
-                << " has " << num_ones << " rows' bit set to 1!!"
-                << endl;
-                assert(num_ones <= 1);
-            }
-            if (num_ones == 1) {
-                if (row_resp_for_var[found_row] != var_Undef) {
-                    cout << "ERROR One row can only be responsible for one col"
-                    << " but row " << found_row << " is responsible for"
-                    << " var: " << row_resp_for_var[found_row]+1
-                    << " and var: " << var+1
-                    << endl;
-                    assert(false);
-                }
-                row_resp_for_var[found_row] = var;
-            }
+    assert(compact);
+    for(uint32_t d = 0; d < num_dcols; d++) assert(var_to_dcol[dcol_to_var[d]] == d);
+
+    vector<char> seen_resp(solver->nVars(), 0);
+    for(uint32_t row = 0; row < num_rows; row++) {
+        const uint32_t v = row_to_resp_var[row];
+        if (v == var_Undef) {
+            assert(mat[row].isZero());
+            continue;
         }
+        assert(var_to_dcol[v] == unassigned_col);
+        assert(!seen_resp[v] && "One row can only be responsible for one col");
+        seen_resp[v] = 1;
+    }
+
+    for(uint32_t c = 0; c < num_cols; c++) {
+        const uint32_t v = col_to_var[c];
+        assert((bool)var_has_resp_row[v] == (var_to_dcol[v] == unassigned_col));
     }
 }
 
@@ -1442,35 +1508,30 @@ bool EGaussian::check_row_satisfied(const uint32_t row)
 {
     bool ret = true;
     bool fin = mat[row].rhs();
-    for(uint32_t i = 0; i < num_cols; i++) {
-        if (mat[row][i]) {
-            uint32_t var = col_to_var[i];
-            auto val = solver->value(var);
-            if (val == l_Undef) {
-                cout << "Var " << var+1 << " col: " << i << " is undef!" << endl;
-                ret = false;
-            }
-            fin ^= val == l_True;
+    auto acc = [&](const uint32_t var) {
+        const auto val = solver->value(var);
+        if (val == l_Undef) {
+            cout << "Var " << var+1 << " is undef!" << endl;
+            ret = false;
         }
+        fin ^= val == l_True;
+    };
+    if (compact) {
+        if (row_to_resp_var[row] != var_Undef) acc(row_to_resp_var[row]);
+        mat[row].for_each_set_bit([&](const uint32_t d) { acc(dcol_to_var[d]); });
+    } else {
+        mat[row].for_each_set_bit([&](const uint32_t c) { acc(col_to_var[c]); });
     }
     return ret && fin == false;
 }
 
 void EGaussian::check_cols_unset_vals()
 {
-    for(uint32_t i = 0; i < num_cols; i ++) {
-        uint32_t var = col_to_var[i];
-        if (solver->value(var) == l_Undef) {
-            assert((*cols_unset)[i] == 1);
-        } else {
-            assert((*cols_unset)[i] == 0);
-        }
-
-        if (solver->value(var) == l_True) {
-            assert((*cols_vals)[i] == 1);
-        } else {
-            assert((*cols_vals)[i] == 0);
-        }
+    assert(compact);
+    for(uint32_t d = 0; d < num_dcols; d++) {
+        const uint32_t var = dcol_to_var[d];
+        assert((*cols_unset)[d] == (solver->value(var) == l_Undef));
+        assert((*cols_vals)[d] == (solver->value(var) == l_True));
     }
 }
 
