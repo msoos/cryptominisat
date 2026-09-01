@@ -21,8 +21,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+// note: MinGW64 defines both __MINGW32__ and __MINGW64__
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
+#include <time.h>
+#else
 #include <sys/resource.h>
 #include <sys/time.h>
+#endif
 
 #include <stdlib.h>
 
@@ -620,6 +625,11 @@ static double yals_avg (double a, double b) { return b ? a/b : 0; }
 
 static double yals_pct (double a, double b) { return b ? 100.0 * a / b : 0; }
 
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
+double yals_process_time () {
+  return (double) clock () / CLOCKS_PER_SEC;
+}
+#else
 double yals_process_time () {
   struct rusage u;
   double res;
@@ -628,6 +638,7 @@ double yals_process_time () {
   res += u.ru_stime.tv_sec + 1e-6 * u.ru_stime.tv_usec;
   return res;
 }
+#endif
 
 static double yals_time (Yals * yals) {
   if (yals && yals->cbs.time) return yals->cbs.time ();
