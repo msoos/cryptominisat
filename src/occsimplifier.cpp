@@ -3639,7 +3639,6 @@ bool OccSimplifier::find_ite_gate(
                 continue;
             }
             if (!ok && ok2) {
-//                 cout << "Swapped" << endl;
                 std::swap(lits[0], lits[1]);
             }
 
@@ -3668,7 +3667,6 @@ bool OccSimplifier::find_ite_gate(
             continue;
         }
 
-//         cout << "Start" << endl;
         out_b.clear();
         bool got_mf_v_mx = false;
         bool got_mg_v_x = false;
