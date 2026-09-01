@@ -772,7 +772,6 @@ bool EGaussian::find_truths(
         var_has_resp_row,
         new_resp_var,
         *tmp_col,
-        *tmp_col2,
         *cols_vals,
         *cols_unset,
         ret_lit_prop);
@@ -1054,7 +1053,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                     var_has_resp_row,
                     new_non_resp_var,
                     *tmp_col,
-                    *tmp_col2,
                     *cols_vals,
                     *cols_unset,
                     ret_lit_prop

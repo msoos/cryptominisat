@@ -160,12 +160,12 @@ gret PackedRow::propGause(
     vector<char> &var_has_resp_row,
     uint32_t& new_resp_var,
     PackedRow& tmp_col,
-    PackedRow& tmp_col2,
     PackedRow& cols_vals,
     PackedRow& cols_unset,
     Lit& ret_lit_prop
 ) {
-    uint32_t pop = tmp_col.set_and_until_popcnt_atleast2(*this, cols_unset);
+    int first_nz;
+    const uint32_t pop = tmp_col.set_and_until_popcnt_atleast2(*this, cols_unset, first_nz);
     #ifdef VERBOSE_DEBUG
     cout << "POP in GausE: " << pop << " row: " << endl;
     cout << *this << endl;
@@ -175,7 +175,7 @@ gret PackedRow::propGause(
 
     //Find new watch
     if (pop >= 2) {
-        for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
+        for (int i = first_nz; i < size; i++) if (tmp_col.mp[i]) {
             int64_t tmp = tmp_col.mp[i];
             unsigned long at;
             at = scan_fwd_64b(tmp);
@@ -209,13 +209,12 @@ gret PackedRow::propGause(
         assert(false && "Should have found a new watch!");
     }
 
-    //Calc value of row
-    tmp_col2.set_and(*this, cols_vals);
-    const uint32_t pop_t = tmp_col2.popcnt() + rhs();
+    //Value of the row -- only its parity is ever used
+    const bool odd = parity_of_and(cols_vals) ^ (bool)rhs();
 
     //Lazy prop
     if (pop == 1) {
-        for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
+        for (int i = first_nz; i < size; i++) if (tmp_col.mp[i]) {
             int at = scan_fwd_64b(tmp_col.mp[i]);
 
             // found prop
@@ -225,7 +224,7 @@ gret PackedRow::propGause(
             #endif
             const uint32_t var = col_to_var[col];
             assert(assigns[var] == l_Undef);
-            ret_lit_prop = Lit(var, !(pop_t % 2));
+            ret_lit_prop = Lit(var, !odd);
             return gret::prop;
         }
         assert(false && "Should have found the propagating literal!");
@@ -235,9 +234,7 @@ gret PackedRow::propGause(
     assert(pop == 0);
 
     //Satisfied
-    if (pop_t % 2 == 0) {
-        return gret::nothing_satisfied;
-    }
+    if (!odd) return gret::nothing_satisfied;
 
     //Conflict
     return gret::confl;

@@ -119,7 +119,10 @@ public:
         }
     }
 
-    uint32_t set_and_until_popcnt_atleast2(const PackedRow& a, const PackedRow& b)
+    ///Also hands back the first word that came out non-zero, so callers don't
+    ///have to walk the leading zeros a second time to find the set bits.
+    uint32_t set_and_until_popcnt_atleast2(
+        const PackedRow& a, const PackedRow& b, int& first_nz)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
@@ -128,12 +131,31 @@ public:
         #endif
 
         uint32_t pop = 0;
-        for (int i = 0; i < size && pop < 2; i++) {
-            *(mp + i) = *(a.mp + i) & *(b.mp + i);
-            pop += __builtin_popcountll((uint64_t)*(mp + i));
+        first_nz = size;
+        for (int i = 0; i < size; i++) {
+            const int64_t w = *(a.mp + i) & *(b.mp + i);
+            *(mp + i) = w;
+            if (w) {
+                if (first_nz == size) first_nz = i;
+                pop += __builtin_popcountll((uint64_t)w);
+                if (pop >= 2) break;
+            }
         }
 
         return pop;
+    }
+
+    ///Parity of popcnt(*this AND b). popcnt is linear over GF(2), so XOR the
+    ///words together and count once instead of counting each word.
+    bool parity_of_and(const PackedRow& b) const
+    {
+        #ifdef DEBUG_ROW
+        assert(b.size == size);
+        #endif
+
+        int64_t acc = 0;
+        for (int i = 0; i < size; i++) acc ^= mp[i] & b.mp[i];
+        return __builtin_parityll((uint64_t)acc);
     }
 
     void xor_in(const PackedRow& b)
@@ -256,7 +278,6 @@ public:
         vector<char> &var_has_resp_row,
         uint32_t& new_resp_var,
         PackedRow& tmp_col,
-        PackedRow& tmp_col2,
         PackedRow& cols_vals,
         PackedRow& cols_unset,
         Lit& ret_lit_prop
