@@ -190,10 +190,6 @@ if(BREAKID_LIBRARIES)
     set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
 endif()
 
-if(NOT NOCADICAL)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} cadiback cadical)
-endif()
-
 if(STATS)
     set(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
@@ -277,6 +273,8 @@ target_link_libraries(cryptominisat5
     PRIVATE
         ${cryptoms_lib_link_libs}
         ${LOUVAIN_COMMUNITIES_LIBRARIES}
+        cadiback
+        cadical
         Threads::Threads
     PUBLIC
         PkgConfig::GMP
@@ -310,6 +308,8 @@ if(IPASIR)
             Threads::Threads
             ${cryptoms_lib_link_libs}
             ${LOUVAIN_COMMUNITIES_LIBRARIES}
+            cadiback
+            cadical
         PUBLIC
             PkgConfig::GMP
     )
@@ -446,19 +446,16 @@ install(TARGETS oracle-bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Uses CaDiCaL directly as the ground truth to check the oracle against
-if(NOT NOCADICAL)
-    add_executable(assump_fuzz_oracle
-        oracle/assump_fuzz_oracle.cpp
-    )
-    target_include_directories(assump_fuzz_oracle PRIVATE
-        ${PROJECT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/oracle
-    )
-    target_link_libraries(assump_fuzz_oracle PRIVATE oracle cadiback cadical)
-    target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
-endif()
+add_executable(assump_fuzz_oracle
+    oracle/assump_fuzz_oracle.cpp
+)
+target_include_directories(assump_fuzz_oracle PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle
+)
+target_link_libraries(assump_fuzz_oracle PRIVATE oracle cadiback cadical)
+target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
 
 if(MPI_FOUND)
     add_executable(cryptominisat5_mpi-bin
