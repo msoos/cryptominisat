@@ -1418,7 +1418,7 @@ lbool Solver::solve_with_assumptions(
     //CaDiCaL calls 'lucky_phases' here, after preprocessing and before the CDCL
     //loop. Assumptions and BNNs are not handled, as in CaDiCaL.
     if (status == l_Undef && conf.lucky && nVars() > 0
-        && assumptions.empty() && bnns.empty()
+        && assumptions.empty() && bnns.empty() && !fast_backw.fast_backw_on
     ) {
         Lucky lucky(this);
         status = lucky.doit();
