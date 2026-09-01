@@ -27,9 +27,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include "cryptominisat.h"
 #include "varreplacer.h"
-#ifdef USE_CADIBACK
 #include "cadiback.h"
-#endif
 
 using namespace CMSat;
 
@@ -46,12 +44,6 @@ inline Lit orc_to_lit(int x) {
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
         bool& backbone_done)
 {
-#ifndef USE_CADIBACK
-    (void)orig_max_confl;
-    backbone_done = false;
-    verb_print(1, "[backbone-simpl] CaDiCaL/CadiBack not compiled in, skipping");
-    return okay();
-#else
     if (!okay()) return okay();
     if (nVars() == 0) return okay();
     double my_time = cpu_time();
@@ -208,7 +200,6 @@ end:
             << cpu_time() - my_time);
     print_simp_stats_after("backbone-simpl");
     return okay();
-#endif
 }
 
 void Solver::detach_and_free_all_irred_cls()
