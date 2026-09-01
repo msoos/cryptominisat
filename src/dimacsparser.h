@@ -284,8 +284,10 @@ bool DimacsParser<C, S>::parse_header(C& in)
         if (solver->nVars() < (size_t)num_header_vars) {
             solver->new_vars(num_header_vars-solver->nVars());
         }
-        //XLRUP proofs number input clauses by file position
-        solver->reserve_input_clause_ids(num_header_cls);
+        //XLRUP proofs number input clauses by file position. Sinks other than
+        //the solver (e.g. CNF containers) don't implement this.
+        if constexpr (requires { solver->reserve_input_clause_ids(num_header_cls); })
+            solver->reserve_input_clause_ids(num_header_cls);
     } else {
         std::cerr
         << "PARSE ERROR! Unexpected char (hex: " << std::hex
