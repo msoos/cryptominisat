@@ -214,15 +214,13 @@ void EGaussian::fill_matrix() {
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
     reason_mat.clear();
+    reason_stride = solver->frat->enabled() ? (num_rows+63)/64 : 0;
+    reason_mat.resize((size_t)num_rows*reason_stride, 0);
     for (uint32_t row = 0; row < num_rows; row++) {
         const Xor& c = xorclauses[row];
         mat[row].set(c, var_to_col, num_cols);
-        vector<char> line;
-        line.resize(num_rows, 0);
-        line[row] = 1;
-        reason_mat.push_back(line);
+        if (reason_stride) reason_mat[(size_t)row*reason_stride + row/64] |= 1ULL << (row%64);
     }
-    assert(reason_mat.size() == num_rows);
 
     // reset
     var_has_resp_row.clear();
@@ -386,9 +384,9 @@ void EGaussian::create_temps()
 
 void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
 {
-    for(uint32_t i = 0; i < reason_mat[a].size(); i ++) {
-        reason_mat[a][i] ^= reason_mat[b][i];
-    }
+    uint64_t* ap = reason_mat.data() + (size_t)a*reason_stride;
+    const uint64_t* bp = reason_mat.data() + (size_t)b*reason_stride;
+    for(uint32_t i = 0; i < reason_stride; i++) ap[i] ^= bp[i];
 }
 
 void EGaussian::eliminate() {
@@ -417,7 +415,10 @@ void EGaussian::eliminate() {
             // swap row row_with_1_in_col and rowIt
             if (row_with_1_in_col != rowI) {
                 (*rowI).swapBoth(*row_with_1_in_col);
-                std::swap(reason_mat[row_i], reason_mat[row_with_1_in_col_n]);
+                if (reason_stride) std::swap_ranges(
+                    reason_mat.begin() + (size_t)row_i*reason_stride,
+                    reason_mat.begin() + (size_t)(row_i+1)*reason_stride,
+                    reason_mat.begin() + (size_t)row_with_1_in_col_n*reason_stride);
             }
 
             // XOR into *all* rows that have a "1" in column COL
@@ -491,8 +492,14 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     mat[row_n].get_reason_xor(reason, solver->assigns, col_to_var, *cols_vals, *tmp_col2);
     INC_XID(reason);
     *solver->frat << addx << reason << fratchain;
-    for(uint32_t i = 0; i < reason_mat[row_n].size(); i++) {
-        if (reason_mat[row_n][i]) *solver->frat << xorclauses[i].xid;
+    const uint64_t* rp = reason_mat.data() + (size_t)row_n*reason_stride;
+    for(uint32_t w = 0; w < reason_stride; w++) {
+        uint64_t tmp = rp[w];
+        while (tmp) {
+            const uint32_t i = w*64 + __builtin_ctzll(tmp);
+            tmp &= tmp-1;
+            *solver->frat << xorclauses[i].xid;
+        }
     }
     *solver->frat << fin;
     VERBOSE_PRINT("reason XOR: " << reason);

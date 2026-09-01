@@ -192,7 +192,12 @@ class EGaussian {
 
 
     PackedMatrix mat;
-    vector<vector<char>> reason_mat;
+
+    ///Which original xorclauses XOR together into each row, as a bitset with
+    ///reason_stride words per row. Only built when FRAT is on -- it is
+    ///num_rows^2 bits, i.e. bigger than the matrix itself.
+    vector<uint64_t> reason_mat;
+    uint32_t reason_stride = 0;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;
