@@ -67,6 +67,119 @@ DistillerLong::DistillerLong(Solver* _solver) :
     solver(_solver)
 {}
 
+//Visit one literal of a reason clause: mark its var and queue its own
+//reason, as CaDiCaL's vivify_analyze_redundant
+void DistillerLong::analyze_visit(const Lit l, bool& only_bin)
+{
+    (void)only_bin;
+    const auto& vd = solver->varData[l.var()];
+    if (vd.level == 0) return;
+    auto& s = solver->seen[l.var()*2];
+    if (s) return;
+    s = 1;
+    analyzed_vars.push_back(l.var());
+    if (!vd.reason.isnullptr()) reason_stack.push_back(vd.reason);
+}
+
+//DFS over the reasons reachable from 'start', marking every level>0 var.
+//Decisions end the recursion. Returns false on a BNN reason, where this
+//analysis is unsupported
+bool DistillerLong::analyze_seen_reasons(const PropBy start, bool& only_bin)
+{
+    //visits done before this call may have queued reasons already: keep them
+    reason_stack.push_back(start);
+    while (!reason_stack.empty()) {
+        const PropBy r = reason_stack.back();
+        reason_stack.pop_back();
+        switch (r.getType()) {
+            case binary_t:
+                analyze_visit(r.lit2(), only_bin);
+                break;
+            case clause_t: {
+                const Clause& rcl = *solver->cl_alloc.ptr(r.get_offset());
+                if (rcl.size() > 2) only_bin = false;
+                for (const Lit l: rcl) analyze_visit(l, only_bin);
+                break;
+            }
+            case xor_t: {
+                only_bin = false;
+                int32_t id;
+                for (const Lit l: *solver->get_xor_reason(r, id))
+                    analyze_visit(l, only_bin);
+                break;
+            }
+            default: return false; //BNN reason: bail out
+        }
+    }
+    return true;
+}
+
+//CaDiCaL's vivify_post_process_analysis: keep the subsume literal and the
+//decisions the derivation used; flush the rest. Result in kept_lits.
+//Returns false when nothing is gained ('@7': all literals were used)
+bool DistillerLong::post_process_analysis(const Clause& cl, const Lit subsume_lit)
+{
+    bool all_dec = true;
+    for (const Lit l: cl) {
+        if (l == subsume_lit) continue;
+        if (solver->value(l) != l_False) { all_dec = false; break; }
+        const auto& vd = solver->varData[l.var()];
+        if (vd.level == 0) continue;
+        if (!vd.reason.isnullptr()) { all_dec = false; break; }
+        if (!solver->seen[l.var()*2]) { all_dec = false; break; }
+    }
+    if (all_dec) return false;
+
+    kept_lits.clear();
+    for (const Lit l: cl) {
+        if (l == subsume_lit) { kept_lits.push_back(l); continue; }
+        if (solver->value(l) != l_False) continue;          //true/unassigned: flush
+        const auto& vd = solver->varData[l.var()];
+        if (vd.level == 0) continue;                        //fixed false: drop
+        if (!vd.reason.isnullptr()) continue;               //implied false: flush
+        if (solver->seen[l.var()*2]) kept_lits.push_back(l); //used decision: keep
+    }
+    return !kept_lits.empty();
+}
+
+//Strict hints for an analysis-strengthened clause: units, the seen
+//propagations' reasons in trail order, then the closing clause
+void DistillerLong::analysis_hints(const Lit subsume_lit, const PropBy confl)
+{
+    hints.clear();
+    if (!solver->frat->enabled()) return;
+
+    props_tmp.clear();
+    for (const uint32_t v: analyzed_vars) {
+        if (subsume_lit != lit_Undef && v == subsume_lit.var()) continue;
+        if (!solver->varData[v].reason.isnullptr()) props_tmp.push_back(v);
+    }
+    std::sort(props_tmp.begin(), props_tmp.end(),
+        [this](const uint32_t a, const uint32_t b) {
+            return solver->varData[a].sublevel < solver->varData[b].sublevel;
+        });
+    vector<int32_t> rsns;
+    for (const uint32_t v: props_tmp)
+        rsns.push_back(solver->get_reason_id(solver->varData[v].reason, hint_units));
+    int32_t final_id;
+    if (subsume_lit != lit_Undef)
+        final_id = solver->get_reason_id(
+            solver->varData[subsume_lit.var()].reason, hint_units);
+    else
+        final_id = solver->get_confl_id(confl, hint_units);
+    hints = hint_units;
+    hints.insert(hints.end(), rsns.begin(), rsns.end());
+    hints.push_back(final_id);
+
+}
+
+void DistillerLong::clear_seen()
+{
+    for (const uint32_t v: analyzed_vars) solver->seen[v*2] = 0;
+    analyzed_vars.clear();
+    reason_stack.clear(); //non-empty after a BNN bail-out
+}
+
 bool DistillerLong::distill(const bool red, bool only_rem_cl)
 {
     frat_func_start();
@@ -240,13 +353,71 @@ bool DistillerLong::distill_long_cls_all(
     {
         const LitScoreDescSort lit_sort(lit_counts);
         vector<vector<Lit>> slits(todo.size());
-        vector<uint32_t> order(todo.size());
         for(uint32_t i = 0; i < todo.size(); i++) {
-            order[i] = i;
             const Clause& cl = *solver->cl_alloc.ptr(todo[i]);
             slits[i].assign(cl.begin(), cl.end());
             std::sort(slits[i].begin(), slits[i].end(), lit_sort);
         }
+
+        //CaDiCaL's flush_vivification_schedule: a candidate whose sorted
+        //literals extend another candidate's full literal set is subsumed
+        //by it (duplicates included). Delete such candidates outright.
+        {
+            vector<uint32_t> ford(todo.size());
+            for(uint32_t i = 0; i < todo.size(); i++) ford[i] = i;
+            std::stable_sort(ford.begin(), ford.end(),
+                [&](const uint32_t a, const uint32_t b) {
+                    const auto& x = slits[a];
+                    const auto& y = slits[b];
+                    const uint32_t n = std::min(x.size(), y.size());
+                    for(uint32_t i = 0; i < n; i++)
+                        if (x[i] != y[i]) return x[i] < y[i];
+                    return x.size() < y.size();
+                });
+            vector<char> removed(todo.size(), 0);
+            uint32_t num_subsumed = 0;
+            uint32_t prev = numeric_limits<uint32_t>::max();
+            for(const uint32_t at: ford) {
+                if (prev == numeric_limits<uint32_t>::max()
+                    || slits[at].size() < slits[prev].size()
+                ) {
+                    prev = at;
+                    continue;
+                }
+                bool is_prefix = true;
+                for(uint32_t i = 0; i < slits[prev].size(); i++) {
+                    if (slits[prev][i] != slits[at][i]) { is_prefix = false; break; }
+                }
+                if (is_prefix) {
+                    Clause* cl = solver->cl_alloc.ptr(todo[at]);
+                    solver->detachClause(*cl);
+                    solver->free_cl(todo[at]);
+                    removed[at] = 1;
+                    num_subsumed++;
+                } else {
+                    prev = at;
+                }
+            }
+            if (num_subsumed) {
+                runStats.clRemoved += num_subsumed;
+                uint32_t j = 0;
+                for(uint32_t i = 0; i < todo.size(); i++) {
+                    if (removed[i]) continue;
+                    if (i != j) {
+                        todo[j] = todo[i];
+                        todo_prio[j] = todo_prio[i];
+                        slits[j] = std::move(slits[i]);
+                    }
+                    j++;
+                }
+                todo.resize(j);
+                todo_prio.resize(j);
+                slits.resize(j);
+            }
+        }
+
+        vector<uint32_t> order(todo.size());
+        for(uint32_t i = 0; i < todo.size(); i++) order[i] = i;
         std::stable_sort(order.begin(), order.end(),
             [&](const uint32_t a, const uint32_t b) {
                 if (todo_prio[a] != todo_prio[b]) return todo_prio[a] < todo_prio[b];
@@ -477,16 +648,60 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         << "True_confl: " << True_confl
         << "confl.isnullptr(): " << confl.isnullptr());
 
-    //Actually, we can remove the clause!
-    if (also_remove && !red && !True_confl && !confl.isnullptr()) {
+    //Subsumed via propagation: a conflict ('@6') or a literal positively
+    //implied ('@5'), as in CaDiCaL's vivify_clause
+    const bool subsumed = !confl.isnullptr();
+
+    //Propagation was over irred only, so the clause is an asymmetric
+    //tautology of the irred formula: drop it
+    if (subsumed && !red && also_remove) {
         VERBOSE_PRINT("CL Removed.");
         return remove_cl();
     }
 
+    //Redundant mode: strengthen instead of subsuming, by resolving the
+    //involved reasons, as CaDiCaL's vivify_analyze_redundant
+    bool have_analysis = false;
+    if (subsumed && red) {
+        const Lit subsume_lit = True_confl ? kept_lits.back() : lit_Undef;
+        bool only_bin = true;
+        bool analyzed_ok;
+        assert(analyzed_vars.empty());
+        if (True_confl) {
+            solver->seen[subsume_lit.var()*2] = 1;
+            analyzed_vars.push_back(subsume_lit.var());
+            analyzed_ok = analyze_seen_reasons(
+                solver->varData[subsume_lit.var()].reason, only_bin);
+        } else {
+            if (confl.getType() == binary_t)
+                analyze_visit(solver->get_fail_bin_lit(), only_bin);
+            analyzed_ok = analyze_seen_reasons(confl, only_bin);
+        }
+        if (analyzed_ok) {
+            if (only_bin) {
+                //hidden tautology: derived through binaries only, drop it
+                clear_seen();
+                return remove_cl();
+            }
+            if (!post_process_analysis(cl, subsume_lit)) {
+                //'@7': the derivation used every literal, nothing to gain
+                clear_seen();
+                cl.disabled = false;
+                solver->frat->forget_delay();
+                solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+                frat_func_end();
+                return offset;
+            }
+            analysis_hints(subsume_lit, confl);
+            clear_seen();
+            have_analysis = true; //kept_lits & hints are set
+        } else {
+            clear_seen(); //BNN reason: plain prefix shortening below
+        }
+    }
+
     //Couldn't simplify the clause. Keep the trail for the next candidate
-    if (num_dropped == 0 && kept_lits.size() == orig_size
-        && !True_confl && confl.isnullptr()
-    ) {
+    if (!subsumed && num_dropped == 0 && kept_lits.size() == orig_size) {
         VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
         solver->frat->forget_delay();
@@ -496,17 +711,19 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //strict hints while the trail is still intact: units, propagation
     //reasons in trail order, closing clause (conflict/true-lit reason/orig)
-    hints.clear();
-    if (solver->frat->enabled()) {
-        vector<int32_t> rsns;
-        solver->collect_trail_seg_hints(seg_start, hint_units, rsns);
-        int32_t final_id;
-        if (True_confl) final_id = solver->get_reason_id(confl, hint_units);
-        else if (!confl.isnullptr()) final_id = solver->get_confl_id(confl, hint_units);
-        else final_id = stats->id;
-        hints = hint_units;
-        hints.insert(hints.end(), rsns.begin(), rsns.end());
-        hints.push_back(final_id);
+    if (!have_analysis) {
+        hints.clear();
+        if (solver->frat->enabled()) {
+            vector<int32_t> rsns;
+            solver->collect_trail_seg_hints(seg_start, hint_units, rsns);
+            int32_t final_id;
+            if (True_confl) final_id = solver->get_reason_id(confl, hint_units);
+            else if (!confl.isnullptr()) final_id = solver->get_confl_id(confl, hint_units);
+            else final_id = stats->id;
+            hints = hint_units;
+            hints.insert(hints.end(), rsns.begin(), rsns.end());
+            hints.push_back(final_id);
+        }
     }
 
     solver->cancelUntil<false, true>(0);

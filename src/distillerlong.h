@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "solvertypes.h"
 #include "cloffset.h"
+#include "propby.h"
 #include "watcharray.h"
 
 namespace CMSat {
@@ -81,8 +82,16 @@ class DistillerLong {
             bool only_remove,
             bool red, uint32_t red_lev = numeric_limits<uint32_t>::max());
         bool go_through_clauses(vector<ClOffset>& cls, const bool also_remove, const bool only_remove);
+        void analyze_visit(const Lit l, bool& only_bin);
+        bool analyze_seen_reasons(const PropBy start, bool& only_bin);
+        bool post_process_analysis(const Clause& cl, const Lit subsume_lit);
+        void analysis_hints(const Lit subsume_lit, const PropBy confl);
+        void clear_seen();
         Solver* solver;
         uint64_t last_red_props = 0;
+        vector<PropBy> reason_stack;
+        vector<uint32_t> analyzed_vars;
+        vector<uint32_t> props_tmp;
 
         //For distill
         vector<uint64_t> lit_counts; ///<Per-literal JW-style scores, as CaDiCaL's noccs
