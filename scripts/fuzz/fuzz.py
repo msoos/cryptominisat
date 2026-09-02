@@ -429,6 +429,12 @@ class Tester:
         cmd += "--distillirredalsoremratio %s " % random.choice([0.1, 1.2])
         cmd += "--distillirrednoremratio %s " % random.choice([0.1, 1])
 
+        # oracle-based inprocessing (oracle-vivif*/oracle-sparsify* schedule steps)
+        cmd += "--oraclemult %s " % random.choice([0.001, 0.01, 0.1, 1.0, 1.0, 10])
+        cmd += "--oraclegetlearnts %d " % random.choice([0, 1])
+        cmd += "--oracleremovedislearnt %d " % random.choice([0, 1])
+        cmd += "--oraclefindbins %d " % random.choice([0, 0, 1, 5, 500])
+
         # occ / varelim / bva limits
         cmd += "--bva %d " % random.choice([0, 0, 1])
         cmd += "--bvalim %d " % random.choice([0, 5, 250000])

@@ -983,6 +983,25 @@ void Main::add_supported_options() {
         .help("How much of irred to distill when doing no removal");
     ;
 
+    /* po::options_description oracleOptions("Oracle options"); */
+    program.add_argument("--oraclemult")
+        .action([&](const auto& a) {conf.oracle_mult = fc_double(a);})
+        .default_value(conf.oracle_mult)
+        .help("Time multiplier for all oracle-based (oracle-vivif*, oracle-sparsify*) cutoffs");
+    program.add_argument("--oraclegetlearnts")
+        .action([&](const auto& a) {conf.oracle_get_learnts = fc_int(a);})
+        .default_value(conf.oracle_get_learnts)
+        .help("Keep the clauses the oracle learnt during vivification as redundant clauses");
+    program.add_argument("--oracleremovedislearnt")
+        .action([&](const auto& a) {conf.oracle_removed_is_learnt = fc_int(a);})
+        .default_value(conf.oracle_removed_is_learnt)
+        .help("Clauses removed by the oracle are re-added as redundant instead of being deleted");
+    program.add_argument("--oraclefindbins")
+        .action([&](const auto& a) {conf.oracle_find_bins = fc_int(a);})
+        .default_value(conf.oracle_find_bins)
+        .help("[0..] Effort spent looking for binary clauses during oracle vivification. 0 = off");
+    ;
+
     /* po::options_description mem_save_opts("Memory saving options"); */
     program.add_argument("--renumber")
         .action([&](const auto& a) {conf.doRenumberVars = fc_int(a);})
