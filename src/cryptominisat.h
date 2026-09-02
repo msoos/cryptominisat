@@ -250,6 +250,9 @@ namespace CMSat {
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
+        //Probe all the given (outer) variables, in the given order. Much cheaper
+        //than calling probe() on each: vars already implied by an earlier probe are skipped
+        lbool probe_all(const std::vector<uint32_t>& vars);
         bool backbone_simpl(int64_t max_confl, bool& finished);
         std::vector<std::vector<uint8_t>> many_sls(int64_t mems, uint32_t num);
 

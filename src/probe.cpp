@@ -279,6 +279,48 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
     return l_Undef;
 }
 
+lbool Solver::probe_all_outside(const vector<uint32_t>& vars)
+{
+    assert(decisionLevel() == 0);
+    if (!ok) return l_False;
+    SLOW_DEBUG_DO(check_seen_clean());
+    SLOW_DEBUG_DO(check_seen2_clean());
+
+    const double my_time = cpu_time();
+    const size_t orig_num_free_vars = get_num_free_vars();
+    const auto orig_repl = varReplacer->get_num_replaced_vars();
+    uint32_t probed = 0;
+    uint32_t skipped = 0;
+
+    for(const uint32_t outer_v: vars) {
+        assert(outer_v < nVarsOuter());
+        Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
+        l = map_outer_to_inter(l);
+        if (varData[l.var()].removed != Removed::none) continue;
+        if (value(l) != l_Undef) continue;
+
+        //we have seen it in every combination, nothing will be learnt
+        if (seen2[l.var()] == 3) { skipped++; continue; }
+
+        probed++;
+        uint32_t min_props;
+        if (!probe_inter<false>(l, min_props)) break;
+    }
+    clear_probe_seen2();
+    SLOW_DEBUG_DO(check_seen_clean());
+    SLOW_DEBUG_DO(check_seen2_clean());
+
+    verb_print(1, "[probe-all] asked: " << vars.size()
+        << " probed: " << probed
+        << " skipped: " << skipped
+        << " set: " << (orig_num_free_vars - get_num_free_vars())
+        << " repl: " << (varReplacer->get_num_replaced_vars() - orig_repl)
+        << conf.print_times(cpu_time() - my_time));
+
+    if (!okay()) return l_False;
+    return l_Undef;
+}
+
 void Solver::clear_probe_seen2()
 {
     for (const uint32_t v: probe_seen2_touched) seen2[v] = 0;

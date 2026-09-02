@@ -1665,6 +1665,13 @@ DLL_PUBLIC lbool SATSolver::probe(Lit l, uint32_t& min_props)
     return s.probe_outside(l, min_props);
 }
 
+DLL_PUBLIC lbool SATSolver::probe_all(const std::vector<uint32_t>& vars)
+{
+    assert(data->solvers.size() >= 1);
+    Solver& s = *data->solvers[0];
+    return s.probe_all_outside(vars);
+}
+
 DLL_PUBLIC uint32_t SATSolver::simplified_nvars()
 {
     assert(data->solvers.size() >= 1);

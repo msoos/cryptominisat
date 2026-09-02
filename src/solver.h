@@ -108,6 +108,7 @@ class Solver : public Searcher
         vector<int32_t> probe_hints_pos; ///< FRAT chain of the positive probe
         vector<int32_t> probe_hints_neg; ///< FRAT chain of the negative probe
         lbool probe_outside(Lit l, uint32_t& min_props);
+        lbool probe_all_outside(const vector<uint32_t>& vars);
         void set_max_confl(uint64_t max_confl);
         void set_outer_lit_weight(const Lit lit, const float weight);
         void changed_sampling_vars();
