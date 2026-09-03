@@ -1437,6 +1437,8 @@ void Main::ban_found_solution() {
 void Main::printVersionInfo()
 {
     cout << "c " << "CMS SHA1: " << solver->get_version_sha1() << endl;
+    cout << "c " << "CaDiCaL SHA1: " << solver->get_cadical_version_sha1() << endl;
+    cout << "c " << "CadiBack SHA1: " << solver->get_cadiback_version_sha1() << endl;
     cout << "c " << "CryptoMiniSat version " << solver->get_version() << endl;
     cout << "c " << "CMS compilation env " << solver->get_compilation_env() << endl;
     cout << solver->get_thanks_info("c ") << endl;
