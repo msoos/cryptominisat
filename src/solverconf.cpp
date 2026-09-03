@@ -205,7 +205,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_linkin_limit_MB(1000)
         , varelim_gate_find_limit(800)
         , picosat_gate_limitK(70)
-        , xor_gate_find_maxsize(7)
+        , xor_gate_find_maxsize(12)
         , picosat_confl_limit(100)
         , varelim_check_resolvent_subs(false)
 
