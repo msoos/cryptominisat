@@ -661,9 +661,15 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             VERBOSE_PRINT("CL Removed.");
             return remove_cl();
         }
-        //Keeping it: the trail is at a conflict, so it cannot be reused
-        solver->cancelUntil<false, true>(0);
-        if (num_dropped == 0 && kept_lits.size() == orig_size) {
+        //Keeping it. The loop broke at the conflict, so kept_lits is only a
+        //prefix -- writing that back would strengthen the clause, which is
+        //exactly what we are declining to do. Keep every literal instead.
+        kept_lits.clear();
+        for(const Lit l: sorted) kept_lits.push_back(l);
+        num_dropped = orig_size - sorted.size();
+        if (num_dropped == 0) {
+            //Unchanged. The trail is at a conflict, so it cannot be reused
+            solver->cancelUntil<false, true>(0);
             cl.disabled = false;
             solver->frat->forget_delay();
             frat_func_end();
