@@ -1624,6 +1624,14 @@ DLL_PUBLIC void SATSolver::set_distill_rem_level(int val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_xor_gate_find_maxsize(uint32_t val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.xor_gate_find_maxsize = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_bva(int val)
 {
     assert(val == 0 && "BVA no longer supported");

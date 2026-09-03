@@ -3710,7 +3710,7 @@ bool OccSimplifier::find_xor_gate(
     assert(toclear_marked_cls.empty());
     assert(parities_found.empty());
 
-    uint32_t maxsize = 7;
+    uint32_t maxsize = solver->conf.xor_gate_find_maxsize;
     maxsize = std::min((int)maxsize, (int)std::log2(a.size())+1);
     maxsize = std::min((int)maxsize, (int)std::log2(b.size())+1);
 

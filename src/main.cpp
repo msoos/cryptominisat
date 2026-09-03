@@ -973,6 +973,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.distill_instantiate = fc_int(a);})
         .default_value(conf.distill_instantiate)
         .help("Try to remove the last literal during distillation");
+    program.add_argument("--xorgatemaxsize")
+        .action([&](const auto& a) {conf.xor_gate_find_maxsize = fc_int(a);})
+        .default_value(conf.xor_gate_find_maxsize)
+        .help("Largest clause XOR-gate finding considers, before the log2 occurrence cap");
     program.add_argument("--distillremlevel")
         .action([&](const auto& a) {conf.distill_rem_level = fc_int(a);})
         .default_value(conf.distill_rem_level)
