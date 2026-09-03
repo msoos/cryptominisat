@@ -973,6 +973,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.distill_instantiate = fc_int(a);})
         .default_value(conf.distill_instantiate)
         .help("Try to remove the last literal during distillation");
+    program.add_argument("--distillremlevel")
+        .action([&](const auto& a) {conf.distill_rem_level = fc_int(a);})
+        .default_value(conf.distill_rem_level)
+        .help("Clause removal during distillation. 0 = never, 1 = only on a real conflict, 2 = also when a literal is positively implied");
     program.add_argument("--distillirredalsoremratio")
         .action([&](const auto& a) {conf.distill_irred_alsoremove_ratio = fc_double(a);})
         .default_value(conf.distill_irred_alsoremove_ratio)

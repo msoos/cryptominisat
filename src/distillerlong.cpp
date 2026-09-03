@@ -651,17 +651,35 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     //Subsumed via propagation: a conflict ('@6') or a literal positively
     //implied ('@5'), as in CaDiCaL's vivify_clause
     const bool subsumed = !confl.isnullptr();
+    bool have_analysis = false;
 
     //Propagation was over irred only, so the clause is an asymmetric
     //tautology of the irred formula: drop it
     if (subsumed && !red && also_remove) {
-        VERBOSE_PRINT("CL Removed.");
-        return remove_cl();
+        const int lev = solver->conf.distill_rem_level;
+        if (lev >= 2 || (lev == 1 && !True_confl)) {
+            VERBOSE_PRINT("CL Removed.");
+            return remove_cl();
+        }
+        //Keeping it: the trail is at a conflict, so it cannot be reused
+        solver->cancelUntil<false, true>(0);
+        if (num_dropped == 0 && kept_lits.size() == orig_size) {
+            cl.disabled = false;
+            solver->frat->forget_delay();
+            frat_func_end();
+            return offset;
+        }
+        //Only the level-0-false literals go: units, then the original clause
+        hints.clear();
+        if (solver->frat->enabled()) {
+            hints = hint_units;
+            hints.push_back(stats->id);
+        }
+        have_analysis = true;
     }
 
     //Redundant mode: strengthen instead of subsuming, by resolving the
     //involved reasons, as CaDiCaL's vivify_analyze_redundant
-    bool have_analysis = false;
     if (subsumed && red) {
         const Lit subsume_lit = True_confl ? kept_lits.back() : lit_Undef;
         bool only_bin = true;

@@ -336,6 +336,7 @@ class DLL_PUBLIC SolverConf
         long distill_min_confl;
         unsigned distill_red_releff;   ///<Per-mille of props since last round, as CaDiCaL's vivifyreleff
         int    distill_instantiate;    ///<Try removing the last literal, as CaDiCaL's vivifyinst
+        int    distill_rem_level;      ///<Clause removal during distillation: 0 = never, 1 = only on a real conflict, 2 = also on a positively implied literal
         double distill_irred_alsoremove_ratio;
         double distill_irred_noremove_ratio;
 

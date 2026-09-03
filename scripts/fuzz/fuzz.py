@@ -426,6 +426,7 @@ class Tester:
         cmd += "--distillminconf %d " % random.choice([1, 10000])
         cmd += "--distillredreleff %s " % random.choice([0, 20, 1000])
         cmd += "--distillinst %d " % random.choice([0, 1])
+        cmd += "--distillremlevel %d " % random.choice([0, 1, 2])
         cmd += "--distillirredalsoremratio %s " % random.choice([0.1, 1.2])
         cmd += "--distillirrednoremratio %s " % random.choice([0.1, 1])
 

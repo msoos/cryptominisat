@@ -331,6 +331,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_min_confl(10000)
         , distill_red_releff(20)
         , distill_instantiate(1)
+        , distill_rem_level(2)
         , distill_irred_alsoremove_ratio(1.2)
         , distill_irred_noremove_ratio(1.0) //from out-3946531.wlm01-15-drat0
 

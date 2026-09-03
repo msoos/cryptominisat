@@ -153,6 +153,7 @@ namespace CMSat {
         void set_scc(int val);
         void set_bva(int val);
         void set_distill(int val);
+        void set_distill_rem_level(int val);
         void reset_vsids();
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
         void set_simplify(const bool simp);
