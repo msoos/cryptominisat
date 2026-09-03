@@ -1152,6 +1152,7 @@ bool OccSimplifier::eliminate_vars()
     //Go through the ordered list of variables to eliminate
     int64_t last_elimed = 1;
     grow = 0;
+    uint32_t bve_round = 0;
     uint32_t n_cls_last  = sum_irred_cls_longs() + solver->binTri.irredBins;
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
@@ -1274,6 +1275,15 @@ bool OccSimplifier::eliminate_vars()
         << " -> " << n_vars_now << " vars " << n_cls_now << " cls"
         << " cl_inc_rate: " << cl_inc_rate << " var_dec_rate: " << var_dec_rate);
 
+        bve_round++;
+        verb_print(1, "[occ-bve-round] " << bve_round << " grow " << grow
+            << " tried " << print_value_kilo_mega(wenThrough)
+            << " elimed " << last_elimed << " (tot " << vars_elimed << ")"
+            << " cls " << n_cls_last << "->" << n_cls_now
+            << " (init " << n_cls_init << ", d " << (int64_t)n_cls_now-(int64_t)n_cls_last << ")"
+            << " vars " << n_vars_last << "->" << n_vars_now
+            << " T: " << std::fixed << std::setprecision(2) << (cpu_time()-my_time));
+
         if (varelim_num_limit < 0
             || varelim_linkin_limit_bytes < 0
             || *limit_to_decrease < 0
@@ -1284,14 +1294,26 @@ bool OccSimplifier::eliminate_vars()
             << " *limit_to_decrease: " << print_value_kilo_mega(*limit_to_decrease));
         }
 
-        if (!solver->conf.non_stop_bve &&
-                (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate))) {
-            break;
+        if (!solver->conf.non_stop_bve) {
+            if (n_cls_now > n_cls_init) {
+                verb_print(1, "[occ-bve-round] stop: cls " << n_cls_now
+                    << " over init " << n_cls_init);
+                break;
+            }
+            if (cl_inc_rate > var_dec_rate) {
+                verb_print(1, "[occ-bve-round] stop: cl_inc_rate " << cl_inc_rate
+                    << " > var_dec_rate " << var_dec_rate);
+                break;
+            }
         }
         n_cls_last = n_cls_now;
         n_vars_last = n_vars_now;
 
-        if ((int)grow >= solver->conf.min_bva_gain) break;
+        if ((int)grow >= solver->conf.min_bva_gain) {
+            verb_print(1, "[occ-bve-round] stop: grow " << grow
+                << " reached min_bva_gain " << solver->conf.min_bva_gain);
+            break;
+        }
         if (grow == 0) grow = 3;
         else grow *= 1.5;
         grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
