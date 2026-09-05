@@ -818,6 +818,18 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.velim_resolvent_too_large = fc_int(a);})
         .default_value(conf.velim_resolvent_too_large)
         .help("Maximum resolvent size during BVE, -1 = no limit");
+    program.add_argument("--varelimirregocclim")
+        .action([&](const auto& a) {conf.varelim_irreg_gate_occ_cutoff = fc_int(a);})
+        .default_value(conf.varelim_irreg_gate_occ_cutoff)
+        .help("Don't run picosat-based irregular gate finding if the variable has more occurrences than this");
+    program.add_argument("--varelimirregconfl")
+        .action([&](const auto& a) {conf.varelim_irreg_gate_confl_limit = fc_int(a);})
+        .default_value(conf.varelim_irreg_gate_confl_limit)
+        .help("Picosat conflict budget for one irregular gate query during BVE");
+    program.add_argument("--varelimirregunit")
+        .action([&](const auto& a) {conf.varelim_irreg_gate_unit = fc_int(a);})
+        .default_value(conf.varelim_irreg_gate_unit)
+        .help("Turn a one-sided irregular-gate core into a unit instead of a gate");
     program.add_argument("--varelimprod")
         .action([&](const auto& a) {conf.varelim_score_prod = fc_int(a);})
         .default_value(conf.varelim_score_prod)

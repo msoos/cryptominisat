@@ -1671,6 +1671,45 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
     return solver->okay();
 }
 
+///UNSAT from picosat means no assignment of the `seen`-marked variables leaves
+///`v` free, i.e. `v` is definable by them. l_Undef when we didn't ask.
+lbool OccSimplifier::definable_by_picosat(const uint32_t v, DefinableStats& st)
+{
+    const Lit l = Lit(v, false);
+    const uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
+    if (total == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
+        st.no_occ++;
+        return l_Undef;
+    }
+    if (total > 500) {
+        st.too_many_occ++;
+        return l_Undef;
+    }
+
+    assert(picosat == nullptr);
+    assert(picovars_used.empty());
+    picosat = picosat_init();
+    pre_register_picosat_vars(solver->watches[l], l);
+    pre_register_picosat_vars(solver->watches[~l], ~l);
+    uint32_t added = add_cls_to_picosat_definable(l);
+    added += add_cls_to_picosat_definable(~l);
+    for(const auto x: picovars_used) var_to_picovar[x] = 0;
+    picovars_used.clear();
+
+    lbool ret = l_Undef;
+    if (added == 0) {
+        st.no_cls_match++;
+    } else {
+        st.ran++;
+        const int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
+        ret = (picoret == PICOSAT_UNSATISFIABLE) ? l_True : l_False;
+        if (ret == l_True) st.definable++;
+    }
+    picosat_reset(picosat);
+    picosat = nullptr;
+    return ret;
+}
+
 vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint32_t>& vars)
 {
     assert(solver->okay());
@@ -1687,62 +1726,24 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
     if (!setup()) return vars;
     assert(picosat == nullptr);
 
-    uint32_t unsat = 0;
-    uint32_t picosat_ran = 0;
-    uint32_t too_many_occ = 0;
+    DefinableStats st;
     for(const auto& v: vars) seen[v] = 1;
     auto ret = vars;
 
     for(uint32_t v = 0; v < solver->nVars(); v++) {
         assert(solver->varData[v].removed == Removed::none);
         if (seen[v] == 1) continue;
-        const Lit l = Lit(v, false);
-
-        uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
-        bool empty_occ = total == 0 ||
-            (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l));
-        if (empty_occ) continue;
-
-        // too expensive?
-        if (total > 500) {
-            too_many_occ++;
-            continue;
-        }
-
-        if (picosat == nullptr) picosat = picosat_init();
-        assert(picovars_used.empty());
-        pre_register_picosat_vars(solver->watches[l], l);
-        pre_register_picosat_vars(solver->watches[~l], ~l);
-        uint32_t added = add_cls_to_picosat_definable(l);
-        added += add_cls_to_picosat_definable(~l);
-        for(const auto x: picovars_used) var_to_picovar[x] = 0;
-        picovars_used.clear();
-
-        if (added == 0) {
-            picosat_reset(picosat);
-            picosat = nullptr;
-            continue;
-        }
-
-        int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
-        picosat_ran++;
-        if (picoret == PICOSAT_UNSATISFIABLE) {
-            unsat++;
+        //once definable, v joins the defining set for the variables after it
+        if (definable_by_picosat(v, st) == l_True) {
             seen[v] = 1;
             ret.push_back(v);
         }
-        picosat_reset(picosat);
-        picosat = nullptr;
-    }
-    if (picosat) {
-        picosat_reset(picosat);
-        picosat = nullptr;
     }
     for(const uint32_t v: ret) seen[v] = 0;
 
     verb_print(1, "[irreg-gate-extend]"
-               << " pico ran: " << picosat_ran << " unsat: " << unsat
-               << " too-many-occ: " << too_many_occ);
+               << " pico ran: " << st.ran << " definable: " << st.definable
+               << " too-many-occ: " << st.too_many_occ);
 
     solver->conf.maxOccurRedMB = backup;
     finish_up(orig_trail_sz);
@@ -1767,12 +1768,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     if (!setup()) return vars;
     assert(picosat == nullptr);
 
-    uint32_t unsat = 0;
-    uint32_t picosat_ran = 0;
-    uint32_t no_cls_matching_filter = 0;
-    uint32_t no_occ = 0;
-    uint32_t too_many_occ = 0;
-
+    DefinableStats st;
     vector<uint32_t> vars2;
     for(const uint32_t& v: vars) {
         assert(solver->varData[v].removed == Removed::none
@@ -1790,64 +1786,15 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     for(const auto& v: vars2) {
         assert(solver->varData[v].removed == Removed::none);
         if (solver->value(v) != l_Undef) continue;
-        const Lit l = Lit(v, false);
-
-        uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
-        bool empty_occ = total == 0 ||
-            (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l));
-        if (empty_occ) {
-            no_occ++;
-            ret.push_back(v);
-            continue;
-        }
-
-        // too expensive?
-        if (total > 500) {
-            too_many_occ++;
-            ret.push_back(v);
-            continue;
-        }
-
-        if (picosat == nullptr) {
-            picosat = picosat_init();
-        }
-
-        assert(picovars_used.empty());
-        pre_register_picosat_vars(solver->watches[l], l);
-        pre_register_picosat_vars(solver->watches[~l], ~l);
-        uint32_t added = add_cls_to_picosat_definable(l);
-        added += add_cls_to_picosat_definable(~l);
-        for(const auto x: picovars_used) var_to_picovar[x] = 0;
-        picovars_used.clear();
-
-        if (added == 0) {
-            picosat_reset(picosat);
-            picosat = nullptr;
-            no_cls_matching_filter++;
-            ret.push_back(v);
-            continue;
-        }
-
-        int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
-        picosat_ran++;
-        if (picoret == PICOSAT_UNSATISFIABLE) {
-            unsat++;
-            seen[v] = 0;
-        } else {
-            ret.push_back(v);
-        }
-        picosat_reset(picosat);
-        picosat = nullptr;
-    }
-    if (picosat) {
-        picosat_reset(picosat);
-        picosat = nullptr;
+        //v is definable: drop it from the set the remaining ones may use
+        if (definable_by_picosat(v, st) == l_True) seen[v] = 0;
+        else ret.push_back(v);
     }
     for(const uint32_t v: vars2) seen[v] = 0;
 
-    verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
-               << " pico ran: " << picosat_ran << " unsat: " << unsat
-               << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ);
+    verb_print(1, "[gate-definable] no-cls-match-filt: " << st.no_cls_match
+               << " pico ran: " << st.ran << " definable: " << st.definable
+               << " 0-occ: " << st.no_occ << " too-many-occ: " << st.too_many_occ);
 
     solver->conf.maxOccurRedMB = backup;
     finish_up(origTrailSize);
@@ -3353,6 +3300,144 @@ void OccSimplifier::add_picosat_cls(
     }
 }
 
+namespace {
+///One entry of picosat's extended tracecheck trace: `idx lits... 0 antecedents... 0`
+struct PicoTraceCl {
+    int idx;
+    vector<int> lits;
+    vector<int> antes;
+};
+
+///Picosat sorts a chain's antecedents by index, but an LRAT-style hint list has
+///to be in propagation order. Assume the negation of `c` and propagate its
+///antecedents until one conflicts, recording the order they fired in. Antecedents
+///that end up satisfied are dropped. False if they don't conflict at all.
+bool order_pico_chain(
+    const PicoTraceCl& c,
+    const vector<PicoTraceCl>& tr,
+    const std::unordered_map<int, uint32_t>& idx_to_pos,
+    vector<int>& order)
+{
+    std::unordered_map<int, int> val;
+    for(const int l: c.lits) val[std::abs(l)] = (l > 0) ? -1 : 1;
+    const auto value = [&](const int l) -> int {
+        const auto it = val.find(std::abs(l));
+        if (it == val.end()) return 0;
+        return (l > 0) ? it->second : -it->second;
+    };
+
+    order.clear();
+    vector<char> used(c.antes.size(), 0);
+    for(;;) {
+        bool progress = false;
+        for(uint32_t i = 0; i < c.antes.size(); i++) {
+            if (used[i]) continue;
+            const auto f = idx_to_pos.find(c.antes[i]);
+            if (f == idx_to_pos.end()) return false;
+
+            uint32_t n_undef = 0;
+            int unit = 0;
+            bool sat = false;
+            for(const int l: tr[f->second].lits) {
+                const int v = value(l);
+                if (v == 1) { sat = true; break; }
+                if (v == 0) { n_undef++; unit = l; }
+            }
+            if (sat) { used[i] = 1; continue; }
+            if (n_undef > 1) continue;
+
+            used[i] = 1;
+            order.push_back(c.antes[i]);
+            if (n_undef == 0) return true;
+            val[std::abs(unit)] = (unit > 0) ? 1 : -1;
+            progress = true;
+        }
+        if (!progress) return false;
+    }
+}
+}
+
+///Picosat's core came from one polarity only, so `{C \ {unit_lit} : C in
+///occs(unit_lit)}` is UNSAT and `unit_lit` is implied -- CaDiCaL's
+///`definition_unit`. That unit is not RUP, so replay picosat's resolution trace
+///as FRAT lemmas: each learned core clause becomes the same clause plus
+///`unit_lit`, and the trace's empty clause becomes the unit. Fills pico_lemmas,
+///last entry being the unit. False if no propagation-ordered chain could be
+///built, in which case nothing has been emitted.
+bool OccSimplifier::build_core_unit_chain(
+    const Lit unit_lit,
+    const vector<uint32_t>& picovar_to_var,
+    const unordered_map<int, Watched>& core_map)
+{
+    pico_lemmas.clear();
+    pico_lemmas.resize(1);
+    pico_lemmas[0].lits.push_back(unit_lit);
+    if (!solver->frat->enabled()) return true;
+
+    TraceData td;
+    td.size = 0;
+    td.capacity = 1024;
+    td.data = (int*)malloc(td.capacity*sizeof(int));
+    picosat_write_extended_trace_data(picosat, &td);
+    const uint32_t n_orig = picosat_added_original_clauses(picosat);
+
+    vector<PicoTraceCl> tr;
+    std::unordered_map<int, uint32_t> idx_to_pos;
+    bool ok = true;
+    int p = 0;
+    while (p < td.size) {
+        tr.resize(tr.size()+1);
+        PicoTraceCl& c = tr.back();
+        c.idx = td.data[p++];
+        while (p < td.size && td.data[p] != 0) c.lits.push_back(td.data[p++]);
+        p++;
+        while (p < td.size && td.data[p] != 0) c.antes.push_back(td.data[p++]);
+        p++;
+        if (p > td.size) { ok = false; break; }
+        idx_to_pos[c.idx] = tr.size()-1;
+    }
+    free(td.data);
+    //the refutation must end in the empty clause, which is what becomes the unit
+    if (!ok || tr.empty() || !tr.back().lits.empty()) return false;
+
+    pico_lemmas.clear();
+    std::unordered_map<int, int32_t> idx_to_id;
+    vector<int> order;
+    for(const auto& c: tr) {
+        if ((uint32_t)c.idx <= n_orig) {
+            //an original clause: the CMS clause we exported, pivot included
+            const auto it = core_map.find(c.idx-1);
+            if (it == core_map.end()) return false;
+            idx_to_id[c.idx] = watch_cl_id(it->second);
+            continue;
+        }
+
+        if (!order_pico_chain(c, tr, idx_to_pos, order)) return false;
+        pico_lemmas.resize(pico_lemmas.size()+1);
+        PicoLemma& lem = pico_lemmas.back();
+        for(const int pl: c.lits) {
+            const uint32_t pv = std::abs(pl);
+            //picosat may have variables of its own that map to nothing here
+            if (pv >= picovar_to_var.size() ||
+                picovar_to_var[pv] == var_Undef) return false;
+            lem.lits.push_back(Lit(picovar_to_var[pv], pl < 0));
+        }
+        lem.lits.push_back(unit_lit);
+        for(const int ai: order) {
+            const auto it = idx_to_id.find(ai);
+            if (it == idx_to_id.end()) return false;
+            lem.hints.push_back(it->second);
+        }
+        //the empty clause is the unit, add_clause_int gives it its ID
+        if (!c.lits.empty()) {
+            lem.id = ++solver->clauseID;
+            idx_to_id[c.idx] = lem.id;
+        }
+    }
+
+    return !pico_lemmas.empty() && pico_lemmas.back().id == 0;
+}
+
 bool OccSimplifier::find_irreg_gate(
     Lit elim_lit
     , watch_subarray_const a
@@ -3377,7 +3462,7 @@ bool OccSimplifier::find_irreg_gate(
                << " lits: " << bvestats.picolits_added/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * 30.0
                << " conflK: " << bvestats.pico_conflicts/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK);
 
-    if (a.size() + b.size() > 100) return false;
+    if (a.size() + b.size() > solver->conf.varelim_irreg_gate_occ_cutoff) return false;
 
     bool found = false;
     out_a.clear();
@@ -3395,10 +3480,14 @@ bool OccSimplifier::find_irreg_gate(
     pre_register_picosat_vars(b, elim_lit);
     add_picosat_cls(a, elim_lit, a_map);
     add_picosat_cls(b, elim_lit, b_map);
-    for(const auto v: picovars_used) var_to_picovar[v] = 0;
+    vector<uint32_t> picovar_to_var(picovars_used.size()+1, var_Undef);
+    for(const auto v: picovars_used) {
+        picovar_to_var[var_to_picovar[v]] = v;
+        var_to_picovar[v] = 0;
+    }
     picovars_used.clear();
 
-    ret = picosat_sat(picosat, 300);
+    ret = picosat_sat(picosat, solver->conf.varelim_irreg_gate_confl_limit);
     if (ret == PICOSAT_UNSATISFIABLE) {
         for(const auto& m: a_map) {
             if (picosat_coreclause(picosat, m.first)) {
@@ -3414,8 +3503,45 @@ bool OccSimplifier::find_irreg_gate(
         resolve_gate = true;
     }
     bvestats.pico_conflicts += picosat_conflicts(picosat);
+
+    //A core that only used one polarity means that polarity's clauses are UNSAT
+    //once the pivot is stripped, i.e. the pivot is implied. That unit is worth
+    //much more than the gate.
+    Lit unit = lit_Undef;
+    bool have_chain = false;
+    if (found && solver->conf.varelim_irreg_gate_unit) {
+        if (out_b.empty() && !out_a.empty()) unit = elim_lit;
+        else if (out_a.empty() && !out_b.empty()) unit = ~elim_lit;
+    }
+    if (unit != lit_Undef) {
+        have_chain = build_core_unit_chain(
+            unit, picovar_to_var, out_b.empty() ? a_map : b_map);
+        if (!have_chain) bvestats.irreg_gate_units_no_chain++;
+    }
+
     picosat_reset(picosat);
     picosat = nullptr;
+
+    if (have_chain) {
+        bvestats.irreg_gate_units++;
+        gate_gave_unit = true;
+        resolve_gate = false;
+        out_a.clear();
+        out_b.clear();
+        verb_print(3, "[occ] irregular gate core is one-sided, unit: " << unit);
+
+        for(uint32_t i = 0; i+1 < pico_lemmas.size(); i++) {
+            const auto& lem = pico_lemmas[i];
+            *solver->frat << add << lem.id << lem.lits << fratchain << lem.hints << fin;
+        }
+        PicoLemma& last = pico_lemmas.back();
+        add_varelim_resolvent(last.lits, ClauseStats(), last.hints);
+        for(uint32_t i = 0; i+1 < pico_lemmas.size(); i++) {
+            const auto& lem = pico_lemmas[i];
+            *solver->frat << del << lem.id << lem.lits << fin;
+        }
+        return false;
+    }
     bvestats.irreg_gate_found += found;
 
     if (found)
@@ -4345,6 +4471,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;
     resolve_gate = false;
+    gate_gave_unit = false;
     if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
@@ -4360,6 +4487,10 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     } else if (find_irreg_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     }
+
+    //find_irreg_gate turned the pivot into a unit instead of a gate: it has
+    //already propagated, so poss/negs are stale. Retry the var in a later round.
+    if (gate_gave_unit) return false;
 
     if (gates && solver->conf.verbosity > 5) {
         cout << "Elim on gate, lit: " << lit << " g poss: ";
@@ -4479,6 +4610,17 @@ bool OccSimplifier::add_varelim_resolvent(
     , const ClauseStats& stats
     , const std::pair<int32_t, int32_t>& parents
 ) {
+    varelim_hints_tmp.clear();
+    varelim_hints_tmp.push_back(parents.first);
+    varelim_hints_tmp.push_back(parents.second);
+    return add_varelim_resolvent(finalLits, stats, varelim_hints_tmp);
+}
+
+bool OccSimplifier::add_varelim_resolvent(
+    vector<Lit>& finalLits
+    , const ClauseStats& stats
+    , const vector<int32_t>& hints
+) {
     assert(solver->okay());
     assert(solver->prop_at_head());
 
@@ -4492,7 +4634,6 @@ bool OccSimplifier::add_varelim_resolvent(
         << endl;
     }
 
-    const vector<int32_t> hints = {parents.first, parents.second};
     ClauseStats backup_stats(stats);
     newCl = solver->add_clause_int(
         finalLits //Literals in new clause
@@ -5238,6 +5379,11 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     triedToElimVars += other.triedToElimVars;
     newClauses += other.newClauses;
     gatefind_timeouts += other.gatefind_timeouts;
+    irreg_gate_found += other.irreg_gate_found;
+    irreg_gate_tried += other.irreg_gate_tried;
+    irreg_gate_entered += other.irreg_gate_entered;
+    irreg_gate_units += other.irreg_gate_units;
+    irreg_gate_units_no_chain += other.irreg_gate_units_no_chain;
 
     return *this;
 }

@@ -9,7 +9,8 @@ for substitution, `pos+neg+bound` resolvent count limit, backward subsumption of
 resolvents, extension stack. The differences are in the details.
 
 **Items 2-6 are now implemented in CMS** (branch `develop-more-cadical`).
-Item 1 was tried and discarded. See "Status" under each.
+Item 1 was tried and discarded. `definition_unit` (under "New in CaDiCaL 3.0.1")
+is implemented and proof-checked but measures flat. See "Status" under each.
 
 ## 1. On-the-fly self-subsuming resolution — TRIED, DEAD END
 
@@ -181,20 +182,102 @@ definition exists, and the clausal core is the gate. This is exactly CMS's
 
 Differences worth stealing:
 
-- **One-sided core ⇒ failed literal.** CaDiCaL tracks which side the core
+- **One-sided core ⇒ failed literal — DONE.** CaDiCaL tracks which side the core
   clauses came from (`definition_unit` bitmask). If the core only uses
   `occs(lit)`, then `{C \ {lit} : lit ∈ C}` is UNSAT, so `lit` is implied and
-  becomes a unit. CMS computes the same core and throws this away.
-  *Blocker:* the unit is not RUP — it needs the sub-solver's resolution trace
-  translated into the FRAT/XLRUP chain (CaDiCaL does this via
-  `kitten_trace_core` under `lrat`). Doing it without a proof would break
-  `cake_xlrup` checking.
-- **Core shrinking.** `elimdefcores` (default 1, so off) re-solves on the
-  clausal core and shuffles, to get a smaller gate.
-- **Sub-solver reuse.** kitten is initialised once per elim phase
-  (`init_citten`) and cleared per call, with a ticks budget
-  (`elimdefticks` = 2e5). CMS calls `picosat_init`/`picosat_reset` per variable
-  and budgets by literals added (`picosat_gate_limitK`).
+  becomes a unit.
+
+  **Status: implemented**, proof and all (`--varelimirregunit`, default on).
+  `find_irreg_gate` already knows which side each core clause came from — it
+  fills `out_a`/`out_b` separately — so the detection is one `empty()` test.
+
+  The unit is not RUP, so the blocker was the proof. Solved by replaying
+  picosat's own resolution trace: `picosat_write_extended_trace_data()` (an
+  mpicosat addition, previously unused) hands back the clausal core in extended
+  tracecheck form, `idx lits… 0 antecedents… 0`, originals first then learned in
+  derivation order. Every core clause is `C \ {lit}` of a CMS clause, so adding
+  `lit` back to each learned clause turns the trace into a CMS derivation whose
+  final step — picosat's empty clause — is the unit itself. Original clauses map
+  straight to their CMS IDs via the `a_map`/`b_map` picosat-index → `Watched`
+  tables; each learned one is emitted as a FRAT lemma with a fresh ID and
+  deleted again once the unit is in.
+
+  Two things had to be got right:
+
+  - **Hint order.** `add_zhain` sorts a chain's antecedents by clause index, so
+    picosat's order is *not* a propagation order and strict LRAT checking
+    rejects it. `order_pico_chain()` re-derives one: assume the negation of the
+    lemma, propagate its antecedents, record the order they fire in, drop the
+    ones that come out satisfied. The chain is therefore verified by
+    construction — if it does not conflict we emit nothing and fall back to
+    using the core as a gate.
+  - **The trace literals must equal what we added.** They do: `trivial_clause`
+    only drops duplicates and tautologies, `simplify` collects satisfied clauses
+    but never shrinks one, and with `TRACE` on `collect_clause` never frees an
+    original.
+
+  When FRAT is off the trace is skipped entirely and the unit is enqueued
+  directly.
+
+  **Measured, and it is a wash.** 30-instance harness below,
+  `--varelimirregunit` 1 vs 0, one instance times out in both arms:
+
+  | instance | lits | free | units | elim | cls |
+  |----------------|-----:|----:|----:|----:|----:|
+  | 03B-1          |   +0 |  +0 |  +1 |  -1 |  +0 |
+  | 03B-4          |   +0 |  +0 |  +4 |  -4 |  +0 |
+  | 13A-3          |   +0 |  +0 |  +6 |  -6 |  +0 |
+  | 90-34-2-q      |   +0 |  +0 |  +9 |  -9 |  +0 |
+  | blasted_case12 |   +0 |  +0 |  +8 |  -8 |  +0 |
+  | herman21       |  -70 |  -1 | +32 | -31 | -14 |
+  | s38417_7_4     |  -53 |  +1 |  +2 |  -3 |  +3 |
+  | tire-2         |   +0 |  +0 |  +2 |  -2 |  +0 |
+  | **total**      | **-123** | **0** | **+64** | **-64** | **-11** |
+
+  `units +64` against `elimed_vars -64`, `free_vars` dead level: every unit this
+  derives is a variable BVE was going to eliminate anyway. Six of the eight
+  differing instances are otherwise byte-identical — same clause count, same
+  literals, same bins. Only herman21 and s38417 move any literals, 123 out of
+  4.65M. 21 of 29 instances do not differ at all.
+
+  Two reasons the win does not materialise:
+
+  - The unit substitutes for an elimination rather than adding to it. A unit is
+    the better form in principle — it propagates, costs one clause, and needs no
+    extension-stack entry — but the resolvents it displaces were cheap.
+  - On deriving the unit we return `false` and do not eliminate the variable
+    that round, so the `|core| × |negs|` resolvents "saved" would only ever have
+    been *added* if the elimination had passed the bound test, which mostly it
+    would not have.
+
+  Correctness is not in doubt: `no-chain` was zero on every run — 9 of the 30
+  instances plus 400 generated UNSAT instances carrying planted implied literals
+  (569 units), all `cake_xlrup`-verified, over 720 fuzz rounds.
+
+  Same shape as item 1: correct, fires, verifiable, does not help. Kept behind
+  `--varelimirregunit` so it costs nothing when off. The reusable part is the
+  trace replay itself — `picosat_write_extended_trace_data` +
+  `order_pico_chain` turn any picosat refutation into an FRAT chain, which is
+  what any future "the sub-solver proved it, now prove it to the checker" needs.
+
+  Note what CMS used to do instead was *sound*, just wasteful: with `out_b`
+  empty the gate resolution generates `|core| × |negs|` resolvents which
+  together imply `D \ {~lit}` for every `D ∈ negs` — i.e. exactly the result of
+  substituting `lit = true` — and the skipped `antec_poss × negs` resolvents are
+  subsumed by them. The unit gets the same effect for one clause.
+- **Core shrinking — not done.** `elimdefcores` is 1 in CaDiCaL 3.0.1, i.e. one
+  core, no re-solve. Dead code by default there too.
+- **Sub-solver reuse — not done, and not portable.** kitten has `kitten_clear`;
+  picosat has no equivalent, `picosat_reset` is a destructor. The only reuse
+  mechanism is `picosat_push`/`picosat_pop`, which prefixes every clause added
+  inside a context with a context literal (`simplify_and_add_original_clause`) —
+  that literal would show up in the traced clause literals the unit derivation
+  above now depends on. Not worth it: the sub-problem is capped at
+  `--varelimirregocclim` = 100 clauses, so `picosat_init` is small next to the
+  solve.
+- **Budgets.** CMS budgets by literals added (`picosat_gate_limitK`) plus a
+  per-query conflict cap, now `--varelimirregconfl` (was a hardcoded 300 that
+  ignored the `picosat_confl_limit` its two sibling call sites use).
 
 Note `elimdef` defaults to **0** in CaDiCaL — this is off by default there,
 while CMS's `find_irreg_gate` is on. kitten's other user, `sweep.cpp` (SAT
@@ -240,3 +323,8 @@ A/B harness, ~10 min for a run: loop the 30
 `../approxmc/build/*.no_w.cnf.gz` instances under
 `cryptominisat5 --verb 2 --maxconfl 1 --presimp 1`, compare `irred_long_lits`
 and `free_vars` from the last `[simp-stats] AFTER` line.
+
+Take `units` and `elimed_vars` off that line too. `definition_unit` looked like
+a small win on `irred_long_lits` alone; the two of them moving +64/-64 against a
+flat `free_vars` is what showed it was pure relabelling. A change that only
+moves a variable between the two categories has done nothing.

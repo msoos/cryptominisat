@@ -226,6 +226,9 @@ class DLL_PUBLIC SolverConf
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;
+        uint32_t varelim_irreg_gate_occ_cutoff; ///<Max occurrences (both polarities) picosat-based gate finding will look at
+        int varelim_irreg_gate_confl_limit; ///<Picosat conflict budget per irregular-gate query
+        int varelim_irreg_gate_unit; ///<CaDiCaL's definition_unit: a one-sided core makes the pivot a unit
         uint32_t xor_gate_find_maxsize; ///<Largest clause XOR-gate finding will look at, before the log2 occurrence cap
         int picosat_confl_limit;
         int varelim_check_resolvent_subs;

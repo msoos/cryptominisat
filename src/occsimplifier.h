@@ -89,6 +89,8 @@ struct BVEStats
     uint64_t irreg_gate_entered = 0;
     uint64_t picolits_added = 0;
     uint64_t pico_conflicts = 0;
+    uint64_t irreg_gate_units = 0;
+    uint64_t irreg_gate_units_no_chain = 0;
     bool turned_off_irreg_gate = false;
 
     BVEStats& operator+=(const BVEStats& other);
@@ -110,6 +112,7 @@ struct BVEStats
         print_stats_line(prefix + "cl-elim-avg-s",
                 safe_div(clauses_elimed_sumsize,clauses_elimed_bin + clauses_elimed_long));
         cout << prefix << "irreg-gate-found / tried / entered: " << irreg_gate_found << " / " << irreg_gate_tried << "/ " << irreg_gate_entered << endl;
+        cout << prefix << "irreg-gate-units / no-chain: " << irreg_gate_units << " / " << irreg_gate_units_no_chain << endl;
     }
     void clear() {
         *this = BVEStats{};
@@ -137,6 +140,14 @@ public:
     void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
+    struct DefinableStats {
+        uint32_t ran = 0;
+        uint32_t definable = 0;
+        uint32_t no_occ = 0;
+        uint32_t too_many_occ = 0;
+        uint32_t no_cls_match = 0;
+    };
+    lbool definable_by_picosat(uint32_t v, DefinableStats& st);
     PicoSAT* picosat = nullptr;
     int lit_to_picolit(const Lit l);
     vector<int> var_to_picovar;
@@ -448,12 +459,26 @@ private:
     void pre_register_picosat_vars(const vec<Watched>& ws, const Lit elim_lit);
     void register_lit_to_picovar(const Lit l);
     bool resolve_gate;
+    bool gate_gave_unit; ///< find_irreg_gate derived a unit instead of a gate
     bool find_irreg_gate(
         Lit elim_lit,
         watch_subarray_const a,
         watch_subarray_const b,
         vec<Watched>& out_a,
         vec<Watched>& out_b);
+    ///One step of picosat's resolution trace, replayed as a FRAT lemma. The
+    ///last one is the derived unit itself and is added through add_clause_int,
+    ///so it has no pre-allocated ID.
+    struct PicoLemma {
+        vector<Lit> lits;      ///< picosat clause plus the implied pivot
+        vector<int32_t> hints; ///< CMS clause IDs, in propagation order
+        int32_t id = 0;
+    };
+    vector<PicoLemma> pico_lemmas;
+    bool build_core_unit_chain(
+        Lit unit_lit,
+        const vector<uint32_t>& picovar_to_var,
+        const unordered_map<int, Watched>& core_map);
     bool find_equivalence_gate(
         Lit lit
         , watch_subarray_const a
@@ -478,7 +503,10 @@ private:
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
+                                      const vector<int32_t>& hints);
+    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
                                       const std::pair<int32_t, int32_t>& parents);
+    vector<int32_t> varelim_hints_tmp;
     int32_t     watch_cl_id(const Watched& w) const;
     void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
