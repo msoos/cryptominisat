@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "watched.h"
 #include "watchalgos.h"
 
+#include <algorithm>
 #include <limits>
 #include <sstream>
 
@@ -266,6 +267,18 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
                 std::sort(new_card.begin(), new_card.end());
                 /*cout << "c [cardfind] -> Combined card: "
                 << print_card(new_card) << endl;*/
+
+                //The two parents can share literals, and can hold a literal
+                //and its negation. AMO over the set still holds, but a card
+                //watching both polarities of a variable would come back as
+                //both a pos and a neg index for that clash var below.
+                new_card.erase(std::unique(new_card.begin(), new_card.end()),
+                               new_card.end());
+                bool complementary = false;
+                for(uint32_t at = 1; at < new_card.size(); at++) {
+                    if (new_card[at] == ~new_card[at-1]) {complementary = true; break;}
+                }
+                if (complementary) continue;
 
                 //add the new cardinality constraint
                 for(Lit l: new_card) {
