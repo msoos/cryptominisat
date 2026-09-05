@@ -315,14 +315,11 @@ Clause* Solver::add_clause_int(
     add_clause_int_tmp_cl = lits;
     vector<Lit>& ps = add_clause_int_tmp_cl;
     if (!sort_and_clean_clause(ps, lits, red, sorted)) {
-        if (finalLits) finalLits->clear();
         if (remove_frat) *frat << del << cl_stats->id << lits << fin;
+        if (finalLits) finalLits->clear();
         return nullptr;
     }
     VERBOSE_PRINT("add_clause_int final clause: " << ps);
-
-    //If caller required final set of lits, return it.
-    if (finalLits) *finalLits = ps;
 
     //unit IDs falsifying the lits that sort_and_clean_clause stripped;
     //they must come before any caller-supplied hints
@@ -379,6 +376,11 @@ Clause* Solver::add_clause_int(
             }
         }
     }
+
+    //Callers pass one vector as both 'lits' and 'finalLits', so this must come
+    //after every read of 'lits' above -- otherwise stripped_units() walks the
+    //already-cleaned clause and emits no unit hints at all
+    if (finalLits) *finalLits = ps;
 
     //Handle special cases
     switch (ps.size()) {

@@ -1,4 +1,21 @@
-For issues with FRAT, always recompile with DEBUG_FRAT so you can see which functions are involved with the failing step
+# Determinism -- NO time-based cutoffs
+
+The solver must be deterministic: two runs of the same binary on the same input
+with the same options produce byte-identical output and proofs. So NO cutoff,
+budget or limit may be driven by wall-clock or CPU time. Use deterministic step
+counters -- bogoprops, ticks, `limit_to_decrease`, conflict counts, byte counts.
+
+`cpu_time()` is for reporting only: stats lines, SQL, verbose output. The one
+exception is `conf.maxTime` (`--maxtime`), a user-requested overall giving-up
+point, off by default.
+
+If a run is not reproducible, that is a bug -- do not explain a flaky result
+away as timing. Diff the proofs of two runs first.
+
+For issues with FRAT, always recompile with DEBUG_FRAT so you can see which
+functions are involved with the failing step. Note that cake_xlrup cannot parse
+the `c ...` lines this adds, so strip them before checking.
+
 
 # Fuzzing -- MANDATORY after every change
 
