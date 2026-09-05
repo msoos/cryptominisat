@@ -119,6 +119,65 @@ struct BVEStats
     }
 };
 
+/// Why BVE refused to eliminate a variable. Purely diagnostic: each counter is
+/// a distinct bail-out point of maybe_eliminate(), so the histogram tells us
+/// which cutoff is actually costing eliminations on a given CNF. Same fields in
+/// every branch, so two logs can be diffed column by column.
+struct BVEWhyStats
+{
+    //order_vars_for_elim()
+    uint64_t sched_considered = 0;
+    uint64_t sched_cannot_elim = 0;
+    uint64_t sched_no_elim_cand = 0; ///< CaDiCaL's Flags::elim, 0 in old CMS
+    uint64_t sched_added = 0;
+
+    //test_elim_and_fill_resolvents()
+    uint64_t entered = 0;
+    uint64_t pure_lit = 0;
+    uint64_t rej_occ_cutoff = 0;
+    uint64_t rej_too_many_res = 0;
+    uint64_t rej_res_too_large = 0;
+    uint64_t rej_timeout = 0;
+    uint64_t rej_gate_unit = 0; ///< 0 in old CMS
+    uint64_t rej_unit_res = 0;  ///< 0 in old CMS
+    uint64_t ok_gate = 0;
+    uint64_t ok_nogate = 0;
+
+    uint64_t gate_eq = 0, gate_or = 0, gate_ite = 0, gate_xor = 0, gate_irreg = 0;
+
+    //profile of what we refused on, to tell "just over the line" from "hopeless"
+    uint64_t rej_occ_cutoff_max_sum = 0;
+    uint64_t rej_occ_cutoff_min_sum = 0;
+    uint64_t rej_too_many_res_lim_sum = 0;
+    uint64_t rej_res_too_large_sz_sum = 0;
+
+    void clear() { *this = BVEWhyStats{}; }
+
+    void print(const string& pre) const {
+        cout << pre << "sched: seen " << sched_considered
+            << " added " << sched_added
+            << " skip-cannot-elim " << sched_cannot_elim
+            << " skip-not-cand " << sched_no_elim_cand << endl;
+        cout << pre << "test: entered " << entered
+            << " ok-gate " << ok_gate << " ok-nogate " << ok_nogate
+            << " pure " << pure_lit << endl;
+        cout << pre << "rej: occ-lim " << rej_occ_cutoff
+            << " (avg max/min occ " << std::fixed << std::setprecision(1)
+            << safe_div(rej_occ_cutoff_max_sum, rej_occ_cutoff)
+            << "/" << safe_div(rej_occ_cutoff_min_sum, rej_occ_cutoff) << ")"
+            << " too-many-res " << rej_too_many_res
+            << " (avg lim " << safe_div(rej_too_many_res_lim_sum, rej_too_many_res) << ")"
+            << " res-too-large " << rej_res_too_large
+            << " (avg sz " << safe_div(rej_res_too_large_sz_sum, rej_res_too_large) << ")"
+            << " t-out " << rej_timeout
+            << " gate-unit " << rej_gate_unit
+            << " unit-res " << rej_unit_res << endl;
+        cout << pre << "gates: eq " << gate_eq << " or " << gate_or
+            << " ite " << gate_ite << " xor " << gate_xor
+            << " irreg " << gate_irreg << endl;
+    }
+};
+
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 */
@@ -201,6 +260,7 @@ public:
 
     BVEStats bvestats;
     BVEStats bvestats_global;
+    BVEWhyStats bve_why;
 
     const Stats& get_stats() const;
     const SubsumeStrengthen* get_sub_str() const;
@@ -420,6 +480,14 @@ private:
         vec<Watched>& tmp_negs,
         Lit lit,
         const uint32_t limit);
+    bool bve_abort_resolvent(const uint32_t limit);
+    ///per-variable BVE trace (verbosity>=4), filled by test_elim_and_fill_resolvents
+    const char* bve_trace_reason = "?";
+    const char* bve_trace_gate = "-";
+    uint32_t bve_trace_pos = 0;
+    uint32_t bve_trace_neg = 0;
+    uint32_t bve_trace_lim = 0;
+    bool test_elim_and_fill_resolvents_inner(const uint32_t var);
     bool generate_resolvents_weakened(
         vector<Lit>& tmp_poss,
         vector<Lit>& tmp_negs,

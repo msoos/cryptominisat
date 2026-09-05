@@ -460,6 +460,10 @@ bool DistillerLong::distill_long_cls_all(
         cout
         << " cls"
         << " tried: " << runStats.checkedClauses << "/" << orig_todo_size
+        << " cl-rem: " << runStats.clRemoved
+        << " cl-sh: " << runStats.numClShorten
+        << " lit-rem: " << runStats.numLitsRem
+        << " 0-depth-ass: " << (solver->trail_size() - origTrailSize)
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }

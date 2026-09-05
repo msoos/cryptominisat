@@ -1179,6 +1179,10 @@ bool OccSimplifier::eliminate_vars()
         #endif
 
         last_elimed = 0;
+        bve_why.clear();
+        uint32_t bve_wave = 0;
+        size_t wave_last_through = wenThrough;
+        int64_t wave_last_elimed = 0;
         limit_to_decrease = &norm_varelim_time_limit;
         order_vars_for_elim();
         if (velim_order.size() < 400) {
@@ -1245,11 +1249,26 @@ bool OccSimplifier::eliminate_vars()
             if (!simulate_frw_sub_str_with_added_cl_to_var()) goto end;
 
             //These WILL ADD VARS BACK even though it's not changed.
+            uint32_t re_added = 0;
             for(uint32_t var: removed_cl_with_var.getTouchedList()) {
                 if (!can_eliminate_var(var)) continue;
+                re_added++;
                 varElimComplexity[var] = heuristicCalcVarElimScore(var);
                 velim_order.update(var);
             }
+            //A "wave" is one sweep of the elimination heap. The cascade on a
+            //circuit CNF lives here: each wave's eliminations touch neighbours
+            //that only become eliminable in the next wave. A run that stops
+            //after few waves never unrolled the definition chain.
+            bve_wave++;
+            verb_print(2, "[occ-bve-wave] " << bve_wave
+                << " tried " << (wenThrough - wave_last_through)
+                << " elimed " << (last_elimed - wave_last_elimed)
+                << " touched " << removed_cl_with_var.getTouchedList().size()
+                << " re-added " << re_added
+                << " heap " << velim_order.size());
+            wave_last_through = wenThrough;
+            wave_last_elimed = last_elimed;
 
             verb_print(2, "x n vars       : " << solver->get_num_free_vars());
             #ifdef DEBUG_VARELIM
@@ -1290,6 +1309,7 @@ bool OccSimplifier::eliminate_vars()
             << " (init " << n_cls_init << ", d " << (int64_t)n_cls_now-(int64_t)n_cls_last << ")"
             << " vars " << n_vars_last << "->" << n_vars_now
             << " T: " << std::fixed << std::setprecision(2) << (cpu_time()-my_time));
+        if (solver->conf.verbosity) bve_why.print("c [occ-bve-why] ");
 
         if (varelim_num_limit < 0
             || varelim_linkin_limit_bytes < 0
@@ -4131,6 +4151,32 @@ int32_t OccSimplifier::watch_cl_id(const Watched& w) const {
     return w.isBin() ? w.get_id() : solver->cl_alloc.ptr(w.get_offset())->stats.id;
 }
 
+//Diagnostic split of BVE's early-abort: which of the three bounds tripped.
+//dummy is the resolvent we were about to add.
+bool OccSimplifier::bve_abort_resolvent(const uint32_t limit)
+{
+    if (resolvents.size()+1 > limit) {
+        bve_why.rej_too_many_res++;
+        bve_why.rej_too_many_res_lim_sum += limit;
+        bve_trace_reason = "too-many-res";
+        return true;
+    }
+    if (solver->conf.velim_resolvent_too_large != -1
+        && (int)dummy.size() > solver->conf.velim_resolvent_too_large
+    ) {
+        bve_why.rej_res_too_large++;
+        bve_why.rej_res_too_large_sz_sum += dummy.size();
+        bve_trace_reason = "res-too-large";
+        return true;
+    }
+    if (*limit_to_decrease < -10LL*1000LL) {
+        bve_why.rej_timeout++;
+        bve_trace_reason = "t-out";
+        return true;
+    }
+    return false;
+}
+
 bool OccSimplifier::generate_resolvents_weakened(
     vector<Lit>& tmp_poss,
     vector<Lit>& tmp_negs,
@@ -4198,16 +4244,7 @@ bool OccSimplifier::generate_resolvents_weakened(
             }
 
             //Early-abort or over time
-            if (resolvents.size()+1 > limit
-                //Too long resolvent
-                || (solver->conf.velim_resolvent_too_large != -1
-                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
-                //Over-time
-                || *limit_to_decrease < -10LL*1000LL
-
-            ) {
-                return false;
-            }
+            if (bve_abort_resolvent(limit)) return false;
 
             ClauseStats stats;
             resolvents.add_resolvent(dummy, stats,
@@ -4252,13 +4289,7 @@ bool OccSimplifier::generate_resolvents(
             }
 
             //Early-abort or over time
-            if (resolvents.size() + 1 > limit
-                || (solver->conf.velim_resolvent_too_large != -1
-                    && (int)dummy.size() > solver->conf.velim_resolvent_too_large)
-                || *limit_to_decrease < -10LL*1000LL
-            ) {
-                return false;
-            }
+            if (bve_abort_resolvent(limit)) return false;
 
             //Calculate new clause stats
             ClauseStats stats;
@@ -4407,8 +4438,28 @@ bool OccSimplifier::check_taut_weaken_dummy(const uint32_t dontuse)
 }
 
 //Return true if it worked
+//Wrapper only for the per-variable trace: one line per elimination attempt,
+//with the cutoff that refused it. Diff two runs' [bve-try] lines to find the
+//first variable where two BVE implementations disagree.
 bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 {
+    if (solver->conf.verbosity < 4) return test_elim_and_fill_resolvents_inner(var);
+
+    bve_trace_reason = "OK";
+    bve_trace_gate = "-";
+    bve_trace_pos = bve_trace_neg = bve_trace_lim = 0;
+    const bool ret = test_elim_and_fill_resolvents_inner(var);
+    cout << "c [bve-try] v " << (var+1)
+        << " pos " << bve_trace_pos << " neg " << bve_trace_neg
+        << " gate " << bve_trace_gate
+        << " res " << resolvents.size() << "/" << bve_trace_lim
+        << " -> " << (ret ? "OK" : bve_trace_reason) << endl;
+    return ret;
+}
+
+bool OccSimplifier::test_elim_and_fill_resolvents_inner(const uint32_t var)
+{
+    bve_why.entered++;
     assert(solver->ok);
     assert(solver->varData[var].removed == Removed::none);
     assert(solver->value(var) == l_Undef);
@@ -4446,14 +4497,23 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     //Pure literal, no resolvents
     //we look at "pos" and "neg" (and not poss&negs) because we don't care about redundant clauses
+    bve_trace_pos = pos; bve_trace_neg = neg;
     if (pos == 0 || neg == 0) {
+        bve_why.pure_lit++;
+        bve_trace_gate = "pure";
         return true;
     }
 
 
     //Too expensive to check, it's futile. CaDiCaL's elimocclim: cap the larger
     //polarity, not the product, so 50x50 is allowed but 2x900 is not.
-    if (std::max(pos, neg) > solver->conf.varelim_occ_cutoff) return false;
+    if (std::max(pos, neg) > solver->conf.varelim_occ_cutoff) {
+        bve_why.rej_occ_cutoff++;
+        bve_why.rej_occ_cutoff_max_sum += std::max(pos, neg);
+        bve_why.rej_occ_cutoff_min_sum += std::min(pos, neg);
+        bve_trace_reason = "occ-lim";
+        return false;
+    }
 
     // A smaller OR gate will lead to less BIN (and 1 long) clause.
     //The total size of the resolvent is
@@ -4473,24 +4533,24 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     resolve_gate = false;
     gate_gave_unit = false;
     if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+        gates = true; bve_why.gate_eq++; bve_trace_gate = "eq";
     } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+        gates = true; bve_why.gate_or++; bve_trace_gate = "or";
     } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-        gates = true;
+        gates = true; bve_why.gate_or++; bve_trace_gate = "or~";
     } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+        gates = true; bve_why.gate_ite++; bve_trace_gate = "ite";
     } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-        gates = true;
+        gates = true; bve_why.gate_ite++; bve_trace_gate = "ite~";
     } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+        gates = true; bve_why.gate_xor++; bve_trace_gate = "xor";
     } else if (find_irreg_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+        gates = true; bve_why.gate_irreg++; bve_trace_gate = "irreg";
     }
 
     //find_irreg_gate turned the pivot into a unit instead of a gate: it has
     //already propagated, so poss/negs are stale. Retry the var in a later round.
-    if (gate_gave_unit) return false;
+    if (gate_gave_unit) { bve_why.rej_gate_unit++; bve_trace_reason = "gate-unit"; return false; }
 
     if (gates && solver->conf.verbosity > 5) {
         cout << "Elim on gate, lit: " << lit << " g poss: ";
@@ -4522,6 +4582,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
     uint32_t limit = pos+neg+grow;
+    bve_trace_lim = limit;
     bool ret = true;
     if (gates) {
         if (!generate_resolvents(gates_poss, antec_negs, lit, limit)) {
@@ -4550,10 +4611,13 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     //Units found while counting are kept whatever happens, but they invalidate
     //the occurrence lists we just walked, so give up on this variable for now
     if (!elim_unit_resolvents.empty()) {
+        bve_why.rej_unit_res++;
+        bve_trace_reason = "unit-res";
         add_elim_unit_resolvents();
         return false;
     }
 
+    if (ret) { if (gates) bve_why.ok_gate++; else bve_why.ok_nogate++; }
     return ret;
 }
 
@@ -5254,11 +5318,13 @@ void OccSimplifier::order_vars_for_elim()
         ; var < solver->nVars() && *limit_to_decrease > 0
         ; var++
     ) {
-        if (!can_eliminate_var(var)) continue;
+        bve_why.sched_considered++;
+        if (!can_eliminate_var(var)) { bve_why.sched_cannot_elim++; continue; }
         //CaDiCaL only schedules variables that occurred in an irredundant
         //clause removed or shrunk since we last tried them
-        if (!solver->varData[var].elim_cand) continue;
+        if (!solver->varData[var].elim_cand) { bve_why.sched_no_elim_cand++; continue; }
 
+        bve_why.sched_added++;
         *limit_to_decrease -= 50;
         assert(!velim_order.inHeap(var));
         varElimComplexity[var] = heuristicCalcVarElimScore(var);
