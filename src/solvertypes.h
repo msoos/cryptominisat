@@ -145,8 +145,13 @@ inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
     return os;
 }
 
+//main_exe.cpp unmasks FE_DIVBYZERO, so the zero guards below must not be
+//hoisted past the division -- clang does that unless told exceptions are live
 inline double ratio_for_stat(double a, double b)
 {
+    #if defined(__clang__)
+    #pragma clang fp exceptions(maytrap)
+    #endif
     if (b == 0)
         return 0;
     return a/b;
@@ -154,6 +159,9 @@ inline double ratio_for_stat(double a, double b)
 
 inline double stats_line_percent(double num, double total)
 {
+    #if defined(__clang__)
+    #pragma clang fp exceptions(maytrap)
+    #endif
     if (total == 0) {
         return 0;
     } else {
@@ -441,6 +449,9 @@ inline vector<Lit> vars_to_lits(const T& vars)
 
 inline double float_div(const double a, const double b)
 {
+    #if defined(__clang__)
+    #pragma clang fp exceptions(maytrap)
+    #endif
     if (b != 0)
         return a/b;
 
