@@ -202,6 +202,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_sub_str_limitM(600)
         , varElimRatioPerIter(1.60)
         , velim_resolvent_too_large(20)
+        , varelim_score_prod(1)
+        , varelim_score_sum(1)
         , var_linkin_limit_MB(1000)
         , varelim_gate_find_limit(800)
         , picosat_gate_limitK(70)

@@ -5000,28 +5000,36 @@ int OccSimplifier::check_empty_resolvent_action(
     exit(EXIT_FAILURE);
 }
 
-uint64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
+// CaDiCaL's compute_elim_score(): the sum term breaks product ties (1x10 and
+// 2x5 both give 10, but sums 11 vs 7), and pure literals get a negative score
+// so they are always tried first.
+int64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
 {
     const Lit lit(var, false);
     #ifdef CHECK_N_OCCUR
-    const uint32_t pos = calc_data_for_heuristic(lit);
-    if (pos != n_occurs[lit.toInt()]) {
+    const uint32_t check_pos = calc_data_for_heuristic(lit);
+    if (check_pos != n_occurs[lit.toInt()]) {
         cout << "for lit: " << lit << endl;
-        cout << "pos is: " << pos
+        cout << "pos is: " << check_pos
         << " n_occurs is:" << n_occurs[lit.toInt()] << endl;
         assert(false);
     }
 
-    const uint32_t neg = calc_data_for_heuristic(~lit);
-    if (neg != n_occurs[(~lit).toInt()]) {
+    const uint32_t check_neg = calc_data_for_heuristic(~lit);
+    if (check_neg != n_occurs[(~lit).toInt()]) {
         cout << "for lit: " << lit << endl;
-        cout << "neg is: " << neg
+        cout << "neg is: " << check_neg
         << " n_occurs is:" << n_occurs[(~lit).toInt()] << endl;
         assert(false);
     }
     #endif
 
-    return  (uint64_t)n_occurs[lit.toInt()] * (uint64_t)n_occurs[(~lit).toInt()];
+    const int64_t pos = n_occurs[lit.toInt()];
+    const int64_t neg = n_occurs[(~lit).toInt()];
+    if (pos == 0) return -neg;
+    if (neg == 0) return -pos;
+    return (int64_t)solver->conf.varelim_score_prod * pos * neg
+        + (int64_t)solver->conf.varelim_score_sum * (pos + neg);
 }
 
 void OccSimplifier::order_vars_for_elim()

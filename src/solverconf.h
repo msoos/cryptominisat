@@ -221,6 +221,8 @@ class DLL_PUBLIC SolverConf
         long long varelim_sub_str_limitM;
         double    varElimRatioPerIter;
         int velim_resolvent_too_large; //-1 == no limit
+        int varelim_score_prod; ///<CaDiCaL's elimprod, weight of pos*neg in the elim score
+        int varelim_score_sum;  ///<CaDiCaL's elimsum, weight of pos+neg in the elim score
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;

@@ -810,6 +810,14 @@ void Main::add_supported_options() {
         .default_value(conf.varElimRatioPerIter)
         //, ssERatio.str()
         .help("Eliminate this ratio of free variables at most per variable elimination iteration");
+    program.add_argument("--varelimprod")
+        .action([&](const auto& a) {conf.varelim_score_prod = fc_int(a);})
+        .default_value(conf.varelim_score_prod)
+        .help("Weight of pos*neg in the BVE ordering score");
+    program.add_argument("--varelimsum")
+        .action([&](const auto& a) {conf.varelim_score_sum = fc_int(a);})
+        .default_value(conf.varelim_score_sum)
+        .help("Weight of pos+neg in the BVE ordering score");
     program.add_argument("--varelimcheckres")
         .action([&](const auto& a) {conf.varelim_check_resolvent_subs = fc_int(a);})
         .default_value(conf.varelim_check_resolvent_subs)
