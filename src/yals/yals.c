@@ -2175,11 +2175,11 @@ DO_NOT_CACHE_ASSSIGNEMNT:
 
 static void yals_remove_trailing_bits (Yals * yals) {
   unsigned i;
-  Word mask;
   if (!yals->nvarwords) return;
+  //bit indices are 1-based, so the last word holds 'i' live bits, or a full
+  //word when nvars is word-aligned
   i = yals->nvars & BITMAPMASK;
-  mask = ((Word)1) << (i + 1);
-  yals->vals[yals->nvarwords-1] &= mask - 1;
+  if (i) yals->vals[yals->nvarwords-1] &= (((Word)1) << i) - 1;
 }
 
 // Sets literals in the assignment forced by unit propagation
