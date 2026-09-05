@@ -56,3 +56,5 @@ build_dbgfrat/
 xnf-tests/
 /build_dbg
 /build_fuzz
+/build_fuzz2
+/scripts/fuzz/fuzzrun
