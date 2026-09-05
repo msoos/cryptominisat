@@ -358,7 +358,9 @@ private:
 
     /////////////////////
     //Variable elimination
-    uint32_t grow = 0; /// maximum grow rate for clauses
+    /// CaDiCaL's lim.elimbound: persists across eliminate_vars() calls and only
+    /// doubles once a full pass at the current bound finished.
+    uint32_t grow = 0;
     vector<int64_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
@@ -372,6 +374,7 @@ private:
         const vector<int64_t>& varElimComplexity;
     };
     void        order_vars_for_elim();
+    void        increase_elim_bound();
     Heap<VarOrderLt> velim_order;
     void        rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_set_is_removed = true);
     vector<Lit> tmp_rem_lits;

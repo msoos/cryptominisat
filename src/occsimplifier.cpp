@@ -1153,9 +1153,11 @@ bool OccSimplifier::eliminate_vars()
     bvestats.clear();
     bvestats.numCalls = 1;
 
-    //Go through the ordered list of variables to eliminate
+    //Go through the ordered list of variables to eliminate. Note that "grow"
+    //(CaDiCaL's elimination bound) is NOT reset here: it persists across calls
+    //and only goes up once a pass at the current bound ran to completion.
     int64_t last_elimed = 1;
-    grow = 0;
+    bool round_complete = false;
     uint32_t bve_round = 0;
     uint32_t n_cls_last  = sum_irred_cls_longs() + solver->binTri.irredBins;
     uint32_t n_cls_init = n_cls_last;
@@ -1299,6 +1301,21 @@ bool OccSimplifier::eliminate_vars()
             << " *limit_to_decrease: " << print_value_kilo_mega(*limit_to_decrease));
         }
 
+        //Only raise the bound once the cheap one is exhausted, as CaDiCaL does.
+        //If we ran out of budget the bound stays where it is, and the next call
+        //picks up from here instead of starting over at 0.
+        round_complete = removed_cl_with_var.getTouchedList().empty()
+            && velim_order.empty()
+            && varelim_num_limit > 0
+            && varelim_linkin_limit_bytes > 0
+            && *limit_to_decrease > 0
+            && solver->okay()
+            && !solver->must_interrupt_asap();
+        if (!round_complete) {
+            verb_print(1, "[occ-bve-round] incomplete, keeping bound " << grow);
+            break;
+        }
+
         if (!solver->conf.non_stop_bve) {
             if (n_cls_now > n_cls_init) {
                 verb_print(1, "[occ-bve-round] stop: cls " << n_cls_now
@@ -1319,9 +1336,7 @@ bool OccSimplifier::eliminate_vars()
                 << " reached min_bva_gain " << solver->conf.min_bva_gain);
             break;
         }
-        if (grow == 0) grow = 3;
-        else grow *= 1.5;
-        grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
+        increase_elim_bound();
 
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
@@ -5037,6 +5052,17 @@ int64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
     if (neg == 0) return -pos;
     return (int64_t)solver->conf.varelim_score_prod * pos * neg
         + (int64_t)solver->conf.varelim_score_sum * (pos + neg);
+}
+
+// CaDiCaL's increase_elimination_bound(): doubling ramp, and every active
+// variable becomes a candidate again at the new bound.
+void OccSimplifier::increase_elim_bound()
+{
+    if (grow == 0) grow = 1;
+    else grow *= 2;
+    grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
+    for(auto& v: solver->varData) v.elim_cand = 1;
+    verb_print(1, "[occ-bve] new elimination bound " << grow);
 }
 
 void OccSimplifier::order_vars_for_elim()
