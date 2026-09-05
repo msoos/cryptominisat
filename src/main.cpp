@@ -810,6 +810,14 @@ void Main::add_supported_options() {
         .default_value(conf.varElimRatioPerIter)
         //, ssERatio.str()
         .help("Eliminate this ratio of free variables at most per variable elimination iteration");
+    program.add_argument("--varelimocclim")
+        .action([&](const auto& a) {conf.varelim_occ_cutoff = fc_int(a);})
+        .default_value(conf.varelim_occ_cutoff)
+        .help("Don't try to eliminate a variable whose more frequent polarity occurs more than this many times");
+    program.add_argument("--varelimclslim")
+        .action([&](const auto& a) {conf.velim_resolvent_too_large = fc_int(a);})
+        .default_value(conf.velim_resolvent_too_large)
+        .help("Maximum resolvent size during BVE, -1 = no limit");
     program.add_argument("--varelimprod")
         .action([&](const auto& a) {conf.varelim_score_prod = fc_int(a);})
         .default_value(conf.varelim_score_prod)

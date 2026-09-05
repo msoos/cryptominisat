@@ -193,7 +193,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Var-elim
         , doVarElim        (true)
-        , varelim_cutoff_too_many_clauses(2000)
+        , varelim_occ_cutoff(100)
         , do_empty_varelim (true)
         , do_full_varelim(true)
         , do_xor_varelim(true)
@@ -201,7 +201,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_time_limitM(750)
         , varelim_sub_str_limitM(600)
         , varElimRatioPerIter(1.60)
-        , velim_resolvent_too_large(20)
+        , velim_resolvent_too_large(100)
         , varelim_score_prod(1)
         , varelim_score_sum(1)
         , var_linkin_limit_MB(1000)

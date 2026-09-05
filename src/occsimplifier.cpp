@@ -4285,12 +4285,9 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
 
-    //Too expensive to check, it's futile
-    if ((uint64_t)neg * (uint64_t)pos
-        >= solver->conf.varelim_cutoff_too_many_clauses
-    ) {
-        return false;
-    }
+    //Too expensive to check, it's futile. CaDiCaL's elimocclim: cap the larger
+    //polarity, not the product, so 50x50 is allowed but 2x900 is not.
+    if (std::max(pos, neg) > solver->conf.varelim_occ_cutoff) return false;
 
     // A smaller OR gate will lead to less BIN (and 1 long) clause.
     //The total size of the resolvent is
