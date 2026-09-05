@@ -678,7 +678,10 @@ void Solver::detach_modified_clause(
     , const Clause* address
 ) {
     if (address->red()) litStats.redLits -= origSize;
-    else litStats.irredLits -= origSize;
+    else {
+        litStats.irredLits -= origSize;
+        mark_elim_cand(*address);
+    }
     PropEngine::detach_modified_clause(lit1, lit2, address);
 }
 

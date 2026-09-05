@@ -267,6 +267,8 @@ class Solver : public Searcher
                 binTri.redBins--;
             } else {
                 binTri.irredBins--;
+                mark_elim_cand(lit1);
+                mark_elim_cand(lit2);
             }
 
             PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);

@@ -96,6 +96,9 @@ public:
     uint32_t num_sls_called = 0;
     int64_t sls_minimum = std::numeric_limits<int64_t>::max(); //fewest unsat cls local search reached
     vector<VarData> varData;
+    void mark_elim_cand(const uint32_t var) { varData[var].elim_cand = 1; }
+    void mark_elim_cand(const Lit lit) { varData[lit.var()].elim_cand = 1; }
+    void mark_elim_cand(const Clause& cl) { for(const Lit l: cl) mark_elim_cand(l); }
     branch branch_strategy = branch::vsids;
     string branch_strategy_str = "VSIDS";
     string branch_strategy_str_short = "vs";

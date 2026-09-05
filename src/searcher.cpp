@@ -3351,6 +3351,8 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             } else {
                 solver->binTri.irredBins--;
                 removedIrred++;
+                mark_elim_cand(b.getLit1());
+                mark_elim_cand(b.getLit2());
             }
             *frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
 

@@ -460,6 +460,10 @@ inline void VarReplacer::updateBin(
     if (lit1 == ~lit2) remove = true;
     if (remove) {
         impl_tmp_stats.remove(*i);
+        if (!i->red()) {
+            solver->mark_elim_cand(lit1);
+            solver->mark_elim_cand(lit2);
+        }
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
@@ -467,6 +471,13 @@ inline void VarReplacer::updateBin(
         }
 
         return;
+    }
+
+    if (lit1 != origLit1 || lit2 != origLit2) {
+        if (!i->red()) {
+            solver->mark_elim_cand(lit1);
+            solver->mark_elim_cand(lit2);
+        }
     }
 
     if (//Changed
@@ -731,6 +742,7 @@ bool VarReplacer::handleUpdatedClause(
     }
     c.shrink(i - j);
     c.set_strengthened();
+    if (!c.red()) for(const Lit l: c) solver->mark_elim_cand(l);
 
     runStats.bogoprops += 10;
     if (c.red()) {

@@ -36,6 +36,7 @@ struct VarData
     VarData([[maybe_unused]] uint32_t num) {
         is_bva = 0;
         occ_simp_tried = 0;
+        elim_cand = 1;
         saved_polarity = false;
         target_polarity = false;
         target_polarity_set = false;
@@ -64,6 +65,9 @@ struct VarData
     uint8_t best_polarity_set:1;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
+    ///CaDiCaL's Flags::elim -- occurred in an irredundant clause that was
+    ///removed or shrunk since BVE last tried this variable
+    uint8_t elim_cand:1;
     uint8_t propagated:1 = false;
 
     float weight = 0.5;

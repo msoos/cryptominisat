@@ -64,6 +64,8 @@ void SubsumeImplicit::try_subsume_bin(
             solver->binTri.redBins--;
         } else {
             solver->binTri.irredBins--;
+            solver->mark_elim_cand(lit);
+            solver->mark_elim_cand(i->lit2());
         }
         (*solver->frat) << del << i->get_id() << lit << i->lit2() << fin;
 

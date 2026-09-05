@@ -656,6 +656,8 @@ void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
         simplifier->elim_calc_need_update.touch(cl.ws.lit2());
         simplifier->removed_cl_with_var.touch(cl.lit);
         simplifier->removed_cl_with_var.touch(cl.ws.lit2());
+        solver->mark_elim_cand(cl.lit);
+        solver->mark_elim_cand(cl.ws.lit2());
     }
 }
 
@@ -739,6 +741,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     simplifier->elim_calc_need_update.touch(subs[j].ws.lit2());
                     simplifier->removed_cl_with_var.touch(subs[j].lit);
                     simplifier->removed_cl_with_var.touch(subs[j].ws.lit2());
+                    solver->mark_elim_cand(subs[j].lit);
+                    solver->mark_elim_cand(subs[j].ws.lit2());
                 }
                 //propagation above may have deleted our impl
                 if (solver->frat->enabled() && impl_id != 0 && !impl_bin_alive(lits, impl_id))

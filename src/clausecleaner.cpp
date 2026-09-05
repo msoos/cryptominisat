@@ -59,7 +59,11 @@ void ClauseCleaner::clean_binary_implicit(
         }
 
         if (i->red()) impl_data.remLBin++;
-        else impl_data.remNonLBin++;
+        else {
+            impl_data.remNonLBin++;
+            if (solver->value(lit) == l_Undef) solver->mark_elim_cand(lit);
+            if (solver->value(i->lit2()) == l_Undef) solver->mark_elim_cand(i->lit2());
+        }
     } else {
         if (solver->value(i->lit2()) != l_Undef || solver->value(lit) != l_Undef
         ) {
@@ -266,6 +270,9 @@ bool ClauseCleaner::clean_clause(Clause& cl)
 
         if (val == l_True) {
             (*solver->frat) << findelay;
+            if (!cl.red())
+                for(const Lit l: cl)
+                    if (solver->value(l) == l_Undef) solver->mark_elim_cand(l);
             return true;
         } else {
             solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
@@ -276,6 +283,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         const auto orig_ID = cl.stats.id;
         INC_ID(cl);
         cl.shrink(i-j);
+        if (!cl.red()) for(const Lit l: cl) solver->mark_elim_cand(l);
         //strict hint order: unit IDs first, the original clause's ID last
         *solver->frat << add << cl << fratchain << solver->chain << orig_ID << fin << findelay;
     } else {

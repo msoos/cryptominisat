@@ -279,6 +279,7 @@ void OccSimplifier::unlink_clause(
             CHECK_N_OCCUR_DO(assert(n_occurs[lit.toInt()]>0));
             n_occurs[lit.toInt()]--;
             removed_cl_with_var.touch(lit.var());
+            solver->mark_elim_cand(lit);
         }
     }
 
@@ -336,6 +337,7 @@ bool OccSimplifier::clean_clause(
         removeWCl(solver->watches[*i], offset);
         if (!cl.red()) {
             removed_cl_with_var.touch(i->var());
+            solver->mark_elim_cand(*i);
             elim_calc_need_update.touch(i->var());
             n_occurs[i->toInt()]--;
         }
@@ -943,6 +945,8 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     n_occurs[l.toInt()]--;
                     n_occurs[w.lit2().toInt()]--;
                     elim_calc_need_update.touch(w.lit2());
+                    removed_cl_with_var.touch(w.lit2());
+                    solver->mark_elim_cand(w.lit2());
                     solver->binTri.irredBins--;
                 }
                 *(solver->frat) << del << w.get_id() << l << w.lit2() << fin;
@@ -1199,6 +1203,7 @@ bool OccSimplifier::eliminate_vars()
                 assert(solver->prop_at_head());
                 assert(limit_to_decrease == &norm_varelim_time_limit);
                 uint32_t var = velim_order.removeMin();
+                solver->varData[var].elim_cand = 0;
 
                 //Stats
                 *limit_to_decrease -= 20;
@@ -2189,6 +2194,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 n_occurs[l.toInt()]--;
                 elim_calc_need_update.touch(l);
                 removed_cl_with_var.touch(l);
+                solver->mark_elim_cand(l);
                 cl->strengthen(l);
             }
 
@@ -2905,6 +2911,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     //Uneliminate it in theory
     bvestats_global.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
+    solver->mark_elim_cand(var);
     solver->set_decision_var(var);
 
     //Find if variable is really needed to be eliminated
@@ -3241,6 +3248,8 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_s
                 n_occurs[lits[1].toInt()]--;
                 removed_cl_with_var.touch(lits[0]);
                 removed_cl_with_var.touch(lits[1]);
+                solver->mark_elim_cand(lits[0]);
+                solver->mark_elim_cand(lits[1]);
                 elim_calc_need_update.touch(lits[0]);
                 elim_calc_need_update.touch(lits[1]);
             } else {
@@ -3269,6 +3278,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_s
 void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t id) {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
+        solver->mark_elim_cand(l);
         elim_calc_need_update.touch(l.var());
     }
 
@@ -5043,6 +5053,9 @@ void OccSimplifier::order_vars_for_elim()
         ; var++
     ) {
         if (!can_eliminate_var(var)) continue;
+        //CaDiCaL only schedules variables that occurred in an irredundant
+        //clause removed or shrunk since we last tried them
+        if (!solver->varData[var].elim_cand) continue;
 
         *limit_to_decrease -= 50;
         assert(!velim_order.inHeap(var));
@@ -5265,6 +5278,7 @@ bool OccSimplifier::remove_literal(
         n_occurs[toRemoveLit.toInt()]--;
         elim_calc_need_update.touch(toRemoveLit.var());
         removed_cl_with_var.touch(toRemoveLit.var());
+        solver->mark_elim_cand(toRemoveLit);
     }
 
     removeWCl(solver->watches[toRemoveLit], offset);
