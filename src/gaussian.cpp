@@ -794,6 +794,10 @@ bool EGaussian::find_truths(
     assert(gqd.ret != gauss_res::confl);
     assert(initialized);
 
+    //a plain-XOR watch, or another matrix, in this same gwatches[] list may
+    //have enqueued since we last looked
+    update_cols_vals_set();
+
     #ifdef LAZY_DELETE_HACK
     if (!mat[row_n][var_to_dcol[var]]) {
         //lazy delete
@@ -1044,6 +1048,10 @@ void EGaussian::prop_lit(
 
 void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 {
+    //must be before the D remap below, while dcol_to_var is still the one the
+    //cache was built with
+    update_cols_vals_set();
+
     const uint32_t new_resp_row_n = gqd.new_resp_row;
     const uint32_t elim_var = gqd.new_resp_var;
     const uint32_t dcol = var_to_dcol[elim_var];

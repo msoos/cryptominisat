@@ -163,10 +163,9 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
     if (gmatrices.empty() && xorclauses.empty()) return PropBy();
 
-    // Lazy per-call bookkeeping: matrices are reset and update_cols_vals_set'd
-    // only when first consulted through gwatches[pv] in this call. Matrices not
-    // watching pv keep their previous state (update_cols_vals_set is idempotent
-    // via last_val_update, so deferring catches up later with no extra work).
+    // Matrices are reset only when first consulted through gwatches[pv] in this
+    // call. The cols_vals/cols_unset caches refresh themselves in find_truths()
+    // and eliminate_col().
     assert(touched_matrices_gje.size() == 0);
 
     bool confl_in_gauss = false;
@@ -240,7 +239,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             // Lazy init on first touch in this call.
             if (!gqd.touched_this_call) {
                 gqd.reset();
-                gmatrices[matnum]->update_cols_vals_set();
                 gqd.touched_this_call = true;
                 touched_matrices_gje.push(matnum);
             }
