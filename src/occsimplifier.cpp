@@ -4505,9 +4505,26 @@ bool OccSimplifier::test_elim_and_fill_resolvents_inner(const uint32_t var)
     }
 
 
-    //Too expensive to check, it's futile. CaDiCaL's elimocclim: cap the larger
-    //polarity, not the product, so 50x50 is allowed but 2x900 is not.
-    if (std::max(pos, neg) > solver->conf.varelim_occ_cutoff) {
+    //Too expensive to check, it's futile. What costs us is the number of
+    //resolutions we are about to attempt, which is pos*neg -- so bound that.
+    //
+    //CaDiCaL's elimocclim caps the *larger* polarity instead (elimocclim=100),
+    //and that refuses one-sided variables: a variable with 1 occurrence in one
+    //polarity and 300 in the other is a definition, it produces at most 300
+    //resolvents against a budget of pos+neg=301, so it always resolves away for
+    //free. Refusing those stalls the elimination cascade on circuit CNFs -- the
+    //chain of definitions stops unrolling and everything downstream stays.
+    //Kept as varelim_occ_cutoff (off by default) for anyone who wants it back.
+    if ((uint64_t)pos * (uint64_t)neg > solver->conf.varelim_occ_prod_cutoff) {
+        bve_why.rej_occ_cutoff++;
+        bve_why.rej_occ_cutoff_max_sum += std::max(pos, neg);
+        bve_why.rej_occ_cutoff_min_sum += std::min(pos, neg);
+        bve_trace_reason = "occ-lim";
+        return false;
+    }
+    if (solver->conf.varelim_occ_cutoff != 0
+        && std::max(pos, neg) > solver->conf.varelim_occ_cutoff
+    ) {
         bve_why.rej_occ_cutoff++;
         bve_why.rej_occ_cutoff_max_sum += std::max(pos, neg);
         bve_why.rej_occ_cutoff_min_sum += std::min(pos, neg);

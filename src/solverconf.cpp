@@ -193,7 +193,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Var-elim
         , doVarElim        (true)
-        , varelim_occ_cutoff(100)
+        , varelim_occ_cutoff(0)
+        , varelim_occ_prod_cutoff(10000)
         , do_empty_varelim (true)
         , do_full_varelim(true)
         , do_xor_varelim(true)

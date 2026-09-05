@@ -813,7 +813,11 @@ void Main::add_supported_options() {
     program.add_argument("--varelimocclim")
         .action([&](const auto& a) {conf.varelim_occ_cutoff = fc_int(a);})
         .default_value(conf.varelim_occ_cutoff)
-        .help("Don't try to eliminate a variable whose more frequent polarity occurs more than this many times");
+        .help("Don't try to eliminate a variable whose more frequent polarity occurs more than this many times. 0 = no limit");
+    program.add_argument("--varelimprodlim")
+        .action([&](const auto& a) {conf.varelim_occ_prod_cutoff = fc_int(a);})
+        .default_value(conf.varelim_occ_prod_cutoff)
+        .help("Don't try to eliminate a variable whose pos*neg occurrence product is over this");
     program.add_argument("--varelimclslim")
         .action([&](const auto& a) {conf.velim_resolvent_too_large = fc_int(a);})
         .default_value(conf.velim_resolvent_too_large)
