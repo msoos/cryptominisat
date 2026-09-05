@@ -4065,6 +4065,12 @@ bool OccSimplifier::generate_resolvents_weakened(
             if (tautological) continue;
             VERBOSE_PRINT("Adding new varelim resolvent clause: " << dummy);
 
+            if (dummy.size() == 1) {
+                elim_unit_resolvents.push_back({dummy[0],
+                    {watch_cl_id(tmp_poss2[pos_at]), watch_cl_id(tmp_negs2[negs_at])}});
+                continue;
+            }
+
             //Early-abort or over time
             if (resolvents.size()+1 > limit
                 //Too long resolvent
@@ -4110,6 +4116,14 @@ bool OccSimplifier::generate_resolvents(
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
             #endif
+
+            //CaDiCaL's elim_propagate: a unit resolvent is free, it does not
+            //count against the bound and is kept even if elimination fails
+            if (dummy.size() == 1) {
+                elim_unit_resolvents.push_back({dummy[0],
+                    {watch_cl_id(pos), watch_cl_id(neg)}});
+                continue;
+            }
 
             //Early-abort or over time
             if (resolvents.size() + 1 > limit
@@ -4273,6 +4287,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     assert(solver->varData[var].removed == Removed::none);
     assert(solver->value(var) == l_Undef);
     resolvents.clear();
+    elim_unit_resolvents.clear();
     const Lit lit = Lit(var, false);
 
     //Gather data
@@ -4401,7 +4416,27 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
     }
 
+    //Units found while counting are kept whatever happens, but they invalidate
+    //the occurrence lists we just walked, so give up on this variable for now
+    if (!elim_unit_resolvents.empty()) {
+        add_elim_unit_resolvents();
+        return false;
+    }
+
     return ret;
+}
+
+bool OccSimplifier::add_elim_unit_resolvents()
+{
+    for(const auto& u: elim_unit_resolvents) {
+        if (!solver->okay()) break;
+        if (solver->value(u.lit) == l_True) continue;
+        elim_unit_tmp.clear();
+        elim_unit_tmp.push_back(u.lit);
+        if (!add_varelim_resolvent(elim_unit_tmp, ClauseStats(), u.parents)) break;
+    }
+    elim_unit_resolvents.clear();
+    return solver->okay();
 }
 
 void OccSimplifier::printOccur(const Lit lit) const

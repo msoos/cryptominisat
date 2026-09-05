@@ -386,6 +386,16 @@ private:
     bool        simulate_frw_sub_str_with_added_cl_to_var();
 
 
+    ///Unit resolvents seen while counting: CaDiCaL assigns these immediately
+    ///instead of charging them against the resolvent bound (elim_propagate)
+    struct UnitResolvent {
+        Lit lit;
+        std::pair<int32_t, int32_t> parents;
+    };
+    vector<UnitResolvent> elim_unit_resolvents;
+    vector<Lit> elim_unit_tmp;
+    bool add_elim_unit_resolvents();
+
     TouchList   elim_calc_need_update;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t var);
