@@ -104,8 +104,67 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
 }
 
 // Vars that differ between local search models cannot be backbone, so cadiback
-// need not test them. ccnr's neighborhood is quadratic in clause size (one
-// 25k-literal clause is 2.4GB of it), so everything is freed before we return.
+// need not test them.
+#ifdef SLOW_DEBUG
+// ccnr is only handed the irredundant clauses, so it can hardly fail on those.
+// Red and XOR are the real safeguard: a solution falsifying one means the clause
+// does not follow from the irredundant set, or that we fed ccnr the wrong thing.
+static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
+    assert(sol.size() == solver->nVars()+1);
+    auto live = [&](const uint32_t v) { return solver->varData[v].removed == Removed::none; };
+    auto sat = [&](const Lit l) { return sol[l.var()+1] == (l.sign() ? 0 : 1); };
+
+    for(uint32_t v = 0; v < solver->nVars(); v++) {
+        if (!live(v) || solver->value(v) == l_Undef) continue;
+        // we gave ccnr a unit for each of these
+        assert(sat(Lit(v, solver->value(v) == l_False)));
+    }
+
+    auto check_long = [&](const vector<ClOffset>& cs, const char* what) {
+        for(const ClOffset off: cs) {
+            const Clause& cl = *solver->cl_alloc.ptr(off);
+            bool skip = false;
+            bool is_sat = false;
+            for(const Lit l: cl) {
+                if (!live(l.var())) { skip = true; break; }
+                if (sat(l)) is_sat = true;
+            }
+            if (skip || is_sat) continue;
+            std::cout << "ERROR: ccnr sol falsifies " << what << " clause: " << cl << std::endl;
+            assert(false);
+        }
+    };
+    check_long(solver->longIrredCls, "irred");
+    for(const auto& tier: solver->longRedCls) check_long(tier, "red");
+
+    for(uint32_t i = 0; i < solver->nVars()*2; i++) {
+        const Lit l1 = Lit::toLit(i);
+        if (!live(l1.var())) continue;
+        for(const auto& w: solver->watches[l1]) {
+            if (!w.isBin()) continue;
+            const Lit l2 = w.lit2();
+            if (l1 > l2 || !live(l2.var())) continue;
+            if (sat(l1) || sat(l2)) continue;
+            std::cout << "ERROR: ccnr sol falsifies " << (w.red() ? "red" : "irred")
+                << " bin clause: " << l1 << " " << l2 << std::endl;
+            assert(false);
+        }
+    }
+
+    for(const Xor& x: solver->xorclauses) {
+        bool skip = false;
+        bool parity = false;
+        for(const uint32_t v: x) {
+            if (!live(v)) { skip = true; break; }
+            parity ^= (sol[v+1] == 1);
+        }
+        if (skip || parity == x.rhs) continue;
+        std::cout << "ERROR: ccnr sol falsifies xor: " << x << std::endl;
+        assert(false);
+    }
+}
+#endif
+
 static vector<int> ccnr_drop_cands(Solver* solver, uint64_t& num_cls) {
     vector<vector<sspp::Lit>> cls = build_ccnr_cls(solver);
     num_cls = cls.size();
@@ -125,6 +184,7 @@ static vector<int> ccnr_drop_cands(Solver* solver, uint64_t& num_cls) {
         if (!ret) continue;
         ccnr_sols_found++;
         const auto& sol = ccnr.get_sol();
+        SLOW_DEBUG_DO(check_ccnr_sol(solver, sol));
         for(uint32_t v = 1; v <= solver->nVars(); v++) {
             if (sols_found[v] == -1) {
                 sols_found[v] = sol[v];
