@@ -322,7 +322,7 @@ by default. And CaDiCaL's `instantiate.cpp` is a different technique from
 A/B harness, ~10 min for a run: loop the 30
 `../approxmc/build/*.no_w.cnf.gz` instances under
 `cryptominisat5 --verb 2 --maxconfl 1 --presimp 1`, compare `irred_long_lits`
-and `free_vars` from the last `[simp-stats] AFTER` line.
+and `free_vars` from the last `[simp-stats] aft` line.
 
 Take `units` and `elimed_vars` off that line too. `definition_unit` looked like
 a small win on `irred_long_lits` alone; the two of them moving +64/-64 against a

@@ -182,37 +182,45 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #endif
 
 #define COLRED "\033[31m"
+#define COLGREEN "\033[32m"
+#define COLGREENLIGHT "\033[92m"
 //default
 #define COLDEF "\033[0m"
 
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= (a)) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
-#define print_simp_stats_emit(when, tok) \
-    verb_print(1, "[simp-stats] " << when << " " << tok \
+#define SIMP_STATS_TOK_W 22
+#define print_simp_stats_emit(col, when, tok) \
+    do { \
+    verb_print(1, "[simp-stats] " << when << " " \
+        << col << std::left << std::setw(SIMP_STATS_TOK_W) << tok \
+        << COLDEF << std::right \
         << " irred_bins " << solver->binTri.irredBins \
         << " irred_long_cls " << solver->num_long_irred_cls_anywhere() \
         << " irred_long_lits " << solver->litStats.irredLits \
+        << " units " << solver->trail_size()); \
+    verb_print(1, "[simp-stats] " << std::setw(SIMP_STATS_TOK_W+4) << "" \
         << " free_vars " << solver->get_num_free_vars() \
         << " elimed_vars " << solver->get_num_vars_elimed() \
         << " replaced_vars " << solver->varReplacer->get_num_replaced_vars() \
-        << " units " << solver->trail_size() \
         << " mem_MB " << (rss_mem_used() / (1024ULL * 1024ULL)) \
         << " T: " << std::setprecision(3) << cpu_time() << std::setprecision(2) \
-        << " depth " << solver->simp_stats_depth)
+        << " depth " << solver->simp_stats_depth); \
+    } while (0)
 
 // Bracket a preprocessing step with BEFORE/AFTER lines that include the
 // nesting depth. depth=0 is a top-level step; depth>=1 is nested inside
 // another wrapper (and its work is already counted by its parent).
 #define print_simp_stats_before(tok) do { \
-    print_simp_stats_emit("BEFORE", tok); \
+    print_simp_stats_emit(COLGREENLIGHT, "bef", tok); \
     solver->simp_stats_depth++; \
 } while (0)
 
 #define print_simp_stats_after(tok) do { \
     assert(solver->simp_stats_depth > 0); \
     solver->simp_stats_depth--; \
-    print_simp_stats_emit("AFTER", tok); \
+    print_simp_stats_emit(COLGREEN, "aft", tok); \
 } while (0)
 
 #ifdef DEBUG_WATCHED
