@@ -50,11 +50,6 @@ html/cryptominisat5.wasm
 /scripts/fuzz/cake_xlrup
 /scripts/fuzz/repro.sh
 /scripts/fuzz/oracle_fuzz_failures
-/build_fuzz
-build_dbgfrat/
-/build_fratdbg
+/build*
 xnf-tests/
-/build_dbg
-/build_fuzz
-/build_fuzz2
 /scripts/fuzz/fuzzrun
