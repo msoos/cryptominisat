@@ -1668,6 +1668,14 @@ DLL_PUBLIC void SATSolver::set_varelim_max_cls_size(uint32_t val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_varelim_sched_only_touched(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varelim_sched_only_touched = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_backbone_ccnr_mems_limitM(int64_t val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {

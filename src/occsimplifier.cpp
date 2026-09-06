@@ -5396,7 +5396,9 @@ void OccSimplifier::order_vars_for_elim()
         if (!can_eliminate_var(var)) { bve_why.sched_cannot_elim++; continue; }
         //CaDiCaL only schedules variables that occurred in an irredundant
         //clause removed or shrunk since we last tried them
-        if (!solver->varData[var].elim_cand) { bve_why.sched_no_elim_cand++; continue; }
+        if (solver->conf.varelim_sched_only_touched
+            && !solver->varData[var].elim_cand
+        ) { bve_why.sched_no_elim_cand++; continue; }
 
         bve_why.sched_added++;
         *limit_to_decrease -= 50;

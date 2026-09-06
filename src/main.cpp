@@ -826,6 +826,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.varelim_occ_prod_cutoff = fc_int(a);})
         .default_value(conf.varelim_occ_prod_cutoff)
         .help("Don't try to eliminate a variable whose pos*neg occurrence product is over this");
+    program.add_argument("--varelimschedtouched")
+        .action([&](const auto& a) {conf.varelim_sched_only_touched = fc_int(a);})
+        .default_value(conf.varelim_sched_only_touched)
+        .help("Only schedule for elimination the vars whose clauses changed since BVE last looked (CaDiCaL's Flags::elim). 0 = schedule every eligible var");
     program.add_argument("--varelimclsmaxsz")
         .action([&](const auto& a) {conf.varelim_max_cls_size = fc_int(a);})
         .default_value(conf.varelim_max_cls_size)

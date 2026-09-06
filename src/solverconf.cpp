@@ -196,6 +196,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_occ_cutoff(0)
         , varelim_occ_prod_cutoff(10000)
         , varelim_max_cls_size(0)
+        , varelim_sched_only_touched(0)
         , do_empty_varelim (true)
         , do_full_varelim(true)
         , do_xor_varelim(true)
