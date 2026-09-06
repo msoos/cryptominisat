@@ -185,6 +185,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define COLGREEN "\033[32m"
 #define COLREDLIGHT "\033[91m"
 #define COLPURPLELIGHT "\033[95m"
+#define COLYELLOWLIGHT "\033[93m"
 //default
 #define COLDEF "\033[0m"
 

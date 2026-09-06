@@ -2280,7 +2280,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (!token.empty() && solver->conf.verbosity) {
-            verb_print(1, "Executing OCC strategy token: " << token);
+            verb_print(1, "Executing OCC strategy token: " << COLYELLOWLIGHT << token << COLDEF);
             *solver->frat << __PRETTY_FUNCTION__ << " Executing OCC strategy token:" << token.c_str() << "\n";
         }
 

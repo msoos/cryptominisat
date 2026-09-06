@@ -1743,7 +1743,7 @@ lbool Solver::execute_inprocess_strategy(
                 occ_strategy_tokens = trim(occ_strategy_tokens);
                 string pr = occ_strategy_tokens;
                 if (!pr.empty() && pr.back() == ',') pr.pop_back();
-                verb_print(1, "Executing OCC strategy token(s): '" << pr << "'");
+                verb_print(1, "Executing OCC strategy token(s): " << COLYELLOWLIGHT << pr << COLDEF);
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
@@ -1757,7 +1757,7 @@ lbool Solver::execute_inprocess_strategy(
         if (okay()) SLOW_DEBUG_DO(check_wrong_attach());
 
         if (token.substr(0,3) != "occ" && !token.empty())
-            verb_print(1, "--> Executing strategy token: " << token);
+            verb_print(1, "--> Executing strategy token: " << COLYELLOWLIGHT << token << COLDEF);
 
         if (token.substr(0,3) != "occ" && !token.empty())
             simp_stats_before(token);
