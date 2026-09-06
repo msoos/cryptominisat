@@ -1668,6 +1668,14 @@ DLL_PUBLIC void SATSolver::set_backbone_ccnr_mems_limitM(int64_t val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_ccnr_neighbor_max_cl_size(uint32_t val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.ccnr_neighbor_max_cl_size = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_bva(int val)
 {
     assert(val == 0 && "BVA no longer supported");

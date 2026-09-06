@@ -217,6 +217,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Backbone
         , backbone_ccnr_mems_limitM(300)
+        , ccnr_neighbor_max_cl_size(256)
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)

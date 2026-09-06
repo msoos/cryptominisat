@@ -57,10 +57,14 @@ bool OracleLS::make_space() {
 // Updates variables' neighbor_vars, ran once
 void OracleLS::build_neighborhood() {
     vector<uint8_t> flag(num_vars+1, 0);
+    const size_t max_sz = solver->conf.ccnr_neighbor_max_cl_size;
     for (int vnum = 1; vnum <= num_vars; ++vnum) {
         Ovariable& v = vars[vnum];
         for (const auto& l: v.lits) {
             int c_id = l.cl_num;
+            // A huge clause makes every var in it a neighbor of every other: that is
+            // quadratic memory, and it tells configuration checking nothing.
+            if (cls[c_id].lits.size() > max_sz) continue;
             for (const auto& lc: cls[c_id].lits) {
                 if (!flag[lc.var_num] && lc.var_num != vnum) {
                     flag[lc.var_num] = 1;

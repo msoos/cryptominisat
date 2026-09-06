@@ -614,6 +614,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.sls_memoutMB = fc_int(a);})
         .default_value(conf.sls_memoutMB)
         .help("Maximum number of MB to give to the local search solver. Skips local search if handing over the formula would need more.");
+    program.add_argument("--ccnrneighmaxsz")
+        .action([&](const auto& a) {conf.ccnr_neighbor_max_cl_size = fc_int(a);})
+        .default_value(conf.ccnr_neighbor_max_cl_size)
+        .help("CCNR builds no neighbor edges for clauses longer than this. The neighborhood is quadratic in clause size, so one huge clause costs GBs and makes every flip of its vars charge thousands of mems");
     program.add_argument("--backboneccnrlim")
         .action([&](const auto& a) {conf.backbone_ccnr_mems_limitM = fc_int(a);})
         .default_value(conf.backbone_ccnr_mems_limitM)

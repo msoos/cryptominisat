@@ -158,6 +158,7 @@ namespace CMSat {
         void set_varelim_occ_cutoff(uint32_t val);
         void set_varelim_occ_prod_cutoff(uint64_t val);
         void set_backbone_ccnr_mems_limitM(int64_t val);
+        void set_ccnr_neighbor_max_cl_size(uint32_t val);
         void reset_vsids();
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
         void set_simplify(const bool simp);

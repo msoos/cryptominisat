@@ -236,6 +236,7 @@ class DLL_PUBLIC SolverConf
 
         //Backbone
         long long backbone_ccnr_mems_limitM; ///<CCNR mems budget per local-search try, in millions
+        uint32_t ccnr_neighbor_max_cl_size; ///<Clauses longer than this contribute no CCNR neighbor edges
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
