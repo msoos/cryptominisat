@@ -185,7 +185,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     do { if (solver->conf.verbosity >= (a)) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
 #define print_simp_stats_emit(when, tok) \
-    verb_print(2, "[simp-stats] " << when << " " << tok \
+    verb_print(1, "[simp-stats] " << when << " " << tok \
         << " irred_bins " << solver->binTri.irredBins \
         << " irred_long_cls " << solver->get_num_long_irred_cls() \
         << " irred_long_lits " << solver->litStats.irredLits \
