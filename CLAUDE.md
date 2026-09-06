@@ -27,6 +27,8 @@ Fuzz on all 16 cores -- `unique_file()` uses O_CREAT|O_EXCL, so many `fuzz.py`
 can share one `out/` dir. Launch them yourself in the background, or use
 `./fuzz_session_cms.sh --num 16 [fuzz.py opts]` for an interactive tmux session.
 
+- Rebuild first. Fuzzing a stale binary means chasing repros that no longer
+  exist -- especially when someone else has edited the tree meanwhile.
 - `--fuzzlim N` limits the number of fuzzing rounds. Use at least 30 for
   search/propagation/simplification changes, 10 for trivial ones.
 - `--seed N` reproduces a run exactly (each round prints its re-create line).
