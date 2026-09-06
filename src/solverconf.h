@@ -234,6 +234,9 @@ class DLL_PUBLIC SolverConf
         int picosat_confl_limit;
         int varelim_check_resolvent_subs;
 
+        //Backbone
+        long long backbone_ccnr_mems_limitM; ///<CCNR mems budget per local-search try, in millions
+
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
         long long weaken_time_limitM;

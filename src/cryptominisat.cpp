@@ -1660,6 +1660,14 @@ DLL_PUBLIC void SATSolver::set_varelim_occ_prod_cutoff(uint64_t val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_backbone_ccnr_mems_limitM(int64_t val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.backbone_ccnr_mems_limitM = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_bva(int val)
 {
     assert(val == 0 && "BVA no longer supported");

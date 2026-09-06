@@ -215,6 +215,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , picosat_confl_limit(100)
         , varelim_check_resolvent_subs(false)
 
+        //Backbone
+        , backbone_ccnr_mems_limitM(30)
+
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
         , weaken_time_limitM(300)

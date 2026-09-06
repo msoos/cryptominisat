@@ -29,6 +29,9 @@ THE SOFTWARE.
 #include "cryptominisat.h"
 #include "varreplacer.h"
 #include "cadiback.h"
+#ifdef __GLIBC__
+#include <malloc.h>
+#endif
 
 using namespace CMSat;
 
@@ -42,6 +45,71 @@ inline Lit orc_to_lit(int x) {
     return Lit(var, neg);
 }
 
+// The irredundant clauses in cadiback's format: each clause 0-terminated.
+static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) {
+    cnf.clear();
+    num_lits = 0;
+    for(auto const& off: s->longIrredCls) {
+        Clause* cl = s->cl_alloc.ptr(off);
+        for(auto const& l1: *cl) {
+            num_lits++;
+            cnf.push_back(s->PICOLIT(l1));
+        }
+        cnf.push_back(0);
+    }
+    for(uint32_t i = 0; i < s->nVars()*2; i++) {
+        Lit l1 = Lit::toLit(i);
+        for(auto const& w: s->watches[l1]) {
+            if (!w.isBin() || w.red()) continue;
+            const Lit l2 = w.lit2();
+            if (l1 > l2) continue;
+
+            num_lits+=2;
+            cnf.push_back(s->PICOLIT(l1));
+            cnf.push_back(s->PICOLIT(l2));
+            cnf.push_back(0);
+        }
+    }
+    for(uint32_t i = 0; i < s->nVars(); i++) {
+        if (s->value(i) == l_Undef) continue;
+        cnf.push_back(s->PICOLIT(Lit(i, s->value(i) == l_False)));
+        cnf.push_back(0);
+    }
+}
+
+// The same clause set in the local search solver's format. Kept apart from
+// build_cadiback_cnf() so the local search engine can be swapped out on its own.
+static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
+    // A local search solver only sees the clauses we hand it. An XOR would be
+    // invisible to it, so its "model" could falsify one, and every candidate we
+    // then drop on the strength of that model would be dropped wrongly.
+    assert(s->xorclauses.empty());
+    assert(s->gmatrices.empty());
+
+    vector<vector<sspp::Lit>> cls;
+    vector<sspp::Lit> tmp;
+    for(auto const& off: s->longIrredCls) {
+        tmp.clear();
+        Clause* cl = s->cl_alloc.ptr(off);
+        for(auto const& l1: *cl) tmp.push_back(orclit(l1));
+        cls.push_back(tmp);
+    }
+    for(uint32_t i = 0; i < s->nVars()*2; i++) {
+        Lit l1 = Lit::toLit(i);
+        for(auto const& w: s->watches[l1]) {
+            if (!w.isBin() || w.red()) continue;
+            const Lit l2 = w.lit2();
+            if (l1 > l2) continue;
+            cls.push_back({orclit(l1), orclit(l2)});
+        }
+    }
+    for(uint32_t i = 0; i < s->nVars(); i++) {
+        if (s->value(i) == l_Undef) continue;
+        cls.push_back({orclit(Lit(i, s->value(i) == l_False))});
+    }
+    return cls;
+}
+
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
         bool& backbone_done)
 {
@@ -51,48 +119,12 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     print_simp_stats_before("backbone-simpl");
 
     vector<int> cnf;
-    /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
-    CCNROraclePre ccnr(this);
-    vector<vector<sspp::Lit>> cls;
-    vector<sspp::Lit> cctmp;
     uint64_t num_lits = 0;
-    for(auto const& off: longIrredCls) {
-        cctmp.clear();
-        Clause* cl = cl_alloc.ptr(off);
-        for(auto const& l1: *cl) {
-            num_lits++;
-            cnf.push_back(PICOLIT(l1));
-            cctmp.push_back(orclit(l1));
-        }
-        cnf.push_back(0);
-        cls.push_back(cctmp);
-    }
-    for(uint32_t i = 0; i < nVars()*2; i++) {
-        Lit l1 = Lit::toLit(i);
-        for(auto const& w: watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
-            const Lit l2 = w.lit2();
-            if (l1 > l2) continue;
+    build_cadiback_cnf(this, cnf, num_lits);
 
-            num_lits+=2;
-            cnf.push_back(PICOLIT(l1));
-            cnf.push_back(PICOLIT(l2));
-            cnf.push_back(0);
-
-            cctmp.clear();
-            cctmp.push_back(orclit(l1));
-            cctmp.push_back(orclit(l2));
-            cls.push_back(cctmp);
-        }
-    }
-    for(uint32_t i = 0; i < nVars(); i++) {
-        if (value(i) == l_Undef) continue;
-        auto l = Lit(i, value(i) == l_False);
-        cnf.push_back(PICOLIT(l));
-        cnf.push_back(0);
-        cls.push_back({orclit(l)});
-    }
-    uint64_t num_cls = cls.size();
+    CCNROraclePre ccnr(this);
+    vector<vector<sspp::Lit>> cls = build_ccnr_cls(this);
+    const uint64_t num_cls = cls.size();
 
     vector<int8_t> assump_map(nVars()+1, 2);
     ccnr.init(cls, nVars(), &assump_map);
@@ -101,7 +133,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     double ccnr_time = cpu_time();
     for(uint32_t nsols = 0; nsols < 10; nsols++) {
         ccnr.reinit();
-        bool ret = ccnr.run(30LL*1000LL*1000LL);
+        bool ret = ccnr.run(conf.backbone_ccnr_mems_limitM*1000LL*1000LL);
         verb_print(3, "[backbone-ccnr] sol found: " << ret);
         if (!ret) continue;
         ccnr_sols_found++;
@@ -133,6 +165,12 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     bool backbone_limit_hit = false;
     int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits,
         orig_max_confl, &backbone_limit_hit);
+#ifdef __GLIBC__
+    // Hands back what doit() freed. NOTE: measured on 6s289rb05233 this recovers
+    // only ~20MB of a 3.2GB rise -- mallinfo2 says the rest is still *live* when
+    // doit() returns, i.e. cadiback leaks it, and 'delete solver' frees just 74MB.
+    malloc_trim(0);
+#endif
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     uint32_t num_eq_added = 0;

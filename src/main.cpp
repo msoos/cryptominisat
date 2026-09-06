@@ -614,6 +614,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.sls_memoutMB = fc_int(a);})
         .default_value(conf.sls_memoutMB)
         .help("Maximum number of MB to give to the local search solver. Skips local search if handing over the formula would need more.");
+    program.add_argument("--backboneccnrlim")
+        .action([&](const auto& a) {conf.backbone_ccnr_mems_limitM = fc_int(a);})
+        .default_value(conf.backbone_ccnr_mems_limitM)
+        .help("Mems budget, in millions, for each of the CCNR local search tries that pre-filter backbone candidates. Too low and no model is found, so cadiback must test every variable");
 
     /* po::options_description rephase_options("Rephasing options"); */
     program.add_argument("--rephase")
