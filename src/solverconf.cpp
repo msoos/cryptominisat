@@ -216,7 +216,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_check_resolvent_subs(false)
 
         //Backbone
-        , backbone_ccnr_mems_limitM(30)
+        , backbone_ccnr_mems_limitM(300)
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
