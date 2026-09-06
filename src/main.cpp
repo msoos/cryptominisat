@@ -830,6 +830,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.varelim_sched_only_touched = fc_int(a);})
         .default_value(conf.varelim_sched_only_touched)
         .help("Only schedule for elimination the vars whose clauses changed since BVE last looked (CaDiCaL's Flags::elim). 0 = schedule every eligible var");
+    program.add_argument("--weakenclsmaxsz")
+        .action([&](const auto& a) {conf.weaken_max_cls_size = fc_int(a);})
+        .default_value(conf.weaken_max_cls_size)
+        .help("Don't weaken a clause longer than this during BVE. 0 = no limit");
     program.add_argument("--varelimclsmaxsz")
         .action([&](const auto& a) {conf.varelim_max_cls_size = fc_int(a);})
         .default_value(conf.varelim_max_cls_size)
