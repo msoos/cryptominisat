@@ -2596,7 +2596,7 @@ bool Searcher::clean_clauses_if_needed()
         && newZeroDepthAss > ((double)nVars()*0.05)
     ) {
         if (conf.verbosity >= 2) {
-            cout << "c newZeroDepthAss : " << newZeroDepthAss
+            cout << conf.prefix << "newZeroDepthAss : " << newZeroDepthAss
             << " -- "
             << (double)newZeroDepthAss/(double)nVars()*100.0
             << " % of active vars"
@@ -3052,7 +3052,7 @@ void Searcher::check_need_restart() {
         params.must_stop = true;
     }
 
-    VERBOSE_DEBUG_DO(if (params.must_stop) cout << "c must_stop set" << endl);
+    VERBOSE_DEBUG_DO(if (params.must_stop) cout << conf.prefix << "must_stop set" << endl);
 }
 
 void Searcher::print_solution_varreplace_status() const
@@ -3140,16 +3140,16 @@ void Searcher::finish_up_solve(const lbool status) {
 void Searcher::print_iteration_solving_stats()
 {
     if (conf.verbosity >= 3) {
-        cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
+        cout << conf.prefix << "------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print(propStats.propagations, conf.do_print_times, conf.prefix);
-        propStats.print(stats.cpu_time);
+        propStats.print(stats.cpu_time, conf.prefix);
         print_stats_line("c props/decision"
             , float_div(propStats.propagations, stats.decisions)
         );
         print_stats_line("c props/conflict"
             , float_div(propStats.propagations, stats.conflicts)
         );
-        cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
+        cout << conf.prefix << "------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 }
 

@@ -75,7 +75,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     runStats.foundXorsNew = binxors.size();
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
-            runStats.print();
+            runStats.print(solver->conf.prefix);
         else
             runStats.print_short(solver);
     }

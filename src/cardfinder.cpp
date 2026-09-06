@@ -201,7 +201,7 @@ void CardFinder::find_two_product_atmost1() {
 
 void CardFinder::print_cards(const vector<vector<Lit>>& card_constraints) const {
     for(const auto& card: card_constraints) {
-        cout << "c [cardfind] final: " << print_card(card) << endl;
+        cout << solver->conf.prefix << "[cardfind] final: " << print_card(card) << endl;
     }
 }
 
@@ -422,7 +422,7 @@ void CardFinder::find_cards()
             avg = (double)total_sizes/(double)cards.size();
         }
 
-        cout << "c [cardfind] "
+        cout << solver->conf.prefix << "[cardfind] "
         << "cards: " << cards.size()
         << " avg size: " << avg
         << solver->conf.print_times(cpu_time()-my_time)

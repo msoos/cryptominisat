@@ -61,7 +61,7 @@ void GateFinder::find_all()
     if (solver->conf.doPrintGateDot) print_graphviz_dot();
     VERBOSE_DEBUG_DO(for(auto g: orGates) cout << "found: OR gate" << g << endl;);
 
-    if (solver->conf.verbosity >= 3) runStats.print(solver->nVars());
+    if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
     globalStats += runStats;
     solver->sumSearchStats.num_gates_found_last = orGates.size();
 }
@@ -273,7 +273,7 @@ void GateFinder::print_graphviz_dot()
 
     file  << "}" << endl;
     file.close();
-    cout << "c Printed gate structure to file " << filenename << endl;
+    cout << solver->conf.prefix << "Printed gate structure to file " << filenename << endl;
 }
 
 GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
@@ -308,9 +308,9 @@ GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void GateFinder::Stats::print(const size_t nVars) const
+void GateFinder::Stats::print(const size_t nVars, const string& pre) const
 {
-    cout << "c -------- GATE FINDING ----------" << endl;
+    cout << pre << "-------- GATE FINDING ----------" << endl;
     print_stats_line("c time"
         , total_time()
     );
@@ -369,6 +369,6 @@ void GateFinder::Stats::print(const size_t nVars) const
         , "% vars"
     );
 
-    cout << "c -------- GATE FINDING END ----------" << endl;
+    cout << pre << "-------- GATE FINDING END ----------" << endl;
 }
 

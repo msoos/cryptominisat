@@ -191,9 +191,9 @@ void SubsumeImplicit::Stats::print_short(const Solver* solver, const char* calle
     << " w-visit: " << numWatchesLooked);
 }
 
-void SubsumeImplicit::Stats::print(const char* caller) const
+void SubsumeImplicit::Stats::print(const char* caller, const string& pre) const
 {
-    cout << "c -------- IMPLICIT SUB " << caller << " STATS --------" << endl;
+    cout << pre << "-------- IMPLICIT SUB " << caller << " STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , float_div(time_used, numCalled)
@@ -209,7 +209,7 @@ void SubsumeImplicit::Stats::print(const char* caller) const
     print_stats_line("c rem bins"
         , remBins
     );
-    cout << "c -------- IMPLICIT SUB STATS END --------" << endl;
+    cout << pre << "-------- IMPLICIT SUB STATS END --------" << endl;
 }
 
 SubsumeImplicit::Stats SubsumeImplicit::get_stats() const

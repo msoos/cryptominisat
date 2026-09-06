@@ -85,7 +85,7 @@ end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
-            runStats.print();
+            runStats.print(solver->conf.prefix);
         else
             runStats.print_short(solver);
     }
@@ -436,15 +436,15 @@ void DistillerLongWithImpl::Stats::print_short(const Solver* _solver) const
     redWatchBased.print_short("red", _solver);
 }
 
-void DistillerLongWithImpl::Stats::print() const
+void DistillerLongWithImpl::Stats::print(const string& pre) const
 {
-    cout << "c -------- STRENGTHEN STATS --------" << endl;
-    cout << "c --> watch-based on irred cls" << endl;
+    cout << pre << "-------- STRENGTHEN STATS --------" << endl;
+    cout << pre << "--> watch-based on irred cls" << endl;
     irredWatchBased.print();
 
-    cout << "c --> watch-based on red cls" << endl;
+    cout << pre << "--> watch-based on red cls" << endl;
     redWatchBased.print();
-    cout << "c -------- STRENGTHEN STATS END --------" << endl;
+    cout << pre << "-------- STRENGTHEN STATS END --------" << endl;
 }
 
 

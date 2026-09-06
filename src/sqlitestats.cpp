@@ -224,7 +224,7 @@ bool SQLiteStats::connectServer(const Solver* solver)
 
     int rc = sqlite3_open(filename.c_str(), &db);
     if(rc) {
-        cout << "c Cannot open sqlite database: " << sqlite3_errmsg(db) << endl;
+        cout << solver->conf.prefix << "Cannot open sqlite database: " << sqlite3_errmsg(db) << endl;
         sqlite3_close(db);
         return false;
     }
@@ -243,7 +243,7 @@ bool SQLiteStats::connectServer(const Solver* solver)
 
 
     if (solver->conf.verbosity) {
-        cout << "c writing to SQLite file: " << filename << endl;
+        cout << solver->conf.prefix << "writing to SQLite file: " << filename << endl;
     }
 
     return true;

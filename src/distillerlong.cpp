@@ -855,9 +855,9 @@ DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void DistillerLong::Stats::print(const size_t nVars) const
+void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
 {
-    cout << "c -------- DISTILL-LONG STATS --------" << endl;
+    cout << pre << "-------- DISTILL-LONG STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , ratio_for_stat(time_used, numCalled)
@@ -884,7 +884,7 @@ void DistillerLong::Stats::print(const size_t nVars) const
         , stats_line_percent(zeroDepthAssigns, nVars)
         , "% of vars"
     );
-    cout << "c -------- DISTILL STATS END --------" << endl;
+    cout << pre << "-------- DISTILL STATS END --------" << endl;
 }
 
 double DistillerLong::mem_used() const

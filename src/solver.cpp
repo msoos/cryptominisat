@@ -156,7 +156,7 @@ void Solver::set_sqlite(
     sqlStats = new SQLiteStats(filename);
     if (!sqlStats->setup(this)) exit(-1);
     if (conf.verbosity >= 4) {
-        cout << "c Connected to SQLite server" << endl;
+        cout << conf.prefix << "Connected to SQLite server" << endl;
     }
     if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
     #else
@@ -388,7 +388,7 @@ Clause* Solver::add_clause_int(
             set_unsat_cl_id(ID);
             ok = false;
             if (conf.verbosity >= 6) {
-                cout << "c solver received clause through addClause(): " << lits
+                cout << conf.prefix << "solver received clause through addClause(): " << lits
                 << " that became an empty clause at toplevel --> UNSAT" << endl;
             }
             return nullptr;
@@ -1674,7 +1674,7 @@ lbool Solver::iterate_until_solved() {
     if (status != l_Undef) {
         dump_clauses_at_finishup_as_last();
         if (conf.verbosity) {
-            cout << "c [sql] dumping all remaining clauses as cl_last_in_solver" << endl;
+            cout << conf.prefix << "[sql] dumping all remaining clauses as cl_last_in_solver" << endl;
         }
     }
     #endif
@@ -1760,7 +1760,7 @@ lbool Solver::execute_inprocess_strategy(
             verb_print(1, "--> Executing strategy token: " << token);
 
         if (token.substr(0,3) != "occ" && !token.empty())
-            print_simp_stats_before(token);
+            simp_stats_before(token);
 
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
@@ -1916,7 +1916,7 @@ lbool Solver::execute_inprocess_strategy(
         }
 
         if (token.substr(0,3) != "occ" && !token.empty())
-            print_simp_stats_after(token);
+            simp_stats_after(token);
 
         if (!okay()) return l_False;
         SLOW_DEBUG_DO(check_stats());
@@ -2149,9 +2149,9 @@ void Solver::print_full_stats(
     const double /*cpu_time_total*/,
     const double /*wallclock_time_started*/) const
 {
-    cout << "c All times are for this thread only except if explicitly specified" << endl;
+    cout << conf.prefix << "All times are for this thread only except if explicitly specified" << endl;
     sumSearchStats.print(sumPropStats.propagations, conf.do_print_times, conf.prefix);
-    sumPropStats.print(sumSearchStats.cpu_time);
+    sumPropStats.print(sumSearchStats.cpu_time, conf.prefix);
     //reduceDB->get_total_time().print(cpu_time);
 
     //OccSimplifier stats
@@ -2165,14 +2165,14 @@ void Solver::print_full_stats(
         occsimplifier->print_gatefinder_stats();
     }*/
 
-    varReplacer->get_scc_finder()->get_stats().print();
+    varReplacer->get_scc_finder()->get_stats().print(conf.prefix);
     varReplacer->get_stats().print(nVarsOuter(), conf.prefix);
     varReplacer->print_some_stats(cpu_time, conf.prefix);
-    distill_bin_cls->get_stats().print(nVarsOuter());
-    dist_long_with_impl->get_stats().print();
+    distill_bin_cls->get_stats().print(nVarsOuter(), conf.prefix);
+    dist_long_with_impl->get_stats().print(conf.prefix);
 
     if (conf.doStrSubImplicit) {
-        subsumeImplicit->get_stats().print("");
+        subsumeImplicit->get_stats().print("", conf.prefix);
     }
     print_mem_stats();
 }
@@ -2486,6 +2486,69 @@ size_t Solver::get_num_nonfree_vars() const
     nonfree += varReplacer->get_num_replaced_vars();
 
     return nonfree;
+}
+
+/// Green if the value went down, light red if it went up, plain if unchanged
+/// or if there is nothing to compare against (i.e. this is a "bef" line).
+static string col_num(const uint64_t val, const uint64_t prev, const bool cmp) {
+    if (!cmp || val == prev) return std::to_string(val);
+    std::stringstream ss;
+    ss << (val < prev ? COLGREEN : COLREDLIGHT) << val << COLDEF;
+    return ss.str();
+}
+
+static void print_simp_stats(
+    const Solver* solver, const char* col, const char* when, const string& tok,
+    const SimpStatsSnap& now, const SimpStatsSnap* prev)
+{
+    const bool c = prev != nullptr;
+    verb_print(1, "[simp-stats] " << when << " "
+        << col << std::left << std::setw(SIMP_STATS_TOK_W) << tok
+        << COLDEF << std::right
+        << " irred_bins " << col_num(now.irred_bins, c ? prev->irred_bins : 0, c)
+        << " irred_long_cls " << col_num(now.irred_long_cls, c ? prev->irred_long_cls : 0, c)
+        << " irred_long_lits " << col_num(now.irred_long_lits, c ? prev->irred_long_lits : 0, c)
+        << " units " << col_num(now.units, c ? prev->units : 0, c));
+
+    std::stringstream t_step;
+    if (c) t_step << " T-step: " << std::fixed << std::setprecision(2) << (now.t - prev->t);
+    verb_print(1, "[simp-stats] " << std::setw(SIMP_STATS_TOK_W+4) << ""
+        << " free_vars " << col_num(now.free_vars, c ? prev->free_vars : 0, c)
+        << " elimed_vars " << col_num(now.elimed_vars, c ? prev->elimed_vars : 0, c)
+        << " replaced_vars " << col_num(now.replaced_vars, c ? prev->replaced_vars : 0, c)
+        << " mem_MB " << (rss_mem_used() / (1024ULL * 1024ULL))
+        << " T: " << std::setprecision(3) << now.t << std::setprecision(2)
+        << t_step.str()
+        << " depth " << solver->simp_stats_snaps.size());
+}
+
+SimpStatsSnap Solver::simp_stats_snap() const
+{
+    SimpStatsSnap s;
+    s.t = cpu_time();
+    s.irred_bins = binTri.irredBins;
+    s.irred_long_cls = num_long_irred_cls_anywhere();
+    s.irred_long_lits = litStats.irredLits;
+    s.units = trail_size();
+    s.free_vars = get_num_free_vars();
+    s.elimed_vars = get_num_vars_elimed();
+    s.replaced_vars = varReplacer->get_num_replaced_vars();
+    return s;
+}
+
+void Solver::simp_stats_before(const string& tok)
+{
+    const auto snap = simp_stats_snap();
+    print_simp_stats(this, COLPURPLELIGHT, "bef", tok, snap, nullptr);
+    simp_stats_snaps.push_back(snap);
+}
+
+void Solver::simp_stats_after(const string& tok)
+{
+    assert(!simp_stats_snaps.empty());
+    const SimpStatsSnap prev = simp_stats_snaps.back();
+    simp_stats_snaps.pop_back();
+    print_simp_stats(this, COLGREEN, "aft", tok, simp_stats_snap(), &prev);
 }
 
 size_t Solver::get_num_free_vars() const
@@ -3177,7 +3240,7 @@ bool Solver::find_and_init_all_matrices() {
     frat_func_start();
     if (!xorclauses_updated) {
         if (conf.verbosity >= 2) {
-            cout << "c [matrix] XORs not updated -> not performing matrix init. Matrices: "
+            cout << conf.prefix << "[matrix] XORs not updated -> not performing matrix init. Matrices: "
                 << gmatrices.size() << endl;
         }
         return true;

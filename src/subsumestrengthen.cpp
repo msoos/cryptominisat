@@ -916,7 +916,7 @@ void SubsumeStrengthen::Stats::print_short(const Solver* s) const
 
 void SubsumeStrengthen::Stats::print(const string& prefix) const
 {
-    cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
+    cout << prefix << "-------- SubsumeStrengthen STATS ----------" << endl;
     print_stats_line(prefix + "cl-subs"
         , sub0.numSubsumed + sub1.sub
         , " Clauses"
@@ -933,7 +933,7 @@ void SubsumeStrengthen::Stats::print(const string& prefix) const
         , strengthenTime
         , " s"
     );
-    cout << "c -------- SubsumeStrengthen STATS END ----------" << endl;
+    cout << prefix << "-------- SubsumeStrengthen STATS END ----------" << endl;
 }
 
 SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& other)

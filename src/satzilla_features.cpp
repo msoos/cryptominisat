@@ -31,7 +31,7 @@ using namespace CMSat;
 
 void SatZillaFeatures::print_stats() const
 {
-    cout << "c [satzilla_features] ";
+    cout << solver->conf.prefix << "[satzilla_features] ";
     cout << "numVars " << numVars << ", ";
     cout << "numClauses " << numClauses << ", ";
     cout << "var_cl_ratio " << var_cl_ratio << ", ";

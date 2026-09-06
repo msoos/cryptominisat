@@ -166,6 +166,7 @@ static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
 #endif
 
 static vector<int> ccnr_drop_cands(Solver* solver, uint64_t& num_cls) {
+    const double ccnr_time = cpu_time();
     vector<vector<sspp::Lit>> cls = build_ccnr_cls(solver);
     num_cls = cls.size();
     vector<int8_t> assump_map(solver->nVars()+1, 2);
@@ -176,7 +177,6 @@ static vector<int> ccnr_drop_cands(Solver* solver, uint64_t& num_cls) {
 
     vector<int> sols_found(solver->nVars()+1, -1);
     uint32_t ccnr_sols_found = 0;
-    double ccnr_time = cpu_time();
     for(uint32_t nsols = 0; nsols < 10; nsols++) {
         ccnr.reinit();
         bool ret = ccnr.run(solver->conf.backbone_ccnr_mems_limitM*1000LL*1000LL);
@@ -277,15 +277,18 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
                 << gmatrices.size() << " matrices)" << COLDEF);
         return okay();
     }
-    double my_time = cpu_time();
-    print_simp_stats_before("backbone-simpl");
+    SimpStatsScope simp_stats_scope(this, "backbone-simpl");
+    const double my_time = cpu_time();
 
     vector<int> cnf;
     uint64_t num_lits = 0;
     build_cadiback_cnf(this, cnf, num_lits);
+    const double build_time = cpu_time() - my_time;
 
     uint64_t num_cls = 0;
+    const double ccnr_start_time = cpu_time();
     vector<int> drop_cands = ccnr_drop_cands(this, num_cls);
+    const double ccnr_time = cpu_time() - ccnr_start_time;
 
     vector<int> learned_units;
     vector<int> learned_bins;
@@ -293,8 +296,10 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
             << " num cls: " << num_cls << " num vars: " << nVars());
     vector<pair<int, int>> eqLits;
     bool backbone_limit_hit = false;
+    const double cadiback_start_time = cpu_time();
     int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits,
         orig_max_confl, &backbone_limit_hit);
+    const double cadiback_time = cpu_time() - cadiback_start_time;
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     uint32_t num_eq_added = 0;
@@ -308,13 +313,16 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
         // res == 20 means UNSAT, res == 0 means limit hit (not an error)
         ok = false;
     }
+    // The T-s below are disjoint, and add up to the total T
     verb_print(1, "[backbone-simpl] res: " << res
             <<  " num units added: " << trail_size() - num_units
             <<  " num eq added: " << num_eq_added
             <<  " num bins: " << num_bins_added
-            << " T: " << std::fixed << std::setprecision(2)
-            << cpu_time() - my_time);
-    print_simp_stats_after("backbone-simpl");
+            << std::fixed << std::setprecision(2)
+            << " buildT: " << build_time
+            << " ccnrT: " << ccnr_time
+            << " cadibackT: " << cadiback_time
+            << " T: " << cpu_time() - my_time);
     return okay();
 }
 

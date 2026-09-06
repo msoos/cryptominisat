@@ -61,7 +61,7 @@ end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
+            runStats.print(solver->nVars(), solver->conf.prefix);
         else
             runStats.print_short(solver);
     }
@@ -211,7 +211,7 @@ bool DistillerLitRem::distill_long_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 3) {
-        cout << "c [distill-litrem] "
+        cout << solver->conf.prefix << "[distill-litrem] "
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
         << endl;
     }
@@ -355,9 +355,9 @@ void DistillerLitRem::Stats::print_short(const Solver* _solver) const
     << endl;
 }
 
-void DistillerLitRem::Stats::print(const size_t nVars) const
+void DistillerLitRem::Stats::print(const size_t nVars, const string& pre) const
 {
-    cout << "c -------- DISTILL-LITREM STATS --------" << endl;
+    cout << pre << "-------- DISTILL-LITREM STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , ratio_for_stat(time_used, numCalled)
@@ -384,7 +384,7 @@ void DistillerLitRem::Stats::print(const size_t nVars) const
         , stats_line_percent(zeroDepthAssigns, nVars)
         , "% of vars"
     );
-    cout << "c -------- DISTILL STATS END --------" << endl;
+    cout << pre << "-------- DISTILL STATS END --------" << endl;
 }
 
 double DistillerLitRem::mem_used() const

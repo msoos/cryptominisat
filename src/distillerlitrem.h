@@ -52,7 +52,7 @@ class DistillerLitRem {
 
             Stats& operator+=(const Stats& other);
             void print_short(const Solver* solver) const;
-            void print(const size_t nVars) const;
+            void print(const size_t nVars, const string& pre) const;
 
             double time_used = 0.0;
             uint64_t timeOut = 0;

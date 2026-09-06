@@ -689,7 +689,7 @@ inline void Searcher::vsids_bump_var_act(const uint32_t var)
 
 template<class T> void Searcher::print_clause(const string& str, const T& cl) const
 {
-    cout << "c " << str << " clause: " ;
+    cout << conf.prefix << str << " clause: " ;
     for(const Lit& l: cl) cout << l << ": " << value(l) << " ";
     cout << endl;
 }

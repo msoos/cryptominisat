@@ -112,7 +112,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
         txors.resize(sz);
 
         if (solver->conf.verbosity) {
-            cout << "c [xor-clean-equiv] removed equivalent xors: "
+            cout << solver->conf.prefix << "[xor-clean-equiv] removed equivalent xors: "
             << (orig_size-txors.size()) << " left with: " << txors.size()
             << endl;
         }

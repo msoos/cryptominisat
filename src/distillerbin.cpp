@@ -61,7 +61,7 @@ bool DistillerBin::distill()
 
     globalStats += runStats;
     if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3) runStats.print(solver->nVars());
+        if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
         else runStats.print_short(solver);
     }
     runStats.clear();
@@ -287,9 +287,9 @@ void DistillerBin::Stats::print_short(const Solver* solver) const
     << solver->conf.print_times(time_used, timeOut));
 }
 
-void DistillerBin::Stats::print(const size_t nVars) const
+void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
 {
-    cout << "c -------- DISTILL-BIN STATS --------" << endl;
+    cout << pre << "-------- DISTILL-BIN STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , ratio_for_stat(time_used, numCalled)
@@ -316,7 +316,7 @@ void DistillerBin::Stats::print(const size_t nVars) const
         , stats_line_percent(zeroDepthAssigns, nVars)
         , "% of vars"
     );
-    cout << "c -------- DISTILL STATS END --------" << endl;
+    cout << pre << "-------- DISTILL STATS END --------" << endl;
 }
 
 double DistillerBin::mem_used() const

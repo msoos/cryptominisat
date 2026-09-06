@@ -100,7 +100,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
-    double start_vivif_time = cpu_time();
+    SimpStatsScope simp_stats_scope(this, "oracle-vivif");
+    const double start_time = cpu_time();
 
     auto clauses = get_irred_cls_for_oracle();
     std::shuffle(clauses.begin(), clauses.end(), mtrand);
@@ -111,6 +112,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     /* oracle.SetStrictMode(true); */
     oracle.SetVerbosity(2);
 
+    const double build_time = cpu_time() - start_time;
+    const double start_vivif_time = cpu_time();
     int64_t mems_for_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult/20.0;
     int64_t mems_before_vivif = mems_for_vivif;
     int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
@@ -156,7 +159,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     // Do equiv check
     end1:
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
-    const double end_vivif_time = cpu_time();
+    const double vivif_time = cpu_time() - start_vivif_time;
     const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL * solver->conf.oracle_mult;
     bool early_aborted_bin = true;
     oracle.reset_mems();
@@ -254,7 +257,8 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     early_aborted_bin = false;
 
     end2:
-    const double end_bin_tme = cpu_time();
+    const double bin_time = cpu_time() - start_bin_time;
+    const double start_finish_time = cpu_time();
     const auto oracle_bin_mems_used = oracle.getStats().mems;
 
     vector<Lit> tmp2;
@@ -286,25 +290,30 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     execute_inprocess_strategy(false, "must-scc-vrepl");
     if (!okay()) return okay();
 
+    const double finish_time = cpu_time() - start_finish_time;
+
+    // The T-s below are disjoint: build+vivif+bin+finish == total
     verb_print(1, "[oracle-vivif]"
             << " lits-rem: " << lits_rem
             << " learnt-units: " << oracle.getStats().learned_units
             << " T-out: " << (early_aborted_vivif ? "Y" : "N")
             << " T-remain: " << stats_line_percent(tot_vivif_mems-oracle_vivif_mems_used, tot_vivif_mems) << "%"
-            << " T: " << std::setprecision(2) << (end_vivif_time-start_vivif_time));
+            << " buildT: " << std::setprecision(2) << build_time
+            << " T: " << std::setprecision(2) << vivif_time);
 
     verb_print(1, "[oracle-bin]"
             << " bin-added: " << bin_added
             << " equiv-added: " << equiv_added
             << " T-out: " << (early_aborted_bin ? "Y" : "N")
             << " T-remain: " << stats_line_percent(tot_bin_mems-oracle_bin_mems_used, tot_bin_mems) << "%"
-            << " T: " << std::setprecision(2) << (end_bin_tme - start_bin_time));
+            << " T: " << std::setprecision(2) << bin_time);
 
     verb_print(1, "[oracle-vivif] cache usefulness: "
             << std::setprecision(0) << std::fixed <<
             safe_div(oracle.getStats().cache_useful, oracle.getStats().total_cache_lookups)*100.0 << "%"
             << std::setprecision(2)
-            << " total T: " << std::setprecision(2) << (cpu_time() - start_vivif_time));
+            << " finishT: " << finish_time
+            << " total T: " << (cpu_time() - start_time));
     return solver->okay();
 }
 
@@ -423,6 +432,7 @@ bool Solver::oracle_sparsify(bool fast)
     execute_inprocess_strategy(false, "sub-impl, occ-backw-sub, must-renumber");
     if (!okay()) return okay() ;
     if (nVars() < 10) return okay();
+    SimpStatsScope simp_stats_scope(this, "oracle-sparsify");
 
     double my_time = cpu_time();
     uint32_t removed = 0;
@@ -645,7 +655,7 @@ bool Solver::oracle_sparsify(bool fast)
         << safe_div(oracle.getStats().cache_useful, oracle.getStats().total_cache_lookups)*100.0 << "%"
         << std::setprecision(2)
         << " learnt-units: " << oracle.getStats().learned_units
-        << " T: " << (cpu_time()-my_time) << " buildT: " << build_time);
+        << " T: " << (cpu_time()-my_time) << " (of which buildT: " << build_time << ")");
 
     return solver->okay();
 }

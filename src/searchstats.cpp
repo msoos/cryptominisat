@@ -208,7 +208,7 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
     /*assert(numConflicts
         == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
 
-    cout << "c LEARNT stats" << endl;
+    cout << prefix << "LEARNT stats" << endl;
     print_stats_line(prefix + "units learnt"
         , learntUnits
         , stats_line_percent(learntUnits, conflicts)
@@ -226,7 +226,7 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
     );
 
 
-    cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
+    cout << prefix << "SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
     print_stats_line(prefix + "advProp called"
         , advancedPropCalled
     );
@@ -246,7 +246,7 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
         , "bin/call"
     );
 
-    cout << "c CONFL LITS stats" << endl;
+    cout << prefix << "CONFL LITS stats" << endl;
     print_stats_line(prefix + "orig "
         , litsRedNonMin
         , ratio_for_stat(litsRedNonMin, conflicts)

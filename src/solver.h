@@ -80,6 +80,19 @@ struct SolveStats
     uint32_t num_solve_calls = 0;
 };
 
+/// State of the formula at a [simp-stats] bef/aft point, so aft can color
+/// each value by which way it moved.
+struct SimpStatsSnap {
+    double t = 0;
+    uint64_t irred_bins = 0;
+    uint64_t irred_long_cls = 0;
+    uint64_t irred_long_lits = 0;
+    uint64_t units = 0;
+    uint64_t free_vars = 0;
+    uint64_t elimed_vars = 0;
+    uint64_t replaced_vars = 0;
+};
+
 class Solver : public Searcher
 {
     public:
@@ -162,11 +175,13 @@ class Solver : public Searcher
         // During occ-* steps, OccSimplifier owns them and longIrredCls is empty.
         size_t get_num_long_irred_cls() const;
 
-        // Nesting depth of currently-open [simp-stats] wrappers. Maintained by
-        // print_simp_stats_before/after. depth=0 lines are the top-level
-        // preprocessing steps; depth>=1 are nested children whose work is
-        // already counted by their parent.
-        uint32_t simp_stats_depth = 0;
+        // [simp-stats] bef/aft lines bracketing a preprocessing step. depth=0
+        // is a top-level step, depth>=1 is nested inside another one (and its
+        // work is already counted by its parent).
+        void simp_stats_before(const std::string& tok);
+        void simp_stats_after(const std::string& tok);
+        SimpStatsSnap simp_stats_snap() const;
+        vector<SimpStatsSnap> simp_stats_snaps;
         ///Long irred clause count that is right in both phases: during occur
         ///simplification the clauses live in OccSimplifier, not in longIrredCls
         size_t num_long_irred_cls_anywhere() const;
@@ -514,6 +529,16 @@ class Solver : public Searcher
         void print_watch_list(watch_subarray_const ws, const Lit lit) const;
         void print_clause_size_distrib();
         void check_model_for_assumptions() const;
+};
+
+// simp_stats_before/after for steps that have many exit points.
+struct SimpStatsScope {
+    SimpStatsScope(Solver* _s, const std::string& _tok): s(_s), tok(_tok) {
+        s->simp_stats_before(tok);
+    }
+    ~SimpStatsScope() { s->simp_stats_after(tok); }
+    Solver* s;
+    std::string tok;
 };
 
 inline void Solver::set_decision_var(const uint32_t var)

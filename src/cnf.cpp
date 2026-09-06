@@ -870,9 +870,9 @@ bool CNF::zero_irred_cls(const CMSat::Lit lit) const
 void CNF::print_xors(const vector<Xor>& xors)
 {
     if (conf.verbosity >= 5) {
-        cout << "c Orig XORs: " << endl;
-        for(auto const& x: xors) cout << "c " << x << endl;
-        cout << "c -> Total: " << xors.size() << " xors" << endl;
+        cout << conf.prefix << "Orig XORs: " << endl;
+        for(auto const& x: xors) cout << conf.prefix << x << endl;
+        cout << conf.prefix << "-> Total: " << xors.size() << " xors" << endl;
     }
 }
 

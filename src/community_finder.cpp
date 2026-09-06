@@ -113,7 +113,7 @@ void CMSat::CommunityFinder::compute()
 
     double time_passed = cpu_time() - my_time;
     if (solver->conf.verbosity) {
-        cout << "c [louvain] Louvain communities found. T: "
+        cout << solver->conf.prefix << "[louvain] Louvain communities found. T: "
         << std::fixed << std::setprecision(2)
         << solver->conf.print_times(time_passed) << endl;
     }

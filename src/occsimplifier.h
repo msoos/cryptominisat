@@ -95,10 +95,10 @@ struct BVEStats
 
     BVEStats& operator+=(const BVEStats& other);
 
-    void print_short() const {
-        cout << "c [occ-bve]" << " elimed: " << numVarsElimed
+    void print_short(const string& pre) const {
+        cout << pre << "[occ-bve] elimed: " << numVarsElimed
             << " gatefind timeout: " << gatefind_timeouts << endl;
-        cout << "c [occ-bve]" << " cl-new: " << newClauses << " tried: " << triedToElimVars
+        cout << pre << "[occ-bve] cl-new: " << newClauses << " tried: " << triedToElimVars
             << " tested: " << testedToElimVars << endl;
     }
 

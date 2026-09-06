@@ -1292,7 +1292,7 @@ void VarReplacer::print_some_stats(const double global_cpu_time, const string& p
 
 void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
 {
-        cout << "c --------- VAR REPLACE STATS ----------" << endl;
+        cout << prefix << "--------- VAR REPLACE STATS ----------" << endl;
         print_stats_line(prefix + "time"
             , cpu_time
             , float_div(cpu_time, numCalls)
@@ -1330,7 +1330,7 @@ void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
          print_stats_line(prefix + "bogoprops"
             , bogoprops
         );
-        cout << "c --------- VAR REPLACE STATS END ----------" << endl;
+        cout << prefix << "--------- VAR REPLACE STATS END ----------" << endl;
 }
 
 void VarReplacer::Stats::print_short(const Solver* solver) const

@@ -52,7 +52,7 @@ class DistillerLongWithImpl {
 
             Stats& operator+=(const Stats& other);
             void print_short(const Solver* solver) const;
-            void print() const;
+            void print(const string& pre) const;
 
             struct WatchBased
             {

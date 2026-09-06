@@ -80,7 +80,7 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
     if (sz == 0) {
         //it's unsat because of assumptions
         if (solver->conf.verbosity) {
-            cout << "c [breakid] UNSAT because of assumptions in clause: " << cl << endl;
+            cout << solver->conf.prefix << "[breakid] UNSAT because of assumptions in clause: " << cl << endl;
         }
         return add_cl_ret::unsat;
     }
@@ -153,7 +153,7 @@ void BreakID::set_up_time_lim()
 
     set_time_lim *= 1000LL;
     if (solver->conf.verbosity) {
-        cout << "c [breakid] set time lim: " << set_time_lim << endl;
+        cout << solver->conf.prefix << "[breakid] set time lim: " << set_time_lim << endl;
     }
 
     breakid->set_steps_lim(set_time_lim);
@@ -264,7 +264,7 @@ bool BreakID::doit()
     bool time_out = remain <= 0;
     double time_remain = float_div(remain, set_time_lim);
     if (solver->conf.verbosity) {
-        cout << "c [breakid] finished "
+        cout << solver->conf.prefix << "[breakid] finished "
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -376,7 +376,7 @@ void BreakID::remove_duplicates()
 
     double time_used = cpu_time() - my_time;
     if (solver->conf.verbosity >= 1) {
-        cout << "c [breakid] tmp-rem-dup cls"
+        cout << solver->conf.prefix << "[breakid] tmp-rem-dup cls"
         << " dupl: " << print_value_kilo_mega(old_size-dedup_cls.size(), false)
         << solver->conf.print_times(time_used)
         <<  endl;
@@ -393,8 +393,8 @@ void BreakID::remove_duplicates()
 void BreakID::break_symms_in_cms()
 {
     if (solver->conf.verbosity) {
-        cout << "c [breakid] Breaking cls: "<< breakid->get_num_break_cls() << endl;
-        cout << "c [breakid] Aux vars: "<< breakid->get_num_aux_vars() << endl;
+        cout << solver->conf.prefix << "[breakid] Breaking cls: "<< breakid->get_num_break_cls() << endl;
+        cout << solver->conf.prefix << "[breakid] Aux vars: "<< breakid->get_num_aux_vars() << endl;
     }
     for(uint32_t i = 0; i < breakid->get_num_aux_vars(); i++) solver->new_var(true);
     if (solver->conf.breakid_use_assump) {

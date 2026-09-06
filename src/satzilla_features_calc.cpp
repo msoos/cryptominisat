@@ -390,7 +390,7 @@ SatZillaFeatures SatZillaFeaturesCalc::extract()
 
     double time_used = cpu_time() - start_time;
     if (solver->conf.verbosity) {
-        cout << "c [szfeat] satzilla features extracted "
+        cout << solver->conf.prefix << "[szfeat] satzilla features extracted "
         << solver->conf.print_times(time_used)
         << endl;
     }

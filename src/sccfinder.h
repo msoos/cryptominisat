@@ -64,9 +64,9 @@ class SCCFinder {
                 return *this;
             }
 
-            void print() const
+            void print(const string& pre) const
             {
-                cout << "c ----- SCC STATS --------" << endl;
+                cout << pre << "----- SCC STATS --------" << endl;
                 print_stats_line("c time"
                     , cpu_time
                     , float_div(cpu_time, numCalls)
@@ -90,7 +90,7 @@ class SCCFinder {
                     , "% of all found"
                 );
 
-                cout << "c ----- SCC STATS END --------" << endl;
+                cout << pre << "----- SCC STATS END --------" << endl;
             }
 
             void print_short(const Solver* solver) const;

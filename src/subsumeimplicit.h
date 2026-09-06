@@ -54,7 +54,7 @@ public:
         }
         Stats operator+=(const Stats& other);
         void print_short(const Solver* solver, const char* caller) const;
-        void print(const char* caller) const;
+        void print(const char* caller, const string& pre) const;
 
         double time_used = 0.0;
         uint64_t numCalled = 0;

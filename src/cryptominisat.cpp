@@ -855,7 +855,7 @@ struct OneThreadCalc
         if (print_thread_start_and_finish) {
             data_for_thread.update_mutex->lock();
             std::ios::fmtflags f(cout.flags());
-            cout << "c Finished thread " << tid << " with result: " << ret
+            cout << data_for_thread.solvers[tid]->getConf().prefix << "Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
             << (data_for_thread.cpu_times[tid]-start_time)
             << endl;

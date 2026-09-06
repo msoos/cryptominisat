@@ -66,7 +66,7 @@ public:
                 + andBasedTime + erTime;
         }
         Stats& operator+=(const Stats& other);
-        void print(const size_t nVars) const;
+        void print(const size_t nVars, const string& pre) const;
 
         //Time
         double findGateTime = 0.0;

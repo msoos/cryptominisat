@@ -1315,7 +1315,7 @@ bool OccSimplifier::eliminate_vars()
             << " (init " << n_cls_init << ", d " << (int64_t)n_cls_now-(int64_t)n_cls_last << ")"
             << " vars " << n_vars_last << "->" << n_vars_now
             << " T: " << std::fixed << std::setprecision(2) << (cpu_time()-my_time));
-        if (solver->conf.verbosity) bve_why.print("c [occ-bve-why] ");
+        if (solver->conf.verbosity) bve_why.print(solver->conf.prefix + "[occ-bve-why] ");
 
         if (varelim_num_limit < 0
             || varelim_linkin_limit_bytes < 0
@@ -2285,7 +2285,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
 
         if (!token.empty())
-            print_simp_stats_before(token);
+            solver->simp_stats_before(token);
 
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
@@ -2335,7 +2335,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             exit(-1);
         }
         if (!token.empty())
-            print_simp_stats_after(token);
+            solver->simp_stats_after(token);
 
         CHECK_N_OCCUR_DO(check_n_occur());
         SLOW_DEBUG_DO(check_cls_sanity());
@@ -2995,7 +2995,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
     frat_func_start();
 
     //Add back clauses to solver
-    print_simp_stats_before("occ-finishup");
+    solver->simp_stats_before("occ-finishup");
     remove_all_longs_from_watches();
     if (solver->okay()) {
         assert(solver->prop_at_head());
@@ -3043,7 +3043,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
     //offsets in both OccSimplifier::clauses and solver->longIrredCls, so
     //get_num_long_irred_cls() would double-count until we drop the former.
     clauses.clear();
-    print_simp_stats_after("occ-finishup");
+    solver->simp_stats_after("occ-finishup");
     frat_func_end();
 }
 
@@ -3117,7 +3117,7 @@ void OccSimplifier::set_limits()
     }
 
     #ifdef BIT_MORE_VERBOSITY
-    cout << "c clause_lits_added: " << clause_lits_added << endl;
+    cout << solver->conf.prefix << "clause_lits_added: " << clause_lits_added << endl;
     #endif
 
     norm_varelim_time_limit *= 4;
@@ -4498,7 +4498,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     bve_trace_gate = "-";
     bve_trace_pos = bve_trace_neg = bve_trace_lim = 0;
     const bool ret = test_elim_and_fill_resolvents_inner(var);
-    cout << "c [bve-try] v " << (var+1)
+    cout << solver->conf.prefix << "[bve-try] v " << (var+1)
         << " pos " << bve_trace_pos << " neg " << bve_trace_neg
         << " gate " << bve_trace_gate
         << " res " << resolvents.size() << "/" << bve_trace_lim
@@ -5539,7 +5539,7 @@ void OccSimplifier::Stats::print_extra_times(const char* prefix) const
 
 void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
 {
-    cout << "c -------- OccSimplifier STATS ----------" << endl;
+    cout << occs->solver->conf.prefix << "-------- OccSimplifier STATS ----------" << endl;
     print_stats_line("c time"
         , total_time(occs)
         , stats_line_percent(varElimTime, total_time(occs))
@@ -5558,7 +5558,7 @@ void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
         , "% vars"
     );
 
-    cout << "c -------- OccSimplifier STATS END ----------" << endl;
+    cout << occs->solver->conf.prefix << "-------- OccSimplifier STATS END ----------" << endl;
 }
 
 Clause* OccSimplifier::full_add_clause(

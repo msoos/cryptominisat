@@ -653,7 +653,7 @@ void ReduceDB::update_preds_lev2()
 
     if (solver->conf.verbosity >= 2) {
         double predTime = cpu_time() - my_time;
-        cout << "c [DBCL] main predtime: " << predTime << endl;
+        cout << solver->conf.prefix << "[DBCL] main predtime: " << predTime << endl;
     }
 }
 
@@ -897,7 +897,7 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
     }
 
     /*if (solver->conf.verbosity) {
-        cout << "c [DBCL pred]"
+        cout << solver->conf.prefix << "[DBCL pred]"
         << " lev: " << lev
         << " avg age: " << std::fixed << std::setprecision(2) << std::setw(6)
         << ratio_for_stat(tot_age, solver->longRedCls[lev].size())
@@ -971,7 +971,7 @@ void ReduceDB::handle_predictors()
                 exit(-1);
             }
             if (solver->conf.verbosity) {
-                cout << "c [pred] predictor hashes: ";
+                cout << solver->conf.prefix << "[pred] predictor hashes: ";
                 for(const auto& h: predictors->get_hashes()) {
                     cout << h << " ";
                 }
@@ -1002,7 +1002,7 @@ void ReduceDB::handle_predictors()
             }
 
             if (solver->conf.verbosity) {
-                cout << "c [pred] loaded predictors from: ";
+                cout << solver->conf.prefix << "[pred] loaded predictors from: ";
                 for(const auto& l: locations) {
                     cout << l << " ";
                 }
