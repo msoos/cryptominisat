@@ -214,7 +214,7 @@ class DLL_PUBLIC SolverConf
         int      doVarElim;          ///<Perform variable elimination
         uint32_t varelim_occ_cutoff; ///<CaDiCaL's elimocclim: cap on the *larger* polarity's occurrences, 0 = off
         uint64_t varelim_occ_prod_cutoff; ///<Cap on pos*neg, i.e. on the number of resolutions we would attempt
-        uint32_t varelim_max_cls_size; ///<Refuse a var occurring in a clause longer than this, 0 = off
+        uint32_t varelim_max_cls_size; ///<Refuse a var occurring in a clause longer than this, 0 = off (default)
         int      do_empty_varelim;
         int      do_full_varelim;
         int      do_xor_varelim;
