@@ -200,6 +200,12 @@ def print_version():
     print("Version values: %s" % consoleOutput.strip())
 
 
+ORACLE_OPTS = [
+    "oracle-vivif", "oracle-vivif-fast", "oracle-vivif-veryfast",
+    "oracle-vivif-sparsify", "oracle-vivif-sparsify-mustfinish",
+    "oracle-sparsify", "oracle-sparsify-fast"]
+
+
 class Tester:
 
     def __init__(self):
@@ -261,6 +267,14 @@ class Tester:
         if "autodisablegauss" in self.extra_opts_supported:
             sched.append("occ-xor")
 
+        # backbone and the oracle steps are the expensive ones, so they go in
+        # rarely instead of sitting in the pool where every slot could pick them
+        if not self.frat:
+            if random.randint(0, 9) == 0:
+                sched.insert(random.randint(0, len(sched)), "backbone")
+            if random.randint(0, 9) == 0:
+                sched.insert(random.randint(0, len(sched)), random.choice(ORACLE_OPTS))
+
         # oracle steps require backbone to have run first
         first_oracle = None
         for i, s in enumerate(sched):
@@ -284,13 +298,6 @@ class Tester:
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "distill-cls-onlyrem, must-distill-cls, must-distill-cls-onlyrem,"
         sched_opts += "distill-litrem, distill-bins, clean-cls,"
-
-        # oracle and backbone are incompatible with FRAT
-        if not self.frat:
-            sched_opts += "oracle-vivif, oracle-vivif-fast, oracle-vivif-veryfast,"
-            sched_opts += "oracle-vivif-sparsify, oracle-vivif-sparsify-mustfinish,"
-            sched_opts += "oracle-sparsify, oracle-sparsify-fast,"
-            sched_opts += "backbone,"
 
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
         sched_opts += "occ-bve-empty, occ-ternary-res,"

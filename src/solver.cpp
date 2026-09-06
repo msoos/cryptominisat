@@ -1793,8 +1793,11 @@ lbool Solver::execute_inprocess_strategy(
             if (nVars() > 10) { oracle_sparsify(true);
             }
         } else if (token == "backbone") {
-            bool backbone_found = false;
-            backbone_simpl(30LL*1000LL, true, backbone_found);
+            // cadiback's units/bins come from outside, we have no proof of them
+            if (!frat->enabled()) {
+                bool backbone_found = false;
+                backbone_simpl(30LL*1000LL, true, backbone_found);
+            }
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
