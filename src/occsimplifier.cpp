@@ -2349,7 +2349,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
 
         if (!token.empty())
-            print_simp_stats("BEFORE", token);
+            print_simp_stats_before(token);
 
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
@@ -2404,7 +2404,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             exit(-1);
         }
         if (!token.empty())
-            print_simp_stats("AFTER", token);
+            print_simp_stats_after(token);
 
         CHECK_N_OCCUR_DO(check_n_occur());
         SLOW_DEBUG_DO(check_cls_sanity());
@@ -3102,6 +3102,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
     frat_func_start();
 
     //Add back clauses to solver
+    print_simp_stats_before("occ-finishup");
     remove_all_longs_from_watches();
     if (solver->okay()) {
         assert(solver->prop_at_head());
@@ -3145,7 +3146,11 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
     if (solver->ok) check_elimed_vars_are_unassignedAndStats();
 
     //Let's just clean up ourselves a bit
+    //add_back_to_solver() leaves the same offsets in both OccSimplifier::clauses
+    //and solver->longIrredCls, so get_num_long_irred_cls() would double-count
+    //until we drop the former -- hence clearing before the AFTER line
     clauses.clear();
+    print_simp_stats_after("occ-finishup");
     frat_func_end();
 }
 

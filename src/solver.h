@@ -155,6 +155,11 @@ class Solver : public Searcher
         void     print_clause_stats() const;
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
+        // Nesting depth of currently-open [simp-stats] wrappers. Maintained by
+        // print_simp_stats_before/after. depth=0 lines are the top-level
+        // preprocessing steps; depth>=1 are nested children whose work is
+        // already counted by their parent.
+        uint32_t simp_stats_depth = 0;
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;

@@ -1740,7 +1740,7 @@ lbool Solver::execute_inprocess_strategy(
             verb_print(1, "--> Executing strategy token: " << token);
 
         if (token.substr(0,3) != "occ" && !token.empty())
-            print_simp_stats("BEFORE", token);
+            print_simp_stats_before(token);
 
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
@@ -1897,7 +1897,7 @@ lbool Solver::execute_inprocess_strategy(
         }
 
         if (token.substr(0,3) != "occ" && !token.empty())
-            print_simp_stats("AFTER", token);
+            print_simp_stats_after(token);
 
         SLOW_DEBUG_DO(check_stats());
         if (!okay()) return l_False;
