@@ -167,6 +167,9 @@ class Solver : public Searcher
         // preprocessing steps; depth>=1 are nested children whose work is
         // already counted by their parent.
         uint32_t simp_stats_depth = 0;
+        ///Long irred clause count that is right in both phases: during occur
+        ///simplification the clauses live in OccSimplifier, not in longIrredCls
+        size_t num_long_irred_cls_anywhere() const;
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;

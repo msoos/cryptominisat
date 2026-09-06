@@ -508,7 +508,11 @@ void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 
 void OccSimplifier::print_linkin_data(const LinkInData& link_in_data) const
 {
-    if (solver->conf.verbosity < 2) return;
+    //Clauses that did not fit the occur lists are invisible to everything the
+    //occ phase does -- BVE included, which then silently misses eliminations.
+    //Worth verb 1 whenever it actually happens; noise when it does not.
+    const bool anything_skipped = link_in_data.cl_not_linked > 0;
+    if (solver->conf.verbosity < (anything_skipped ? 1 : 2)) return;
 
     double val;
     if (link_in_data.cl_linked + link_in_data.cl_not_linked == 0) val = 0;
@@ -865,6 +869,8 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var, bool ignore_xor) const
 
     return true;
 }
+
+uint32_t OccSimplifier::num_long_irred_linked_in() const { return sum_irred_cls_longs(); }
 
 uint32_t OccSimplifier::sum_irred_cls_longs() const
 {

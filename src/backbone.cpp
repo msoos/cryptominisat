@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "ccnr_oracle_pre.h"
 #include "constants.h"
 #include "solver.h"
+#include "occsimplifier.h"
 #include "solvertypesmini.h"
 #include <cstdint>
 #include "cryptominisat.h"
@@ -200,6 +201,13 @@ end:
             << cpu_time() - my_time);
     print_simp_stats_after("backbone-simpl");
     return okay();
+}
+
+size_t Solver::num_long_irred_cls_anywhere() const
+{
+    size_t n = longIrredCls.size();
+    if (occsimplifier != nullptr) n += occsimplifier->num_long_irred_linked_in();
+    return n;
 }
 
 void Solver::detach_and_free_all_irred_cls()

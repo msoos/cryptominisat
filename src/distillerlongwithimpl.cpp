@@ -374,10 +374,10 @@ void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     } else {
         runStats.irredWatchBased += tmpStats;
     }
-    if (solver->conf.verbosity >= 2) {
-        if (solver->conf.verbosity >= 10) {
-            cout << "red:" << red << " alsostrenghten:" << also_strengthen << endl;
-        }
+    if (solver->conf.verbosity >= 10) {
+        cout << "red:" << red << " alsostrenghten:" << also_strengthen << endl;
+    }
+    if (solver->conf.verbosity >= 1) {
         watch_based_data.print(solver->conf.prefix.c_str());
         verb_print(1, "[distill-with-bin-ext]"
                 << solver->conf.print_times(time_used, time_out, time_remain));

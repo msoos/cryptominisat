@@ -264,6 +264,10 @@ public:
 
     const Stats& get_stats() const;
     const SubsumeStrengthen* get_sub_str() const;
+    ///Long irred clauses parked here while occur lists are linked in. Solver's
+    ///own longIrredCls is empty during that window, so any count of the formula
+    ///has to add this in or it reads 0 for the whole occ phase.
+    uint32_t num_long_irred_linked_in() const;
 
     //validity checking
     void check_elimed_vars_are_unassigned() const;
