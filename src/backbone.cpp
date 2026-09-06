@@ -77,12 +77,9 @@ static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) 
     }
 }
 
-// The same clause set in the local search solver's format. Kept apart from
-// build_cadiback_cnf() so the local search engine can be swapped out on its own.
 static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
     // A local search solver only sees the clauses we hand it. An XOR would be
-    // invisible to it, so its "model" could falsify one, and every candidate we
-    // then drop on the strength of that model would be dropped wrongly.
+    // invisible to it
     assert(s->xorclauses.empty());
     assert(s->gmatrices.empty());
 
