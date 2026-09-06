@@ -26,12 +26,8 @@ THE SOFTWARE.
 #include "occsimplifier.h"
 #include "solvertypesmini.h"
 #include <cstdint>
-#include "cryptominisat.h"
 #include "varreplacer.h"
 #include "cadiback.h"
-#ifdef __GLIBC__
-#include <malloc.h>
-#endif
 
 using namespace CMSat;
 
@@ -107,6 +103,107 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
     return cls;
 }
 
+// Vars that differ between local search models cannot be backbone, so cadiback
+// need not test them. ccnr's neighborhood is quadratic in clause size (one
+// 25k-literal clause is 2.4GB of it), so everything is freed before we return.
+static vector<int> ccnr_drop_cands(Solver* solver, uint64_t& num_cls) {
+    vector<vector<sspp::Lit>> cls = build_ccnr_cls(solver);
+    num_cls = cls.size();
+    vector<int8_t> assump_map(solver->nVars()+1, 2);
+    CCNROraclePre ccnr(solver);
+    ccnr.init(cls, solver->nVars(), &assump_map);
+    cls.clear(); // ccnr copied them
+    cls.shrink_to_fit();
+
+    vector<int> sols_found(solver->nVars()+1, -1);
+    uint32_t ccnr_sols_found = 0;
+    double ccnr_time = cpu_time();
+    for(uint32_t nsols = 0; nsols < 10; nsols++) {
+        ccnr.reinit();
+        bool ret = ccnr.run(solver->conf.backbone_ccnr_mems_limitM*1000LL*1000LL);
+        verb_print(3, "[backbone-ccnr] sol found: " << ret);
+        if (!ret) continue;
+        ccnr_sols_found++;
+        const auto& sol = ccnr.get_sol();
+        for(uint32_t v = 1; v <= solver->nVars(); v++) {
+            if (sols_found[v] == -1) {
+                sols_found[v] = sol[v];
+                continue;
+            }
+            if (sols_found[v] == sol[v]) continue;
+            sols_found[v] = 2;
+        }
+    }
+
+    vector<int> drop_cands; // off by one, as in cadiback (i.e. vars start with 1)
+    for(uint32_t i = 1; i <= solver->nVars(); i++) {
+        if (sols_found[i] == 2) drop_cands.push_back(i);
+    }
+    verb_print(1, "[backbone-simpl] ccnr sols: " << ccnr_sols_found << " drop_cands: " << drop_cands.size()
+            << " T: " << std::fixed << std::setprecision(2)
+            << cpu_time()-ccnr_time);
+    return drop_cands;
+}
+
+static bool add_backbone_units(Solver* solver, const vector<int>& learned_units) {
+    vector<Lit> tmp;
+    for(const auto& l: learned_units) {
+        if (l == 0) continue;
+        const Lit lit = Lit(abs(l)-1, l < 0);
+        if (solver->value(lit.var()) != l_Undef) continue;
+        if (solver->varData[lit.var()].removed != Removed::none) continue;
+        tmp.clear();
+        tmp.push_back(lit);
+        solver->add_clause_int(tmp);
+        if (!solver->okay()) return false;
+    }
+    return true;
+}
+
+static uint32_t add_backbone_eq_lits(Solver* solver, const vector<pair<int, int>>& eqLits) {
+    uint32_t num_eq_added = 0;
+    vector<Lit> tmp;
+    for(const auto& p: eqLits) {
+        const Lit lit1 = Lit(abs(p.first)-1, p.first < 0);
+        const Lit lit2 = Lit(abs(p.second)-1, p.second < 0);
+        tmp = {~lit1, lit2};
+        auto ret = solver->add_clause_int(tmp, true);
+        assert(ret == nullptr);
+        tmp = {lit1, ~lit2};
+        ret = solver->add_clause_int(tmp, true);
+        assert(ret == nullptr);
+        verb_print(4, "[backbone-simpl] added eq clause: " << lit1 << " = " << lit2);
+        num_eq_added++;
+    }
+    return num_eq_added;
+}
+
+// Stops early if a clause makes us UNSAT, so the caller must re-check okay().
+static uint32_t add_backbone_bins(Solver* solver, const vector<int>& learned_bins) {
+    uint32_t num_bins_added = 0;
+    vector<Lit> tmp;
+    bool ignore = false;
+    for(const auto& l: learned_bins) {
+        if (l == 0) {
+            if (!ignore) {
+                assert(tmp.size() == 2);
+                auto ret = solver->add_clause_int(tmp, true);
+                assert(ret == nullptr);
+                num_bins_added++;
+                if (!solver->okay()) return num_bins_added;
+            }
+            ignore = false;
+            tmp.clear();
+            continue;
+        }
+        const Lit lit = Lit(abs(l)-1, l < 0);
+        if (solver->varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
+        if (solver->value(lit.var()) != l_Undef) {ignore = true; continue;}
+        tmp.push_back(lit);
+    }
+    return num_bins_added;
+}
+
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
         bool& backbone_done)
 {
@@ -119,40 +216,8 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     uint64_t num_lits = 0;
     build_cadiback_cnf(this, cnf, num_lits);
 
-    CCNROraclePre ccnr(this);
-    vector<vector<sspp::Lit>> cls = build_ccnr_cls(this);
-    const uint64_t num_cls = cls.size();
-
-    vector<int8_t> assump_map(nVars()+1, 2);
-    ccnr.init(cls, nVars(), &assump_map);
-    vector<int> sols_found(nVars()+1, -1);
-    uint32_t ccnr_sols_found = 0;
-    double ccnr_time = cpu_time();
-    for(uint32_t nsols = 0; nsols < 10; nsols++) {
-        ccnr.reinit();
-        bool ret = ccnr.run(conf.backbone_ccnr_mems_limitM*1000LL*1000LL);
-        verb_print(3, "[backbone-ccnr] sol found: " << ret);
-        if (!ret) continue;
-        ccnr_sols_found++;
-        const auto& sol = ccnr.get_sol();
-        for(uint32_t v = 1; v <= nVars(); v++) {
-            if (sols_found[v] == -1) {
-                sols_found[v] = sol[v];
-                continue;
-            }
-            if (sols_found[v] == sol[v]) continue;
-            sols_found[v] = 2;
-        }
-    }
-    cls.clear();
-
-    vector<int> drop_cands; // off by one, as in cadiback (i.e. vars start with 1)
-    for(uint32_t i = 1; i <= nVars(); i++) {
-        if (sols_found[i] == 2) drop_cands.push_back(i);
-    }
-    verb_print(1, "[backbone-simpl] ccnr sols: " << ccnr_sols_found << " drop_cands: " << drop_cands.size()
-            << " T: " << std::fixed << std::setprecision(2)
-            << cpu_time()-ccnr_time);
+    uint64_t num_cls = 0;
+    vector<int> drop_cands = ccnr_drop_cands(this, num_cls);
 
     vector<int> learned_units;
     vector<int> learned_bins;
@@ -162,72 +227,19 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     bool backbone_limit_hit = false;
     int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits,
         orig_max_confl, &backbone_limit_hit);
-#ifdef __GLIBC__
-    // Hands back what doit() freed. NOTE: measured on 6s289rb05233 this recovers
-    // only ~20MB of a 3.2GB rise -- mallinfo2 says the rest is still *live* when
-    // doit() returns, i.e. cadiback leaks it, and 'delete solver' frees just 74MB.
-    malloc_trim(0);
-#endif
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
     uint32_t num_eq_added = 0;
     if (res == 10) {
-        vector<Lit> tmp;
-        for(const auto& l: learned_units) {
-            if (l == 0) continue;
-            const Lit lit = Lit(abs(l)-1, l < 0);
-            if (value(lit.var()) != l_Undef) continue;
-            if (varData[lit.var()].removed != Removed::none) continue;
-            tmp.clear();
-            tmp.push_back(lit);
-            add_clause_int(tmp);
-            if (!okay()) goto end;
+        if (add_backbone_units(this, learned_units)) {
+            num_eq_added = add_backbone_eq_lits(this, eqLits);
+            num_bins_added = add_backbone_bins(this, learned_bins);
+            if (okay() && !backbone_limit_hit) backbone_done = true;
         }
-
-        for(const auto& p: eqLits) {
-            int l1 = p.first;
-            int l2 = p.second;
-            const Lit lit1 = Lit(abs(l1)-1, l1 < 0);
-            const Lit lit2 = Lit(abs(l2)-1, l2 < 0);
-            tmp = {~lit1, lit2};
-            auto ret = add_clause_int(tmp, true);
-            assert(ret == nullptr);
-            tmp = {lit1, ~lit2};
-            ret = add_clause_int(tmp, true);
-            assert(ret == nullptr);
-            verb_print(4, "[backbone-simpl] added eq clause: " << lit1 << " = " << lit2);
-            num_eq_added++;
-        }
-
-        tmp.clear();
-        bool ignore = false;
-        for(const auto& l: learned_bins) {
-            if (l == 0) {
-                if (ignore) {
-                    ignore = false;
-                    tmp.clear();
-                    continue;
-                }
-                assert(tmp.size() == 2);
-                auto ret = add_clause_int(tmp, true);
-                assert(ret == nullptr);
-                num_bins_added++;
-                if (!okay()) goto end;
-                ignore = false;
-                tmp.clear();
-                continue;
-            }
-            const Lit lit = Lit(abs(l)-1, l < 0);
-            if (varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
-            if (value(lit.var()) != l_Undef) {ignore = true; continue;}
-            tmp.push_back(lit);
-        }
-        if (!backbone_limit_hit) backbone_done = true;
     } else if (res != 0) {
         // res == 20 means UNSAT, res == 0 means limit hit (not an error)
         ok = false;
     }
-end:
     verb_print(1, "[backbone-simpl] res: " << res
             <<  " num units added: " << trail_size() - num_units
             <<  " num eq added: " << num_eq_added
