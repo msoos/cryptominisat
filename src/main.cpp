@@ -826,6 +826,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.varelim_occ_prod_cutoff = fc_int(a);})
         .default_value(conf.varelim_occ_prod_cutoff)
         .help("Don't try to eliminate a variable whose pos*neg occurrence product is over this");
+    program.add_argument("--varelimclsmaxsz")
+        .action([&](const auto& a) {conf.varelim_max_cls_size = fc_int(a);})
+        .default_value(conf.varelim_max_cls_size)
+        .help("Don't try to eliminate a variable that occurs in a clause longer than this. 0 = no limit");
     program.add_argument("--varelimclslim")
         .action([&](const auto& a) {conf.velim_resolvent_too_large = fc_int(a);})
         .default_value(conf.velim_resolvent_too_large)

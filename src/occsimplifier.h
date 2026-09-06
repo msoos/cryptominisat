@@ -135,6 +135,7 @@ struct BVEWhyStats
     uint64_t entered = 0;
     uint64_t pure_lit = 0;
     uint64_t rej_occ_cutoff = 0;
+    uint64_t rej_cls_too_long = 0;
     uint64_t rej_too_many_res = 0;
     uint64_t rej_res_too_large = 0;
     uint64_t rej_timeout = 0;
@@ -165,6 +166,7 @@ struct BVEWhyStats
             << " (avg max/min occ " << std::fixed << std::setprecision(1)
             << safe_div(rej_occ_cutoff_max_sum, rej_occ_cutoff)
             << "/" << safe_div(rej_occ_cutoff_min_sum, rej_occ_cutoff) << ")"
+            << " cls-too-long " << rej_cls_too_long
             << " too-many-res " << rej_too_many_res
             << " (avg lim " << safe_div(rej_too_many_res_lim_sum, rej_too_many_res) << ")"
             << " res-too-large " << rej_res_too_large
@@ -485,6 +487,8 @@ private:
         Lit lit,
         const uint32_t limit);
     bool bve_abort_resolvent(const uint32_t limit);
+    bool bve_charge_resolution(const uint32_t pos_sz, const uint32_t neg_sz);
+    bool has_too_long_cl(const vec<Watched>& ws) const;
     ///per-variable BVE trace (verbosity>=4), filled by test_elim_and_fill_resolvents
     const char* bve_trace_reason = "?";
     const char* bve_trace_gate = "-";
@@ -580,6 +584,7 @@ private:
                                       const std::pair<int32_t, int32_t>& parents);
     vector<int32_t> varelim_hints_tmp;
     int32_t     watch_cl_id(const Watched& w) const;
+    uint32_t    watch_cl_size(const Watched& w) const;
     void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
 

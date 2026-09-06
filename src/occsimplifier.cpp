@@ -4123,7 +4123,12 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     //No conflict at decision level 0, let's propagate
     if (!conflicted && !can_remove_cl) {
         assert(found_it);
-        conflicted = !solver->propagate_occur<true>(limit_to_decrease);
+        //Own sub-budget: one clause must not be able to eat the whole round's
+        int64_t sub_limit = std::min<int64_t>(
+            *limit_to_decrease, solver->conf.occ_lit_rem_one_cl_limit);
+        const int64_t before = sub_limit;
+        conflicted = !solver->propagate_occur<true>(&sub_limit);
+        *limit_to_decrease -= before - sub_limit;
     }
     if (conflicted && solver->frat->enabled()) {
         //strict chain for the vivified clause: units, the original clause
@@ -4155,6 +4160,32 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
 
 int32_t OccSimplifier::watch_cl_id(const Watched& w) const {
     return w.isBin() ? w.get_id() : solver->cl_alloc.ptr(w.get_offset())->stats.id;
+}
+
+uint32_t OccSimplifier::watch_cl_size(const Watched& w) const {
+    return w.isBin() ? 2 : solver->cl_alloc.ptr(w.get_offset())->size();
+}
+
+bool OccSimplifier::has_too_long_cl(const vec<Watched>& ws) const {
+    const uint32_t lim = solver->conf.varelim_max_cls_size;
+    if (lim == 0) return false;
+    for(const auto& w: ws) {
+        if (!w.isClause()) continue;
+        if (solver->cl_alloc.ptr(w.get_offset())->size() > lim) return true;
+    }
+    return false;
+}
+
+//One resolution walks both antecedents in full, so charge that, not a constant.
+bool OccSimplifier::bve_charge_resolution(const uint32_t pos_sz, const uint32_t neg_sz)
+{
+    *limit_to_decrease -= (int64_t)pos_sz + (int64_t)neg_sz + 3;
+    if (*limit_to_decrease < -10LL*1000LL) {
+        bve_why.rej_timeout++;
+        bve_trace_reason = "t-out";
+        return true;
+    }
+    return false;
 }
 
 //Diagnostic split of BVE's early-abort: which of the three bounds tripped.
@@ -4203,7 +4234,9 @@ bool OccSimplifier::generate_resolvents_weakened(
         for (uint32_t i2 = 0; i2 < tmp_negs.size(); i2++, negs_at++) {
             negs_start = i2;
             while (tmp_negs[i2] != lit_Undef) i2++;
-            *limit_to_decrease -= 3;
+
+            //Before the 'continue's below: they skip the resolvent-count bound
+            if (bve_charge_resolution(i-poss_start, i2-negs_start)) return false;
 
             //Resolve the two weakened clauses
             dummy.clear();
@@ -4272,10 +4305,13 @@ bool OccSimplifier::generate_resolvents(
         #ifdef SLOW_DEBUG
         assert(!solver->redundant_or_removed(pos));
         #endif
+        const uint32_t pos_sz = watch_cl_size(pos);
 
         for (const auto& neg : tmp_negs) {
-            *limit_to_decrease -= 3;
             assert(!solver->redundant_or_removed(neg));
+
+            //Before the 'continue's below: they skip the resolvent-count bound
+            if (bve_charge_resolution(pos_sz, watch_cl_size(neg))) return false;
 
             //Resolve the two clauses
             if (resolve_clauses(pos, neg, lit)) continue;
@@ -4376,11 +4412,13 @@ void OccSimplifier::weaken(
     out.clear();
     uint32_t at = 0;
     for(const auto& c: in) {
+        uint32_t orig_sz;
         if (c.isBin()) {
             out.push_back(lit);
             out.push_back(c.lit2());
             seen[c.lit2().toInt()] = 1;
             toClear.push_back(c.lit2());
+            orig_sz = 2;
         } else if (c.isClause()) {
             const Clause* cl = solver->cl_alloc.ptr(c.get_offset());
             for(auto const& l: *cl) {
@@ -4390,8 +4428,13 @@ void OccSimplifier::weaken(
                 }
                 out.push_back(l);
             }
-        } else release_assert(false);
-        for(uint32_t i = at; i < out.size() && *limit_to_decrease > 0; i++) {
+            orig_sz = cl->size();
+        } else { release_assert(false); }
+
+        //Weakening only grows it, and it is already past the largest resolvent we keep
+        const bool too_long = solver->conf.velim_resolvent_too_large != -1
+            && (int)orig_sz > solver->conf.velim_resolvent_too_large;
+        for(uint32_t i = at; !too_long && i < out.size() && *limit_to_decrease > 0; i++) {
             const Lit l = out[i];
             if (l == lit) continue;
             *limit_to_decrease -= 50;
@@ -4535,6 +4578,14 @@ bool OccSimplifier::test_elim_and_fill_resolvents_inner(const uint32_t var)
         bve_why.rej_occ_cutoff_max_sum += std::max(pos, neg);
         bve_why.rej_occ_cutoff_min_sum += std::min(pos, neg);
         bve_trace_reason = "occ-lim";
+        return false;
+    }
+
+    //Resolving against these costs their full length and the resolvent is over
+    //velim_resolvent_too_large anyway
+    if (has_too_long_cl(poss) || has_too_long_cl(negs)) {
+        bve_why.rej_cls_too_long++;
+        bve_trace_reason = "cls-too-long";
         return false;
     }
 

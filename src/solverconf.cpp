@@ -195,6 +195,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doVarElim        (true)
         , varelim_occ_cutoff(0)
         , varelim_occ_prod_cutoff(10000)
+        , varelim_max_cls_size(1000)
         , do_empty_varelim (true)
         , do_full_varelim(true)
         , do_xor_varelim(true)
@@ -226,6 +227,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , subsumption_time_limit_ratio_sub_w_long(0.9)
         , strengthening_time_limitM(300)
         , occ_based_lit_rem_time_limitM(50)
+        , occ_lit_rem_one_cl_limit(100LL*1000LL)
 
 
         //Ternary resolution

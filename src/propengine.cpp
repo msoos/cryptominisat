@@ -881,6 +881,9 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
     bool ret = true;
 
     while (qhead < trail.size()) {
+        //Only safe above level 0, where the caller backtracks. At level 0 the
+        //trail must be fully propagated before we return.
+        if (decisionLevel() > 0 && *limit_to_decrease < 0) break;
         const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
@@ -889,7 +892,8 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
         *limit_to_decrease -= 1;
         for (const auto& w: ws) {
             if (w.isClause()) {
-                *limit_to_decrease -= 1;
+                //prop_long_cl_occur walks the whole clause, so charge its length
+                *limit_to_decrease -= (int64_t)cl_alloc.ptr(w.get_offset())->size();
                 if (!prop_long_cl_occur<inprocess>(w.get_offset())) ret = false;
             }
             if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w, p)) ret = false;
