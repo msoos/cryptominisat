@@ -183,7 +183,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 
 #define COLRED "\033[31m"
 #define COLGREEN "\033[32m"
-#define COLGREENLIGHT "\033[92m"
+#define COLPURPLELIGHT "\033[95m"
 //default
 #define COLDEF "\033[0m"
 
@@ -213,7 +213,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 // nesting depth. depth=0 is a top-level step; depth>=1 is nested inside
 // another wrapper (and its work is already counted by its parent).
 #define print_simp_stats_before(tok) do { \
-    print_simp_stats_emit(COLGREENLIGHT, "bef", tok); \
+    print_simp_stats_emit(COLPURPLELIGHT, "bef", tok); \
     solver->simp_stats_depth++; \
 } while (0)
 
