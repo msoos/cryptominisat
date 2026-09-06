@@ -181,6 +181,10 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define DEBUG_ATTACH_MORE_DO(x) do { } while (0)
 #endif
 
+#define COLRED "\033[31m"
+//default
+#define COLDEF "\033[0m"
+
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= (a)) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 

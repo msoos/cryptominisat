@@ -269,6 +269,14 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
 {
     if (!okay()) return okay();
     if (nVars() == 0) return okay();
+    // ccnr and cadiback are both only given the clauses, so they cannot see an
+    // XOR and would compute the backbone of a formula that is not ours
+    if (!xorclauses.empty() || !gmatrices.empty()) {
+        verb_print(0, COLRED << "WARNING: BACKBONE SKIPPED, THE SYSTEM CONTAINS XORS"
+                << " (" << xorclauses.size() << " xor clauses, "
+                << gmatrices.size() << " matrices)" << COLDEF);
+        return okay();
+    }
     double my_time = cpu_time();
     print_simp_stats_before("backbone-simpl");
 
