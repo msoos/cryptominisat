@@ -1270,7 +1270,7 @@ bool OccSimplifier::eliminate_vars()
             //that only become eliminable in the next wave. A run that stops
             //after few waves never unrolled the definition chain.
             bve_wave++;
-            verb_print(2, "[occ-bve-wave] " << bve_wave
+            verb_print(1, "[occ-bve-wave] " << bve_wave
                 << " tried " << (wenThrough - wave_last_through)
                 << " elimed " << (last_elimed - wave_last_elimed)
                 << " touched " << removed_cl_with_var.getTouchedList().size()
