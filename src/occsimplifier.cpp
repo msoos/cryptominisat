@@ -4403,8 +4403,7 @@ void OccSimplifier::clean_from_satisfied(vec<Watched>& in)
     in.shrink(i-j);
 }
 
-void OccSimplifier::weaken(
-    const Lit lit, const vec<Watched>& in, vector<Lit>& out)
+void OccSimplifier::weaken(const Lit lit, const vec<Watched>& in, vector<Lit>& out)
 {
     auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &weaken_time_limit;
