@@ -4430,9 +4430,6 @@ void OccSimplifier::weaken(const Lit lit, const vec<Watched>& in, vector<Lit>& o
             orig_sz = cl->size();
         } else { release_assert(false); }
 
-        //Weakening walks every literal's binary watches, so it is not worth it on
-        //a huge clause. Own limit: velim_resolvent_too_large is far smaller
-        //(Arjun sets 12) and using it here suppressed nearly all weakening.
         const bool too_long = solver->conf.weaken_max_cls_size != 0
             && orig_sz > solver->conf.weaken_max_cls_size;
         for(uint32_t i = at; !too_long && i < out.size() && *limit_to_decrease > 0; i++) {
