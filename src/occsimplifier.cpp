@@ -701,7 +701,7 @@ void OccSimplifier::eliminate_xor_vars()
 
     double my_time = cpu_time();
     const int64_t orig_xor_varelim_time_limit = xor_varelim_time_limit;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &xor_varelim_time_limit;
     uint32_t elimed = 0;
     vector<Lit> lits;
@@ -804,7 +804,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     uint32_t var_elimed = 0;
     double my_time = cpu_time();
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &empty_varelim_time_limit;
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
@@ -1011,7 +1011,7 @@ bool OccSimplifier::mark_and_push_to_added_long_cl_cls_containing(const Lit lit)
 
 bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
 {
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &varelim_sub_str_limit;
 
     //during the mark_and_push_to_added_long_cl_cls_containing() below, we mark the clauses
@@ -1060,7 +1060,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     double my_time = cpu_time();
     uint64_t removed = 0;
     uint64_t resolvents_checked = 0;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &resolvent_sub_time_limit;
     bool timed_out = false;
     for (uint32_t var = 0; var < solver->nVars() && !timed_out; var++) {
@@ -1152,7 +1152,7 @@ bool OccSimplifier::eliminate_vars()
     time_spent_on_calc_otf_update = 0;
     num_otf_update_until_now = 0;
     int64_t orig_norm_varelim_time_limit = norm_varelim_time_limit;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &norm_varelim_time_limit;
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
@@ -2093,7 +2093,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     gateFinder->cleanup();
     delete gateFinder;
     gateFinder = nullptr;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &gate_based_litrem_time_limit;
 
     // we can't have 2 definitions of the same gate with different RHS
@@ -2476,7 +2476,7 @@ bool OccSimplifier::ternary_res()
 
     double my_time = cpu_time();
     int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &ternary_res_time_limit;
     Sub1Ret sub1_ret;
 
@@ -2726,7 +2726,7 @@ void OccSimplifier::backward_sub()
 {
     auto backup = subsumption_time_limit;
     subsumption_time_limit = 0;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &subsumption_time_limit;
     assert(cl_to_free_later.empty());
 
@@ -2752,7 +2752,7 @@ bool OccSimplifier::backward_sub_str()
 
     auto backup = subsumption_time_limit;
     subsumption_time_limit = 0;
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &subsumption_time_limit;
 
     auto cleanup = [&]() {
@@ -4406,7 +4406,7 @@ void OccSimplifier::clean_from_satisfied(vec<Watched>& in)
 void OccSimplifier::weaken(
     const Lit lit, const vec<Watched>& in, vector<Lit>& out)
 {
-    int64_t* old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &weaken_time_limit;
 
     out.clear();
@@ -4920,7 +4920,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
     frat_func_start();
     assert(solver->decisionLevel() == 0);
 
-    int64_t* old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &occ_based_lit_rem_time_limit;
     removed = 0;
     for(int i = 0; i < 2; i++) {
@@ -4963,8 +4963,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
     assert(solver->prop_at_head());
 
     double my_time = cpu_time();
-    //TODO this is not being used, bogoprops is not checked here
-    auto old_limit_to_decrease = limit_to_decrease;
+    auto* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &occ_based_lit_rem_time_limit;
 
     //Order them for removal
