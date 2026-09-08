@@ -5480,6 +5480,13 @@ Clause* OccSimplifier::full_add_clause(
         , hints
     );
 
+    //the bin is already attached, so count it even if propagation below
+    //finds UNSAT -- n_occurs must match the watchlists at all times
+    if (!newCl && final_lits.size() == 2 && !red) {
+        n_occurs[final_lits[0].toInt()]++;
+        n_occurs[final_lits[1].toInt()]++;
+        added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clauseID});
+    }
     if (solver->okay()) {
         solver->ok = solver->propagate_occur<false>(limit_to_decrease);
     }
@@ -5487,13 +5494,7 @@ Clause* OccSimplifier::full_add_clause(
         return nullptr;
     }
 
-    if (!newCl) {
-        if (final_lits.size() == 2 && !red) {
-            n_occurs[final_lits[0].toInt()]++;
-            n_occurs[final_lits[1].toInt()]++;
-            added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clauseID});
-        }
-    } else {
+    if (newCl) {
         link_in_clause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
