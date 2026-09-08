@@ -234,7 +234,11 @@ void Sweeper::core_cb_chain(
         assert(id < env_cls.size());
         pc.sweep_id = id;
         pc.cms_id = env_cls[id].id;
-        for (size_t i = 0; i < sz; i++) pc.lits.push_back(Lit::toLit(lits[i]));
+        //full original literals, incl. ones falsified at collection time,
+        //so add_equiv_bin can justify the clause with unit hints
+        pc.lits = env_cls[id].lits;
+        (void)sz;
+        (void)lits;
     } else {
         assert(chsz);
         for (size_t i = 0; i < sz; i++) pc.lits.push_back(Lit::toLit(lits[i]));
@@ -549,8 +553,9 @@ bool Sweeper::add_equiv_bin(const ProofCl* pc, Lit a, Lit b)
     if (fr) {
         assert(pc != nullptr);
         for (const Lit pl : pc->lits) {
+            if (pl == a || pl == b) continue;
+            if (solver->value(pl) == l_True) return false;
             if (solver->value(pl) == l_Undef) continue;
-            assert(solver->value(pl) == l_False);
             assert(solver->unit_cl_IDs[pl.var()] != 0);
             tmp_hints.push_back(solver->unit_cl_IDs[pl.var()]);
         }
@@ -652,8 +657,8 @@ bool Sweeper::equivalence_candidates(Lit lit, Lit other)
         const ProofCl* pc0 = nullptr;
         const ProofCl* pc1 = nullptr;
         if (fr) {
-            assert(!core[0].empty() && core[0].back().learned);
-            assert(!core[1].empty() && core[1].back().learned);
+            assert(!core[0].empty());
+            assert(!core[1].empty());
             pc0 = &core[0].back();
             pc1 = &core[1].back();
         }
