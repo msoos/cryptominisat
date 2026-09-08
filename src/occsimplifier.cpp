@@ -46,6 +46,7 @@ THE SOFTWARE.
 #include "watched.h"
 #include "xorfinder.h"
 #include "gatefinder.h"
+#include "sweeper.h"
 #include "trim.h"
 extern "C" {
 #include "mpicosat/mpicosat.h"
@@ -79,6 +80,19 @@ OccSimplifier::~OccSimplifier()
 {
     delete sub_str;
     delete gateFinder;
+    delete sweeper;
+}
+
+bool OccSimplifier::sweep()
+{
+    limit_to_decrease = &sweep_time_limit;
+    if (!sweeper) sweeper = new Sweeper(this, solver);
+    if (!sweeper->sweep()) return false;
+    if (!clear_vars_from_cls_that_have_been_set()) return false;
+    if (!sub_str_with_added_long_and_bin(false)) return false;
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+    return solver->okay();
 }
 
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
@@ -2328,6 +2342,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             // nothing, ignore BVA
         } else if (token == "occ-resolv-subs") {
             subs_with_resolvent_clauses();
+        } else if (token == "occ-sweep") {
+            if (solver->conf.do_sweep) sweep();
         } else if (token.empty()) {
             //nothing, ignore empty token
         } else {
@@ -3107,6 +3123,8 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
     weaken_time_limit = 1000ULL*1000ULL*solver->conf.weaken_time_limitM
+        *solver->conf.global_timeout_multiplier;
+    sweep_time_limit = 1000LL*1000LL*solver->conf.sweep_time_limitM
         *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well

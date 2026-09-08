@@ -401,6 +401,17 @@ class DLL_PUBLIC SolverConf
         int oracle_removed_is_learnt; // clauses removed by Oracle should be learnt
         int oracle_find_bins;
 
+        // SAT sweeping with kitten (occ-sweep)
+        int do_sweep = 1;
+        double sweep_time_limitM = 150;
+        uint32_t sweep_vars = 256;
+        uint32_t sweep_max_vars = 8192;
+        uint32_t sweep_clauses = 1024;
+        uint32_t sweep_max_clauses = 300ULL*1000ULL;
+        uint32_t sweep_depth = 2;
+        uint32_t sweep_max_depth = 3;
+        uint32_t sweep_flip_rounds = 1;
+
         //Misc
         unsigned origSeed;
         int      conf_needed = true;

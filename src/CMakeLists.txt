@@ -136,6 +136,7 @@ set(cryptoms_lib_files
     mpicosat/mpicosat.c
     mpicosat/version.c
     kitten.c
+    sweeper.cpp
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )

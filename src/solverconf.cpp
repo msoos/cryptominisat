@@ -297,7 +297,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, occ-backw-sub,"
             "scc-vrepl,"
             "breakid, "
-            "occ-bve,occ-xor"
+            "occ-sweep, occ-bve,occ-xor,"
+            "must-scc-vrepl"
         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
@@ -306,8 +307,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,sub-impl,"
             "breakid,"
              //occurrence based
-            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
-            "occ-bva,occ-ternary-res,occ-xor,card-find,"
+            "occ-backw-sub-str,occ-clean-implicit,occ-sweep,occ-bve,"//occ-gates,"
+            "occ-bva,occ-ternary-res,occ-xor,"
+            //pick up the equivalences occ-sweep found
+            "must-scc-vrepl,card-find,"
             //consolidate after OCC
             "cl-consolidate,"
             //strengthen again

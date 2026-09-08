@@ -300,7 +300,7 @@ class Tester:
         sched_opts += "distill-litrem, distill-bins, clean-cls,"
 
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
-        sched_opts += "occ-bve-empty, occ-ternary-res,"
+        sched_opts += "occ-bve-empty, occ-ternary-res, occ-sweep,"
         sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
         sched_opts += "renumber, must-renumber, louvain-comms,"

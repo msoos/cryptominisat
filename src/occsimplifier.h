@@ -50,6 +50,7 @@ class SolutionExtender;
 class Solver;
 class SubsumeStrengthen;
 class GateFinder;
+class Sweeper;
 
 struct ElimedClauses {
     uint64_t start = 0;
@@ -323,7 +324,10 @@ public:
 
 private:
     friend class SubsumeStrengthen;
+    friend class Sweeper;
     SubsumeStrengthen* sub_str;
+    Sweeper* sweeper = nullptr;
+    bool sweep();
     void check_cls_sanity();
 
     bool startup = false;
@@ -373,6 +377,7 @@ private:
     int64_t  ternary_res_cls_limit;
     int64_t  occ_based_lit_rem_time_limit;
     int64_t  weaken_time_limit;
+    int64_t  sweep_time_limit;
     int64_t* limit_to_decrease;
 
     //Memory limits

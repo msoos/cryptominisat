@@ -1062,6 +1062,33 @@ void Main::add_supported_options() {
         .help("[0..] Effort spent looking for binary clauses during oracle vivification. 0 = off");
     ;
 
+    /* po::options_description sweep_opts("SAT sweeping options"); */
+    program.add_argument("--sweep")
+        .action([&](const auto& a) {conf.do_sweep = fc_int(a);})
+        .default_value(conf.do_sweep)
+        .help("Perform SAT sweeping with kitten (occ-sweep)");
+    program.add_argument("--sweeptimelimM")
+        .action([&](const auto& a) {conf.sweep_time_limitM = fc_double(a);})
+        .default_value(conf.sweep_time_limitM)
+        .help("Tick limit for one occ-sweep run, in millions");
+    program.add_argument("--sweepvars")
+        .action([&](const auto& a) {conf.sweep_vars = fc_int(a);})
+        .default_value(conf.sweep_vars)
+        .help("Starting number of variables in a sweeping environment");
+    program.add_argument("--sweepclauses")
+        .action([&](const auto& a) {conf.sweep_clauses = fc_int(a);})
+        .default_value(conf.sweep_clauses)
+        .help("Starting number of clauses in a sweeping environment");
+    program.add_argument("--sweepdepth")
+        .action([&](const auto& a) {conf.sweep_depth = fc_int(a);})
+        .default_value(conf.sweep_depth)
+        .help("Starting depth of a sweeping environment");
+    program.add_argument("--sweepfliprounds")
+        .action([&](const auto& a) {conf.sweep_flip_rounds = fc_int(a);})
+        .default_value(conf.sweep_flip_rounds)
+        .help("Rounds of model flipping during sweeping");
+    ;
+
     /* po::options_description mem_save_opts("Memory saving options"); */
     program.add_argument("--renumber")
         .action([&](const auto& a) {conf.doRenumberVars = fc_int(a);})
