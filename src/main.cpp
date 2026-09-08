@@ -845,7 +845,7 @@ void Main::add_supported_options() {
     program.add_argument("--varelimirregocclim")
         .action([&](const auto& a) {conf.varelim_irreg_gate_occ_cutoff = fc_int(a);})
         .default_value(conf.varelim_irreg_gate_occ_cutoff)
-        .help("Don't run picosat-based irregular gate finding if the variable has more occurrences than this");
+        .help("Don't run kitten-based irregular gate finding if the variable has more occurrences than this");
     program.add_argument("--varelimirregconfl")
         .action([&](const auto& a) {conf.varelim_irreg_gate_confl_limit = fc_int(a);})
         .default_value(conf.varelim_irreg_gate_confl_limit)
