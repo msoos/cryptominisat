@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "watched.h"
 #include "watcharray.h"
 struct PicoSAT;
+struct kitten;
 
 namespace CMSat {
 
@@ -88,8 +89,8 @@ struct BVEStats
     uint64_t irreg_gate_found = 0;
     uint64_t irreg_gate_tried = 0;
     uint64_t irreg_gate_entered = 0;
-    uint64_t picolits_added = 0;
-    uint64_t pico_conflicts = 0;
+    uint64_t kitlits_added = 0;
+    uint64_t kit_ticks = 0;
     uint64_t irreg_gate_units = 0;
     uint64_t irreg_gate_units_no_chain = 0;
     bool turned_off_irreg_gate = false;
@@ -201,7 +202,7 @@ public:
     vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
     void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
-    uint32_t add_cls_to_picosat_definable(const Lit wsLit);
+    uint32_t add_cls_to_kitten_definable(const Lit wsLit);
     struct DefinableStats {
         uint32_t ran = 0;
         uint32_t definable = 0;
@@ -209,11 +210,12 @@ public:
         uint32_t too_many_occ = 0;
         uint32_t no_cls_match = 0;
     };
-    lbool definable_by_picosat(uint32_t v, DefinableStats& st);
-    PicoSAT* picosat = nullptr;
-    int lit_to_picolit(const Lit l);
-    vector<int> var_to_picovar;
-    vector<uint32_t> picovars_used;
+    lbool definable_by_kitten(uint32_t v, DefinableStats& st);
+    kitten* kit = nullptr; ///< embedded sub-solver for gate/definition detection
+    //kitten trace/core traversal callbacks, public for the extern "C" trampolines
+    void gate_core_id_cb(unsigned id);
+    void gate_trace_cb(unsigned cid, unsigned id, bool learned, size_t sz,
+                       const unsigned* lits, size_t chsz, const unsigned* chain);
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
@@ -536,9 +538,19 @@ private:
         vec<Watched>& out_a,
         vec<Watched>& out_b
     );
-    void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
-    void pre_register_picosat_vars(const vec<Watched>& ws, const Lit elim_lit);
-    void register_lit_to_picovar(const Lit l);
+    void add_kitten_cls(const vec<Watched>& ws, const Lit elim_lit);
+    vector<Watched> kit_id_to_watch; ///< kitten clause id -> the CMS clause
+    vector<unsigned> kit_cl_tmp;
+    vector<uint8_t> kit_core_marks;
+    ///One clause of kitten's core trace, as handed to gate_trace_cb
+    struct KitTraceCl {
+        unsigned kid;           ///< kitten's internal clause id
+        bool learned;
+        uint32_t orig_id;       ///< original only: index into kit_id_to_watch
+        vector<Lit> lits;       ///< learned only
+        vector<unsigned> chain; ///< learned only, in derivation order
+    };
+    vector<KitTraceCl> kit_trace;
     bool resolve_gate;
     bool gate_gave_unit; ///< find_irreg_gate derived a unit instead of a gate
     bool find_irreg_gate(
@@ -547,19 +559,16 @@ private:
         watch_subarray_const b,
         vec<Watched>& out_a,
         vec<Watched>& out_b);
-    ///One step of picosat's resolution trace, replayed as a FRAT lemma. The
+    ///One step of kitten's resolution trace, replayed as a FRAT lemma. The
     ///last one is the derived unit itself and is added through add_clause_int,
     ///so it has no pre-allocated ID.
-    struct PicoLemma {
-        vector<Lit> lits;      ///< picosat clause plus the implied pivot
+    struct GateLemma {
+        vector<Lit> lits;      ///< kitten clause plus the implied pivot
         vector<int32_t> hints; ///< CMS clause IDs, in propagation order
         int32_t id = 0;
     };
-    vector<PicoLemma> pico_lemmas;
-    bool build_core_unit_chain(
-        Lit unit_lit,
-        const vector<uint32_t>& picovar_to_var,
-        const unordered_map<int, Watched>& core_map);
+    vector<GateLemma> gate_lemmas;
+    bool build_core_unit_chain(Lit unit_lit);
     bool find_equivalence_gate(
         Lit lit
         , watch_subarray_const a

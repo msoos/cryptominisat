@@ -49,7 +49,7 @@ THE SOFTWARE.
 #include "sweeper.h"
 #include "trim.h"
 extern "C" {
-#include "mpicosat/mpicosat.h"
+#include "kitten.h"
 }
 
 //#define VERBOSE_DEBUG
@@ -81,6 +81,7 @@ OccSimplifier::~OccSimplifier()
     delete sub_str;
     delete gateFinder;
     delete sweeper;
+    if (kit) kitten_release(kit);
 }
 
 bool OccSimplifier::sweep()
@@ -1155,9 +1156,6 @@ bool OccSimplifier::eliminate_vars()
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
-    assert(picovars_used.empty());
-    var_to_picovar.clear();
-    var_to_picovar.resize(solver->nVars(), 0);
 
     //Set-up
     double my_time = cpu_time();
@@ -1597,22 +1595,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     return or_gates;
 }
 
-void OccSimplifier::register_lit_to_picovar(const Lit l) {
-    auto f = var_to_picovar[l.var()];
-    if (f == 0) {
-        int v = picosat_inc_max_var(picosat);
-        var_to_picovar[l.var()] = v;
-        picovars_used.push_back(l.var());
-    }
-}
-
-int OccSimplifier::lit_to_picolit(const Lit l) {
-    bvestats.picolits_added++;
-    release_assert(var_to_picovar[l.var()] != 0 && "lit not pre-registered with picosat");
-    return var_to_picovar[l.var()] * (l.sign() ? -1 : 1);
-}
-
-uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
+uint32_t OccSimplifier::add_cls_to_kitten_definable(const Lit wsLit) {
     /* assert(seen[wsLit.var()] == 1); */
 
     uint32_t added = 0;
@@ -1630,20 +1613,20 @@ uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
             }
             if (only_sampl) {
                 added++;
+                kit_cl_tmp.clear();
                 for(const auto& l: cl) {
-                    if (l != wsLit) picosat_add(picosat, lit_to_picolit(l));
+                    if (l != wsLit) kit_cl_tmp.push_back(l.toInt());
                 }
-//                 cout << "Added cl: " << cl << endl;
-                picosat_add(picosat, 0);
+                bvestats.kitlits_added += kit_cl_tmp.size();
+                kitten_clause(kit, kit_cl_tmp.size(), kit_cl_tmp.data());
             }
         } else if (w.isBin()) {
             if (!w.red()) {
                 bool only_sampl = seen[w.lit2().var()];
                 if (only_sampl) {
                     added++;
-                    picosat_add(picosat, lit_to_picolit(w.lit2()));
-                    picosat_add(picosat, 0);
-    //                 cout << "Added cl: " << w.lit2() << " " << wsLit << endl;
+                    bvestats.kitlits_added++;
+                    kitten_unit(kit, w.lit2().toInt());
                 }
             }
         } else {
@@ -1711,9 +1694,9 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
     return solver->okay();
 }
 
-///UNSAT from picosat means no assignment of the `seen`-marked variables leaves
+///UNSAT from kitten means no assignment of the `seen`-marked variables leaves
 ///`v` free, i.e. `v` is definable by them. l_Undef when we didn't ask.
-lbool OccSimplifier::definable_by_picosat(const uint32_t v, DefinableStats& st)
+lbool OccSimplifier::definable_by_kitten(const uint32_t v, DefinableStats& st)
 {
     const Lit l = Lit(v, false);
     const uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
@@ -1726,27 +1709,23 @@ lbool OccSimplifier::definable_by_picosat(const uint32_t v, DefinableStats& st)
         return l_Undef;
     }
 
-    assert(picosat == nullptr);
-    assert(picovars_used.empty());
-    picosat = picosat_init();
-    pre_register_picosat_vars(solver->watches[l], l);
-    pre_register_picosat_vars(solver->watches[~l], ~l);
-    uint32_t added = add_cls_to_picosat_definable(l);
-    added += add_cls_to_picosat_definable(~l);
-    for(const auto x: picovars_used) var_to_picovar[x] = 0;
-    picovars_used.clear();
+    if (!kit) kit = kitten_init();
+    kitten_clear(kit);
+    uint32_t added = add_cls_to_kitten_definable(l);
+    added += add_cls_to_kitten_definable(~l);
 
     lbool ret = l_Undef;
     if (added == 0) {
         st.no_cls_match++;
     } else {
         st.ran++;
-        const int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
-        ret = (picoret == PICOSAT_UNSATISFIABLE) ? l_True : l_False;
+        kitten_set_ticks_limit(kit,
+            (uint64_t)solver->conf.picosat_confl_limit * 1000ULL);
+        const int kitret = kitten_solve(kit);
+        bvestats.kit_ticks += kitten_current_ticks(kit);
+        ret = (kitret == 20) ? l_True : l_False;
         if (ret == l_True) st.definable++;
     }
-    picosat_reset(picosat);
-    picosat = nullptr;
     return ret;
 }
 
@@ -1754,9 +1733,6 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(picovars_used.empty());
-    var_to_picovar.clear();
-    var_to_picovar.resize(solver->nVars(), 0);
 
     auto orig_trail_sz = solver->trail_size();
 
@@ -1764,7 +1740,6 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
     double backup = solver->conf.maxOccurRedMB;
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) return vars;
-    assert(picosat == nullptr);
 
     DefinableStats st;
     for(const auto& v: vars) seen[v] = 1;
@@ -1774,7 +1749,7 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
         assert(solver->varData[v].removed == Removed::none);
         if (seen[v] == 1) continue;
         //once definable, v joins the defining set for the variables after it
-        if (definable_by_picosat(v, st) == l_True) {
+        if (definable_by_kitten(v, st) == l_True) {
             seen[v] = 1;
             ret.push_back(v);
         }
@@ -1782,7 +1757,7 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
     for(const uint32_t v: ret) seen[v] = 0;
 
     verb_print(1, "[irreg-gate-extend]"
-               << " pico ran: " << st.ran << " definable: " << st.definable
+               << " kitten ran: " << st.ran << " definable: " << st.definable
                << " too-many-occ: " << st.too_many_occ);
 
     solver->conf.maxOccurRedMB = backup;
@@ -1795,9 +1770,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(picovars_used.empty());
-    var_to_picovar.clear();
-    var_to_picovar.resize(solver->nVars(), 0);
 
     vector<uint32_t> ret;
     auto origTrailSize = solver->trail_size();
@@ -1806,7 +1778,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     double backup = solver->conf.maxOccurRedMB;
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) return vars;
-    assert(picosat == nullptr);
 
     DefinableStats st;
     vector<uint32_t> vars2;
@@ -1827,13 +1798,13 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
         assert(solver->varData[v].removed == Removed::none);
         if (solver->value(v) != l_Undef) continue;
         //v is definable: drop it from the set the remaining ones may use
-        if (definable_by_picosat(v, st) == l_True) seen[v] = 0;
+        if (definable_by_kitten(v, st) == l_True) seen[v] = 0;
         else ret.push_back(v);
     }
     for(const uint32_t v: vars2) seen[v] = 0;
 
     verb_print(1, "[gate-definable] no-cls-match-filt: " << st.no_cls_match
-               << " pico ran: " << st.ran << " definable: " << st.definable
+               << " kitten ran: " << st.ran << " definable: " << st.definable
                << " 0-occ: " << st.no_occ << " too-many-occ: " << st.too_many_occ);
 
     solver->conf.maxOccurRedMB = backup;
@@ -3296,190 +3267,119 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t id
     newly_elimed_cls_IDs.push_back(id);
 }
 
-void OccSimplifier::pre_register_picosat_vars(
-    const vec<Watched>& ws, const Lit elim_lit)
+///Load one side's clauses into kitten with the pivot stripped. Kitten clause
+///ids index kit_id_to_watch, so cores map straight back to CMS clauses.
+void OccSimplifier::add_kitten_cls(const vec<Watched>& ws, const Lit elim_lit)
 {
     for(const auto& w: ws) {
+        kit_cl_tmp.clear();
         if (w.isClause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
             assert(!cl.get_removed());
             assert(!cl.red());
             for(const auto& l: cl) {
-                if (l.var() != elim_lit.var())
-                    register_lit_to_picovar(l);
+                if (l.var() != elim_lit.var()) kit_cl_tmp.push_back(l.toInt());
             }
-        } else if (w.isBin()) {
-            if (w.red()) continue;
-            register_lit_to_picovar(w.lit2());
-        }
-    }
-}
-
-void OccSimplifier::add_picosat_cls(
-    const vec<Watched>& ws, const Lit elim_lit,
-    unordered_map<int, Watched>& picosat_cl_to_cms_cl)
-{
-    picosat_cl_to_cms_cl.clear();
-    for(const auto& w: ws) {
-        if (w.isClause()) {
-            Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-            assert(!cl.get_removed());
-            assert(!cl.red());
-            for(const auto& l: cl) {
-                if (l.var() != elim_lit.var())
-                    picosat_add(picosat, lit_to_picolit(l));
-            }
-//          cout << "Added cl (except " << elim_lit.unsign() << "): " << cl << endl;
-            int pico_cl_id = picosat_add(picosat, 0);
-            picosat_cl_to_cms_cl[pico_cl_id] = w;
         } else if (w.isBin()) {
             assert(!w.red());
-            picosat_add(picosat, lit_to_picolit(w.lit2()));
-            int pico_cl_id = picosat_add(picosat, 0);
-            picosat_cl_to_cms_cl[pico_cl_id] = w;
-//          cout << "Added cl: " << w.lit2() << endl;
+            kit_cl_tmp.push_back(w.lit2().toInt());
         } else {
             assert(false);
+            continue;
         }
+        bvestats.kitlits_added += kit_cl_tmp.size();
+        kitten_clause_with_id_and_exception(
+            kit, kit_id_to_watch.size(), kit_cl_tmp.size(), kit_cl_tmp.data(),
+            std::numeric_limits<unsigned>::max());
+        kit_id_to_watch.push_back(w);
     }
 }
 
-namespace {
-///One entry of picosat's extended tracecheck trace: `idx lits... 0 antecedents... 0`
-struct PicoTraceCl {
-    int idx;
-    vector<int> lits;
-    vector<int> antes;
-};
-
-///Picosat sorts a chain's antecedents by index, but an LRAT-style hint list has
-///to be in propagation order. Assume the negation of `c` and propagate its
-///antecedents until one conflicts, recording the order they fired in. Antecedents
-///that end up satisfied are dropped. False if they don't conflict at all.
-bool order_pico_chain(
-    const PicoTraceCl& c,
-    const vector<PicoTraceCl>& tr,
-    const std::unordered_map<int, uint32_t>& idx_to_pos,
-    vector<int>& order)
+extern "C" {
+static void occ_gate_core_id_cb(void* state, unsigned id)
 {
-    std::unordered_map<int, int> val;
-    for(const int l: c.lits) val[std::abs(l)] = (l > 0) ? -1 : 1;
-    const auto value = [&](const int l) -> int {
-        const auto it = val.find(std::abs(l));
-        if (it == val.end()) return 0;
-        return (l > 0) ? it->second : -it->second;
-    };
+    ((CMSat::OccSimplifier*)state)->gate_core_id_cb(id);
+}
 
-    order.clear();
-    vector<char> used(c.antes.size(), 0);
-    for(;;) {
-        bool progress = false;
-        for(uint32_t i = 0; i < c.antes.size(); i++) {
-            if (used[i]) continue;
-            const auto f = idx_to_pos.find(c.antes[i]);
-            if (f == idx_to_pos.end()) return false;
+static void occ_gate_trace_cb(
+    void* state, unsigned cid, unsigned id, bool learned,
+    size_t sz, const unsigned* lits, size_t chsz, const unsigned* chain)
+{
+    ((CMSat::OccSimplifier*)state)->gate_trace_cb(cid, id, learned, sz, lits, chsz, chain);
+}
+}
 
-            uint32_t n_undef = 0;
-            int unit = 0;
-            bool sat = false;
-            for(const int l: tr[f->second].lits) {
-                const int v = value(l);
-                if (v == 1) { sat = true; break; }
-                if (v == 0) { n_undef++; unit = l; }
-            }
-            if (sat) { used[i] = 1; continue; }
-            if (n_undef > 1) continue;
+void OccSimplifier::gate_core_id_cb(unsigned id)
+{
+    assert(id < kit_core_marks.size());
+    kit_core_marks[id] = 1;
+}
 
-            used[i] = 1;
-            order.push_back(c.antes[i]);
-            if (n_undef == 0) return true;
-            val[std::abs(unit)] = (unit > 0) ? 1 : -1;
-            progress = true;
-        }
-        if (!progress) return false;
+void OccSimplifier::gate_trace_cb(
+    unsigned cid, unsigned id, bool learned,
+    size_t sz, const unsigned* lits, size_t chsz, const unsigned* chain)
+{
+    kit_trace.emplace_back();
+    KitTraceCl& c = kit_trace.back();
+    c.kid = cid;
+    c.learned = learned;
+    if (!learned) {
+        assert(!chsz);
+        c.orig_id = id;
+    } else {
+        for (size_t i = 0; i < sz; i++) c.lits.push_back(Lit::toLit(lits[i]));
+        //kitten hands the chain in reverse resolution order
+        for (const unsigned* p = chain + chsz; p != chain; p--)
+            c.chain.push_back(*(p-1));
     }
 }
-}
 
-///Picosat's core came from one polarity only, so `{C \ {unit_lit} : C in
+///Kitten's core came from one polarity only, so `{C \ {unit_lit} : C in
 ///occs(unit_lit)}` is UNSAT and `unit_lit` is implied -- CaDiCaL's
-///`definition_unit`. That unit is not RUP, so replay picosat's resolution trace
-///as FRAT lemmas: each learned core clause becomes the same clause plus
-///`unit_lit`, and the trace's empty clause becomes the unit. Fills pico_lemmas,
-///last entry being the unit. False if no propagation-ordered chain could be
-///built, in which case nothing has been emitted.
-bool OccSimplifier::build_core_unit_chain(
-    const Lit unit_lit,
-    const vector<uint32_t>& picovar_to_var,
-    const unordered_map<int, Watched>& core_map)
+///`definition_unit`. That unit is not RUP, so replay kitten's core trace as
+///FRAT lemmas: each learned core lemma becomes the same clause plus
+///`unit_lit`, and the trace's empty clause becomes the unit. Fills
+///gate_lemmas, last entry being the unit.
+bool OccSimplifier::build_core_unit_chain(const Lit unit_lit)
 {
-    pico_lemmas.clear();
-    pico_lemmas.resize(1);
-    pico_lemmas[0].lits.push_back(unit_lit);
-    if (!solver->frat->enabled()) return true;
-
-    TraceData td;
-    td.size = 0;
-    td.capacity = 1024;
-    td.data = (int*)malloc(td.capacity*sizeof(int));
-    picosat_write_extended_trace_data(picosat, &td);
-    const uint32_t n_orig = picosat_added_original_clauses(picosat);
-
-    vector<PicoTraceCl> tr;
-    std::unordered_map<int, uint32_t> idx_to_pos;
-    bool ok = true;
-    int p = 0;
-    while (p < td.size) {
-        tr.resize(tr.size()+1);
-        PicoTraceCl& c = tr.back();
-        c.idx = td.data[p++];
-        while (p < td.size && td.data[p] != 0) c.lits.push_back(td.data[p++]);
-        p++;
-        while (p < td.size && td.data[p] != 0) c.antes.push_back(td.data[p++]);
-        p++;
-        if (p > td.size) { ok = false; break; }
-        idx_to_pos[c.idx] = tr.size()-1;
+    gate_lemmas.clear();
+    if (!solver->frat->enabled()) {
+        gate_lemmas.resize(1);
+        gate_lemmas[0].lits.push_back(unit_lit);
+        return true;
     }
-    free(td.data);
-    //the refutation must end in the empty clause, which is what becomes the unit
-    if (!ok || tr.empty() || !tr.back().lits.empty()) return false;
 
-    pico_lemmas.clear();
-    std::unordered_map<int, int32_t> idx_to_id;
-    vector<int> order;
-    for(const auto& c: tr) {
-        if ((uint32_t)c.idx <= n_orig) {
+    kit_trace.clear();
+    kitten_trace_core(kit, this, occ_gate_trace_cb);
+    if (kit_trace.empty() || !kit_trace.back().learned
+        || !kit_trace.back().lits.empty()) return false;
+
+    std::unordered_map<unsigned, int32_t> kid_to_id;
+    for(const auto& c: kit_trace) {
+        if (!c.learned) {
             //an original clause: the CMS clause we exported, pivot included
-            const auto it = core_map.find(c.idx-1);
-            if (it == core_map.end()) return false;
-            idx_to_id[c.idx] = watch_cl_id(it->second);
+            assert(c.orig_id < kit_id_to_watch.size());
+            kid_to_id[c.kid] = watch_cl_id(kit_id_to_watch[c.orig_id]);
             continue;
         }
 
-        if (!order_pico_chain(c, tr, idx_to_pos, order)) return false;
-        pico_lemmas.resize(pico_lemmas.size()+1);
-        PicoLemma& lem = pico_lemmas.back();
-        for(const int pl: c.lits) {
-            const uint32_t pv = std::abs(pl);
-            //picosat may have variables of its own that map to nothing here
-            if (pv >= picovar_to_var.size() ||
-                picovar_to_var[pv] == var_Undef) return false;
-            lem.lits.push_back(Lit(picovar_to_var[pv], pl < 0));
-        }
+        gate_lemmas.resize(gate_lemmas.size()+1);
+        GateLemma& lem = gate_lemmas.back();
+        lem.lits = c.lits;
         lem.lits.push_back(unit_lit);
-        for(const int ai: order) {
-            const auto it = idx_to_id.find(ai);
-            if (it == idx_to_id.end()) return false;
+        for(const unsigned ki: c.chain) {
+            const auto it = kid_to_id.find(ki);
+            if (it == kid_to_id.end()) return false;
             lem.hints.push_back(it->second);
         }
         //the empty clause is the unit, add_clause_int gives it its ID
         if (!c.lits.empty()) {
             lem.id = ++solver->clauseID;
-            idx_to_id[c.idx] = lem.id;
+            kid_to_id[c.kid] = lem.id;
         }
     }
 
-    return !pico_lemmas.empty() && pico_lemmas.back().id == 0;
+    return !gate_lemmas.empty() && gate_lemmas.back().id == 0;
 }
 
 bool OccSimplifier::find_irreg_gate(
@@ -3492,10 +3392,10 @@ bool OccSimplifier::find_irreg_gate(
     bvestats.irreg_gate_entered++;
     // Too expensive
     if (bvestats.turned_off_irreg_gate ||
-            bvestats.picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
+            bvestats.kitlits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
         if (!bvestats.turned_off_irreg_gate) {
-            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection, added lits: "
-                << print_value_kilo_mega(bvestats.picolits_added, false));
+            verb_print(1, "[occ-bve] turning off kitten-based irreg gate detection, added lits: "
+                << print_value_kilo_mega(bvestats.kitlits_added, false));
         }
         bvestats.turned_off_irreg_gate = true;
         return false;
@@ -3503,8 +3403,8 @@ bool OccSimplifier::find_irreg_gate(
     bvestats.irreg_gate_tried++;
     if (bvestats.irreg_gate_tried % 2500 == 0)
         verb_print(1, "[occ-bve] irreg-gate-find"
-               << " lits: " << bvestats.picolits_added/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * 30.0
-               << " conflK: " << bvestats.pico_conflicts/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK);
+               << " lits: " << bvestats.kitlits_added/1000.0 << " / " << (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * 30.0
+               << " ticksM: " << bvestats.kit_ticks/1000000.0);
 
     if (a.size() + b.size() > solver->conf.varelim_irreg_gate_occ_cutoff) return false;
 
@@ -3512,41 +3412,30 @@ bool OccSimplifier::find_irreg_gate(
     out_a.clear();
     out_b.clear();
 
-    assert(picosat == nullptr);
-    picosat = picosat_init();
-    int ret = picosat_enable_trace_generation(picosat);
-    assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
+    if (!kit) kit = kitten_init();
+    kitten_clear(kit);
+    kitten_track_antecedents(kit);
+    kit_id_to_watch.clear();
+    add_kitten_cls(a, elim_lit);
+    const uint32_t a_cnt = kit_id_to_watch.size();
+    add_kitten_cls(b, elim_lit);
 
-    unordered_map<int, Watched> a_map;
-    unordered_map<int, Watched> b_map;
-    assert(picovars_used.empty());
-    pre_register_picosat_vars(a, elim_lit);
-    pre_register_picosat_vars(b, elim_lit);
-    add_picosat_cls(a, elim_lit, a_map);
-    add_picosat_cls(b, elim_lit, b_map);
-    vector<uint32_t> picovar_to_var(picovars_used.size()+1, var_Undef);
-    for(const auto v: picovars_used) {
-        picovar_to_var[var_to_picovar[v]] = v;
-        var_to_picovar[v] = 0;
-    }
-    picovars_used.clear();
-
-    ret = picosat_sat(picosat, solver->conf.varelim_irreg_gate_confl_limit);
-    if (ret == PICOSAT_UNSATISFIABLE) {
-        for(const auto& m: a_map) {
-            if (picosat_coreclause(picosat, m.first)) {
-                out_a.push(m.second);
-            }
-        }
-        for(const auto& m: b_map) {
-            if (picosat_coreclause(picosat, m.first)) {
-                out_b.push(m.second);
-            }
+    kitten_set_ticks_limit(kit,
+        (uint64_t)solver->conf.varelim_irreg_gate_confl_limit * 1000ULL);
+    const int ret = kitten_solve(kit);
+    bvestats.kit_ticks += kitten_current_ticks(kit);
+    if (ret == 20) {
+        kitten_compute_clausal_core(kit, nullptr);
+        kit_core_marks.assign(kit_id_to_watch.size(), 0);
+        kitten_traverse_core_ids(kit, this, occ_gate_core_id_cb);
+        for(uint32_t i = 0; i < kit_id_to_watch.size(); i++) {
+            if (!kit_core_marks[i]) continue;
+            if (i < a_cnt) out_a.push(kit_id_to_watch[i]);
+            else out_b.push(kit_id_to_watch[i]);
         }
         found = true;
         resolve_gate = true;
     }
-    bvestats.pico_conflicts += picosat_conflicts(picosat);
 
     //A core that only used one polarity means that polarity's clauses are UNSAT
     //once the pivot is stripped, i.e. the pivot is implied. That unit is worth
@@ -3558,13 +3447,9 @@ bool OccSimplifier::find_irreg_gate(
         else if (out_a.empty() && !out_b.empty()) unit = ~elim_lit;
     }
     if (unit != lit_Undef) {
-        have_chain = build_core_unit_chain(
-            unit, picovar_to_var, out_b.empty() ? a_map : b_map);
+        have_chain = build_core_unit_chain(unit);
         if (!have_chain) bvestats.irreg_gate_units_no_chain++;
     }
-
-    picosat_reset(picosat);
-    picosat = nullptr;
 
     if (have_chain) {
         bvestats.irreg_gate_units++;
@@ -3574,14 +3459,14 @@ bool OccSimplifier::find_irreg_gate(
         out_b.clear();
         verb_print(3, "[occ] irregular gate core is one-sided, unit: " << unit);
 
-        for(uint32_t i = 0; i+1 < pico_lemmas.size(); i++) {
-            const auto& lem = pico_lemmas[i];
+        for(uint32_t i = 0; i+1 < gate_lemmas.size(); i++) {
+            const auto& lem = gate_lemmas[i];
             *solver->frat << add << lem.id << lem.lits << fratchain << lem.hints << fin;
         }
-        PicoLemma& last = pico_lemmas.back();
+        GateLemma& last = gate_lemmas.back();
         add_varelim_resolvent(last.lits, ClauseStats(), last.hints);
-        for(uint32_t i = 0; i+1 < pico_lemmas.size(); i++) {
-            const auto& lem = pico_lemmas[i];
+        for(uint32_t i = 0; i+1 < gate_lemmas.size(); i++) {
+            const auto& lem = gate_lemmas[i];
             *solver->frat << del << lem.id << lem.lits << fin;
         }
         return false;
