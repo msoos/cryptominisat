@@ -135,6 +135,7 @@ set(cryptoms_lib_files
     matrixfinder.cpp
     mpicosat/mpicosat.c
     mpicosat/version.c
+    kitten.c
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
