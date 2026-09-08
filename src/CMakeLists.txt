@@ -141,6 +141,13 @@ set(cryptoms_lib_files
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
+# vendored yals does NULL+0 pointer arithmetic on empty stacks all over;
+# harmless in practice, so keep UBSAN quiet about it
+if(SANITIZE)
+    set_source_files_properties(yals/yals.c PROPERTIES
+        COMPILE_OPTIONS "-fno-sanitize=pointer-overflow")
+endif()
+
 if(GPU)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
