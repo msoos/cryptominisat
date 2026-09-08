@@ -8,6 +8,7 @@ echo "solvers dir: $SAT_DIR"
 rm -rf cm*
 rm -rf CM*
 rm -rf lib*
+rm -f *.a *.so*
 rm -rf cryptomini*
 rm -rf Testing*
 rm -rf tests*
