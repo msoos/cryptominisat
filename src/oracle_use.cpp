@@ -322,9 +322,8 @@ void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
     vector<sspp::Lit> tmp;
     std::ofstream fout(fname.c_str());
     fout << nVars() << endl;
-    for(uint32_t i = 0; i < cs.size(); i++) {
-        const auto& c = cs[i];
-        tmp.clear();
+    for(const auto & c : cs) {
+         tmp.clear();
         if (!c.binary) {
             Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) assert(l.var() < nVars());
