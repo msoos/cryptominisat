@@ -401,7 +401,7 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
                 }
             } }
         } else ww[0] = cl.size();
-        cs.push_back(OracleDat(ww, off));
+        cs.emplace_back(ww, off);
     }
 
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -416,7 +416,7 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
                     assert(edgew[v1][v2] >= 1);
                     if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
                 } else ww[0] = 2;
-                cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_id())));
+                cs.emplace_back(ww, OracleBin(l, ws.lit2(), ws.get_id()));
             }
         }
     }
@@ -597,7 +597,8 @@ bool Solver::oracle_sparsify(bool fast)
             if (ws[i].isBNN()) {
                 ws[j++] = ws[i];
                 continue;
-            } else if (ws[i].isBin()) {
+            }
+            if (ws[i].isBin()) {
                 if (!ws[i].bin_cl_marked()) {
                     ws[j++] = ws[i];
                     continue;
@@ -610,7 +611,8 @@ bool Solver::oracle_sparsify(bool fast)
                     ws[j++] = ws[i];
                 }
                 continue;
-            } else if (ws[i].isClause()) {
+            }
+            if (ws[i].isClause()) {
                 Clause* cl = cl_alloc.ptr(ws[i].get_offset());
                 if (conf.oracle_removed_is_learnt || !cl->stats.marked_clause) ws[j++] = ws[i];
                 continue;
