@@ -44,6 +44,7 @@ THE SOFTWARE.
 namespace CMSat {
     class SATSolver;
 }
+namespace sspp::oracle { class Oracle; }
 using std::vector;
 using std::pair;
 using std::string;
@@ -438,6 +439,11 @@ class Solver : public Searcher
         void dump_cls_oracle(const string fname, const vector<OracleDat>& cs);
         bool find_equivs();
         bool oracle_vivif(int fast, bool& finished);
+        lbool oracle_vivif_cls(sspp::oracle::Oracle& oracle, vector<vector<int>>& clauses,
+                const bool backbone_found, const int64_t tot_mems, const int64_t mems_per_call,
+                uint64_t& lits_rem);
+        lbool oracle_find_bins(sspp::oracle::Oracle& oracle, const vector<vector<int>>& clauses,
+                const int64_t tot_mems, uint32_t& bin_added, uint32_t& equiv_added);
         bool oracle_sparsify(bool fast = false);
         void print_cs_ordering(const vector<OracleDat>& cs) const;
         template<bool bin_only> bool probe_inter(const Lit l, uint32_t& min_props);

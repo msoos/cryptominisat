@@ -90,13 +90,121 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const {
     return clauses;
 }
 
-bool Solver::oracle_vivif(int fast, bool& backbone_found) {
-    using sspp::PosLit;
-    using sspp::NegLit;
-    using sspp::oracle::TriState;
+// Variable pairs that occur together in a clause -- the only pairs that can
+// possibly have a binary clause between them
+static vector<VarPair> get_cand_var_pairs(const vector<vector<int>>& clauses, const uint32_t nvars) {
+    vector<vector<uint32_t>> pg(nvars);
+    for (uint32_t v = 0; v < nvars; v++) pg[v].resize(nvars, 0);
+    for (const auto& cl : clauses) {
+        for (const auto& l1 : cl) { for (const auto& l2 : cl) {
+            const uint32_t v1 = orc_to_lit(l1).var();
+            const uint32_t v2 = orc_to_lit(l2).var();
+            if (v1 < v2) pg[v1][v2]++;
+        } }
+    }
 
+    vector<VarPair> varp;
+    for (uint32_t v1 = 0; v1 < nvars; v1++) {
+        for (uint32_t v2 = v1+1; v2 < nvars; v2++) {
+            if (pg[v1][v2] > 0) varp.push_back({v1, v2, pg[v1][v2]});
+        }
+    }
+
+    // Actually seems to slow it down. Strange. TODO
+    /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
+    /*         if (a.score == b.score) { */
+    /*             if (a.v1 == b.v1) return a.v2 < b.v2; */
+    /*             return a.v1 < b.v1; */
+    /*         } */
+    /*         return a.score > b.score;}); */
+    return varp;
+}
+
+// Vivifies (i.e. shortens) `clauses` in-place with the oracle.
+// l_False: UNSAT was derived, l_Undef: ran out of mems, l_True: all clauses done
+lbool Solver::oracle_vivif_cls(sspp::oracle::Oracle& oracle, vector<vector<int>>& clauses,
+        const bool backbone_found, const int64_t tot_mems, const int64_t mems_per_call,
+        uint64_t& lits_rem) {
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        // Backbone has been found, this will never be shorter
+        if (backbone_found && clauses[i].size() == 2) continue;
+
+        for (int j = 0; j < (int)clauses[i].size(); j++) {
+            if (oracle.getStats().mems > tot_mems) return l_Undef;
+            auto assump = negate(clauses[i]);
+            swapdel(assump, j);
+            const auto ret = oracle.Solve(assump, true, mems_per_call);
+            if (ret.isUnknown()) return l_Undef;
+            if (ret.isFalse()) {
+                sort(assump.begin(), assump.end());
+                auto clause = negate(assump);
+                oracle.AddClauseIfNeededAndStr(clause, true);
+                lits_rem += clauses[i].size()-clause.size();
+                clauses[i] = clause;
+                if (clause.empty()) { ok = false; return l_False; }
+                j = -1; //start from beginning
+            }
+        }
+    }
+    return l_True;
+}
+
+// Finds binary clauses -- and hence equivalent literals -- between variable pairs.
+// l_False: UNSAT was derived, l_Undef: ran out of mems, l_True: all pairs done
+lbool Solver::oracle_find_bins(sspp::oracle::Oracle& oracle, const vector<vector<int>>& clauses,
+        const int64_t tot_mems, uint32_t& bin_added, uint32_t& equiv_added) {
+    const double pg_start_time = cpu_time();
+    const auto varp = get_cand_var_pairs(clauses, nVars());
+    verb_print(1, "[oracle-bin] potential pairs: " << varp.size()
+            << " T: " << (cpu_time()-pg_start_time));
+    const auto mems_per_call = conf.global_timeout_multiplier*433LL*1000LL * conf.oracle_mult;
+
+    // Adds (a V b) if the oracle proves it. l_Undef means out of mems or UNSAT, check okay()
+    auto add_bin_if_implied = [&](const Lit a, const Lit b) -> lbool {
+        const auto ret = oracle.Solve({orclit(~a), orclit(~b)}, true, mems_per_call);
+        if (ret.isUnknown()) return l_Undef;
+        if (ret.isTrue()) return l_False;
+        Clause* cl = add_clause_int({a, b}, true);
+        assert(!cl);
+        if (!okay()) return l_Undef;
+        bin_added++;
+        oracle.AddClauseIfNeededAndStr({orclit(a), orclit(b)}, true);
+        return l_True;
+    };
+
+    for (const auto& vp: varp) {
+        if (varData[vp.v1].removed != Removed::none) continue;
+        if (varData[vp.v2].removed != Removed::none) continue;
+        if (value(vp.v1) != l_Undef) continue;
+        if (value(vp.v2) != l_Undef) continue;
+        if (oracle.getStats().mems > tot_mems) return l_Undef;
+
+        const Lit l1 = Lit(vp.v1, false);
+        const Lit l2 = Lit(vp.v2, false);
+
+        // v1 == -v2, i.e. both (-v1 V -v2) and (v1 V v2) hold
+        lbool ret = add_bin_if_implied(~l1, ~l2);
+        if (ret == l_Undef) return okay() ? l_Undef : l_False;
+        if (ret == l_True) {
+            ret = add_bin_if_implied(l1, l2);
+            if (ret == l_Undef) return okay() ? l_Undef : l_False;
+            if (ret == l_True) { equiv_added++; continue; }
+        }
+
+        // v1 == v2, i.e. both (v1 V -v2) and (-v1 V v2) hold
+        ret = add_bin_if_implied(l1, ~l2);
+        if (ret == l_Undef) return okay() ? l_Undef : l_False;
+        if (ret == l_False) continue;
+        ret = add_bin_if_implied(~l1, l2);
+        if (ret == l_Undef) return okay() ? l_Undef : l_False;
+        if (ret == l_True) equiv_added++;
+    }
+    return l_True;
+}
+
+bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     assert(!frat->enabled());
-    assert(solver->okay());
+    assert(okay());
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
@@ -111,161 +219,41 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     /* oracle.SetStrictMode(true); */
     oracle.SetVerbosity(2);
-
     const double build_time = cpu_time() - start_time;
-    const double start_vivif_time = cpu_time();
-    int64_t mems_for_vivif = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult/20.0;
-    int64_t mems_before_vivif = mems_for_vivif;
-    int64_t tot_vivif_mems = solver->conf.global_timeout_multiplier*633LL*1000LL*1000LL * solver->conf.oracle_mult;
-    if (fast > 0) tot_vivif_mems /= (3*fast);
-    int64_t mems_per_call =  solver->conf.global_timeout_multiplier*200LL*1000LL*1000LL * solver->conf.oracle_mult;
-    if (fast > 0) mems_per_call /= (3*fast);
-    bool early_aborted_vivif = true;
-    uint32_t bin_added = 0;
-    uint32_t equiv_added = 0;
-    uint64_t lits_rem = 0;
-    for (int i = 0; i < (int)clauses.size(); i++) {
-        if (backbone_found && clauses[i].size() == 2) {
-            // Backbone has been found, this will never be shorter
-            continue;
-        }
-        for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > tot_vivif_mems) goto end1;
-            /* if (oracle.getStats().mems > mems_before_vivif) { */
-            /*     oracle.Vivify(mems_for_vivif/10); */
-            /*     mems_before_vivif = oracle.getStats().mems + mems_for_vivif; */
-            /* } */
-            auto assump = negate(clauses[i]);
-            swapdel(assump, j);
-            auto ret = oracle.Solve(assump, true,mems_per_call);
-            if (ret.isUnknown()) goto end1;
-            if (ret.isFalse()) {
-                sort(assump.begin(), assump.end());
-                auto clause = negate(assump);
-                oracle.AddClauseIfNeededAndStr(clause, true);
-                lits_rem += clauses[i].size()-clause.size();
-                clauses[i] = clause;
-                j = -1; //start from beginning
-                if (clause.empty()) {
-                    ok = false;
-                    return false;
-                }
-            }
-        }
-    }
-    early_aborted_vivif = false;
-    backbone_found = true;
 
-    // Do equiv check
-    end1:
+    const double start_vivif_time = cpu_time();
+    int64_t tot_vivif_mems = conf.global_timeout_multiplier*633LL*1000LL*1000LL * conf.oracle_mult;
+    int64_t mems_per_call = conf.global_timeout_multiplier*200LL*1000LL*1000LL * conf.oracle_mult;
+    if (fast > 0) { tot_vivif_mems /= (3*fast); mems_per_call /= (3*fast); }
+    uint64_t lits_rem = 0;
+    const lbool vivif_ret = oracle_vivif_cls(oracle, clauses, backbone_found,
+            tot_vivif_mems, mems_per_call, lits_rem);
+    if (vivif_ret == l_False) return false;
+    const bool early_aborted_vivif = vivif_ret == l_Undef;
+    if (!early_aborted_vivif) backbone_found = true;
     const auto oracle_vivif_mems_used = oracle.getStats().mems;
     const double vivif_time = cpu_time() - start_vivif_time;
-    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*solver->conf.global_timeout_multiplier*9LL*1000LL*1000LL * solver->conf.oracle_mult;
-    bool early_aborted_bin = true;
+
+    const auto tot_bin_mems = (int64_t)conf.oracle_find_bins*conf.global_timeout_multiplier*9LL*1000LL*1000LL * conf.oracle_mult;
     oracle.reset_mems();
-    double start_bin_time = cpu_time();
+    const double start_bin_time = cpu_time();
+    uint32_t bin_added = 0;
+    uint32_t equiv_added = 0;
+    bool early_aborted_bin = false;
     if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
-        double pg_start_time = cpu_time();
-        vector<vector<uint32_t>> pg(nVars());
-        for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), 0);
-        for (const auto& clause : clauses) {
-            for (auto l1 : clause) {
-                for (auto l2 : clause) {
-                    uint32_t v1 = orc_to_lit(l1).var();
-                    uint32_t v2 = orc_to_lit(l2).var();
-                    if (v1 < v2) pg[v1][v2]++;
-                }
-            }
-        }
-        vector<VarPair> varp;
-        for (uint32_t v1 = 0; v1 < nVars(); v1++) {
-            for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
-                if (pg[v1][v2] > 0)
-                    varp.push_back({v1, v2, pg[v1][v2]});
-            }
-        }
-        pg.clear();
-        pg.shrink_to_fit();
-
-        // Actually seems to slow it down. Strange. TODO
-        /* std::sort(varp.begin(), varp.end(), [](const VarPair& a, const VarPair& b) { */
-        /*         if (a.score == b.score) { */
-        /*             if (a.v1 == b.v1) return a.v2 < b.v2; */
-        /*             return a.v1 < b.v1; */
-        /*         } */
-        /*         return a.score > b.score;}); */
-        /* for(const auto& vp: varp) { */
-        /*     cout << "vp.score: " << vp.score << " v1: " << vp.v1 << " v2: " << vp.v2 << endl; */
-        /* } */
-        verb_print(1, "[oracle-bin] potential pairs: " << varp.size()
-                << " T: " << (cpu_time()-pg_start_time));
-
-        auto mem_per_call = solver->conf.global_timeout_multiplier*433LL*1000LL * solver->conf.oracle_mult;
-        for (const auto& vp: varp) {
-            if (varData[vp.v1].removed != Removed::none) continue;
-            if (varData[vp.v2].removed != Removed::none) continue;
-            if (value(vp.v1) != l_Undef) continue;
-            if (value(vp.v2) != l_Undef) continue;
-            if (oracle.getStats().mems > tot_bin_mems) goto end2;
-
-            TriState ret;
-            Clause* cl;
-            const Lit l1 = Lit(vp.v1, false);
-            const Lit l2 = Lit(vp.v2, false);
-            ret = oracle.Solve({orclit(l1), orclit(l2)}, true, mem_per_call);
-            if (ret.isUnknown()) goto end2;
-            if (ret.isTrue()) goto next;
-            cl = add_clause_int({~l1, ~l2}, true);
-            assert(!cl);
-            if (!okay()) return false;
-            bin_added++;
-            oracle.AddClauseIfNeededAndStr({orclit(~l1), orclit(~l2)}, true);
-
-            ret = oracle.Solve({orclit(~l1), orclit(~l2)}, true, mem_per_call);
-            if (ret.isUnknown()) goto end2;
-            if (ret.isTrue()) goto next;
-            assert(ret.isFalse());
-            cl = add_clause_int({l1, l2}, true);
-            assert(!cl);
-            if (!okay()) return false;
-            bin_added++;
-            equiv_added++;
-            oracle.AddClauseIfNeededAndStr({orclit(l1), orclit(l2)}, true);
-            continue;
-
-            next:
-            ret = oracle.Solve({orclit(~l1), orclit(l2)}, true, mem_per_call);
-            if (ret.isUnknown()) goto end2;
-            if (ret.isTrue()) continue;
-            cl = add_clause_int({l1, ~l2}, true);
-            assert(!cl);
-            if (!okay()) return false;
-            bin_added++;
-            oracle.AddClauseIfNeededAndStr({orclit(l1), orclit(~l2)}, true);
-
-            ret = oracle.Solve({orclit(l1), orclit(~l2)}, true, mem_per_call);
-            if (ret.isUnknown()) goto end2;
-            if (ret.isTrue()) continue;
-            cl = add_clause_int({~l1, l2}, true);
-            assert(!cl);
-            if (!okay()) return false;
-            bin_added++;
-            equiv_added++;
-            oracle.AddClauseIfNeededAndStr({orclit(~l1), orclit(l2)}, true);
-        }
+        const lbool bin_ret = oracle_find_bins(oracle, clauses, tot_bin_mems, bin_added, equiv_added);
+        if (bin_ret == l_False) return false;
+        early_aborted_bin = bin_ret == l_Undef;
     }
-    early_aborted_bin = false;
-
-    end2:
     const double bin_time = cpu_time() - start_bin_time;
-    const double start_finish_time = cpu_time();
     const auto oracle_bin_mems_used = oracle.getStats().mems;
 
+    const double start_finish_time = cpu_time();
     vector<Lit> tmp2;
     for(const auto& cl: clauses) {
         tmp2.clear();
         for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
-        Clause* cl2 = solver->add_clause_int(tmp2);
+        Clause* cl2 = add_clause_int(tmp2);
         if (cl2) longIrredCls.push_back(cl_alloc.get_offset(cl2));
         if (!okay()) return false;
     }
@@ -274,7 +262,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         tmp2.clear();
         for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
         if (cl.size() == 1) {
-            Clause* cl2 = solver->add_clause_int(tmp2);
+            Clause* cl2 = add_clause_int(tmp2);
             assert(!cl2);
             if (!okay()) return false;
         } else if (conf.oracle_get_learnts) {
@@ -282,14 +270,13 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             s.which_red_array = 0;
             s.id = ++clauseID;
             s.glue = cl.size();
-            Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
+            Clause* cl2 = add_clause_int(tmp2, true, &s);
             if (cl2) longRedCls[0].push_back(cl_alloc.get_offset(cl2));
             if (!okay()) return false;
         }
     }
     execute_inprocess_strategy(false, "must-scc-vrepl");
     if (!okay()) return okay();
-
     const double finish_time = cpu_time() - start_finish_time;
 
     // The T-s below are disjoint: build+vivif+bin+finish == total
@@ -314,7 +301,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             << std::setprecision(2)
             << " finishT: " << finish_time
             << " total T: " << (cpu_time() - start_time));
-    return solver->okay();
+    return okay();
 }
 
 void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
