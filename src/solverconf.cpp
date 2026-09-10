@@ -209,7 +209,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_score_sum(1)
         , varelim_planner(0)
         , varelim_canon_ties(0)
-        , varelim_plan_work(30LL*1000LL*1000LL)
         , var_linkin_limit_MB(1000)
         , varelim_gate_find_limit(800)
         , picosat_gate_limitK(70)

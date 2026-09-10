@@ -161,7 +161,6 @@ namespace CMSat {
         void set_varelim_sched_only_touched(int val);
         void set_varelim_planner(int val);
         void set_varelim_canon_ties(int val);
-        void set_varelim_plan_work(int64_t val);
         void set_backbone_ccnr_mems_limitM(int64_t val);
         void set_ccnr_neighbor_max_cl_size(uint32_t val);
         void reset_vsids();

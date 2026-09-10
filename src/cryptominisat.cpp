@@ -1678,6 +1678,11 @@ DLL_PUBLIC void SATSolver::set_varelim_sched_only_touched(int val)
 
 DLL_PUBLIC void SATSolver::set_varelim_planner(int val)
 {
+    if (val != 0 && val != 1) {
+        const char err[] = "ERROR: set_varelim_planner() only accepts 0 or 1";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
+    }
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.varelim_planner = val;
@@ -1689,14 +1694,6 @@ DLL_PUBLIC void SATSolver::set_varelim_canon_ties(int val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.varelim_canon_ties = val;
-    }
-}
-
-DLL_PUBLIC void SATSolver::set_varelim_plan_work(int64_t val)
-{
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.varelim_plan_work = val;
     }
 }
 

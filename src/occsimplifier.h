@@ -439,12 +439,7 @@ private:
     /// doubles once a full pass at the current bound finished.
     uint32_t grow = 0;
     vector<int64_t> varElimComplexity;
-    struct VarElimInfo { uint32_t pos = 0, neg = 0; uint64_t sum_pos = 0, sum_neg = 0; uint32_t degree = 0, fill = 0; uint64_t hash = 0; };
-    VarElimInfo calc_var_elim_info(uint32_t var, int heuristic);
-    int effective_planner() const;
-    void plan_bve_order();
-    int planner_choice = 0;
-    vector<uint32_t> nb_stamp, nb_stamp2, nb_list;
+    vector<uint32_t> nb_stamp, nb_list;
     uint32_t nb_stamp_cur = 0;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {

@@ -98,7 +98,6 @@ set(cryptoms_lib_files
     varreplacer.cpp
     clausecleaner.cpp
     occsimplifier.cpp
-    bve_plan.cpp
     gatefinder.cpp
     subsumestrengthen.cpp
     clauseallocator.cpp
