@@ -1676,6 +1676,30 @@ DLL_PUBLIC void SATSolver::set_varelim_sched_only_touched(int val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_varelim_planner(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varelim_planner = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_varelim_canon_ties(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varelim_canon_ties = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_varelim_plan_work(int64_t val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varelim_plan_work = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_backbone_ccnr_mems_limitM(int64_t val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {

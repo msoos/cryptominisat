@@ -226,6 +226,9 @@ class DLL_PUBLIC SolverConf
         int velim_resolvent_too_large; //-1 == no limit
         int varelim_score_prod; ///<CaDiCaL's elimprod, weight of pos*neg in the elim score
         int varelim_score_sum;  ///<CaDiCaL's elimsum, weight of pos+neg in the elim score
+        int varelim_planner; ///<BVE ordering: 0 prod score, 1 literal growth, 2 no-growth tiers, 3 min-degree, 4 min-fill, 5 pick by simulation
+        int varelim_canon_ties; ///<Break score ties by a neighbourhood hash instead of the variable index
+        int64_t varelim_plan_work; ///<Literal-operation budget per simulated planner run
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;

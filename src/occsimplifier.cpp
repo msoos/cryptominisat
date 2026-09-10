@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "constants.h"
 #include "time_mem.h"
+#include "bve_plan.h"
 #include <cassert>
 #include <iomanip>
 #include <cmath>
@@ -5359,10 +5360,126 @@ int64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
 
     const int64_t pos = n_occurs[lit.toInt()];
     const int64_t neg = n_occurs[(~lit).toInt()];
-    if (pos == 0) return -neg;
-    if (neg == 0) return -pos;
-    return (int64_t)solver->conf.varelim_score_prod * pos * neg
-        + (int64_t)solver->conf.varelim_score_sum * (pos + neg);
+    const int h = effective_planner();
+    if (h == 0 && !solver->conf.varelim_canon_ties) {
+        if (pos == 0) return -neg;
+        if (neg == 0) return -pos;
+        return (int64_t)solver->conf.varelim_score_prod * pos * neg
+            + (int64_t)solver->conf.varelim_score_sum * (pos + neg);
+    }
+    const VarElimInfo vi = calc_var_elim_info(var, h);
+    const int64_t primary = BvePlanSim::score_of(h, vi.pos, vi.neg, vi.sum_pos, vi.sum_neg, vi.degree, vi.fill,
+        solver->conf.varelim_score_prod, solver->conf.varelim_score_sum);
+    return primary * (1LL << 22) + (solver->conf.varelim_canon_ties ? (int64_t)(vi.hash & ((1ULL << 22) - 1)) : 0);
+}
+
+int OccSimplifier::effective_planner() const {
+    return solver->conf.varelim_planner == 5 ? planner_choice : solver->conf.varelim_planner;
+}
+
+OccSimplifier::VarElimInfo OccSimplifier::calc_var_elim_info(uint32_t var, int h) {
+    VarElimInfo vi;
+    if (nb_stamp.size() < solver->nVars()) { nb_stamp.assign(solver->nVars(), 0); nb_stamp2.assign(solver->nVars(), 0); }
+    nb_stamp_cur++;
+    nb_list.clear();
+    for (int sgn = 0; sgn < 2; sgn++) {
+        const Lit l(var, sgn);
+        for (const auto& ws : solver->watches[l]) {
+            if (solver->redundant(ws)) continue;
+            uint32_t sz;
+            const bool want_nb = h >= 3 || solver->conf.varelim_canon_ties;
+            if (ws.isBin()) {
+                sz = 2;
+                if (want_nb && nb_stamp[ws.lit2().var()] != nb_stamp_cur) { nb_stamp[ws.lit2().var()] = nb_stamp_cur; nb_list.push_back(ws.lit2().var()); }
+            } else {
+                const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
+                if (cl->get_removed()) continue;
+                sz = cl->size();
+                *limit_to_decrease -= sz;
+                if (want_nb) for (const Lit x : *cl) {
+                    if (x.var() == var || nb_stamp[x.var()] == nb_stamp_cur) continue;
+                    nb_stamp[x.var()] = nb_stamp_cur;
+                    nb_list.push_back(x.var());
+                }
+            }
+            if (sgn) { vi.neg++; vi.sum_neg += sz; } else { vi.pos++; vi.sum_pos += sz; }
+        }
+    }
+    vi.degree = nb_list.size();
+    if (h == 4) {
+        if (nb_list.size() > 32) vi.fill = nb_list.size() * nb_list.size();
+        else {
+            const uint32_t nb_mark = nb_stamp_cur;
+            uint64_t missing = 0;
+            for (const uint32_t u : nb_list) {
+                nb_stamp_cur++;
+                uint32_t adj = 0;
+                for (int sgn = 0; sgn < 2; sgn++) {
+                    const Lit l(u, sgn);
+                    if (solver->watches[l].size() > 400) { adj = nb_list.size(); break; }
+                    for (const auto& ws : solver->watches[l]) {
+                        if (solver->redundant(ws)) continue;
+                        auto visit = [&](uint32_t w) {
+                            if (w == u || w == var || nb_stamp[w] != nb_mark || nb_stamp2[w] == nb_stamp_cur) return;
+                            nb_stamp2[w] = nb_stamp_cur;
+                            adj++;
+                        };
+                        if (ws.isBin()) visit(ws.lit2().var());
+                        else {
+                            const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
+                            if (cl->get_removed()) continue;
+                            *limit_to_decrease -= cl->size();
+                            for (const Lit x : *cl) visit(x.var());
+                        }
+                    }
+                }
+                missing += nb_list.size() - 1 - std::min<uint32_t>(adj, nb_list.size() - 1);
+            }
+            vi.fill = missing / 2;
+        }
+    }
+    vi.hash = 0x9e3779b97f4a7c15ULL * (vi.pos + 1) + 0xff51afd7ed558ccdULL * (vi.neg + 1) + vi.sum_pos * 31 + vi.sum_neg * 131;
+    if (solver->conf.varelim_canon_ties)
+        for (const uint32_t u : nb_list) {
+            const uint64_t a = n_occurs[Lit(u, false).toInt()], b = n_occurs[Lit(u, true).toInt()];
+            vi.hash += (a * 0x9e3779b97f4a7c15ULL) ^ (b * 0xc2b2ae3d27d4eb4fULL) ^ ((a + b) << 17);
+        }
+    return vi;
+}
+
+void OccSimplifier::plan_bve_order() {
+    const double t0 = cpu_time();
+    vector<vector<Lit>> cls;
+    for (ClOffset offs : clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->freed() || cl->get_removed() || cl->red()) continue;
+        cls.emplace_back(cl->begin(), cl->end());
+    }
+    for (uint32_t i = 0; i < solver->nVars() * 2; i++) {
+        const Lit l = Lit::toLit(i);
+        for (const auto& ws : solver->watches[l]) {
+            if (!ws.isBin() || ws.red() || l > ws.lit2()) continue;
+            cls.push_back({l, ws.lit2()});
+        }
+    }
+    vector<char> can(solver->nVars(), 0);
+    uint32_t elig = 0;
+    for (uint32_t v = 0; v < solver->nVars(); v++) { can[v] = can_eliminate_var(v); elig += can[v]; }
+    const uint32_t max_grow = std::max<int>(0, solver->conf.min_bva_gain);
+    int best = 0;
+    double best_obj = 1e300;
+    for (int h = 0; h <= 4; h++) {
+        BvePlanSim sim(solver->nVars(), cls, can, max_grow, solver->conf.velim_resolvent_too_large,
+                       solver->conf.varelim_plan_work, solver->conf.varelim_score_prod, solver->conf.varelim_score_sum);
+        const BvePlanResult r = sim.run(h, solver->conf.varelim_canon_ties);
+        const double obj = (double)r.cls + 8.0 * (double)(elig - r.elimed);
+        verb_print(1, "[bve-plan] h=" << h << " elig " << elig << " tried " << r.tried << " elimed " << r.elimed
+            << " cls " << r.cls << " lits " << r.lits << (r.complete ? "" : " (budget out)")
+            << " obj " << std::fixed << std::setprecision(0) << obj << " T: " << std::setprecision(2) << r.time);
+        if (obj < best_obj) { best_obj = obj; best = h; }
+    }
+    planner_choice = best;
+    verb_print(1, "[bve-plan] chosen h=" << best << " (input cls " << cls.size() << ") T: " << std::fixed << std::setprecision(2) << (cpu_time() - t0));
 }
 
 // CaDiCaL's increase_elimination_bound(): doubling ramp, and every active
@@ -5378,6 +5495,7 @@ void OccSimplifier::increase_elim_bound()
 
 void OccSimplifier::order_vars_for_elim()
 {
+    if (solver->conf.varelim_planner == 5) plan_bve_order();
     velim_order.clear();
     varElimComplexity.clear();
     varElimComplexity.resize(solver->nVars(), 0);
