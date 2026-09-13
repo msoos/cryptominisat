@@ -332,6 +332,8 @@ private:
     bool execute_simplifier_strategy(const string& strategy);
     bool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed,
                         const vector<int32_t>* hints = nullptr);
+    ClOffset relocate_clause(ClOffset old_off);
+    vector<Lit> reloc_lits;
     vector<int32_t> occ_vivif_hints; ///< FRAT chain of the last occ vivification
 
     //Ternary resolution

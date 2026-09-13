@@ -866,6 +866,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.varelim_check_resolvent_subs = fc_int(a);})
         .default_value(conf.varelim_check_resolvent_subs)
         .help("BVE should check whether resolvents subsume others and check for exact size increase");
+    program.add_argument("--occrelocatelim")
+        .action([&](const auto& a) {conf.occ_relocate_lim = fc_int(a);})
+        .default_value(conf.occ_relocate_lim)
+        .help("When strengthening removes a literal whose occurrence list is longer than this, move the clause to a new place instead of searching the list");
 
     /* po::options_description xorOptions("XOR-related options"); */
     program.add_argument("--xor")

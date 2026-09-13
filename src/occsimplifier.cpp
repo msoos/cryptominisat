@@ -5627,11 +5627,46 @@ bool OccSimplifier::remove_literal(
         solver->mark_elim_cand(toRemoveLit);
     }
 
-    removeWCl(solver->watches[toRemoveLit], offset);
-    if (cl.red()) solver->litStats.redLits--;
+    //removeWCl is O(occ): leave the entry to the lazy removed-clause cleanup
+    if (only_set_is_removed && cl.size() == 2) {
+        solver->watches.smudge(toRemoveLit);
+    } else if (only_set_is_removed && !cl.red()
+            && solver->watches[toRemoveLit].size() > solver->conf.occ_relocate_lim) {
+        offset = relocate_clause(offset);
+        solver->watches.smudge(toRemoveLit);
+    } else {
+        removeWCl(solver->watches[toRemoveLit], offset);
+    }
+    if (solver->cl_alloc.ptr(offset)->red()) solver->litStats.redLits--;
     else solver->litStats.irredLits--;
 
     return clean_clause(offset, only_set_is_removed);
+}
+
+//Moves the arena: don't hold Clause pointers across this
+ClOffset OccSimplifier::relocate_clause(const ClOffset old_off)
+{
+    const Clause* old = solver->cl_alloc.ptr(old_off);
+    assert(!old->red() && !old->get_removed());
+    reloc_lits.assign(old->begin(), old->end());
+    Clause* cl = solver->cl_alloc.Clause_new(reloc_lits, 0, old->stats.id);
+    old = solver->cl_alloc.ptr(old_off);
+    memcpy((void*)cl, (void*)old, sizeof(Clause));
+    const ClOffset off = solver->cl_alloc.get_offset(cl);
+
+    for (const Lit l: *cl) {
+        solver->watches.smudge(l);
+        solver->watches[l].push(Watched(off, cl->abst));
+    }
+    clauses.push_back(off);
+    if (cl->stats.marked_clause) added_long_cl.push_back(off);
+
+    Clause* o = solver->cl_alloc.ptr(old_off);
+    o->stats.marked_clause = 0;
+    o->stats.is_tracked = 0;
+    o->set_removed();
+    cl_to_free_later.push_back(old_off);
+    return off;
 }
 
 void OccSimplifier::check_clauses_lits_ordered() const

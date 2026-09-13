@@ -473,6 +473,7 @@ class Tester:
         cmd += "--verballrestarts %d " % random.choice([0, 0, 1])
         cmd += "--restartprint %d " % random.choice([1, 100, 8192])
         cmd += "--printtimes %d " % random.choice([0, 1])
+        cmd += "--occrelocatelim %d " % random.choice([0, 2, 10, 1000, 1000*1000*1000])
 
         if self.only_sampling:
             cmd += "--sampling "

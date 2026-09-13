@@ -230,6 +230,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , occ_based_lit_rem_time_limitM(50)
         , occ_lit_rem_one_cl_limit(100LL*1000LL)
         , weaken_max_cls_size(0)
+        , occ_relocate_lim(1000)
 
 
         //Ternary resolution

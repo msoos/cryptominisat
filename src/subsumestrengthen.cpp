@@ -129,27 +129,31 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
 {
     subs.clear();
     subsLits.clear();
-    Clause& cl = *solver->cl_alloc.ptr(offset);
-    assert(!cl.get_removed());
-    assert(!cl.freed());
+    {
+        const Clause& cl = *solver->cl_alloc.ptr(offset);
+        assert(!cl.get_removed());
+        assert(!cl.freed());
 
-    if (solver->conf.verbosity >= 6)
-        cout << "backw_sub_str_with_long-ing with clause:" << cl
-            << " offset: " << offset << endl;
+        if (solver->conf.verbosity >= 6)
+            cout << "backw_sub_str_with_long-ing with clause:" << cl
+                << " offset: " << offset << endl;
 
-    find_subsumed_and_strengthened(
-        offset
-        , cl
-        , cl.abst
-        , subs
-        , subsLits
-    );
+        find_subsumed_and_strengthened(
+            offset
+            , cl
+            , cl.abst
+            , subs
+            , subsLits
+        );
+    }
 
     for (size_t j = 0
         ; j < subs.size() && solver->okay() && *simplifier->limit_to_decrease > -20LL*1000LL*1000LL
         ; j++
     ) {
         assert(subs[j].ws.isClause());
+        //remove_literal() may move the arena
+        Clause& cl = *solver->cl_alloc.ptr(offset);
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume

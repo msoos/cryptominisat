@@ -249,6 +249,7 @@ class DLL_PUBLIC SolverConf
         long long occ_based_lit_rem_time_limitM;
         long long occ_lit_rem_one_cl_limit; ///<Per-clause cap on the occur-propagation of one lit-removal try
         uint32_t weaken_max_cls_size; ///<Do not weaken a clause longer than this, 0 = no limit
+        uint32_t occ_relocate_lim;
 
         //Ternary resolution
         bool doTernary;
