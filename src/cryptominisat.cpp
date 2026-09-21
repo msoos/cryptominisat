@@ -1092,7 +1092,7 @@ DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
     ss << prefix << "      by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
     ss << prefix << "Using Oracle code from 'Integrating Tree Decompositions [...]'" << endl;
     ss << prefix << "      by Tuukka Korhonen and Matti Jarvisalo, CP 2021" << endl;
-    ss << prefix << "Using xnfSAT by @Vtec234 from 'XOR Local Search for";
+    ss << prefix << "Using xnfSAT by @Vtec234 from 'XOR Local Search for" << endl;
     ss << prefix << "      Boolean Brent Equations' by W. Nawrocki, et al, SAT 2021" << endl;
     ss << prefix << "Using code extensively lifted via LLMs from CaDiCaL, originally by Armin Biere et al.";
     return ss.str();
