@@ -415,6 +415,9 @@ class Tester:
         cmd += "--fullwatchconseveryn %d " % random.choice([100, 4000000])
         cmd += "--transred %d " % random.choice([0, 1])
         cmd += "--intreemaxm %d " % random.choice([0, 1, 400])
+        cmd += "--intreeeff %s " % random.choice([0, 0.01, 0.3, 5])
+        cmd += "--fullprobe %d " % random.choice([0, 1, 1])
+        cmd += "--fullprobemaxm %d " % random.choice([0, 1, 20])
         cmd += "--cardfind %d " % random.choice([0, 0, 1])
 
         # SLS details
@@ -428,6 +431,7 @@ class Tester:
 
         # distill details
         cmd += "--distillbin %d " % random.choice([0, 1])
+        cmd += "--distillbineff %s " % random.choice([0, 0.02, 1])
         cmd += "--distillmaxm %d " % random.choice([0, 1, 200])
         cmd += "--distillincconf %s " % random.choice([0, 0.1, 10])
         cmd += "--distillminconf %d " % random.choice([1, 10000])

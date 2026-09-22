@@ -654,6 +654,14 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.doIntreeProbe = fc_int(a);})
         .default_value(conf.doIntreeProbe)
         .help("Carry out intree-based probing");
+    program.add_argument("--fullprobe")
+        .action([&](const auto& a) {conf.do_full_probe = fc_int(a);})
+        .default_value(conf.do_full_probe)
+        .help("Regularly probe both polarities of variables during search");
+    program.add_argument("--fullprobemaxm")
+        .action([&](const auto& a) {conf.full_probe_time_limitM = fc_ll(a);})
+        .default_value(conf.full_probe_time_limitM)
+        .help("Time in mega-bogoprops to perform full probing");
     program.add_argument("--intreemaxm")
         .action([&](const auto& a) {conf.intree_time_limitM = fc_ll(a);})
         .default_value(conf.intree_time_limitM)

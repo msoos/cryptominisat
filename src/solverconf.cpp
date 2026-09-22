@@ -261,7 +261,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_every_n(7)
 
         //Probing
-        , do_full_probe    (true)
+        , do_full_probe    (false)
         , doIntreeProbe    (true)
         , doTransRed       (true)
         , full_probe_time_limitM(20ULL)
