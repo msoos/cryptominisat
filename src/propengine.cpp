@@ -753,9 +753,8 @@ PropBy PropEngine::propagate_any_order()
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        if (inprocess) {
-            propStats.bogoProps += ws.size()/4 + 1;
-        }
+        //Also in search: effort budgets of inprocessing are relative to it
+        propStats.bogoProps += ws.size()/4 + 1;
         propStats.propagations++;
         simpDB_props--;
         for (; i != end; i++) {

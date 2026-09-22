@@ -284,6 +284,7 @@ class DLL_PUBLIC SolverConf
         int      doTransRed;   ///<carry out transitive reduction
         unsigned long long   full_probe_time_limitM;
         unsigned long long   intree_time_limitM;
+        double intree_effort = 0.3; //fraction of all bogoprops since last call
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
 
@@ -346,6 +347,7 @@ class DLL_PUBLIC SolverConf
         //Distillation
         int      do_distill_clauses;
         int      do_distill_bin_clauses;
+        double distill_bin_effort = 0.02; //fraction of all bogoprops since last call
         unsigned long long distill_long_cls_time_limitM;
         long watch_based_str_time_limitM;
         double distill_increase_conf_ratio;

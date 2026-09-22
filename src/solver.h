@@ -230,6 +230,12 @@ class Solver : public Searcher
 
         SearchStats sumSearchStats;
         PropStats sumPropStats;
+        uint64_t outside_search_props = 0;
+        //Monotonic, deterministic measure of all propagation work so far
+        uint64_t all_bogoprops() const {
+            return sumPropStats.bogoProps + sumPropStats.otfHyperTime
+                + propStats.bogoProps + propStats.otfHyperTime + outside_search_props;
+        }
 
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);

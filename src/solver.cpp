@@ -1643,6 +1643,8 @@ lbool Solver::iterate_until_solved() {
             status = l_False;
             goto end;
         }
+        //Searcher::solve() clears propStats, don't lose inprocessing's props
+        outside_search_props += propStats.bogoProps + propStats.otfHyperTime;
         status = solve(num_confl);
 
         //Check for effectiveness

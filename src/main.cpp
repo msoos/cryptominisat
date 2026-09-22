@@ -658,6 +658,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.intree_time_limitM = fc_ll(a);})
         .default_value(conf.intree_time_limitM)
         .help("Time in mega-bogoprops to perform intree probing");
+    program.add_argument("--intreeeff")
+        .action([&](const auto& a) {conf.intree_effort = fc_double(a);})
+        .default_value(conf.intree_effort)
+        .help("Intree probing budget as a fraction of all propagations since its last call");
     program.add_argument("--otfhyper")
         .action([&](const auto& a) {conf.do_hyperbin_and_transred = fc_int(a);})
         .default_value(conf.do_hyperbin_and_transred)
@@ -1009,6 +1013,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_distill_bin_clauses = fc_int(a);})
         .default_value(conf.do_distill_bin_clauses)
         .help("Regularly execute binary clause distillation");
+    program.add_argument("--distillbineff")
+        .action([&](const auto& a) {conf.distill_bin_effort = fc_double(a);})
+        .default_value(conf.distill_bin_effort)
+        .help("Binary clause distillation budget as a fraction of all propagations since its last call");
     program.add_argument("--distillmaxm")
         .action([&](const auto& a) {conf.distill_long_cls_time_limitM = fc_ll(a);})
         .default_value(conf.distill_long_cls_time_limitM)

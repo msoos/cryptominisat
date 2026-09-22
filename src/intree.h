@@ -95,6 +95,8 @@ private:
     vector<char> depth_failed;
     int64_t bogoprops_to_use;
     int64_t start_bogoprops;
+    uint64_t last_all_props = 0;
+    int64_t used_props() const;
 
     size_t hyperbin_added;
     size_t removedIrredBin;

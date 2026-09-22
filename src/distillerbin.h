@@ -68,18 +68,29 @@ class DistillerBin {
 
         const Stats& get_stats() const;
         double mem_used() const;
+        double sched_backoff() const { return backoff; }
 
     private:
 
-        bool try_distill_bin(
-            Lit lit1,
-            Lit lit2,
-            const Watched& w
-        );
+        struct Cand {
+            Lit lit2;
+            int32_t ID;
+        };
+
+        bool try_distill_bin(Lit lit1, Lit lit2, const int32_t ID);
         bool distill_bin_cls_all(double time_mult);
         bool go_through_bins(const Lit lit);
+        bool out_of_budget();
+        void set_cands_marked(const Lit lit1, const bool mark);
+        void remove_bin(const Lit lit1, const Lit lit2, const int32_t ID);
         Solver* solver;
         vec<Watched> tmp;
+        vector<Cand> cands;
+        vector<Cand> to_rem;
+        vector<Cand> fallback;
+        vector<char> done;
+        uint64_t last_all_props = 0;
+        double backoff = 1.0;
 
         //For distill
         vector<Lit> lits;

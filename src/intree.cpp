@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "watchalgos.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <cmath>
 #include <cassert>
 
@@ -51,6 +52,14 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
 
     aborted = false;
     uint64_t bogoprops = 0;
+    //Can't replace vars inside GJ matrices, but the tree needs an acyclic
+    //implication graph: skip this round if there are equivalences
+    if (!solver->gmatrices.empty()) {
+        if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+        aborted = solver->varReplacer->has_equivalences(&bogoprops);
+        frat_func_end();
+        return true;
+    }
     uint32_t last_replace = numeric_limits<uint32_t>::max();
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
@@ -121,6 +130,9 @@ bool InTree::intree_probe() {
     assert(solver->okay());
     queue.clear();
     reset_reason_stack.clear();
+    //TODO: without the depth trick is_ancestor_of() walks ancestor chains to
+    //the root and dominates intree time. Effort budget caps it; a real fix
+    //needs an O(1) ancestor query on the (dynamically re-parented) tree.
     solver->use_depth_trick = false;
     solver->perform_transitive_reduction = true;
     hyperbin_added = 0;
@@ -139,7 +151,7 @@ bool InTree::intree_probe() {
     if (aborted) {
         if (solver->conf.verbosity) {
             cout
-            << "c [intree] too expensive or depth exceeded during SCC: aborting"
+            << "c [intree] SCC too expensive, depth exceeded or equivalences under GJ: aborting"
             << endl;
         }
         solver->use_depth_trick = true;
@@ -151,7 +163,9 @@ bool InTree::intree_probe() {
     bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
-    start_bogoprops = solver->propStats.bogoProps;
+    const int64_t rel = solver->conf.intree_effort*(double)(solver->all_bogoprops() - last_all_props);
+    bogoprops_to_use = std::min<int64_t>(bogoprops_to_use, std::max<int64_t>(rel, 5LL*1000LL*1000LL));
+    start_bogoprops = used_props();
 
     fill_roots();
     std::shuffle(roots.begin(), roots.end(), solver->mtrand);
@@ -170,9 +184,9 @@ bool InTree::intree_probe() {
     if (solver->frat->enabled()) solver->flush_ghost_hyper_bins();
 
     const double time_used = cpu_time() - my_time;
-    const double time_remain = float_div(
-        (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
-    const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
+    const int64_t used = used_props() - start_bogoprops;
+    const double time_remain = float_div(bogoprops_to_use - used, bogoprops_to_use);
+    const bool time_out = used > bogoprops_to_use;
 
     verb_print(1,
         "[intree] Set "
@@ -181,6 +195,8 @@ bool InTree::intree_probe() {
         << " hyper-added: " << hyperbin_added
         << " trans-irred: " << removedIrredBin
         << " trans-red: " << removedRedBin
+        << " budget(M): " << std::setprecision(2) << (double)bogoprops_to_use/1e6
+        << " used(M): " << (double)used/1e6
         << solver->conf.print_times(time_used,  time_out, time_remain));
 
     if (solver->sqlStats) {
@@ -190,7 +206,13 @@ bool InTree::intree_probe() {
     frat_func_end();
     solver->use_depth_trick = true;
     solver->perform_transitive_reduction = true;
+    last_all_props = solver->all_bogoprops();
     return solver->okay();
+}
+
+int64_t InTree::used_props() const
+{
+    return solver->propStats.bogoProps + solver->propStats.otfHyperTime;
 }
 
 void InTree::unmark_all_bins()
@@ -209,16 +231,11 @@ void InTree::tree_look()
     assert(failed.empty());
     depth_failed.clear();
     depth_failed.push_back(false);
-    solver->propStats.clear();
 
     bool timeout = false;
     while(!queue.empty())
     {
-        if (start_bogoprops + bogoprops_to_use <
-            (int64_t)solver->propStats.bogoProps
-            + (int64_t)solver->propStats.otfHyperTime
-            || timeout
-        ) {
+        if (start_bogoprops + bogoprops_to_use < used_props() || timeout) {
             break;
         }
 

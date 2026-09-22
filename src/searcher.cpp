@@ -2829,11 +2829,12 @@ bool Searcher::intree_if_needed()
 {
     assert(okay());
     assert(decisionLevel() == 0);
-    if (!xorclauses.empty() || !gmatrices.empty()) return okay();
-
     bool ret = okay();
 
     if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
+    //Without hyper-bin, intree falls back to propagate<true>(), which runs GJ
+    //at every tree level: too expensive, and clashes with its reason re-parenting
+    if (!conf.do_hyperbin_and_transred && !gmatrices.empty()) return ret;
     if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
         sumConflicts > next_intree
     ) {
@@ -2876,7 +2877,8 @@ bool Searcher::distill_bins_if_needed() {
     {
         TimeScope ts(solver->time_tally, "distill-bins");
         ret = solver->distill_bin_cls->distill();
-        next_bins_distill = sumConflicts + 20000.0*conf.global_next_multiplier;
+        next_bins_distill = sumConflicts + 20000.0*conf.global_next_multiplier
+            *solver->distill_bin_cls->sched_backoff();
     }
     return ret;
 }
