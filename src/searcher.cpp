@@ -2838,6 +2838,7 @@ bool Searcher::intree_if_needed()
         sumConflicts > next_intree
     ) {
 
+        TimeScope ts(solver->time_tally, "intree-probe");
         auto repl = solver->varReplacer->get_num_replaced_vars();
         if (ret) ret &= solver->intree->intree_probe();
         if (ret) {
@@ -2857,6 +2858,7 @@ bool Searcher::str_impl_with_impl_if_needed()
     bool ret = okay();
 
     if (conf.doStrSubImplicit && sumConflicts > next_str_impl_with_impl) {
+        TimeScope ts(solver->time_tally, "str-impl");
         ret &= solver->dist_impl_with_impl->str_impl_w_impl();
         if (ret) solver->subsumeImplicit->subsume_implicit();
         next_str_impl_with_impl = sumConflicts + 60000.0*conf.global_next_multiplier;
@@ -2872,6 +2874,7 @@ bool Searcher::distill_bins_if_needed() {
     if (conf.do_distill_bin_clauses &&
         sumConflicts > next_bins_distill)
     {
+        TimeScope ts(solver->time_tally, "distill-bins");
         ret = solver->distill_bin_cls->distill();
         next_bins_distill = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
@@ -2885,6 +2888,7 @@ bool Searcher::sub_str_with_bin_if_needed()
 
     //Subsumes and strengthens long clauses with binary clauses
     if (conf.do_distill_clauses && sumConflicts > next_sub_str_with_bin) {
+        TimeScope ts(solver->time_tally, "sub-str-cls-with-bin");
         ret = solver->dist_long_with_impl->distill_long_with_implicit(true);
         next_sub_str_with_bin = sumConflicts + 25000.0*conf.global_next_multiplier;
     }
@@ -2896,6 +2900,7 @@ lbool Searcher::distill_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
     if (conf.do_distill_clauses && sumConflicts > next_cls_distill) {
+        TimeScope ts(solver->time_tally, "distill-cls");
         if (!solver->distill_long_cls->distill(true, false)) return l_False;
         next_cls_distill = sumConflicts + 15000.0*conf.global_next_multiplier;
     }
@@ -2908,6 +2913,7 @@ bool Searcher::full_probe_if_needed()
     assert(decisionLevel() == 0);
     if (conf.do_full_probe && !conf.never_stop_search && sumConflicts > next_full_probe) {
         full_probe_iter++;
+        TimeScope ts(solver->time_tally, "full-probe");
         if (!solver->full_probe(full_probe_iter % 2)) return false;
         next_full_probe = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
@@ -2919,6 +2925,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     assert(ok);
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _max_confls;
+    TimeScope ts(solver->time_tally, "search");
     if (fast_backw.fast_backw_on && fast_backw.cur_max_confl == 0) {
         fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
         fast_backw.start_sumConflicts = sumConflicts;

@@ -1744,6 +1744,7 @@ lbool Solver::execute_inprocess_strategy(
                 string pr = occ_strategy_tokens;
                 if (!pr.empty() && pr.back() == ',') pr.pop_back();
                 verb_print(1, "Executing OCC strategy token(s): " << COLYELLOWLIGHT << pr << COLDEF);
+                TimeScope ts(time_tally, "occ-other");
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
@@ -1759,8 +1760,11 @@ lbool Solver::execute_inprocess_strategy(
         if (token.substr(0,3) != "occ" && !token.empty())
             verb_print(1, "--> Executing strategy token: " << COLYELLOWLIGHT << token << COLDEF);
 
-        if (token.substr(0,3) != "occ" && !token.empty())
+        std::optional<TimeScope> ts;
+        if (token.substr(0,3) != "occ" && !token.empty()) {
             simp_stats_before(token);
+            ts.emplace(time_tally, token);
+        }
 
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
@@ -2005,6 +2009,7 @@ void CMSat::Solver::print_stats(
         print_full_stats(cpu_time, cpu_time_total, wallclock_time_started);
     }
     print_norm_stats(cpu_time, cpu_time_total, wallclock_time_started);
+    if (conf.do_print_times) time_tally.print(conf.prefix, cpu_time);
 }
 
 void Solver::print_stats_time(

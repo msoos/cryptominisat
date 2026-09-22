@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "propengine.h"
 #include "searcher.h"
+#include "timetally.h"
 #include "searchstats.h"
 #ifdef CMS_TESTING_ENABLED
 #include "gtest/gtest_prod.h"
@@ -183,6 +184,7 @@ class Solver : public Searcher
         void simp_stats_after(const std::string& tok);
         SimpStatsSnap simp_stats_snap() const;
         vector<SimpStatsSnap> simp_stats_snaps;
+        TimeTally time_tally;
         ///Long irred clause count that is right in both phases: during occur
         ///simplification the clauses live in OccSimplifier, not in longIrredCls
         size_t num_long_irred_cls_anywhere() const;

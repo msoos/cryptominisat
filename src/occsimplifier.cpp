@@ -2284,8 +2284,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             *solver->frat << __PRETTY_FUNCTION__ << " Executing OCC strategy token:" << token.c_str() << "\n";
         }
 
-        if (!token.empty())
+        std::optional<TimeScope> ts;
+        if (!token.empty()) {
             solver->simp_stats_before(token);
+            ts.emplace(solver->time_tally, token);
+        }
 
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
