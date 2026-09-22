@@ -60,7 +60,7 @@ class GaussConf
         , min_usefulness_cutoff(0.2)
         , max_matrix_columns(100000)
         , max_matrix_rows(100000)
-        , min_matrix_rows(1)
+        , min_matrix_rows(2)
         , max_num_matrices(1000000)
     {
     }
