@@ -108,7 +108,6 @@ public:
     uint64_t sumConflicts = 0;
     uint64_t sumDecisions = 0;
     uint64_t sumAntecedents = 0;
-    uint64_t sumPropagations = 0;
     uint64_t sumConflictClauseLits = 0;
     uint64_t sumAntecedentsLits = 0;
     uint64_t sumDecisionBasedCl = 0;

@@ -33,7 +33,10 @@ SLS::SLS(Solver* _solver) : solver(_solver) {}
 //CaDiCaL's 'walk': effort relative to the search propagations done so far
 int64_t SLS::effort() const
 {
-    int64_t limit = (double)solver->sumPropagations * 1e-3 * solver->conf.walkreleff;
+    //sumPropagations was only ever incremented in the removed BRANCH stats
+    //builds, so this was always walkmineff
+    const uint64_t props = solver->sumPropStats.propagations + solver->propStats.propagations;
+    int64_t limit = (double)props * 1e-3 * solver->conf.walkreleff;
     limit = std::max<int64_t>(limit, solver->conf.walkmineff);
     limit = std::min<int64_t>(limit, solver->conf.walkmaxeff);
     return limit;
