@@ -1307,6 +1307,13 @@ void Main::manually_parse_some_options()
 
     try {
         auto files = program.get<std::vector<std::string>>("files");
+        for(const auto& f: files) {
+            if (!f.empty() && f[0] == '-') {
+                cerr << "ERROR: '" << f << "' after the input file would be the proof file name."
+                    " Options must come before the input file" << endl;
+                exit(-1);
+            }
+        }
         if (files.size() > 2) {
             cerr << "ERROR: you can only have at most two files as positional options:"
                 "the input file and the output FRAT file" << endl;

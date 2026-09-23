@@ -17,7 +17,8 @@ function run() { # name, binary, opts..., cnf
     local name="$1"; shift
     local cnf="${@: -1}"
     local out="$PRED/eval/$(basename "$cnf").$name"
-    "$@" --zero-exit-status > "$out" 2>&1 || true
+    # options must come before the CNF: anything after it is a proof file name
+    "${@:1:$#-1}" --zero-exit-status "$cnf" > "$out" 2>&1 || true
     printf "%-9s confl %9s  %7s s   " "$name" \
         "$(grep -m1 '^c conflicts' "$out" | awk '{print $4}')" \
         "$(grep -m1 'Total time (this thread)' "$out" | awk '{print $7}')"
