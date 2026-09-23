@@ -68,6 +68,9 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--out", default=None, help="write the best_features file here")
     parser.add_argument("--computed", choices=["all", "no", "both"], default="both",
                         help="use the runs with all_computed, no_computed, or both")
+    parser.add_argument("--no-context", action="store_true",
+                        help="skip features made only of rdb0_common.* columns: they are the same "
+                        "for every clause at a reduce, so they cannot rank clauses, only memorise instances")
     opts = parser.parse_args()
 
     total = defaultdict(float)
@@ -95,6 +98,11 @@ if __name__ == "__main__":
         if not computable(feat):
             skipped.append((feat, imp))
             continue
+        if opts.no_context:
+            cols = set()
+            gen_pred_features.to_cpp(ast.parse(feat, mode="eval"), cols)
+            if all(c.startswith("rdb0_common.") for c in cols):
+                continue
         picked.append((feat, imp))
         if len(picked) >= opts.num:
             break
