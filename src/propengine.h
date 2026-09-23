@@ -51,17 +51,6 @@ namespace CMSat {
 class Solver;
 class SQLStats;
 class DataSync;
-
-//#define VERBOSE_DEBUG_FULLPROP
-//#define VERBOSE_DEBUG
-
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_DEBUG_FULLPROP
-#define ENQUEUE_DEBUG
-#define DEBUG_ENQUEUE_LEVEL0
-#endif
-
-class Solver;
 class ClauseAllocator;
 class Gaussian;
 class EGaussian;

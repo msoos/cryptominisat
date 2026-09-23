@@ -806,31 +806,6 @@ PropBy PropEngine::propagate_any_order()
     }
     #endif
 
-// For BNN debugging
-//     if (confl.isnullptr()) {
-//         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-//             auto& bnn = bnns[idx];
-//             if (!bnn) continue;
-//             int32_t undefs = 0;
-//             int32_t ts = 0;
-//             for(const auto& l: *bnn) {
-//                 if (value(l) == l_True) {
-//                     ts++;
-//                 }
-//                 if (value(l) == l_Undef) {
-//                     undefs++;
-//                 }
-//             }
-//             cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
-//             cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
-//             << " sz :" << bnn->size() << endl;
-//             assert(undefs == bnn->undefs);
-//             assert(ts == bnn->ts);
-//         }
-//         cout << "ALL BNNS CHECKED========" << endl;
-//     }
-
-
     VERBOSE_PRINT("Propagation (propagate_any_order) ended.");
 
     return confl;
@@ -840,23 +815,6 @@ template PropBy PropEngine::propagate_any_order<true>();
 template PropBy PropEngine::propagate_any_order<true, false, true>();
 template PropBy PropEngine::propagate_any_order<true, true,  true>();
 
-
-void PropEngine::printWatchList(const Lit lit) const
-{
-    watch_subarray_const ws = watches[lit];
-    for (const Watched *it2 = ws.begin(), *end2 = ws.end()
-        ; it2 != end2
-        ; it2++
-    ) {
-        if (it2->isBin()) {
-            cout << "bin: " << lit << " , " << it2->lit2() << " red : " <<  (it2->red()) << endl;
-        } else if (it2->isClause()) {
-            cout << "cla:" << it2->get_offset() << endl;
-        } else {
-            assert(false);
-        }
-    }
-}
 
 void PropEngine::updateVars(
     [[maybe_unused]] const vector<uint32_t>& outer_to_inter,
