@@ -2060,6 +2060,7 @@ void Solver::print_norm_stats(
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)
         , "% time"
     );
+    reduceDB->print_reduce_stats();
 
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {

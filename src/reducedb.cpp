@@ -155,7 +155,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     for (const ClOffset offs: solver->longRedCls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
-        if (solver->clause_locked(*cl, offs)) continue; //reasons are kept, as in CaDiCaL
+        if (solver->clause_locked(*cl, offs)) { rstats.locked++; continue; } //reasons are kept, as in CaDiCaL
         const uint32_t used = cl->stats.used;
         if (used) cl->stats.used = used - 1;
         if (cl->stats.is_ternary_resolvent) {
@@ -163,11 +163,12 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             if (!used) cl->stats.marked_clause = true;
             continue;
         }
-        if (used) continue;
-        if (cl->stats.keep) continue;
+        if (used) { rstats.kept_used++; continue; }
+        if (cl->stats.keep) { rstats.kept_keep++; continue; }
         if (cl->stats.locked_for_data_gen) continue;
         stack.push_back(offs);
     }
+    rstats.cands = stack.size();
 
     //worst first: larger glue, then larger size, as in CaDiCaL
     std::stable_sort(stack.begin(), stack.end(),
@@ -181,8 +182,13 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     size_t target = 1e-2 * (double)solver->conf.reducetarget * (double)stack.size();
     if (target > stack.size()) target = stack.size();
     cl_reduced = target;
-    for (size_t i = 0; i < target; i++)
-        solver->cl_alloc.ptr(stack[i])->stats.marked_clause = true;
+    for (size_t i = 0; i < target; i++) {
+        Clause* cl = solver->cl_alloc.ptr(stack[i]);
+        cl->stats.marked_clause = true;
+        rstats.removed++;
+        const uint32_t g = cl->stats.glue;
+        rstats.removed_tier[g <= solver->tier1_glue ? 0 : (g <= solver->tier2_glue ? 1 : 2)]++;
+    }
 
     //CaDiCaL's lim.keptglue/keptsize, used to pick vivification candidates
     lim_keptglue = lim_keptsize = 0;
@@ -246,9 +252,12 @@ void ReduceDB::handle_reduce()
     if (flush) num_flushes++;
 
     cl_reduced = 0;
+    rstats = ReduceStats();
+    rstats.sum_red_before = orig_size;
     if (flush) mark_clauses_to_be_flushed();
     else mark_useless_redundant_clauses_as_garbage();
     remove_marked_clauses();
+    rstats_tot += rstats;
 
     solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset offset: delayed_clause_free) solver->free_cl(offset);
@@ -268,12 +277,19 @@ void ReduceDB::handle_reduce()
         lim_flush = solver->sumConflicts + inc_flush;
     }
 
-    verb_print(2, "[DBclean]"
+    verb_print(1, "[reduce] " << num_reductions
     << (flush ? " FLUSHED" : "")
     << " confl: " << solver->sumConflicts
-    << " orig size: " << orig_size
-    << " removed: " << cl_reduced
-    << " next reduce at confl: " << lim_reduce
+    << " red: " << orig_size << "->" << solver->longRedCls[0].size()
+    << " cands: " << rstats.cands
+    << " rem: " << rstats.removed
+    << " (t1/t2/t3: " << rstats.removed_tier[0] << "/" << rstats.removed_tier[1]
+    << "/" << rstats.removed_tier[2] << ")"
+    << " kept-used: " << rstats.kept_used
+    << " kept-keep: " << rstats.kept_keep
+    << " locked: " << rstats.locked
+    << " tiers: " << solver->tier1_glue << "/" << solver->tier2_glue
+    << " next: +" << delta
     << solver->conf.print_times(cpu_time()-my_time));
 
     if (solver->sqlStats) {
@@ -286,6 +302,30 @@ void ReduceDB::handle_reduce()
     total_time += cpu_time()-my_time;
 
     last_reducedb_num_conflicts = solver->sumConflicts;
+}
+
+void ReduceDB::print_reduce_stats() const
+{
+    const auto& r = rstats_tot;
+    const string p = solver->conf.prefix;
+    print_stats_line(p + "reductions", num_reductions,
+        float_div(r.sum_red_before, num_reductions), "avg red cls at reduce");
+    print_stats_line(p + "reduce candidates", r.cands,
+        stats_line_percent(r.cands, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
+    print_stats_line(p + "reduce removed", r.removed,
+        stats_line_percent(r.removed, r.cands), "% of candidates");
+    print_stats_line(p + "reduce removed tier1", r.removed_tier[0],
+        stats_line_percent(r.removed_tier[0], r.removed), "% of removed");
+    print_stats_line(p + "reduce removed tier2", r.removed_tier[1],
+        stats_line_percent(r.removed_tier[1], r.removed), "% of removed");
+    print_stats_line(p + "reduce removed tier3", r.removed_tier[2],
+        stats_line_percent(r.removed_tier[2], r.removed), "% of removed");
+    print_stats_line(p + "reduce kept used", r.kept_used,
+        stats_line_percent(r.kept_used, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
+    print_stats_line(p + "reduce kept tier1-keep", r.kept_keep,
+        stats_line_percent(r.kept_keep, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
+    print_stats_line(p + "reduce kept locked", r.locked,
+        stats_line_percent(r.locked, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
 }
 
 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)

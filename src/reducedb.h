@@ -43,6 +43,7 @@ class ReduceDB
 public:
     ReduceDB(Solver* solver);
     ~ReduceDB();
+    void print_reduce_stats() const;
     double get_total_time() const {
         return total_time;
     }
@@ -103,6 +104,25 @@ private:
     uint64_t lim_flush = 0;
     uint64_t inc_flush = 0;
     size_t cl_reduced = 0;
+    //Per-call and total reduce stats, as kissat's reduce phase line
+    struct ReduceStats {
+        uint64_t cands = 0;     //reducible: not protected by used/keep/reason
+        uint64_t kept_used = 0; //protected because used since last reduce
+        uint64_t kept_keep = 0; //tier1 'keep' flag
+        uint64_t locked = 0;    //reasons
+        uint64_t removed = 0;
+        uint64_t removed_tier[3] = {0, 0, 0};
+        uint64_t sum_red_before = 0; //to average the red DB size
+        ReduceStats& operator+=(const ReduceStats& o) {
+            cands += o.cands; kept_used += o.kept_used; kept_keep += o.kept_keep;
+            locked += o.locked; removed += o.removed;
+            for(int i = 0; i < 3; i++) removed_tier[i] += o.removed_tier[i];
+            sum_red_before += o.sum_red_before;
+            return *this;
+        }
+    };
+    ReduceStats rstats;     //this call
+    ReduceStats rstats_tot; //all calls
     void mark_useless_redundant_clauses_as_garbage();
     void mark_clauses_to_be_flushed();
     void remove_marked_clauses();
