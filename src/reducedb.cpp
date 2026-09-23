@@ -268,13 +268,11 @@ void ReduceDB::handle_reduce()
     delayed_clause_free.clear();
     SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
 
-    //increasing intervals, as in CaDiCaL
-    int64_t delta = (int64_t)solver->conf.reduceint * (int64_t)(num_reductions + 1);
-    const uint64_t irred = solver->longIrredCls.size() + solver->binTri.irredBins;
-    if (irred > 100000) {
-        delta *= std::log10((double)irred / 1e4);
-        if (delta < 1) delta = 1;
-    }
+    //Kissat's reduce interval: reduceint * sqrt(reductions). CaDiCaL's
+    //linear reduceint*(n+1) gave 81 reductions on UTI-20-10p0 vs kissat's
+    //231, so 'used' lives were never spent and the red DB kept growing
+    int64_t delta = (int64_t)((double)solver->conf.reduceint * std::sqrt((double)num_reductions));
+    if (delta < 1) delta = 1;
     lim_reduce = solver->sumConflicts + delta;
     if (flush) {
         inc_flush *= solver->conf.flushfactor;

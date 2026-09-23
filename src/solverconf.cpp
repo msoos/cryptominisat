@@ -112,7 +112,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Learnt clause DB reduction, as in CaDiCaL
         , reduce(1)
-        , reduceint(300)
+        , reduceint(1000)
         , reducetarget(75)
         , reducetier1glue(2)
         , reducetier2glue(6)
