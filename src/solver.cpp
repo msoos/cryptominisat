@@ -2011,6 +2011,7 @@ void CMSat::Solver::print_stats(
         print_full_stats(cpu_time, cpu_time_total, wallclock_time_started);
     }
     print_norm_stats(cpu_time, cpu_time_total, wallclock_time_started);
+    print_mode_stats();
     print_glue_usage();
     if (conf.do_print_times) time_tally.print(conf.prefix, cpu_time);
 }

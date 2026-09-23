@@ -1671,6 +1671,7 @@ lbool Searcher::search()
 
     //Stats reset & update
     stats.numRestarts++;
+    restarts_in_mode[rst.stable]++;
     hist.clear();
     hist.reset_glueHist_size(conf.shortTermHistorySize);
 
@@ -2208,6 +2209,7 @@ bool Searcher::handle_conflict(PropBy confl)
     stats.conflicts++;
     hist.num_conflicts_this_restart++;
     sumConflicts++;
+    confl_in_mode[rst.stable]++;
     for(uint32_t i = 0; i < longRedCls.size(); i++)  longRedClsSizes[i] += longRedCls[i].size();
     params.confl_this_rst++;
 
@@ -2878,7 +2880,9 @@ void Searcher::compute_tier_limits()
         if (!t1_set && acc*2 >= total) { t1 = g; t1_set = true; }
         if (acc*10 >= total*9) { t2 = g; break; }
     }
-    t1 = std::max<uint32_t>(t1, 1);
+    //tier1 clauses are kept forever here (CaDiCaL's 'keep'), so never
+    //raise it: on UTI-20-10p0 it drifted to 4 and the red DB ballooned
+    t1 = std::min<uint32_t>(std::max<uint32_t>(t1, 1), conf.reducetier1glue);
     t2 = std::max<uint32_t>(t2, t1);
     if (t1 != tier1_glue || t2 != tier2_glue) {
         verb_print(2, "[tiers] " << (rst.stable ? "stable" : "focused")
@@ -2886,6 +2890,26 @@ void Searcher::compute_tier_limits()
     }
     tier1_glue = t1;
     tier2_glue = t2;
+}
+
+//Kissat's focused/stable/switched/restarts statistics
+void Searcher::print_mode_stats() const
+{
+    const uint64_t confls = confl_in_mode[0] + confl_in_mode[1];
+    const uint64_t rsts = restarts_in_mode[0] + restarts_in_mode[1];
+    for(uint32_t stable = 0; stable < 2; stable++) {
+        cout << conf.prefix << (stable ? "stable  " : "focused ")
+            << " conflicts " << std::setw(10) << confl_in_mode[stable]
+            << " (" << std::setw(5) << std::fixed << std::setprecision(1)
+            << stats_line_percent(confl_in_mode[stable], confls) << "%)"
+            << " restarts " << std::setw(8) << restarts_in_mode[stable]
+            << " (" << std::setw(5) << stats_line_percent(restarts_in_mode[stable], rsts) << "%)"
+            << " confl/restart " << std::setw(8) << std::setprecision(1)
+            << float_div(confl_in_mode[stable], restarts_in_mode[stable])
+            << endl;
+    }
+    cout << conf.prefix << "mode switches " << mode_switches
+        << " rephased " << num_rephased << endl;
 }
 
 //Kissat's '[ glue usage ]' table: how often clauses of each glue were
@@ -3154,6 +3178,7 @@ bool Searcher::stabilizing()
     if (!conf.do_stabilize) return false;
     if (sumConflicts >= rst.lim_stabilize) {
         rst.stable = !rst.stable;
+        mode_switches++;
         rst.inc_stabilize =
             std::min<uint64_t>(rst.inc_stabilize * conf.stabilizefactor, conf.stabilizemaxint);
         rst.lim_stabilize = sumConflicts + std::max<uint64_t>(rst.inc_stabilize, 1);

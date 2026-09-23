@@ -130,7 +130,7 @@ class DLL_PUBLIC SolverConf
         unsigned reducetarget;     ///<Percent of unused candidates removed per reduce
         unsigned reducetier1glue;  ///<Glue at/below which learnt clauses are kept forever
         unsigned reducetier2glue;  ///<Glue at/below which learnt clauses get a double life
-        int dynamic_tiers = 1;     ///<Recompute tiers from glue usage, as kissat
+        int dynamic_tiers = 0;     ///<Recompute tier2 from glue usage, as kissat. Off: +14% time on UTI-20-10p0
         int      flush;            ///<Enable full flushing of unused redundant clauses
         unsigned flushfactor;      ///<Flush interval multiplier
         uint64_t flushint;         ///<Initial flush interval, in conflicts
