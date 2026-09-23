@@ -183,7 +183,15 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             return c->size() > d->size();
         });
 
-    size_t target = 1e-2 * (double)solver->conf.reducetarget * (double)stack.size();
+    //Kissat's mark_less_useful_clauses_as_garbage: the removed fraction
+    //rises from reducelow towards reducehigh with log10 of the reductions
+    double percent = solver->conf.reducetarget;
+    if (solver->conf.reducelow < solver->conf.reducehigh) {
+        const double high = solver->conf.reducehigh * 0.1;
+        const double low = solver->conf.reducelow * 0.1;
+        percent = high - (high - low) / std::log10((double)num_reductions + 9.0);
+    }
+    size_t target = 1e-2 * percent * (double)stack.size();
     if (target > stack.size()) target = stack.size();
     cl_reduced = target;
     for (size_t i = 0; i < target; i++) {

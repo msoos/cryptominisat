@@ -502,6 +502,14 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.reducetarget = fc_int(a);})
         .default_value(conf.reducetarget)
         .help("Percent of unused reduce candidates removed per reduce");
+    program.add_argument("--reducelow")
+        .action([&](const auto& a) {conf.reducelow = fc_int(a);})
+        .default_value(conf.reducelow)
+        .help("Fraction per mille of reduce candidates removed at the first reduce, rising towards --reducehigh as kissat. Set >= reducehigh to use --reducetarget");
+    program.add_argument("--reducehigh")
+        .action([&](const auto& a) {conf.reducehigh = fc_int(a);})
+        .default_value(conf.reducehigh)
+        .help("Asymptotic fraction per mille of reduce candidates removed");
     program.add_argument("--reducetier1glue")
         .action([&](const auto& a) {conf.reducetier1glue = fc_int(a);})
         .default_value(conf.reducetier1glue)

@@ -128,6 +128,8 @@ class DLL_PUBLIC SolverConf
         int      reduce;           ///<Enable clause DB reduction
         unsigned reduceint;        ///<Base reduce interval, in conflicts
         unsigned reducetarget;     ///<Percent of unused candidates removed per reduce
+        unsigned reducelow = 750;  ///<Kissat's reducelow. If < reducehigh the removed fraction rises from it; 292s vs 232s on UTI-20-10p0, so off
+        unsigned reducehigh = 750; ///<Kissat's reducehigh: asymptotic removed fraction per mille
         unsigned reducetier1glue;  ///<Glue at/below which learnt clauses are kept forever
         unsigned reducetier2glue;  ///<Glue at/below which learnt clauses get a double life
         int dynamic_tiers = 0;     ///<Recompute tier2 from glue usage, as kissat. Off: +14% time on UTI-20-10p0
