@@ -746,7 +746,7 @@ PropBy PropEngine::propagate_any_order()
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
-        varData[p.var()].propagated = true;
+        if (!bnns.empty()) varData[p.var()].propagated = true; //only reverse_prop() reads it
         watch_subarray ws = watches[~p];
         uint32_t currLevel = trail[qhead].lev;
 
