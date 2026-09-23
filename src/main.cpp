@@ -1044,7 +1044,19 @@ void Main::add_supported_options() {
     program.add_argument("--distillredreleff")
         .action([&](const auto& a) {conf.distill_red_releff = fc_int(a);})
         .default_value(conf.distill_red_releff)
-        .help("Per-mille of search props to spend distilling red cls");
+        .help("Per-mille of all bogoprops since last call to spend distilling red cls");
+    program.add_argument("--distillirredreleff")
+        .action([&](const auto& a) {conf.distill_irred_releff = fc_int(a);})
+        .default_value(conf.distill_irred_releff)
+        .help("Per-mille of all bogoprops since last call to spend distilling irred cls");
+    program.add_argument("--distillmineffm")
+        .action([&](const auto& a) {conf.distill_min_effortM = fc_int(a);})
+        .default_value(conf.distill_min_effortM)
+        .help("Floor of the distill effort reference, in mega-bogoprops");
+    program.add_argument("--distillschedmax")
+        .action([&](const auto& a) {conf.distill_sched_max = fc_int(a);})
+        .default_value(conf.distill_sched_max)
+        .help("Max clauses scheduled per distill pass");
     program.add_argument("--distillinst")
         .action([&](const auto& a) {conf.distill_instantiate = fc_int(a);})
         .default_value(conf.distill_instantiate)

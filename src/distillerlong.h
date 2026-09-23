@@ -41,7 +41,9 @@ class Clause;
 class DistillerLong {
     public:
         explicit DistillerLong(Solver* solver);
-        bool distill(const bool red, bool only_rem_cl = false);
+        bool distill(const bool red, bool only_rem_cl = false, int64_t effort_ref = -1);
+        bool distill_red_and_irred();
+        int64_t calc_effort_ref();
 
         struct Stats
         {
@@ -77,7 +79,7 @@ class DistillerLong {
         vector<int32_t> hint_units;
         vector<int32_t> hints;
         bool distill_long_cls_all(
-            vector<ClOffset>& offs, double time_mult,
+            vector<ClOffset>& offs, double budget,
             bool also_remove,
             bool only_remove,
             bool red, uint32_t red_lev = numeric_limits<uint32_t>::max());
@@ -88,7 +90,7 @@ class DistillerLong {
         void analysis_hints(const Lit subsume_lit, const PropBy confl);
         void clear_seen();
         Solver* solver;
-        uint64_t last_red_props = 0;
+        uint64_t last_all_props = 0;
         vector<PropBy> reason_stack;
         vector<uint32_t> analyzed_vars;
         vector<uint32_t> props_tmp;

@@ -3004,7 +3004,7 @@ lbool Searcher::distill_clauses_if_needed()
     assert(decisionLevel() == 0);
     if (conf.do_distill_clauses && sumConflicts > next_cls_distill) {
         TimeScope ts(solver->time_tally, "distill-cls");
-        if (!solver->distill_long_cls->distill(true, false)) return l_False;
+        if (!solver->distill_long_cls->distill_red_and_irred()) return l_False;
         next_cls_distill = sumConflicts + 15000.0*conf.global_next_multiplier;
     }
 
