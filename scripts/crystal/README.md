@@ -60,10 +60,27 @@ ranked by: the short, long or forever prediction, or (default) their sum.
 
 ## Many instances
 
-`learn.sh <outdir> <cnf-dir>...` concatenates the frames of several
-`ballofcrystal.sh` runs and trains on the union. `gen_best_feats.sh`
-trains on all raw (and all computed) features and prints the importance
-ranking, to pick a new `best_features-*.txt`.
+`run_corpus.sh <outdir> a.cnf b.cnf ...` gathers each instance
+(`ballofcrystal.sh --gather-only`, skipped when its frames exist), trains
+on the union with `learn.sh` and prints an A/B table with
+`eval_corpus.sh`: normal build vs predictor build, plain and ancestor
+tables, per instance and in total. All instances must use the same
+FIXED and label horizons.
+
+## A new feature list
+
+1. `gen_best_feats.sh <prefix> <out>` trains on all raw features and on
+   all raw + computed relative features (thousands) for every
+   (table, tier) and prints the xgboost importance rankings. Use the
+   `comb-` frames of a `learn.sh` run as the prefix for a corpus.
+2. `pick_features.py -n 30 -o best_features.txt <out>` sums the
+   importances over the runs and keeps the top N features the solver can
+   compute at run time (`gen_pred_features.py --list-raw` lists the raw
+   columns it knows).
+3. Rebuild the predictor build: `gen_pred_features.py` turns the file
+   into `predict_features_gen.h` at build time (`-DPRED_FEATURES_FILE`),
+   so the solver's feature code and the training expressions never drift.
+   Retrain (`learn.sh`) with the new `bestf` and evaluate.
 
 ## Where the features come from
 

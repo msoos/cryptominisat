@@ -146,11 +146,9 @@ class Queries (helper.QueryHelper):
             bad = self.c.execute(q).fetchone()[0]
             tot = self.c.execute("select count() from reduceDB").fetchone()[0]
             if bad > 0:
-                # subsumption merges clause stats, old data can have a few
-                print("WARNING: %d of %d reduceDB rows have glue > orig_glue" % (bad, tot))
-                if bad > 0.001*tot:
-                    print("ERROR: that's too many")
-                    exit(-1)
+                # after eager subsume marks a clause with the glue sentinel,
+                # the next bump sets its glue afresh, which can be larger
+                print("NOTE: %d of %d reduceDB rows have glue > orig_glue" % (bad, tot))
 
             queries = """
             drop index if exists `idx-check-qual1`;
