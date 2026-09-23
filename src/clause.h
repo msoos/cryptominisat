@@ -269,8 +269,6 @@ struct ClauseStatsExtra
     #ifdef STATS_NEEDED
     uint32_t dump_no = 0;
     int32_t orig_ID = 0;
-    uint32_t orig_connects_num_communities = 0;
-    uint32_t connects_num_communities = 0;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint32_t ttl_stats = 0;
     AtecedentData<uint16_t> antec_data;
@@ -345,9 +343,6 @@ struct ClauseStatsExtra
         ret.dump_no = std::max(first.dump_no, second.dump_no);
         ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
-        ret.orig_connects_num_communities = std::max(
-            first.orig_connects_num_communities,
-            second.orig_connects_num_communities);
         #endif
 
         return ret;

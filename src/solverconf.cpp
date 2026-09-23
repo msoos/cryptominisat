@@ -318,7 +318,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
-            "louvain-comms,"
         )
 
         //Occur based simplification

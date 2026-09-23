@@ -107,7 +107,6 @@ CREATE TABLE `reduceDB` (
   `is_ternary_resolvent` int(20) NOT NULL,
   `is_decision` int(20) NOT NULL,
   `is_distilled` int(20) NOT NULL,
-  `connects_num_communities` int(20) NOT NULL,
 
   -- ranking
   `act_ranking` int(20) NOT NULL,
@@ -246,7 +245,6 @@ CREATE TABLE `clause_stats` (
   `trailDepthHistLT_avg` float,
   `conflSizeHistlt_avg` float,
   `glueHistLT_avg` float,
-  `connects_num_communities_histLT_avg` float,
   `numResolutionsHistLT_avg` float,
 
   `antec_data_sum_sizeHistLT_avg` float,
@@ -260,8 +258,7 @@ CREATE TABLE `clause_stats` (
   `trailDepthDeltaHist_avg` float,
   `backtrackLevelHist_avg` float,
   `glueHist_avg` float,
-  `glueHist_longterm_avg` float,
-  `orig_connects_num_communities` int(20) NOT NULL
+  `glueHist_longterm_avg` float
 );
 
 DROP TABLE IF EXISTS `satzilla_features`;

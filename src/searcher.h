@@ -162,8 +162,6 @@ class Searcher : public HyperEngine
 
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
-        template<class T>
-        uint32_t calc_connects_num_communities(const T& cl);
         #endif
 
         /////////////////////
@@ -364,8 +362,7 @@ class Searcher : public HyperEngine
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(
             size_t backtrack_level,
-            uint32_t glue,
-            uint32_t connects_num_communities);
+            uint32_t glue);
         template<bool inprocess>
         void  attach_and_enqueue_learnt_clause(
             Clause* cl,
@@ -400,7 +397,6 @@ class Searcher : public HyperEngine
             , const uint32_t glue_before_minim
             , const uint32_t size_before_minim
             , const bool is_decision
-            , const uint32_t connects_num_communities
             , int32_t& ID
         );
 
@@ -522,8 +518,7 @@ class Searcher : public HyperEngine
             const uint32_t size_before_minim,
             const uint32_t old_decision_level,
             const uint64_t clid,
-            const bool decision_cl,
-            const uint32_t connects_num_communities
+            const bool decision_cl
         );
         int dump_this_many_cldata_in_stream = 0;
         #endif

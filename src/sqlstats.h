@@ -133,7 +133,6 @@ public:
         , const uint32_t restart_type
         , const SearchHist& hist
         , const bool is_decision
-        , const uint32_t orig_connects_num_communities
     ) = 0;
     #endif
 

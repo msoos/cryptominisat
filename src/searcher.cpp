@@ -1779,8 +1779,7 @@ lbool Searcher::new_decision() {
 
 void Searcher::update_history_stats(
     size_t backtrack_level,
-    uint32_t glue,
-    uint32_t connects_num_communities
+    uint32_t glue
 ) {
     assert(decisionLevel() > 0);
 
@@ -1812,7 +1811,6 @@ void Searcher::update_history_stats(
     //restart scheduling
     rst.cur.fast.update(glue);
     rst.cur.slow.update(glue);
-    hist.connects_num_communities_histLT.push(connects_num_communities);
 
     //Global stats from cnf.h
     sumClLBD += glue;
@@ -1890,10 +1888,7 @@ void Searcher::dump_sql_clause_data(
     , const uint32_t old_decision_level
     , const uint64_t clid
     , const bool is_decision
-    , const uint32_t connects_num_communities
 ) {
-
-
     solver->sqlStats->clause_stats(
         solver
         , clid
@@ -1910,7 +1905,6 @@ void Searcher::dump_sql_clause_data(
         , (int)rst.stable
         , hist
         , is_decision
-        , connects_num_communities
     );
 }
 #endif
@@ -1950,35 +1944,6 @@ void Searcher::set_clause_data(
 }
 #endif
 
-#ifdef STATS_NEEDED
-template<class T>
-uint32_t Searcher::calc_connects_num_communities(const T& cl)
-{
-    assert(toClear.empty());
-    uint32_t connects_num_communities = 0;
-    for(const auto l: cl) {
-        uint32_t comm = varData[l.var()].community_num;
-        if (comm == numeric_limits<uint32_t>::max()) {
-            continue;
-        }
-        assert(comm < solver->nVars());
-        if (!seen[comm]) {
-            connects_num_communities++;
-            toClear.push_back(Lit(comm, 0));
-            seen[comm] = 1;
-        }
-    }
-
-    for(auto& t: toClear) {
-        seen[t.var()] = 0;
-    }
-    toClear.clear();
-
-    return connects_num_communities;
-}
-
-template uint32_t Searcher::calc_connects_num_communities<Clause>(const Clause& cl);
-#endif
 
 Clause* Searcher::handle_last_confl(
     const uint32_t glue,
@@ -1986,7 +1951,6 @@ Clause* Searcher::handle_last_confl(
     [[maybe_unused]] const uint32_t glue_before_minim,
     [[maybe_unused]] const uint32_t size_before_minim,
     [[maybe_unused]] const bool is_decision,
-    [[maybe_unused]] const uint32_t connects_num_communities,
     int32_t& ID
 ) {
     *frat << __PRETTY_FUNCTION__ << " begin\n";
@@ -2043,8 +2007,6 @@ Clause* Searcher::handle_last_confl(
         ClOffset offset = cl_alloc.get_offset(cl);
 
         #ifdef STATS_NEEDED
-        ext_stats.connects_num_communities = connects_num_communities;
-        ext_stats.orig_connects_num_communities = connects_num_communities;
         cl->stats.locked_for_data_gen = to_track &&
             (double)rnd_uint(solver->mtrand,100000)/100000.0 < conf.lock_for_data_gen_ratio;
         #endif
@@ -2081,7 +2043,6 @@ Clause* Searcher::handle_last_confl(
             , old_decision_level
             , ID
             , is_decision
-            , connects_num_communities
         );
     }
     #endif
@@ -2174,11 +2135,9 @@ bool Searcher::handle_conflict(PropBy confl)
     }
     solver->datasync->signal_new_long_clause(learnt_clause);
 
-    uint32_t connects_num_communities = 0;
-    STATS_DO(connects_num_communities = calc_connects_num_communities(learnt_clause));
     if (conf.verbosity >= 6) print_clause("learnt", learnt_clause);
 
-    update_history_stats(backtrack_level, glue, connects_num_communities);
+    update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
 
     //Add decision-based clause in case it's short
@@ -2237,7 +2196,6 @@ bool Searcher::handle_conflict(PropBy confl)
         glue_before_minim,
         size_before_minim,
         false, // is decision?
-        connects_num_communities,
         ID
     );
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true, ID);
@@ -2267,11 +2225,6 @@ bool Searcher::handle_conflict(PropBy confl)
             learnt_clause.size(), // minimized glue is the same as glue before minim
             learnt_clause.size(),
             true, // is decision?
-            #ifdef STATS_NEEDED
-            calc_connects_num_communities(learnt_clause),
-            #else
-            0,
-            #endif
             ID
         );
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false, ID);

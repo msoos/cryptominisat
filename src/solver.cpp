@@ -68,7 +68,6 @@ THE SOFTWARE.
 #include "matrixfinder.h"
 #include "lucky.h"
 #include "get_clause_query.h"
-#include "community_finder.h"
 extern "C" {
 #include "mpicosat/mpicosat.h"
 }
@@ -1413,13 +1412,6 @@ lbool Solver::solve_with_assumptions(
             !conf.full_simplify_at_startup ? conf.simplify_schedule_startup : conf.simplify_schedule_nonstartup);
     }
 
-    #ifdef STATS_NEEDED
-    if (status == l_Undef) {
-        CommunityFinder comm_finder(this);
-        comm_finder.compute();
-    }
-    #endif
-
     //CaDiCaL calls 'lucky_phases' here, after preprocessing and before the CDCL
     //loop. Assumptions and BNNs are not handled, as in CaDiCaL.
     if (status == l_Undef && conf.lucky && nVars() > 0
@@ -1888,11 +1880,6 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "cl-consolidate") {
             cl_alloc.consolidate(this, conf.must_always_conslidate, true);
-        } else if (token == "louvain-comms") {
-            #ifdef STATS_NEEDED
-            CommunityFinder comm_finder(this);
-            comm_finder.compute();
-            #endif
         } else if (token == "renumber" || token == "must-renumber") {
             if (conf.doRenumberVars && !frat->enabled()) {
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {

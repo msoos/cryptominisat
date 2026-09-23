@@ -133,7 +133,6 @@ public:
         , const uint32_t rest_type
         , const SearchHist& hist
         , const bool is_decision
-        , const uint32_t orig_connects_num_communities
     ) override;
 
     #endif

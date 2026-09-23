@@ -73,7 +73,6 @@ struct VarData
     float weight = 0.5;
 
     #if defined(STATS_NEEDED)
-    uint32_t community_num = numeric_limits<uint32_t>::max();
     #endif
 
 };

@@ -303,7 +303,7 @@ class Tester:
         sched_opts += "occ-bve-empty, occ-ternary-res, occ-sweep,"
         sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
-        sched_opts += "renumber, must-renumber, louvain-comms,"
+        sched_opts += "renumber, must-renumber,"
         sched_opts += "card-find, breakid, cl-consolidate,"
         sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
 

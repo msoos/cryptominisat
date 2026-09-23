@@ -182,7 +182,6 @@ endif()
 if(STATS_NEEDED)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
-        community_finder.cpp
         satzilla_features_calc.cpp
         satzilla_features.cpp
     )
@@ -223,7 +222,6 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS}
     ${MPI_INCLUDE_PATH}
     $<INSTALL_INTERFACE:include>
     ${BREAKID_INCLUDE_DIRS}
@@ -279,7 +277,6 @@ endif()
 target_link_libraries(cryptominisat5
     PRIVATE
         ${cryptoms_lib_link_libs}
-        ${LOUVAIN_COMMUNITIES_LIBRARIES}
         cadiback
         cadical
         Threads::Threads
@@ -314,7 +311,6 @@ if(IPASIR)
         PRIVATE
             Threads::Threads
             ${cryptoms_lib_link_libs}
-            ${LOUVAIN_COMMUNITIES_LIBRARIES}
             cadiback
             cadical
         PUBLIC
