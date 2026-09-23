@@ -382,6 +382,7 @@ private:
     int64_t  occ_based_lit_rem_time_limit;
     int64_t  weaken_time_limit;
     int64_t  sweep_time_limit;
+    uint64_t sweep_last_all_props = 0;
     int64_t* limit_to_decrease;
 
     //Memory limits

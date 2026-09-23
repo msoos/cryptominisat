@@ -1106,7 +1106,15 @@ void Main::add_supported_options() {
     program.add_argument("--sweeptimelimM")
         .action([&](const auto& a) {conf.sweep_time_limitM = fc_double(a);})
         .default_value(conf.sweep_time_limitM)
-        .help("Tick limit for one occ-sweep run, in millions");
+        .help("Tick limit cap for one occ-sweep run, in millions");
+    program.add_argument("--sweepeff")
+        .action([&](const auto& a) {conf.sweep_effort = fc_double(a);})
+        .default_value(conf.sweep_effort)
+        .help("occ-sweep budget as a fraction of all bogoprops since its last call");
+    program.add_argument("--sweepmineffm")
+        .action([&](const auto& a) {conf.sweep_min_effortM = fc_double(a);})
+        .default_value(conf.sweep_min_effortM)
+        .help("Floor of the occ-sweep budget, in mega-ticks");
     program.add_argument("--sweepvars")
         .action([&](const auto& a) {conf.sweep_vars = fc_int(a);})
         .default_value(conf.sweep_vars)

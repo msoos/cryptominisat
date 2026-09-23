@@ -86,6 +86,13 @@ OccSimplifier::~OccSimplifier()
 
 bool OccSimplifier::sweep()
 {
+    //Kissat's sweepeffort: a share of all propagation work since the last
+    //sweep, floored at mineffort; the absolute limit only caps it
+    const int64_t rel = solver->conf.sweep_effort
+        * (double)(solver->all_bogoprops() - sweep_last_all_props);
+    sweep_last_all_props = solver->all_bogoprops();
+    sweep_time_limit = std::min<int64_t>(sweep_time_limit,
+        std::max<int64_t>(rel, solver->conf.sweep_min_effortM*1000LL*1000LL));
     limit_to_decrease = &sweep_time_limit;
     if (!sweeper) sweeper = new Sweeper(this, solver);
     if (!sweeper->sweep()) return false;

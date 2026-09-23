@@ -411,6 +411,8 @@ class DLL_PUBLIC SolverConf
         // SAT sweeping with kitten (occ-sweep)
         int do_sweep = 1;
         double sweep_time_limitM = 150;
+        double sweep_effort = 0.1; //share of all bogoprops since last sweep, as kissat's sweepeffort
+        double sweep_min_effortM = 10;
         uint32_t sweep_vars = 256;
         uint32_t sweep_max_vars = 8192;
         uint32_t sweep_clauses = 1024;
