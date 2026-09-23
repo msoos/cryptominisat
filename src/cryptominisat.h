@@ -189,12 +189,6 @@ namespace CMSat {
         ////////////////////////////
         // Predictive system tuning
         ////////////////////////////
-        void set_pred_short_size(int32_t sz = -1);
-        void set_pred_long_size(int32_t sz = -1);
-        void set_pred_forever_size(int32_t sz = -1);
-        void set_pred_long_chunk(int32_t sz = -1);
-        void set_pred_forever_chunk(int32_t sz = -1);
-        void set_pred_forever_cutoff(int32_t sz = -1);
         void set_every_pred_reduce(int32_t sz = -1);
 
         ////////////////////////////

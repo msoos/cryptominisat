@@ -330,7 +330,7 @@ struct ClauseStatsExtra
         ret.sum_props_made = first.sum_props_made + second.sum_props_made;
         ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
         ret.discounted_uip1_used =  first.discounted_uip1_used  + second.discounted_uip1_used;
-        ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
+        //orig_glue/orig_size stay the survivor's (first), it is ITS history
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
         ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
         ret.discounted_uip1_used2 =  first.discounted_uip1_used2  + second.discounted_uip1_used2;

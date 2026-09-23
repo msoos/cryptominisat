@@ -362,83 +362,14 @@ void Main::add_supported_options() {
         .default_value(conf.predict_best_feat_fname)
         .help("Best features file, only for --predtype py");
 
-    //size
-    program.add_argument("--predshortsize")
-        .action([&](const auto& a) {conf.pred_short_size = fc_int(a);})
-        .default_value(conf.pred_short_size)
-        .help("Pred short multiplier");
-    program.add_argument("--predlongsize")
-        .action([&](const auto& a) {conf.pred_long_size = fc_int(a);})
-        .default_value(conf.pred_long_size)
-        .help("Pred long multiplier");
-    program.add_argument("--predforeversize")
-        .action([&](const auto& a) {conf.pred_forever_size = fc_int(a);})
-        .default_value(conf.pred_forever_size)
-        .help("Pred forever multiplier");
-    program.add_argument("--predforevercutoff")
-        .action([&](const auto& a) {conf.pred_forever_cutoff = fc_int(a);})
-        .default_value(conf.pred_forever_cutoff)
-        .help("If non-zero, ONLY this determines what's MOVED to or KEPT IN 'forever'.");
-    program.add_argument("--predforeverpow")
-        .action([&](const auto& a) {conf.pred_forever_size_pow = fc_double(a);})
-        .default_value(conf.pred_forever_size_pow)
-        .help("Pred forever power to raise the conflicts to");
-    program.add_argument("--ordertier2by")
-        .action([&](const auto& a) {conf.order_tier2_by = fc_int(a);})
-        .default_value(conf.order_tier2_by)
-        .help("Order Tier 2 by Tier 2/1/0 prediction");
-
-    //move or del?
-    program.add_argument("--movefromtier0")
-        .action([&](const auto& a) {conf.move_from_tier0 = fc_int(a);})
-        .default_value(conf.move_from_tier0)
-        .help("Move from tier0 to tier1? If set to 0, then it's deleted instead of moved.");
-    program.add_argument("--movefromtier1")
-        .action([&](const auto& a) {conf.move_from_tier1 = fc_int(a);})
-        .default_value(conf.move_from_tier1)
-        .help("Move from tier1 to tier2? If set to 0, then it's deleted instead of moved.");
-
-    //printing
+    program.add_argument("--predsortby")
+        .action([&](const auto& a) {conf.pred_sort_by = fc_int(a);})
+        .default_value(conf.pred_sort_by)
+        .help("Reduce removes the candidates with the lowest predicted use over the next: 0 = short, 1 = long, 2 = forever horizon, 3 = sum of the three (near-term counts 3x, long-term still counts)");
     program.add_argument("--dumppreddistrib")
         .action([&](const auto& a) {conf.dump_pred_distrib = fc_int(a);})
         .default_value(conf.dump_pred_distrib)
-        .help("Dump predict distribution to pred_distrib.csv");
-
-    //chunk
-    program.add_argument("--predlongchunk")
-        .action([&](const auto& a) {conf.pred_long_chunk = fc_int(a);})
-        .default_value(conf.pred_long_chunk)
-        .help("Pred long chunk multiplier");
-    program.add_argument("--predforeverchunk")
-        .action([&](const auto& a) {conf.pred_forever_chunk = fc_int(a);})
-        .default_value(conf.pred_forever_chunk)
-        .help("Pred forever chunk multiplier");
-    program.add_argument("--predforeverchunkmult")
-        .action([&](const auto& a) {conf.pred_forever_chunk_mult = fc_double(a);})
-        .default_value(conf.pred_forever_chunk_mult)
-        .help("Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option");
-
-    //Check intervals for LONG and FOREVER
-    program.add_argument("--predlongcheckn")
-        .action([&](const auto& a) {conf.pred_long_check_every_n = fc_int(a);})
-        .default_value(conf.pred_long_check_every_n)
-        .help("Pred long check over limit every N");
-    program.add_argument("--predforevercheckn")
-         .action([&](const auto& a) {conf.pred_forever_check_every_n = fc_int(a);})
-        .default_value(conf.pred_forever_check_every_n)
-        .help("Pred forever check over limit every N");
-
-    // Some old stuff
-    program.add_argument("--preddistillsmallgue")
-        .action([&](const auto& a) {conf.pred_distill_only_smallgue = fc_int(a);})
-        .default_value(conf.pred_distill_only_smallgue)
-        .help("Only distill small glue clauses");
-
-    // Lock clauses in
-    program.add_argument("--preddontmovetime")
-        .action([&](const auto& a) {conf.pred_dontmove_until_timeinside = fc_int(a);})
-        .default_value(conf.pred_dontmove_until_timeinside)
-        .help("Don't move clause until its time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.");
+        .help("Dump predictions of all clauses at every reduce to pred_distrib.csv");
     #endif
 
     /* po::options_description restartOptions("Restart options"); */
@@ -540,7 +471,7 @@ void Main::add_supported_options() {
     program.add_argument("--everypred")
         .action([&](const auto& a) {conf.every_pred_reduce = fc_int(a);})
         .default_value(conf.every_pred_reduce)
-        .help("Reduce final predictor (lev3) clauses every N, and produce data at every N in case of STATS_NEEDED");
+        .help("Calculate satzilla features every N conflicts (STATS builds)");
     #endif
 
     /* po::options_description varPickOptions("Variable branching options"); */

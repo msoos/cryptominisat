@@ -121,7 +121,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
 
     set_up_sql_writer();
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    next_pred_reduce =  conf.every_pred_reduce;
     #endif
 
     check_xor_cut_config_sanity();
@@ -2099,11 +2098,6 @@ void Solver::print_norm_stats(
                 , (double)longRedClsSizes[i]/(double)sumConflicts
             );
         }
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-        for(uint32_t i = 0; i < longRedCls.size(); i++) {
-            reduceDB->cl_stats[i].print(i);
-        }
-        #endif
     }
 
     #ifdef STATS_NEEDED

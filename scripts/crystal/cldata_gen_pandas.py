@@ -279,10 +279,11 @@ class QueryCls (helper.QueryHelper):
             print("--> The weight was %f so weighted size is: %d" % (mult, int(ws)))
             weighted_size.append(ws)
 
+        # every clause present at a reduce is ranked, the young ones too
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 0 ")
         one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 1 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 2 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 2 and rdb0.dump_no <= 20 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 20 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 1 and rdb0.dump_no <= 5 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 5 ")
 
         df = pd.concat(df_parts)
         print("-> size of all dump_no-s, strata {strata} data: {size}".format(

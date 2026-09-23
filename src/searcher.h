@@ -412,7 +412,6 @@ class Searcher : public HyperEngine
         // Clause database reduction
         /////////////////////
         void reduce_db_if_needed();
-        uint64_t next_pred_reduce;
 
         ///////////////
         // Restart parameters

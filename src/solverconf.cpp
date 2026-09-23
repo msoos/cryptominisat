@@ -83,31 +83,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
         polarity_mode(PolarityMode::polarmode_automatic)
 
-        //Clause cleaning
-        , pred_short_size(5500)
-        , pred_long_size(18500)
-        , pred_forever_size(10500) // Used only if pred_forever_cutoff is 0
-        , pred_forever_cutoff(0) //this sets a static cutoff
-        , order_tier2_by(2) //order Tier2 by this tier's sort function. 2 means Tier2, i.e. default
-
-        , pred_forever_size_pow(0.01) // Used only if pred_forever_cutoff is 0
-        //
-        , pred_long_chunk(4700)
-        , pred_forever_chunk(2000) // Used only if pred_forever_cutoff is 0
-        , pred_forever_chunk_mult(0)
-        //
-        , move_from_tier0(1) //if 1 = moves it, rather than deletes it
-        , move_from_tier1(1) //if 1 = moves it, rather than deletes it
-        //
-        , pred_long_check_every_n(3)
-        , pred_forever_check_every_n(12)
-        , pred_distill_only_smallgue(false)
-        , pred_dontmove_until_timeinside(1) //always move, don't wait
-
-        , every_pred_reduce(10000) //5000 seems to work better
-        #ifdef FINAL_PREDICTOR
+        , pred_sort_by(3)
+        , every_pred_reduce(10000)
         , dump_pred_distrib(0)
-        #endif
         , clause_decay(0.999)
 
         //Learnt clause DB reduction, as in CaDiCaL

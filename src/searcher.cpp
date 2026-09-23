@@ -2013,12 +2013,8 @@ Clause* Searcher::handle_last_confl(
         cl->stats.keep = 0;
         cl->stats.used = CL_MAX_USED;
 
-        #ifdef FINAL_PREDICTOR
-        cl->stats.which_red_array = 2;
-        #else
         cl->stats.which_red_array = 0;
-        #endif
-        solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+        solver->longRedCls[0].push_back(offset);
         if (conf.eager_subsume) {
             eager_subsume_last_learnt(*cl);
             last_learnt[last_learnt_at++ % 4] = LastLearnt{offset, cl->stats.id};
@@ -2396,24 +2392,6 @@ void Searcher::print_restart_stat()
 
 void Searcher::reduce_db_if_needed()
 {
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    if (conf.every_pred_reduce != 0
-        && sumConflicts >= next_pred_reduce
-    ) {
-        #ifdef STATS_NEEDED
-        if (solver->sqlStats) {
-            solver->reduceDB->dump_sql_cl_data((int)rst.stable);
-        }
-        #endif
-        #ifdef FINAL_PREDICTOR
-        solver->reduceDB->handle_predictors();
-        cl_alloc.consolidate(solver);
-        #endif
-        next_pred_reduce = sumConflicts + conf.every_pred_reduce;
-    }
-    #endif
-
-    #ifndef FINAL_PREDICTOR
     auto& rdb = *solver->reduceDB;
     if (rdb.lim_reduce == 0) rdb.lim_reduce = sumConflicts + conf.reduceint;
     if (conf.reduce
@@ -2421,10 +2399,9 @@ void Searcher::reduce_db_if_needed()
         && sumConflicts >= rdb.lim_reduce
     ) {
         compute_tier_limits();
-        rdb.handle_reduce();
+        rdb.handle_reduce((uint32_t)rst.stable);
         cl_alloc.consolidate(solver);
     }
-    #endif
 }
 
 bool Searcher::clean_clauses_if_needed()

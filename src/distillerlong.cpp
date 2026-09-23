@@ -252,20 +252,6 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
         globalStats += runStats;
         runStats.clear();
 
-        #ifdef FINAL_PREDICTOR //only predictor builds populate longRedCls[1]
-        if (!distill_long_cls_all(
-            solver->longRedCls[1],
-            budget,
-            false, //dont' remove (it's always redundant)
-            only_rem_cl,
-            red,
-            1))  // //red lev (only to print)
-        {
-            goto end;
-        }
-        globalStats += runStats;
-        runStats.clear();
-        #endif
     }
 
 end:

@@ -81,7 +81,7 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
         --cldatadumpratio "$DUMPRATIO" --cllockdatagen "$CLLOCK" \
         --everypred "$EVERYPRED" --clid --sql 2 --sqlitedb data.db-raw \
         --xlrup 0 --zero-exit-status "$FNAME" data.frat | tee cms-stats-run.out
-    grep "^c conflicts" cms-stats-run.out | head -1
+    grep -m1 "^c conflicts" cms-stats-run.out
     if ! grep -q "^s UNSATISFIABLE" cms-stats-run.out; then
         echo "ERROR: not UNSAT, crystalball needs an UNSAT instance"
         exit 255

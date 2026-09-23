@@ -2570,11 +2570,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         stats_extra.orig_size = 3;
         #endif
 
-        #ifdef FINAL_PREDICTOR
-        stats.which_red_array = 2;
-        #else
         stats.which_red_array = 0;
-        #endif
 
         #ifdef STATS_NEEDED
         const bool to_track = (double)rnd_uint(solver->mtrand,100000)/100000.0

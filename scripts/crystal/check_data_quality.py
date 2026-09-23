@@ -140,14 +140,17 @@ class Queries (helper.QueryHelper):
 
             t = time.time()
             q = """
-            select * from `clause_stats`,`reduceDB`
+            select count() from `clause_stats`,`reduceDB`
             where clause_stats.clauseID = reduceDB.clauseID
             and glue > orig_glue"""
-            cursor = self.c.execute(q)
-            for row in cursor:
-                print("ERROR: glue is larger than orig_glue!")
-                print(row)
-                exit(-1)
+            bad = self.c.execute(q).fetchone()[0]
+            tot = self.c.execute("select count() from reduceDB").fetchone()[0]
+            if bad > 0:
+                # subsumption merges clause stats, old data can have a few
+                print("WARNING: %d of %d reduceDB rows have glue > orig_glue" % (bad, tot))
+                if bad > 0.001*tot:
+                    print("ERROR: that's too many")
+                    exit(-1)
 
             queries = """
             drop index if exists `idx-check-qual1`;

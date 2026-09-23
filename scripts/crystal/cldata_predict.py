@@ -377,7 +377,7 @@ class Learner:
         print("--------------------------")
         print("-       test data        -")
         print("--------------------------")
-        for dump_no in [1, 2, 3, 10, 20, 40, None]:
+        for dump_no in [0, 1, 2, 5, 10, None]:
             self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf, "test data", highlight=True)
         print("--------------------------------")

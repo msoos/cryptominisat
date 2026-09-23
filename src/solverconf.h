@@ -100,27 +100,9 @@ class DLL_PUBLIC SolverConf
         //Variable polarities
         PolarityMode polarity_mode;
 
-        //Clause cleaning
-        uint32_t pred_short_size;
-        uint32_t pred_long_size;
-        uint32_t pred_forever_size;
-        uint32_t pred_forever_cutoff;
-        uint32_t order_tier2_by;
-        double pred_forever_size_pow;
-
-        uint32_t pred_long_chunk;
-        uint32_t pred_forever_chunk;
-        int      pred_forever_chunk_mult; //true or false
-
-        int move_from_tier0;
-        int move_from_tier1;
-
-        uint32_t pred_long_check_every_n;
-        uint32_t pred_forever_check_every_n;
-        int   pred_distill_only_smallgue;
-        int   pred_dontmove_until_timeinside;
-
-        unsigned every_pred_reduce;
+        //Predictor (FINAL_PREDICTOR) and data gathering (STATS_NEEDED)
+        uint32_t pred_sort_by; //reduce candidates sorted by predicted use: 0 short, 1 long, 2 forever, 3 sum
+        unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
         double    clause_decay;
 
