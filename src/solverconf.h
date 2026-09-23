@@ -56,7 +56,7 @@ class GaussConf
     public:
 
     bool autodisable = true;
-    double min_usefulness_cutoff = 0.5;
+    double min_usefulness_cutoff = 0.3;
     uint32_t autodisable_min_calls = 200;
     uint32_t autodisable_check_every = 1024;
     uint32_t max_matrix_columns = 100000;
