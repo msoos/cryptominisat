@@ -173,11 +173,10 @@ if(FINAL_PREDICTOR)
 #         predict/clustering_imp.cpp
         cl_predictors_xgb.cpp
         cl_predictors_py.cpp
-        cl_predictors_lgbm.cpp
         cl_predictors_abs.cpp
     )
     set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs}
-        _lightgbm xgboost dmlc rabit rt ${Python3_LIBRARIES})
+        xgboost_c rt ${Python3_LIBRARIES})
 endif()
 
 if(STATS_NEEDED)

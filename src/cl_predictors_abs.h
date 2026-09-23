@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <string>
 #include <cmath>
 #include <xgboost/c_api.h>
+#include <cfenv>
 #include "clause.h"
 
 #define PRED_COLS 22
@@ -67,6 +68,14 @@ struct ReduceCommonData
         avg_uip = safe_div(total_uip1_used, size);
         avg_sum_uip1_used = safe_div(total_sum_uip1_used, size);
     }
+};
+
+//main_exe.cpp traps FE_INVALID etc, but xgboost/numpy legitimately produce
+//NaN and inf internally: no traps while they run
+struct NoFPTraps {
+    int saved;
+    NoFPTraps() { saved = fegetexcept(); fedisableexcept(FE_ALL_EXCEPT); }
+    ~NoFPTraps() { feclearexcept(FE_ALL_EXCEPT); feenableexcept(saved); }
 };
 
 class ClPredictorsAbst

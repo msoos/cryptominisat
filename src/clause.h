@@ -122,7 +122,8 @@ struct ClauseStats
     {
         //NOTE: we *MUST* set values to high default, as we do
         //combineStats(default, newclause) to get combined stats.
-        glue = 1000;
+        //CL_MAX_GLUE, not 1000: eager subsume marks clauses with it
+        glue = CL_MAX_GLUE;
         is_decision = false;
         marked_clause = false;
         keep = false;

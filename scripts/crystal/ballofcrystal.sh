@@ -17,266 +17,143 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# This file wraps CMake invocation for TravisCI
-# so we can set different configurations via environment variables.
+# The whole crystalball pipeline on one UNSAT CNF:
+#   1. run the STATS build -> SQLite DB + FRAT proof
+#   2. trim the proof and mark which clauses were used, when
+#   3. clean, check, sample, denormalise the data
+#   4. learn the short/long/forever xgboost predictors
+#   5. run the FINAL_PREDICTOR build with them and print a comparison
+#
+# usage: ballofcrystal.sh [--skip-solve] [--skip-learn] file.cnf
+#   --skip-solve  reuse <file>-dir/data.db-raw and data.frat from an earlier run
+#   --skip-learn  reuse the predictors from an earlier run, only run step 5
 
 set -e
-set -x
-set -o pipefail  # needed so  " | tee xyz " doesn't swallow the last command's error
+set -o pipefail  # needed so " | tee xyz " doesn't swallow the last command's error
 
+cd "$(dirname "$0")"
 source ./setparams_ballofcrystal.sh
+SCRIPTDIR="$(pwd)"
 
-if [ "$1" == "--skip" ]; then
-    echo "Will skip running CMS stats + FRAT"
-    SKIP="1"
-    NEXT_OP="$2"
-else
-    SKIP="0"
-    NEXT_OP="$1"
-fi
-
-if [ "$NEXT_OP" == "" ]; then
-    while true; do
-        echo "No CNF command line parameter, running predefined CNFs"
-        echo "Options are:"
-        echo "1 -- velev-pipe-uns-1.0-9.cnf"
-        echo "2 -- goldb-heqc-i10mul.cnf"
-        echo "3 -- Haystacks-ext-13_c18.cnf"
-        echo "4 -- NONE"
-        echo "5 -- AProVE07-16.cnf"
-        echo "6 -- UTI-20-10p0.cnf-unz"
-        echo "7 -- UCG-20-5p0.cnf"
-
-        read -r -p "Which CNF do you want to run? " myinput
-        case $myinput in
-            ["1"]* )
-                FNAME="velev-pipe-uns-1.0-9.cnf"
-                break;;
-            [2]* )
-                FNAME="goldb-heqc-i10mul.cnf";
-                break;;
-            [3]* )
-                FNAME="dist6.c-sc2018.cnf";
-                break;;
-            [5]* )
-                FNAME="AProVE07-16.cnf";
-                break;;
-            [6]* )
-                DUMPRATIO="0.01"
-                FNAME="UTI-20-10p0.cnf-unz";
-                FIXED="20000";
-                break;;
-            [7]* )
-                DUMPRATIO="0.50"
-                FNAME="UCG-20-5p0.cnf";
-                break;;
-            * ) echo "Please answer 1-7";;
-        esac
-    done
-else
-    if [ "$NEXT_OP" == "-h" ] || [ "$NEXT_OP" == "--help" ]; then
-        echo "You must give a CNF file as input"
-        exit
-    fi
-    initial="$(echo ${NEXT_OP} | head -c 1)"
-    if [ "$1" == "-" ]; then
-        echo "Cannot understand opion, there are no options"
-        exit 255
-    fi
-    FNAME="${NEXT_OP}"
-fi
-
-set -e
-set -o pipefail
-
-echo "--> Running on file                   $FNAME"
-echo "--> Outputting to data                $FNAMEOUT"
-echo "--> Using clause gather ratio of      $DUMPRATIO"
-echo "--> Locking in ratio of               $CLLOCK"
-echo "--> with fixed number of data points  $FIXED"
-
-if [ "$FNAMEOUT" == "" ]; then
-    echo "Error: FNAMEOUT is not set, it's empty. Exiting."
+SKIP_SOLVE=0
+SKIP_LEARN=0
+while [[ "$1" == --* ]]; do
+    case "$1" in
+        --skip-solve) SKIP_SOLVE=1 ;;
+        --skip-learn) SKIP_LEARN=1; SKIP_SOLVE=1 ;;
+        *) echo "Unknown option $1"; exit 255 ;;
+    esac
+    shift
+done
+if [[ -z "$1" ]]; then
+    echo "usage: $0 [--skip-solve] [--skip-learn] file.cnf"
     exit 255
 fi
+FNAME="$(realpath "$1")"
+BASE="$(basename "$FNAME")"
+DIR="$(dirname "$FNAME")/${BASE}-dir"
 
+echo "--> CNF:                      $FNAME"
+echo "--> work dir:                 $DIR"
+echo "--> stats binary:             $STATS_BIN"
+echo "--> predictor binary:         $PRED_BIN"
+echo "--> dump ratio / lock ratio:  $DUMPRATIO / $CLLOCK"
+echo "--> tiers short/long/forever: $SHORT / $LONG / $FOREVER"
+echo "--> rows per strata:          $FIXED"
 
-if [ "$SKIP" != "1" ]; then
-    echo "Cleaning up"
-    (
-    rm -rf "$FNAME-dir"
-    mkdir "$FNAME-dir"
-    cd "$FNAME-dir"
-    rm -f $FNAMEOUT.d*
-    rm -f $FNAMEOUT.lemma*
-    )
-
-    set -e
-
-    ########################
-    # Build statistics-gathering CryptoMiniSat
-    ########################
-    if [[ $SANITIZE -eq 0 ]]; then
-        ./build_stats.sh
-    else
-        ./build_stats_sanitize.sh
-    fi
-
-    (
-    ########################
-    # Obtain dynamic data in SQLite and FRAT info
-    ########################
-    cd "$FNAME-dir"
-    # for var, we need: --bva 0 --scc 0
-    $NOBUF ../cryptominisat5 --maxnummatrices 0 --presimp 1 -n1 --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen "$CLLOCK" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --frat "$FNAMEOUT.frat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
-    grep "c conflicts" cms-pred-run.out
-
-    ########################
-    # Run frat-rs
-    ########################
-    set +e
-    grep "s SATIS" cms-pred-run.out > /dev/null
-    retval=$?
-    set -e
-    if [[ retval -eq 1 ]]; then
-        /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat" "../$FNAME" -m -v
-
-        echo "If the following fails, you MUST compile frat-rs with 'ascii' feature through 'cargo build --features=ascii --release' !"
-        set +e
-        /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat"
-        /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.frat.temp" correct
-        set -e
-
-
-    else
-        echo "Not UNSAT!!!"
-        exit 255
-    fi
-    echo "CMS+FRAT done now"
-    )
-fi
-
-(
-set -e
-cd "$FNAME-dir"
-
-########################
-# Augment, fix up and sample the SQLite data
-########################
-
-rm -f "$FNAMEOUT.db"
-rm -f "$FNAMEOUT-min.db"
-rm -f "${FNAMEOUT}-min.db-cldata-*"
-rm -f out_pred_*
-rm -f sample.out
-rm -f check_quality.out
-rm -f clean_update.out
-rm -f fill_clauses.out
-
-../fix_up_frat.py correct "$FNAMEOUT.db-raw" | tee fill_used_clauses.out
-cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
-/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update_data.out
-../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_data_quality.out
-cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample_data.out
-
-
-########################
-# Denormalize the data into a Pandas Table, label it and sample it
-########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} | tee cldata_gen_pandas.out
-# ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
-
-
-####################################
-# Clustering for cldata, using cldata dataframe
-####################################
-# ../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 4 --scale --nocomputed
-
-
-####################################
-# Create the classifiers
-####################################
-
-# TODO: add --csv  to dump CSV
-#       then you can play with Weka
-#../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
-#../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
-
-set -e
-set -o pipefail
-rm -f .*.json
-regressors=("xgb") # "lgbm" )
-tiers=("short" "long" "forever")
-tables=("used_later" "used_later_anc")
-for tier in "${tiers[@]}"; do
-    for table in "${tables[@]}"; do
-        for regressor in "${regressors[@]}"; do
-            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier "${tier}" --table "${table}" --features best_only --regressor "$regressor" --basedir "." --bestfeatfile "$bestf"| tee "cldata_predict_${tier}-${table}-${regressor}.out"
-        done
-    done
+for f in "$STATS_BIN" "$PRED_BIN" "$bestf"; do
+    if [[ ! -e "$f" ]]; then echo "ERROR: $f does not exist"; exit 255; fi
 done
 
-############################
-# To get feature importances
-############################
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgb --allcomputed > output_long
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgb --nocomputed > output_long_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgb --allcomputed > output_short
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgb --nocomputed > output_short_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --top 2000 --xgb --nocomputed --topperc > "output_forever_nocomputed"
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --top 2000 --xgb --allcomputed --topperc > "output_forever"
-
-
-)
-
+function stage() { echo; echo "=================== $1 ==================="; }
 
 ########################
-# Build final CryptoMiniSat with the classifier
+# 1. Gather data with the STATS build
 ########################
-if [[ $SANITIZE -eq 1 ]]; then
-    ./build_final_predictor_sanitize.sh
+if [[ $SKIP_SOLVE -eq 0 ]]; then
+    rm -rf "$DIR"
+    mkdir -p "$DIR"
+    cd "$DIR"
+
+    stage "solving with STATS build"
+    # --xor 0: no XOR reasoning, so the proof is plain resolution
+    $NOBUF "$STATS_BIN" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
+        --cldatadumpratio "$DUMPRATIO" --cllockdatagen "$CLLOCK" \
+        --everypred "$EVERYPRED" --clid --sql 2 --sqlitedb data.db-raw \
+        --xlrup 0 --zero-exit-status "$FNAME" data.frat | tee cms-stats-run.out
+    grep "^c conflicts" cms-stats-run.out | head -1
+    if ! grep -q "^s UNSATISFIABLE" cms-stats-run.out; then
+        echo "ERROR: not UNSAT, crystalball needs an UNSAT instance"
+        exit 255
+    fi
+
+    # the solver's FRAT has full hint chains, no elaboration needed.
+    # Optionally check the proof anyway.
+    if [[ -x "$FRAT_XOR" && -x "$CAKE_XLRUP" ]]; then
+        stage "checking proof"
+        "$FRAT_XOR" elab data.frat "$FNAME" data.xlrup
+        "$CAKE_XLRUP" "$FNAME" data.xlrup | tee cake.out
+        grep -q "^s VERIFIED UNSAT" cake.out
+        rm -f data.xlrup data.frat.temp
+    fi
 else
-    ./build_final_predictor.sh
+    cd "$DIR"
 fi
 
-(
-cd "$FNAME-dir"
-ln -fs ../ml_module.py .
+########################
+# 2-4. Fill in used_clauses, clean, check, sample, learn
+########################
+if [[ $SKIP_LEARN -eq 0 ]]; then
+    rm -f data.db data-min.db data-min.db-cldata-* predictor-*.json *.out-stage
 
-TODO="000"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+    stage "fix_up_frat: which clause was used when"
+    cp data.db-raw data.db
+    "$SCRIPTDIR/fix_up_frat.py" data.frat data.db | tee fix_up_frat.out-stage
 
-TODO="001"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+    stage "clean_update_data"
+    "$SCRIPTDIR/clean_update_data.py" data.db | tee clean_update_data.out-stage
 
-TODO="010"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+    stage "check_data_quality"
+    "$SCRIPTDIR/check_data_quality.py" --slow data.db | tee check_data_quality.out-stage
 
-TODO="011"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+    stage "sample_data"
+    cp data.db data-min.db
+    "$SCRIPTDIR/sample_data.py" --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
+        data-min.db | tee sample_data.out-stage
 
-TODO="100"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+    stage "cldata_gen_pandas"
+    "$SCRIPTDIR/cldata_gen_pandas.py" data-min.db \
+        --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
+        --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} \
+        | tee cldata_gen_pandas.out-stage
 
-TODO="101"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+    stage "cldata_predict"
+    for tier in short long forever; do
+        for table in used_later used_later_anc; do
+            $NOBUF "$SCRIPTDIR/cldata_predict.py" \
+                "data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat" \
+                --tier "$tier" --table "$table" --features best_only --regressor xgb \
+                --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
+                --xgboostminchild "$XGB_MINCHILD" \
+                --basedir . --bestfeatfile "$bestf" \
+                > "cldata_predict_${tier}-${table}.out-stage" 2>&1
+            grep -E "Mean squared error|==> Saved" "cldata_predict_${tier}-${table}.out-stage" | head -2
+        done
+    done
+    ls -la predictor-*.json
+fi
 
-TODO="110"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
-
-TODO="111"
-../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
-
-)
-exit
-
-
-# old
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simfrat 1 --printsol 0 --predloc ./data/14-april-2021-69bad529f962c-cut1-3.0-cut2-25.0-limit-1000-est10-w0-xbmin50-xbmd6/ --predtype py --predbestfeats ./best_features-b93210018231ab04d2.txt
-
-# current
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simfrat 1 --printsol 0 --predloc ./data/18-sept-2021-a408d53c665f9305b-cut1-3.0-cut2-25.0-limit-1000-est15-w0-xbmin50-xbmd4-regxgb/ --predtype py --predbestfeats ./best_features-rdb0-only.txt
-
-# newest
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simfrat 1 --printsol 0 --predloc ./data/29-sept-a408d53c665f9305b-ccf121255372-cut1-3.0-cut2-25.0-limit-3000-est8-w0-xbmin10-xbmd6-regxgb/ --predtype py --predbestfeats ./best_features-correlaton.txt
+########################
+# 5. Run the predictor build with the learnt models
+########################
+stage "running FINAL_PREDICTOR build"
+ln -fs "$SCRIPTDIR/ml_module.py" .
+ln -fs "$SCRIPTDIR/ccg.py" .
+for TODO in 000 111; do
+    $NOBUF "$PRED_BIN" --predtype xgb --predloc . --predbestfeats "$bestf" \
+        --everypred "$EVERYPRED" --predtables $TODO --zero-exit-status "$FNAME" \
+        > "cms-pred-run.out-${TODO}" 2>&1 || true
+    echo -n "predtables $TODO: "; grep -E "^s |^c conflicts|Total time" "cms-pred-run.out-${TODO}" | tr '\n' ' '; echo
+done
+echo -n "STATS build:    "; grep -E "^s |^c conflicts" cms-stats-run.out | tr '\n' ' '; echo
+echo "Done. Predictors are in $DIR/predictor-*.json"

@@ -70,6 +70,7 @@ int ClPredictorsXGB::load_models(const std::string& short_fname,
                                const std::string& forever_fname,
                                const std::string& best_feats_fname)
 {
+    NoFPTraps no_traps;
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
@@ -78,6 +79,7 @@ int ClPredictorsXGB::load_models(const std::string& short_fname,
 
 int ClPredictorsXGB::load_models_from_buffers()
 {
+    NoFPTraps no_traps;
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::short_pred], predictor_short_json, predictor_short_json_len));
     safe_xgboost(XGBoosterLoadModelFromBuffer(
@@ -91,6 +93,7 @@ void ClPredictorsXGB::predict_all(
     float* const data,
     const uint32_t num)
 {
+    NoFPTraps no_traps;
     safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, missing_val, &dmat))
     if (num == 0) {
         return;
@@ -162,5 +165,6 @@ void ClPredictorsXGB::get_prediction_at(ClauseStatsExtra& extdata, const uint32_
 
 void CMSat::ClPredictorsXGB::finish_all_predict()
 {
+    NoFPTraps no_traps;
     safe_xgboost(XGDMatrixFree(dmat))
 }

@@ -147,6 +147,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
                                 const std::string& forever_fname,
                                 const std::string& best_feats_fname)
 {
+    NoFPTraps no_traps;
     Py_Initialize();
     import_array();
     wchar_t *tmp = charToWChar(best_feats_fname.c_str());
@@ -218,6 +219,7 @@ void ClPredictorsPy::predict_all(
     if (num == 0) {
         return;
     }
+    NoFPTraps no_traps;
 
     // Create NumPy 2D array with data
     npy_intp dims[2];

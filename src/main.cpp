@@ -345,24 +345,22 @@ void Main::add_supported_options() {
     #endif
 
     #ifdef FINAL_PREDICTOR
-    po::options_description predictOptions("Predict options");
-    predictOptions.add_options()
     program.add_argument("--predloc")
-        .action([&](const auto& a) {conf.pred_conf_location = fc_int(a);})
-         .default_value(conf.pred_conf_location)
-        .help("Directory where predictor_short.json, predictor_long.json, predictor_forever.json are");
+        .action([&](const auto& a) {conf.pred_conf_location = a;})
+        .default_value(conf.pred_conf_location)
+        .help("Directory with predictor-<table>-<tier>-<type>.json (see --predtables), empty = use built-in models");
     program.add_argument("--predtype")
-        .action([&](const auto& a) {conf.predictor_type = fc_int(a);})
+        .action([&](const auto& a) {conf.predictor_type = a;})
         .default_value(conf.predictor_type)
-        .help("Type of predictor. Supported: py, xgb, lgbm");
+        .help("Type of predictor. Supported: py, xgb");
     program.add_argument("--predtables")
-        .action([&](const auto& a) {conf.pred_tables = fc_int(a);})
+        .action([&](const auto& a) {conf.pred_tables = a;})
         .default_value(conf.pred_tables)
-        .help("000 = normal for all, 111 = ancestor for all");
+        .help("Per short/long/forever: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all");
     program.add_argument("--predbestfeats")
-         .action([&](const auto& a) {conf.predict_best_feat_fname = a);})
-         .default_value(conf.predict_best_feat_fname)
-        .help("Model python file name");
+        .action([&](const auto& a) {conf.predict_best_feat_fname = a;})
+        .default_value(conf.predict_best_feat_fname)
+        .help("Best features file, only for --predtype py");
 
     //size
     program.add_argument("--predshortsize")

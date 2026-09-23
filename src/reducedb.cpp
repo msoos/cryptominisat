@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
-#include "cl_predictors_lgbm.h"
 #include "cl_predictors_py.h"
 #endif
 
@@ -1014,7 +1013,7 @@ void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs, uint32_t lev) {
     if (!solver->conf.dump_pred_distrib) {
         return;
     }
-    std::ofstream distrib_file("pred_distrib.csv", ios::app);
+    std::ofstream distrib_file("pred_distrib.csv", std::ios::app);
     for(const auto& off:offs) {
         Clause* cl = solver->cl_alloc.ptr(off);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
@@ -1047,12 +1046,10 @@ void ReduceDB::handle_predictors()
     if (predictors == nullptr) {
         if (solver->conf.predictor_type == "xgb") {
             predictors = new ClPredictorsXGB;
-        } else if (solver->conf.predictor_type == "lgbm") {
-            predictors = new ClPredictorsLGBM;
         } else if (solver->conf.predictor_type == "py") {
             predictors = new ClPredictorsPy;
         } else {
-            cout << "ERROR: You must give either lgbm or xgboost for predictor" << endl;
+            cout << "ERROR: You must give either py or xgb for predictor" << endl;
             exit(-1);
         }
         if (solver->conf.pred_conf_location.empty()) {

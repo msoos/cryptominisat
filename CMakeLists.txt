@@ -366,13 +366,15 @@ message(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 if(FINAL_PREDICTOR)
-    message(STATUS "You HAVE to build xgboost and LightGBM with 'cmake -DBUILD_STATIC_LIB=ON -DUSE_OPENMP=OFF ..' for static linking")
-    find_package(dmlc REQUIRED)
-    find_package(rabit REQUIRED)
-    find_package(xgboost REQUIRED)
-    find_library(lightgbm
-    NAMES _lightgbm lightgbm LightGBM
-    REQUIRED)
+    # only the xgboost C API is needed: xgboost/c_api.h + libxgboost.so
+    # (the one shipped in the xgboost pip package works: -DXGBOOST_LIBRARY=...)
+    find_path(XGBOOST_INCLUDE_DIR NAMES xgboost/c_api.h REQUIRED)
+    find_library(XGBOOST_LIBRARY NAMES xgboost REQUIRED)
+    message(STATUS "xgboost include: ${XGBOOST_INCLUDE_DIR} lib: ${XGBOOST_LIBRARY}")
+    add_library(xgboost_c SHARED IMPORTED)
+    set_target_properties(xgboost_c PROPERTIES
+        IMPORTED_LOCATION "${XGBOOST_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${XGBOOST_INCLUDE_DIR}")
     add_compile_definitions(FINAL_PREDICTOR)
 endif()
 

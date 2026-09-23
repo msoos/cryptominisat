@@ -2037,7 +2037,7 @@ Clause* Searcher::handle_last_confl(
         #ifdef STATS_NEEDED
         cl->stats.is_tracked = to_track;
         if (cl->stats.is_tracked) ext_stats.orig_ID = ID;
-        if (sqlStats) sqlStats->update_id(ID, ID); // this is how we know it's tracked
+        if (to_track && sqlStats) sqlStats->update_id(ID, ID); // this is how fix_up_frat knows it's tracked
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
