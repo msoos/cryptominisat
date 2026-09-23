@@ -417,9 +417,7 @@ private:
 inline void PropEngine::new_decision_level()
 {
     trail_lim.push_back(trail.size());
-    #ifdef VERBOSE_DEBUG
-    cout << "New decision level: " << trail_lim.size() << endl;
-    #endif
+    VERBOSE_PRINT("New decision level: " << trail_lim.size());
 }
 
 inline uint32_t PropEngine::decisionLevel() const
@@ -518,10 +516,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     , PropBy& confl
 ) {
     confl = PropBy(offset);
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    Clause& c = *cl_alloc.ptr(offset);
-    cout << "Conflict from cl: " << c << endl;
-    #endif
+    VERBOSE_PRINT("Conflict from cl: " << *cl_alloc.ptr(offset));
 
     STATS_DO(if (!inprocess && c.red()) red_stats_extra[c.stats.extra_pos].conflicts_made++);
 
@@ -538,28 +533,12 @@ void PropEngine::enqueue(const Lit p)
 template<bool inprocess>
 void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, bool do_unit_frat)
 {
-    #ifdef VERBOSE_DEBUG
-    if (level == 0) {
-        cout << "enqueue var " << p.var()+1
-        << " to val " << !p.sign()
-        << " level: " << level
-        << " decisonLevel(): " << decisionLevel()
-        << " sublevel: " << trail.size()
-        << " by: " << from << endl;
-        cout << "trail at level 0: ";
-        for(auto const& x: trail) {
-            cout << "(lit: " << x.lit << " lev: " << x.lev << ")";
-        }
-        cout << endl;
-    }
-    #endif //DEBUG_ENQUEUE_LEVEL0
-
-    #ifdef ENQUEUE_DEBUG
-    assert(trail.size() <= nVarsOuter());
-    #endif
+    VERBOSE_PRINT("enqueue " << p << " level: " << level << " declevel: " << decisionLevel()
+        << " sublevel: " << trail.size() << " by: " << from);
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
+    SLOW_DEBUG_DO(assert(trail.size() <= nVarsOuter()));
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
