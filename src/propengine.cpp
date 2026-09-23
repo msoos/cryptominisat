@@ -940,6 +940,87 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     return true;
 }
 
+//Branching statistics of STATS builds, kept out of the hot enqueue
+void PropEngine::enqueue_branch_stats([[maybe_unused]] const Lit p, [[maybe_unused]] const PropBy from)
+{
+    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
+    const uint32_t v = p.var();
+    varData[v].set++;
+    if (from == PropBy()) {
+        #ifdef STATS_NEEDED_BRANCH
+        sql_dump_vardata_picktime(v, from);
+        varData[v].num_decided++;
+        varData[v].last_decided_on = sumConflicts;
+        if (!p.sign()) varData[v].num_decided_pos++;
+        #endif
+    } else {
+        sumPropagations++;
+        #ifdef STATS_NEEDED_BRANCH
+        bool flipped = (varData[v].polarity != !p.sign());
+        if (flipped) {
+            varData[v].last_flipped = sumConflicts;
+        }
+        varData[v].num_propagated++;
+        varData[v].last_propagated = sumConflicts;
+        if (!p.sign()) varData[v].num_propagated_pos++;
+        #endif
+    }
+    #endif
+    #ifdef STATS_NEEDED
+    if (p.sign()) propStats.varSetNeg++;
+    else propStats.varSetPos++;
+    #endif
+}
+
+//A level-0 assignment is a unit clause in the proof: emit it with hints
+//(unit IDs of the reason's other lits first, reason ID last)
+void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat)
+{
+    const uint32_t v = p.var();
+    if (!do_unit_frat) {
+        assert(unit_cl_IDs[v] != 0);
+        assert(unit_cl_XIDs[v] != 0);
+        return;
+    }
+    int32_t reason_id = 0;
+    tmp_unit_hints.clear();
+    switch (from.getType()) {
+        case PropByType::binary_t:
+            reason_id = from.get_id();
+            tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
+            break;
+        case PropByType::clause_t: {
+            Clause* cl = cl_alloc.ptr(from.get_offset());
+            reason_id = cl->stats.id;
+            for(auto const& l: *cl)
+                if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        case PropByType::xor_t: {
+            auto cl = get_xor_reason(from, reason_id);
+            for(auto const& l: *cl)
+                if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        default: break; //null/BNN: no hints
+    }
+
+    const auto id = ++clauseID;
+    const auto xid = ++clauseXID;
+    *frat << add << id << p;
+    if (reason_id != 0) {
+        *frat << fratchain << tmp_unit_hints << reason_id;
+    }
+    *frat << fin;
+    if (frat && !frat->incremental())
+      *frat << implyxfromcls << xid << p << fratchain << id << fin;
+
+    assert(unit_cl_IDs[v] == 0);
+    assert(unit_cl_XIDs[v] == 0);
+    unit_cl_IDs[v] = id;
+    unit_cl_XIDs[v] = xid;
+}
+
 #ifdef STATS_NEEDED_BRANCH
 void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 {

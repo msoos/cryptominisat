@@ -410,6 +410,8 @@ private:
         , uint32_t currLevel
     );
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
+    void enqueue_branch_stats(const Lit p, const PropBy from);
+    void enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat);
 
     PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
 };
@@ -542,31 +544,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
-
-    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    if (!inprocess) {
-        varData[v].set++;
-        if (from == PropBy()) {
-            #ifdef STATS_NEEDED_BRANCH
-            sql_dump_vardata_picktime(v, from);
-            varData[v].num_decided++;
-            varData[v].last_decided_on = sumConflicts;
-            if (!p.sign()) varData[v].num_decided_pos++;
-            #endif
-        } else {
-            sumPropagations++;
-            #ifdef STATS_NEEDED_BRANCH
-            bool flipped = (varData[v].polarity != !p.sign());
-            if (flipped) {
-                varData[v].last_flipped = sumConflicts;
-            }
-            varData[v].num_propagated++;
-            varData[v].last_propagated = sumConflicts;
-            if (!p.sign()) varData[v].num_propagated_pos++;
-            #endif
-        }
-    }
-    #endif
+    if (!inprocess) enqueue_branch_stats(p, from);
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
@@ -575,66 +553,10 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     varData[v].level = level;
     varData[v].sublevel = trail.size();
 
-    if (level == 0 && frat->enabled())
-    {   if (do_unit_frat) {
-            //hints: unit IDs of the reason's other lits first, reason ID last
-            int32_t reason_id = 0;
-            tmp_unit_hints.clear();
-            switch (from.getType()) {
-                case PropByType::binary_t:
-                    reason_id = from.get_id();
-                    tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
-                    break;
-                case PropByType::clause_t: {
-                    Clause* cl = cl_alloc.ptr(from.get_offset());
-                    reason_id = cl->stats.id;
-                    for(auto const& l: *cl)
-                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
-                    break;
-                }
-                case PropByType::xor_t: {
-                    auto cl = get_xor_reason(from, reason_id);
-                    for(auto const& l: *cl)
-                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
-                    break;
-                }
-                default: break; //null/BNN: no hints
-            }
+    if (level == 0 && frat->enabled()) enqueue_level0_frat(p, from, do_unit_frat);
 
-            const auto id = ++clauseID;
-            const auto xid = ++clauseXID;
-            *frat << add << id << p;
-            if (reason_id != 0) {
-                *frat << fratchain << tmp_unit_hints << reason_id;
-            }
-            *frat << fin;
-            if (frat && !frat->incremental())
-              *frat << implyxfromcls << xid << p << fratchain << id << fin;
-
-            assert(unit_cl_IDs[v] == 0);
-            assert(unit_cl_XIDs[v] == 0);
-            unit_cl_IDs[v] = id;
-            unit_cl_XIDs[v] = xid;
-        } else {
-            assert(unit_cl_IDs[v] != 0);
-            assert(unit_cl_XIDs[v] != 0);
-        }
-    }
-
-    if (!inprocess) {
-        #ifdef STATS_NEEDED
-        if (sign) {
-            propStats.varSetNeg++;
-        } else {
-            propStats.varSetPos++;
-        }
-        #endif
-    }
     trail.push_back(Trail(p, level));
-
-    if (inprocess) {
-        propStats.bogoProps += 1;
-    }
+    if (inprocess) propStats.bogoProps += 1;
 }
 
 template<bool bin_only>
