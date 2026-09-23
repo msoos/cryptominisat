@@ -41,7 +41,6 @@ import sklearn.ensemble
 import sklearn.linear_model
 import helper
 import xgboost as xgb
-import lightgbm as lgbm
 import ast
 import math
 import functools
@@ -59,7 +58,7 @@ if int(ver[0]) == 0 and int(ver[1]) < 20:
 else:
     from sklearn.model_selection import train_test_split
 
-MISSING=np.NaN
+MISSING=np.nan
 
 class MyEnsemble:
     def __init__(self, models):
@@ -228,7 +227,7 @@ class Learner:
             # poly transform
             poly = sklearn.preprocessing.PolynomialFeatures(2)
             transformed = poly.fit_transform(transformed)
-            features = poly.get_feature_names(input_features=features)
+            features = list(poly.get_feature_names_out(input_features=features))
 
             # recreate dataframe
             transformed = np.append(transformed, df[extra_feats].values, axis=1)
@@ -274,11 +273,6 @@ class Learner:
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
                 n_estimators=options.n_estimators_xgboost)
-        clf_lgbm = model = lgbm.LGBMRegressor(
-            subsample=options.xgboost_subsample,
-            min_child_samples=options.min_child_weight_xgboost, # from doc: "Minimum number of data needed in a child"
-            max_depth=options.xboost_max_depth,
-            n_estimators=options.n_estimators_xgboost)
 
         if options.regressor == "tree":
             clf = clf_tree
@@ -294,8 +288,6 @@ class Learner:
             clf = clf_elasticnet
         elif options.regressor == "forest":
             clf = clf_forest
-        elif options.regressor == "lgbm":
-            clf = clf_lgbm
         elif options.regressor == "xgb":
             print("Using xgboost no. estimators:", options.n_estimators_xgboost)
             clf = clf_xgboost
@@ -362,11 +354,8 @@ class Learner:
                 booster = clf.get_booster()
                 booster.save_model(fname_pred_out)
                 print("==> Saved XGB model to: ", fname_pred_out)
-            elif options.basedir and options.regressor == "lgbm":
-                clf.booster_.save_model(fname_pred_out)
-                print("==> Saved LGBM model to: ", fname_pred_out)
         else:
-            print("WARNING: NOT writing code -- you must use xgboost/lgbm and give dir for that")
+            print("WARNING: NOT writing predictor -- you must use xgb and give --basedir for that")
 
 
         # print feature rankings
@@ -422,7 +411,6 @@ class Learner:
 
     def learn(self):
         if options.raw_data_plots:
-            pd.options.display.mpl_style = "default"
             df.hist()
             df.boxplot()
 
@@ -589,7 +577,7 @@ if __name__ == "__main__":
     # only "fname" is allowed to be an object (a string)
     for name,ty in zip(list(df), df.dtypes):
         if name == "fname":
-            assert ty == object
+            assert ty == object or pd.api.types.is_string_dtype(ty)
         else:
             if ty == object:
                 print("name: " , name, " is object!")
@@ -619,7 +607,7 @@ if __name__ == "__main__":
             assert False
 
     print("Filling NA with MISSING..")
-    df.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
+    df.replace([np.inf, -np.inf], MISSING, inplace=True)
 
     if options.dat_file is not None:
         cols = list(df)

@@ -304,7 +304,7 @@ class QueryCls (helper.QueryHelper):
 
         one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 1 ")
         one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 2 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 2 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 2 and rdb0.dump_no <= 20 ")
         one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 20 ")
 
         df = pd.concat(df_parts)

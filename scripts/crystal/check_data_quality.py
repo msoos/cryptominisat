@@ -133,8 +133,8 @@ class Queries (helper.QueryHelper):
         if options.slow:
 
             queries = """
-            create index `idx-check-qual1` on `reduceDB` (`clauseID`);
-            create index `idx-check-qual2` on `clause_stats` ( `clauseID`);
+            create index if not exists `idx-check-qual1` on `reduceDB` (`clauseID`);
+            create index if not exists `idx-check-qual2` on `clause_stats` ( `clauseID`);
             """
             for l in queries.split('\n'):
                 self.c.execute(l)
@@ -151,8 +151,8 @@ class Queries (helper.QueryHelper):
                 exit(-1)
 
             queries = """
-            drop index `idx-check-qual1`;
-            drop index `idx-check-qual2`;
+            drop index if exists `idx-check-qual1`;
+            drop index if exists `idx-check-qual2`;
             """
             for l in queries.split('\n'):
                 self.c.execute(l)

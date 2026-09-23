@@ -30,7 +30,7 @@ from ccg import *
 # to test memory usage
 #from memory_profiler import *
 
-MISSING=np.NaN
+MISSING=np.nan
 
 raw_data = [
     "is_ternary_resolvent",
@@ -205,7 +205,7 @@ def predict(data, check=False, dump=False):
 
     add_features(df, transformed_data)
     df_final = pd.DataFrame(transformed_data, columns=best_features)
-    df_final.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
+    df_final.replace([np.inf, -np.inf], MISSING, inplace=True)
 
     if check:
         check_against_binary_dat('bin_dump'+str(num_called)+".csv", df_final, df)
