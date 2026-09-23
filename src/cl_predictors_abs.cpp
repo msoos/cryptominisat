@@ -133,9 +133,10 @@ int ClPredictorsAbst::set_up_input(
 //     33
 
 
-    if (cl->stats.is_ternary_resolvent ||
-        solver->hist.glueHistLT.avg() == 0
-    ) {
+    //glue is NULL in the data for ternary resolvents and eagerly subsumed
+    //clauses (glue == CL_MAX_GLUE), so it's missing here too
+    const bool no_glue = cl->stats.is_ternary_resolvent || cl->stats.glue == CL_MAX_GLUE;
+    if (no_glue || solver->hist.glueHistLT.avg() == 0) {
         at[x++] = missing_val;
     } else {
         at[x++] = (double)cl->stats.glue/(double)solver->hist.glueHistLT.avg();
@@ -183,9 +184,7 @@ int ClPredictorsAbst::set_up_input(
 
 
     //////////////////
-    if (cl->stats.is_ternary_resolvent ||
-        extra_stats.trail_depth_level == 0
-    ) {
+    if (no_glue || extra_stats.trail_depth_level == 0) {
         at[x++] = missing_val;
     } else {
         at[x++] = (double)cl->stats.glue/(double)extra_stats.trail_depth_level;

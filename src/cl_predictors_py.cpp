@@ -110,7 +110,7 @@ int ClPredictorsPy::set_up_input(
         at[x++] = extra_stats.antecedents_binred;
         at[x++] = extra_stats.num_total_lits_antecedents;
         at[x++] = extra_stats.numResolutionsHistLT_avg;
-        at[x++] = cl->stats.glue;
+        at[x++] = cl->stats.glue == CL_MAX_GLUE ? missing_val : (float)cl->stats.glue;
         at[x++] = extra_stats.orig_glue;
         at[x++] = extra_stats.glue_before_minim;
         at[x++] = extra_stats.trail_depth_level;

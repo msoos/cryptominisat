@@ -51,12 +51,7 @@ except ImportError:
 else:
     mlflow_avail = True
 
-ver = sklearn.__version__.split(".")
-print("version: ", ver)
-if int(ver[0]) == 0 and int(ver[1]) < 20:
-    from sklearn.cross_validation import train_test_split
-else:
-    from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 
 MISSING=np.nan
 
@@ -216,7 +211,17 @@ class Learner:
         print("Value distribution of 'rdb0.glue':\n%s" % df["rdb0.glue"].value_counts())
         print("Value distribution of to_predict:\n%s" % df[to_predict].value_counts())
 
-        train, test = train_test_split(df, test_size=0.33, random_state=prng)
+        # split by clause, not by row: a clause's rows from different dumps
+        # are near-duplicates, splitting them would make the test set
+        # look better than it is
+        groups = self.df["sum_cl_use.clauseID"]
+        splitter = GroupShuffleSplit(n_splits=1, test_size=0.33, random_state=prng)
+        train_idx, test_idx = next(splitter.split(df, groups=groups))
+        train = df.iloc[train_idx]
+        test = df.iloc[test_idx]
+        print("Train/test split by clause: %d/%d rows, %d/%d clauses" % (
+            train.shape[0], test.shape[0],
+            groups.iloc[train_idx].nunique(), groups.iloc[test_idx].nunique()))
         if options.regressor in ["linear", "tree"]:
             train, test = self.scale_and_impute(train, test, features, extra_feats)
 
