@@ -155,6 +155,10 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     for (const ClOffset offs: solver->longRedCls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
+        {
+            const uint32_t g = cl->stats.glue;
+            rstats.live_tier[g <= solver->tier1_glue ? 0 : (g <= solver->tier2_glue ? 1 : 2)]++;
+        }
         if (solver->clause_locked(*cl, offs)) { rstats.locked++; continue; } //reasons are kept, as in CaDiCaL
         const uint32_t used = cl->stats.used;
         if (used) cl->stats.used = used - 1;
@@ -295,6 +299,8 @@ void ReduceDB::handle_reduce()
     << " rem: " << rstats.removed
     << " (t1/t2/t3: " << rstats.removed_tier[0] << "/" << rstats.removed_tier[1]
     << "/" << rstats.removed_tier[2] << ")"
+    << " live t1/t2/t3: " << rstats.live_tier[0] << "/" << rstats.live_tier[1]
+    << "/" << rstats.live_tier[2]
     << " kept-used: " << rstats.kept_used
     << " kept-keep: " << rstats.kept_keep
     << " locked: " << rstats.locked
@@ -341,6 +347,12 @@ void ReduceDB::print_reduce_stats() const
         stats_line_percent(r.removed_tier[1], r.removed), "% of removed");
     print_stats_line(p + "reduce removed tier3", r.removed_tier[2],
         stats_line_percent(r.removed_tier[2], r.removed), "% of removed");
+    for(int t = 0; t < 3; t++) {
+        print_stats_line(p + "avg red cls in tier" + std::to_string(t+1),
+            float_div(r.live_tier[t], num_reductions),
+            stats_line_percent(r.live_tier[t], r.live_tier[0] + r.live_tier[1] + r.live_tier[2]),
+            "% of red cls seen");
+    }
     print_stats_line(p + "reduce kept used", r.kept_used,
         stats_line_percent(r.kept_used, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
     print_stats_line(p + "reduce kept tier1-keep", r.kept_keep,
