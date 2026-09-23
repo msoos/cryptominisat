@@ -340,7 +340,10 @@ bool DistillerLong::distill_long_cls_all(
     //Cap the schedule, as CaDiCaL's vivifyschedmax: sorting and the
     //per-candidate literal copies below must not dominate a small budget.
     //Keep the best by (prio, glue, size), hand the rest back untouched
-    const uint32_t sched_max = solver->conf.distill_sched_max;
+    //A candidate costs ~1K bogoprops at least, so a small budget must not
+    //pay for sorting thousands of candidates it will never reach
+    const uint32_t sched_max = std::min<uint64_t>(solver->conf.distill_sched_max,
+        std::max<uint64_t>(100, maxNumProps / 1000));
     if (todo.size() > sched_max) {
         vector<uint32_t> idx(todo.size());
         for(uint32_t i = 0; i < todo.size(); i++) idx[i] = i;
