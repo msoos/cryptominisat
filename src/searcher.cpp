@@ -3568,7 +3568,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 template<bool inprocess, bool red_also, bool distill_use>
 PropBy Searcher::propagate() {
     uint32_t last_trail = trail.size();
-    PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
+    PropBy ret = propagate_core<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled())) {

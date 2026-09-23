@@ -375,17 +375,17 @@ protected:
 
 protected:
     template<bool inprocess, bool red_also = true, bool distill_use = false>
-    PropBy propagate_any_order();
+    PropBy propagate_core();
     template<bool bin_only=true> PropBy propagate_light();
     template<bool inprocess>
-    PropResult prop_normal_helper(
+    PropResult find_new_watch(
         Clause& c
         , ClOffset offset
         , Watched*& j
         , const Lit p
     );
     template<bool inprocess>
-    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
+    PropResult handle_long_cl_conflict(Clause& c, ClOffset offset, PropBy& confl);
 
 private:
     Solver* solver;
@@ -401,8 +401,8 @@ private:
         , PropBy& confl
         , uint32_t currLevel
     );
-    template<bool inprocess, bool red_also, bool use_disable>
-    bool prop_long_cl_any_order(
+    template<bool inprocess, bool red_also, bool distill_use>
+    bool prop_long_cl(
         Watched* i
         , Watched*& j
         , const Lit p
@@ -454,7 +454,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
 }
 
 template<bool inprocess>
-inline PropResult PropEngine::prop_normal_helper(
+inline PropResult PropEngine::find_new_watch(
     Clause& c
     , ClOffset offset
     , Watched*& j
@@ -507,7 +507,7 @@ inline PropResult PropEngine::prop_normal_helper(
 
 
 template<bool inprocess>
-inline PropResult PropEngine::handle_normal_prop_fail(
+inline PropResult PropEngine::handle_long_cl_conflict(
     Clause&
     #ifdef STATS_NEEDED
     c

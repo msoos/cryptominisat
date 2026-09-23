@@ -619,8 +619,8 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-template<bool inprocess, bool red_also, bool use_disable>
-bool PropEngine::prop_long_cl_any_order(
+template<bool inprocess, bool red_also, bool distill_use>
+bool PropEngine::prop_long_cl(
     Watched* i
     , Watched*& j
     , const Lit p
@@ -639,7 +639,7 @@ bool PropEngine::prop_long_cl_any_order(
     #ifdef SLOW_DEBUG
     assert(!c.get_removed());
     assert(!c.freed());
-    if (!use_disable) {
+    if (!distill_use) {
         assert(!c.disabled);
     }
     #endif
@@ -649,18 +649,18 @@ bool PropEngine::prop_long_cl_any_order(
         return true;
     }
 
-    if (use_disable && c.disabled) {
+    if (distill_use && c.disabled) {
         *j++ = *i;
         return true;
     }
 
-    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING)
+    if (find_new_watch<inprocess>(c, offset, j, p) == PROP_NOTHING)
         return true;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        handle_normal_prop_fail<inprocess>(c, offset, confl);
+        handle_long_cl_conflict<inprocess>(c, offset, confl);
         return false;
     } else {
         if (!inprocess) {
@@ -736,10 +736,10 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
 }
 
 template<bool inprocess, bool red_also, bool distill_use>
-PropBy PropEngine::propagate_any_order()
+PropBy PropEngine::propagate_core()
 {
     PropBy confl;
-    VERBOSE_PRINT("propagate_any_order started");
+    VERBOSE_PRINT("propagate_core started");
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
@@ -774,7 +774,7 @@ PropBy PropEngine::propagate_any_order()
 
             //propagate normal clause
             assert(i->isClause());
-            prop_long_cl_any_order<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
+            prop_long_cl<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
         }
         while (i != end) {
             *j++ = *i++;
@@ -803,14 +803,14 @@ PropBy PropEngine::propagate_any_order()
     }
     #endif
 
-    VERBOSE_PRINT("Propagation (propagate_any_order) ended.");
+    VERBOSE_PRINT("Propagation (propagate_core) ended.");
 
     return confl;
 }
-template PropBy PropEngine::propagate_any_order<false>();
-template PropBy PropEngine::propagate_any_order<true>();
-template PropBy PropEngine::propagate_any_order<true, false, true>();
-template PropBy PropEngine::propagate_any_order<true, true,  true>();
+template PropBy PropEngine::propagate_core<false>();
+template PropBy PropEngine::propagate_core<true>();
+template PropBy PropEngine::propagate_core<true, false, true>();
+template PropBy PropEngine::propagate_core<true, true,  true>();
 
 
 void PropEngine::updateVars(
