@@ -29,9 +29,9 @@ using std::endl;
 using namespace CMSat;
 
 
-void SatZillaFeatures::print_stats() const
+void SatZillaFeatures::print_stats(const std::string& prefix) const
 {
-    cout << solver->conf.prefix << "[satzilla_features] ";
+    cout << prefix << "[satzilla_features] ";
     cout << "numVars " << numVars << ", ";
     cout << "numClauses " << numClauses << ", ";
     cout << "var_cl_ratio " << var_cl_ratio << ", ";

@@ -141,7 +141,6 @@ SQLiteStats::~SQLiteStats()
 
     //Free all the prepared statements
     del_prepared_stmt(stmtRst);
-    del_prepared_stmt(stmtVarRst);
     del_prepared_stmt(stmtClRst);
     del_prepared_stmt(stmtFeat);
     del_prepared_stmt(stmtReduceDB);

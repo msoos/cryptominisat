@@ -1388,7 +1388,6 @@ void Main::manually_parse_some_options()
             input_file = files[0];
 #ifdef USE_SQLITE3
             if (!program.is_used("sqlitedb")) sqlite_filename = input_file + ".sqlite";
-            else sqlite_filename = program.get<string>("sqlitedb");
 #endif
             fileNamePresent = true;
         } else assert(false && "The try() should not have succeeded");

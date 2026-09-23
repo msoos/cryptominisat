@@ -2045,7 +2045,7 @@ Clause* Searcher::handle_last_confl(
         #ifdef STATS_NEEDED
         ext_stats.connects_num_communities = connects_num_communities;
         ext_stats.orig_connects_num_communities = connects_num_communities;
-        cl->stats.locked_for_data_gen =
+        cl->stats.locked_for_data_gen = to_track &&
             (double)rnd_uint(solver->mtrand,100000)/100000.0 < conf.lock_for_data_gen_ratio;
         #endif
 

@@ -3070,7 +3070,7 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     satzilla_feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
     if (conf.verbosity > 2) {
-        satzilla_feat.print_stats();
+        satzilla_feat.print_stats(conf.prefix);
     }
 
     if (sqlStats) {
@@ -3452,6 +3452,7 @@ void Solver::stats_del_cl(Clause* cl)
         assert(stats_extra.orig_ID != 0);
         assert(stats_extra.orig_ID <= cl->stats.id);
         sqlStats->cl_last_in_solver(this, stats_extra.orig_ID);
+        cl->stats.is_tracked = false; // exactly one cl_last_in_solver per clause
     }
 }
 

@@ -35,7 +35,7 @@ namespace CMSat {
 
 struct SatZillaFeatures
 {
-    void print_stats() const;
+    void print_stats(const std::string& prefix) const;
 
     //Some parameter
     double eps = 0.00001;

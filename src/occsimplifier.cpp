@@ -2577,10 +2577,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #endif
 
         #ifdef STATS_NEEDED
-
-        if ((double)rnd_uint(solver->mtrand,100000)/100000.0  < solver->conf.lock_for_data_gen_ratio) {
-            assert(false && "//TODO mark clause for dumping");
-        }
+        const bool to_track = (double)rnd_uint(solver->mtrand,100000)/100000.0
+            < solver->conf.dump_individual_cldata_ratio;
         #endif
 
         tmp_tern_res.assign(newcl.lits.begin(), newcl.lits.begin() + newcl.size);
@@ -2589,9 +2587,13 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, &stats, true, &hints);
         if (newCl) {
             #ifdef STATS_NEEDED
-            newCl->stats.locked_for_data_gen =
+            newCl->stats.is_tracked = to_track;
+            if (to_track) {
+                stats_extra.orig_ID = newCl->stats.id;
+                if (solver->sqlStats) solver->sqlStats->update_id(newCl->stats.id, newCl->stats.id);
+            }
+            newCl->stats.locked_for_data_gen = to_track &&
                 (double)rnd_uint(solver->mtrand,100000)/100000.0  < solver->conf.lock_for_data_gen_ratio;
-            if (newCl->stats.locked_for_data_gen) newCl->stats.which_red_array = 0;
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             solver->red_stats_extra.push_back(stats_extra);
