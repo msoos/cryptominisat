@@ -39,9 +39,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 {
     timedOutPropagateFull = false;
     propStats.otfHyperPropCalled++;
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Prop full BFS started" << endl;
-    #endif
+    VERBOSE_DEBUG_DO(cout << "Prop full BFS started" << endl;);
 
     PropBy confl;
     assert(uselessBin.empty());
@@ -185,10 +183,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
         if (frat->enabled()) tmp_orig_ancestors = currAncestors;
         deepestAncestor = deepest_common_ancestor();
 
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Adding hyper-bin clause: " << p << " , "
-        << ~deepestAncestor << " ID: " << ID << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << " ID: " << ID << endl;);
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
         if (frat->enabled()) {
             //hints: per ancestor, its bin chain down from the common
@@ -214,12 +209,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
         //0-level propagation is NEVER made by propFull
         assert(currAncestors.size() > 0);
 
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout
-        << "Not adding hyper-bin because only ONE lit is not set at"
-        << "level 0 in long clause, but that long clause needs to be cleaned"
-        << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Not adding hyper-bin because only ONE lit is not set at" << "level 0 in long clause, but that long clause needs to be cleaned" << endl;);
         deepestAncestor = currAncestors[0];
         hyperBinNotAdded = true;
         if (frat->enabled()) {
@@ -330,38 +320,21 @@ bool HyperEngine::is_ancestor_of(
     , const Lit lookingForAncestor
 ) {
     propStats.otfHyperTime += 1;
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "is_ancestor_of."
-    << "conflict: " << conflict
-    << " thisAncestor: " << thisAncestor
-    << " thisStepRed: " << thisStepRed
-    << " onlyIrred: " << onlyIrred
-    << " lookingForAncestor: " << lookingForAncestor << endl;
-    #endif
+    VERBOSE_DEBUG_DO(cout << "is_ancestor_of." << "conflict: " << conflict << " thisAncestor: " << thisAncestor << " thisStepRed: " << thisStepRed << " onlyIrred: " << onlyIrred << " lookingForAncestor: " << lookingForAncestor << endl;);
 
     //Was propagated at level 0 -- clauseCleaner will remove the clause
     if (lookingForAncestor == lit_Undef)
         return false;
 
     if (lookingForAncestor == thisAncestor) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Last position inside prop queue is not saved during propFull" << endl
-        << "This may be the same exact binary clause -- not removing" << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Last position inside prop queue is not saved during propFull" << endl << "This may be the same exact binary clause -- not removing" << endl;);
         return false;
     }
 
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Looking for ancestor of " << conflict << " : " << lookingForAncestor << endl;
-    cout << "This step based on redundant cl? " << (thisStepRed ? "yes" : "false") << endl;
-    cout << "Only irred is acceptable?" << (onlyIrred ? "yes" : "no") << endl;
-    cout << "This step would be based on redundant cl?" << (thisStepRed ? "yes" : "no") << endl;
-    #endif
+    VERBOSE_DEBUG_DO(cout << "Looking for ancestor of " << conflict << " : " << lookingForAncestor << endl; cout << "This step based on redundant cl? " << (thisStepRed ? "yes" : "false") << endl; cout << "Only irred is acceptable?" << (onlyIrred ? "yes" : "no") << endl; cout << "This step would be based on redundant cl?" << (thisStepRed ? "yes" : "no") << endl;);
 
     if (onlyIrred && thisStepRed) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "This step doesn't work -- is redundant but needs irred" << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "This step doesn't work -- is redundant but needs irred" << endl;);
         return false;
     }
 
@@ -371,24 +344,15 @@ bool HyperEngine::is_ancestor_of(
     while(thisAncestor != lit_Undef
         && (!use_depth_trick || bottom <= depth[thisAncestor.var()])
     ) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Current acestor: " << thisAncestor
-        << " redundant step? " << varData[thisAncestor.var()].reason.isRedStep()
-        << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Current acestor: " << thisAncestor << " redundant step? " << varData[thisAncestor.var()].reason.isRedStep() << endl;);
 
         if (thisAncestor == conflict) {
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "We are trying to step over the conflict."
-            << " That would create a loop." << endl;
-            #endif
+            VERBOSE_DEBUG_DO(cout << "We are trying to step over the conflict." << " That would create a loop." << endl;);
             return false;
         }
 
         if (thisAncestor == lookingForAncestor) {
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Ancestor found" << endl;
-            #endif
+            VERBOSE_DEBUG_DO(cout << "Ancestor found" << endl;);
             return true;
         }
 
@@ -396,9 +360,7 @@ bool HyperEngine::is_ancestor_of(
         if ((onlyIrred && data.isRedStep())
             || data.getHyperbinNotAdded()
         ) {
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Wrong kind of hop would be needed" << endl;
-            #endif
+            VERBOSE_DEBUG_DO(cout << "Wrong kind of hop would be needed" << endl;);
             return false;  //reached would-be redundant hop (but this is irred)
         }
 
@@ -406,9 +368,7 @@ bool HyperEngine::is_ancestor_of(
         propStats.otfHyperTime += 1;
     }
 
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Exit, reached root" << endl;
-    #endif
+    VERBOSE_DEBUG_DO(cout << "Exit, reached root" << endl;);
 
     return false;
 }
@@ -417,11 +377,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
 {
     assert(value(p.var()) == l_Undef);
 
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Enqueing " << p
-    << " with ancestor clause: " << cl
-    << endl;
-     #endif
+    VERBOSE_DEBUG_DO(cout << "Enqueing " << p << " with ancestor clause: " << cl << endl;);
 
     currAncestors.clear();
     for (const Lit lit : cl) {
@@ -485,9 +441,7 @@ Lit HyperEngine::deepest_common_ancestor()
     assert(toClear.empty());
     Lit foundLit = lit_Undef;
     while(foundLit == lit_Undef) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "LEVEL analyzeFail" << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "LEVEL analyzeFail" << endl;);
         size_t num_lit_undef = 0;
         for (auto it = currAncestors.begin(), end = currAncestors.end(); it != end; ++it) {
             propStats.otfHyperTime += 1;
@@ -496,9 +450,7 @@ Lit HyperEngine::deepest_common_ancestor()
             //are still stepping back will find which literal is the lowest
             //common ancestor
             if (*it == lit_Undef) {
-                #ifdef VERBOSE_DEBUG_FULLPROP
-                cout << "seen lit_Undef" << endl;
-                #endif
+                VERBOSE_DEBUG_DO(cout << "seen lit_Undef" << endl;);
                 num_lit_undef++;
                 assert(num_lit_undef != currAncestors.size());
                 continue;
@@ -512,9 +464,7 @@ Lit HyperEngine::deepest_common_ancestor()
             if (seen[it->toInt()] == 1)
                 toClear.push_back(*it);
 
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "seen " << *it << " : " << seen[it->toInt()] << endl;
-            #endif
+            VERBOSE_DEBUG_DO(cout << "seen " << *it << " : " << seen[it->toInt()] << endl;);
 
             //Is this point where all the 'threads' that are stepping backwards
             //reach each other? If so, we have found what we were looking for!
@@ -528,9 +478,7 @@ Lit HyperEngine::deepest_common_ancestor()
             *it = varData[it->var()].reason.getAncestor();
         }
     }
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "END" << endl;
-    #endif
+    VERBOSE_DEBUG_DO(cout << "END" << endl;);
     assert(foundLit != lit_Undef);
 
     //Clear nodes we have visited
@@ -557,15 +505,11 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
     //However, if the hyper-bin was never added because only 1 literal was unbound at level 0 (i.e. through
     //clause cleaning, the clause would have been 2-long), then we don't do anything.
     if (!varData[lit.var()].reason.getHyperbin()) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Normal removing clause " << clauseToRemove << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Normal removing clause " << clauseToRemove << endl;);
         propStats.otfHyperTime += 2;
         uselessBin.insert(clauseToRemove);
     } else if (!varData[lit.var()].reason.getHyperbinNotAdded()) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Removing hyper-bin clause " << clauseToRemove << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Removing hyper-bin clause " << clauseToRemove << endl;);
         propStats.otfHyperTime += needToAddBinClause.size()/4;
         std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
 
@@ -597,9 +541,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
     } else if (val == l_False) {
         //Conflict
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Conflict from " << p << " , " << lit << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Conflict from " << p << " , " << lit << endl;);
 
         failBinLit = lit;
         confl = PropBy(~p, k->red(), k->get_id());
@@ -609,9 +551,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
         //Propaged already
         assert(val == l_True);
 
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Lit " << p << " also wants to propagate " << lit << endl;
-        #endif
+        VERBOSE_DEBUG_DO(cout << "Lit " << p << " also wants to propagate " << lit << endl;);
         Lit remove = remove_which_bin_due_to_trans_red(lit, p, k->red());
 
         //Remove this one
@@ -619,9 +559,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             const Lit origAnc = varData[lit.var()].reason.getAncestor();
             const int32_t origID = varData[lit.var()].reason.get_id();
             assert(origAnc != lit_Undef);
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "ID of k: " << k->get_id() << " ID of orig: " << origID << " removing latter, origAnc: " << origAnc << endl;
-            #endif
+            VERBOSE_DEBUG_DO(cout << "ID of k: " << k->get_id() << " ID of orig: " << origID << " removing latter, origAnc: " << origAnc << endl;);
 
             remove_bin_clause(lit, origID);
 
@@ -635,9 +573,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             //if (!onlyIrred) return PropBy();
 
         } else if (remove != lit_Undef) {
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Removing this bin clause, ID: " << k->get_id() << endl;
-            #endif
+            VERBOSE_DEBUG_DO(cout << "Removing this bin clause, ID: " << k->get_id() << endl;);
             propStats.otfHyperTime += 2;
             uselessBin.insert(BinaryClause(~p, lit, k->red(), k->get_id()));
         }
