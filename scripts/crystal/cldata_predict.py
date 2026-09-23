@@ -359,7 +359,7 @@ if __name__ == "__main__":
 
     # feature manipulation
     if options.features =="all_computed":
-        helper.cldata_add_computed_features(df, options.verbose)
+        df = helper.cldata_add_computed_features(df, options.verbose)
     elif options.features == "best_only" or options.features == "best_also":
         helper.add_features_from_fname(df, options.best_features_fname)
     elif options.features == "no_computed":

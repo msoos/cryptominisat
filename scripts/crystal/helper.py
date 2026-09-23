@@ -218,29 +218,44 @@ def get_features(fname):
     return best_features
 
 
+# Thousands of computed columns inserted one by one fragment the frame
+# and make every access crawl: while _pending is a dict, new columns are
+# collected there and concatenated to the frame in one go at the end
+_pending = None
+
+def _col(df, name):
+    if _pending is not None and name in _pending:
+        return _pending[name]
+    return df[name]
+
+def _set(df, name, val):
+    if _pending is not None:
+        _pending[name] = val
+    else:
+        df[name] = val
+
+def _flush_pending(df):
+    global _pending
+    if not _pending:
+        _pending = None
+        return df
+    df = pd.concat([df, pd.DataFrame(_pending, index=df.index)], axis=1)
+    _pending = None
+    return df
+
 def helper_divide(dividend, divisor, df, features, verb, name=None):
     """
     to be used like:
     import functools
     divide = functools.partial(helper.divide, df=df, features=features, verb=options.verbose)
     """
-
-    # dividend feature not present
-    #if dividend not in features:
-        #return None
-
-    # divisorfeature not present
-    #if divisor not in features:
-        #return None
-
-    # divide
     if verb:
         print("Dividing. dividend: '%s' divisor: '%s' " % (dividend, divisor))
 
     if name is None:
         name = "(%s/%s)" % (dividend, divisor)
 
-    df[name] = df[dividend].div(df[divisor])
+    _set(df, name, _col(df, dividend).div(_col(df, divisor)))
     return name
 
 def helper_larger_than(lhs, rhs, df, features, verb):
@@ -255,7 +270,7 @@ def helper_larger_than(lhs, rhs, df, features, verb):
         print("Calulating '%s' >: '%s' " % (lhs, rhs))
 
     name = "(" + lhs + ">" + rhs + ")"
-    df[name] = (df[lhs] > df[rhs]).astype(int)
+    _set(df, name, (_col(df, lhs) > _col(df, rhs)).astype(int))
     return name
 
 def helper_add(toadd, df, features, verb):
@@ -512,8 +527,11 @@ def cldata_add_minimum_computed_features(df, verbose):
 
 
 def cldata_add_computed_features(df, verbose):
+    """returns the new frame"""
+    global _pending
     print("Adding computed features...")
     cldata_add_minimum_computed_features(df, verbose)
+    _pending = {}
 
     del df["cl.conflicts"]
     del df["cl.restartID"]
@@ -616,7 +634,7 @@ def cldata_add_computed_features(df, verbose):
         divisors.extend(toadd)
 
     # relative data
-    cols = list(df)
+    cols = list(df) + list(_pending.keys())
     for col in cols:
         if ("rdb" in col or "cl." in col) and "restart_type" not in col and "tot_cls_in" not in col:
             for divisor in divisors:
@@ -645,6 +663,10 @@ def cldata_add_computed_features(df, verbose):
         #print("columns: ", (old - new))
         #assert(False)
         #exit(-1)
+
+    df = _flush_pending(df)
+    print("Computed features added, now %d columns" % df.shape[1])
+    return df
 
 def print_datatypes(df):
     pd.set_option('display.max_rows', len(df.dtypes))
