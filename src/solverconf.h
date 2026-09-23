@@ -307,7 +307,7 @@ class DLL_PUBLIC SolverConf
         #ifdef FINAL_PREDICTOR
         //Predictor system
         std::string pred_conf_location;
-        std::string pred_tables = "110";
+        std::string pred_tables = "000";
         std::string predictor_type = "xgb";
         std::string predict_best_feat_fname;
         #endif
