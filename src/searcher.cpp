@@ -83,6 +83,8 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     hist.setSize(conf.shortTermHistorySize);
 
+    tier1_glue = conf.reducetier1glue;
+    tier2_glue = conf.reducetier2glue;
     next_cls_distill = 5000.0*conf.global_next_multiplier;
     next_bins_distill = 12000.0*conf.global_next_multiplier;
     next_full_probe = 20000.0*conf.global_next_multiplier;
