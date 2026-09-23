@@ -786,7 +786,12 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (!distill_use && confl.isnullptr()) confl = gauss_jordan_elim(p, currLevel);
+        //Skip the call when there is nothing to do: it showed at 6% in perf
+        if (!distill_use && confl.isnullptr()
+            && (!gmatrices.empty() || !xorclauses.empty())
+        ) {
+            confl = gauss_jordan_elim(p, currLevel);
+        }
 
         qhead++;
     }
