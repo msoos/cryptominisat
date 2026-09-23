@@ -519,27 +519,6 @@ if __name__ == "__main__":
         helper.drop_idxs(q.c)
         q.create_indexes1()
 
-    # this is the SLOW way of doing it -- without pre-sampling it
-    if False:
-        print("This is good for verifying that the fast ones are close")
-        # slower percentiles
-        t = time.time()
-        with helper.QueryFill(args[0]) as q:
-            helper.dangerous(q.c)
-            q.delete_and_create_used_laters()
-            q.create_indexes(verbose=options.verbose)
-            for tier in ["short", "long", "forever"]:
-                q.fill_used_later_X(tier, getattr(options, tier))
-        with QueryDatRem(args[0]) as q:
-            helper.dangerous(q.c)
-            q.create_percentiles_table()
-            for tier in ["short", "long", "forever"]:
-                q.get_all_percentile_X(tier)
-            q.print_percentiles()
-        with helper.QueryFill(args[0]) as q:
-            q.delete_and_create_used_laters()
-        print("SLOWER percentiles:", time.time()-t)
-
     # Percentile generation
     t = time.time()
 
