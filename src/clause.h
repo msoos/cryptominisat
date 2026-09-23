@@ -148,10 +148,10 @@ struct ClauseStats
         float   activity;
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
-    uint32_t last_touched_any = 0;
     int32_t id;
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    uint32_t last_touched_any = 0; //only the predictors/SQL read it
     uint32_t extra_pos = numeric_limits<uint32_t>::max();
     uint32_t uip1_used = 0; ///N.o. times clause was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
@@ -165,7 +165,9 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.last_touched_any = std::max(first.last_touched_any, second.last_touched_any);
+        #endif
         ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
         ret.is_ternary_resolvent = first.is_ternary_resolvent;
         ret.keep = first.keep | second.keep;
@@ -403,7 +405,11 @@ public:
     {
         //assert(ps.size() > 2);
 
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         stats.last_touched_any = _introduced_at_conflict;
+        #else
+        (void)_introduced_at_conflict;
+        #endif
         assert(_ID > 0);
         stats.id = _ID;
 
