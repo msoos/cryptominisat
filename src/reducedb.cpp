@@ -232,7 +232,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     if (solver->sqlStats) dump_sql_cl_data(cur_rst_type);
     #endif
     #ifdef FINAL_PREDICTOR
-    if (!flush) predict_all_learnt();
+    if (!flush) predict_all_learnt(cur_rst_type);
     #endif
     if (flush) mark_clauses_to_be_flushed();
     else mark_useless_redundant_clauses_as_garbage();
@@ -668,7 +668,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
     predictors->finish_all_predict();
 }
 
-void ReduceDB::predict_all_learnt()
+void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
 {
     load_predictors();
     const double my_time = cpu_time();
@@ -678,7 +678,10 @@ void ReduceDB::predict_all_learnt()
         total_props,
         total_uip1_used,
         total_sum_uip1_used,
+        total_sum_props_used,
+        total_time_in_solver,
         all_learnt.size(),
+        cur_rst_type,
         median_data);
     update_preds(solver->longRedCls[0]);
     dump_pred_distrib(solver->longRedCls[0]);

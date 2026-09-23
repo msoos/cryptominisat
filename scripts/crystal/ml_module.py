@@ -27,53 +27,9 @@ from ccg import *
 
 MISSING=np.nan
 
-raw_data = [
-    "is_ternary_resolvent",
-    "rdb0.used",
-    "rdb0.last_touched",
-    "rdb0.act_ranking_rel",
-    "rdb0.uip1_ranking_rel",
-    "rdb0.prop_ranking_rel",
-    "rdb0.last_touched_diff",
-    "cl.time_inside_solver",
-    "rdb0.props_made",
-    "rdb0_common.avg_props",
-    #"rdb0_common.avg_glue", CANNOT DO, ternaries have no glue!
-    "rdb0_common.avg_uip1_used",
-    "rdb0_common.conflSizeHistLT_avg",
-    "rdb0_common.glueHistLT_avg",
-    "rdb0.sum_props_made",
-    "rdb0.discounted_props_made",
-    "rdb0.discounted_props_made2",
-    "rdb0.discounted_props_made3",
-    "rdb0.discounted_uip1_used",
-    "rdb0.discounted_uip1_used2",
-    "rdb0.discounted_uip1_used3",
-    "rdb0.sum_uip1_used",
-    "rdb0.uip1_used",
-    "rdb0.size",
-    "rdb0.sum_uip1_per_time_ranking",
-    "rdb0.sum_props_per_time_ranking",
-    "rdb0.sum_uip1_per_time_ranking_rel",
-    "rdb0.sum_props_per_time_ranking_rel",
-    "rdb0.is_distilled",
-    "cl.glueHist_avg",
-    "cl.antecedents_binIrred",
-    "cl.glueHistLT_avg",
-    "cl.glueHist_longterm_avg",
-    "cl.num_antecedents",
-    "cl.overlapHistLT_avg",
-    "cl.conflSizeHist_avg",
-    "cl.antecedents_binRed",
-    "cl.num_total_lits_antecedents",
-    "cl.numResolutionsHistLT_avg",
-    "rdb0.glue",
-    "cl.orig_glue",
-    "cl.glue_before_minim",
-    "cl.trail_depth_level",
-    #"sum_uip1_per_time_ranking_rel",
-    #"sum_props_per_time_ranking_rel",
-]
+# the raw columns the solver passes, set by set_up_features() from
+# predict_features_gen.h so C++ and Python never disagree
+raw_data = []
 
 def check_file_exists(fname):
     return os.path.exists(fname)
@@ -107,8 +63,10 @@ def add_features(df, df2):
     for i, feat_gen_func in zip(range(len(best_features)), feat_gen_funcs):
         df2[:, i] = feat_gen_func(df)
 
-def set_up_features(features_fname):
+def set_up_features(features_fname, raw_names):
     global best_features
+    global raw_data
+    raw_data = list(raw_names)
     global feat_gen_exprs
     global feat_gen_funcs
     best_features = get_features(features_fname)

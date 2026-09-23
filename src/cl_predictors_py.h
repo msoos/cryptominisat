@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
-#define NUM_RAW_FEATS 42
 
 using std::vector;
 
@@ -68,7 +67,7 @@ public:
         const Solver* solver,
         float* at) override;
 
-    virtual int get_step_size() override {return NUM_RAW_FEATS;}
+    virtual int get_step_size() override;
 
     float predict(
         predict_type pred_type,

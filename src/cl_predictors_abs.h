@@ -32,8 +32,6 @@ THE SOFTWARE.
 #include <cfenv>
 #include "clause.h"
 
-#define PRED_COLS 22
-
 using std::vector;
 
 namespace CMSat {
@@ -43,30 +41,38 @@ enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
 class Clause;
 class Solver;
 
+//The DB-wide numbers of reduceDB_common, as the STATS build dumps them
 struct ReduceCommonData
 {
-    double   avg_props;
-    //double   avg_glue; CANNOT COUNT, ternary has no glue!
-    double   avg_uip;
-    double   avg_sum_uip1_used;
+    double   avg_props = 0;
+    //no avg_glue: ternary resolvents have no glue
+    double   avg_uip = 0;
+    double   avg_sum_uip1_per_time = 0;
+    double   avg_sum_props_per_time = 0;
     MedianCommonDataRDB  median_data;
-    uint32_t all_learnt_size;
+    uint32_t all_learnt_size = 0;
+    uint32_t cur_rst_type = 0;
 
     ReduceCommonData() {}
     ReduceCommonData(
-        uint32_t total_props,
-//         uint32_t total_glue,
-        uint32_t total_uip1_used,
-        uint32_t total_sum_uip1_used,
+        uint64_t total_props,
+        uint64_t total_uip1_used,
+        uint64_t total_sum_uip1_used,
+        uint64_t total_sum_props_used,
+        uint64_t total_time_in_solver,
         uint32_t size,
+        uint32_t _cur_rst_type,
         const MedianCommonDataRDB& _median_data) :
             median_data(_median_data)
     {
         all_learnt_size = size;
+        cur_rst_type = _cur_rst_type;
         avg_props = safe_div(total_props, size);
-        //avg_glue = safe_div(total_glue, size);
         avg_uip = safe_div(total_uip1_used, size);
-        avg_sum_uip1_used = safe_div(total_sum_uip1_used, size);
+        if (total_time_in_solver > 0) {
+            avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)(size*total_time_in_solver);
+            avg_sum_props_per_time = (double)total_sum_props_used/(double)(size*total_time_in_solver);
+        }
     }
 };
 
@@ -94,7 +100,7 @@ public:
         float* const data,
         const uint32_t num) = 0;
 
-    virtual int get_step_size() {return PRED_COLS;}
+    virtual int get_step_size();
 
     virtual int set_up_input(
         const CMSat::Clause* const cl,

@@ -61,6 +61,14 @@ if(STATS OR FINAL_PREDICTOR)
 endif()
 
 if(FINAL_PREDICTOR)
+    # the feature computation follows the best_features file
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py ${PRED_FEATURES_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        DEPENDS ${PRED_FEATURES_FILE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py
+    )
+    add_custom_target(pred_features ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h)
+
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -267,6 +275,7 @@ endif()
 
 if(FINAL_PREDICTOR)
     add_dependencies(cryptominisat5
+        pred_features
         pred_short
         pred_long
         pred_forever

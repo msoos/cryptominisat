@@ -1908,18 +1908,28 @@ void Searcher::dump_sql_clause_data(
 #endif
 
 #ifdef FINAL_PREDICTOR
+//As sqlitestats.cpp's clause_stats(), kept in memory for the predictor
 void Searcher::set_clause_data(
     Clause* cl
     , const uint32_t orig_glue
     , const uint32_t glue_before_minim
+    , const uint32_t size_before_minim
     , const uint32_t old_decision_level
 ) {
     assert(cl->red());
     auto& stats_extra = red_stats_extra[cl->stats.extra_pos];
 
-    //definitely a BUG here I think -- should be 2*antec_data.num(), no?
-    //however, it's the same as how it's dumped in sqlitestats.cpp
-    //stats_extra.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+    stats_extra.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+    stats_extra.size_before_minim = size_before_minim;
+    stats_extra.decision_level = old_decision_level;
+    stats_extra.learnt_rst_type = rst.stable;
+    stats_extra.antecedents_longIrred = antec_data.longIrred;
+    stats_extra.antecedents_longRed = antec_data.longRed;
+    stats_extra.trailDepthHistLT_avg = hist.trailDepthHistLT.avg();
+    stats_extra.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();
+    stats_extra.antec_data_sum_sizeHistLT_avg = hist.antec_data_sum_sizeHistLT.avg();
+    stats_extra.branchDepthHistQueue_avg = hist.branchDepthHistQueue.avg_nocheck();
+    stats_extra.trailDepthHist_avg = hist.trailDepthHist.avg_nocheck();
 
 
     stats_extra.glueHist_longterm_avg = hist.glueHist.getLongtTerm().avg();
@@ -2043,7 +2053,7 @@ Clause* Searcher::handle_last_confl(
 
     if (cl) {
         #ifdef FINAL_PREDICTOR
-        set_clause_data(cl, glue, glue_before_minim, old_decision_level);
+        set_clause_data(cl, glue, glue_before_minim, size_before_minim, old_decision_level);
         #endif
         cl->stats.is_decision = is_decision;
     }

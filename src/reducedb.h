@@ -110,7 +110,7 @@ private:
     ClPredictorsAbst* predictors = nullptr;
     ReduceCommonData commdata;
     void load_predictors();
-    void predict_all_learnt();
+    void predict_all_learnt(const uint32_t cur_rst_type);
     void update_preds(const vector<ClOffset>& offs);
     double pred_score(const ClauseStatsExtra& e) const;
     void dump_pred_distrib(const vector<ClOffset>& offs);

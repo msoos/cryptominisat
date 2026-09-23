@@ -240,18 +240,30 @@ struct ClauseStatsExtra
 
     //Features that are normally available through SQL
     #ifdef FINAL_PREDICTOR
-    uint32_t    trail_depth_level;
-    float       glueHist_longterm_avg;
-    float       glueHist_avg;
-    uint32_t    glue_before_minim;
-    float       overlapHistLT_avg;
-    uint32_t    num_total_lits_antecedents;
-    uint32_t    num_antecedents;
-    float       numResolutionsHistLT_avg;
-    float       conflSizeHist_avg;
-    float       glueHistLT_avg;
-    uint32_t    antecedents_binred;
-    uint32_t    antecedents_binIrred;
+    //everything clause_stats has, set when the clause is learnt
+    uint32_t    trail_depth_level = 0;
+    float       glueHist_longterm_avg = 0;
+    float       glueHist_avg = 0;
+    uint32_t    glue_before_minim = 0;
+    float       overlapHistLT_avg = 0;
+    uint32_t    num_total_lits_antecedents = 0;
+    uint32_t    num_antecedents = 0;
+    float       numResolutionsHistLT_avg = 0;
+    float       conflSizeHist_avg = 0;
+    float       glueHistLT_avg = 0;
+    uint32_t    antecedents_binred = 0;
+    uint32_t    antecedents_binIrred = 0;
+    uint32_t    antecedents_longIrred = 0;
+    uint32_t    antecedents_longRed = 0;
+    uint32_t    size_before_minim = 0;
+    uint32_t    num_overlap_literals = 0;
+    uint32_t    decision_level = 0;
+    uint32_t    learnt_rst_type = 0;
+    float       trailDepthHistLT_avg = 0;
+    float       conflSizeHistLT_avg = 0;
+    float       antec_data_sum_sizeHistLT_avg = 0;
+    float       branchDepthHistQueue_avg = 0;
+    float       trailDepthHist_avg = 0;
     #endif
 
     //Features that are computed while running (not in SQL)

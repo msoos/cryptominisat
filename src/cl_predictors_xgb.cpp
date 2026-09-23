@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "cl_predictors_xgb.h"
 #include "clause.h"
 #include "solver.h"
+#include "predict_features_gen.h"
 #include <cmath>
 #include <sstream>
 #include <fstream>

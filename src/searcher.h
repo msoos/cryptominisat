@@ -504,9 +504,11 @@ class Searcher : public HyperEngine
         void dump_search_sql(const double my_time);
         void set_clause_data(
             Clause* cl
-            , const uint32_t glue
+            , const uint32_t orig_glue
             , const uint32_t glue_before_minim
-            , const uint32_t old_decision_level);
+            , const uint32_t size_before_minim
+            , const uint32_t old_decision_level
+        );
         #ifdef STATS_NEEDED
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
