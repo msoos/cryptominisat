@@ -353,6 +353,8 @@ struct WatchSorterBinTriLong {
     };
 
 
+#ifndef LARGE_OFFSETS
 static_assert(sizeof(Watched) == 8, "a watch must stay one 64-bit word");
+#endif
 
 } //end namespace

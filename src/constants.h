@@ -111,9 +111,9 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define STATS_DO(x) do {x;} while (0)
 #define INC_ID(cl) \
     do { \
-        auto prev_id = (cl).stats.ID; \
-        (cl).stats.ID = ++solver->clauseID; \
-        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.ID); \
+        auto prev_id = (cl).stats.id; \
+        (cl).stats.id = ++solver->clauseID; \
+        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.id); \
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)

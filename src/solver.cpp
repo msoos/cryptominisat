@@ -407,8 +407,8 @@ Clause* Solver::add_clause_int(
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
-                STATS_DO(if (ID != c->stats.ID && sqlStats && c->stats.is_tracked)
-                        sqlStats->update_id(c->stats.ID, ID));
+                STATS_DO(if (ID != c->stats.id && sqlStats && c->stats.is_tracked)
+                        sqlStats->update_id(c->stats.id, ID));
                 c->stats.id = ID;
             }
             if (red && cl_stats == nullptr) {
@@ -3450,7 +3450,7 @@ void Solver::stats_del_cl(Clause* cl)
     if (cl->stats.is_tracked && sqlStats) {
         const ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         assert(stats_extra.orig_ID != 0);
-        assert(stats_extra.orig_ID <= cl->stats.ID);
+        assert(stats_extra.orig_ID <= cl->stats.id);
         sqlStats->cl_last_in_solver(this, stats_extra.orig_ID);
     }
 }

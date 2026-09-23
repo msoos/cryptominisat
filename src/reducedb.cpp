@@ -585,7 +585,7 @@ void ReduceDB::dump_sql_cl_data(
         const bool locked = solver->clause_locked(*cl, offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         assert(stats_extra.orig_ID != 0);
-        assert(stats_extra.orig_ID <= cl->stats.ID);
+        assert(stats_extra.orig_ID <= cl->stats.id);
         solver->sqlStats->reduceDB(
             solver
             , locked
@@ -602,7 +602,6 @@ void ReduceDB::dump_sql_cl_data(
         << " locked-perc: " << stats_line_percent(num_locked_for_data_gen, all_learnt.size())
         << " non-locked lev0: " << non_locked_lev0
         << solver->conf.print_times(cpu_time()-my_time));
-    }
     locked_for_data_gen_total += num_locked_for_data_gen;
     locked_for_data_gen_cls += all_learnt.size();
 }
