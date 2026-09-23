@@ -275,6 +275,12 @@ public:
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
     vector<GaussQData> gqueuedata;
+    // Indexed by VAR and shared by all gmatrices, which are variable-disjoint.
+    // Per-matrix nVars-sized copies took 35GB on 4M vars x 1600 matrices.
+    // Entries of vars a matrix doesn't own may be stale, see EGaussian.
+    vector<uint32_t> gauss_var_to_col;
+    vector<uint32_t> gauss_var_to_dcol;
+    vector<char> gauss_var_has_resp_row;
     // Scratch list of matrix indices touched during a single gauss_jordan_elim
     // call. Allows per-call bookkeeping to skip the many untouched matrices.
     vec<uint32_t> touched_matrices_gje;
