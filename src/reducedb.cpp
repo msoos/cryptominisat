@@ -161,6 +161,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         }
         if (solver->clause_locked(*cl, offs)) { rstats.locked++; continue; } //reasons are kept, as in CaDiCaL
         const uint32_t used = cl->stats.used;
+        rstats.used_hist[used == 0 ? 0 : (used <= 10 ? 1 : (used < CL_MAX_USED-1 ? 2 : (used == CL_MAX_USED-1 ? 3 : 4)))]++;
         if (used) cl->stats.used = used - 1;
         if (cl->stats.is_ternary_resolvent) {
             //like CaDiCaL's hyper resolvents: kept one round unless used
@@ -307,6 +308,10 @@ void ReduceDB::handle_reduce()
     << " tiers: " << solver->tier1_glue << "/" << solver->tier2_glue
     << " next: +" << delta
     << solver->conf.print_times(cpu_time()-my_time));
+    verb_print(2, "[reduce-used] life 0: " << rstats.used_hist[0]
+    << " 1-10: " << rstats.used_hist[1] << " 11-29: " << rstats.used_hist[2]
+    << " 30 (used before last reduce): " << rstats.used_hist[3]
+    << " 31 (used since): " << rstats.used_hist[4]);
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -358,6 +363,13 @@ void ReduceDB::print_reduce_stats() const
             float_div(r.live_tier[t], num_reductions),
             stats_line_percent(r.live_tier[t], r.live_tier[0] + r.live_tier[1] + r.live_tier[2]),
             "% of red cls seen");
+    }
+    {
+        const uint64_t tot = r.used_hist[0]+r.used_hist[1]+r.used_hist[2]+r.used_hist[3]+r.used_hist[4];
+        print_stats_line(p + "red cls used since last reduce", r.used_hist[4],
+            stats_line_percent(r.used_hist[4], tot), "% of red cls seen");
+        print_stats_line(p + "red cls with life 0", r.used_hist[0],
+            stats_line_percent(r.used_hist[0], tot), "% of red cls seen");
     }
     print_stats_line(p + "reduce kept used", r.kept_used,
         stats_line_percent(r.kept_used, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");

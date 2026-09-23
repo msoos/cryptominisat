@@ -108,12 +108,14 @@ private:
         uint64_t removed = 0;
         uint64_t removed_tier[3] = {0, 0, 0};
         uint64_t live_tier[3] = {0, 0, 0}; //red cls per tier seen at reduce
+        uint64_t used_hist[5] = {0, 0, 0, 0, 0}; //'used' life: 0, 1-10, 11-29, 30, 31
         uint64_t sum_red_before = 0; //to average the red DB size
         ReduceStats& operator+=(const ReduceStats& o) {
             cands += o.cands; kept_used += o.kept_used; kept_keep += o.kept_keep;
             locked += o.locked; removed += o.removed;
             for(int i = 0; i < 3; i++) removed_tier[i] += o.removed_tier[i];
             for(int i = 0; i < 3; i++) live_tier[i] += o.live_tier[i];
+            for(int i = 0; i < 5; i++) used_hist[i] += o.used_hist[i];
             sum_red_before += o.sum_red_before;
             return *this;
         }
