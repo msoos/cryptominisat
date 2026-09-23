@@ -53,12 +53,7 @@ public:
     uint32_t lim_keptglue = 0;
     uint32_t lim_keptsize = 0;
     //CaDiCaL's likely_to_be_kept_clause: would this red cl survive the next reduce?
-    bool likely_to_be_kept(const Clause& cl) const {
-        if (cl.stats.keep) return true;
-        if (cl.stats.glue > lim_keptglue) return false;
-        if (cl.size() > lim_keptsize) return false;
-        return true;
-    }
+    bool likely_to_be_kept(const Clause& cl) const;
     #ifdef FINAL_PREDICTOR
     void handle_predictors();
     #endif

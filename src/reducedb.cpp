@@ -160,12 +160,16 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         if (used) cl->stats.used = used - 1;
         if (cl->stats.is_ternary_resolvent) {
             //like CaDiCaL's hyper resolvents: kept one round unless used
-            if (!used) cl->stats.marked_clause = true;
+            if (used < CL_MAX_USED) cl->stats.marked_clause = true;
             continue;
         }
-        if (used) { rstats.kept_used++; continue; }
         if (cl->stats.keep) { rstats.kept_keep++; continue; }
         if (cl->stats.locked_for_data_gen) continue;
+        //Kissat's collect_reducibles: tier1 lives while 'used' lasts, tier2
+        //only if used since the last reduce, tier3 is always a candidate
+        const uint32_t glue = cl->stats.glue;
+        if (glue <= solver->tier1_glue && used) { rstats.kept_used++; continue; }
+        if (glue <= solver->tier2_glue && used >= CL_MAX_USED-1) { rstats.kept_used++; continue; }
         stack.push_back(offs);
     }
     rstats.cands = stack.size();
@@ -207,7 +211,7 @@ void ReduceDB::mark_clauses_to_be_flushed()
         if (solver->clause_locked(*cl, offs)) continue;
         const uint32_t used = cl->stats.used;
         if (used) cl->stats.used = used - 1;
-        if (used) continue;
+        if (used >= CL_MAX_USED-1) continue;
         if (cl->stats.locked_for_data_gen) continue;
         cl->stats.marked_clause = true;
         cl_reduced++;
@@ -302,6 +306,17 @@ void ReduceDB::handle_reduce()
     total_time += cpu_time()-my_time;
 
     last_reducedb_num_conflicts = solver->sumConflicts;
+}
+
+//CaDiCaL's likely_to_be_kept_clause under kissat's tier rules
+bool ReduceDB::likely_to_be_kept(const Clause& cl) const
+{
+    if (cl.stats.keep) return true;
+    if (cl.stats.glue <= solver->tier1_glue && cl.stats.used) return true;
+    if (cl.stats.glue <= solver->tier2_glue && cl.stats.used >= CL_MAX_USED-1) return true;
+    if (cl.stats.glue > lim_keptglue) return false;
+    if (cl.size() > lim_keptsize) return false;
+    return true;
 }
 
 void ReduceDB::print_reduce_stats() const

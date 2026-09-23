@@ -395,31 +395,25 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 #endif
 }
 
-//Improve glue and lift into a better tier, as in CaDiCaL
+//Improve glue, as kissat's promote: the tier follows from the glue
 void Searcher::promote_clause(Clause* cl, const uint32_t new_glue)
 {
     assert(cl->red());
-    if (cl->stats.keep) return;
     if (cl->stats.is_ternary_resolvent) return;
     if (new_glue >= cl->stats.glue) return;
-    if (new_glue <= tier1_glue) cl->stats.keep = 1;
-    else if (cl->stats.glue > tier2_glue && new_glue <= tier2_glue)
-        cl->stats.used = 2;
     cl->stats.glue = new_glue;
 }
 
-//Mark clause used, recompute glue and promote if it shrank, as in CaDiCaL
+//Kissat's mark_clause_as_used: refresh 'used', recompute glue and promote
 void Searcher::bump_clause(Clause* cl)
 {
-    const uint32_t used = cl->stats.used;
-    cl->stats.used = 1;
-    glue_used_hist[rst.stable][std::min<uint32_t>(cl->stats.glue, 64)]++;
-    if (cl->stats.keep) return;
-    if (cl->stats.is_ternary_resolvent) return;
     if (!cl->red()) return;
-    const uint32_t new_glue = calc_glue(*cl);
-    if (new_glue < cl->stats.glue) promote_clause(cl, new_glue);
-    else if (used && cl->stats.glue <= tier2_glue) cl->stats.used = 2;
+    cl->stats.used = CL_MAX_USED;
+    if (!cl->stats.is_ternary_resolvent) {
+        const uint32_t new_glue = calc_glue(*cl);
+        if (new_glue < cl->stats.glue) promote_clause(cl, new_glue);
+    }
+    glue_used_hist[rst.stable][std::min<uint32_t>(cl->stats.glue, 64)]++;
 }
 
 template<bool inprocess>
@@ -2133,9 +2127,9 @@ Clause* Searcher::handle_last_confl(
             (double)rnd_uint(solver->mtrand,100000)/100000.0 < conf.lock_for_data_gen_ratio;
         #endif
 
-        //keep/used as in CaDiCaL's new_clause() + new_driving_clause()
-        cl->stats.keep = glue <= tier1_glue;
-        cl->stats.used = 1 + (glue <= tier2_glue);
+        //as kissat's learn: every tier starts with a full 'used' life
+        cl->stats.keep = 0;
+        cl->stats.used = CL_MAX_USED;
 
         #ifdef FINAL_PREDICTOR
         cl->stats.which_red_array = 2;
@@ -2308,7 +2302,7 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     assert(value(learnt_clause[0]) == l_Undef);
-    glue = std::min<uint32_t>(glue, numeric_limits<uint32_t>::max());
+    glue = std::min<uint32_t>(glue, CL_MAX_GLUE);
     int32_t ID;
     *frat << "normal learnt clause\n";
     Clause* cl = handle_last_confl(

@@ -111,6 +111,11 @@ struct AtecedentData
     AvgCalc<uint32_t> size_longs;
 };
 
+//Kissat's MAX_USED: a tier1 clause survives this many reduces unused,
+//a tier2 one only survives if used since the last reduce
+#define CL_MAX_USED 31U
+#define CL_MAX_GLUE ((1U<<17)-1)
+
 struct ClauseStats
 {
     ClauseStats()
@@ -130,11 +135,11 @@ struct ClauseStats
     }
 
     //Stored data
-    uint32_t glue:20;  //currently in code limited to 100'000
+    uint32_t glue:17;  //capped at CL_MAX_GLUE
     uint32_t is_decision:1; //a "decision clause", i.e. made out of decisions leading to conflict, not resolution
     uint32_t marked_clause:1;
-    uint32_t keep:1;   //always keep, as in CaDiCaL (tier1, glue <= reducetier1glue)
-    uint32_t used:2;   //resolved in conflict analysis since last reduce, as in CaDiCaL
+    uint32_t keep:1;   //always keep (not set by search any more, see CL_MAX_USED)
+    uint32_t used:5;   //set to CL_MAX_USED on learn/use, -1 per reduce, as kissat
     uint32_t which_red_array:3;
     uint32_t locked_for_data_gen:1;
     uint32_t is_ternary_resolvent:1;
