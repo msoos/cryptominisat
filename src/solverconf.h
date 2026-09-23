@@ -229,11 +229,11 @@ class DLL_PUBLIC SolverConf
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;
-        uint32_t varelim_irreg_gate_occ_cutoff; ///<Max occurrences (both polarities) picosat-based gate finding will look at
-        int varelim_irreg_gate_confl_limit; ///<Picosat conflict budget per irregular-gate query
+        uint32_t varelim_irreg_gate_occ_cutoff; ///<Max occurrences (both polarities) kitten-based gate finding will look at
+        int varelim_irreg_gate_confl_limit; ///<Kitten budget per irregular-gate query (in K ticks)
         int varelim_irreg_gate_unit; ///<CaDiCaL's definition_unit: a one-sided core makes the pivot a unit
         uint32_t xor_gate_find_maxsize; ///<Largest clause XOR-gate finding will look at, before the log2 occurrence cap
-        int picosat_confl_limit;
+        int picosat_confl_limit; ///<Kitten definability budget (in K ticks); name kept for API compat
         int varelim_check_resolvent_subs;
 
         //Backbone
@@ -407,6 +407,17 @@ class DLL_PUBLIC SolverConf
         int oracle_get_learnts; // get oracle learnt clauses
         int oracle_removed_is_learnt; // clauses removed by Oracle should be learnt
         int oracle_find_bins;
+
+        // SAT sweeping with kitten (occ-sweep)
+        int do_sweep = 1;
+        double sweep_time_limitM = 150;
+        uint32_t sweep_vars = 256;
+        uint32_t sweep_max_vars = 8192;
+        uint32_t sweep_clauses = 1024;
+        uint32_t sweep_max_clauses = 300ULL*1000ULL;
+        uint32_t sweep_depth = 2;
+        uint32_t sweep_max_depth = 3;
+        uint32_t sweep_flip_rounds = 1;
 
         //Misc
         unsigned origSeed;
