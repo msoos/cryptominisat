@@ -4469,7 +4469,8 @@ bool OccSimplifier::check_taut_weaken_dummy(const uint32_t dontuse)
         const Lit l = weaken_dummy[i];
         assert(l.var() != dontuse);
         if (taut) break;
-        weaken_time_limit-=1;
+        //charge the whole watch list: this was 8% of total time in perf
+        weaken_time_limit -= 1 + (int64_t)solver->watches[l].size();
         for(auto const& w: solver->watches[l]) {
             if (!w.isBin() || w.red()) continue;
             const Lit toadd = ~w.lit2();
