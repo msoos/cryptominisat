@@ -294,6 +294,18 @@ class Searcher : public HyperEngine
         uint64_t next_intree = 0;
         bool intree_if_needed();
 
+        //Intree's hyper-bins: kept only until the next cleanup unless used
+        //as a reason in conflict analysis, as CaDiCaL's 'hyper' flag
+        struct HyperBinRange { int32_t start; int32_t end; vector<uint8_t> used; };
+        vector<HyperBinRange> hyper_bin_ranges;
+        uint64_t next_hyper_bin_clean = 0;
+        uint64_t hyper_bins_cleaned = 0;
+        uint64_t hyper_bins_kept = 0;
+        void mark_hyper_bin_used(const int32_t id);
+        void add_hyper_bin_range(const int32_t start, const int32_t end);
+        void clean_unused_hyper_bins();
+        bool clean_hyper_bins_if_needed();
+
         // Fast backward for Arjun
         lbool new_decision_fast_backw();
         void create_new_fast_backw_assumption();
@@ -462,6 +474,7 @@ class Searcher : public HyperEngine
         friend class Gaussian;
         friend class Lucky;
         friend class DistillerLong;
+        friend class InTree;
         #ifdef CMS_TESTING_ENABLED
         FRIEND_TEST(SearcherTest, pickpolar_rnd);
         FRIEND_TEST(SearcherTest, pickpolar_pos);

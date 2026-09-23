@@ -166,6 +166,8 @@ bool InTree::intree_probe() {
     const int64_t rel = solver->conf.intree_effort*(double)(solver->all_bogoprops() - last_all_props);
     bogoprops_to_use = std::min<int64_t>(bogoprops_to_use, std::max<int64_t>(rel, 5LL*1000LL*1000LL));
     start_bogoprops = used_props();
+    solver->clean_unused_hyper_bins();
+    const int32_t first_hyper_id = solver->clauseID + 1;
 
     fill_roots();
     std::shuffle(roots.begin(), roots.end(), solver->mtrand);
@@ -182,6 +184,7 @@ bool InTree::intree_probe() {
     tree_look();
     unmark_all_bins();
     if (solver->frat->enabled()) solver->flush_ghost_hyper_bins();
+    solver->add_hyper_bin_range(first_hyper_id, solver->clauseID + 1);
 
     const double time_used = cpu_time() - my_time;
     const int64_t used = used_props() - start_bogoprops;

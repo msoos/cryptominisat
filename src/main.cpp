@@ -674,6 +674,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_hyperbin_and_transred = fc_int(a);})
         .default_value(conf.do_hyperbin_and_transred)
         .help("Perform hyper-binary resolution during probing");
+    program.add_argument("--hyperkeepconfl")
+        .action([&](const auto& a) {conf.hyperbin_keep_confl = fc_double(a);})
+        .default_value(conf.hyperbin_keep_confl)
+        .help("Conflicts an unused intree hyper-bin is kept for before being dropped");
 
     /* po::options_description simp_schedules("Simplification schedules"); */
     program.add_argument("--schedsimp")

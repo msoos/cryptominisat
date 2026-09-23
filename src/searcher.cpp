@@ -445,6 +445,7 @@ void Searcher::add_lits_to_learnt(
                 antec_data.binRed++;
                 #endif
                 stats.resolvs.binRed++;
+                if (!hyper_bin_ranges.empty()) mark_hyper_bin_used(id);
             } else {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.binIrred++;
@@ -2886,6 +2887,73 @@ void Searcher::print_glue_usage() const
     }
 }
 
+void Searcher::mark_hyper_bin_used(const int32_t id)
+{
+    for(auto& r: hyper_bin_ranges) {
+        if (id >= r.start && id < r.end) { r.used[id-r.start] = 1; return; }
+    }
+}
+
+void Searcher::add_hyper_bin_range(const int32_t start, const int32_t end)
+{
+    if (start >= end) return;
+    hyper_bin_ranges.push_back({start, end, vector<uint8_t>(end-start, 0)});
+    next_hyper_bin_clean = sumConflicts + conf.hyperbin_keep_confl*conf.global_next_multiplier;
+}
+
+//Drop every hyper-bin of the recorded ranges that was never a reason in
+//conflict analysis. Level 0 only: a deleted bin must not be a live reason
+void Searcher::clean_unused_hyper_bins()
+{
+    if (hyper_bin_ranges.empty()) return;
+    assert(decisionLevel() == 0);
+    const double my_time = cpu_time();
+    const auto unused = [&](const int32_t id) {
+        for(const auto& r: hyper_bin_ranges)
+            if (id >= r.start && id < r.end) return !r.used[id-r.start];
+        return false;
+    };
+
+    uint64_t removed = 0;
+    const size_t end = watches.size();
+    for (size_t wsLit = 0; wsLit < end; wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray ws = watches[lit];
+        if (ws.empty()) continue;
+        Watched* j = ws.begin();
+        for (Watched* w = ws.begin(); w != ws.end(); w++) {
+            if (w->isBin() && w->red() && unused(w->get_id())) {
+                if (lit.toInt() < w->lit2().toInt()) {
+                    removed++;
+                    *frat << del << w->get_id() << lit << w->lit2() << fin;
+                }
+                continue;
+            }
+            *j++ = *w;
+        }
+        ws.shrink_(ws.end()-j);
+    }
+    binTri.redBins -= removed;
+    uint64_t total = 0;
+    for(const auto& r: hyper_bin_ranges) total += r.end - r.start;
+    hyper_bins_cleaned += removed;
+    hyper_bins_kept += total - removed;
+    hyper_bin_ranges.clear();
+    verb_print(1, "[hyper-bin-clean] removed: " << removed << " of: " << total
+        << " red-bins now: " << binTri.redBins
+        << conf.print_times(cpu_time() - my_time));
+}
+
+bool Searcher::clean_hyper_bins_if_needed()
+{
+    assert(decisionLevel() == 0);
+    if (!hyper_bin_ranges.empty() && sumConflicts > next_hyper_bin_clean) {
+        TimeScope ts(solver->time_tally, "hyper-bin-clean");
+        clean_unused_hyper_bins();
+    }
+    return okay();
+}
+
 bool Searcher::str_impl_with_impl_if_needed()
 {
     assert(okay());
@@ -2990,7 +3058,8 @@ lbool Searcher::solve(const uint64_t _max_confls) {
                     || !distill_bins_if_needed()
                     || !sub_str_with_bin_if_needed()
                     || !str_impl_with_impl_if_needed()
-                    || !intree_if_needed())
+                    || !intree_if_needed()
+                    || !clean_hyper_bins_if_needed())
             ) {
                 assert(!frat->enabled() || unsat_cl_ID != 0);
                 status = l_False;

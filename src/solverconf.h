@@ -287,6 +287,7 @@ class DLL_PUBLIC SolverConf
         double intree_effort = 0.8; //fraction of all bogoprops since last call
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
+        double    hyperbin_keep_confl = 15000; ///<Unused hyper-bins are dropped after this many conflicts
 
         //XORs
         int      doFindXors;
