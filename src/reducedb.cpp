@@ -579,19 +579,22 @@ void ReduceDB::dump_sql_cl_data(
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->stats.is_tracked) continue;
-
-        const bool locked = solver->clause_locked(*cl, offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        assert(stats_extra.orig_ID != 0);
-        assert(stats_extra.orig_ID <= cl->stats.id);
-        solver->sqlStats->reduceDB(
-            solver
-            , locked
-            , cl
-            , reduceDB_called
-        );
-        added_to_db++;
+        if (cl->stats.is_tracked) {
+            const bool locked = solver->clause_locked(*cl, offs);
+            assert(stats_extra.orig_ID != 0);
+            assert(stats_extra.orig_ID <= cl->stats.id);
+            solver->sqlStats->reduceDB(
+                solver
+                , locked
+                , cl
+                , reduceDB_called
+            );
+            added_to_db++;
+        }
+        //ALL clauses' per-interval stats restart here, as in the predictor
+        //build: otherwise untracked clauses accumulate props/uip1 forever
+        //and the rankings/averages the tracked ones are dumped with are off
         stats_extra.reset_rdb_stats(cl->stats);
     }
     solver->sqlStats->end_transaction();
