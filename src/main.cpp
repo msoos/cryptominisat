@@ -510,6 +510,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.reducehigh = fc_int(a);})
         .default_value(conf.reducehigh)
         .help("Asymptotic fraction per mille of reduce candidates removed");
+    program.add_argument("--eagersubsume")
+        .action([&](const auto& a) {conf.eager_subsume = fc_int(a);})
+        .default_value(conf.eager_subsume)
+        .help("Demote the last learnt clauses subsumed by a new one, as kissat");
     program.add_argument("--reducetier1glue")
         .action([&](const auto& a) {conf.reducetier1glue = fc_int(a);})
         .default_value(conf.reducetier1glue)

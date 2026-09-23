@@ -255,6 +255,14 @@ class Searcher : public HyperEngine
         uint64_t num_rephased = 0;
         uint64_t num_rephased_in[2] = {0, 0}; //indexed by rst.stable
         uint64_t glue_used_hist[2][65] = {}; //[rst.stable][min(glue,64)] at bump, as kissat
+        //Kissat's eagersubsume: the last few learnt clauses, checked for
+        //subsumption by each new one. Offsets validated by ID, cleared on consolidate
+        struct LastLearnt { ClOffset off = CL_OFFSET_MAX; int32_t id = 0; };
+        LastLearnt last_learnt[4];
+        uint32_t last_learnt_at = 0;
+        uint64_t eagerly_subsumed = 0;
+        void eager_subsume_last_learnt(const Clause& newcl);
+        void clear_last_learnt() { for(auto& l: last_learnt) l = LastLearnt(); }
         uint64_t confl_in_mode[2] = {0, 0};   //[rst.stable], as kissat's focused/stable stats
         uint64_t restarts_in_mode[2] = {0, 0};
         uint64_t mode_switches = 0;

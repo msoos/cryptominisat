@@ -2137,6 +2137,10 @@ Clause* Searcher::handle_last_confl(
         cl->stats.which_red_array = 0;
         #endif
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+        if (conf.eager_subsume) {
+            eager_subsume_last_learnt(*cl);
+            last_learnt[last_learnt_at++ % 4] = LastLearnt{offset, cl->stats.id};
+        }
     }
 
     #ifdef STATS_NEEDED
@@ -2886,6 +2890,32 @@ void Searcher::compute_tier_limits()
     tier2_glue = t2;
 }
 
+//Kissat's eagerly_subsume_last_learned: a subsumed recent learnt clause is
+//demoted to a sure tier3 candidate, so the next reduce drops it first
+void Searcher::eager_subsume_last_learnt(const Clause& newcl)
+{
+    for(const Lit l: newcl) seen2[l.toInt()] = 1;
+    for(auto& ll: last_learnt) {
+        if (ll.off == CL_OFFSET_MAX) continue;
+        Clause* c = cl_alloc.ptr(ll.off);
+        if (c->freed() || c->get_removed() || !c->red() || c->stats.id != ll.id
+            || c->size() <= newcl.size() || c->stats.glue == CL_MAX_GLUE
+        ) continue;
+        uint32_t needed = newcl.size();
+        uint32_t remain = c->size();
+        for(const Lit l: *c) {
+            if (seen2[l.toInt()] && !--needed) break;
+            else if (--remain < needed) break;
+        }
+        if (needed) continue;
+        c->stats.used = 0;
+        c->stats.glue = CL_MAX_GLUE;
+        ll = LastLearnt();
+        eagerly_subsumed++;
+    }
+    for(const Lit l: newcl) seen2[l.toInt()] = 0;
+}
+
 //Kissat's focused/stable/switched/restarts statistics
 void Searcher::print_mode_stats() const
 {
@@ -2903,7 +2933,8 @@ void Searcher::print_mode_stats() const
             << endl;
     }
     cout << conf.prefix << "mode switches " << mode_switches
-        << " rephased " << num_rephased << endl;
+        << " rephased " << num_rephased
+        << " eagerly subsumed learnts " << eagerly_subsumed << endl;
 }
 
 //Kissat's '[ glue usage ]' table: how often clauses of each glue were
