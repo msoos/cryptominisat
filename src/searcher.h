@@ -139,6 +139,7 @@ class Searcher : public HyperEngine
         void check_need_gauss_jordan_disable();
         bool disable_gauss_matrix(uint32_t i);
         bool gauss_disable_pending = false;
+        uint32_t gauss_disabled_this_solve = 0;
 
         double get_cla_inc() const
         {

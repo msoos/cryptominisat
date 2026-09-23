@@ -1530,6 +1530,7 @@ bool Searcher::disable_gauss_matrix(const uint32_t i)
     assert(!gqd.disabled);
     gmatrices[i]->delete_reasons();
     gqd.disabled = true;
+    gauss_disabled_this_solve++;
     gmatrices[i]->move_back_xor_clauses();
     return okay();
 }
@@ -2945,6 +2946,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     verb_print(6, __func__ << " called");
 
     gauss_disable_pending = false; //stale, matrices are new
+    gauss_disabled_this_solve = 0;
     resetStats();
     lbool status = l_Undef;
 
@@ -3110,6 +3112,13 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status) {
     print_solution_type(status);
     if (conf.verbosity >= 2 && status != l_Undef) print_matrix_stats();
+    if (gauss_disabled_this_solve) {
+        uint32_t active = 0;
+        for(const auto& gqd: gqueuedata) active += !gqd.disabled;
+        verb_print(1, "[gauss] disabled " << gauss_disabled_this_solve
+            << " matrices in this search round, " << active << " of "
+            << gqueuedata.size() << " still active");
+    }
 
     if (status == l_True) {
         SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));

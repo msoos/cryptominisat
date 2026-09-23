@@ -1552,10 +1552,10 @@ bool EGaussian::must_disable(GaussQData& gqd)
         uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
         //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
         if (egcalled > gconf.autodisable_min_calls && useful < limit) {
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity >= 2) {
                 const double perc =
                     stats_line_percent(useful, egcalled);
-                verb_print(1, "[g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
+                verb_print(2, "[g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
                 " Usefulness was: "
                 << std::setprecision(4) << std::fixed << perc
                 <<  "%"
