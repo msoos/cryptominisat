@@ -467,19 +467,15 @@ bool DistillerLong::distill_long_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
-        cout << solver->conf.prefix << "[distill-long";
-        if (red) {
-            cout << "-red" << red_lev << "]";
-        } else {
-            cout << "-irred]";
-        }
-        cout
-        << " cls"
-        << " tried: " << runStats.checkedClauses << "/" << orig_todo_size
+        const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
+        cout << solver->conf.prefix << tag
+        << " cls tried: " << runStats.checkedClauses << "/" << orig_todo_size
         << " cl-rem: " << runStats.clRemoved
         << " cl-sh: " << runStats.numClShorten
         << " lit-rem: " << runStats.numLitsRem
         << " 0-depth-ass: " << (solver->trail_size() - origTrailSize)
+        << endl;
+        cout << solver->conf.prefix << tag
         << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
         << " used(M): " << (double)((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps)/1e6
         << solver->conf.print_times(time_used, time_out, time_remain)

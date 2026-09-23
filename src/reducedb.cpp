@@ -268,16 +268,16 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     << " red: " << orig_size << "->" << solver->longRedCls[0].size()
     << " cands: " << rstats.cands
     << " rem: " << rstats.removed
-    << " (t1/t2/t3: " << rstats.removed_tier[0] << "/" << rstats.removed_tier[1]
-    << "/" << rstats.removed_tier[2] << ")"
-    << " live t1/t2/t3: " << rstats.live_tier[0] << "/" << rstats.live_tier[1]
-    << "/" << rstats.live_tier[2]
-    << " kept-used: " << rstats.kept_used
-    << " kept-keep: " << rstats.kept_keep
-    << " locked: " << rstats.locked
-    << " tiers: " << solver->tier1_glue << "/" << solver->tier2_glue
     << " next: +" << delta
     << solver->conf.print_times(cpu_time()-my_time));
+    verb_print(1, "[reduce]   rem t1/t2/t3: " << rstats.removed_tier[0] << "/" << rstats.removed_tier[1]
+    << "/" << rstats.removed_tier[2]
+    << " live t1/t2/t3: " << rstats.live_tier[0] << "/" << rstats.live_tier[1]
+    << "/" << rstats.live_tier[2]
+    << " tiers: " << solver->tier1_glue << "/" << solver->tier2_glue);
+    verb_print(1, "[reduce]   kept-used: " << rstats.kept_used
+    << " kept-keep: " << rstats.kept_keep
+    << " locked: " << rstats.locked);
     verb_print(2, "[reduce-used] life 0: " << rstats.used_hist[0]
     << " 1-10: " << rstats.used_hist[1] << " 11-29: " << rstats.used_hist[2]
     << " 30 (used before last reduce): " << rstats.used_hist[3]
