@@ -337,6 +337,12 @@ void ReduceDB::print_reduce_stats() const
     const string p = solver->conf.prefix;
     print_stats_line(p + "reductions", num_reductions,
         float_div(r.sum_red_before, num_reductions), "avg red cls at reduce");
+    print_stats_line(p + "reduce interval avg",
+        (uint64_t)(num_reductions ? solver->sumConflicts / num_reductions : 0),
+        float_div(solver->sumConflicts, num_reductions) / (double)solver->conf.reduceint,
+        "x reduceint");
+    print_stats_line(p + "learnt cls uses", solver->sum_clause_uses(),
+        stats_line_percent(solver->sum_clause_uses(), solver->sumConflicts), "% of conflicts, as kissat's clauses_used");
     print_stats_line(p + "reduce candidates", r.cands,
         stats_line_percent(r.cands, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
     print_stats_line(p + "reduce removed", r.removed,
