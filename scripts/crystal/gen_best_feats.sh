@@ -8,6 +8,7 @@
 # usage: gen_best_feats.sh <cldata-prefix> [outdir]
 #   e.g. gen_best_feats.sh mydir/data-min.db-cldata- feats-out
 #   reads <prefix><table>-<tier>-cut1-*-cut2-*-limit-*.dat
+#   ONLY=0.3 uses 30% of the rows (all_computed has thousands of columns)
 
 set -e
 
@@ -29,7 +30,7 @@ for tier in short long forever; do
             f=$(ls ${PREFIX}${table}-${tier}-cut1-*.dat | head -1)
             echo "Doing $f ${computed}_computed"
             "$SCRIPTDIR/cldata_predict.py" "$f" --tier "$tier" --table "$table" \
-                --regressor xgb --topfeats --features "${computed}_computed" \
+                --regressor xgb --topfeats --features "${computed}_computed" --only "${ONLY:-1.0}" \
                 > "$OUT/output_${table}_${tier}_${computed}computed" 2>&1
             grep -A 40 "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" | head -42
         done

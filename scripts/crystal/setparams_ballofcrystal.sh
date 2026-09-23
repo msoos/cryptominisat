@@ -27,8 +27,8 @@ export FIXED="${FIXED:-3000}"          # max rows per strata per tier/table
 export cut1="${cut1:-3.0}"
 export cut2="${cut2:-25.0}"
 export bestf="${bestf:-$(pwd)/best_features.txt}"
-export XGB_EST="${XGB_EST:-10}"
-export XGB_DEPTH="${XGB_DEPTH:-4}"
+export XGB_EST="${XGB_EST:-40}"
+export XGB_DEPTH="${XGB_DEPTH:-5}"
 export XGB_MINCHILD="${XGB_MINCHILD:-10}"
 export EXTRA_GEN_PANDAS_OPTS="${EXTRA_GEN_PANDAS_OPTS:-}"
 
