@@ -7,8 +7,8 @@ export STATS_BIN="${STATS_BIN:-$(pwd)/../../build_stats/cryptominisat5}"
 export PRED_BIN="${PRED_BIN:-$(pwd)/../../build_pred/cryptominisat5}"
 
 # Optional: frat-xor + cake_xlrup to check the proof. Set either to "" to skip.
-export FRAT_XOR="${FRAT_XOR:-$(pwd)/../fuzz/frat-rs}"
-export CAKE_XLRUP="${CAKE_XLRUP:-$(pwd)/../fuzz/cake_xlrup}"
+export FRAT_XOR="${FRAT_XOR-$(pwd)/../fuzz/frat-rs}"
+export CAKE_XLRUP="${CAKE_XLRUP-$(pwd)/../fuzz/cake_xlrup}"
 
 # Data gathering
 export DUMPRATIO="${DUMPRATIO:-0.1}"   # fraction of learnt clauses tracked
