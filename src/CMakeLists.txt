@@ -125,7 +125,6 @@ set(cryptoms_lib_files
     yalsat_cms.cpp
     yals/yals.c
     sqlstats.cpp
-    vardistgen.cpp
     ccnr_oracle.cpp
     ccnr_oracle_pre.cpp
     lucky.cpp

@@ -117,8 +117,6 @@ public:
 
     uint32_t latest_satzilla_feature_calc = 0;
     uint64_t last_satzilla_feature_calc_confl = 0;
-    uint32_t latest_vardist_feature_calc = 0;
-    uint64_t last_vardist_feature_calc_confl = 0;
 
 
     //Note that this array can have the same internal variable more than

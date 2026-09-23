@@ -136,33 +136,6 @@ public:
         , const uint32_t orig_connects_num_communities
     ) override;
 
-    #ifdef STATS_NEEDED_BRANCH
-    void var_data_picktime(
-        const Solver* solver
-        , const uint32_t var
-        , const VarData& vardata
-        , const double rel_activity
-    ) override;
-
-    void var_data_fintime(
-        const Solver* solver
-        , const uint32_t var
-        , const VarData& vardata
-        , const double rel_activity
-    ) override;
-
-    void dec_var_clid(
-        const uint32_t var
-        , const uint64_t sumConflicts_at_picktime
-        , const uint64_t clid
-    ) override;
-
-    void var_dist(
-        const uint32_t var
-        , const VarData2& data
-        , const Solver* solver
-    ) override;
-    #endif
     #endif
 
     bool setup(const Solver* solver) override;
@@ -183,9 +156,6 @@ private:
     void init_cl_last_in_solver_STMT();
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
-    void init_var_data_picktime_STMT();
-    void init_var_data_fintime_STMT();
-    void init_dec_var_clid_STMT();
     void run_sqlite_step(
         sqlite3_stmt* stmt,
         const char* name,
@@ -199,7 +169,6 @@ private:
     sqlite3_stmt *stmtReduceDB = nullptr;
     sqlite3_stmt *stmtReduceDB_common = nullptr;
     sqlite3_stmt *stmtRst = nullptr;
-    sqlite3_stmt *stmtVarRst = nullptr;
     sqlite3_stmt *stmtClRst = nullptr;
     sqlite3_stmt *stmtFeat = nullptr;
     sqlite3_stmt *stmt_clause_stats = nullptr;
@@ -207,10 +176,6 @@ private:
     sqlite3_stmt *stmt_update_id = nullptr;
     sqlite3_stmt *stmt_set_id_confl = nullptr;
     sqlite3_stmt *stmt_set_id_confl_1000 = nullptr;
-    sqlite3_stmt *stmt_var_data_fintime = nullptr;
-    sqlite3_stmt *stmt_var_data_picktime = nullptr;
-    sqlite3_stmt *stmt_dec_var_clid = nullptr;
-    sqlite3_stmt *stmt_var_dist = nullptr;
 
     std::map<string, uint32_t> query_to_size;
 

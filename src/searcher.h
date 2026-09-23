@@ -74,9 +74,6 @@ class Searcher : public HyperEngine
         #ifdef STATS_NEEDED
         void check_calc_satzilla_features(bool force = false);
         #endif
-        #ifdef STATS_NEEDED_BRANCH
-        void check_calc_vardist_features(bool force = false);
-        #endif
         void dump_search_loop_stats(double my_time);
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
@@ -165,7 +162,6 @@ class Searcher : public HyperEngine
 
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
-        uint64_t last_dumped_conflict_rst_data_for_var = numeric_limits<uint64_t>::max();
         template<class T>
         uint32_t calc_connects_num_communities(const T& cl);
         #endif
@@ -530,16 +526,8 @@ class Searcher : public HyperEngine
             const uint32_t connects_num_communities
         );
         int dump_this_many_cldata_in_stream = 0;
-        void dump_var_for_learnt_cl(const uint32_t v,
-                                    const uint64_t clid,
-                                    const bool is_decision);
         #endif
 
-        #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-        vector<uint32_t> level_used_for_cl;
-        vector<uint32_t> vars_used_for_cl;
-        vector<unsigned char> level_used_for_cl_arr;
-        #endif
 
         //Other
         void print_solution_type(const lbool status) const;

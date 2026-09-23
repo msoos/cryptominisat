@@ -409,8 +409,6 @@ private:
         , PropBy& confl
         , uint32_t currLevel
     );
-    void sql_dump_vardata_picktime(uint32_t v, PropBy from);
-    void enqueue_branch_stats(const Lit p, const PropBy from);
     void enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat);
 
     PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
@@ -544,7 +542,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
-    if (!inprocess) enqueue_branch_stats(p, from);
+    STATS_DO(if (!inprocess) { if (p.sign()) propStats.varSetNeg++; else propStats.varSetPos++; });
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);

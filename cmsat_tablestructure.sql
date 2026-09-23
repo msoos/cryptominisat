@@ -205,9 +205,7 @@ CREATE TABLE `restart` (
   `restart_type` int(20) NOT NULL
 );
 
-DROP TABLE IF EXISTS `restart_dat_for_var`;
 DROP TABLE IF EXISTS `restart_dat_for_cl`;
-CREATE TABLE `restart_dat_for_var` AS SELECT * FROM `restart` WHERE 0;
 CREATE TABLE `restart_dat_for_cl` AS SELECT * FROM `restart` WHERE 0;
 
 
@@ -350,92 +348,6 @@ CREATE TABLE `satzilla_features` (
   `irred_activity_distr_var` double NOT NULL
 );
 
-DROP TABLE IF EXISTS `var_data_fintime`;
-create table `var_data_fintime` (
-    `var`                                              int(20) NOT NULL
-    , `sumConflicts_at_picktime`                       int(20) NOT NULL
-    , `rel_activity_at_fintime`                        double NOT NULL
-
-    , `inside_conflict_clause_at_fintime`              int(20) NOT NULL
-    , `inside_conflict_clause_antecedents_at_fintime`  int(20) NOT NULL
-    , `inside_conflict_clause_glue_at_fintime`         int(20) NOT NULL
-
-    , `sumDecisions_at_fintime`                        int(20) NOT NULL
-    , `sumConflicts_at_fintime`                        int(20) NOT NULL
-    , `sumPropagations_at_fintime`                     int(20) NOT NULL
-    , `sumAntecedents_at_fintime`                      int(20) NOT NULL
-    , `sumAntecedentsLits_at_fintime`                  int(20) NOT NULL
-    , `sumConflictClauseLits_at_fintime`               int(20) NOT NULL
-    , `sumDecisionBasedCl_at_fintime`                  int(20) NOT NULL
-    , `sumClLBD_at_fintime`                            int(20) NOT NULL
-    , `sumClSize_at_fintime`                           int(20) NOT NULL
-);
-
-DROP TABLE IF EXISTS `var_data_picktime`;
-create table `var_data_picktime` (
-    `var`                                                       int(20) NOT NULL
-    , `dec_depth`                                               int(20) NOT NULL
-    , `rel_activity_at_picktime`                                double  NOT NULL
-    , `latest_vardist_feature_calc`                             int(20) NOT NULL
-
-    , `inside_conflict_clause_at_picktime`                      int(20) NOT NULL
-    , `inside_conflict_clause_antecedents_at_picktime`          int(20) NOT NULL
-    , `inside_conflict_clause_glue_at_picktime`                 int(20) NOT NULL
-
-    , `inside_conflict_clause_during_at_picktime`               int(20) NOT NULL
-    , `inside_conflict_clause_antecedents_during_at_picktime`   int(20) NOT NULL
-    , `inside_conflict_clause_glue_during_at_picktime`          int(20) NOT NULL
-
-    , `num_decided`                                             int(20) NOT NULL
-    , `num_decided_pos`                                         int(20) NOT NULL
-    , `num_propagated`                                          int(20) NOT NULL
-    , `num_propagated_pos`                                      int(20) NOT NULL
-
-    , `conflicts_since_in_1uip`                                 int(20) NOT NULL
-    , `conflicts_since_decided`                                 int(20) NOT NULL
-    , `conflicts_since_propagated`                              int(20) NOT NULL
-    , `conflicts_since_canceled`                                int(20) NOT NULL
-
-    , `sumDecisions_at_picktime`                                int(20) NOT NULL
-    , `sumConflicts_at_picktime`                                int(20) NOT NULL
-    , `sumPropagations_at_picktime`                             int(20) NOT NULL
-    , `sumAntecedents_at_picktime`                              int(20) NOT NULL
-    , `sumAntecedentsLits_at_picktime`                          int(20) NOT NULL
-    , `sumConflictClauseLits_at_picktime`                       int(20) NOT NULL
-    , `sumDecisionBasedCl_at_picktime`                          int(20) NOT NULL
-    , `sumClLBD_at_picktime`                                    int(20) NOT NULL
-    , `sumClSize_at_picktime`                                   int(20) NOT NULL
-
-    , `sumConflicts_below_during`                               int(20) NOT NULL
-    , `sumDecisions_below_during`                               int(20) NOT NULL
-    , `sumPropagations_below_during`                            int(20) NOT NULL
-    , `sumAntecedents_below_during`                             int(20) NOT NULL
-    , `sumAntecedentsLits_below_during`                         int(20) NOT NULL
-    , `sumConflictClauseLits_below_during`                      int(20) NOT NULL
-    , `sumDecisionBasedCl_below_during`                         int(20) NOT NULL
-    , `sumClLBD_below_during`                                   int(20) NOT NULL
-    , `sumClSize_below_during`                                  int(20) NOT NULL
-
-    , flipped_confs_ago                                         int(20) NOT NULL
-);
-
-DROP TABLE IF EXISTS `dec_var_clid`;
-create table `dec_var_clid` (
-    `var` int(20) NOT NULL
-    , `sumConflicts_at_picktime` bigint(20) NOT NULL
-    , `clauseID` int(2) DEFAULT NULL
-);
-
-DROP TABLE IF EXISTS `var_data_use`;
-create table `var_data_use` (
-    `var` int(20) NOT NULL
-    , `sumConflicts_at_picktime` bigint(20) NOT NULL
-
-    , `cls_marked` int(2) DEFAULT NULL
-    , `useful_clauses` int(20) DEFAULT NULL
-    , `useful_clauses_used` int(20) DEFAULT NULL
-);
-
 DROP TABLE IF EXISTS `cl_last_in_solver`;
 create table `cl_last_in_solver` (
   `conflicts` bigint(20) NOT NULL
@@ -455,32 +367,3 @@ create table `set_id_confl` (
 );
 
 
-DROP TABLE IF EXISTS `var_dist`;
-create table `var_dist` (
-  `var` bigint(20) NOT NULL
-  , `latest_vardist_feature_calc` bigint(20) NOT NULL
-  , `conflicts` bigint(20) NOT NULL
-
-  , `num_irred_long_cls`                     bigint(20) NOT NULL
-  , `num_red_long_cls`                     bigint(20) NOT NULL
-  , `num_irred_bin_cls`                     bigint(20) NOT NULL
-  , `num_red_bin_cls`                     bigint(20) NOT NULL
-
-  , `red_num_times_in_bin_clause`                     bigint(20) NOT NULL
-  , `red_num_times_in_long_clause`                    bigint(20) NOT NULL
-  , `red_satisfies_cl`                                bigint(20) NOT NULL
-  , `red_falsifies_cl`                                bigint(20) NOT NULL
-  , `red_tot_num_lit_of_bin_it_appears_in`            bigint(20) NOT NULL
-  , `red_tot_num_lit_of_long_cls_it_appears_in`       bigint(20) NOT NULL
-  , `red_sum_var_act_of_cls`                          double NOT NULL
-
-  , `irred_num_times_in_bin_clause`                   bigint(20) NOT NULL
-  , `irred_num_times_in_long_clause`                  bigint(20) NOT NULL
-  , `irred_satisfies_cl`                              bigint(20) NOT NULL
-  , `irred_falsifies_cl`                              bigint(20) NOT NULL
-  , `irred_tot_num_lit_of_bin_it_appears_in`          bigint(20) NOT NULL
-  , `irred_tot_num_lit_of_long_cls_it_appears_in`     bigint(20) NOT NULL
-  , `irred_sum_var_act_of_cls`                        double NOT NULL
-
-  , `tot_act_long_red_cls`                            bigint(20) NOT NULL
-);

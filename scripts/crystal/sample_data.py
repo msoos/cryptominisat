@@ -129,10 +129,6 @@ class QueryDatRem(helper.QueryHelper):
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
         create index `idxclid34` on `used_clauses` (`clauseID`);
         create index `idxclid44` on `restart_dat_for_cl` (`clauseID`);
-        create index `idxclid35` on `var_data_fintime` (`var`, `sumConflicts_at_picktime`);
-        create index `idxclid36` on `var_data_picktime` (`var`, `sumConflicts_at_picktime`);
-        create index `idxclid37` on `dec_var_clid` (`var`, `sumConflicts_at_picktime`);
-        create index `idxclid40` on `restart_dat_for_var` (`conflicts`);
         """
 
         for q in queries.split("\n"):
@@ -157,108 +153,6 @@ class QueryDatRem(helper.QueryHelper):
         create index `idxclid30` on `used_cl_ids` (`clauseID`);
         """
         self.c.execute(q)
-
-    def remove_too_many_vardata(self):
-        t = time.time()
-        q = """
-        select count()
-        from var_data_picktime
-        """
-        ret = self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        num_vardata = rows[0][0]
-        print("Current number of elements in var_data: %d" % num_vardata)
-
-        if num_vardata < options.goal_vardata:
-            print("Not too many in var_data, skipping removal.")
-            return
-
-        q = """
-        DROP TABLE IF EXISTS `used_vardat`;
-        """
-        self.c.execute(q)
-
-        q = """
-        CREATE TABLE `used_vardat` (
-          `var` bigint(20) NOT NULL
-          , `sumConflicts_at_picktime` bigint(20) NOT NULL
-        );
-        """
-        self.c.execute(q)
-
-        q = """
-        create index `idxclidxx` on `used_vardat`
-        (`var`, `sumConflicts_at_picktime`);
-        """
-        self.c.execute(q)
-
-        q = """
-        insert into `used_vardat`
-        SELECT
-        var, sumConflicts_at_picktime
-        FROM var_data_picktime
-        order by random()
-        limit {limit}
-        """.format(limit=options.goal_vardata)
-        self.c.execute(q)
-        print("Added {limit} to `used_vardat`".format(limit=options.goal_vardata))
-        print("--> T: %-3.2f s"% (time.time() - t))
-
-        t = time.time()
-        del_from = ["var_data_picktime", "var_data_fintime", "dec_var_clid"]
-        for table in del_from:
-
-            q = """
-            DROP TABLE IF EXISTS `myrows`;
-            """
-            self.c.execute(q)
-
-            q = """
-            CREATE TABLE `myrows` (
-              `myrowid` bigint(20) NOT NULL
-            );
-            """
-            self.c.execute(q)
-
-            q = """
-            INSERT INTO `myrows`
-            SELECT `rowid`
-            FROM `{table}` WHERE (`var`, `sumConflicts_at_picktime`)
-            in (SELECT `var`, `sumConflicts_at_picktime` from `used_vardat`);
-            """
-            self.c.execute(q.format(table=table))
-
-            q = """
-            create index `myidx111` on `myrows` (`myrowid`);
-            """
-
-            q = """
-            DELETE FROM `{table}` WHERE (rowid) NOT IN
-            (SELECT `myrowid` from `myrows` );"""
-            self.c.execute(q.format(table=table))
-            print("Deleted unused data from %s" % table)
-
-        # cleanup
-        q = """
-        DROP TABLE IF EXISTS `myrows`;
-        """
-        self.c.execute(q)
-
-        # sample restart_dat_for_var
-        q = """
-        DELETE FROM restart_dat_for_var WHERE `conflicts` NOT IN
-        (SELECT `sumConflicts_at_picktime` from `used_vardat` group by sumConflicts_at_picktime);"""
-        self.c.execute(q)
-        print("Deleted unused data from restart_dat_for_var")
-
-        # cleanup
-        q = """
-        DROP TABLE IF EXISTS `used_vardat`;
-        """
-        self.c.execute(q)
-        print("Cleaned up var_data_x & restart_dat_for_var tables T: %-3.2f s"
-              % (time.time() - t))
 
     def insert_into_used_cls_ids_from_clstats(self, min_used, limit, table):
         min_used = int(min_used)
@@ -593,8 +487,6 @@ if __name__ == "__main__":
                       dest="limit", help="Number of clauses to limit ourselves to")
     parser.add_option("--goalrdb", default=200000, type=int,
                       dest="goal_rdb", help="Number of RDB neeeded")
-    parser.add_option("--goalvardata", default=50000, type=int,
-                      dest="goal_vardata", help="Number of varData points neeeded")
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
     parser.add_option("--noidx", action="store_true", default=False,
@@ -627,7 +519,6 @@ if __name__ == "__main__":
         helper.dangerous(q.c)
         helper.drop_idxs(q.c)
         q.create_indexes1()
-        q.remove_too_many_vardata()
 
     # this is the SLOW way of doing it -- without pre-sampling it
     if False:

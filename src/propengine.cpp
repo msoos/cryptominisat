@@ -939,38 +939,6 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     return true;
 }
 
-//Branching statistics of STATS builds, kept out of the hot enqueue
-void PropEngine::enqueue_branch_stats([[maybe_unused]] const Lit p, [[maybe_unused]] const PropBy from)
-{
-    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    const uint32_t v = p.var();
-    varData[v].set++;
-    if (from == PropBy()) {
-        #ifdef STATS_NEEDED_BRANCH
-        sql_dump_vardata_picktime(v, from);
-        varData[v].num_decided++;
-        varData[v].last_decided_on = sumConflicts;
-        if (!p.sign()) varData[v].num_decided_pos++;
-        #endif
-    } else {
-        sumPropagations++;
-        #ifdef STATS_NEEDED_BRANCH
-        bool flipped = (varData[v].polarity != !p.sign());
-        if (flipped) {
-            varData[v].last_flipped = sumConflicts;
-        }
-        varData[v].num_propagated++;
-        varData[v].last_propagated = sumConflicts;
-        if (!p.sign()) varData[v].num_propagated_pos++;
-        #endif
-    }
-    #endif
-    #ifdef STATS_NEEDED
-    if (p.sign()) propStats.varSetNeg++;
-    else propStats.varSetPos++;
-    #endif
-}
-
 //A level-0 assignment is a unit clause in the proof: emit it with hints
 //(unit IDs of the reason's other lits first, reason ID last)
 void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat)
@@ -1020,52 +988,6 @@ void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool 
     unit_cl_XIDs[v] = xid;
 }
 
-#ifdef STATS_NEEDED_BRANCH
-void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
-{
-    if (!solver->sqlStats)
-        return;
-
-    bool dump = false;
-    double rnd_num = solver->mtrand.randDblExc();
-    if (rnd_num <= conf.dump_individual_cldata_ratio*0.1) {
-        dump = true;
-    }
-    varData[v].dump = dump;
-    if (!dump)
-        return;
-
-    solver->dump_restart_sql(rst_dat_type::var);
-
-    uint64_t outer_var = map_inter_to_outer(v);
-
-    varData[v].sumDecisions_at_picktime = sumDecisions;
-    varData[v].sumConflicts_at_picktime = sumConflicts;
-    varData[v].sumAntecedents_at_picktime = sumAntecedents;
-    varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
-    varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
-    varData[v].sumPropagations_at_picktime = sumPropagations;
-    varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
-    varData[v].sumClLBD_at_picktime = sumClLBD;
-    varData[v].sumClSize_at_picktime = sumClSize;
-    double rel_activity_at_picktime =
-        std::log2(var_act_vsids[v]+10e-300)/std::log2(max_vsids_act+10e-300);
-
-    varData[v].last_time_set_was_dec = (from == PropBy());
-
-    //inside data
-    varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
-    varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
-    varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
-
-    solver->sqlStats->var_data_picktime(
-        solver
-        , outer_var
-        , varData[v]
-        , rel_activity_at_picktime
-    );
-}
-#endif
 
 ///// VMTF ////
 
