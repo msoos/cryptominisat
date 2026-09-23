@@ -52,7 +52,6 @@ enum BNNPropType {
 
 class Watched {
     public:
-        Watched(Watched const&) = default;
 
         /**
         @brief Constructor for a long (>2) clause
@@ -353,5 +352,7 @@ struct WatchSorterBinTriLong {
         }
     };
 
+
+static_assert(sizeof(Watched) == 8, "a watch must stay one 64-bit word");
 
 } //end namespace

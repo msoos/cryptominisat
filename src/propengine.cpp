@@ -157,8 +157,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
         << decisionLevel() << " lit to prop: " << p);
     const uint32_t pv = p.var();
-
-    if (gmatrices.empty() && xorclauses.empty()) return PropBy();
+    assert(!gmatrices.empty() || !xorclauses.empty()); //the hot caller checks
 
     // Matrices are reset only when first consulted through gwatches[pv] in this
     // call. The cols_vals/cols_unset caches refresh themselves in find_truths()
