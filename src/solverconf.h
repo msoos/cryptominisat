@@ -55,24 +55,14 @@ class GaussConf
 {
     public:
 
-    GaussConf() :
-        autodisable(true)
-        , min_usefulness_cutoff(0.2)
-        , max_matrix_columns(100000)
-        , max_matrix_rows(100000)
-        , min_matrix_rows(2)
-        , max_num_matrices(1000000)
-    {
-    }
-
-    bool autodisable;
-    double min_usefulness_cutoff;
+    bool autodisable = true;
+    double min_usefulness_cutoff = 0.5;
     uint32_t autodisable_min_calls = 200;
     uint32_t autodisable_check_every = 1024;
-    uint32_t max_matrix_columns;
-    uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
-    uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
-    uint32_t max_num_matrices; //Maximum number of matrices
+    uint32_t max_matrix_columns = 100000;
+    uint32_t max_matrix_rows = 100000; //The maximum matrix size -- no. of rows
+    uint32_t min_matrix_rows = 10; //The minimum matrix size -- no. of rows
+    uint32_t max_num_matrices = 1000000; //Maximum number of matrices
 
     //Matrix extraction config
     bool doMatrixFind = true;
