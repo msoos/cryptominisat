@@ -95,3 +95,19 @@ both give the same conflict count.
 
 `src/predict/predictor_{short,long,forever}.json` are compiled into the
 predictor build as the defaults used when `--predloc` is not given.
+
+## Results so far (2026-09-23)
+
+Corpus of 10 UNSAT instances (count14, php10, subsetcard20, six random
+3-SAT of 460k-2.2M conflicts, UTI-20-10p0), 130k training rows, 40 trees
+of depth 5. Conflicts of the predictor build relative to the normal build:
+
+| | plain tables | ancestor tables |
+|---|---|---|
+| old 22 features, trained on all 10 (in-sample) | 78% | 88% |
+| `best_features.txt` (corpus-picked 30), in-sample | 81% | 80% |
+| UTI held out, old features | 102% | 103% |
+| UTI held out, `best_features.txt` | 93% | 109% |
+
+So with enough instances the learnt ranking beats glue/size clearly on
+the training instances and by 6% on an unseen one (plain tables).
