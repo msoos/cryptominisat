@@ -254,6 +254,8 @@ class Searcher : public HyperEngine
         uint64_t lim_rephase = 0;
         uint64_t num_rephased = 0;
         uint64_t num_rephased_in[2] = {0, 0}; //indexed by rst.stable
+        uint64_t glue_used_hist[2][65] = {}; //[rst.stable][min(glue,64)] at bump, as kissat
+        void print_glue_usage() const;
         uint64_t last_rephase_conflicts = 0;
         char   rephased = 0;
         char   last_rephase = '-'; //for reporting only

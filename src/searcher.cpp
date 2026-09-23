@@ -413,6 +413,7 @@ void Searcher::bump_clause(Clause* cl)
 {
     const uint32_t used = cl->stats.used;
     cl->stats.used = 1;
+    glue_used_hist[rst.stable][std::min<uint32_t>(cl->stats.glue, 64)]++;
     if (cl->stats.keep) return;
     if (cl->stats.is_ternary_resolvent) return;
     if (!cl->red()) return;
@@ -2853,6 +2854,38 @@ bool Searcher::intree_if_needed()
     return ret;
 }
 
+//Kissat's '[ glue usage ]' table: how often clauses of each glue were
+//reasons in conflict analysis, per search mode, with the tier marks
+void Searcher::print_glue_usage() const
+{
+    for(uint32_t stable = 0; stable < 2; stable++) {
+        uint64_t total = 0;
+        for(uint32_t g = 0; g < 65; g++) total += glue_used_hist[stable][g];
+        if (total == 0) continue;
+        cout << conf.prefix << "glue usage in " << (stable ? "stable" : "focused")
+            << " mode, " << total << " uses (tier1 glue<=" << conf.reducetier1glue
+            << " tier2 glue<=" << conf.reducetier2glue << ")" << endl;
+        uint64_t acc = 0;
+        uint32_t rows = 0;
+        for(uint32_t g = 0; g < 65 && rows < 20; g++) {
+            const uint64_t c = glue_used_hist[stable][g];
+            if (c == 0) continue;
+            acc += c;
+            rows++;
+            cout << conf.prefix << (stable ? "stable " : "focused") << " glue "
+                << std::setw(2) << g << (g == 64 ? "+" : " ")
+                << " used " << std::setw(10) << c
+                << " " << std::setw(6) << std::fixed << std::setprecision(2)
+                << stats_line_percent(c, total) << "%"
+                << " accumulated " << std::setw(6) << stats_line_percent(acc, total) << "%"
+                << (g == conf.reducetier1glue ? " tier1" : "")
+                << (g == conf.reducetier2glue ? " tier2" : "")
+                << endl;
+            if (acc*100 >= total*95) break;
+        }
+    }
+}
+
 bool Searcher::str_impl_with_impl_if_needed()
 {
     assert(okay());
@@ -2958,7 +2991,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
                     || !sub_str_with_bin_if_needed()
                     || !str_impl_with_impl_if_needed()
                     || !intree_if_needed())
-              ) {
+            ) {
                 assert(!frat->enabled() || unsat_cl_ID != 0);
                 status = l_False;
                 goto end;
