@@ -28,6 +28,7 @@
 #   --skip-solve  reuse <file>-dir/data.db-raw and data.frat from an earlier run
 #   --skip-learn  reuse the predictors from an earlier run, only run step 5
 #   --gather-only stop after step 3, the frames are for learn.sh
+# KEEP_FRAT=1 keeps data.frat (it is deleted once used, GBs on big CNFs)
 
 set -e
 set -o pipefail  # needed so " | tee xyz " doesn't swallow the last command's error
@@ -108,10 +109,16 @@ fi
 ########################
 if [[ $SKIP_LEARN -eq 0 ]]; then
     rm -f data.db data-min.db data-min.db-cldata-* predictor-*.json *.out-stage
+    if [[ ! -f data.frat ]]; then
+        echo "ERROR: data.frat is gone (deleted once used unless KEEP_FRAT=1), re-run without --skip-solve"
+        exit 255
+    fi
 
     stage "fix_up_frat: which clause was used when"
     cp data.db-raw data.db
     "$SCRIPTDIR/fix_up_frat.py" data.frat data.db | tee fix_up_frat.out-stage
+    # the proof is GBs on big instances and not needed any more
+    [[ "$KEEP_FRAT" == "1" ]] || rm -f data.frat
 
     stage "clean_update_data"
     "$SCRIPTDIR/clean_update_data.py" data.db | tee clean_update_data.out-stage
