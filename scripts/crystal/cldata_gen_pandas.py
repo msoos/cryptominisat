@@ -65,6 +65,7 @@ class QueryAddIdxes (helper.QueryHelper):
         ---
         create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `used_clauses` ( `used_at`);
+        create index `idxclidUCLS-3` on `used_clauses_anc` ( `clauseID`, `used_at`);
         ---
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
         ---
@@ -121,8 +122,9 @@ class QueryCls (helper.QueryHelper):
         self.clause_dat = helper.query_fragment(
             "clause_stats", not_cols, "cl", options.verbose, self.c)
 
+        # a hash order instead of random(): the same DB gives the same frame
         self.common_limits = """
-        order by random()
+        order by ((`sum_cl_use.clauseID` * 7919 + `rdb0.dump_no`) * 2654435761) % 4294967296
         limit {limit}
         """
 

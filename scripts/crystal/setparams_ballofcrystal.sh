@@ -5,6 +5,8 @@
 # (see scripts/build_scripts/build_stats.sh, build_final_predictor.sh)
 export STATS_BIN="${STATS_BIN:-$(pwd)/../../build_stats/cryptominisat5}"
 export PRED_BIN="${PRED_BIN:-$(pwd)/../../build_pred/cryptominisat5}"
+# Optional: the normal build, run at the end for the comparison ("" to skip)
+export NORMAL_BIN="${NORMAL_BIN-$(pwd)/../../build/cryptominisat5}"
 
 # Optional: frat-xor + cake_xlrup to check the proof. Set either to "" to skip.
 export FRAT_XOR="${FRAT_XOR-$(pwd)/../fuzz/frat-rs}"

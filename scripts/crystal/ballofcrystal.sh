@@ -149,11 +149,25 @@ fi
 stage "running FINAL_PREDICTOR build"
 ln -fs "$SCRIPTDIR/ml_module.py" .
 ln -fs "$SCRIPTDIR/ccg.py" .
+function summary() {
+    printf "%-16s" "$1:"
+    grep -m1 "^s " "$2" | tr -d '\n'
+    printf "  conflicts %s  time %s s\n" \
+        "$(grep -m1 '^c conflicts' "$2" | awk '{print $4}')" \
+        "$(grep -m1 'Total time (this thread)' "$2" | awk '{print $7}')"
+}
 for TODO in 000 111; do
     $NOBUF "$PRED_BIN" --predtype xgb --predloc . --predbestfeats "$bestf" \
-        --everypred "$EVERYPRED" --predtables $TODO --zero-exit-status "$FNAME" \
+        --predtables $TODO --zero-exit-status "$FNAME" \
         > "cms-pred-run.out-${TODO}" 2>&1 || true
-    echo -n "predtables $TODO: "; grep -E "^s |^c conflicts|Total time" "cms-pred-run.out-${TODO}" | tr '\n' ' '; echo
 done
-echo -n "STATS build:    "; grep -E "^s |^c conflicts" cms-stats-run.out | tr '\n' ' '; echo
+if [[ -x "$NORMAL_BIN" ]]; then
+    $NOBUF "$NORMAL_BIN" --zero-exit-status "$FNAME" > cms-normal-run.out 2>&1 || true
+fi
+echo
+echo "predictor build vs the others (same reduce, only the candidate order differs):"
+summary "pred 000" cms-pred-run.out-000
+summary "pred 111" cms-pred-run.out-111
+[[ -f cms-normal-run.out ]] && summary "normal" cms-normal-run.out
+summary "stats" cms-stats-run.out
 echo "Done. Predictors are in $DIR/predictor-*.json"

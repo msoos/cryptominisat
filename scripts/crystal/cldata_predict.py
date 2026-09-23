@@ -239,8 +239,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(usage=usage)
 
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
-    parser.add_argument("--seed", default=None, type=int,
-                        dest="seed", help="Seed of PRNG")
+    parser.add_argument("--seed", default=0, type=int,
+                        dest="seed", help="Seed of the train/test split. Default: %(default)s")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                         dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,

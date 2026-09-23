@@ -164,7 +164,7 @@ class QueryDatRem(helper.QueryHelper):
         clauseID from {table}
         where
         num_used >= {min_used}
-        order by random() limit {limit}
+        order by ((clauseID + {min_used}) * 2654435761) % 4294967296 limit {limit}
         """.format(
             min_used=min_used,
             limit=int(limit),
@@ -233,20 +233,18 @@ class QueryDatRem(helper.QueryHelper):
                 print("-> index:", row)
 
     def create_used_clauses_red(self):
-        t = time.time()
-        q = """
-        CREATE TABLE used_clauses_red AS
-        SELECT * FROM used_clauses WHERE clauseID IN (SELECT clauseID from used_cl_ids );
-        """
-
-        self.c.execute(q)
-        print("Filtered into used_clauses_red T: %-3.2f s" % (time.time() - t))
+        for table in ["used_clauses", "used_clauses_anc"]:
+            t = time.time()
+            q = """
+            CREATE TABLE {table}_red AS
+            SELECT * FROM {table} WHERE clauseID IN (SELECT clauseID from used_cl_ids );
+            """.format(table=table)
+            self.c.execute(q)
+            print("Filtered into %s_red T: %-3.2f s" % (table, time.time() - t))
 
     def drop_used_clauses_red(self):
-        q = """
-        drop TABLE if exists used_clauses_red;
-        """
-        self.c.execute(q)
+        for table in ["used_clauses", "used_clauses_anc"]:
+            self.c.execute("drop TABLE if exists %s_red;" % table)
 
     def filter_tables_of_ids(self):
 
@@ -375,7 +373,7 @@ class QueryDatRem(helper.QueryHelper):
         {table}_{tier}.clauseID=rdb0.clauseID
         and {table}_{tier}.rdb0conflicts=rdb0.conflicts
         and {table}_{tier}.used_later >= {min_used_later}
-        order by random()
+        order by ((rdb0.rowid + {min_used_later} * 7919) * 2654435761) % 4294967296
         limit {limit}""".format(min_used_later=min_used_later, limit=limit,
                                 tier=tier, table=table)
         self.c.execute(q)
@@ -535,11 +533,11 @@ if __name__ == "__main__":
     with helper.QueryFill(args[0]) as q:
         helper.dangerous(q.c)
         q.delete_and_create_used_laters()
-        q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
+        q.create_indexes(verbose=options.verbose, used_clauses_suffix="_red")
         for table in ["used_later", "used_later_anc"]:
             for tier in ["short", "long", "forever"]:
                 q.fill_used_later_X(tier, duration=getattr(options, tier),
-                                    used_clauses="used_clauses_red",
+                                    used_clauses_suffix="_red",
                                     table=table)
 
     # now we calculate the distributions and save them

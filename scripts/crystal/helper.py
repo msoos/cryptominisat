@@ -52,14 +52,15 @@ class QueryHelper:
 
 
 class QueryFill (QueryHelper):
-    def create_indexes(self, verbose=False, used_clauses="used_clauses"):
+    def create_indexes(self, verbose=False, used_clauses_suffix=""):
         t = time.time()
         print("Recreating indexes...")
         queries = """
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
-        create index `idxclidUCLS-2` on `{used_clauses}` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-2` on `used_clauses{suffix}` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-3` on `used_clauses_anc{suffix}` ( `clauseID`, `used_at`);
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
-        """.format(used_clauses=used_clauses)
+        """.format(suffix=used_clauses_suffix)
         for l in queries.split('\n'):
             t2 = time.time()
 
@@ -109,8 +110,12 @@ class QueryFill (QueryHelper):
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
     # The most expesive operation of all, when called with "forever"
-    def fill_used_later_X(self, tier, duration, used_clauses="used_clauses",
-                          table="used_later"):
+    # used_later_X is summed from used_clauses, used_later_anc_X from
+    # used_clauses_anc (uses of the clause AND of its descendants)
+    def fill_used_later_X(self, tier, duration, table="used_later",
+                          used_clauses_suffix=""):
+        used_clauses = ("used_clauses" if table == "used_later" else "used_clauses_anc") \
+            + used_clauses_suffix
 
         min_del_distance = duration
         if min_del_distance > 2*1000*1000:
