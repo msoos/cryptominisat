@@ -256,6 +256,10 @@ class Searcher : public HyperEngine
         uint64_t num_rephased_in[2] = {0, 0}; //indexed by rst.stable
         uint64_t glue_used_hist[2][65] = {}; //[rst.stable][min(glue,64)] at bump, as kissat
         void print_glue_usage() const;
+        //Kissat's dynamic tiers: glue covering 50%/90% of uses in this mode
+        uint32_t tier1_glue = 2;
+        uint32_t tier2_glue = 6;
+        void compute_tier_limits();
         uint64_t last_rephase_conflicts = 0;
         char   rephased = 0;
         char   last_rephase = '-'; //for reporting only

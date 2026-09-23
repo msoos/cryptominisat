@@ -510,6 +510,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.reducetier2glue = fc_int(a);})
         .default_value(conf.reducetier2glue)
         .help("Glue at/below which learnt clauses get a double life");
+    program.add_argument("--dyntiers")
+        .action([&](const auto& a) {conf.dynamic_tiers = fc_int(a);})
+        .default_value(conf.dynamic_tiers)
+        .help("Recompute tier1/tier2 glue limits from glue usage at each reduce, as kissat");
     program.add_argument("--flush")
         .action([&](const auto& a) {conf.flush = fc_int(a);})
         .default_value(conf.flush)

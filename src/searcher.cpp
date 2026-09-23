@@ -402,8 +402,8 @@ void Searcher::promote_clause(Clause* cl, const uint32_t new_glue)
     if (cl->stats.keep) return;
     if (cl->stats.is_ternary_resolvent) return;
     if (new_glue >= cl->stats.glue) return;
-    if (new_glue <= conf.reducetier1glue) cl->stats.keep = 1;
-    else if (cl->stats.glue > conf.reducetier2glue && new_glue <= conf.reducetier2glue)
+    if (new_glue <= tier1_glue) cl->stats.keep = 1;
+    else if (cl->stats.glue > tier2_glue && new_glue <= tier2_glue)
         cl->stats.used = 2;
     cl->stats.glue = new_glue;
 }
@@ -419,7 +419,7 @@ void Searcher::bump_clause(Clause* cl)
     if (!cl->red()) return;
     const uint32_t new_glue = calc_glue(*cl);
     if (new_glue < cl->stats.glue) promote_clause(cl, new_glue);
-    else if (used && cl->stats.glue <= conf.reducetier2glue) cl->stats.used = 2;
+    else if (used && cl->stats.glue <= tier2_glue) cl->stats.used = 2;
 }
 
 template<bool inprocess>
@@ -2133,8 +2133,8 @@ Clause* Searcher::handle_last_confl(
         #endif
 
         //keep/used as in CaDiCaL's new_clause() + new_driving_clause()
-        cl->stats.keep = glue <= conf.reducetier1glue;
-        cl->stats.used = 1 + (glue <= conf.reducetier2glue);
+        cl->stats.keep = glue <= tier1_glue;
+        cl->stats.used = 1 + (glue <= tier2_glue);
 
         #ifdef FINAL_PREDICTOR
         cl->stats.which_red_array = 2;
@@ -2579,6 +2579,7 @@ void Searcher::reduce_db_if_needed()
         && !longRedCls[0].empty()
         && sumConflicts >= rdb.lim_reduce
     ) {
+        compute_tier_limits();
         rdb.handle_reduce();
         cl_alloc.consolidate(solver);
     }
@@ -2855,6 +2856,38 @@ bool Searcher::intree_if_needed()
     return ret;
 }
 
+//Kissat's kissat_compute_and_set_tier_limits: tier1 is the glue by which
+//50% of clause uses in this mode are covered, tier2 90%. The configured
+//limits hold until enough uses were seen
+void Searcher::compute_tier_limits()
+{
+    if (!conf.dynamic_tiers) return;
+    const auto& hist = glue_used_hist[rst.stable];
+    uint64_t total = 0;
+    for(uint32_t g = 0; g < 65; g++) total += hist[g];
+    if (total < 1000) {
+        tier1_glue = conf.reducetier1glue;
+        tier2_glue = conf.reducetier2glue;
+        return;
+    }
+    uint64_t acc = 0;
+    uint32_t t1 = 0, t2 = 0;
+    bool t1_set = false;
+    for(uint32_t g = 0; g < 65; g++) {
+        acc += hist[g];
+        if (!t1_set && acc*2 >= total) { t1 = g; t1_set = true; }
+        if (acc*10 >= total*9) { t2 = g; break; }
+    }
+    t1 = std::max<uint32_t>(t1, 1);
+    t2 = std::max<uint32_t>(t2, t1);
+    if (t1 != tier1_glue || t2 != tier2_glue) {
+        verb_print(2, "[tiers] " << (rst.stable ? "stable" : "focused")
+            << " tier1: " << tier1_glue << "->" << t1 << " tier2: " << tier2_glue << "->" << t2);
+    }
+    tier1_glue = t1;
+    tier2_glue = t2;
+}
+
 //Kissat's '[ glue usage ]' table: how often clauses of each glue were
 //reasons in conflict analysis, per search mode, with the tier marks
 void Searcher::print_glue_usage() const
@@ -2864,8 +2897,8 @@ void Searcher::print_glue_usage() const
         for(uint32_t g = 0; g < 65; g++) total += glue_used_hist[stable][g];
         if (total == 0) continue;
         cout << conf.prefix << "glue usage in " << (stable ? "stable" : "focused")
-            << " mode, " << total << " uses (tier1 glue<=" << conf.reducetier1glue
-            << " tier2 glue<=" << conf.reducetier2glue << ")" << endl;
+            << " mode, " << total << " uses (final tier1 glue<=" << tier1_glue
+            << " tier2 glue<=" << tier2_glue << ")" << endl;
         uint64_t acc = 0;
         uint32_t rows = 0;
         for(uint32_t g = 0; g < 65 && rows < 20; g++) {
@@ -2879,8 +2912,8 @@ void Searcher::print_glue_usage() const
                 << " " << std::setw(6) << std::fixed << std::setprecision(2)
                 << stats_line_percent(c, total) << "%"
                 << " accumulated " << std::setw(6) << stats_line_percent(acc, total) << "%"
-                << (g == conf.reducetier1glue ? " tier1" : "")
-                << (g == conf.reducetier2glue ? " tier2" : "")
+                << (g == tier1_glue ? " tier1" : "")
+                << (g == tier2_glue ? " tier2" : "")
                 << endl;
             if (acc*100 >= total*95) break;
         }
@@ -3125,6 +3158,7 @@ bool Searcher::stabilizing()
             std::min<uint64_t>(rst.inc_stabilize * conf.stabilizefactor, conf.stabilizemaxint);
         rst.lim_stabilize = sumConflicts + std::max<uint64_t>(rst.inc_stabilize, 1);
         swap_restart_averages();
+        compute_tier_limits();
         verb_print(2, "[restart] "
             << (rst.stable ? "stable" : "focused") << " phase, until confl "
             << rst.lim_stabilize);
