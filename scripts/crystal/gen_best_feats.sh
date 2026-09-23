@@ -1,47 +1,43 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
+
+# Feature importance runs, to pick the features for best_features-*.txt:
+# trains on ALL raw features ("no_computed") and on all raw + computed
+# relative features ("all_computed", many hundreds, slow) and prints the
+# xgboost importance ranking (grep "impdf:" -A 60 in the outputs).
+#
+# usage: gen_best_feats.sh <cldata-prefix> [outdir]
+#   e.g. gen_best_feats.sh mydir/data-min.db-cldata- feats-out
+#   reads <prefix><table>-<tier>-cut1-*-cut2-*-limit-*.dat
+#   ONLY=0.1 uses 10% of the rows (all_computed has thousands of columns, ~5GB at 10%)
 
 set -e
-set -x
 
+PREFIX="$1"
+OUT="${2:-best-feats-out}"
+if [[ -z "$PREFIX" ]]; then
+    echo "usage: $0 <cldata-prefix> [outdir]"
+    exit 255
+fi
+cd "$(dirname "$0")"
+SCRIPTDIR="$(pwd)"
+cd - > /dev/null
+mkdir -p "$OUT"
+git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
 
-basename="8march-2020-3acd81dc55df3-best-feats"
-basename="aes-30-march-2020-a1e0e19be0c1"
-mkdir -p ${basename}
-rm -f ${basename}/*
-git rev-parse HEAD > ${basename}/out_git
-cat gen_best_feats.sh >> ${basename}/out_git
-md5sum *.dat >> ${basename}/out_git
-
-
-function doit() {
-
-tiers=(
-"short"
-"long"
-"forever")
-
-for tier in "${tiers[@]}"
-do
-    echo "Doing ${tier}_${computed}computed"
-
-    /usr/bin/time --verbose -o "${basename}/output_${tier}_${computed}computed.timeout" \
-    ../cldata_predict.py "${tier}-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
-    --tier ${tier} --regressor "xgboost" --only "$only" \
-    --features "${computed}_computed" > "${basename}/output_${tier}_${computed}computed-cut1-${cut1}-cut2-${cut2}"
-
-    echo "Done with ${tier}_${computed}computed"
+for tier in short long forever; do
+    for table in used_later used_later_anc; do
+        for computed in no all; do
+            f=$(ls ${PREFIX}${table}-${tier}-cut1-*.dat | head -1)
+            if grep -q "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" 2>/dev/null; then
+                echo "Have $table $tier ${computed}_computed already"
+                continue
+            fi
+            echo "Doing $f ${computed}_computed"
+            "$SCRIPTDIR/cldata_predict.py" "$f" --tier "$tier" --table "$table" \
+                --regressor xgb --topfeats --features "${computed}_computed" --only "${ONLY:-1.0}" \
+                > "$OUT/output_${table}_${tier}_${computed}computed" 2>&1
+            grep -A 40 "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" | head -42
+        done
+    done
 done
-
-}
-
-limit=2000
-cut1="5.0"
-cut2="30.0"
-
-only="1.0"
-computed="no"
-doit
-
-only="0.02"
-computed="all"
-doit
+echo "Outputs in $OUT/"

@@ -45,7 +45,6 @@ THE SOFTWARE.
 #include "hasher.h"
 #include "solverconf.h"
 #include "distillerlong.h"
-#include "vardistgen.h"
 #include "solvertypes.h"
 #include "gaussian.h"
 #include "distillerbin.h"
@@ -83,6 +82,8 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     hist.setSize(conf.shortTermHistorySize);
 
+    tier1_glue = conf.reducetier1glue;
+    tier2_glue = conf.reducetier2glue;
     next_cls_distill = 5000.0*conf.global_next_multiplier;
     next_bins_distill = 12000.0*conf.global_next_multiplier;
     next_full_probe = 20000.0*conf.global_next_multiplier;
@@ -102,9 +103,6 @@ void Searcher::new_var(
 
     if (insert_varorder) {
         insert_var_order_all((int)nVars()-1);
-        #ifdef STATS_NEEDED_BRANCH
-        level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
-        #endif
     }
 }
 
@@ -116,18 +114,12 @@ void Searcher::new_vars(size_t n)
         insert_var_order_all((int)nVars()-i-1);
     }
 
-    #ifdef STATS_NEEDED_BRANCH
-    level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
-    #endif
 }
 
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
 
-    #ifdef STATS_NEEDED_BRANCH
-    level_used_for_cl_arr.resize(nVars());
-    #endif
 }
 
 void Searcher::updateVars(
@@ -164,12 +156,6 @@ inline void Searcher::add_lit_to_learnt(
 //     << removed_type_to_string(varData[var].removed) << endl;
     assert(varData[var].removed == Removed::none);
 
-    #ifdef STATS_NEEDED_BRANCH
-    if (!inprocess) {
-        varData[var].inside_conflict_clause_antecedents++;
-        varData[var].last_seen_in_1uip = sumConflicts;
-    }
-    #endif
 
     if (varData[var].level == 0) {
         if (frat->enabled()) {
@@ -184,14 +170,6 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     if (!inprocess) {
-        #ifdef STATS_NEEDED_BRANCH
-        if (varData[var].level != 0 &&
-            !level_used_for_cl_arr[varData[var].level]
-        ) {
-            level_used_for_cl_arr[varData[var].level] = 1;
-            level_used_for_cl.push_back(varData[var].level);
-        }
-        #endif
 
         switch(branch_strategy) {
             case branch::vsids:
@@ -395,30 +373,25 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 #endif
 }
 
-//Improve glue and lift into a better tier, as in CaDiCaL
+//Improve glue, as kissat's promote: the tier follows from the glue
 void Searcher::promote_clause(Clause* cl, const uint32_t new_glue)
 {
     assert(cl->red());
-    if (cl->stats.keep) return;
     if (cl->stats.is_ternary_resolvent) return;
     if (new_glue >= cl->stats.glue) return;
-    if (new_glue <= conf.reducetier1glue) cl->stats.keep = 1;
-    else if (cl->stats.glue > conf.reducetier2glue && new_glue <= conf.reducetier2glue)
-        cl->stats.used = 2;
     cl->stats.glue = new_glue;
 }
 
-//Mark clause used, recompute glue and promote if it shrank, as in CaDiCaL
+//Kissat's mark_clause_as_used: refresh 'used', recompute glue and promote
 void Searcher::bump_clause(Clause* cl)
 {
-    const uint32_t used = cl->stats.used;
-    cl->stats.used = 1;
-    if (cl->stats.keep) return;
-    if (cl->stats.is_ternary_resolvent) return;
     if (!cl->red()) return;
-    const uint32_t new_glue = calc_glue(*cl);
-    if (new_glue < cl->stats.glue) promote_clause(cl, new_glue);
-    else if (used && cl->stats.glue <= conf.reducetier2glue) cl->stats.used = 2;
+    cl->stats.used = CL_MAX_USED;
+    if (!cl->stats.is_ternary_resolvent) {
+        const uint32_t new_glue = calc_glue(*cl);
+        if (new_glue < cl->stats.glue) promote_clause(cl, new_glue);
+    }
+    glue_used_hist[rst.stable][std::min<uint32_t>(cl->stats.glue, 64)]++;
 }
 
 template<bool inprocess>
@@ -444,6 +417,7 @@ void Searcher::add_lits_to_learnt(
                 antec_data.binRed++;
                 #endif
                 stats.resolvs.binRed++;
+                if (!hyper_bin_ranges.empty()) mark_hyper_bin_used(id);
             } else {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.binIrred++;
@@ -1160,14 +1134,6 @@ void Searcher::analyze_conflict(
     [[maybe_unused]] uint32_t& size_before_minim
 ) {
     //Set up environment
-    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    assert(level_used_for_cl.empty());
-    #ifdef SLOW_DEBUG
-    for(auto& x: level_used_for_cl_arr) {
-        assert(x == 0);
-    }
-    #endif
-    #endif
 
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     antec_data.clear();
@@ -1191,10 +1157,6 @@ void Searcher::analyze_conflict(
             for (const auto& v: implied_by_learnts) vmtf_bump_queue(v);
         }
         implied_by_learnts.clear();
-        #ifdef STATS_NEEDED_BRANCH
-        for(auto& lev: level_used_for_cl) level_used_for_cl_arr[lev] = 0;
-        level_used_for_cl.clear();
-        #endif
         out_btlevel = 0;
         glue = 0;
         glue_before_minim = 0;
@@ -1233,20 +1195,6 @@ void Searcher::analyze_conflict(
         }
     }
 
-    #ifdef STATS_NEEDED_BRANCH
-    for(const Lit l: learnt_clause) {
-        varData[l.var()].inside_conflict_clause++;
-        varData[l.var()].inside_conflict_clause_glue += glue;
-    }
-    vars_used_for_cl.clear();
-    for(auto& lev: level_used_for_cl) {
-        vars_used_for_cl.push_back(trail[trail_lim[lev-1]].lit.var());
-        assert(varData[trail[trail_lim[lev-1]].lit.var()].reason == PropBy());
-        assert(level_used_for_cl_arr[lev] == 1);
-        level_used_for_cl_arr[lev] = 0;
-    }
-    level_used_for_cl.clear();
-    #endif
 
     if (!inprocess && conf.bump_reason_depth > 0 && branch_strategy != branch::rand) {
         bump_reason_side_lits();
@@ -1582,6 +1530,7 @@ bool Searcher::disable_gauss_matrix(const uint32_t i)
     assert(!gqd.disabled);
     gmatrices[i]->delete_reasons();
     gqd.disabled = true;
+    gauss_disabled_this_solve++;
     gmatrices[i]->move_back_xor_clauses();
     return okay();
 }
@@ -1669,6 +1618,7 @@ lbool Searcher::search()
 
     //Stats reset & update
     stats.numRestarts++;
+    restarts_in_mode[rst.stable]++;
     hist.clear();
     hist.reset_glueHist_size(conf.shortTermHistorySize);
 
@@ -1830,8 +1780,7 @@ lbool Searcher::new_decision() {
 
 void Searcher::update_history_stats(
     size_t backtrack_level,
-    uint32_t glue,
-    uint32_t connects_num_communities
+    uint32_t glue
 ) {
     assert(decisionLevel() > 0);
 
@@ -1849,7 +1798,6 @@ void Searcher::update_history_stats(
     //long-term averages
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     hist.numResolutionsHistLT.push(antec_data.num());
-    hist.decisionLevelHistLT.push(decisionLevel());
     const uint32_t overlap = antec_data.sum_size()-(antec_data.num()-1)-learnt_clause.size();
     hist.antec_data_sum_sizeHistLT.push(antec_data.sum_size());
     hist.overlapHistLT.push(overlap);
@@ -1863,7 +1811,6 @@ void Searcher::update_history_stats(
     //restart scheduling
     rst.cur.fast.update(glue);
     rst.cur.slow.update(glue);
-    hist.connects_num_communities_histLT.push(connects_num_communities);
 
     //Global stats from cnf.h
     sumClLBD += glue;
@@ -1931,25 +1878,6 @@ void Searcher::print_learning_debug_info(const int32_t ID) const
     << endl;
 }
 
-#ifdef STATS_NEEDED_BRANCH
-void Searcher::dump_var_for_learnt_cl(const uint32_t v,
-                                      const uint64_t clid,
-                                      const bool is_decision)
-{
-    //When it's a decision clause, the REAL clause could have already
-    //set some variable to having been propagated (due to asserting clause)
-    //so this assert() no longer holds for all literals
-    assert(is_decision || varData[v].reason == PropBy());
-    if (varData[v].dump) {
-        uint64_t outer_var = map_inter_to_outer(v);
-        solver->sqlStats->dec_var_clid(
-            outer_var
-            , varData[v].sumConflicts_at_picktime
-            , clid
-        );
-    }
-}
-#endif
 
 #ifdef STATS_NEEDED
 void Searcher::dump_sql_clause_data(
@@ -1960,21 +1888,7 @@ void Searcher::dump_sql_clause_data(
     , const uint32_t old_decision_level
     , const uint64_t clid
     , const bool is_decision
-    , const uint32_t connects_num_communities
 ) {
-
-    #ifdef STATS_NEEDED_BRANCH
-    if (is_decision) {
-        for(Lit l: learnt_clause) {
-            dump_var_for_learnt_cl(l.var(), clid, is_decision);
-        }
-    } else {
-        for(uint32_t v: vars_used_for_cl) {
-            dump_var_for_learnt_cl(v, clid, is_decision);
-        }
-    }
-    #endif
-
     solver->sqlStats->clause_stats(
         solver
         , clid
@@ -1987,28 +1901,36 @@ void Searcher::dump_sql_clause_data(
         , antec_data
         , old_decision_level
         , trail.size()
-        , params.confl_this_rst
         , (int)rst.stable
         , hist
         , is_decision
-        , connects_num_communities
     );
 }
 #endif
 
 #ifdef FINAL_PREDICTOR
+//As sqlitestats.cpp's clause_stats(), kept in memory for the predictor
 void Searcher::set_clause_data(
     Clause* cl
     , const uint32_t orig_glue
     , const uint32_t glue_before_minim
+    , const uint32_t size_before_minim
     , const uint32_t old_decision_level
 ) {
     assert(cl->red());
     auto& stats_extra = red_stats_extra[cl->stats.extra_pos];
 
-    //definitely a BUG here I think -- should be 2*antec_data.num(), no?
-    //however, it's the same as how it's dumped in sqlitestats.cpp
-    //stats_extra.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+    stats_extra.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+    stats_extra.size_before_minim = size_before_minim;
+    stats_extra.decision_level = old_decision_level;
+    stats_extra.learnt_rst_type = rst.stable;
+    stats_extra.antecedents_longIrred = antec_data.longIrred;
+    stats_extra.antecedents_longRed = antec_data.longRed;
+    stats_extra.trailDepthHistLT_avg = hist.trailDepthHistLT.avg();
+    stats_extra.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();
+    stats_extra.antec_data_sum_sizeHistLT_avg = hist.antec_data_sum_sizeHistLT.avg();
+    stats_extra.branchDepthHistQueue_avg = hist.branchDepthHistQueue.avg_nocheck();
+    stats_extra.trailDepthHist_avg = hist.trailDepthHist.avg_nocheck();
 
 
     stats_extra.glueHist_longterm_avg = hist.glueHist.getLongtTerm().avg();
@@ -2031,35 +1953,6 @@ void Searcher::set_clause_data(
 }
 #endif
 
-#ifdef STATS_NEEDED
-template<class T>
-uint32_t Searcher::calc_connects_num_communities(const T& cl)
-{
-    assert(toClear.empty());
-    uint32_t connects_num_communities = 0;
-    for(const auto l: cl) {
-        uint32_t comm = varData[l.var()].community_num;
-        if (comm == numeric_limits<uint32_t>::max()) {
-            continue;
-        }
-        assert(comm < solver->nVars());
-        if (!seen[comm]) {
-            connects_num_communities++;
-            toClear.push_back(Lit(comm, 0));
-            seen[comm] = 1;
-        }
-    }
-
-    for(auto& t: toClear) {
-        seen[t.var()] = 0;
-    }
-    toClear.clear();
-
-    return connects_num_communities;
-}
-
-template uint32_t Searcher::calc_connects_num_communities<Clause>(const Clause& cl);
-#endif
 
 Clause* Searcher::handle_last_confl(
     const uint32_t glue,
@@ -2067,7 +1960,6 @@ Clause* Searcher::handle_last_confl(
     [[maybe_unused]] const uint32_t glue_before_minim,
     [[maybe_unused]] const uint32_t size_before_minim,
     [[maybe_unused]] const bool is_decision,
-    [[maybe_unused]] const uint32_t connects_num_communities,
     int32_t& ID
 ) {
     *frat << __PRETTY_FUNCTION__ << " begin\n";
@@ -2118,28 +2010,26 @@ Clause* Searcher::handle_last_confl(
         #ifdef STATS_NEEDED
         cl->stats.is_tracked = to_track;
         if (cl->stats.is_tracked) ext_stats.orig_ID = ID;
-        if (sqlStats) sqlStats->update_id(ID, ID); // this is how we know it's tracked
+        if (to_track && sqlStats) sqlStats->update_id(ID, ID); // this is how fix_up_frat knows it's tracked
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
 
         #ifdef STATS_NEEDED
-        ext_stats.connects_num_communities = connects_num_communities;
-        ext_stats.orig_connects_num_communities = connects_num_communities;
-        cl->stats.locked_for_data_gen =
+        cl->stats.locked_for_data_gen = to_track &&
             (double)rnd_uint(solver->mtrand,100000)/100000.0 < conf.lock_for_data_gen_ratio;
         #endif
 
-        //keep/used as in CaDiCaL's new_clause() + new_driving_clause()
-        cl->stats.keep = glue <= conf.reducetier1glue;
-        cl->stats.used = 1 + (glue <= conf.reducetier2glue);
+        //as kissat's learn: every tier starts with a full 'used' life
+        cl->stats.keep = 0;
+        cl->stats.used = CL_MAX_USED;
 
-        #ifdef FINAL_PREDICTOR
-        cl->stats.which_red_array = 2;
-        #else
         cl->stats.which_red_array = 0;
-        #endif
-        solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+        solver->longRedCls[0].push_back(offset);
+        if (conf.eager_subsume) {
+            eager_subsume_last_learnt(*cl);
+            last_learnt[last_learnt_at++ % 4] = LastLearnt{offset, cl->stats.id};
+        }
     }
 
     #ifdef STATS_NEEDED
@@ -2158,14 +2048,13 @@ Clause* Searcher::handle_last_confl(
             , old_decision_level
             , ID
             , is_decision
-            , connects_num_communities
         );
     }
     #endif
 
     if (cl) {
         #ifdef FINAL_PREDICTOR
-        set_clause_data(cl, glue, glue_before_minim, old_decision_level);
+        set_clause_data(cl, glue, glue_before_minim, size_before_minim, old_decision_level);
         #endif
         cl->stats.is_decision = is_decision;
     }
@@ -2206,6 +2095,7 @@ bool Searcher::handle_conflict(PropBy confl)
     stats.conflicts++;
     hist.num_conflicts_this_restart++;
     sumConflicts++;
+    confl_in_mode[rst.stable]++;
     for(uint32_t i = 0; i < longRedCls.size(); i++)  longRedClsSizes[i] += longRedCls[i].size();
     params.confl_this_rst++;
 
@@ -2250,11 +2140,9 @@ bool Searcher::handle_conflict(PropBy confl)
     }
     solver->datasync->signal_new_long_clause(learnt_clause);
 
-    uint32_t connects_num_communities = 0;
-    STATS_DO(connects_num_communities = calc_connects_num_communities(learnt_clause));
     if (conf.verbosity >= 6) print_clause("learnt", learnt_clause);
 
-    update_history_stats(backtrack_level, glue, connects_num_communities);
+    update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
 
     //Add decision-based clause in case it's short
@@ -2304,7 +2192,7 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     assert(value(learnt_clause[0]) == l_Undef);
-    glue = std::min<uint32_t>(glue, numeric_limits<uint32_t>::max());
+    glue = std::min<uint32_t>(glue, CL_MAX_GLUE);
     int32_t ID;
     *frat << "normal learnt clause\n";
     Clause* cl = handle_last_confl(
@@ -2313,7 +2201,6 @@ bool Searcher::handle_conflict(PropBy confl)
         glue_before_minim,
         size_before_minim,
         false, // is decision?
-        connects_num_communities,
         ID
     );
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true, ID);
@@ -2343,11 +2230,6 @@ bool Searcher::handle_conflict(PropBy confl)
             learnt_clause.size(), // minimized glue is the same as glue before minim
             learnt_clause.size(),
             true, // is decision?
-            #ifdef STATS_NEEDED
-            calc_connects_num_communities(learnt_clause),
-            #else
-            0,
-            #endif
             ID
         );
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false, ID);
@@ -2392,25 +2274,6 @@ void Searcher::check_calc_satzilla_features(bool force)
 }
 #endif
 
-#ifdef STATS_NEEDED_BRANCH
-void Searcher::check_calc_vardist_features(bool force)
-{
-    if (!solver->sqlStats) {
-        return;
-    }
-
-    if (last_vardist_feature_calc_confl == 0
-        || (last_vardist_feature_calc_confl + solver->conf.every_pred_reduce) < sumConflicts
-        || force
-    ) {
-        last_vardist_feature_calc_confl = sumConflicts+1;
-        VarDistGen v(solver);
-        v.calc();
-        latest_vardist_feature_calc++;
-        v.dump();
-    }
-}
-#endif
 
 void Searcher::print_restart_header()
 {
@@ -2497,16 +2360,8 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
+inline void Searcher::dump_restart_sql()
 {
-    //don't dump twice for var
-    if (type == rst_dat_type::var) {
-        if (last_dumped_conflict_rst_data_for_var == solver->sumConflicts) {
-            return;
-        }
-        last_dumped_conflict_rst_data_for_var = solver->sumConflicts;
-    }
-
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
@@ -2517,14 +2372,9 @@ inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
         , thisStats
         , solver
         , this
-        , type
-        , ID
     );
-
-    if (type == rst_dat_type::norm) {
-        lastSQLPropStats = propStats;
-        lastSQLGlobalStats = stats;
-    }
+    lastSQLPropStats = propStats;
+    lastSQLGlobalStats = stats;
 }
 #endif
 
@@ -2553,34 +2403,16 @@ void Searcher::print_restart_stat()
 
 void Searcher::reduce_db_if_needed()
 {
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    if (conf.every_pred_reduce != 0
-        && sumConflicts >= next_pred_reduce
-    ) {
-        #ifdef STATS_NEEDED
-        if (solver->sqlStats) {
-            solver->reduceDB->dump_sql_cl_data((int)rst.stable);
-        }
-        #endif
-        #ifdef FINAL_PREDICTOR
-        solver->reduceDB->handle_predictors();
-        cl_alloc.consolidate(solver);
-        #endif
-        next_pred_reduce = sumConflicts + conf.every_pred_reduce;
-    }
-    #endif
-
-    #ifndef FINAL_PREDICTOR
     auto& rdb = *solver->reduceDB;
     if (rdb.lim_reduce == 0) rdb.lim_reduce = sumConflicts + conf.reduceint;
     if (conf.reduce
         && !longRedCls[0].empty()
         && sumConflicts >= rdb.lim_reduce
     ) {
-        rdb.handle_reduce();
+        compute_tier_limits();
+        rdb.handle_reduce((uint32_t)rst.stable);
         cl_alloc.consolidate(solver);
     }
-    #endif
 }
 
 bool Searcher::clean_clauses_if_needed()
@@ -2690,9 +2522,6 @@ inline void Searcher::dump_search_loop_stats(double my_time)
 {
     #if defined(STATS_NEEDED)
     check_calc_satzilla_features();
-    #if defined(STATS_NEEDED_BRANCH)
-    check_calc_vardist_features();
-    #endif
     #endif
 
     dump_search_sql(my_time);
@@ -2703,7 +2532,7 @@ inline void Searcher::dump_search_loop_stats(double my_time)
     if (sqlStats
         && conf.dump_individual_restarts_and_clauses
     ) {
-        dump_restart_sql(rst_dat_type::norm);
+        dump_restart_sql();
     }
     #endif
     restartID++;
@@ -2829,15 +2658,17 @@ bool Searcher::intree_if_needed()
 {
     assert(okay());
     assert(decisionLevel() == 0);
-    if (!xorclauses.empty() || !gmatrices.empty()) return okay();
-
     bool ret = okay();
 
     if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
+    //Without hyper-bin, intree falls back to propagate<true>(), which runs GJ
+    //at every tree level: too expensive, and clashes with its reason re-parenting
+    if (!conf.do_hyperbin_and_transred && !gmatrices.empty()) return ret;
     if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
         sumConflicts > next_intree
     ) {
 
+        TimeScope ts(solver->time_tally, "intree-probe");
         auto repl = solver->varReplacer->get_num_replaced_vars();
         if (ret) ret &= solver->intree->intree_probe();
         if (ret) {
@@ -2851,12 +2682,193 @@ bool Searcher::intree_if_needed()
     return ret;
 }
 
+//Kissat's kissat_compute_and_set_tier_limits: tier1 is the glue by which
+//50% of clause uses in this mode are covered, tier2 90%. The configured
+//limits hold until enough uses were seen
+void Searcher::compute_tier_limits()
+{
+    if (!conf.dynamic_tiers) return;
+    const auto& hist = glue_used_hist[rst.stable];
+    uint64_t total = 0;
+    for(uint32_t g = 0; g < 65; g++) total += hist[g];
+    if (total < 1000) {
+        tier1_glue = conf.reducetier1glue;
+        tier2_glue = conf.reducetier2glue;
+        return;
+    }
+    uint64_t acc = 0;
+    uint32_t t1 = 0, t2 = 0;
+    bool t1_set = false;
+    for(uint32_t g = 0; g < 65; g++) {
+        acc += hist[g];
+        if (!t1_set && acc*2 >= total) { t1 = g; t1_set = true; }
+        if (acc*10 >= total*9) { t2 = g; break; }
+    }
+    //tier1 clauses are kept forever here (CaDiCaL's 'keep'), so never
+    //raise it: on UTI-20-10p0 it drifted to 4 and the red DB ballooned
+    t1 = std::min<uint32_t>(std::max<uint32_t>(t1, 1), conf.reducetier1glue);
+    t2 = std::max<uint32_t>(t2, t1);
+    if (t1 != tier1_glue || t2 != tier2_glue) {
+        verb_print(2, "[tiers] " << (rst.stable ? "stable" : "focused")
+            << " tier1: " << tier1_glue << "->" << t1 << " tier2: " << tier2_glue << "->" << t2);
+    }
+    tier1_glue = t1;
+    tier2_glue = t2;
+}
+
+//Kissat's eagerly_subsume_last_learned: a subsumed recent learnt clause is
+//demoted to a sure tier3 candidate, so the next reduce drops it first
+void Searcher::eager_subsume_last_learnt(const Clause& newcl)
+{
+    for(const Lit l: newcl) seen2[l.toInt()] = 1;
+    for(auto& ll: last_learnt) {
+        if (ll.off == CL_OFFSET_MAX) continue;
+        Clause* c = cl_alloc.ptr(ll.off);
+        if (c->freed() || c->get_removed() || !c->red() || c->stats.id != ll.id
+            || c->size() <= newcl.size() || c->stats.glue == CL_MAX_GLUE
+        ) continue;
+        uint32_t needed = newcl.size();
+        uint32_t remain = c->size();
+        for(const Lit l: *c) {
+            if (seen2[l.toInt()] && !--needed) break;
+            else if (--remain < needed) break;
+        }
+        if (needed) continue;
+        c->stats.used = 0;
+        c->stats.glue = CL_MAX_GLUE;
+        ll = LastLearnt();
+        eagerly_subsumed++;
+    }
+    for(const Lit l: newcl) seen2[l.toInt()] = 0;
+}
+
+//Kissat's focused/stable/switched/restarts statistics
+void Searcher::print_mode_stats() const
+{
+    const uint64_t confls = confl_in_mode[0] + confl_in_mode[1];
+    const uint64_t rsts = restarts_in_mode[0] + restarts_in_mode[1];
+    for(uint32_t stable = 0; stable < 2; stable++) {
+        cout << conf.prefix << (stable ? "stable  " : "focused ")
+            << " conflicts " << std::setw(10) << confl_in_mode[stable]
+            << " (" << std::setw(5) << std::fixed << std::setprecision(1)
+            << stats_line_percent(confl_in_mode[stable], confls) << "%)"
+            << " restarts " << std::setw(8) << restarts_in_mode[stable]
+            << " (" << std::setw(5) << stats_line_percent(restarts_in_mode[stable], rsts) << "%)"
+            << " confl/restart " << std::setw(8) << std::setprecision(1)
+            << float_div(confl_in_mode[stable], restarts_in_mode[stable])
+            << endl;
+    }
+    cout << conf.prefix << "mode switches " << mode_switches
+        << " rephased " << num_rephased
+        << " eagerly subsumed learnts " << eagerly_subsumed << endl;
+}
+
+//Kissat's '[ glue usage ]' table: how often clauses of each glue were
+//reasons in conflict analysis, per search mode, with the tier marks
+void Searcher::print_glue_usage() const
+{
+    for(uint32_t stable = 0; stable < 2; stable++) {
+        uint64_t total = 0;
+        for(uint32_t g = 0; g < 65; g++) total += glue_used_hist[stable][g];
+        if (total == 0) continue;
+        cout << conf.prefix << "glue usage in " << (stable ? "stable" : "focused")
+            << " mode, " << total << " uses (final tier1 glue<=" << tier1_glue
+            << " tier2 glue<=" << tier2_glue << ")" << endl;
+        uint64_t acc = 0;
+        uint32_t rows = 0;
+        for(uint32_t g = 0; g < 65 && rows < 20; g++) {
+            const uint64_t c = glue_used_hist[stable][g];
+            if (c == 0) continue;
+            acc += c;
+            rows++;
+            cout << conf.prefix << (stable ? "stable " : "focused") << " glue "
+                << std::setw(2) << g << (g == 64 ? "+" : " ")
+                << " used " << std::setw(10) << c
+                << " " << std::setw(6) << std::fixed << std::setprecision(2)
+                << stats_line_percent(c, total) << "%"
+                << " accumulated " << std::setw(6) << stats_line_percent(acc, total) << "%"
+                << (g == tier1_glue ? " tier1" : "")
+                << (g == tier2_glue ? " tier2" : "")
+                << endl;
+            if (acc*100 >= total*95) break;
+        }
+    }
+}
+
+void Searcher::mark_hyper_bin_used(const int32_t id)
+{
+    for(auto& r: hyper_bin_ranges) {
+        if (id >= r.start && id < r.end) { r.used[id-r.start] = 1; return; }
+    }
+}
+
+void Searcher::add_hyper_bin_range(const int32_t start, const int32_t end)
+{
+    if (start >= end) return;
+    hyper_bin_ranges.push_back({start, end, vector<uint8_t>(end-start, 0)});
+    next_hyper_bin_clean = sumConflicts + conf.hyperbin_keep_confl*conf.global_next_multiplier;
+}
+
+//Drop every hyper-bin of the recorded ranges that was never a reason in
+//conflict analysis. Level 0 only: a deleted bin must not be a live reason
+void Searcher::clean_unused_hyper_bins()
+{
+    if (hyper_bin_ranges.empty()) return;
+    assert(decisionLevel() == 0);
+    const double my_time = cpu_time();
+    const auto unused = [&](const int32_t id) {
+        for(const auto& r: hyper_bin_ranges)
+            if (id >= r.start && id < r.end) return !r.used[id-r.start];
+        return false;
+    };
+
+    uint64_t removed = 0;
+    const size_t end = watches.size();
+    for (size_t wsLit = 0; wsLit < end; wsLit++) {
+        const Lit lit = Lit::toLit(wsLit);
+        watch_subarray ws = watches[lit];
+        if (ws.empty()) continue;
+        Watched* j = ws.begin();
+        for (Watched* w = ws.begin(); w != ws.end(); w++) {
+            if (w->isBin() && w->red() && unused(w->get_id())) {
+                if (lit.toInt() < w->lit2().toInt()) {
+                    removed++;
+                    *frat << del << w->get_id() << lit << w->lit2() << fin;
+                }
+                continue;
+            }
+            *j++ = *w;
+        }
+        ws.shrink_(ws.end()-j);
+    }
+    binTri.redBins -= removed;
+    uint64_t total = 0;
+    for(const auto& r: hyper_bin_ranges) total += r.end - r.start;
+    hyper_bins_cleaned += removed;
+    hyper_bins_kept += total - removed;
+    hyper_bin_ranges.clear();
+    verb_print(1, "[hyper-bin-clean] removed: " << removed << " of: " << total
+        << " red-bins now: " << binTri.redBins
+        << conf.print_times(cpu_time() - my_time));
+}
+
+bool Searcher::clean_hyper_bins_if_needed()
+{
+    assert(decisionLevel() == 0);
+    if (!hyper_bin_ranges.empty() && sumConflicts > next_hyper_bin_clean) {
+        TimeScope ts(solver->time_tally, "hyper-bin-clean");
+        clean_unused_hyper_bins();
+    }
+    return okay();
+}
+
 bool Searcher::str_impl_with_impl_if_needed()
 {
     assert(okay());
     bool ret = okay();
 
     if (conf.doStrSubImplicit && sumConflicts > next_str_impl_with_impl) {
+        TimeScope ts(solver->time_tally, "str-impl");
         ret &= solver->dist_impl_with_impl->str_impl_w_impl();
         if (ret) solver->subsumeImplicit->subsume_implicit();
         next_str_impl_with_impl = sumConflicts + 60000.0*conf.global_next_multiplier;
@@ -2872,8 +2884,10 @@ bool Searcher::distill_bins_if_needed() {
     if (conf.do_distill_bin_clauses &&
         sumConflicts > next_bins_distill)
     {
+        TimeScope ts(solver->time_tally, "distill-bins");
         ret = solver->distill_bin_cls->distill();
-        next_bins_distill = sumConflicts + 20000.0*conf.global_next_multiplier;
+        next_bins_distill = sumConflicts + 20000.0*conf.global_next_multiplier
+            *solver->distill_bin_cls->sched_backoff();
     }
     return ret;
 }
@@ -2885,6 +2899,7 @@ bool Searcher::sub_str_with_bin_if_needed()
 
     //Subsumes and strengthens long clauses with binary clauses
     if (conf.do_distill_clauses && sumConflicts > next_sub_str_with_bin) {
+        TimeScope ts(solver->time_tally, "sub-str-cls-with-bin");
         ret = solver->dist_long_with_impl->distill_long_with_implicit(true);
         next_sub_str_with_bin = sumConflicts + 25000.0*conf.global_next_multiplier;
     }
@@ -2896,7 +2911,8 @@ lbool Searcher::distill_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
     if (conf.do_distill_clauses && sumConflicts > next_cls_distill) {
-        if (!solver->distill_long_cls->distill(true, false)) return l_False;
+        TimeScope ts(solver->time_tally, "distill-cls");
+        if (!solver->distill_long_cls->distill_red_and_irred()) return l_False;
         next_cls_distill = sumConflicts + 15000.0*conf.global_next_multiplier;
     }
 
@@ -2908,6 +2924,7 @@ bool Searcher::full_probe_if_needed()
     assert(decisionLevel() == 0);
     if (conf.do_full_probe && !conf.never_stop_search && sumConflicts > next_full_probe) {
         full_probe_iter++;
+        TimeScope ts(solver->time_tally, "full-probe");
         if (!solver->full_probe(full_probe_iter % 2)) return false;
         next_full_probe = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
@@ -2919,6 +2936,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     assert(ok);
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _max_confls;
+    TimeScope ts(solver->time_tally, "search");
     if (fast_backw.fast_backw_on && fast_backw.cur_max_confl == 0) {
         fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
         fast_backw.start_sumConflicts = sumConflicts;
@@ -2928,15 +2946,13 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     verb_print(6, __func__ << " called");
 
     gauss_disable_pending = false; //stale, matrices are new
+    gauss_disabled_this_solve = 0;
     resetStats();
     lbool status = l_Undef;
 
     setup_branch_strategy();
     init_restart_sched();
     STATS_DO(check_calc_satzilla_features(true));
-    #ifdef STATS_NEEDED_BRANCH
-    check_calc_vardist_features(true);
-    #endif
 
     SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
     while(stats.conflicts < max_confl_per_search_solve_call && status == l_Undef) {
@@ -2948,8 +2964,9 @@ lbool Searcher::solve(const uint64_t _max_confls) {
                     || !distill_bins_if_needed()
                     || !sub_str_with_bin_if_needed()
                     || !str_impl_with_impl_if_needed()
-                    || !intree_if_needed())
-              ) {
+                    || !intree_if_needed()
+                    || !clean_hyper_bins_if_needed())
+            ) {
                 assert(!frat->enabled() || unsat_cl_ID != 0);
                 status = l_False;
                 goto end;
@@ -3010,10 +3027,12 @@ bool Searcher::stabilizing()
     if (!conf.do_stabilize) return false;
     if (sumConflicts >= rst.lim_stabilize) {
         rst.stable = !rst.stable;
+        mode_switches++;
         rst.inc_stabilize =
             std::min<uint64_t>(rst.inc_stabilize * conf.stabilizefactor, conf.stabilizemaxint);
         rst.lim_stabilize = sumConflicts + std::max<uint64_t>(rst.inc_stabilize, 1);
         swap_restart_averages();
+        compute_tier_limits();
         verb_print(2, "[restart] "
             << (rst.stable ? "stable" : "focused") << " phase, until confl "
             << rst.lim_stabilize);
@@ -3093,6 +3112,13 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status) {
     print_solution_type(status);
     if (conf.verbosity >= 2 && status != l_Undef) print_matrix_stats();
+    if (gauss_disabled_this_solve) {
+        uint32_t active = 0;
+        for(const auto& gqd: gqueuedata) active += !gqd.disabled;
+        verb_print(1, "[gauss] disabled " << gauss_disabled_this_solve
+            << " matrices in this search round, " << active << " of "
+            << gqueuedata.size() << " still active");
+    }
 
     if (status == l_True) {
         SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
@@ -3371,7 +3397,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 template<bool inprocess, bool red_also, bool distill_use>
 PropBy Searcher::propagate() {
     uint32_t last_trail = trail.size();
-    PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
+    PropBy ret = propagate_core<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled())) {
@@ -3544,65 +3570,6 @@ void Searcher::cancelUntil(uint32_t blevel)
             }
             if (!bnns.empty()) reverse_prop(trail[i].lit);
 
-            #ifdef STATS_NEEDED_BRANCH
-            if (!inprocess) {
-                varData[var].last_canceled = sumConflicts;
-            }
-            if (!inprocess && varData[var].reason == PropBy()) {
-                //we want to dump & this was a decision var
-                uint64_t sumConflicts_during = sumConflicts - varData[var].sumConflicts_at_picktime;
-                uint64_t sumDecisions_during = sumDecisions - varData[var].sumDecisions_at_picktime;
-                uint64_t sumPropagations_during = sumPropagations - varData[var].sumPropagations_at_picktime;
-                uint64_t sumAntecedents_during = sumAntecedents - varData[var].sumAntecedents_at_picktime;
-                uint64_t sumAntecedentsLits_during = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
-                uint64_t sumConflictClauseLits_during = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
-                uint64_t sumDecisionBasedCl_during = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
-                uint64_t sumClLBD_during = sumClLBD - varData[var].sumClLBD_at_picktime;
-                uint64_t sumClSize_during = sumClSize - varData[var].sumClSize_at_picktime;
-                double rel_activity_at_fintime =
-                    std::log2(var_act_vsids[var]+10e-300)/std::log2(max_vsids_act+10e-300);
-
-                uint64_t inside_conflict_clause_during =
-                varData[var].inside_conflict_clause - varData[var].inside_conflict_clause_at_picktime;
-
-                uint64_t inside_conflict_clause_glue_during =
-                varData[var].inside_conflict_clause_glue - varData[var].inside_conflict_clause_glue_at_picktime;
-
-                uint64_t inside_conflict_clause_antecedents_during =
-                varData[var].inside_conflict_clause_antecedents -
-                varData[var].inside_conflict_clause_antecedents_at_picktime;
-
-                if (varData[var].dump) {
-                    uint64_t outer_var = map_inter_to_outer(var);
-
-                    solver->sqlStats->var_data_fintime(
-                        solver
-                        , outer_var
-                        , varData[var]
-                        , rel_activity_at_fintime
-                    );
-                }
-
-                //if STATS_NEEDED we only update for decisions, otherwise, all the time
-                varData[var].sumConflicts_below_during += sumConflicts_during;
-                varData[var].sumDecisions_below_during += sumDecisions_during;
-                varData[var].sumPropagations_below_during += sumPropagations_during;
-                varData[var].sumAntecedents_below_during += sumAntecedents_during;
-                varData[var].sumAntecedentsLits_below_during += sumAntecedentsLits_during;
-                varData[var].sumConflictClauseLits_below_during += sumConflictClauseLits_during;
-                varData[var].sumDecisionBasedCl_below_during += sumDecisionBasedCl_during;
-                varData[var].sumClLBD_below_during += sumClLBD_during;
-                varData[var].sumClSize_below_during += sumClSize_during;
-
-                varData[var].inside_conflict_clause_during +=
-                inside_conflict_clause_during;
-
-                varData[var].inside_conflict_clause_glue_during += inside_conflict_clause_glue_during;
-
-                varData[var].inside_conflict_clause_antecedents_during +=
-                inside_conflict_clause_antecedents_during;
-            }
-            #endif
 
 
             if (trail[i].lev <= blevel) {

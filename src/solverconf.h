@@ -55,24 +55,14 @@ class GaussConf
 {
     public:
 
-    GaussConf() :
-        autodisable(true)
-        , min_usefulness_cutoff(0.2)
-        , max_matrix_columns(100000)
-        , max_matrix_rows(100000)
-        , min_matrix_rows(1)
-        , max_num_matrices(1000000)
-    {
-    }
-
-    bool autodisable;
-    double min_usefulness_cutoff;
+    bool autodisable = true;
+    double min_usefulness_cutoff = 0.1;
     uint32_t autodisable_min_calls = 200;
     uint32_t autodisable_check_every = 1024;
-    uint32_t max_matrix_columns;
-    uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
-    uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
-    uint32_t max_num_matrices; //Maximum number of matrices
+    uint32_t max_matrix_columns = 100000;
+    uint32_t max_matrix_rows = 100000; //The maximum matrix size -- no. of rows
+    uint32_t min_matrix_rows = 10; //The minimum matrix size -- no. of rows
+    uint32_t max_num_matrices = 1000000; //Maximum number of matrices
 
     //Matrix extraction config
     bool doMatrixFind = true;
@@ -100,27 +90,9 @@ class DLL_PUBLIC SolverConf
         //Variable polarities
         PolarityMode polarity_mode;
 
-        //Clause cleaning
-        uint32_t pred_short_size;
-        uint32_t pred_long_size;
-        uint32_t pred_forever_size;
-        uint32_t pred_forever_cutoff;
-        uint32_t order_tier2_by;
-        double pred_forever_size_pow;
-
-        uint32_t pred_long_chunk;
-        uint32_t pred_forever_chunk;
-        int      pred_forever_chunk_mult; //true or false
-
-        int move_from_tier0;
-        int move_from_tier1;
-
-        uint32_t pred_long_check_every_n;
-        uint32_t pred_forever_check_every_n;
-        int   pred_distill_only_smallgue;
-        int   pred_dontmove_until_timeinside;
-
-        unsigned every_pred_reduce;
+        //Predictor (FINAL_PREDICTOR) and data gathering (STATS_NEEDED)
+        uint32_t pred_sort_by; //reduce candidates sorted by predicted use: 0 short, 1 long, 2 forever, 3 sum
+        unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
         double    clause_decay;
 
@@ -128,8 +100,12 @@ class DLL_PUBLIC SolverConf
         int      reduce;           ///<Enable clause DB reduction
         unsigned reduceint;        ///<Base reduce interval, in conflicts
         unsigned reducetarget;     ///<Percent of unused candidates removed per reduce
+        int eager_subsume = 1;     ///<Kissat's eagersubsume: new learnt vs the last 4 learnt clauses
+        unsigned reducelow = 750;  ///<Kissat's reducelow. If < reducehigh the removed fraction rises from it; 292s vs 232s on UTI-20-10p0, so off
+        unsigned reducehigh = 750; ///<Kissat's reducehigh: asymptotic removed fraction per mille
         unsigned reducetier1glue;  ///<Glue at/below which learnt clauses are kept forever
         unsigned reducetier2glue;  ///<Glue at/below which learnt clauses get a double life
+        int dynamic_tiers = 0;     ///<Recompute tier2 from glue usage, as kissat. Off: +14% time on UTI-20-10p0
         int      flush;            ///<Enable full flushing of unused redundant clauses
         unsigned flushfactor;      ///<Flush interval multiplier
         uint64_t flushint;         ///<Initial flush interval, in conflicts
@@ -229,11 +205,11 @@ class DLL_PUBLIC SolverConf
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;
-        uint32_t varelim_irreg_gate_occ_cutoff; ///<Max occurrences (both polarities) picosat-based gate finding will look at
-        int varelim_irreg_gate_confl_limit; ///<Picosat conflict budget per irregular-gate query
+        uint32_t varelim_irreg_gate_occ_cutoff; ///<Max occurrences (both polarities) kitten-based gate finding will look at
+        int varelim_irreg_gate_confl_limit; ///<Kitten budget per irregular-gate query (in K ticks)
         int varelim_irreg_gate_unit; ///<CaDiCaL's definition_unit: a one-sided core makes the pivot a unit
         uint32_t xor_gate_find_maxsize; ///<Largest clause XOR-gate finding will look at, before the log2 occurrence cap
-        int picosat_confl_limit;
+        int picosat_confl_limit; ///<Kitten definability budget (in K ticks); name kept for API compat
         int varelim_check_resolvent_subs;
 
         //Backbone
@@ -284,8 +260,10 @@ class DLL_PUBLIC SolverConf
         int      doTransRed;   ///<carry out transitive reduction
         unsigned long long   full_probe_time_limitM;
         unsigned long long   intree_time_limitM;
+        double intree_effort = 0.8; //fraction of all bogoprops since last call
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
+        double    hyperbin_keep_confl = 15000; ///<Unused hyper-bins are dropped after this many conflicts
 
         //XORs
         int      doFindXors;
@@ -301,7 +279,7 @@ class DLL_PUBLIC SolverConf
         #ifdef FINAL_PREDICTOR
         //Predictor system
         std::string pred_conf_location;
-        std::string pred_tables = "110";
+        std::string pred_tables = "000";
         std::string predictor_type = "xgb";
         std::string predict_best_feat_fname;
         #endif
@@ -346,11 +324,15 @@ class DLL_PUBLIC SolverConf
         //Distillation
         int      do_distill_clauses;
         int      do_distill_bin_clauses;
+        double distill_bin_effort = 0.02; //fraction of all bogoprops since last call
         unsigned long long distill_long_cls_time_limitM;
         long watch_based_str_time_limitM;
         double distill_increase_conf_ratio;
         long distill_min_confl;
-        unsigned distill_red_releff;   ///<Per-mille of props since last round, as CaDiCaL's vivifyreleff
+        unsigned distill_red_releff;   ///<Per-mille of all bogoprops since last call, as kissat's vivify tiers share
+        unsigned distill_irred_releff; ///<Per-mille of all bogoprops since last call, as kissat's vivifyirr share
+        unsigned distill_min_effortM;  ///<Floor of the effort reference, as kissat's mineffort
+        unsigned distill_sched_max;    ///<Max candidates per pass, as CaDiCaL's vivifyschedmax
         int    distill_instantiate;    ///<Try removing the last literal, as CaDiCaL's vivifyinst
         int    distill_rem_level;      ///<Clause removal during distillation: 0 = never, 1 = only on a real conflict, 2 = also on a positively implied literal
         double distill_irred_alsoremove_ratio;
@@ -401,6 +383,19 @@ class DLL_PUBLIC SolverConf
         int oracle_get_learnts; // get oracle learnt clauses
         int oracle_removed_is_learnt; // clauses removed by Oracle should be learnt
         int oracle_find_bins;
+
+        // SAT sweeping with kitten (occ-sweep)
+        int do_sweep = 1;
+        double sweep_time_limitM = 150;
+        double sweep_effort = 0.1; //share of all bogoprops since last sweep, as kissat's sweepeffort
+        double sweep_min_effortM = 10;
+        uint32_t sweep_vars = 256;
+        uint32_t sweep_max_vars = 8192;
+        uint32_t sweep_clauses = 1024;
+        uint32_t sweep_max_clauses = 300ULL*1000ULL;
+        uint32_t sweep_depth = 2;
+        uint32_t sweep_max_depth = 3;
+        uint32_t sweep_flip_rounds = 1;
 
         //Misc
         unsigned origSeed;

@@ -59,6 +59,11 @@ bool DistillerBin::distill()
     // since the post-amble below works whether or not we hit UNSAT.
     (void)distill_bin_cls_all(1.0);
 
+    //Mostly useless: run less often
+    const uint64_t useful = runStats.clRemoved + runStats.numClShorten;
+    if (useful*50 < runStats.checkedClauses) backoff = std::min(backoff*2.0, 16.0);
+    else backoff = std::max(backoff/2.0, 1.0);
+
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
@@ -91,6 +96,8 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
         maxNumProps *=2;
     }
     maxNumProps *= time_mult;
+    const int64_t rel = solver->conf.distill_bin_effort*(double)(solver->all_bogoprops() - last_all_props);
+    maxNumProps = std::min<int64_t>(maxNumProps, std::max<int64_t>(rel, 1000LL*1000LL));
     orig_maxNumProps = maxNumProps;
 
     //stats setup
@@ -106,6 +113,8 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
         todo.push_back(Lit::toLit(i));
     }
     std::shuffle(todo.begin(), todo.end(), solver->mtrand);
+    done.clear();
+    done.resize(solver->nVars()*2, 0);
     for(const Lit lit: todo) {
         time_out = go_through_bins(lit);
         if (time_out || !solver->okay()) break;
@@ -131,59 +140,114 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     //Update stats
     runStats.time_used += time_used;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    last_all_props = solver->all_bogoprops();
 
     return solver->okay();
 }
 
-bool DistillerBin::go_through_bins(
-    const Lit lit1
-) {
+bool DistillerBin::out_of_budget()
+{
+    if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+        || solver->must_interrupt_asap()
+    ) {
+        verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
+        runStats.timeOut++;
+        return true;
+    }
+    return false;
+}
+
+void DistillerBin::set_cands_marked(const Lit lit1, const bool mark)
+{
+    for(const auto& c: cands) {
+        auto& w1 = findWatchedOfBin(solver->watches, lit1, c.lit2, false, c.ID);
+        auto& w2 = findWatchedOfBin(solver->watches, c.lit2, lit1, false, c.ID);
+        if (mark) { w1.mark_bin_cl(); w2.mark_bin_cl(); }
+        else { w1.unmark_bin_cl(); w2.unmark_bin_cl(); }
+    }
+}
+
+void DistillerBin::remove_bin(const Lit lit1, const Lit lit2, const int32_t ID)
+{
+    solver->detach_bin_clause(lit1, lit2, false, ID);
+    (*solver->frat) << del << ID << lit1 << lit2 << fin;
+}
+
+// Tests all irred bins (lit1, x) with a single propagation of ~lit1, with all
+// of them disabled at once. Each one found implied is implied by the formula
+// without any of them, so they can all be removed together. Returns timeout.
+bool DistillerBin::go_through_bins(const Lit lit1)
+{
+    done[lit1.toInt()] = 1;
+    cands.clear();
     solver->watches[lit1].copyTo(tmp);
-
     for (const auto& w: tmp) {
-        if (!w.isBin() || //check if we are bin
-            lit1 > w.lit2() || // don't do it 2x
-            w.red()) // only irred
-        {
-            continue;
-        }
+        if (!w.isBin() || w.red() || done[w.lit2().toInt()]) continue;
+        if (out_of_budget()) return true;
 
-        //if done enough, stop doing it
-        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
-            || solver->must_interrupt_asap()
-        ) {
-            verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
-            runStats.timeOut++;
-            return true;
-        }
-        runStats.checkedClauses++;
         const Lit lit2 = w.lit2();
-
-        //we will detach the clause no matter what
+        runStats.checkedClauses++;
         maxNumProps -= solver->watches[lit1].size();
         maxNumProps -= solver->watches[lit2].size();
         maxNumProps -= 2;
-
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
-            solver->detach_bin_clause(lit1, lit2, w.red(), w.get_id());
-            (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
+            remove_bin(lit1, lit2, w.get_id());
+            runStats.clRemoved++;
             continue;
         }
+        cands.push_back({lit2, w.get_id()});
+    }
+    if (cands.empty()) return false;
 
-        //Try to distill clause
-        if (!try_distill_bin(lit1, lit2, w)) {
-            //UNSAT
-            return false;
+    assert(solver->prop_at_head());
+    assert(solver->decisionLevel() == 0);
+    set_cands_marked(lit1, true);
+    to_rem.clear();
+    fallback.clear();
+    bool timeout = false;
+
+    solver->new_decision_level();
+    solver->enqueue<true>(~lit1);
+    if (!solver->propagate<true, false, true>().isnullptr()) {
+        fallback = cands;
+    } else {
+        for(const auto& c: cands) {
+            const lbool val = solver->value(c.lit2);
+            if (val == l_True) to_rem.push_back(c);
+            else if (val == l_False) fallback.push_back(c);
+            else {
+                if (out_of_budget()) { timeout = true; break; }
+                solver->new_decision_level();
+                solver->enqueue<true>(~c.lit2);
+                const bool confl = !solver->propagate<true, false, true>().isnullptr();
+                solver->cancelUntil<false, true>(1);
+                if (confl) to_rem.push_back(c);
+            }
         }
     }
+    solver->cancelUntil<false, true>(0);
+    set_cands_marked(lit1, false);
 
-    return false;
+    for(const auto& c: to_rem) remove_bin(lit1, c.lit2, c.ID);
+    runStats.clRemoved += to_rem.size();
+
+    // Implies a unit, needs the per-bin path for the proof
+    for(const auto& c: fallback) {
+        if (timeout || (timeout = out_of_budget())) break;
+        if (solver->value(lit1) == l_True || solver->value(c.lit2) == l_True) {
+            remove_bin(lit1, c.lit2, c.ID);
+            runStats.clRemoved++;
+            continue;
+        }
+        if (!try_distill_bin(lit1, c.lit2, c.ID)) return false;
+    }
+    return timeout;
 }
 
 bool DistillerBin::try_distill_bin(
     Lit lit1,
     Lit lit2,
-    const Watched& w
+    const int32_t ID
 ) {
     assert(solver->okay());
     assert(solver->prop_at_head());
@@ -198,8 +262,8 @@ bool DistillerBin::try_distill_bin(
     if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);
 
     //Disable this clause
-    findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_id()).mark_bin_cl();
-    findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_id()).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit1, lit2, false, ID).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit2, lit1, false, ID).mark_bin_cl();
 
     solver->new_decision_level();
     PropBy confl;
@@ -223,15 +287,15 @@ bool DistillerBin::try_distill_bin(
                     hints.push_back(solver->unit_cl_IDs[lit2.var()]);
                 }
                 hints.insert(hints.end(), rsns.begin(), rsns.end());
-                hints.push_back(w.get_id());
+                hints.push_back(ID);
             }
             solver->cancelUntil<false, true>(0);
             vector<Lit> x = {lit1};
             solver->add_clause_int(x, false, nullptr, true, nullptr, true,
                 lit_Undef, false, false,
                 solver->frat->enabled() ? &hints : nullptr);
-            solver->detach_bin_clause(lit1, lit2, false, w.get_id());
-            (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
+            solver->detach_bin_clause(lit1, lit2, false, ID);
+            (*solver->frat) << del << ID << lit1 << lit2 << fin;
             runStats.numClShorten++;
             return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
@@ -242,19 +306,19 @@ bool DistillerBin::try_distill_bin(
 
     if (!confl.isnullptr()) {
         solver->cancelUntil<false, true>(0);
-        solver->detach_bin_clause(lit1, lit2, false, w.get_id());
-        (*solver->frat) << del << w.get_id() << lit1 << lit2 << fin;
+        solver->detach_bin_clause(lit1, lit2, false, ID);
+        (*solver->frat) << del << ID << lit1 << lit2 << fin;
         runStats.clRemoved++;
         return true;
     }
 
     //Nothing happened
     solver->cancelUntil<false, true>(0);
-    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_id());
+    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, ID);
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();
 
-    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_id());
+    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, ID);
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
 

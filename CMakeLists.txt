@@ -366,14 +366,19 @@ message(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 if(FINAL_PREDICTOR)
-    message(STATUS "You HAVE to build xgboost and LightGBM with 'cmake -DBUILD_STATIC_LIB=ON -DUSE_OPENMP=OFF ..' for static linking")
-    find_package(dmlc REQUIRED)
-    find_package(rabit REQUIRED)
-    find_package(xgboost REQUIRED)
-    find_library(lightgbm
-    NAMES _lightgbm lightgbm LightGBM
-    REQUIRED)
+    # only the xgboost C API is needed: xgboost/c_api.h + libxgboost.so
+    # (the one shipped in the xgboost pip package works: -DXGBOOST_LIBRARY=...)
+    find_path(XGBOOST_INCLUDE_DIR NAMES xgboost/c_api.h REQUIRED)
+    find_library(XGBOOST_LIBRARY NAMES xgboost REQUIRED)
+    message(STATUS "xgboost include: ${XGBOOST_INCLUDE_DIR} lib: ${XGBOOST_LIBRARY}")
+    add_library(xgboost_c SHARED IMPORTED)
+    set_target_properties(xgboost_c PROPERTIES
+        IMPORTED_LOCATION "${XGBOOST_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${XGBOOST_INCLUDE_DIR}")
     add_compile_definitions(FINAL_PREDICTOR)
+    set(PRED_FEATURES_FILE "${CMAKE_SOURCE_DIR}/scripts/crystal/best_features.txt" CACHE FILEPATH
+        "The predictor's feature list; its C++ is generated from it")
+    message(STATUS "predictor features: ${PRED_FEATURES_FILE}")
 endif()
 
 option(STATS "Don't use statistics at all" OFF)
@@ -386,15 +391,6 @@ if(STATS)
     add_compile_definitions(USE_SQLITE3)
     set(STATS_NEEDED ON)
     add_compile_definitions(STATS_NEEDED)
-
-    find_package(louvain_communities CONFIG REQUIRED)
-    if(louvain_communities_FOUND)
-        message(STATUS "Found Community Louvain library")
-        message(STATUS "Community Louvain dynamic lib: ${COMMLOUVAIN_LIBRARIES}")
-        message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
-    else()
-        message(FATAL_ERROR "For STATS we must have louvain communities installed!")
-    endif()
 else()
     message(STATUS "Not compiling detailed statistics. The system is faster without them")
 endif()

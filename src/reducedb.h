@@ -43,24 +43,17 @@ class ReduceDB
 public:
     ReduceDB(Solver* solver);
     ~ReduceDB();
+    void print_reduce_stats() const;
     double get_total_time() const {
         return total_time;
     }
-    void handle_reduce();
+    void handle_reduce(const uint32_t cur_rst_type);
     uint64_t lim_reduce = 0; ///<Next reduce at this conflict count, as in CaDiCaL
     //CaDiCaL's lim.keptglue/keptsize: largest glue/size kept at last reduce
     uint32_t lim_keptglue = 0;
     uint32_t lim_keptsize = 0;
     //CaDiCaL's likely_to_be_kept_clause: would this red cl survive the next reduce?
-    bool likely_to_be_kept(const Clause& cl) const {
-        if (cl.stats.keep) return true;
-        if (cl.stats.glue > lim_keptglue) return false;
-        if (cl.size() > lim_keptsize) return false;
-        return true;
-    }
-    #ifdef FINAL_PREDICTOR
-    void handle_predictors();
-    #endif
+    bool likely_to_be_kept(const Clause& cl) const;
     void dump_sql_cl_data(const uint32_t cur_rst_type);
     uint32_t reduceDB_called = 0;
 
@@ -69,23 +62,6 @@ public:
     uint64_t locked_for_data_gen_cls = 0;
     #endif
 
-    struct ClauseStats
-    {
-        uint32_t total_uip1_used = 0;
-        uint32_t total_props = 0;
-        uint32_t total_cls = 0;
-        uint64_t total_age = 0;
-        uint64_t total_len = 0;
-        uint32_t total_ternary = 0;
-        uint32_t total_distilled = 0;
-        uint64_t total_orig_size = 0;
-        //uint64_t total_glue = 0; //Cannot calculate, ternaries have no glues!
-
-        void add_in(const Clause& cl, const uint64_t age, const uint32_t orig_size);
-        ClauseStats operator += (const ClauseStats& other);
-        void print(uint32_t lev);
-    };
-    vector<ClauseStats> cl_stats;
 
 private:
 
@@ -94,8 +70,6 @@ private:
     double total_time = 0.0;
 
     size_t last_reducedb_num_conflicts = 0;
-    void clear_clauses_stats(vector<ClOffset>& clauseset);
-    ClauseStats reset_clause_dats(const uint32_t lev);
 
     //CaDiCaL-style reduce & flush
     uint64_t num_reductions = 0;
@@ -103,22 +77,43 @@ private:
     uint64_t lim_flush = 0;
     uint64_t inc_flush = 0;
     size_t cl_reduced = 0;
+    //Per-call and total reduce stats, as kissat's reduce phase line
+    struct ReduceStats {
+        uint64_t cands = 0;     //reducible: not protected by used/keep/reason
+        uint64_t kept_used = 0; //protected because used since last reduce
+        uint64_t kept_keep = 0; //tier1 'keep' flag
+        uint64_t locked = 0;    //reasons
+        uint64_t removed = 0;
+        uint64_t removed_tier[3] = {0, 0, 0};
+        uint64_t live_tier[3] = {0, 0, 0}; //red cls per tier seen at reduce
+        uint64_t used_hist[5] = {0, 0, 0, 0, 0}; //'used' life: 0, 1-10, 11-29, 30, 31
+        uint64_t sum_red_before = 0; //to average the red DB size
+        ReduceStats& operator+=(const ReduceStats& o) {
+            cands += o.cands; kept_used += o.kept_used; kept_keep += o.kept_keep;
+            locked += o.locked; removed += o.removed;
+            for(int i = 0; i < 3; i++) removed_tier[i] += o.removed_tier[i];
+            for(int i = 0; i < 3; i++) live_tier[i] += o.live_tier[i];
+            for(int i = 0; i < 5; i++) used_hist[i] += o.used_hist[i];
+            sum_red_before += o.sum_red_before;
+            return *this;
+        }
+    };
+    ReduceStats rstats;     //this call
+    ReduceStats rstats_tot; //all calls
     void mark_useless_redundant_clauses_as_garbage();
     void mark_clauses_to_be_flushed();
     void remove_marked_clauses();
 
     #ifdef FINAL_PREDICTOR
+    //The predictor build only changes WHICH candidates a reduce removes:
+    //they are sorted by predicted future use instead of glue/size
     ClPredictorsAbst* predictors = nullptr;
-    uint32_t num_times_pred_called = 0;
-    void update_preds_lev2();
-    void pred_move_to_lev1_and_lev0();
-    void delete_from_lev2();
-    void clean_lev1_once_in_a_while();
-    void clean_lev0_once_in_a_while();
-    void reset_predict_stats();
-    void update_preds(const vector<ClOffset>& offs);
     ReduceCommonData commdata;
-    void dump_pred_distrib(const vector<ClOffset>& offs, uint32_t lev);
+    void load_predictors();
+    void predict_all_learnt(const uint32_t cur_rst_type);
+    void update_preds(const vector<ClOffset>& offs);
+    double pred_score(const ClauseStatsExtra& e) const;
+    void dump_pred_distrib(const vector<ClOffset>& offs);
     #endif
 
     const CMSat::ClauseStats& get_median_stat(const vector<ClOffset>& all_learnt) const;
@@ -131,21 +126,6 @@ private:
     uint64_t total_sum_props_used = 0;
     uint64_t total_time_in_solver = 0;
     MedianCommonDataRDB median_data;
-    uint32_t force_kept_short = 0;
-
-    uint32_t T2_deleted;
-    uint32_t moved_from_T1_to_T2;
-    uint32_t kept_in_T1;
-    uint32_t kept_in_T1_due_to_dontmove;
-    uint32_t moved_from_T0_to_T1;
-    uint32_t kept_in_T0;
-    uint32_t moved_from_T2_to_T0;
-    uint32_t moved_from_T2_to_T1;
-    uint32_t kept_in_T0_due_to_dontmove;
-    uint32_t kept_in_T2;
-    uint32_t kept_in_T2_due_to_dontmove;
-
-    uint64_t T2_deleted_age;
 };
 
 }

@@ -61,6 +61,14 @@ if(STATS OR FINAL_PREDICTOR)
 endif()
 
 if(FINAL_PREDICTOR)
+    # the feature computation follows the best_features file
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py ${PRED_FEATURES_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        DEPENDS ${PRED_FEATURES_FILE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py
+    )
+    add_custom_target(pred_features ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h)
+
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -125,7 +133,6 @@ set(cryptoms_lib_files
     yalsat_cms.cpp
     yals/yals.c
     sqlstats.cpp
-    vardistgen.cpp
     ccnr_oracle.cpp
     ccnr_oracle_pre.cpp
     lucky.cpp
@@ -135,9 +142,18 @@ set(cryptoms_lib_files
     matrixfinder.cpp
     mpicosat/mpicosat.c
     mpicosat/version.c
+    kitten.c
+    sweeper.cpp
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
+
+# vendored yals does NULL+0 pointer arithmetic on empty stacks all over;
+# harmless in practice, so keep UBSAN quiet about it
+if(SANITIZE)
+    set_source_files_properties(yals/yals.c PROPERTIES
+        COMPILE_OPTIONS "-fno-sanitize=pointer-overflow")
+endif()
 
 if(GPU)
     set(cryptoms_lib_files
@@ -165,17 +181,15 @@ if(FINAL_PREDICTOR)
 #         predict/clustering_imp.cpp
         cl_predictors_xgb.cpp
         cl_predictors_py.cpp
-        cl_predictors_lgbm.cpp
         cl_predictors_abs.cpp
     )
     set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs}
-        _lightgbm xgboost dmlc rabit rt ${Python3_LIBRARIES})
+        xgboost_c rt ${Python3_LIBRARIES})
 endif()
 
 if(STATS_NEEDED)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
-        community_finder.cpp
         satzilla_features_calc.cpp
         satzilla_features.cpp
     )
@@ -216,7 +230,6 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS}
     ${MPI_INCLUDE_PATH}
     $<INSTALL_INTERFACE:include>
     ${BREAKID_INCLUDE_DIRS}
@@ -262,6 +275,7 @@ endif()
 
 if(FINAL_PREDICTOR)
     add_dependencies(cryptominisat5
+        pred_features
         pred_short
         pred_long
         pred_forever
@@ -272,7 +286,6 @@ endif()
 target_link_libraries(cryptominisat5
     PRIVATE
         ${cryptoms_lib_link_libs}
-        ${LOUVAIN_COMMUNITIES_LIBRARIES}
         cadiback
         cadical
         Threads::Threads
@@ -307,7 +320,6 @@ if(IPASIR)
         PRIVATE
             Threads::Threads
             ${cryptoms_lib_link_libs}
-            ${LOUVAIN_COMMUNITIES_LIBRARIES}
             cadiback
             cadical
         PUBLIC

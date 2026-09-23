@@ -1172,6 +1172,13 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
     return true;
 }
 
+bool VarReplacer::has_equivalences(uint64_t* bogoprops_given) {
+    scc_finder->performSCC(bogoprops_given);
+    const bool found = scc_finder->get_num_binxors_found() > 0;
+    scc_finder->clear_binxors();
+    return found;
+}
+
 bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given, bool *replaced) {
     if (replaced) *replaced = false;
 

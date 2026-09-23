@@ -68,7 +68,6 @@ THE SOFTWARE.
 #include "matrixfinder.h"
 #include "lucky.h"
 #include "get_clause_query.h"
-#include "community_finder.h"
 extern "C" {
 #include "mpicosat/mpicosat.h"
 }
@@ -122,7 +121,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
 
     set_up_sql_writer();
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    next_pred_reduce =  conf.every_pred_reduce;
     #endif
 
     check_xor_cut_config_sanity();
@@ -407,8 +405,8 @@ Clause* Solver::add_clause_int(
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
-                STATS_DO(if (ID != c->stats.ID && sqlStats && c->stats.is_tracked)
-                        sqlStats->update_id(c->stats.ID, ID));
+                STATS_DO(if (ID != c->stats.id && sqlStats && c->stats.is_tracked)
+                        sqlStats->update_id(c->stats.id, ID));
                 c->stats.id = ID;
             }
             if (red && cl_stats == nullptr) {
@@ -1413,13 +1411,6 @@ lbool Solver::solve_with_assumptions(
             !conf.full_simplify_at_startup ? conf.simplify_schedule_startup : conf.simplify_schedule_nonstartup);
     }
 
-    #ifdef STATS_NEEDED
-    if (status == l_Undef) {
-        CommunityFinder comm_finder(this);
-        comm_finder.compute();
-    }
-    #endif
-
     //CaDiCaL calls 'lucky_phases' here, after preprocessing and before the CDCL
     //loop. Assumptions and BNNs are not handled, as in CaDiCaL.
     if (status == l_Undef && conf.lucky && nVars() > 0
@@ -1643,6 +1634,8 @@ lbool Solver::iterate_until_solved() {
             status = l_False;
             goto end;
         }
+        //Searcher::solve() clears propStats, don't lose inprocessing's props
+        outside_search_props += propStats.bogoProps + propStats.otfHyperTime;
         status = solve(num_confl);
 
         //Check for effectiveness
@@ -1744,6 +1737,7 @@ lbool Solver::execute_inprocess_strategy(
                 string pr = occ_strategy_tokens;
                 if (!pr.empty() && pr.back() == ',') pr.pop_back();
                 verb_print(1, "Executing OCC strategy token(s): " << COLYELLOWLIGHT << pr << COLDEF);
+                TimeScope ts(time_tally, "occ-other");
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
@@ -1759,8 +1753,11 @@ lbool Solver::execute_inprocess_strategy(
         if (token.substr(0,3) != "occ" && !token.empty())
             verb_print(1, "--> Executing strategy token: " << COLYELLOWLIGHT << token << COLDEF);
 
-        if (token.substr(0,3) != "occ" && !token.empty())
+        std::optional<TimeScope> ts;
+        if (token.substr(0,3) != "occ" && !token.empty()) {
             simp_stats_before(token);
+            ts.emplace(time_tally, token);
+        }
 
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
@@ -1882,11 +1879,6 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "cl-consolidate") {
             cl_alloc.consolidate(this, conf.must_always_conslidate, true);
-        } else if (token == "louvain-comms") {
-            #ifdef STATS_NEEDED
-            CommunityFinder comm_finder(this);
-            comm_finder.compute();
-            #endif
         } else if (token == "renumber" || token == "must-renumber") {
             if (conf.doRenumberVars && !frat->enabled()) {
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
@@ -2005,6 +1997,9 @@ void CMSat::Solver::print_stats(
         print_full_stats(cpu_time, cpu_time_total, wallclock_time_started);
     }
     print_norm_stats(cpu_time, cpu_time_total, wallclock_time_started);
+    print_mode_stats();
+    print_glue_usage();
+    if (conf.do_print_times) time_tally.print(conf.prefix, cpu_time);
 }
 
 void Solver::print_stats_time(
@@ -2051,6 +2046,7 @@ void Solver::print_norm_stats(
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)
         , "% time"
     );
+    reduceDB->print_reduce_stats();
 
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
@@ -2102,11 +2098,6 @@ void Solver::print_norm_stats(
                 , (double)longRedClsSizes[i]/(double)sumConflicts
             );
         }
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-        for(uint32_t i = 0; i < longRedCls.size(); i++) {
-            reduceDB->cl_stats[i].print(i);
-        }
-        #endif
     }
 
     #ifdef STATS_NEEDED
@@ -3035,17 +3026,6 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     satzilla_feat.avg_branch_depth = hist.branchDepthHist.avg();
     satzilla_feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
 
-    satzilla_feat.confl_size_min = hist.conflSizeHistLT.getMin();
-    satzilla_feat.confl_size_max = hist.conflSizeHistLT.getMax();
-    satzilla_feat.confl_glue_min = hist.glueHistLT.getMin();
-    satzilla_feat.confl_glue_max = hist.glueHistLT.getMax();
-    satzilla_feat.branch_depth_min = hist.branchDepthHist.getMin();
-    satzilla_feat.branch_depth_max = hist.branchDepthHist.getMax();
-    satzilla_feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();
-    satzilla_feat.trail_depth_delta_max = hist.trailDepthDeltaHist.getMax();
-    satzilla_feat.num_resolutions_min = hist.numResolutionsHistLT.getMin();
-    satzilla_feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
-
     if (sumPropStats.propagations != 0
         && sumConflicts != 0
         && sumSearchStats.numRestarts != 0
@@ -3056,11 +3036,8 @@ SatZillaFeatures Solver::calculate_satzilla_features()
         satzilla_feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
     }
 
-    satzilla_feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
-    satzilla_feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
-
     if (conf.verbosity > 2) {
-        satzilla_feat.print_stats();
+        satzilla_feat.print_stats(conf.prefix);
     }
 
     if (sqlStats) {
@@ -3295,25 +3272,12 @@ bool Solver::init_all_matrices() {
     }
 
     uint32_t j = 0;
-    bool modified = false;
     for (uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gmatrices[i] != nullptr) {
             gmatrices[j] = gmatrices[i];
             gmatrices[j]->update_matrix_no(j);
             gqueuedata[j] = gqueuedata[i];
-
-            if (modified) {
-                for (size_t var = 0; var < nVars(); var++) {
-                    for(auto& k: gwatches[var]) {
-                        if (k.matrix_num == i) {
-                            k.matrix_num = j;
-                        }
-                    }
-                }
-            }
             j++;
-        } else {
-            modified = true;
         }
     }
     gqueuedata.resize(j);
@@ -3440,8 +3404,9 @@ void Solver::stats_del_cl(Clause* cl)
     if (cl->stats.is_tracked && sqlStats) {
         const ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         assert(stats_extra.orig_ID != 0);
-        assert(stats_extra.orig_ID <= cl->stats.ID);
+        assert(stats_extra.orig_ID <= cl->stats.id);
         sqlStats->cl_last_in_solver(this, stats_extra.orig_ID);
+        cl->stats.is_tracked = false; // exactly one cl_last_in_solver per clause
     }
 }
 

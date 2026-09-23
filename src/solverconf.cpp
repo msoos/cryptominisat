@@ -83,36 +83,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
         polarity_mode(PolarityMode::polarmode_automatic)
 
-        //Clause cleaning
-        , pred_short_size(5500)
-        , pred_long_size(18500)
-        , pred_forever_size(10500) // Used only if pred_forever_cutoff is 0
-        , pred_forever_cutoff(0) //this sets a static cutoff
-        , order_tier2_by(2) //order Tier2 by this tier's sort function. 2 means Tier2, i.e. default
-
-        , pred_forever_size_pow(0.01) // Used only if pred_forever_cutoff is 0
-        //
-        , pred_long_chunk(4700)
-        , pred_forever_chunk(2000) // Used only if pred_forever_cutoff is 0
-        , pred_forever_chunk_mult(0)
-        //
-        , move_from_tier0(1) //if 1 = moves it, rather than deletes it
-        , move_from_tier1(1) //if 1 = moves it, rather than deletes it
-        //
-        , pred_long_check_every_n(3)
-        , pred_forever_check_every_n(12)
-        , pred_distill_only_smallgue(false)
-        , pred_dontmove_until_timeinside(1) //always move, don't wait
-
-        , every_pred_reduce(10000) //5000 seems to work better
-        #ifdef FINAL_PREDICTOR
+        , pred_sort_by(3)
+        , every_pred_reduce(10000)
         , dump_pred_distrib(0)
-        #endif
         , clause_decay(0.999)
 
         //Learnt clause DB reduction, as in CaDiCaL
         , reduce(1)
-        , reduceint(300)
+        , reduceint(1000)
         , reducetarget(75)
         , reducetier1glue(2)
         , reducetier2glue(6)
@@ -261,7 +239,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_every_n(7)
 
         //Probing
-        , do_full_probe    (true)
+        , do_full_probe    (false)
         , doIntreeProbe    (true)
         , doTransRed       (true)
         , full_probe_time_limitM(20ULL)
@@ -298,7 +276,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, occ-backw-sub,"
             "scc-vrepl,"
             "breakid, "
-            "occ-bve,occ-xor"
+            "occ-sweep, occ-bve,occ-xor,"
+            "must-scc-vrepl"
         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
@@ -307,15 +286,16 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,sub-impl,"
             "breakid,"
              //occurrence based
-            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
-            "occ-bva,occ-ternary-res,occ-xor,card-find,"
+            "occ-backw-sub-str,occ-clean-implicit,occ-sweep,occ-bve,"//occ-gates,"
+            "occ-bva,occ-ternary-res,occ-xor,"
+            //pick up the equivalences occ-sweep found
+            "must-scc-vrepl,card-find,"
             //consolidate after OCC
             "cl-consolidate,"
             //strengthen again
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
-            "louvain-comms,"
         )
 
         //Occur based simplification
@@ -345,7 +325,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , watch_based_str_time_limitM(20LL)
         , distill_increase_conf_ratio(0.10)
         , distill_min_confl(10000)
-        , distill_red_releff(20)
+        , distill_red_releff(70)
+        , distill_irred_releff(30)
+        , distill_min_effortM(10)
+        , distill_sched_max(20000)
         , distill_instantiate(1)
         , distill_rem_level(2)
         , distill_irred_alsoremove_ratio(1.2)

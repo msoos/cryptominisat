@@ -50,17 +50,13 @@ class QueryAddIdxes (helper.QueryHelper):
         queries = """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
         ---
-        create index `idxclid1` on `clause_stats` (`clauseID`, conflicts, latest_satzilla_feature_calc);
+        create index `idxclid1` on `clause_stats` (`clauseID`, conflicts);
         create index `idxclid1-2` on `clause_stats` (`clauseID`);
-        create index `idxclid2` on `clause_stats` (clauseID, conflicts, latest_satzilla_feature_calc);
         create index `idxclid5` on `tags` ( `name`);
         ---
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts);
         create index `idxclid6-9` on `reduceDB` (`conflicts`);
-        create index `idxclid9` on `reduceDB_common` (`conflicts`, `latest_satzilla_feature_calc`);
-        create index `idxclid9-2` on `reduceDB_common` (`conflicts`, `latest_satzilla_feature_calc`);
         create index `idxclid9-3` on `reduceDB_common` (`conflicts`);
-        create index `idxclid9-4` on `reduceDB_common` (`latest_satzilla_feature_calc`);
         create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
@@ -69,6 +65,7 @@ class QueryAddIdxes (helper.QueryHelper):
         ---
         create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `used_clauses` ( `used_at`);
+        create index `idxclidUCLS-3` on `used_clauses_anc` ( `clauseID`, `used_at`);
         ---
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
         ---
@@ -101,7 +98,6 @@ class QueryCls (helper.QueryHelper):
         not_cols = [
             "reduceDB_called"
             , "clauseID"
-            , "in_xor"
             , "locked"
             , "conflicts"
             , "activity_rel"]
@@ -114,8 +110,6 @@ class QueryCls (helper.QueryHelper):
             , "simplifications"
             , "restarts"
             #, "conflicts"
-            , "latest_satzilla_feature_calc"
-            , "runtime"
             ]
         self.rdb0_common_dat = helper.query_fragment(
             "reduceDB_common", not_cols, "rdb0_common", options.verbose, self.c)
@@ -124,27 +118,13 @@ class QueryCls (helper.QueryHelper):
         not_cols = [
             "simplifications"
             , "restarts"
-            , "prev_restart"
-            , "antecedents_long_red_age_max"
-            , "antecedents_long_red_age_min"
-            , "latest_satzilla_feature_calc"
             , "clauseID"]
         self.clause_dat = helper.query_fragment(
             "clause_stats", not_cols, "cl", options.verbose, self.c)
 
-        # satzilla data
-        not_cols = [
-            "simplifications"
-            , "restarts"
-            , "conflicts"
-            , "latest_satzilla_feature_calc"
-            , "irred_glue_distr_mean"
-            , "irred_glue_distr_var"]
-        self.satzfeat_dat = helper.query_fragment(
-            "satzilla_features", not_cols, "szfeat", options.verbose, self.c)
-
+        # a hash order instead of random(): the same DB gives the same frame
         self.common_limits = """
-        order by random()
+        order by ((`sum_cl_use.clauseID` * 7919 + `rdb0.dump_no`) * 2654435761) % 4294967296
         limit {limit}
         """
 
@@ -209,7 +189,6 @@ class QueryCls (helper.QueryHelper):
         self.myformat = {
             "limit": 1000*1000*1000,
             "clause_dat": self.clause_dat,
-            "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "sum_cl_use": self.sum_cl_use,
             "rdb0_common_dat": self.rdb0_common_dat,
@@ -302,10 +281,11 @@ class QueryCls (helper.QueryHelper):
             print("--> The weight was %f so weighted size is: %d" % (mult, int(ws)))
             weighted_size.append(ws)
 
+        # every clause present at a reduce is ranked, the young ones too
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 0 ")
         one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 1 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 2 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 2 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 20 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 1 and rdb0.dump_no <= 5 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 5 ")
 
         df = pd.concat(df_parts)
         print("-> size of all dump_no-s, strata {strata} data: {size}".format(

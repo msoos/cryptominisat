@@ -111,9 +111,9 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define STATS_DO(x) do {x;} while (0)
 #define INC_ID(cl) \
     do { \
-        auto prev_id = (cl).stats.ID; \
-        (cl).stats.ID = ++solver->clauseID; \
-        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.ID); \
+        auto prev_id = (cl).stats.id; \
+        (cl).stats.id = ++solver->clauseID; \
+        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.id); \
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
@@ -218,14 +218,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define DEBUG_ATTACH_FULL
 #define VERBOSE_DEBUG_XOR
 #define VERBOSE_DEBUG_RECONSTRUCT
-#endif
-
-#ifdef __GNUC__
-    #define likely(x) __builtin_expect((x), 1)
-    #define unlikely(x) __builtin_expect((x), 0)
-#else
-    #define likely(x) x
-    #define unlikely(x) x
 #endif
 
 #ifdef DEBUG_MARKED_CLAUSE

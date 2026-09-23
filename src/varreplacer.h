@@ -53,6 +53,7 @@ class VarReplacer
         void new_var(const uint32_t orig_outer);
         void new_vars(const size_t n);
         void save_on_var_memory();
+        bool has_equivalences(uint64_t* bogoprops);
         bool replace_if_enough_is_found(const size_t limit = 0, uint64_t* bogoprops = nullptr
                 , bool* replaced = nullptr);
         uint32_t print_equivalent_literals(bool outer_numbering, std::ostream *os = nullptr) const;

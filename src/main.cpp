@@ -345,102 +345,31 @@ void Main::add_supported_options() {
     #endif
 
     #ifdef FINAL_PREDICTOR
-    po::options_description predictOptions("Predict options");
-    predictOptions.add_options()
     program.add_argument("--predloc")
-        .action([&](const auto& a) {conf.pred_conf_location = fc_int(a);})
-         .default_value(conf.pred_conf_location)
-        .help("Directory where predictor_short.json, predictor_long.json, predictor_forever.json are");
+        .action([&](const auto& a) {conf.pred_conf_location = a;})
+        .default_value(conf.pred_conf_location)
+        .help("Directory with predictor-<table>-<tier>-<type>.json (see --predtables), empty = use built-in models");
     program.add_argument("--predtype")
-        .action([&](const auto& a) {conf.predictor_type = fc_int(a);})
+        .action([&](const auto& a) {conf.predictor_type = a;})
         .default_value(conf.predictor_type)
-        .help("Type of predictor. Supported: py, xgb, lgbm");
+        .help("Type of predictor. Supported: py, xgb");
     program.add_argument("--predtables")
-        .action([&](const auto& a) {conf.pred_tables = fc_int(a);})
+        .action([&](const auto& a) {conf.pred_tables = a;})
         .default_value(conf.pred_tables)
-        .help("000 = normal for all, 111 = ancestor for all");
+        .help("Per short/long/forever: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all");
     program.add_argument("--predbestfeats")
-         .action([&](const auto& a) {conf.predict_best_feat_fname = a);})
-         .default_value(conf.predict_best_feat_fname)
-        .help("Model python file name");
+        .action([&](const auto& a) {conf.predict_best_feat_fname = a;})
+        .default_value(conf.predict_best_feat_fname)
+        .help("Best features file, only for --predtype py");
 
-    //size
-    program.add_argument("--predshortsize")
-        .action([&](const auto& a) {conf.pred_short_size = fc_int(a);})
-        .default_value(conf.pred_short_size)
-        .help("Pred short multiplier");
-    program.add_argument("--predlongsize")
-        .action([&](const auto& a) {conf.pred_long_size = fc_int(a);})
-        .default_value(conf.pred_long_size)
-        .help("Pred long multiplier");
-    program.add_argument("--predforeversize")
-        .action([&](const auto& a) {conf.pred_forever_size = fc_int(a);})
-        .default_value(conf.pred_forever_size)
-        .help("Pred forever multiplier");
-    program.add_argument("--predforevercutoff")
-        .action([&](const auto& a) {conf.pred_forever_cutoff = fc_int(a);})
-        .default_value(conf.pred_forever_cutoff)
-        .help("If non-zero, ONLY this determines what's MOVED to or KEPT IN 'forever'.");
-    program.add_argument("--predforeverpow")
-        .action([&](const auto& a) {conf.pred_forever_size_pow = fc_double(a);})
-        .default_value(conf.pred_forever_size_pow)
-        .help("Pred forever power to raise the conflicts to");
-    program.add_argument("--ordertier2by")
-        .action([&](const auto& a) {conf.order_tier2_by = fc_int(a);})
-        .default_value(conf.order_tier2_by)
-        .help("Order Tier 2 by Tier 2/1/0 prediction");
-
-    //move or del?
-    program.add_argument("--movefromtier0")
-        .action([&](const auto& a) {conf.move_from_tier0 = fc_int(a);})
-        .default_value(conf.move_from_tier0)
-        .help("Move from tier0 to tier1? If set to 0, then it's deleted instead of moved.");
-    program.add_argument("--movefromtier1")
-        .action([&](const auto& a) {conf.move_from_tier1 = fc_int(a);})
-        .default_value(conf.move_from_tier1)
-        .help("Move from tier1 to tier2? If set to 0, then it's deleted instead of moved.");
-
-    //printing
+    program.add_argument("--predsortby")
+        .action([&](const auto& a) {conf.pred_sort_by = fc_int(a);})
+        .default_value(conf.pred_sort_by)
+        .help("Reduce removes the candidates with the lowest predicted use over the next: 0 = short, 1 = long, 2 = forever horizon, 3 = sum of the three (near-term counts 3x, long-term still counts)");
     program.add_argument("--dumppreddistrib")
         .action([&](const auto& a) {conf.dump_pred_distrib = fc_int(a);})
         .default_value(conf.dump_pred_distrib)
-        .help("Dump predict distribution to pred_distrib.csv");
-
-    //chunk
-    program.add_argument("--predlongchunk")
-        .action([&](const auto& a) {conf.pred_long_chunk = fc_int(a);})
-        .default_value(conf.pred_long_chunk)
-        .help("Pred long chunk multiplier");
-    program.add_argument("--predforeverchunk")
-        .action([&](const auto& a) {conf.pred_forever_chunk = fc_int(a);})
-        .default_value(conf.pred_forever_chunk)
-        .help("Pred forever chunk multiplier");
-    program.add_argument("--predforeverchunkmult")
-        .action([&](const auto& a) {conf.pred_forever_chunk_mult = fc_double(a);})
-        .default_value(conf.pred_forever_chunk_mult)
-        .help("Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option");
-
-    //Check intervals for LONG and FOREVER
-    program.add_argument("--predlongcheckn")
-        .action([&](const auto& a) {conf.pred_long_check_every_n = fc_int(a);})
-        .default_value(conf.pred_long_check_every_n)
-        .help("Pred long check over limit every N");
-    program.add_argument("--predforevercheckn")
-         .action([&](const auto& a) {conf.pred_forever_check_every_n = fc_int(a);})
-        .default_value(conf.pred_forever_check_every_n)
-        .help("Pred forever check over limit every N");
-
-    // Some old stuff
-    program.add_argument("--preddistillsmallgue")
-        .action([&](const auto& a) {conf.pred_distill_only_smallgue = fc_int(a);})
-        .default_value(conf.pred_distill_only_smallgue)
-        .help("Only distill small glue clauses");
-
-    // Lock clauses in
-    program.add_argument("--preddontmovetime")
-        .action([&](const auto& a) {conf.pred_dontmove_until_timeinside = fc_int(a);})
-        .default_value(conf.pred_dontmove_until_timeinside)
-        .help("Don't move clause until its time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.");
+        .help("Dump predictions of all clauses at every reduce to pred_distrib.csv");
     #endif
 
     /* po::options_description restartOptions("Restart options"); */
@@ -502,6 +431,18 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.reducetarget = fc_int(a);})
         .default_value(conf.reducetarget)
         .help("Percent of unused reduce candidates removed per reduce");
+    program.add_argument("--reducelow")
+        .action([&](const auto& a) {conf.reducelow = fc_int(a);})
+        .default_value(conf.reducelow)
+        .help("Fraction per mille of reduce candidates removed at the first reduce, rising towards --reducehigh as kissat. Set >= reducehigh to use --reducetarget");
+    program.add_argument("--reducehigh")
+        .action([&](const auto& a) {conf.reducehigh = fc_int(a);})
+        .default_value(conf.reducehigh)
+        .help("Asymptotic fraction per mille of reduce candidates removed");
+    program.add_argument("--eagersubsume")
+        .action([&](const auto& a) {conf.eager_subsume = fc_int(a);})
+        .default_value(conf.eager_subsume)
+        .help("Demote the last learnt clauses subsumed by a new one, as kissat");
     program.add_argument("--reducetier1glue")
         .action([&](const auto& a) {conf.reducetier1glue = fc_int(a);})
         .default_value(conf.reducetier1glue)
@@ -510,6 +451,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.reducetier2glue = fc_int(a);})
         .default_value(conf.reducetier2glue)
         .help("Glue at/below which learnt clauses get a double life");
+    program.add_argument("--dyntiers")
+        .action([&](const auto& a) {conf.dynamic_tiers = fc_int(a);})
+        .default_value(conf.dynamic_tiers)
+        .help("Recompute tier1/tier2 glue limits from glue usage at each reduce, as kissat");
     program.add_argument("--flush")
         .action([&](const auto& a) {conf.flush = fc_int(a);})
         .default_value(conf.flush)
@@ -526,7 +471,7 @@ void Main::add_supported_options() {
     program.add_argument("--everypred")
         .action([&](const auto& a) {conf.every_pred_reduce = fc_int(a);})
         .default_value(conf.every_pred_reduce)
-        .help("Reduce final predictor (lev3) clauses every N, and produce data at every N in case of STATS_NEEDED");
+        .help("Calculate satzilla features every N conflicts (STATS builds)");
     #endif
 
     /* po::options_description varPickOptions("Variable branching options"); */
@@ -654,14 +599,30 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.doIntreeProbe = fc_int(a);})
         .default_value(conf.doIntreeProbe)
         .help("Carry out intree-based probing");
+    program.add_argument("--fullprobe")
+        .action([&](const auto& a) {conf.do_full_probe = fc_int(a);})
+        .default_value(conf.do_full_probe)
+        .help("Regularly probe both polarities of variables during search");
+    program.add_argument("--fullprobemaxm")
+        .action([&](const auto& a) {conf.full_probe_time_limitM = fc_ll(a);})
+        .default_value(conf.full_probe_time_limitM)
+        .help("Time in mega-bogoprops to perform full probing");
     program.add_argument("--intreemaxm")
         .action([&](const auto& a) {conf.intree_time_limitM = fc_ll(a);})
         .default_value(conf.intree_time_limitM)
         .help("Time in mega-bogoprops to perform intree probing");
+    program.add_argument("--intreeeff")
+        .action([&](const auto& a) {conf.intree_effort = fc_double(a);})
+        .default_value(conf.intree_effort)
+        .help("Intree probing budget as a fraction of all propagations since its last call");
     program.add_argument("--otfhyper")
         .action([&](const auto& a) {conf.do_hyperbin_and_transred = fc_int(a);})
         .default_value(conf.do_hyperbin_and_transred)
         .help("Perform hyper-binary resolution during probing");
+    program.add_argument("--hyperkeepconfl")
+        .action([&](const auto& a) {conf.hyperbin_keep_confl = fc_double(a);})
+        .default_value(conf.hyperbin_keep_confl)
+        .help("Conflicts an unused intree hyper-bin is kept for before being dropped");
 
     /* po::options_description simp_schedules("Simplification schedules"); */
     program.add_argument("--schedsimp")
@@ -845,7 +806,7 @@ void Main::add_supported_options() {
     program.add_argument("--varelimirregocclim")
         .action([&](const auto& a) {conf.varelim_irreg_gate_occ_cutoff = fc_int(a);})
         .default_value(conf.varelim_irreg_gate_occ_cutoff)
-        .help("Don't run picosat-based irregular gate finding if the variable has more occurrences than this");
+        .help("Don't run kitten-based irregular gate finding if the variable has more occurrences than this");
     program.add_argument("--varelimirregconfl")
         .action([&](const auto& a) {conf.varelim_irreg_gate_confl_limit = fc_int(a);})
         .default_value(conf.varelim_irreg_gate_confl_limit)
@@ -1009,6 +970,10 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_distill_bin_clauses = fc_int(a);})
         .default_value(conf.do_distill_bin_clauses)
         .help("Regularly execute binary clause distillation");
+    program.add_argument("--distillbineff")
+        .action([&](const auto& a) {conf.distill_bin_effort = fc_double(a);})
+        .default_value(conf.distill_bin_effort)
+        .help("Binary clause distillation budget as a fraction of all propagations since its last call");
     program.add_argument("--distillmaxm")
         .action([&](const auto& a) {conf.distill_long_cls_time_limitM = fc_ll(a);})
         .default_value(conf.distill_long_cls_time_limitM)
@@ -1024,7 +989,19 @@ void Main::add_supported_options() {
     program.add_argument("--distillredreleff")
         .action([&](const auto& a) {conf.distill_red_releff = fc_int(a);})
         .default_value(conf.distill_red_releff)
-        .help("Per-mille of search props to spend distilling red cls");
+        .help("Per-mille of all bogoprops since last call to spend distilling red cls");
+    program.add_argument("--distillirredreleff")
+        .action([&](const auto& a) {conf.distill_irred_releff = fc_int(a);})
+        .default_value(conf.distill_irred_releff)
+        .help("Per-mille of all bogoprops since last call to spend distilling irred cls");
+    program.add_argument("--distillmineffm")
+        .action([&](const auto& a) {conf.distill_min_effortM = fc_int(a);})
+        .default_value(conf.distill_min_effortM)
+        .help("Floor of the distill effort reference, in mega-bogoprops");
+    program.add_argument("--distillschedmax")
+        .action([&](const auto& a) {conf.distill_sched_max = fc_int(a);})
+        .default_value(conf.distill_sched_max)
+        .help("Max clauses scheduled per distill pass");
     program.add_argument("--distillinst")
         .action([&](const auto& a) {conf.distill_instantiate = fc_int(a);})
         .default_value(conf.distill_instantiate)
@@ -1064,6 +1041,41 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.oracle_find_bins = fc_int(a);})
         .default_value(conf.oracle_find_bins)
         .help("[0..] Effort spent looking for binary clauses during oracle vivification. 0 = off");
+    ;
+
+    /* po::options_description sweep_opts("SAT sweeping options"); */
+    program.add_argument("--sweep")
+        .action([&](const auto& a) {conf.do_sweep = fc_int(a);})
+        .default_value(conf.do_sweep)
+        .help("Perform SAT sweeping with kitten (occ-sweep)");
+    program.add_argument("--sweeptimelimM")
+        .action([&](const auto& a) {conf.sweep_time_limitM = fc_double(a);})
+        .default_value(conf.sweep_time_limitM)
+        .help("Tick limit cap for one occ-sweep run, in millions");
+    program.add_argument("--sweepeff")
+        .action([&](const auto& a) {conf.sweep_effort = fc_double(a);})
+        .default_value(conf.sweep_effort)
+        .help("occ-sweep budget as a fraction of all bogoprops since its last call");
+    program.add_argument("--sweepmineffm")
+        .action([&](const auto& a) {conf.sweep_min_effortM = fc_double(a);})
+        .default_value(conf.sweep_min_effortM)
+        .help("Floor of the occ-sweep budget, in mega-ticks");
+    program.add_argument("--sweepvars")
+        .action([&](const auto& a) {conf.sweep_vars = fc_int(a);})
+        .default_value(conf.sweep_vars)
+        .help("Starting number of variables in a sweeping environment");
+    program.add_argument("--sweepclauses")
+        .action([&](const auto& a) {conf.sweep_clauses = fc_int(a);})
+        .default_value(conf.sweep_clauses)
+        .help("Starting number of clauses in a sweeping environment");
+    program.add_argument("--sweepdepth")
+        .action([&](const auto& a) {conf.sweep_depth = fc_int(a);})
+        .default_value(conf.sweep_depth)
+        .help("Starting depth of a sweeping environment");
+    program.add_argument("--sweepfliprounds")
+        .action([&](const auto& a) {conf.sweep_flip_rounds = fc_int(a);})
+        .default_value(conf.sweep_flip_rounds)
+        .help("Rounds of model flipping during sweeping");
     ;
 
     /* po::options_description mem_save_opts("Memory saving options"); */
@@ -1295,6 +1307,13 @@ void Main::manually_parse_some_options()
 
     try {
         auto files = program.get<std::vector<std::string>>("files");
+        for(const auto& f: files) {
+            if (!f.empty() && f[0] == '-') {
+                cerr << "ERROR: '" << f << "' after the input file would be the proof file name."
+                    " Options must come before the input file" << endl;
+                exit(-1);
+            }
+        }
         if (files.size() > 2) {
             cerr << "ERROR: you can only have at most two files as positional options:"
                 "the input file and the output FRAT file" << endl;
@@ -1305,7 +1324,6 @@ void Main::manually_parse_some_options()
             input_file = files[0];
 #ifdef USE_SQLITE3
             if (!program.is_used("sqlitedb")) sqlite_filename = input_file + ".sqlite";
-            else sqlite_filename = program.get<string>("sqlitedb");
 #endif
             fileNamePresent = true;
         } else assert(false && "The try() should not have succeeded");

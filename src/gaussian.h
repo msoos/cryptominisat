@@ -178,7 +178,7 @@ class EGaussian {
 
     // Someone is responsible for this column if TRUE
     ///we always WATCH this variable
-    vector<char> var_has_resp_row;
+    vector<char>& var_has_resp_row;
 
     ///row_to_resp_var[ROW] gives the VAR this row IS responsible for, i.e. the
     ///row's single column of the identity part. var_Undef for all-zero rows.
@@ -199,7 +199,7 @@ class EGaussian {
     ///indexed by "dcol", a slot in D, not by matrix column.
     bool compact = false;
     uint32_t num_dcols = 0;
-    vector<uint32_t> var_to_dcol; ///VAR -> slot in D, or unassigned_col if responsible/not ours
+    vector<uint32_t>& var_to_dcol; ///VAR -> slot in D, or unassigned_col if responsible. Garbage if not ours
     vector<uint32_t> dcol_to_var; ///slot in D -> VAR
     void compactify();
 
@@ -210,7 +210,7 @@ class EGaussian {
     ///num_rows^2 bits, i.e. bigger than the matrix itself.
     vector<uint64_t> reason_mat;
     uint32_t reason_stride = 0;
-    vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
+    vector<uint32_t>& var_to_col; ///var->col mapping. Index with VAR. Garbage if not ours
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;
     uint32_t num_cols = 0;
@@ -256,7 +256,6 @@ inline double EGaussian::get_density()
     return (double)pop/(double)(num_rows*num_cols);
 }
 
-inline void EGaussian::update_matrix_no(uint32_t n) { matrix_no = n; }
 inline uint32_t EGaussian::get_matrix_no() { return matrix_no; }
 inline bool EGaussian::is_initialized() const { return initialized; }
 

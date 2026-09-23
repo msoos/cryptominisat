@@ -248,6 +248,8 @@ void ClauseAllocator::consolidate(
     , const bool force
     , bool lower_verb
 ) {
+    solver->clear_last_learnt(); //offsets move
+
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
     //1) There is too much memory allocated. Re-allocation will save space

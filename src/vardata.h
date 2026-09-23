@@ -73,58 +73,8 @@ struct VarData
     float weight = 0.5;
 
     #if defined(STATS_NEEDED)
-    uint32_t community_num = numeric_limits<uint32_t>::max();
     #endif
 
-    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    uint32_t set = 0;
-    uint64_t num_propagated = 0;
-    uint64_t num_propagated_pos = 0;
-    uint64_t num_decided = 0;
-    uint64_t num_decided_pos = 0;
-    bool     last_time_set_was_dec;
-    uint32_t last_seen_in_1uip = 0;
-    uint32_t last_decided_on = 0;
-    uint32_t last_propagated = 0;
-    uint32_t last_canceled = 0;
-
-    //these are per-solver data
-    uint64_t sumDecisions_at_picktime = 0;
-    uint64_t sumConflicts_at_picktime = 0;
-    uint64_t sumPropagations_at_picktime = 0;
-    uint64_t sumAntecedents_at_picktime = 0;
-    uint64_t sumAntecedentsLits_at_picktime = 0;
-    uint64_t sumConflictClauseLits_at_picktime = 0;
-    uint64_t sumDecisionBasedCl_at_picktime = 0;
-    uint64_t sumClLBD_at_picktime = 0;
-    uint64_t sumClSize_at_picktime = 0;
-
-    uint64_t sumDecisions_below_during = 0;
-    uint64_t sumConflicts_below_during = 0;
-    uint64_t sumPropagations_below_during = 0;
-    uint64_t sumAntecedents_below_during = 0;
-    uint64_t sumAntecedentsLits_below_during = 0;
-    uint64_t sumConflictClauseLits_below_during = 0;
-    uint64_t sumDecisionBasedCl_below_during = 0;
-    uint64_t sumClLBD_below_during = 0;
-    uint64_t sumClSize_below_during = 0;
-
-    //these are per-variable data
-    uint64_t inside_conflict_clause = 0;
-    uint64_t inside_conflict_clause_glue = 0;
-    uint64_t inside_conflict_clause_antecedents = 0;
-
-    uint64_t inside_conflict_clause_at_picktime = 0;
-    uint64_t inside_conflict_clause_glue_at_picktime = 0;
-    uint64_t inside_conflict_clause_antecedents_at_picktime = 0;
-
-    uint64_t inside_conflict_clause_during = 0;
-    uint64_t inside_conflict_clause_glue_during = 0;
-    uint64_t inside_conflict_clause_antecedents_during = 0;
-
-    uint64_t last_flipped = 0;
-    bool dump;
-    #endif
 };
 
 }

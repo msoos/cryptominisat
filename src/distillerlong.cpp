@@ -180,18 +180,40 @@ void DistillerLong::clear_seen()
     reason_stack.clear(); //non-empty after a BNN bail-out
 }
 
-bool DistillerLong::distill(const bool red, bool only_rem_cl)
+//Effort reference, as kissat's SET_EFFORT_LIMIT: all propagation work since
+//the last call, floored at 'mineffort'
+int64_t DistillerLong::calc_effort_ref()
+{
+    int64_t ref = (int64_t)(solver->all_bogoprops() - last_all_props);
+    last_all_props = solver->all_bogoprops();
+    return std::max<int64_t>(ref, solver->conf.distill_min_effortM*1000LL*1000LL);
+}
+
+//Kissat's vivify: red tiers and irred in one go, sharing one effort reference
+bool DistillerLong::distill_red_and_irred()
+{
+    const int64_t ref = calc_effort_ref();
+    if (!distill(true, false, ref)) return false;
+    return distill(false, false, ref);
+}
+
+bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref)
 {
     frat_func_start();
     assert(solver->ok);
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
     runStats.clear();
+    if (effort_ref < 0) effort_ref = calc_effort_ref();
 
     if (!red) {
+        const int64_t budget = effort_ref * (int64_t)solver->conf.distill_irred_releff / 1000LL;
+        const double r_rem = solver->conf.distill_irred_alsoremove_ratio;
+        const double r_norem = only_rem_cl ? 0.0 : solver->conf.distill_irred_noremove_ratio;
+        const double sum = r_rem + r_norem;
         if (!distill_long_cls_all(
             solver->longIrredCls,
-            solver->conf.distill_irred_alsoremove_ratio,
+            sum > 0 ? (double)budget * r_rem / sum : 0.0,
             true, //also remove
             only_rem_cl,
             red))
@@ -204,7 +226,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         if (!only_rem_cl) {
             if (!distill_long_cls_all(
                 solver->longIrredCls,
-                solver->conf.distill_irred_noremove_ratio,
+                sum > 0 ? (double)budget * r_norem / sum : 0.0,
                 false, //also remove
                 only_rem_cl,
                 red))
@@ -216,9 +238,10 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         runStats.clear();
     } else {
         //Redundant
+        const int64_t budget = effort_ref * (int64_t)solver->conf.distill_red_releff / 1000LL;
         if (!distill_long_cls_all(
             solver->longRedCls[0],
-            1.0,
+            budget,
             false, //dont' remove (it's always redundant)
             only_rem_cl,
             red,
@@ -229,20 +252,6 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         globalStats += runStats;
         runStats.clear();
 
-        #ifdef FINAL_PREDICTOR //only predictor builds populate longRedCls[1]
-        if (!distill_long_cls_all(
-            solver->longRedCls[1],
-            1.0,
-            false, //dont' remove (it's always redundant)
-            only_rem_cl,
-            red,
-            1))  // //red lev (only to print)
-        {
-            goto end;
-        }
-        globalStats += runStats;
-        runStats.clear();
-        #endif
     }
 
 end:
@@ -255,43 +264,21 @@ end:
 
 bool DistillerLong::distill_long_cls_all(
     vector<ClOffset>& offs
-    , double time_mult
+    , double budget
     , bool also_remove
     , bool only_remove
     , bool red
     , uint32_t red_lev
 ) {
     assert(solver->ok);
-    if (time_mult == 0.0) return solver->okay();
+    if (budget <= 0.0) return solver->okay();
     verb_print(6, "c Doing distillation branch for long clauses");
     frat_func_start();
 
     double my_time = cpu_time();
     const size_t origTrailSize = solver->trail_size();
 
-    //Time-limiting
-    if (red) {
-        //CaDiCaL's vivify budget for redundant rounds: relative to the
-        //propagations done since the last round, clamped, then the
-        //'vivifyredeff' 75-per-mille share
-        int64_t lim = (int64_t)(solver->propStats.propagations - last_red_props);
-        last_red_props = solver->propStats.propagations;
-        lim *= 1e-3 * (double)solver->conf.distill_red_releff;
-        lim = std::max<int64_t>(lim, 60LL*1000LL);
-        lim = std::min<int64_t>(lim, 60LL*1000LL*1000LL);
-        maxNumProps = lim * 75LL / 1000LL;
-    } else {
-        maxNumProps =
-            solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
-            *solver->conf.global_timeout_multiplier;
-
-        if (solver->litStats.irredLits + solver->litStats.redLits <
-                (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
-        ) {
-            maxNumProps *=2;
-        }
-        maxNumProps *= time_mult;
-    }
+    maxNumProps = (int64_t)budget;
     orig_maxNumProps = maxNumProps;
 
     //stats setup
@@ -334,6 +321,35 @@ bool DistillerLong::distill_long_cls_all(
             }
         }
         offs.resize(j);
+    }
+
+    //Cap the schedule, as CaDiCaL's vivifyschedmax: sorting and the
+    //per-candidate literal copies below must not dominate a small budget.
+    //Keep the best by (prio, glue, size), hand the rest back untouched
+    //A candidate costs ~1K bogoprops at least, so a small budget must not
+    //pay for sorting thousands of candidates it will never reach
+    const uint32_t sched_max = std::min<uint64_t>(solver->conf.distill_sched_max,
+        std::max<uint64_t>(100, maxNumProps / 1000));
+    if (todo.size() > sched_max) {
+        vector<uint32_t> idx(todo.size());
+        for(uint32_t i = 0; i < todo.size(); i++) idx[i] = i;
+        std::nth_element(idx.begin(), idx.begin() + sched_max, idx.end(),
+            [&](const uint32_t a, const uint32_t b) {
+                if (todo_prio[a] != todo_prio[b]) return todo_prio[a] < todo_prio[b];
+                const Clause& c = *solver->cl_alloc.ptr(todo[a]);
+                const Clause& d = *solver->cl_alloc.ptr(todo[b]);
+                if (red && c.stats.glue != d.stats.glue) return c.stats.glue < d.stats.glue;
+                return c.size() < d.size();
+            });
+        vector<ClOffset> todo2; todo2.reserve(sched_max);
+        vector<uint32_t> todo_prio2; todo_prio2.reserve(sched_max);
+        for(uint32_t i = 0; i < sched_max; i++) {
+            todo2.push_back(todo[idx[i]]);
+            todo_prio2.push_back(todo_prio[idx[i]]);
+        }
+        for(uint32_t i = sched_max; i < idx.size(); i++) offs.push_back(todo[idx[i]]);
+        todo = std::move(todo2);
+        todo_prio = std::move(todo_prio2);
     }
 
     //CaDiCaL's noccs: capped Jeroslow-Wang score of each literal over the
@@ -451,19 +467,17 @@ bool DistillerLong::distill_long_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
-        cout << solver->conf.prefix << "[distill-long";
-        if (red) {
-            cout << "-red" << red_lev << "]";
-        } else {
-            cout << "-irred]";
-        }
-        cout
-        << " cls"
-        << " tried: " << runStats.checkedClauses << "/" << orig_todo_size
+        const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
+        cout << solver->conf.prefix << tag
+        << " cls tried: " << runStats.checkedClauses << "/" << orig_todo_size
         << " cl-rem: " << runStats.clRemoved
         << " cl-sh: " << runStats.numClShorten
         << " lit-rem: " << runStats.numLitsRem
         << " 0-depth-ass: " << (solver->trail_size() - origTrailSize)
+        << endl;
+        cout << solver->conf.prefix << tag
+        << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
+        << " used(M): " << (double)((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps)/1e6
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }

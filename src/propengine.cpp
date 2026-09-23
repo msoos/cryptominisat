@@ -43,9 +43,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define DEBUG_ENQUEUE_LEVEL0
-//#define VERBOSE_DEBUG_POLARITIES
-//#define DEBUG_DYNAMIC_RESTART
 
 /**
 @brief Sets a sane default config and allocates handler classes
@@ -160,8 +157,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
         << decisionLevel() << " lit to prop: " << p);
     const uint32_t pv = p.var();
-
-    if (gmatrices.empty() && xorclauses.empty()) return PropBy();
+    assert(!gmatrices.empty() || !xorclauses.empty()); //the hot caller checks
 
     // Matrices are reset only when first consulted through gwatches[pv] in this
     // call. The cols_vals/cols_unset caches refresh themselves in find_truths()
@@ -622,8 +618,8 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-template<bool inprocess, bool red_also, bool use_disable>
-bool PropEngine::prop_long_cl_any_order(
+template<bool inprocess, bool red_also, bool distill_use>
+bool PropEngine::prop_long_cl(
     Watched* i
     , Watched*& j
     , const Lit p
@@ -642,7 +638,7 @@ bool PropEngine::prop_long_cl_any_order(
     #ifdef SLOW_DEBUG
     assert(!c.get_removed());
     assert(!c.freed());
-    if (!use_disable) {
+    if (!distill_use) {
         assert(!c.disabled);
     }
     #endif
@@ -652,18 +648,18 @@ bool PropEngine::prop_long_cl_any_order(
         return true;
     }
 
-    if (use_disable && c.disabled) {
+    if (distill_use && c.disabled) {
         *j++ = *i;
         return true;
     }
 
-    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING)
+    if (find_new_watch<inprocess>(c, offset, j, p) == PROP_NOTHING)
         return true;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        handle_normal_prop_fail<inprocess>(c, offset, confl);
+        handle_long_cl_conflict<inprocess>(c, offset, confl);
         return false;
     } else {
         if (!inprocess) {
@@ -739,28 +735,27 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
 }
 
 template<bool inprocess, bool red_also, bool distill_use>
-PropBy PropEngine::propagate_any_order()
+PropBy PropEngine::propagate_core()
 {
     PropBy confl;
-    VERBOSE_PRINT("propagate_any_order started");
+    VERBOSE_PRINT("propagate_core started");
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
-        varData[p.var()].propagated = true;
+        if (!bnns.empty()) varData[p.var()].propagated = true; //only reverse_prop() reads it
         watch_subarray ws = watches[~p];
         uint32_t currLevel = trail[qhead].lev;
 
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        if (inprocess) {
-            propStats.bogoProps += ws.size()/4 + 1;
-        }
+        //Also in search: effort budgets of inprocessing are relative to it
+        propStats.bogoProps += ws.size()/4 + 1;
         propStats.propagations++;
         simpDB_props--;
         for (; i != end; i++) {
             // propagate binary clause
-            if (likely(i->isBin())) {
+            if (i->isBin()) [[likely]] {
                 *j++ = *i;
                 if (!red_also && i->red()) continue;
                 if (distill_use && i->bin_cl_marked()) continue;
@@ -778,7 +773,7 @@ PropBy PropEngine::propagate_any_order()
 
             //propagate normal clause
             assert(i->isClause());
-            prop_long_cl_any_order<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
+            prop_long_cl<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
         }
         while (i != end) {
             *j++ = *i++;
@@ -787,7 +782,12 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (!distill_use && confl.isnullptr()) confl = gauss_jordan_elim(p, currLevel);
+        //Skip the call when there is nothing to do: it showed at 6% in perf
+        if (!distill_use && confl.isnullptr()
+            && (!gmatrices.empty() || !xorclauses.empty())
+        ) {
+            confl = gauss_jordan_elim(p, currLevel);
+        }
 
         qhead++;
     }
@@ -802,57 +802,15 @@ PropBy PropEngine::propagate_any_order()
     }
     #endif
 
-// For BNN debugging
-//     if (confl.isnullptr()) {
-//         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-//             auto& bnn = bnns[idx];
-//             if (!bnn) continue;
-//             int32_t undefs = 0;
-//             int32_t ts = 0;
-//             for(const auto& l: *bnn) {
-//                 if (value(l) == l_True) {
-//                     ts++;
-//                 }
-//                 if (value(l) == l_Undef) {
-//                     undefs++;
-//                 }
-//             }
-//             cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
-//             cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
-//             << " sz :" << bnn->size() << endl;
-//             assert(undefs == bnn->undefs);
-//             assert(ts == bnn->ts);
-//         }
-//         cout << "ALL BNNS CHECKED========" << endl;
-//     }
-
-
-    VERBOSE_PRINT("Propagation (propagate_any_order) ended.");
+    VERBOSE_PRINT("Propagation (propagate_core) ended.");
 
     return confl;
 }
-template PropBy PropEngine::propagate_any_order<false>();
-template PropBy PropEngine::propagate_any_order<true>();
-template PropBy PropEngine::propagate_any_order<true, false, true>();
-template PropBy PropEngine::propagate_any_order<true, true,  true>();
+template PropBy PropEngine::propagate_core<false>();
+template PropBy PropEngine::propagate_core<true>();
+template PropBy PropEngine::propagate_core<true, false, true>();
+template PropBy PropEngine::propagate_core<true, true,  true>();
 
-
-void PropEngine::printWatchList(const Lit lit) const
-{
-    watch_subarray_const ws = watches[lit];
-    for (const Watched *it2 = ws.begin(), *end2 = ws.end()
-        ; it2 != end2
-        ; it2++
-    ) {
-        if (it2->isBin()) {
-            cout << "bin: " << lit << " , " << it2->lit2() << " red : " <<  (it2->red()) << endl;
-        } else if (it2->isClause()) {
-            cout << "cla:" << it2->get_offset() << endl;
-        } else {
-            assert(false);
-        }
-    }
-}
 
 void PropEngine::updateVars(
     [[maybe_unused]] const vector<uint32_t>& outer_to_inter,
@@ -981,52 +939,55 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     return true;
 }
 
-#ifdef STATS_NEEDED_BRANCH
-void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
+//A level-0 assignment is a unit clause in the proof: emit it with hints
+//(unit IDs of the reason's other lits first, reason ID last)
+void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat)
 {
-    if (!solver->sqlStats)
+    const uint32_t v = p.var();
+    if (!do_unit_frat) {
+        assert(unit_cl_IDs[v] != 0);
+        assert(unit_cl_XIDs[v] != 0);
         return;
-
-    bool dump = false;
-    double rnd_num = solver->mtrand.randDblExc();
-    if (rnd_num <= conf.dump_individual_cldata_ratio*0.1) {
-        dump = true;
     }
-    varData[v].dump = dump;
-    if (!dump)
-        return;
+    int32_t reason_id = 0;
+    tmp_unit_hints.clear();
+    switch (from.getType()) {
+        case PropByType::binary_t:
+            reason_id = from.get_id();
+            tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
+            break;
+        case PropByType::clause_t: {
+            Clause* cl = cl_alloc.ptr(from.get_offset());
+            reason_id = cl->stats.id;
+            for(auto const& l: *cl)
+                if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        case PropByType::xor_t: {
+            auto cl = get_xor_reason(from, reason_id);
+            for(auto const& l: *cl)
+                if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        default: break; //null/BNN: no hints
+    }
 
-    solver->dump_restart_sql(rst_dat_type::var);
+    const auto id = ++clauseID;
+    const auto xid = ++clauseXID;
+    *frat << add << id << p;
+    if (reason_id != 0) {
+        *frat << fratchain << tmp_unit_hints << reason_id;
+    }
+    *frat << fin;
+    if (frat && !frat->incremental())
+      *frat << implyxfromcls << xid << p << fratchain << id << fin;
 
-    uint64_t outer_var = map_inter_to_outer(v);
-
-    varData[v].sumDecisions_at_picktime = sumDecisions;
-    varData[v].sumConflicts_at_picktime = sumConflicts;
-    varData[v].sumAntecedents_at_picktime = sumAntecedents;
-    varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
-    varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
-    varData[v].sumPropagations_at_picktime = sumPropagations;
-    varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
-    varData[v].sumClLBD_at_picktime = sumClLBD;
-    varData[v].sumClSize_at_picktime = sumClSize;
-    double rel_activity_at_picktime =
-        std::log2(var_act_vsids[v]+10e-300)/std::log2(max_vsids_act+10e-300);
-
-    varData[v].last_time_set_was_dec = (from == PropBy());
-
-    //inside data
-    varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
-    varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
-    varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
-
-    solver->sqlStats->var_data_picktime(
-        solver
-        , outer_var
-        , varData[v]
-        , rel_activity_at_picktime
-    );
+    assert(unit_cl_IDs[v] == 0);
+    assert(unit_cl_XIDs[v] == 0);
+    unit_cl_IDs[v] = id;
+    unit_cl_XIDs[v] = xid;
 }
-#endif
+
 
 ///// VMTF ////
 
@@ -1283,17 +1244,13 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             assert(value(lit) == l_False);
             tmp_xor_reason.push_back(lit);
         }
-#ifdef VERBOSE_DEBUG
-        cout << "XOR Reason: " << tmp_xor_reason << endl;
-        for(const auto& l: tmp_xor_reason) {
-            cout
-            << "l: " << l
-            << " value: " << value(l)
-            << " level:" << varData[l.var()].level
-            << " type: " << removed_type_to_string(varData[l.var()].removed)
-            << endl;
-        }
-#endif
+        VERBOSE_DEBUG_DO(
+            cout << "XOR Reason: " << tmp_xor_reason << endl;
+            for(const auto& l: tmp_xor_reason) {
+                cout << "l: " << l << " value: " << value(l)
+                << " level:" << varData[l.var()].level
+                << " type: " << removed_type_to_string(varData[l.var()].removed) << endl;
+            });
 
         // Some sanity checks
         if (x.prop_confl_watch < 2) assert(rhs == x.rhs && "It's a prop, so rhs must match");

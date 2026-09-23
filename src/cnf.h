@@ -108,7 +108,6 @@ public:
     uint64_t sumConflicts = 0;
     uint64_t sumDecisions = 0;
     uint64_t sumAntecedents = 0;
-    uint64_t sumPropagations = 0;
     uint64_t sumConflictClauseLits = 0;
     uint64_t sumAntecedentsLits = 0;
     uint64_t sumDecisionBasedCl = 0;
@@ -117,8 +116,6 @@ public:
 
     uint32_t latest_satzilla_feature_calc = 0;
     uint64_t last_satzilla_feature_calc_confl = 0;
-    uint32_t latest_vardist_feature_calc = 0;
-    uint64_t last_vardist_feature_calc_confl = 0;
 
 
     //Note that this array can have the same internal variable more than

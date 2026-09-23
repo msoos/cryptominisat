@@ -51,17 +51,6 @@ namespace CMSat {
 class Solver;
 class SQLStats;
 class DataSync;
-
-//#define VERBOSE_DEBUG_FULLPROP
-//#define VERBOSE_DEBUG
-
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_DEBUG_FULLPROP
-#define ENQUEUE_DEBUG
-#define DEBUG_ENQUEUE_LEVEL0
-#endif
-
-class Solver;
 class ClauseAllocator;
 class Gaussian;
 class EGaussian;
@@ -286,6 +275,12 @@ public:
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
     vector<GaussQData> gqueuedata;
+    // Indexed by VAR and shared by all gmatrices, which are variable-disjoint.
+    // Per-matrix nVars-sized copies took 35GB on 4M vars x 1600 matrices.
+    // Entries of vars a matrix doesn't own may be stale, see EGaussian.
+    vector<uint32_t> gauss_var_to_col;
+    vector<uint32_t> gauss_var_to_dcol;
+    vector<char> gauss_var_has_resp_row;
     // Scratch list of matrix indices touched during a single gauss_jordan_elim
     // call. Allows per-call bookkeeping to skip the many untouched matrices.
     vec<uint32_t> touched_matrices_gje;
@@ -386,17 +381,17 @@ protected:
 
 protected:
     template<bool inprocess, bool red_also = true, bool distill_use = false>
-    PropBy propagate_any_order();
+    PropBy propagate_core();
     template<bool bin_only=true> PropBy propagate_light();
     template<bool inprocess>
-    PropResult prop_normal_helper(
+    PropResult find_new_watch(
         Clause& c
         , ClOffset offset
         , Watched*& j
         , const Lit p
     );
     template<bool inprocess>
-    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
+    PropResult handle_long_cl_conflict(Clause& c, ClOffset offset, PropBy& confl);
 
 private:
     Solver* solver;
@@ -412,15 +407,15 @@ private:
         , PropBy& confl
         , uint32_t currLevel
     );
-    template<bool inprocess, bool red_also, bool use_disable>
-    bool prop_long_cl_any_order(
+    template<bool inprocess, bool red_also, bool distill_use>
+    bool prop_long_cl(
         Watched* i
         , Watched*& j
         , const Lit p
         , PropBy& confl
         , uint32_t currLevel
     );
-    void sql_dump_vardata_picktime(uint32_t v, PropBy from);
+    void enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat);
 
     PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
 };
@@ -428,9 +423,7 @@ private:
 inline void PropEngine::new_decision_level()
 {
     trail_lim.push_back(trail.size());
-    #ifdef VERBOSE_DEBUG
-    cout << "New decision level: " << trail_lim.size() << endl;
-    #endif
+    VERBOSE_PRINT("New decision level: " << trail_lim.size());
 }
 
 inline uint32_t PropEngine::decisionLevel() const
@@ -467,7 +460,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
 }
 
 template<bool inprocess>
-inline PropResult PropEngine::prop_normal_helper(
+inline PropResult PropEngine::find_new_watch(
     Clause& c
     , ClOffset offset
     , Watched*& j
@@ -520,7 +513,7 @@ inline PropResult PropEngine::prop_normal_helper(
 
 
 template<bool inprocess>
-inline PropResult PropEngine::handle_normal_prop_fail(
+inline PropResult PropEngine::handle_long_cl_conflict(
     Clause&
     #ifdef STATS_NEEDED
     c
@@ -529,10 +522,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     , PropBy& confl
 ) {
     confl = PropBy(offset);
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    Clause& c = *cl_alloc.ptr(offset);
-    cout << "Conflict from cl: " << c << endl;
-    #endif
+    VERBOSE_PRINT("Conflict from cl: " << *cl_alloc.ptr(offset));
 
     STATS_DO(if (!inprocess && c.red()) red_stats_extra[c.stats.extra_pos].conflicts_made++);
 
@@ -549,56 +539,16 @@ void PropEngine::enqueue(const Lit p)
 template<bool inprocess>
 void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, bool do_unit_frat)
 {
-    #ifdef VERBOSE_DEBUG
-    if (level == 0) {
-        cout << "enqueue var " << p.var()+1
-        << " to val " << !p.sign()
-        << " level: " << level
-        << " decisonLevel(): " << decisionLevel()
-        << " sublevel: " << trail.size()
-        << " by: " << from << endl;
-        cout << "trail at level 0: ";
-        for(auto const& x: trail) {
-            cout << "(lit: " << x.lit << " lev: " << x.lev << ")";
-        }
-        cout << endl;
-    }
-    #endif //DEBUG_ENQUEUE_LEVEL0
-
-    #ifdef ENQUEUE_DEBUG
-    assert(trail.size() <= nVarsOuter());
-    #endif
+    VERBOSE_PRINT("enqueue " << p << " level: " << level << " declevel: " << decisionLevel()
+        << " sublevel: " << trail.size() << " by: " << from);
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
+    SLOW_DEBUG_DO(assert(trail.size() <= nVarsOuter()));
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
-
-    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    if (!inprocess) {
-        varData[v].set++;
-        if (from == PropBy()) {
-            #ifdef STATS_NEEDED_BRANCH
-            sql_dump_vardata_picktime(v, from);
-            varData[v].num_decided++;
-            varData[v].last_decided_on = sumConflicts;
-            if (!p.sign()) varData[v].num_decided_pos++;
-            #endif
-        } else {
-            sumPropagations++;
-            #ifdef STATS_NEEDED_BRANCH
-            bool flipped = (varData[v].polarity != !p.sign());
-            if (flipped) {
-                varData[v].last_flipped = sumConflicts;
-            }
-            varData[v].num_propagated++;
-            varData[v].last_propagated = sumConflicts;
-            if (!p.sign()) varData[v].num_propagated_pos++;
-            #endif
-        }
-    }
-    #endif
+    STATS_DO(if (!inprocess) { if (p.sign()) propStats.varSetNeg++; else propStats.varSetPos++; });
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
@@ -607,66 +557,10 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     varData[v].level = level;
     varData[v].sublevel = trail.size();
 
-    if (level == 0 && frat->enabled())
-    {   if (do_unit_frat) {
-            //hints: unit IDs of the reason's other lits first, reason ID last
-            int32_t reason_id = 0;
-            tmp_unit_hints.clear();
-            switch (from.getType()) {
-                case PropByType::binary_t:
-                    reason_id = from.get_id();
-                    tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
-                    break;
-                case PropByType::clause_t: {
-                    Clause* cl = cl_alloc.ptr(from.get_offset());
-                    reason_id = cl->stats.id;
-                    for(auto const& l: *cl)
-                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
-                    break;
-                }
-                case PropByType::xor_t: {
-                    auto cl = get_xor_reason(from, reason_id);
-                    for(auto const& l: *cl)
-                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
-                    break;
-                }
-                default: break; //null/BNN: no hints
-            }
+    if (level == 0 && frat->enabled()) enqueue_level0_frat(p, from, do_unit_frat);
 
-            const auto id = ++clauseID;
-            const auto xid = ++clauseXID;
-            *frat << add << id << p;
-            if (reason_id != 0) {
-                *frat << fratchain << tmp_unit_hints << reason_id;
-            }
-            *frat << fin;
-            if (frat && !frat->incremental())
-              *frat << implyxfromcls << xid << p << fratchain << id << fin;
-
-            assert(unit_cl_IDs[v] == 0);
-            assert(unit_cl_XIDs[v] == 0);
-            unit_cl_IDs[v] = id;
-            unit_cl_XIDs[v] = xid;
-        } else {
-            assert(unit_cl_IDs[v] != 0);
-            assert(unit_cl_XIDs[v] != 0);
-        }
-    }
-
-    if (!inprocess) {
-        #ifdef STATS_NEEDED
-        if (sign) {
-            propStats.varSetNeg++;
-        } else {
-            propStats.varSetPos++;
-        }
-        #endif
-    }
     trail.push_back(Trail(p, level));
-
-    if (inprocess) {
-        propStats.bogoProps += 1;
-    }
+    if (inprocess) propStats.bogoProps += 1;
 }
 
 template<bool bin_only>

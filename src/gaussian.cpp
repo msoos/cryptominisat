@@ -69,7 +69,10 @@ EGaussian::EGaussian(
     const vector<Xor>& _xorclauses) :
 xorclauses(_xorclauses),
 solver(_solver),
-matrix_no(_matrix_no)
+matrix_no(_matrix_no),
+var_has_resp_row(_solver->gauss_var_has_resp_row),
+var_to_dcol(_solver->gauss_var_to_dcol),
+var_to_col(_solver->gauss_var_to_col)
 {
 }
 
@@ -121,18 +124,21 @@ struct ColSorter {
 };
 
 void EGaussian::select_columnorder() {
-    var_to_col.clear();
-    var_to_col.resize(solver->nVars(), unassigned_col);
-    vector<uint32_t> vars_needed;
-    uint32_t largest_used_var = 0;
+    if (var_to_col.size() < solver->nVars()) {
+        var_to_col.resize(solver->nVars(), unassigned_col);
+        var_to_dcol.resize(solver->nVars(), unassigned_col);
+        var_has_resp_row.resize(solver->nVars(), 0);
+    }
+    //the entries may be left over from an earlier matrix
+    for (const Xor& x : xorclauses) for (const uint32_t v : x) var_to_col[v] = unassigned_col;
 
+    vector<uint32_t> vars_needed;
     for (const Xor& x : xorclauses) {
         for (const uint32_t v : x) {
             assert(solver->value(v) == l_Undef);
             if (var_to_col[v] == unassigned_col) {
                 vars_needed.push_back(v);
                 var_to_col[v] = unassigned_col - 1;
-                largest_used_var = std::max(largest_used_var, v);
             }
         }
     }
@@ -147,8 +153,6 @@ void EGaussian::select_columnorder() {
         assert(false);
         exit(-1);
     }
-    var_to_col.resize(largest_used_var + 1);
-
 
     ColSorter c(solver);
     std::sort(vars_needed.begin(), vars_needed.end(),c);
@@ -178,15 +182,6 @@ void EGaussian::select_columnorder() {
         var_to_col[v] = col_to_var.size() - 1;
     }
 
-    // for the ones that were not in the order_heap, but are marked in var_to_col
-    for (uint32_t v = 0; v != var_to_col.size(); v++) {
-        if (var_to_col[v] == unassigned_col - 1) {
-            // assert(false && "order_heap MUST be complete!");
-            col_to_var.push_back(v);
-            var_to_col[v] = col_to_var.size() - 1;
-        }
-    }
-
     #ifdef VERBOSE_DEBUG_MORE
     cout << "(" << matrix_no << ") num_xorclauses: " << num_xorclauses << endl;
     cout << "(" << matrix_no << ") col_to_var: ";
@@ -203,7 +198,7 @@ void EGaussian::select_columnorder() {
 void EGaussian::fill_matrix() {
     assert(solver->prop_at_head());
     compact = false;
-    var_to_col.clear();
+    delete_gauss_watch_this_matrix();
 
     // decide which variable in matrix column and the number of rows
     select_columnorder();
@@ -224,13 +219,10 @@ void EGaussian::fill_matrix() {
     }
 
     // reset
-    var_has_resp_row.clear();
-    var_has_resp_row.resize(solver->nVars(), 0);
+    for (const uint32_t v : col_to_var) var_has_resp_row[v] = 0;
     row_to_var_non_resp.clear();
     row_to_nonresp_watch_hint.clear();
     row_to_nonresp_watch_hint.resize(num_rows, 0);
-
-    delete_gauss_watch_this_matrix();
 
     //reset satisfied_xor state
     assert(solver->decisionLevel() == 0);
@@ -238,9 +230,21 @@ void EGaussian::fill_matrix() {
     satisfied_xors.resize(num_rows, 0);
 }
 
+void EGaussian::update_matrix_no(const uint32_t n) {
+    if (n == matrix_no) return;
+    for (const uint32_t v : col_to_var) {
+        if (v >= solver->gwatches.size()) continue;
+        for (auto& w : solver->gwatches[v]) if (w.matrix_num == matrix_no) w.matrix_num = n;
+    }
+    matrix_no = n;
+}
+
+///We only ever watch our own columns, and col_to_var only changes in
+///fill_matrix(), after this is called. Scanning all of gwatches instead made
+///it matrices x nVars, over half the runtime with 1600 matrices on 4M vars.
 void EGaussian::delete_gauss_watch_this_matrix()
 {
-    for (size_t i = 0; i < solver->gwatches.size(); i++) clear_gwatches(i);
+    for (const uint32_t v : col_to_var) if (v < solver->gwatches.size()) clear_gwatches(v);
 }
 
 ///Attach ROW_N's non-responsible watch to VAR, remembering where it landed
@@ -347,12 +351,13 @@ void EGaussian::compactify()
     assert(!compact);
     assert(num_rows > 0 && num_cols > 0);
 
-    var_to_dcol.clear();
-    var_to_dcol.resize(solver->nVars(), unassigned_col);
     dcol_to_var.clear();
     for(uint32_t c = 0; c < num_cols; c++) {
         const uint32_t v = col_to_var[c];
-        if (var_has_resp_row[v]) continue;
+        if (var_has_resp_row[v]) {
+            var_to_dcol[v] = unassigned_col;
+            continue;
+        }
         var_to_dcol[v] = dcol_to_var.size();
         dcol_to_var.push_back(v);
     }
@@ -1008,7 +1013,8 @@ void EGaussian::update_cols_vals_set(bool force)
         const uint32_t var = solver->trail[i].lit.var();
         if (var_to_dcol.size() <= var) continue;
         const uint32_t d = var_to_dcol[var];
-        if (d != unassigned_col) {
+        //var_to_dcol is shared between matrices, so check it's ours
+        if (d < num_dcols && dcol_to_var[d] == var) {
             assert (solver->value(var) != l_Undef);
             cols_unset->clearBit(d);
             if (solver->value(var) == l_True) cols_vals->setBit(d);
@@ -1473,7 +1479,9 @@ void EGaussian::check_watchlist_sanity()
 {
     for(size_t i = 0; i < solver->nVars(); i++) {
         for(auto w: solver->gwatches[i]) {
-            if (w.matrix_num == matrix_no) assert(i < var_to_col.size());
+            if (w.matrix_num == matrix_no) {
+                assert(var_to_col[i] < num_cols && col_to_var[var_to_col[i]] == i);
+            }
         }
     }
 }
@@ -1555,10 +1563,10 @@ bool EGaussian::must_disable(GaussQData& gqd)
         uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
         //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
         if (egcalled > gconf.autodisable_min_calls && useful < limit) {
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity >= 2) {
                 const double perc =
                     stats_line_percent(useful, egcalled);
-                verb_print(1, "[g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
+                verb_print(2, "[g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
                 " Usefulness was: "
                 << std::setprecision(4) << std::fixed << perc
                 <<  "%"

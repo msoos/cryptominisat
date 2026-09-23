@@ -74,9 +74,6 @@ class Searcher : public HyperEngine
         #ifdef STATS_NEEDED
         void check_calc_satzilla_features(bool force = false);
         #endif
-        #ifdef STATS_NEEDED_BRANCH
-        void check_calc_vardist_features(bool force = false);
-        #endif
         void dump_search_loop_stats(double my_time);
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
@@ -142,6 +139,7 @@ class Searcher : public HyperEngine
         void check_need_gauss_jordan_disable();
         bool disable_gauss_matrix(uint32_t i);
         bool gauss_disable_pending = false;
+        uint32_t gauss_disabled_this_solve = 0;
 
         double get_cla_inc() const
         {
@@ -164,10 +162,7 @@ class Searcher : public HyperEngine
         template<class T> void print_clause(const string& str, const T& cl) const;
 
         #ifdef STATS_NEEDED
-        void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
-        uint64_t last_dumped_conflict_rst_data_for_var = numeric_limits<uint64_t>::max();
-        template<class T>
-        uint32_t calc_connects_num_communities(const T& cl);
+        void dump_restart_sql();
         #endif
 
         /////////////////////
@@ -254,6 +249,29 @@ class Searcher : public HyperEngine
         uint64_t lim_rephase = 0;
         uint64_t num_rephased = 0;
         uint64_t num_rephased_in[2] = {0, 0}; //indexed by rst.stable
+        uint64_t glue_used_hist[2][65] = {}; //[rst.stable][min(glue,64)] at bump, as kissat
+        uint64_t sum_clause_uses() const {
+            uint64_t t = 0;
+            for(int m = 0; m < 2; m++) for(int g = 0; g < 65; g++) t += glue_used_hist[m][g];
+            return t;
+        }
+        //Kissat's eagersubsume: the last few learnt clauses, checked for
+        //subsumption by each new one. Offsets validated by ID, cleared on consolidate
+        struct LastLearnt { ClOffset off = CL_OFFSET_MAX; int32_t id = 0; };
+        LastLearnt last_learnt[4];
+        uint32_t last_learnt_at = 0;
+        uint64_t eagerly_subsumed = 0;
+        void eager_subsume_last_learnt(const Clause& newcl);
+        void clear_last_learnt() { for(auto& l: last_learnt) l = LastLearnt(); }
+        uint64_t confl_in_mode[2] = {0, 0};   //[rst.stable], as kissat's focused/stable stats
+        uint64_t restarts_in_mode[2] = {0, 0};
+        uint64_t mode_switches = 0;
+        void print_mode_stats() const;
+        void print_glue_usage() const;
+        //Kissat's dynamic tiers: glue covering 50%/90% of uses in this mode
+        uint32_t tier1_glue = 2;
+        uint32_t tier2_glue = 6;
+        void compute_tier_limits();
         uint64_t last_rephase_conflicts = 0;
         char   rephased = 0;
         char   last_rephase = '-'; //for reporting only
@@ -291,6 +309,18 @@ class Searcher : public HyperEngine
         // sub-str with bin
         uint64_t next_intree = 0;
         bool intree_if_needed();
+
+        //Intree's hyper-bins: kept only until the next cleanup unless used
+        //as a reason in conflict analysis, as CaDiCaL's 'hyper' flag
+        struct HyperBinRange { int32_t start; int32_t end; vector<uint8_t> used; };
+        vector<HyperBinRange> hyper_bin_ranges;
+        uint64_t next_hyper_bin_clean = 0;
+        uint64_t hyper_bins_cleaned = 0;
+        uint64_t hyper_bins_kept = 0;
+        void mark_hyper_bin_used(const int32_t id);
+        void add_hyper_bin_range(const int32_t start, const int32_t end);
+        void clean_unused_hyper_bins();
+        bool clean_hyper_bins_if_needed();
 
         // Fast backward for Arjun
         lbool new_decision_fast_backw();
@@ -333,8 +363,7 @@ class Searcher : public HyperEngine
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(
             size_t backtrack_level,
-            uint32_t glue,
-            uint32_t connects_num_communities);
+            uint32_t glue);
         template<bool inprocess>
         void  attach_and_enqueue_learnt_clause(
             Clause* cl,
@@ -369,7 +398,6 @@ class Searcher : public HyperEngine
             , const uint32_t glue_before_minim
             , const uint32_t size_before_minim
             , const bool is_decision
-            , const uint32_t connects_num_communities
             , int32_t& ID
         );
 
@@ -385,7 +413,6 @@ class Searcher : public HyperEngine
         // Clause database reduction
         /////////////////////
         void reduce_db_if_needed();
-        uint64_t next_pred_reduce;
 
         ///////////////
         // Restart parameters
@@ -460,6 +487,7 @@ class Searcher : public HyperEngine
         friend class Gaussian;
         friend class Lucky;
         friend class DistillerLong;
+        friend class InTree;
         #ifdef CMS_TESTING_ENABLED
         FRIEND_TEST(SearcherTest, pickpolar_rnd);
         FRIEND_TEST(SearcherTest, pickpolar_pos);
@@ -477,9 +505,11 @@ class Searcher : public HyperEngine
         void dump_search_sql(const double my_time);
         void set_clause_data(
             Clause* cl
-            , const uint32_t glue
+            , const uint32_t orig_glue
             , const uint32_t glue_before_minim
-            , const uint32_t old_decision_level);
+            , const uint32_t size_before_minim
+            , const uint32_t old_decision_level
+        );
         #ifdef STATS_NEEDED
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
@@ -490,20 +520,11 @@ class Searcher : public HyperEngine
             const uint32_t size_before_minim,
             const uint32_t old_decision_level,
             const uint64_t clid,
-            const bool decision_cl,
-            const uint32_t connects_num_communities
+            const bool decision_cl
         );
         int dump_this_many_cldata_in_stream = 0;
-        void dump_var_for_learnt_cl(const uint32_t v,
-                                    const uint64_t clid,
-                                    const bool is_decision);
         #endif
 
-        #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-        vector<uint32_t> level_used_for_cl;
-        vector<uint32_t> vars_used_for_cl;
-        vector<unsigned char> level_used_for_cl_arr;
-        #endif
 
         //Other
         void print_solution_type(const lbool status) const;
