@@ -3032,17 +3032,6 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     satzilla_feat.avg_branch_depth = hist.branchDepthHist.avg();
     satzilla_feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
 
-    satzilla_feat.confl_size_min = hist.conflSizeHistLT.getMin();
-    satzilla_feat.confl_size_max = hist.conflSizeHistLT.getMax();
-    satzilla_feat.confl_glue_min = hist.glueHistLT.getMin();
-    satzilla_feat.confl_glue_max = hist.glueHistLT.getMax();
-    satzilla_feat.branch_depth_min = hist.branchDepthHist.getMin();
-    satzilla_feat.branch_depth_max = hist.branchDepthHist.getMax();
-    satzilla_feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();
-    satzilla_feat.trail_depth_delta_max = hist.trailDepthDeltaHist.getMax();
-    satzilla_feat.num_resolutions_min = hist.numResolutionsHistLT.getMin();
-    satzilla_feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
-
     if (sumPropStats.propagations != 0
         && sumConflicts != 0
         && sumSearchStats.numRestarts != 0
@@ -3052,9 +3041,6 @@ SatZillaFeatures Solver::calculate_satzilla_features()
         satzilla_feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumConflicts;
         satzilla_feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
     }
-
-    satzilla_feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
-    satzilla_feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
     if (conf.verbosity > 2) {
         satzilla_feat.print_stats(conf.prefix);

@@ -161,7 +161,7 @@ class Searcher : public HyperEngine
         template<class T> void print_clause(const string& str, const T& cl) const;
 
         #ifdef STATS_NEEDED
-        void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
+        void dump_restart_sql();
         #endif
 
         /////////////////////

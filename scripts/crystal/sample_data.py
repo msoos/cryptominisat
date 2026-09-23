@@ -128,7 +128,6 @@ class QueryDatRem(helper.QueryHelper):
         create index `idxclid32` on `reduceDB` (`clauseID`);
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
         create index `idxclid34` on `used_clauses` (`clauseID`);
-        create index `idxclid44` on `restart_dat_for_cl` (`clauseID`);
         """
 
         for q in queries.split("\n"):
@@ -261,7 +260,7 @@ class QueryDatRem(helper.QueryHelper):
         self.print_idxs()
 
         tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses_anc",
-                  "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
+                  "used_clauses", "cl_last_in_solver"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from used_cl_ids );"""

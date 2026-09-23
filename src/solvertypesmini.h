@@ -251,7 +251,6 @@ enum class PolarityMode {
     , polarmode_weighted
 };
 
-enum class rst_dat_type {norm, cl};
 
 struct FastBackwData {
     std::vector<Lit>* _assumptions = nullptr;

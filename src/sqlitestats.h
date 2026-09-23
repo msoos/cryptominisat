@@ -87,8 +87,6 @@ public:
         , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher
-        , const rst_dat_type type
-        , const int64_t clauseID
     ) override;
 
     virtual void reduceDB_common(
@@ -129,7 +127,6 @@ public:
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t trail_depth
-        , uint64_t conflicts_this_restart
         , const uint32_t rest_type
         , const SearchHist& hist
         , const bool is_decision
@@ -168,7 +165,6 @@ private:
     sqlite3_stmt *stmtReduceDB = nullptr;
     sqlite3_stmt *stmtReduceDB_common = nullptr;
     sqlite3_stmt *stmtRst = nullptr;
-    sqlite3_stmt *stmtClRst = nullptr;
     sqlite3_stmt *stmtFeat = nullptr;
     sqlite3_stmt *stmt_clause_stats = nullptr;
     sqlite3_stmt *stmt_delete_cl = nullptr;

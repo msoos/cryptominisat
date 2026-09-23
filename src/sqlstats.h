@@ -86,8 +86,6 @@ public:
         , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher
-        , const rst_dat_type type
-        , const int64_t clauseID = -1
     ) = 0;
 
     virtual void reduceDB(
@@ -129,7 +127,6 @@ public:
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t trail_depth
-        , uint64_t conflicts_this_restart
         , const uint32_t restart_type
         , const SearchHist& hist
         , const bool is_decision

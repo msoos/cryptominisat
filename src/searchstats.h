@@ -93,9 +93,6 @@ public:
     uint64_t transReduRemIrred = 0;
     uint64_t transReduRemRed = 0;
 
-    //SatZillaFeatures
-    uint64_t num_xors_found_last = 0;
-    uint64_t num_gates_found_last = 0;
 
     //Resolution Stats
     AtecedentData<uint64_t> resolvs;

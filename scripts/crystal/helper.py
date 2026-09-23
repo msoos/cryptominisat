@@ -742,7 +742,7 @@ def cldata_add_computed_features(df, verbose):
     #del df[time_in_solver]
 
     divisors = [
-        "cl.conflSizeHistlt_avg"
+        "cl.conflSizeHistLT_avg"
         , "cl.glueHistLT_avg"
         , "rdb0.glue"
         , "rdb0.size"

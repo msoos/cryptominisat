@@ -59,7 +59,6 @@ class Queries (helper.QueryHelper):
             {"tbl":"cl_last_in_solver", "elem":"clauseID"},
             {"tbl":"clause_stats", "elem":"clauseID"},
             {"tbl":"restart", "elem":"restartID"},
-            {"tbl":"restart_dat_for_cl", "elem":"clauseID"},
         ]
 
         for only_one in only_ones:
@@ -177,29 +176,6 @@ class Queries (helper.QueryHelper):
             print(row)
             exit(-1)
         print("Checked for orig_glue vs orig_size in %-2.3f seconds" % (time.time()-t))
-
-    def check_is_null(self):
-
-        is_nulls = [
-            {"tbl":"restart", "col":"clauseID"},
-            {"tbl":"restart_data_for_var", "col":"clauseID"}
-        ]
-
-        t = time.time()
-        for is_null in is_nulls:
-            q = """
-            select * from {tbl} where {col} is not NULL
-            """.format(**is_null)
-            cursor = self.c.execute(q)
-            bad = False
-            for row in cursor:
-                bad = True
-                print("ERROR: {col} is not null in table {tbl}: {row}".format(**is_null), row=row)
-
-            if bad:
-                exit(-1)
-
-        print("Checked that some things are NULL. T: %-2.3f" % (time.time()-t))
 
     def check_incorrect_data_values(self):
         incorrect = [

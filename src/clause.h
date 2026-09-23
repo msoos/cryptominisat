@@ -270,7 +270,6 @@ struct ClauseStatsExtra
     uint32_t dump_no = 0;
     int32_t orig_ID = 0;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
-    uint32_t ttl_stats = 0;
     AtecedentData<uint16_t> antec_data;
     #endif
 
@@ -308,7 +307,6 @@ struct ClauseStatsExtra
         #ifdef STATS_NEEDED
         antec_data.clear();
         conflicts_made = 0;
-        ttl_stats = 0;
         dump_no++;
         #endif
 
@@ -341,7 +339,6 @@ struct ClauseStatsExtra
 
         #ifdef STATS_NEEDED
         ret.dump_no = std::max(first.dump_no, second.dump_no);
-        ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         #endif
 

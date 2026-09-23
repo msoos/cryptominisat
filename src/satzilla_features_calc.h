@@ -46,16 +46,7 @@ public:
 
 private:
     void fill_vars_cls();
-    void calculate_clause_stats();
-    void calculate_variable_stats();
-    void calculate_extra_var_stats();
-    void calculate_extra_clause_stats();
-    void normalise_values();
-    void calculate_cl_distributions(
-        const vector<ClOffset>& clauses
-        , struct SatZillaFeatures::Distrib& distrib_data
-    );
-
+    void calculate_red_distributions();
 
     const Solver* solver;
     template<class Function, class Function2>
@@ -67,13 +58,7 @@ private:
     ) const;
     template<class Function, class Function2>
     void for_all_clauses(Function for_each_clause,  Function2 func_each_lit) const;
-    struct VARIABLE {
-        int numPos = 0;
-        int size = 0;
-        int horn = 0;
-    };
-
-    vector<VARIABLE> myVars;
+    vector<uint32_t> var_occs;
     SatZillaFeatures satzilla_feat;
 };
 

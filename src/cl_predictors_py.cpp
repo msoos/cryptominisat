@@ -66,7 +66,7 @@ int ClPredictorsPy::set_up_input(
     double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
 
     at[x++] = cl->stats.is_ternary_resolvent;
-    at[x++] = cl->stats.which_red_array;
+    at[x++] = cl->stats.used;
     at[x++] = cl->stats.last_touched_any;
     at[x++] = act_ranking_rel;
     at[x++] = uip1_ranking_rel;

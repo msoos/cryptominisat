@@ -63,7 +63,6 @@ void GateFinder::find_all()
 
     if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
     globalStats += runStats;
-    solver->sumSearchStats.num_gates_found_last = orGates.size();
 }
 
 void GateFinder::find_or_gates_and_update_stats()

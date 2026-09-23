@@ -1797,7 +1797,6 @@ void Searcher::update_history_stats(
     //long-term averages
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     hist.numResolutionsHistLT.push(antec_data.num());
-    hist.decisionLevelHistLT.push(decisionLevel());
     const uint32_t overlap = antec_data.sum_size()-(antec_data.num()-1)-learnt_clause.size();
     hist.antec_data_sum_sizeHistLT.push(antec_data.sum_size());
     hist.overlapHistLT.push(overlap);
@@ -1901,7 +1900,6 @@ void Searcher::dump_sql_clause_data(
         , antec_data
         , old_decision_level
         , trail.size()
-        , params.confl_this_rst
         , (int)rst.stable
         , hist
         , is_decision
@@ -2355,7 +2353,7 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
+inline void Searcher::dump_restart_sql()
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
@@ -2367,14 +2365,9 @@ inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
         , thisStats
         , solver
         , this
-        , type
-        , ID
     );
-
-    if (type == rst_dat_type::norm) {
-        lastSQLPropStats = propStats;
-        lastSQLGlobalStats = stats;
-    }
+    lastSQLPropStats = propStats;
+    lastSQLGlobalStats = stats;
 }
 #endif
 
@@ -2551,7 +2544,7 @@ inline void Searcher::dump_search_loop_stats(double my_time)
     if (sqlStats
         && conf.dump_individual_restarts_and_clauses
     ) {
-        dump_restart_sql(rst_dat_type::norm);
+        dump_restart_sql();
     }
     #endif
     restartID++;
