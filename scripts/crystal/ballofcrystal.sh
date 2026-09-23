@@ -24,9 +24,10 @@
 #   4. learn the short/long/forever xgboost predictors
 #   5. run the FINAL_PREDICTOR build with them and print a comparison
 #
-# usage: ballofcrystal.sh [--skip-solve] [--skip-learn] file.cnf
+# usage: ballofcrystal.sh [--skip-solve] [--skip-learn] [--gather-only] file.cnf
 #   --skip-solve  reuse <file>-dir/data.db-raw and data.frat from an earlier run
 #   --skip-learn  reuse the predictors from an earlier run, only run step 5
+#   --gather-only stop after step 3, the frames are for learn.sh
 
 set -e
 set -o pipefail  # needed so " | tee xyz " doesn't swallow the last command's error
@@ -37,10 +38,12 @@ SCRIPTDIR="$(pwd)"
 
 SKIP_SOLVE=0
 SKIP_LEARN=0
+GATHER_ONLY=0
 while [[ "$1" == --* ]]; do
     case "$1" in
         --skip-solve) SKIP_SOLVE=1 ;;
         --skip-learn) SKIP_LEARN=1; SKIP_SOLVE=1 ;;
+        --gather-only) GATHER_ONLY=1 ;;
         *) echo "Unknown option $1"; exit 255 ;;
     esac
     shift
@@ -126,6 +129,10 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
         --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} \
         | tee cldata_gen_pandas.out-stage
+    if [[ $GATHER_ONLY -eq 1 ]]; then
+        echo "Done, --gather-only: frames are in $DIR/data-min.db-cldata-*.dat"
+        exit 0
+    fi
 
     stage "cldata_predict"
     for tier in short long forever; do
