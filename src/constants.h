@@ -220,14 +220,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define VERBOSE_DEBUG_RECONSTRUCT
 #endif
 
-#ifdef __GNUC__
-    #define likely(x) __builtin_expect((x), 1)
-    #define unlikely(x) __builtin_expect((x), 0)
-#else
-    #define likely(x) x
-    #define unlikely(x) x
-#endif
-
 #ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)
 #else

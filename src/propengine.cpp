@@ -756,7 +756,7 @@ PropBy PropEngine::propagate_core()
         simpDB_props--;
         for (; i != end; i++) {
             // propagate binary clause
-            if (likely(i->isBin())) {
+            if (i->isBin()) [[likely]] {
                 *j++ = *i;
                 if (!red_also && i->red()) continue;
                 if (distill_use && i->bin_cl_marked()) continue;
