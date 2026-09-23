@@ -198,6 +198,7 @@ void EGaussian::select_columnorder() {
 void EGaussian::fill_matrix() {
     assert(solver->prop_at_head());
     compact = false;
+    delete_gauss_watch_this_matrix();
 
     // decide which variable in matrix column and the number of rows
     select_columnorder();
@@ -223,17 +224,27 @@ void EGaussian::fill_matrix() {
     row_to_nonresp_watch_hint.clear();
     row_to_nonresp_watch_hint.resize(num_rows, 0);
 
-    delete_gauss_watch_this_matrix();
-
     //reset satisfied_xor state
     assert(solver->decisionLevel() == 0);
     satisfied_xors.clear();
     satisfied_xors.resize(num_rows, 0);
 }
 
+void EGaussian::update_matrix_no(const uint32_t n) {
+    if (n == matrix_no) return;
+    for (const uint32_t v : col_to_var) {
+        if (v >= solver->gwatches.size()) continue;
+        for (auto& w : solver->gwatches[v]) if (w.matrix_num == matrix_no) w.matrix_num = n;
+    }
+    matrix_no = n;
+}
+
+///We only ever watch our own columns, and col_to_var only changes in
+///fill_matrix(), after this is called. Scanning all of gwatches instead made
+///it matrices x nVars, over half the runtime with 1600 matrices on 4M vars.
 void EGaussian::delete_gauss_watch_this_matrix()
 {
-    for (size_t i = 0; i < solver->gwatches.size(); i++) clear_gwatches(i);
+    for (const uint32_t v : col_to_var) if (v < solver->gwatches.size()) clear_gwatches(v);
 }
 
 ///Attach ROW_N's non-responsible watch to VAR, remembering where it landed

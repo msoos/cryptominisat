@@ -3272,25 +3272,12 @@ bool Solver::init_all_matrices() {
     }
 
     uint32_t j = 0;
-    bool modified = false;
     for (uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gmatrices[i] != nullptr) {
             gmatrices[j] = gmatrices[i];
             gmatrices[j]->update_matrix_no(j);
             gqueuedata[j] = gqueuedata[i];
-
-            if (modified) {
-                for (size_t var = 0; var < nVars(); var++) {
-                    for(auto& k: gwatches[var]) {
-                        if (k.matrix_num == i) {
-                            k.matrix_num = j;
-                        }
-                    }
-                }
-            }
             j++;
-        } else {
-            modified = true;
         }
     }
     gqueuedata.resize(j);

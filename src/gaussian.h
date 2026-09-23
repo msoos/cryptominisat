@@ -256,7 +256,6 @@ inline double EGaussian::get_density()
     return (double)pop/(double)(num_rows*num_cols);
 }
 
-inline void EGaussian::update_matrix_no(uint32_t n) { matrix_no = n; }
 inline uint32_t EGaussian::get_matrix_no() { return matrix_no; }
 inline bool EGaussian::is_initialized() const { return initialized; }
 
