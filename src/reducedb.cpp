@@ -111,10 +111,12 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         if (cl->stats.keep) { rstats.kept_keep++; continue; }
         if (cl->stats.locked_for_data_gen) continue;
         //Kissat's collect_reducibles: tier1 lives while 'used' lasts, tier2
-        //only if used since the last reduce, tier3 is always a candidate
+        //only if used since the last reduce. Kissat always reduces tier3,
+        //CaDiCaL keeps it if used: see reducekeepused
         const uint32_t glue = cl->stats.glue;
         if (glue <= solver->tier1_glue && used) { rstats.kept_used++; continue; }
-        if (glue <= solver->tier2_glue && used >= CL_MAX_USED-1) { rstats.kept_used++; continue; }
+        if ((glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
+            && used >= CL_MAX_USED-1) { rstats.kept_used++; continue; }
         stack.push_back(offs);
     }
     rstats.cands = stack.size();
@@ -300,7 +302,8 @@ bool ReduceDB::likely_to_be_kept(const Clause& cl) const
 {
     if (cl.stats.keep) return true;
     if (cl.stats.glue <= solver->tier1_glue && cl.stats.used) return true;
-    if (cl.stats.glue <= solver->tier2_glue && cl.stats.used >= CL_MAX_USED-1) return true;
+    if ((cl.stats.glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
+        && cl.stats.used >= CL_MAX_USED-1) return true;
     if (cl.stats.glue > lim_keptglue) return false;
     if (cl.size() > lim_keptsize) return false;
     return true;
