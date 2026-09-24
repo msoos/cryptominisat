@@ -392,7 +392,7 @@ Clause* Solver::add_clause_int(
             return nullptr;
         default:
             Clause* c = cl_alloc.Clause_new(ps, sum_conflicts, ID);
-            c->isRed = red;
+            c->is_red = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
                 STATS_DO(if (ID != c->stats.id && sql_stats && c->stats.is_tracked)
@@ -864,7 +864,7 @@ size_t Solver::calculate_inter_to_outer_and_outer_to_inter(
         for(uint32_t i = 0; i < nVars(); i++) {
             Lit l(i, b);
             for(const auto& ws: watches[l]) {
-                if (ws.isBin() && !ws.red()) {
+                if (ws.is_bin() && !ws.red()) {
                     if (fin[l.var()] == none) fin[l.var()] = at++;
                 }
             }
@@ -1500,7 +1500,7 @@ void Solver::write_final_frat_clauses() {
         Lit l = Lit::toLit(i);
         for(const auto& w: watches[l]) {
             //only do once per binary
-            if (w.isBin() && w.lit2() < l) {
+            if (w.is_bin() && w.lit2() < l) {
                 *frat << finalcl << w.get_id() << l << w.lit2() << fin;
             }
         }
@@ -2463,7 +2463,7 @@ bool Solver::verify_model_implicit_clauses() const
         watch_subarray_const ws = watches[lit];
 
         for (Watched w: ws) {
-            if (w.isBin()
+            if (w.is_bin()
                 && model_value(lit) != l_True
                 && model_value(w.lit2()) != l_True
             ) {
@@ -2666,11 +2666,11 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 {
     cout << "Watch[" << lit << "]: "<< endl;
     for (const auto& w : ws) {
-        if (w.isClause()) {
+        if (w.is_clause()) {
             Clause* cl = cl_alloc.ptr(w.get_offset());
             cout << "-> Clause: " << *cl << " red: " << cl->red();
         }
-        if (w.isBin()) {
+        if (w.is_bin()) {
             cout << "-> BIN: " << lit << ", " << w.lit2() << " red: " << w.red();
         }
         cout << endl;
@@ -2740,13 +2740,13 @@ void Solver::check_implicit_propagated() const
         watch_subarray_const ws = watches[lit];
         for(const auto& w : ws) {
             //Satisfied, or not implicit, skip
-            if (value(lit) == l_True || w.isClause()) continue;
+            if (value(lit) == l_True || w.is_clause()) continue;
 
             const lbool val1 = value(lit);
             const lbool val2 = value(w.lit2());
 
             //Handle binary
-            if (w.isBin()) {
+            if (w.is_bin()) {
                 if (val1 == l_False) {
                     if (val2 != l_True) {
                         cout << "not prop BIN: "
@@ -3130,7 +3130,7 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
         watch_subarray_const ws = watches[Lit::toLit(wsLit)];
         for(const auto& w: ws) {
-            if (w.isBin()) {
+            if (w.is_bin()) {
                 #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
                 Lit lits[2];
                 lits[0] = Lit::toLit(wsLit);
@@ -3620,7 +3620,7 @@ PicoSAT* Solver::build_picosat()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         Lit l1 = Lit::toLit(i);
         for(auto const& w: watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2) continue;
 
@@ -3784,8 +3784,8 @@ bool Solver::check_clause_represented_by_xor(const Clause& cl) {
     Lit minlit = *std::min_element(cl.begin(), cl.end());
     bool found = false;
     for(const auto& w: watches[minlit.unsign()]) {
-        if (!w.isIdx()) continue;
-        assert(w.isIdx());
+        if (!w.is_idx()) continue;
+        assert(w.is_idx());
         const Xor& x = xorclauses[w.get_idx()];
         if (x.size() != cl.size()) continue;
         if (x.rhs != rhs) continue;

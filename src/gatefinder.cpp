@@ -145,7 +145,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     watch_subarray_const ws = solver->watches[lit];
     *simplifier->limit_to_decrease -= ws.size();
     for(const Watched w: ws) {
-        if (w.isBin() && !w.red()) {
+        if (w.is_bin() && !w.red()) {
             seen[(~w.lit2()).toInt()] = 1;
             to_clear.push_back(~w.lit2());
         }
@@ -160,7 +160,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     *simplifier->limit_to_decrease -= ws2.size();
     for(const Watched w: ws2) {
         //Looking for tri or longer
-        if (!w.isClause()) continue;
+        if (!w.is_clause()) continue;
         ClOffset offset = w.get_offset();
         const Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.red() || cl.get_removed() || cl.size() > 5) continue;
@@ -190,7 +190,7 @@ void GateFinder::add_gate_if_not_already_inside(
 {
     OrGate gate(rhs, lhs, ID);
     for (Watched ws: solver->watches[gate.rhs]) {
-        if (ws.isIdx()
+        if (ws.is_idx()
             && orGates[ws.get_idx()] == gate
         ) {
             return;
@@ -222,7 +222,7 @@ void GateFinder::print_graphviz_dot()
     for (const OrGate& orGate: orGates) {
         for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {
-                if (!ws.isIdx()) {
+                if (!ws.is_idx()) {
                     continue;
                 }
                 uint32_t at = ws.get_idx();

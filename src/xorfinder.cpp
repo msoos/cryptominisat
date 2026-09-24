@@ -255,10 +255,10 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 {
     xor_find_time_limit -= (int64_t)occ.size()/8+1;
     for (const Watched& w: occ) {
-        if (w.isIdx()) continue;
+        if (w.is_idx()) continue;
         assert(poss_xor.getSize() > 2);
 
-        if (w.isBin()) {
+        if (w.is_bin()) {
             // FRAT-XOR cannot have different sized clauses for the moment
             if (solver->frat->enabled()) continue;
 
@@ -279,15 +279,15 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             if (poss_xor.foundAll())
                 break;
         } else {
-            if (w.getBlockedLit().toInt() == lit_Undef.toInt())
+            if (w.get_blocked_lit().toInt() == lit_Undef.toInt())
                 //Clauses are ordered, lit_Undef means it's larger than maxXorToFind
                 break;
 
-            if (w.getBlockedLit().toInt() == lit_Error.toInt())
+            if (w.get_blocked_lit().toInt() == lit_Error.toInt())
                 //lit_Error means it's freed or removed, and it's ordered so no more
                 break;
 
-            if ((w.getBlockedLit().toInt() | poss_xor.getAbst()) != poss_xor.getAbst())
+            if ((w.get_blocked_lit().toInt() | poss_xor.get_abst()) != poss_xor.get_abst())
                 continue;
 
             xor_find_time_limit -= 3;
@@ -320,7 +320,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 
             //Doesn't contain variables not in the original clause
             SLOW_DEBUG_DO(assert(cl.abst == calcAbstraction(cl)));
-            if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
+            if ((cl.abst | poss_xor.get_abst()) != poss_xor.get_abst())
                 continue;
 
             //Check RHS, vars inside

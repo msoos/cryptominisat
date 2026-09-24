@@ -332,7 +332,7 @@ void CNF::for_each_lit(
     ,  Function func
     , int64_t* limit
 ) const {
-    switch(cl.ws.getType()) {
+    switch(cl.ws.get_type()) {
         case WatchType::watch_binary_t:
             *limit -= 2;
             func(cl.lit);
@@ -361,7 +361,7 @@ void CNF::for_each_lit_except_watched(
     , Function func
     , int64_t* limit
 ) const {
-    switch(cl.ws.getType()) {
+    switch(cl.ws.get_type()) {
         case WatchType::watch_binary_t:
             *limit -= 1;
             func(cl.ws.lit2());
@@ -396,18 +396,18 @@ struct ClauseSizeSorter
 
 inline bool CNF::redundant(const Watched& ws) const
 {
-    return ((ws.isBin() && ws.red())
-            || (ws.isClause() && cl_alloc.ptr(ws.get_offset())->red())
+    return ((ws.is_bin() && ws.red())
+            || (ws.is_clause() && cl_alloc.ptr(ws.get_offset())->red())
     );
 }
 
 inline bool CNF::redundant_or_removed(const Watched& ws) const
 {
-    if (ws.isBin()) {
+    if (ws.is_bin()) {
         return ws.red();
     }
 
-   assert(ws.isClause());
+   assert(ws.is_clause());
    const Clause* cl = cl_alloc.ptr(ws.get_offset());
    return cl->red() || cl->get_removed();
 }
@@ -442,7 +442,7 @@ inline void CNF::clean_occur_from_idx(const Lit lit)
     Watched* i = ws.begin();
     Watched* j = ws.begin();
     for(const Watched* end = ws.end(); i < end; i++) {
-        if (!i->isIdx()) {
+        if (!i->is_idx()) {
             *j++ = *i;
         }
     }
@@ -452,7 +452,7 @@ inline void CNF::clean_occur_from_idx(const Lit lit)
 inline bool CNF::clause_locked(const Clause& c, const ClOffset offset) const
 {
     return value(c[0]) == l_True
-        && var_data[c[0].var()].reason.isClause()
+        && var_data[c[0].var()].reason.is_clause()
         && var_data[c[0].var()].reason.get_offset() == offset;
 }
 
@@ -463,7 +463,7 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
     size_t end = w.size();
     for(; i < end; i++) {
         const Watched ws = w[i];
-         if (ws.isBNN()) {
+         if (ws.is_bnn()) {
             BNN* bnn = bnns[ws.get_bnn()];
             if (!bnn->isRemoved) {
                 w[j++] = w[i];
@@ -471,12 +471,12 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
             continue;
         }
 
-        if (ws.isBin()) {
+        if (ws.is_bin()) {
             w[j++] = w[i];
             continue;
         }
 
-        assert(ws.isClause());
+        assert(ws.is_clause());
         Clause* cl = cl_alloc.ptr(ws.get_offset());
         if (!cl->get_removed()) {
             w[j++] = w[i];
@@ -506,11 +506,11 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
 {
     for(watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
-            assert(!w.isIdx());
-            if (w.isBin()) {
+            assert(!w.is_idx());
+            if (w.is_bin()) {
                 continue;
             }
-            assert(w.isClause());
+            assert(w.is_clause());
             Clause& cl = *cl_alloc.ptr(w.get_offset());
             assert(!cl.get_removed());
             assert(!cl.freed());

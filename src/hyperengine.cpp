@@ -75,7 +75,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
             ; k++
         ) {
             //If something other than irred binary, skip
-            if (!k->isBin() || k->red()) continue;
+            if (!k->is_bin() || k->red()) continue;
             ret = prop_bin_with_ancestor_info(p, k, confl);
             if (ret == PROP_FAIL)
                 return analyzeFail(confl);
@@ -95,7 +95,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
         for(const Watched *k = ws.begin(), *end = ws.end(); k != end; k++, done++) {
 
             //If something other than redundant binary, skip
-            if (!k->isBin() || !k->red())
+            if (!k->is_bin() || !k->red())
                 continue;
 
             ret = prop_bin_with_ancestor_info(p, k, confl);
@@ -122,12 +122,12 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
         Watched* j = ws.begin();
         Watched* end = ws.end();
         for(; i != end; i++) {
-            if (i->isBin()) {
+            if (i->is_bin()) {
                 *j++ = *i;
                 continue;
             }
 
-            if (i->isClause()) {
+            if (i->is_clause()) {
                 ret = prop_normal_cl_with_ancestor_info(i, j, p, confl);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
@@ -193,7 +193,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
                 while (x != deepestAncestor) {
                     const PropBy& r = var_data[x.var()].reason;
                     tmp_anc_chain.push_back(r.get_id());
-                    x = r.getAncestor();
+                    x = r.get_ancestor();
                 }
                 for(auto it = tmp_anc_chain.rbegin(); it != tmp_anc_chain.rend(); ++it)
                     *frat << *it;
@@ -237,8 +237,8 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     prop_stats.otf_hyper_time += 1;
     const PropBy& data = var_data[conflict.var()].reason;
 
-    bool onlyIrred = !data.isRedStep();
-    Lit lookingForAncestor = data.getAncestor();
+    bool onlyIrred = !data.is_red_step();
+    Lit lookingForAncestor = data.get_ancestor();
 
     if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
         return lit_Undef;
@@ -279,7 +279,7 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     }
 
     onlyIrred = !thisStepRed;
-    thisStepRed = data.isRedStep();
+    thisStepRed = data.is_red_step();
     std::swap(lookingForAncestor, thisAncestor);
     if ((ambivalent || second_is_deeper) &&
         is_ancestor_of(
@@ -347,13 +347,13 @@ bool HyperEngine::is_ancestor_of(
         }
 
         const PropBy& data = var_data[thisAncestor.var()].reason;
-        if ((onlyIrred && data.isRedStep())
-            || data.getHyperbinNotAdded()
+        if ((onlyIrred && data.is_red_step())
+            || data.get_hyperbin_not_added()
         ) {
             return false;  //reached would-be redundant hop (but this is irred)
         }
 
-        thisAncestor = data.getAncestor();
+        thisAncestor = data.get_ancestor();
         prop_stats.otf_hyper_time += 1;
     }
 
@@ -387,7 +387,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
     //First, we set the ancestors, based on the clause
     //Each literal in the clause is an ancestor. So just 'push' them inside the
     //'currAncestors' variable
-    switch(propBy.getType()) {
+    switch(propBy.get_type()) {
         case binary_t: {
             const Lit lit = ~propBy.lit2();
             if (var_data[lit.var()].level != 0)
@@ -459,7 +459,7 @@ Lit HyperEngine::deepest_common_ancestor()
             }
 
             //Update ancestor to its own ancestor, i.e. step up this 'thread'
-            *it = var_data[it->var()].reason.getAncestor();
+            *it = var_data[it->var()].reason.get_ancestor();
         }
     }
     assert(foundLit != lit_Undef);
@@ -478,19 +478,19 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
 {
     //The binary clause we should remove
     const BinaryClause clauseToRemove(
-        ~var_data[lit.var()].reason.getAncestor(),
+        ~var_data[lit.var()].reason.get_ancestor(),
         lit,
-        var_data[lit.var()].reason.isRedStep(),
+        var_data[lit.var()].reason.is_red_step(),
         ID);
 
     //We now remove the clause
     //If it's hyper-bin, then we remove the to-be-added hyper-binary clause
     //However, if the hyper-bin was never added because only 1 literal was unbound at level 0 (i.e. through
     //clause cleaning, the clause would have been 2-long), then we don't do anything.
-    if (!var_data[lit.var()].reason.getHyperbin()) {
+    if (!var_data[lit.var()].reason.get_hyperbin()) {
         prop_stats.otf_hyper_time += 2;
         uselessBin.insert(clauseToRemove);
-    } else if (!var_data[lit.var()].reason.getHyperbinNotAdded()) {
+    } else if (!var_data[lit.var()].reason.get_hyperbin_not_added()) {
         prop_stats.otf_hyper_time += needToAddBinClause.size()/4;
         std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
 
@@ -501,7 +501,7 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
         if (it != needToAddBinClause.end()) {
             prop_stats.otf_hyper_time += 2;
             //FRAT: its add was emitted at creation, delete it
-            *frat << del << it->get_id() << it->getLit1() << it->getLit2() << fin;
+            *frat << del << it->get_id() << it->get_lit1() << it->get_lit2() << fin;
             needToAddBinClause.erase(it);
         }
         //This will subsume the clause later, so don't remove it
@@ -535,7 +535,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
         //Remove this one
         if (remove == p) {
-            const Lit origAnc = var_data[lit.var()].reason.getAncestor();
+            const Lit origAnc = var_data[lit.var()].reason.get_ancestor();
             const int32_t origID = var_data[lit.var()].reason.get_id();
             assert(origAnc != lit_Undef);
 
@@ -567,7 +567,7 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()) == l_True) {
+    if (value(i->get_blocked_lit()) == l_True) {
         *j++ = *i;
         return PROP_NOTHING;
     }

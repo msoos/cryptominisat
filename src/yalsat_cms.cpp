@@ -116,7 +116,7 @@ bool CMS_yalsat::init_problem() {
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
         for(const Watched& w: solver->watches[lit]) {
-            if (!w.isBin() || w.red() || w.lit2() < lit) continue;
+            if (!w.is_bin() || w.red() || w.lit2() < lit) continue;
             bin[0] = lit;
             bin[1] = w.lit2();
             if (add_this_clause(bin) == add_cl_ret::unsat) return false;
@@ -188,7 +188,7 @@ int64_t CMS_yalsat::count_unsat(int64_t& cnf, int64_t& xr) const {
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
         for(const Watched& w: solver->watches[lit]) {
-            if (!w.isBin() || w.red() || w.lit2() < lit) continue;
+            if (!w.is_bin() || w.red() || w.lit2() < lit) continue;
             bin[0] = lit; bin[1] = w.lit2();
             if (!cl_sat(bin)) cnf++;
         }

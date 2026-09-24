@@ -68,7 +68,7 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     Watched* i = ws.begin();
     Watched* j = i;
     for (Watched* end = ws.end(); i != end; i++) {
-        if (i->isBin()) {
+        if (i->is_bin()) {
             if (i->red())
                 stay.red_bins++;
             else

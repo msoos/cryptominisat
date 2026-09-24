@@ -86,7 +86,7 @@ bool DistillerLong::analyze_seen_reasons(const PropBy start, bool& only_bin)
     while (!reason_stack.empty()) {
         const PropBy r = reason_stack.back();
         reason_stack.pop_back();
-        switch (r.getType()) {
+        switch (r.get_type()) {
             case binary_t:
                 analyze_visit(r.lit2(), only_bin);
                 break;
@@ -696,7 +696,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             analyzed_ok = analyze_seen_reasons(
                 solver->var_data[subsume_lit.var()].reason, only_bin);
         } else {
-            if (confl.getType() == binary_t)
+            if (confl.get_type() == binary_t)
                 analyze_visit(solver->get_fail_bin_lit(), only_bin);
             analyzed_ok = analyze_seen_reasons(confl, only_bin);
         }

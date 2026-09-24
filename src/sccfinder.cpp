@@ -111,7 +111,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
     run_stats.bogoprops += ws.size()/4;
     for (const Watched& w: ws) {
         //Only binary clauses matter
-        if (!w.isBin())
+        if (!w.is_bin())
             continue;
 
         const Lit lit = w.lit2();

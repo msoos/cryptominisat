@@ -378,7 +378,7 @@ class Clause
 {
 public:
     ClauseStats stats;
-    uint32_t isRed:1; ///<Is the clause a redundant clause?
+    uint32_t is_red:1; ///<Is the clause a redundant clause?
     uint32_t isRemoved:1; ///<Is this clause queued for removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint32_t distilled:1;
@@ -391,12 +391,12 @@ public:
     uint32_t tried_to_remove:1;
     uint32_t searched_pos:21; //saved watch search position [Gent'13]
 
-    Lit* getData()
+    Lit* get_data()
     {
         return reinterpret_cast<Lit*>(reinterpret_cast<char*>(this) + sizeof(Clause));
     }
 
-    const Lit* getData() const
+    const Lit* get_data() const
     {
         return reinterpret_cast<const Lit*>(reinterpret_cast<const char*>(this) + sizeof(Clause));
     }
@@ -420,7 +420,7 @@ public:
 
         isFreed = false;
         mySize = ps.size();
-        isRed = false;
+        is_red = false;
         isRemoved = false;
         distilled = 0;
         is_ternary_resolved = false;
@@ -430,7 +430,7 @@ public:
         tried_to_remove = 0;
         searched_pos = 0;
 
-        std::copy(ps.begin(), ps.end(), getData());
+        std::copy(ps.begin(), ps.end(), get_data());
     }
 
     using iterator = Lit *;
@@ -462,7 +462,7 @@ public:
 
     bool red() const
     {
-        return isRed;
+        return is_red;
     }
 
     bool freed() const
@@ -490,18 +490,18 @@ public:
 
     Lit& operator [] (const uint32_t i)
     {
-        return *(getData() + i);
+        return *(get_data() + i);
     }
 
     const Lit& operator [] (const uint32_t i) const
     {
-        return *(getData() + i);
+        return *(get_data() + i);
     }
 
     void make_irred()
     {
-        assert(isRed);
-        isRed = false;
+        assert(is_red);
+        is_red = false;
     }
 
     void strengthen(const Lit p)
@@ -513,7 +513,7 @@ public:
     void add(const Lit p)
     {
         mySize++;
-        getData()[mySize-1] = p;
+        get_data()[mySize-1] = p;
         set_strengthened();
     }
 
@@ -523,7 +523,7 @@ public:
         assert(!freed());
         assert(!get_removed());
         #endif
-        return getData();
+        return get_data();
     }
 
     Lit* begin()
@@ -532,11 +532,11 @@ public:
         assert(!freed());
         assert(!get_removed());
         #endif
-        return getData();
+        return get_data();
     }
 
-    const Lit* end() const { return getData()+size(); }
-    Lit* end() { return getData()+size(); }
+    const Lit* end() const { return get_data()+size(); }
+    Lit* end() { return get_data()+size(); }
     void set_removed() { isRemoved = true; }
     bool get_removed() const { return isRemoved; }
     void unset_removed() { isRemoved = false; }

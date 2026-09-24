@@ -41,7 +41,7 @@ ClauseCleaner::ClauseCleaner(Solver* _solver) :
 
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
-    assert(watched.isBin());
+    assert(watched.is_bin());
     return solver->value(lit) == l_True
         || solver->value(watched.lit2()) == l_True;
 }
@@ -86,12 +86,12 @@ void ClauseCleaner::clean_implicit_watchlist(
     Watched* i = watch_list.begin();
     Watched* j = i;
     for (Watched* end2 = watch_list.end(); i != end2; i++) {
-        if (i->isClause() || i->isBNN()) {
+        if (i->is_clause() || i->is_bnn()) {
             *j++ = *i;
             continue;
         }
 
-        if (i->isBin()) {
+        if (i->is_bin()) {
             clean_binary_implicit(i, j, lit);
             continue;
         }
@@ -324,11 +324,11 @@ bool ClauseCleaner::clean_clause(Clause& cl)
 void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 {
     for(const BinaryClause& bincl: toAttach) {
-        assert(solver->value(bincl.getLit1()) == l_Undef);
-        assert(solver->value(bincl.getLit2()) == l_Undef);
-        solver->attach_bin_clause(bincl.getLit1(),
-                                  bincl.getLit2(),
-                                  bincl.isRed(),
+        assert(solver->value(bincl.get_lit1()) == l_Undef);
+        assert(solver->value(bincl.get_lit2()) == l_Undef);
+        solver->attach_bin_clause(bincl.get_lit1(),
+                                  bincl.get_lit2(),
+                                  bincl.is_red(),
                                   bincl.get_id());
     }
 

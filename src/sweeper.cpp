@@ -136,8 +136,8 @@ void Sweeper::collect_environment(uint32_t v)
             watch_subarray_const ws = solver->watches[l];
             *occs->limit_to_decrease -= 1 + (int64_t)ws.size()/2;
             for (const Watched& w : ws) {
-                if (w.isBin()) env_add_bin(depth, l, w.lit2(), w.get_id());
-                else if (w.isClause()) env_add_long(depth, w.get_offset());
+                if (w.is_bin()) env_add_bin(depth, l, w.lit2(), w.get_id());
+                else if (w.is_clause()) env_add_long(depth, w.get_offset());
                 if (env_vars.size() >= limit.vars) {
                     limit_reached = true;
                     break;

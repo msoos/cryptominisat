@@ -79,7 +79,7 @@ class PossibleXor {
             }
         }
 
-        cl_abst_type      getAbst() const;
+        cl_abst_type      get_abst() const;
         uint32_t          getSize() const;
         bool              getRHS() const;
         bool              foundAll() const;
@@ -205,7 +205,7 @@ private:
 };
 
 
-inline cl_abst_type PossibleXor::getAbst() const
+inline cl_abst_type PossibleXor::get_abst() const
 {
     return abst;
 }

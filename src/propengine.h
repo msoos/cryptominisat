@@ -575,7 +575,7 @@ PropBy PropEngine::propagate_light()
             if (!confl.isnullptr()) break;
 
             // propagate binary clause
-            if (i->isBin()) {
+            if (i->is_bin()) {
                 if (!bin_only) *j++ = *i;
                 const lbool val = value(i->lit2());
                 if (val == l_Undef) enqueue_light(i->lit2());
@@ -583,8 +583,8 @@ PropBy PropEngine::propagate_light()
                 continue;
             }
 
-            if (!bin_only && i->isClause()) {
-                if (value(i->getBlockedLit()) == l_True) {
+            if (!bin_only && i->is_clause()) {
+                if (value(i->get_blocked_lit()) == l_True) {
                     *j++ = *i;
                     continue;
                 }

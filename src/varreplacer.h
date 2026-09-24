@@ -194,7 +194,7 @@ class VarReplacer
 
             void remove(const Watched& ws)
             {
-                if (ws.isBin()) {
+                if (ws.is_bin()) {
                     if (ws.red()) {
                         removedRedBin++;
                     } else {

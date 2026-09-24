@@ -67,10 +67,10 @@ bool StrImplWImpl::str_impl_w_impl()
     //Add delayed binary clauses
     for(const BinaryClause& bin: str_impl_data.binsToAdd) {
         lits.clear();
-        lits.push_back(bin.getLit1());
-        lits.push_back(bin.getLit2());
+        lits.push_back(bin.get_lit1());
+        lits.push_back(bin.get_lit2());
         timeAvailable -= 5;
-        solver->add_clause_int(lits, bin.isRed());
+        solver->add_clause_int(lits, bin.is_red());
         if (!solver->okay())
             goto end;
     }
@@ -109,7 +109,7 @@ void StrImplWImpl::distill_implicit_with_implicit_lit(const Lit lit)
             continue;
         }
 
-        switch(i->getType()) {
+        switch(i->get_type()) {
             case WatchType::watch_clause_t:
             case WatchType::watch_bnn_t:
                 *j++ = *i;
@@ -151,7 +151,7 @@ void StrImplWImpl::strengthen_bin_with_bin(
     bool rem = false;
     const Watched* i2 = i;
     while(i2 != end
-        && i2->isBin()
+        && i2->is_bin()
         && i->lit2().var() == i2->lit2().var()
     ) {
         timeAvailable -= 2;

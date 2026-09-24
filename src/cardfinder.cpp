@@ -70,7 +70,7 @@ bool CardFinder::find_connector(Lit lit1, Lit lit2) const
     }
 
     for(const Watched& x : solver->watches[lit1]) {
-        if (!x.isBin()) {
+        if (!x.is_bin()) {
             continue;
         }
 
@@ -107,7 +107,7 @@ void CardFinder::find_two_product_atmost1() {
         //find min(NAG(r))
         Lit l = lit_Undef;
         for(const auto& ws: solver->watches[r]) {
-            if (!ws.isBin()) continue;
+            if (!ws.is_bin()) continue;
             if (l == lit_Undef) {
                 l = ws.lit2();
             } else {
@@ -122,11 +122,11 @@ void CardFinder::find_two_product_atmost1() {
 
         //find the column
         for(const auto& ws: solver->watches[l]) {
-            if (ws.isBin()) {
+            if (ws.is_bin()) {
                 Lit c = ws.lit2();
                 if (c == r) continue;
                 for(const auto& ws2: solver->watches[c]) {
-                    if (ws2.isIdx()) {
+                    if (ws2.is_idx()) {
                         size_t at_col = ws2.get_idx();
                         if (seen2[at_col]) {
                             //only do row1->row2, it's good enough
@@ -146,7 +146,7 @@ void CardFinder::find_two_product_atmost1() {
                         //mark all lits in row's bin-connected graph
                         for(const Lit row: card_row) {
                             for(const auto& ws3: solver->watches[row]) {
-                                if (ws3.isBin()) {
+                                if (ws3.is_bin()) {
                                     seen[ws3.lit2().toInt()] = 1;
                                 }
                             }
@@ -155,7 +155,7 @@ void CardFinder::find_two_product_atmost1() {
                         //find matching column
                         for(const Lit col: card_col) {
                             for(const auto& ws3: solver->watches[col]) {
-                                if (ws3.isBin()) {
+                                if (ws3.is_bin()) {
                                     Lit conn_lit = ws3.lit2();
                                     if (seen[conn_lit.toInt()]) {
                                         //cout << "part of card: " << ~conn_lit << endl;
@@ -174,7 +174,7 @@ void CardFinder::find_two_product_atmost1() {
                         //unmark
                         for(const Lit row: card_row) {
                             for(const auto& ws3: solver->watches[row]) {
-                                if (ws3.isBin()) {
+                                if (ws3.is_bin()) {
                                     seen[ws3.lit2().toInt()] = 0;
                                 }
                             }
@@ -219,7 +219,7 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
 
         //cout << "c [cardfind] Clash on var " << lit << endl;
         for(auto ws: solver->watches[lit]) {
-            if (ws.isIdx()) {
+            if (ws.is_idx()) {
                 idx_pos.push_back(ws.get_idx());
 
                 /*cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
@@ -227,7 +227,7 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
             }
         }
         for(auto ws: solver->watches[~lit]) {
-            if (ws.isIdx()) {
+            if (ws.is_idx()) {
                 idx_neg.push_back(ws.get_idx());
 
                 /*cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
@@ -329,7 +329,7 @@ void CardFinder::find_pairwise_atmost1()
         }
 
         for(const Watched& x : solver->watches[~l]) {
-            if (!x.isBin()) {
+            if (!x.is_bin()) {
                 continue;
             }
             const Lit other = x.lit2();
@@ -408,7 +408,7 @@ void CardFinder::find_cards()
         auto& ws = solver->watches[lit];
         size_t j = 0;
         for(size_t i = 0; i < ws.size(); i++) {
-            if (!ws[i].isIdx()) {
+            if (!ws[i].is_idx()) {
                 ws[j++] = ws[i];
             }
         }

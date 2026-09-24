@@ -90,7 +90,7 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
 
     //Go through each clause that can be subsumed
     for (const auto& occ_cl: subs) {
-        if (!occ_cl.ws.isClause()) {
+        if (!occ_cl.ws.is_clause()) {
             continue;
         }
         ClOffset off = occ_cl.ws.get_offset();
@@ -144,7 +144,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         ; j < subs.size() && solver->okay() && *simplifier->limit_to_decrease > -20LL*1000LL*1000LL
         ; j++
     ) {
-        assert(subs[j].ws.isClause());
+        assert(subs[j].ws.is_clause());
         //remove_literal() may move the arena
         Clause& cl = *solver->cl_alloc.ptr(offset);
         ClOffset offset2 = subs[j].ws.get_offset();
@@ -326,7 +326,7 @@ void inline SubsumeStrengthen::fill_sub_str(
 
     *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
     for (const auto& w: cs) {
-        if (w.isBin()) {
+        if (w.is_bin()) {
             if (cl.size() > 2) continue;
             if (w.red()) continue;
             if (w.lit2() != bin_other_lit) continue;
@@ -344,8 +344,8 @@ void inline SubsumeStrengthen::fill_sub_str(
             continue;
         }
 
-        assert(w.isClause());
-        if (w.get_offset() == offset || !subsetAbst(abs, w.getAbst())) continue;
+        assert(w.is_clause());
+        if (w.get_offset() == offset || !subsetAbst(abs, w.get_abst())) continue;
 
         ClOffset offset2 = w.get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
@@ -571,16 +571,16 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
     for (const auto& w: occ) {
-        if (w.isBin()) {
+        if (w.is_bin()) {
             if (ps.size() == 2 && ps[!smallest] == w.lit2() && !w.red()) {
                 out_subsumed.push_back(OccurClause(lit, w));
             }
             continue;
         }
-        if (!w.isClause()) continue;
+        if (!w.is_clause()) continue;
 
         *simplifier->limit_to_decrease -= 15;
-        if (w.get_offset() == offset || !subsetAbst(abs, w.getAbst())) continue;
+        if (w.get_offset() == offset || !subsetAbst(abs, w.get_abst())) continue;
 
         const ClOffset offset2 = w.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
@@ -637,7 +637,7 @@ bool SubsumeStrengthen::impl_bin_alive(const vector<Lit>& lits, const int32_t im
 {
     if (lits.size() != 2) return true;
     for (const auto& w: solver->watches[lits[0]]) {
-        if (w.isBin() && w.get_id() == impl_id) return true;
+        if (w.is_bin() && w.get_id() == impl_id) return true;
     }
     return false;
 }
@@ -667,7 +667,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
-        if (subs[j].ws.isBin()) {
+        if (subs[j].ws.is_bin()) {
             if (subs_lits[j] == lit_Undef) { //subsume
                 //a duplicate bin may BE our impl -- keep it, later hints use impl_id
                 if (subs[j].ws.get_id() == impl_id) continue;
@@ -722,7 +722,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             continue;
         }
 
-        assert(subs[j].ws.isClause());
+        assert(subs[j].ws.is_clause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subs_lits[j] == lit_Undef) {  //Subsume
@@ -767,12 +767,12 @@ void SubsumeStrengthen::backw_sub_with_impl(
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
-        if (subs[j].ws.isBin()) {
+        if (subs[j].ws.is_bin()) {
             remove_binary_cl(subs[j]);
             continue;
         }
 
-        assert(subs[j].ws.isClause());
+        assert(subs[j].ws.is_clause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (!cl2.red()) ret_sub_str.subsumedIrred = true;
@@ -794,7 +794,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
         ; i++
     ) {
         //Each BIN only once
-        if (!tmp[i].isBin() || (!both_bins && !(lit < tmp[i].lit2()))) continue;
+        if (!tmp[i].is_bin() || (!both_bins && !(lit < tmp[i].lit2()))) continue;
 
         const bool red = tmp[i].red();
         tried_bin_tri++;

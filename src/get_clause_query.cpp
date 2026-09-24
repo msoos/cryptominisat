@@ -130,7 +130,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
         watch_subarray_const ws = solver->watches[l];
         while(watched_at_sub < ws.size()) {
             const Watched& w = ws[watched_at_sub];
-            if (w.isBin() &&
+            if (w.is_bin() &&
                 w.lit2() < l &&
                 (w.red() == red)
             ) {

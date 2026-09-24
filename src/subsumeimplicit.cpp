@@ -102,7 +102,7 @@ uint32_t SubsumeImplicit::subsume_at_watch(
             continue;
         }
 
-        switch(i->getType()) {
+        switch(i->get_type()) {
             case WatchType::watch_clause_t:
             case WatchType::watch_bnn_t:
                 *j++ = *i;

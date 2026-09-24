@@ -56,7 +56,7 @@ static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) 
     for(uint32_t i = 0; i < s->nVars()*2; i++) {
         Lit l1 = Lit::toLit(i);
         for(auto const& w: s->watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2) continue;
 
@@ -90,7 +90,7 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
     for(uint32_t i = 0; i < s->nVars()*2; i++) {
         Lit l1 = Lit::toLit(i);
         for(auto const& w: s->watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2) continue;
             cls.push_back({orclit(l1), orclit(l2)});
@@ -141,7 +141,7 @@ static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
         const Lit l1 = Lit::toLit(i);
         if (!live(l1.var())) continue;
         for(const auto& w: solver->watches[l1]) {
-            if (!w.isBin()) continue;
+            if (!w.is_bin()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2 || !live(l2.var())) continue;
             if (sat(l1) || sat(l2)) continue;
@@ -338,12 +338,12 @@ void Solver::detach_and_free_all_irred_cls()
     for(auto& ws: watches) {
         uint32_t j = 0;
         for(uint32_t i = 0; i < ws.size(); i++) {
-            if (ws[i].isBin()) {
+            if (ws[i].is_bin()) {
                 if (ws[i].red()) ws[j++] = ws[i];
                 continue;
             }
-            assert(!ws[i].isBNN());
-            assert(ws[i].isClause());
+            assert(!ws[i].is_bnn());
+            assert(ws[i].is_clause());
             Clause* cl = cl_alloc.ptr(ws[i].get_offset());
             if (cl->red()) ws[j++] = ws[i];
         }

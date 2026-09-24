@@ -535,7 +535,7 @@ bool VarReplacer::replaceImplicit()
         Watched* j = i;
         for (Watched *end2 = ws.end(); i != end2; i++) {
             //Don't bother non-bin
-            if (!i->isBin()) {
+            if (!i->is_bin()) {
                 *j++ = *i;
                 continue;
             }
@@ -562,7 +562,7 @@ bool VarReplacer::replaceImplicit()
                 run_stats.replacedLits++;
             }
 
-            assert(i->isBin());
+            assert(i->is_bin());
             updateBin(i, j, orig_lit1, orig_lit2, lit1, lit2);
         }
         ws.shrink_(i-j);
@@ -570,7 +570,7 @@ bool VarReplacer::replaceImplicit()
 
     for(const BinaryClause& bincl : delayed_attach_bin) {
         solver->attach_bin_clause(
-            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.get_id());
+            bincl.get_lit1(), bincl.get_lit2(), bincl.is_red(), bincl.get_id());
     }
     delayed_attach_bin.clear();
 

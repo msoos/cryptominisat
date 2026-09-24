@@ -92,7 +92,7 @@ class PropBy
             , data2(0)
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
-            //then if we are at toplevel, .getAncestor()
+            //then if we are at toplevel, .get_ancestor()
             //must work, and return lit_Undef, but at the same time, .isnullptr()
             //must also work, for conflict generation. So this is a hack to
             //achieve that. What an awful hack.
@@ -112,12 +112,12 @@ class PropBy
         {
         }
 
-        bool isRedStep() const
+        bool is_red_step() const
         {
             return red_step;
         }
 
-        bool getHyperbin() const
+        bool get_hyperbin() const
         {
             return data2 & 2U;
         }
@@ -128,7 +128,7 @@ class PropBy
             data2 |= (uint32_t)toSet << 1;
         }
 
-        bool getHyperbinNotAdded() const
+        bool get_hyperbin_not_added() const
         {
             return data2 & 4U;
         }
@@ -139,7 +139,7 @@ class PropBy
             data2 |= (uint32_t)toSet << 2;
         }
 
-        Lit getAncestor() const
+        Lit get_ancestor() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(type == null_clause_t || type == binary_t);
@@ -147,12 +147,12 @@ class PropBy
             return ~Lit::toLit(data1);
         }
 
-        bool isClause() const
+        bool is_clause() const
         {
             return type == clause_t;
         }
 
-        PropByType getType() const
+        PropByType get_type() const
         {
             return (PropByType)type;
         }
@@ -176,7 +176,7 @@ class PropBy
         ClOffset get_offset() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(isClause());
+            assert(is_clause());
             #endif
             return data1;
         }
@@ -203,7 +203,7 @@ class PropBy
 
 inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 {
-    switch (pb.getType()) {
+    switch (pb.get_type()) {
         case binary_t :
             os << " binary, other lit= " << pb.lit2();
             break;

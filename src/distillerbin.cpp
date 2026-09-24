@@ -175,7 +175,7 @@ bool DistillerBin::go_through_bins(const Lit lit1)
     cands.clear();
     solver->watches[lit1].copyTo(tmp);
     for (const auto& w: tmp) {
-        if (!w.isBin() || w.red() || done[w.lit2().toInt()]) continue;
+        if (!w.is_bin() || w.red() || done[w.lit2().toInt()]) continue;
         if (out_of_budget()) return true;
 
         const Lit lit2 = w.lit2();

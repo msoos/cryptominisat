@@ -78,7 +78,7 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const {
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
         for(auto const& ws: watches[l]) {
-            if (!ws.isBin() || ws.red())  continue;
+            if (!ws.is_bin() || ws.red())  continue;
             if (l < ws.lit2()) {
                 tmp.clear();
                 tmp.push_back(orclit(l));
@@ -357,7 +357,7 @@ vector<vector<uint16_t>> Solver::compute_edge_weights() const
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
         for(auto const& ws: watches[l]) {
-            if (!ws.isBin() || ws.red())  continue;
+            if (!ws.is_bin() || ws.red())  continue;
             uint32_t v1 = l.var();
             uint32_t v2 = ws.lit2().var();
             if (v1 < v2) edgew[v1][v2]++;
@@ -394,7 +394,7 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
         for(auto const& ws: watches[l]) {
-            if (!ws.isBin() || ws.red())  continue;
+            if (!ws.is_bin() || ws.red())  continue;
             const uint32_t v1 = l.var();
             const uint32_t v2 = ws.lit2().var();
             if (v1 < v2) {
@@ -581,11 +581,11 @@ bool Solver::oracle_sparsify(bool fast)
     for(auto& ws: watches) {
         uint32_t j = 0;
         for(uint32_t i = 0; i < ws.size(); i++) {
-            if (ws[i].isBNN()) {
+            if (ws[i].is_bnn()) {
                 ws[j++] = ws[i];
                 continue;
             }
-            if (ws[i].isBin()) {
+            if (ws[i].is_bin()) {
                 if (!ws[i].bin_cl_marked()) {
                     ws[j++] = ws[i];
                     continue;
@@ -599,7 +599,7 @@ bool Solver::oracle_sparsify(bool fast)
                 }
                 continue;
             }
-            if (ws[i].isClause()) {
+            if (ws[i].is_clause()) {
                 Clause* cl = cl_alloc.ptr(ws[i].get_offset());
                 if (conf.oracle_removed_is_learnt || !cl->stats.marked_clause) ws[j++] = ws[i];
                 continue;
@@ -623,7 +623,7 @@ bool Solver::oracle_sparsify(bool fast)
                 lit_stats.red_lits += cl->size();
                 long_red_cls[0].push_back(off);
                 cl->stats.which_red_array = 0;
-                cl->isRed = true;
+                cl->is_red = true;
             } else {
                 cl_alloc.clauseFree(off);
             }

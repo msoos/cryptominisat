@@ -35,14 +35,14 @@ namespace CMSat {
 static inline bool findWCl(watch_subarray_const ws, const ClOffset c)
 {
     const Watched* i = ws.begin(), *end = ws.end();
-    for (; i != end && (!i->isClause() || i->get_offset() != c); i++);
+    for (; i != end && (!i->is_clause() || i->get_offset() != c); i++);
     return i != end;
 }
 
 static inline void removeWCl(watch_subarray ws, const ClOffset c)
 {
     Watched* i = ws.begin(), *end = ws.end();
-    for (; i != end && (!i->isClause() || i->get_offset() != c); i++);
+    for (; i != end && (!i->is_clause() || i->get_offset() != c); i++);
     assert(i != end);
     Watched* j = i;
     i++;
@@ -64,7 +64,7 @@ inline void removeWBin(
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (
-        !i->isBin()
+        !i->is_bin()
         || i->lit2() != lit2
         || i->red() != red
         || i->get_id() != ID
@@ -87,7 +87,7 @@ inline void removeWBin_change_order(
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (
-        !i->isBin()
+        !i->is_bin()
         || i->lit2() != lit2
         || i->red() != red
         || i->get_id() != ID
@@ -108,7 +108,7 @@ inline bool removeWBin_except_marked(
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (
-        !i->isBin()
+        !i->is_bin()
         || i->lit2() != lit2
         || i->red() != red
         || i->get_id() != ID
@@ -136,7 +136,7 @@ inline const Watched& findWatchedOfBin(
 ) {
     watch_subarray_const ws = wsFull[lit1];
     for (const Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
+        if (i->is_bin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
             return *i;
     }
 
@@ -153,7 +153,7 @@ inline Watched& findWatchedOfBin(
 ) {
     watch_subarray ws = wsFull[lit1];
     for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
+        if (i->is_bin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
             return *i;
     }
 
@@ -170,7 +170,7 @@ inline Watched* findWatchedOfBinMaybe(
 ) {
     watch_subarray ws = wsFull[lit1];
     for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
+        if (i->is_bin() && i->lit2() == lit2 && i->red() == red && i->get_id() == ID)
             return i;
     }
     return nullptr;
@@ -203,7 +203,7 @@ static inline void removeWBNN(watch_array& wsFull
 ) {
     watch_subarray ws = wsFull[lit];
     Watched *i = ws.begin(), *end = ws.end();
-    for (; i != end && (!i->isBNN() || i->get_bnn() != bnnIdx); i++);
+    for (; i != end && (!i->is_bnn() || i->get_bnn() != bnnIdx); i++);
     assert(i != end);
     Watched *j = i;
     i++;

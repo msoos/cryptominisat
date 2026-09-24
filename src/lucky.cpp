@@ -127,7 +127,7 @@ int Lucky::trivially_satisfiable(const bool polar)
         if (lit.sign() != polar) continue; //satisfies its binaries on its own
 
         for(const Watched& w: solver->watches[lit]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             if (solver->value(w.lit2()) == l_True) continue;
             if (w.lit2().sign() == polar) return 0;
         }
@@ -205,7 +205,7 @@ int Lucky::horn_satisfiable(const bool polar)
 
         to_set.clear();
         for(const Watched& w: solver->watches[lit]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             if (solver->value(w.lit2()) == l_True) continue;
             if (lit.sign() != polar) { to_set.push_back(lit); break; }
             if (w.lit2().sign() == polar) return unlucky(0);

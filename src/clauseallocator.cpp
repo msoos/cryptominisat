@@ -223,10 +223,10 @@ void ClauseAllocator::move_one_watchlist(
     watch_subarray& ws, ClOffset* newDataStart, ClOffset*& new_ptr)
 {
     for(Watched& w: ws) {
-        if (w.isClause()) {
+        if (w.is_clause()) {
             Clause* old = ptr(w.get_offset());
             assert(!old->freed());
-            const Lit blocked = w.getBlockedLit();
+            const Lit blocked = w.get_blocked_lit();
             const ClOffset new_offset = old->reloced
                 ? read_reloced_offset(old)
                 : move_cl(newDataStart, new_ptr, old);
@@ -282,7 +282,7 @@ void ClauseAllocator::consolidate(
     //Fix up propBy
     for (size_t i = 0; i < solver->nVars(); i++) {
         VarData& vdata = solver->var_data[i];
-        if (vdata.reason.isClause()) {
+        if (vdata.reason.is_clause()) {
             if (vdata.removed == Removed::none
                 && solver->decision_level() >= vdata.level
                 && vdata.level != 0

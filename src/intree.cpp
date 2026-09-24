@@ -88,7 +88,7 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 {
     watch_subarray_const ws = solver->watches[lit];
     return std::none_of(ws.begin(), ws.end(),
-                        [](const Watched& w) { return w.isBin(); });
+                        [](const Watched& w) { return w.is_bin(); });
 }
 
 bool InTree::check_timeout_due_to_hyperbin()
@@ -222,7 +222,7 @@ void InTree::unmark_all_bins()
 {
     for(watch_subarray wsub: solver->watches) {
         for(Watched& w: wsub) {
-            if (w.isBin()) {
+            if (w.is_bin()) {
                 w.unmark_bin_cl();
             }
         }
@@ -344,7 +344,7 @@ bool InTree::handle_lit_popped_from_queue(
         solver->uselessBin.clear();
         //FRAT: their adds were emitted at creation, delete before dropping
         for(const auto& b: solver->needToAddBinClause)
-            *solver->frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
+            *solver->frat << del << b.get_id() << b.get_lit1() << b.get_lit2() << fin;
         solver->needToAddBinClause.clear();
     }
 
@@ -413,7 +413,7 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, const bool red_cl, cons
 
     watch_subarray ws = solver->watches[lit];
     for(Watched& w: ws) {
-        if (w.isBin()
+        if (w.is_bin()
             && seen[(~w.lit2()).toInt()] == 0
             && solver->value(w.lit2()) == l_Undef
         ) {

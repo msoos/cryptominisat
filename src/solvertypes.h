@@ -110,17 +110,17 @@ class BinaryClause {
                     && red == other.red);
         }
 
-        const Lit getLit1() const
+        const Lit get_lit1() const
         {
             return lit1;
         }
 
-        const Lit getLit2() const
+        const Lit get_lit2() const
         {
             return lit2;
         }
 
-        bool isRed() const
+        bool is_red() const
         {
             return red;
         }
@@ -139,8 +139,8 @@ class BinaryClause {
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
-    os << val.getLit1() << " , " << val.getLit2()
-    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha
+    os << val.get_lit1() << " , " << val.get_lit2()
+    << " red: " << std::boolalpha << val.is_red() << std::noboolalpha
     << " ID: " << val.get_id();
     return os;
 }

@@ -114,28 +114,28 @@ class Watched {
             data1 = blockedLit.toInt();
         }
 
-        [[nodiscard]] WatchType getType() const
+        [[nodiscard]] WatchType get_type() const
         {
             // we rely that WatchType enum is in [0-3] range and fits into type field two bits
             return static_cast<WatchType>(type);
         }
 
-        [[nodiscard]] bool isBin() const
+        [[nodiscard]] bool is_bin() const
         {
             return (type == static_cast<int>(WatchType::watch_binary_t));
         }
 
-        [[nodiscard]] bool isClause() const
+        [[nodiscard]] bool is_clause() const
         {
             return (type == static_cast<int>(WatchType::watch_clause_t));
         }
 
-        [[nodiscard]] bool isIdx() const
+        [[nodiscard]] bool is_idx() const
         {
             return (type == static_cast<int>(WatchType::watch_idx_t));
         }
 
-        [[nodiscard]] bool isBNN() const
+        [[nodiscard]] bool is_bnn() const
         {
             return (type == static_cast<int>(WatchType::watch_bnn_t));
         }
@@ -163,7 +163,7 @@ class Watched {
         */
         Lit lit2() const
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             return Lit::toLit(data1);
         }
 
@@ -172,30 +172,30 @@ class Watched {
         */
         void setLit2(const Lit lit)
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             data1 = lit.toInt();
         }
 
         bool red() const
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             return data2 & 1;
         }
 
         int32_t get_id() const
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             return data2 >> 2;
         }
         void set_ID(const int32_t ID)
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             data2 = (data2 & 3) | (ID<<2);
         }
 
         void setRed(const bool toSet)
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             DEBUG_WATCHED_DO(assert(red()));
             assert(toSet == false);
             data2 &= (~(1U));
@@ -203,7 +203,7 @@ class Watched {
 
         void setReallyRed()
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             DEBUG_WATCHED_DO(assert(!red()));
             data2 |= 1U;
             assert(red());
@@ -211,34 +211,34 @@ class Watched {
 
         void mark_bin_cl()
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             data2 |= 2;
         }
 
         void unmark_bin_cl()
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             data2 &= (~(2ULL));
         }
 
         bool bin_cl_marked() const
         {
-            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(is_bin()));
             return data2&2;
         }
 
         /**
         @brief Get example literal (blocked lit) of a normal long clause
         */
-        Lit getBlockedLit() const
+        Lit get_blocked_lit() const
         {
-            DEBUG_WATCHED_DO(assert(isClause()));
+            DEBUG_WATCHED_DO(assert(is_clause()));
             return Lit::toLit(data1);
         }
 
-        cl_abst_type getAbst() const
+        cl_abst_type get_abst() const
         {
-            DEBUG_WATCHED_DO(assert(isClause()));
+            DEBUG_WATCHED_DO(assert(is_clause()));
             return data1;
         }
 
@@ -247,7 +247,7 @@ class Watched {
         */
         ClOffset get_offset() const
         {
-            DEBUG_WATCHED_DO(assert(isClause()));
+            DEBUG_WATCHED_DO(assert(is_clause()));
             return data2;
         }
 
@@ -267,11 +267,11 @@ class Watched {
 inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
 {
 
-    if (ws.isClause()) {
+    if (ws.is_clause()) {
         os << "Clause offset " << ws.get_offset();
     }
 
-    if (ws.isBin()) {
+    if (ws.is_bin()) {
         os << "Bin lit " << ws.lit2() << " (red: " << ws.red() << " )";
     }
 
@@ -293,29 +293,29 @@ struct OccurClause {
 
     // will be equal even if one is removing a literal, and the other is subsuming the whole clause
     bool operator==(const OccurClause& other) const {
-        if (ws.getType() != other.ws.getType()) return false;
-        if (ws.isBin()) return ws.get_id() == other.ws.get_id();
-        if (ws.isBNN()) return ws.get_bnn() == other.ws.get_bnn();
-        if (ws.isClause()) return ws.get_offset() == other.ws.get_offset();
+        if (ws.get_type() != other.ws.get_type()) return false;
+        if (ws.is_bin()) return ws.get_id() == other.ws.get_id();
+        if (ws.is_bnn()) return ws.get_bnn() == other.ws.get_bnn();
+        if (ws.is_clause()) return ws.get_offset() == other.ws.get_offset();
         release_assert(false);
         return false;
     }
 
     bool operator<(const OccurClause& other) const {
-        if (ws.isBin() && !other.ws.isBin()) {
+        if (ws.is_bin() && !other.ws.is_bin()) {
             return true;
         }
-        if (!ws.isBin() && other.ws.isBin()) {
+        if (!ws.is_bin() && other.ws.is_bin()) {
             return false;
         }
 
-        if (ws.isBin()) {
-            assert(other.ws.isBin());
+        if (ws.is_bin()) {
+            assert(other.ws.is_bin());
             return ws.get_id() < other.ws.get_id();
         }
 
-        assert(!ws.isBNN()); // no idea how this would work
-        assert(!other.ws.isBNN()); // no idea how this would work
+        assert(!ws.is_bnn()); // no idea how this would work
+        assert(!other.ws.is_bnn()); // no idea how this would work
         return ws.get_offset() < other.ws.get_offset();
     }
 };
@@ -323,22 +323,22 @@ struct OccurClause {
 struct WatchSorterBinTriLong {
         bool operator()(const Watched& a, const Watched& b)
         {
-            assert(!a.isIdx());
-            assert(!b.isIdx());
+            assert(!a.is_idx());
+            assert(!b.is_idx());
 
             //Anything but clause!
-            if (a.isClause() || a.isBNN()) {
+            if (a.is_clause() || a.is_bnn()) {
                 //A is definitely not better than B
                 return false;
             }
-            if (b.isClause() || b.isBNN()) {
+            if (b.is_clause() || b.is_bnn()) {
                 //B is clause, A is NOT a clause. So A is better than B.
                 return true;
             }
 
             //Both are BIN
-            assert(a.isBin());
-            assert(b.isBin());
+            assert(a.is_bin());
+            assert(b.is_bin());
 
             if (a.lit2() != b.lit2()) {
                 return a.lit2() < b.lit2();

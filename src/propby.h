@@ -164,7 +164,7 @@ class PropBy
             , ID(_ID)
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
-            //then if we are at toplevel, .getAncestor()
+            //then if we are at toplevel, .get_ancestor()
             //must work, and return lit_Undef, but at the same time, .isnullptr()
             //must also work, for conflict generation. So this is a hack to
             //achieve that. What an awful hack.
@@ -177,13 +177,13 @@ class PropBy
 
         void set_bnn_reason(uint32_t idx)
         {
-            assert(isBNN());
+            assert(is_bnn());
             data1 = idx;
         }
 
         bool bnn_reason_set() const
         {
-            assert(isBNN());
+            assert(is_bnn());
             return data1 != 0xfffffff;
         }
 
@@ -193,18 +193,18 @@ class PropBy
             return data1;
         }
 
-        [[nodiscard]] bool isBNN() const
+        [[nodiscard]] bool is_bnn() const
         {
             return type == bnn_t;
         }
 
-        [[nodiscard]] uint32_t getBNNidx() const
+        [[nodiscard]] uint32_t get_bnn_idx() const
         {
-            assert(isBNN());
+            assert(is_bnn());
             return data2;
         }
 
-        [[nodiscard]] bool isRedStep() const
+        [[nodiscard]] bool is_red_step() const
         {
             return red_step;
         }
@@ -214,7 +214,7 @@ class PropBy
             return ID;
         }
 
-        [[nodiscard]] bool getHyperbin() const
+        [[nodiscard]] bool get_hyperbin() const
         {
             return data2 & 2U;
         }
@@ -225,7 +225,7 @@ class PropBy
             data2 |= static_cast<uint32_t>(toSet) << 1;
         }
 
-        [[nodiscard]] bool getHyperbinNotAdded() const
+        [[nodiscard]] bool get_hyperbin_not_added() const
         {
             return data2 & 4U;
         }
@@ -236,7 +236,7 @@ class PropBy
             data2 |= static_cast<uint32_t>(toSet) << 2;
         }
 
-        Lit getAncestor() const
+        Lit get_ancestor() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(type == null_clause_t || type == binary_t);
@@ -244,12 +244,12 @@ class PropBy
             return ~Lit::toLit(data1);
         }
 
-        [[nodiscard]] bool isClause() const
+        [[nodiscard]] bool is_clause() const
         {
             return type == clause_t;
         }
 
-        [[nodiscard]] PropByType getType() const
+        [[nodiscard]] PropByType get_type() const
         {
             return static_cast<PropByType>(type);
         }
@@ -281,7 +281,7 @@ class PropBy
         ClOffset get_offset() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(isClause());
+            assert(is_clause());
             #endif
 #ifndef LARGE_OFFSETS
             return data1;
@@ -315,7 +315,7 @@ class PropBy
 
 inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 {
-    switch (pb.getType()) {
+    switch (pb.get_type()) {
         case binary_t:
             os << " binary, other lit= " << pb.lit2();
             break;

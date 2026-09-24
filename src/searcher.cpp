@@ -215,7 +215,7 @@ void Searcher::normalClMinim()
         size_t size;
         Lit *lits = nullptr;
         int32_t id = 0;
-        PropByType type = reason.getType();
+        PropByType type = reason.get_type();
         if (type == null_clause_t) {
             //decision clause
             learnt_clause[j++] = learnt_clause[i];
@@ -246,7 +246,7 @@ void Searcher::normalClMinim()
 
             case bnn_t: {
                 assert(!frat->enabled());
-                auto bnn_reason = get_bnn_reason(bnns[reason.getBNNidx()], learnt_clause[i]);
+                auto bnn_reason = get_bnn_reason(bnns[reason.get_bnn_idx()], learnt_clause[i]);
                 lits = bnn_reason->data();
                 size = bnn_reason->size()-1;
                 sumAntecedentsLits += size;
@@ -311,7 +311,7 @@ void Searcher::build_level0_confl_chain(const PropBy confl)
     assert(frat->enabled());
     chain.clear();
     int32_t id;
-    switch (confl.getType()) {
+    switch (confl.get_type()) {
         case binary_t:
             id = confl.get_id();
             chain.push_back(unit_cl_IDs[failBinLit.var()]);
@@ -366,12 +366,12 @@ void Searcher::add_lits_to_learnt(
     Lit* lits = nullptr;
     size_t size = 0;
     int32_t id;
-    switch (confl.getType()) {
+    switch (confl.get_type()) {
         case binary_t : {
             id = confl.get_id();
             sumAntecedentsLits += 2;
 
-            if (confl.isRedStep()) {
+            if (confl.is_red_step()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.binRed++;
                 #endif
@@ -430,7 +430,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case bnn_t: {
-            auto bnn_reason = get_bnn_reason(bnns[confl.getBNNidx()], p);
+            auto bnn_reason = get_bnn_reason(bnns[confl.get_bnn_idx()], p);
             lits = bnn_reason->data();
             size = bnn_reason->size();
             sumAntecedentsLits += size;
@@ -450,7 +450,7 @@ void Searcher::add_lits_to_learnt(
     bool cont = true;
     Lit x = lit_Undef;
     while(cont) {
-        switch (confl.getType()) {
+        switch (confl.get_type()) {
             case binary_t:
                 if (i == 0) {
                     x = failBinLit;
@@ -475,7 +475,7 @@ void Searcher::add_lits_to_learnt(
         }
         //skip the pivot by value: after OTFS a stale reason may not contain p
         if (p == lit_Undef
-            || (confl.getType() == binary_t ? i > 0 : x != p)
+            || (confl.get_type() == binary_t ? i > 0 : x != p)
         ) {
             add_lit_to_learnt<inprocess>(x, nDecisionLevel);
         }
@@ -542,7 +542,7 @@ bool Searcher::try_shrink_block(
         if (open == 0) break;
 
         const PropBy reason = var_data[uip.var()].reason;
-        const PropByType type = reason.getType();
+        const PropByType type = reason.get_type();
         if (type == null_clause_t) { ok = false; break; }
 
         Lit* lits = nullptr;
@@ -571,7 +571,7 @@ bool Searcher::try_shrink_block(
 
             case bnn_t: {
                 assert(!frat->enabled());
-                auto cl = get_bnn_reason(bnns[reason.getBNNidx()], uip);
+                auto cl = get_bnn_reason(bnns[reason.get_bnn_idx()], uip);
                 lits = cl->data();
                 size = cl->size()-1;
                 break;
@@ -737,7 +737,7 @@ void Searcher::create_learnt_clause(PropBy confl)
 
     // Get decision level to go back to
     Lit lit0 = lit_Error;
-    switch (confl.getType()) {
+    switch (confl.get_type()) {
         case binary_t : {
             lit0 = failBinLit;
             break;
@@ -749,7 +749,7 @@ void Searcher::create_learnt_clause(PropBy confl)
             break;
         }
         case bnn_t : {
-            auto cl = get_bnn_reason(bnns[confl.getBNNidx()], lit_Undef);
+            auto cl = get_bnn_reason(bnns[confl.get_bnn_idx()], lit_Undef);
             lit0 = (*cl)[0];
             break;
         }
@@ -771,7 +771,7 @@ void Searcher::create_learnt_clause(PropBy confl)
         //OTFS: resolvent equals antecedent minus p, strengthen the antecedent
         if (!inprocess && conf.do_otfs
             && p != lit_Undef
-            && confl.getType() == clause_t
+            && confl.get_type() == clause_t
             && otfs_antec_nonzero > 2
             && pathC + learnt_clause.size() - 1 < otfs_antec_nonzero
             && pathC + learnt_clause.size() - 1 >= 3
@@ -903,7 +903,7 @@ void Searcher::simple_create_learnt_clause(
     assert(decision_level() == 1);
 
     do {
-        switch (confl.getType()) {
+        switch (confl.get_type()) {
             case binary_t: {
                 if (p == lit_Undef && True_confl == false) {
                     Lit q = failBinLit;
@@ -925,17 +925,17 @@ void Searcher::simple_create_learnt_clause(
             case clause_t: {
                 Lit* lits;
                 uint32_t size;
-                if (confl.getType() == clause_t) {
+                if (confl.get_type() == clause_t) {
                     auto cl = solver->cl_alloc.ptr(confl.get_offset());
-                    lits = cl->getData();
+                    lits = cl->get_data();
                     size = cl->size();
-                } else if (confl.getType() == bnn_t) {
-                    auto cl = get_bnn_reason(bnns[confl.getBNNidx()], p);
+                } else if (confl.get_type() == bnn_t) {
+                    auto cl = get_bnn_reason(bnns[confl.get_bnn_idx()], p);
                     lits = cl->data();
                     size = cl->size();
                 } else {
                     int32_t ID;
-                    assert(confl.getType() == xor_t);
+                    assert(confl.get_type() == xor_t);
                     auto cl = get_xor_reason(confl, ID);
                     lits = cl->data();
                     size = cl->size();
@@ -1006,7 +1006,7 @@ void Searcher::bump_reason_side_lit(const Lit lit, const uint32_t depth)
 {
     if (var_data[lit.var()].level == 0) return;
     const PropBy& reason = var_data[lit.var()].reason;
-    const PropByType type = reason.getType();
+    const PropByType type = reason.get_type();
 
     Lit* lits = nullptr;
     size_t size = 0;
@@ -1177,7 +1177,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
         Lit p_analyze = analyze_stack.top();
         const PropBy reason = var_data[analyze_stack.top().var()].reason;
-        PropByType type = reason.getType();
+        PropByType type = reason.get_type();
         analyze_stack.pop();
 
         //Must have a reason
@@ -1204,7 +1204,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
             case bnn_t: {
                 assert(!frat->enabled());
-                vector<Lit>* cl = get_bnn_reason(bnns[reason.getBNNidx()],
+                vector<Lit>* cl = get_bnn_reason(bnns[reason.get_bnn_idx()],
                     Lit(p_analyze.var(), value(p_analyze.var()) == l_False));
                 lits = cl->data();
                 size = cl->size()-1;
@@ -1335,7 +1335,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                 out_conflict.push_back(~trail[i].lit);
             } else {
                 int32_t ID;
-                switch(reason.getType()) {
+                switch(reason.get_type()) {
                     case clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
                         ID = cl.stats.id;
@@ -1349,7 +1349,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                     }
 
                     case bnn_t : {
-                        vector<Lit>* cl = get_bnn_reason(bnns[reason.getBNNidx()], lit_Undef);
+                        vector<Lit>* cl = get_bnn_reason(bnns[reason.get_bnn_idx()], lit_Undef);
                         for(const Lit lit: *cl) {
                             if (var_data[lit.var()].level > 0)seen[lit.var()] = 1;
                         }
@@ -1916,7 +1916,7 @@ Clause* Searcher::handle_last_confl(
             , sum_conflicts
             , ID
         );
-        cl->isRed = true;
+        cl->is_red = true;
         cl->stats.glue = glue;
         cl->stats.id = ID;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -2714,7 +2714,7 @@ void Searcher::clean_unused_hyper_bins()
         if (ws.empty()) continue;
         Watched* j = ws.begin();
         for (Watched* w = ws.begin(); w != ws.end(); w++) {
-            if (w->isBin() && w->red() && unused(w->get_id())) {
+            if (w->is_bin() && w->red() && unused(w->get_id())) {
                 if (lit.toInt() < w->lit2().toInt()) {
                     removed++;
                     *frat << del << w->get_id() << lit << w->lit2() << fin;
@@ -3100,7 +3100,7 @@ void Searcher::binary_based_morem_minim(vector<Lit>& cl)
             ; i++
         ) {
             limit--;
-            if (i->isBin()) {
+            if (i->is_bin()) {
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
                     seen[(~i->lit2()).toInt()] = 0;
@@ -3154,20 +3154,20 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
     size_t added = 0;
 
     for(auto const& b: solver->needToAddBinClause) {
-        lbool val1 = value(b.getLit1());
-        lbool val2 = value(b.getLit2());
+        lbool val1 = value(b.get_lit1());
+        lbool val2 = value(b.get_lit2());
 
         verb_print(6,
             "Attached hyper-bin: "
-            << b.getLit1() << "(val: " << val1 << " )"
-            << ", " << b.getLit2() << "(val: " << val2 << " )");
+            << b.get_lit1() << "(val: " << val1 << " )"
+            << ", " << b.get_lit2() << "(val: " << val2 << " )");
 
         //If binary is satisfied, skip
         if (check_for_set_values
             && (val1 == l_True || val2 == l_True)
         ) {
             //FRAT: emitted at creation, delete the never-attached bin
-            *solver->frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
+            *solver->frat << del << b.get_id() << b.get_lit1() << b.get_lit2() << fin;
             continue;
         }
 
@@ -3182,7 +3182,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
         } else {
             ID = ++clause_id;
         }
-        solver->attach_bin_clause(b.getLit1(), b.getLit2(), true, ID, false);
+        solver->attach_bin_clause(b.get_lit1(), b.get_lit2(), true, ID, false);
         added++;
     }
     solver->needToAddBinClause.clear();
@@ -3200,34 +3200,34 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             prop_stats.otf_hyper_time += 2;
             verb_print(10, "Removing binary clause: " << b
                 << " except marked: " << except_marked);
-            prop_stats.otf_hyper_time += solver->watches[b.getLit1()].size()/2;
-            prop_stats.otf_hyper_time += solver->watches[b.getLit2()].size()/2;
+            prop_stats.otf_hyper_time += solver->watches[b.get_lit1()].size()/2;
+            prop_stats.otf_hyper_time += solver->watches[b.get_lit2()].size()/2;
             bool removed;
             if (except_marked) {
                 bool rem1 = removeWBin_except_marked(
-                    solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.get_id());
+                    solver->watches, b.get_lit1(), b.get_lit2(), b.is_red(), b.get_id());
                 bool rem2 = removeWBin_except_marked(
-                    solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.get_id());
+                    solver->watches, b.get_lit2(), b.get_lit1(), b.is_red(), b.get_id());
                 assert(rem1 == rem2);
                 removed = rem1;
             } else {
-                removeWBin(solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.get_id());
-                removeWBin(solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.get_id());
+                removeWBin(solver->watches, b.get_lit1(), b.get_lit2(), b.is_red(), b.get_id());
+                removeWBin(solver->watches, b.get_lit2(), b.get_lit1(), b.is_red(), b.get_id());
                 removed = true;
             }
             if (!removed) continue;
 
             //Update stats
-            if (b.isRed()) {
+            if (b.is_red()) {
                 solver->bin_tri.red_bins--;
                 removedRed++;
             } else {
                 solver->bin_tri.irred_bins--;
                 removedIrred++;
-                mark_elim_cand(b.getLit1());
-                mark_elim_cand(b.getLit2());
+                mark_elim_cand(b.get_lit1());
+                mark_elim_cand(b.get_lit2());
             }
-            *frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
+            *frat << del << b.get_id() << b.get_lit1() << b.get_lit2() << fin;
 
         }
     }
@@ -3247,7 +3247,7 @@ PropBy Searcher::propagate() {
             int32_t id;
             for(size_t i = last_trail; i < trail.size(); i++) {
                 const auto propby = var_data[trail[i].lit.var()].reason;
-                if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, id);
+                if (propby.get_type() == PropByType::xor_t) get_xor_reason(propby, id);
             }
             // We need this check, because apparently GJ can set unsat during prop
             if (unsat_cl_ID == 0) {
@@ -3397,7 +3397,7 @@ void Searcher::cancel_until(uint32_t blevel)
             assert(value(var) != l_Undef);
 
             //Clear out BNN reason on backtrack
-            if (var_data[var].reason.isBNN() &&
+            if (var_data[var].reason.is_bnn() &&
                 var_data[var].reason.bnn_reason_set())
             {
                 uint32_t reason_idx = var_data[var].reason.get_bnn_reason();
@@ -3495,7 +3495,7 @@ void Searcher::check_all_in_vmtf_branch_strategy(const vector<uint32_t>& vars)
 ConflictData Searcher::find_conflict_level(PropBy& pb) {
     ConflictData data;
 
-    if (pb.getType() == PropByType::binary_t) {
+    if (pb.get_type() == PropByType::binary_t) {
         data.nHighestLevel = var_data[failBinLit.var()].level;
 
         if (data.nHighestLevel == decision_level()
@@ -3516,17 +3516,17 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
         // we might want to swap here if highestID is not 0
         if (highestId != 0) {
             Lit back = pb.lit2();
-            pb = PropBy(failBinLit, pb.isRedStep(), pb.get_id());
+            pb = PropBy(failBinLit, pb.is_red_step(), pb.get_id());
             failBinLit = back;
         }
     } else {
         Lit* lits = nullptr;
         uint32_t size = 0;
         int32_t ID;
-        switch(pb.getType()) {
+        switch(pb.get_type()) {
             case PropByType::clause_t: {
                 Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
-                lits = conflCl.getData();
+                lits = conflCl.get_data();
                 size = conflCl.size();
                 ID = conflCl.stats.id;
                 break;
@@ -3540,7 +3540,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
             }
 
             case PropByType::bnn_t: {
-                auto cl = get_bnn_reason(bnns[pb.getBNNidx()], lit_Undef);
+                auto cl = get_bnn_reason(bnns[pb.get_bnn_idx()], lit_Undef);
                 lits = cl->data();
                 size = cl->size();
                 break;
@@ -3569,7 +3569,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
 
         if (highestId != 0) {
             std::swap(lits[0], lits[highestId]);
-            if (highestId > 1 && pb.getType() == clause_t) {
+            if (highestId > 1 && pb.get_type() == clause_t) {
                 removeWCl(watches[lits[highestId]], pb.get_offset());
                 watches[lits[0]].push(Watched(pb.get_offset(), lits[1]));
             }

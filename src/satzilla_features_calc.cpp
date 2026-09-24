@@ -42,7 +42,7 @@ void SatZillaFeaturesCalc::for_one_clause(
     unsigned pos_vars = 0;
     unsigned size = 0;
 
-    switch (cl.getType()) {
+    switch (cl.get_type()) {
         case WatchType::watch_binary_t: {
             if (cl.red()) {
                 //only irred cls

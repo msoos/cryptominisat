@@ -432,9 +432,9 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
 //     cout
 //     << " reason lev: " << var_data[lit.var()].level
 //     << " sublev: " << var_data[lit.var()].sublevel
-//     << " reason type: " << var_data[lit.var()].reason.getType()
+//     << " reason type: " << var_data[lit.var()].reason.get_type()
 //     << endl;
-    assert(reason.isBNN());
+    assert(reason.is_bnn());
     if (reason.bnn_reason_set()) {
         return &bnn_reasons[reason.get_bnn_reason()];
     }
@@ -625,7 +625,7 @@ bool PropEngine::prop_long_cl(
     , uint32_t currLevel
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()) == l_True) {
+    if (value(i->get_blocked_lit()) == l_True) {
         *j++ = *i;
         return true;
     }
@@ -720,7 +720,7 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
     if (!var_data[l.var()].propagated) return;
     watch_subarray ws = watches[~l];
     for (const auto& i: ws) {
-        if (i.isBNN()) {
+        if (i.is_bnn()) {
             reverse_one_bnn(i.get_bnn(), i.get_bnn_prop_t());
         }
     }
@@ -747,7 +747,7 @@ PropBy PropEngine::propagate_core()
         simpDB_props--;
         for (; i != end; i++) {
             // propagate binary clause
-            if (i->isBin()) [[likely]] {
+            if (i->is_bin()) [[likely]] {
                 *j++ = *i;
                 if (!red_also && i->red()) continue;
                 if (distill_use && i->bin_cl_marked()) continue;
@@ -756,7 +756,7 @@ PropBy PropEngine::propagate_core()
             }
 
             // propagate BNN constraint
-            if (i->isBNN()) {
+            if (i->is_bnn()) {
                 *j++ = *i;
                 const lbool val = bnn_prop(i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
                 if (val == l_False) confl = PropBy(i->get_bnn(), nullptr);
@@ -764,7 +764,7 @@ PropBy PropEngine::propagate_core()
             }
 
             //propagate normal clause
-            assert(i->isClause());
+            assert(i->is_clause());
             prop_long_cl<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
         }
         while (i != end) {
@@ -841,13 +841,13 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
         //Go through each occur
         *limit_to_decrease -= 1;
         for (const auto& w: ws) {
-            if (w.isClause()) {
+            if (w.is_clause()) {
                 //prop_long_cl_occur walks the whole clause, so charge its length
                 *limit_to_decrease -= (int64_t)cl_alloc.ptr(w.get_offset())->size();
                 if (!prop_long_cl_occur<inprocess>(w.get_offset())) ret = false;
             }
-            if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w, p)) ret = false;
-            assert(!w.isBNN());
+            if (w.is_bin()) if (!prop_bin_cl_occur<inprocess>(w, p)) ret = false;
+            assert(!w.is_bnn());
         }
     }
     assert(gmatrices.empty());
@@ -943,7 +943,7 @@ void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool 
     }
     int32_t reason_id = 0;
     tmp_unit_hints.clear();
-    switch (from.getType()) {
+    switch (from.get_type()) {
         case PropByType::binary_t:
             reason_id = from.get_id();
             tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
@@ -1098,7 +1098,7 @@ void PropEngine::collect_trail_seg_hints(
         const PropBy r = var_data[trail[i].lit.var()].reason;
         if (r.isnullptr()) continue;
         int32_t id;
-        switch (r.getType()) {
+        switch (r.get_type()) {
             case binary_t:
                 id = r.get_id();
                 if (var_data[r.lit2().var()].level == 0) {
@@ -1144,7 +1144,7 @@ int32_t PropEngine::get_reason_id(const PropBy r, vector<int32_t>& units)
             units.push_back(unit_cl_IDs[x.var()]);
         }
     };
-    switch (r.getType()) {
+    switch (r.get_type()) {
         case binary_t:
             id = r.get_id();
             unit_of(r.lit2());
@@ -1176,7 +1176,7 @@ int32_t PropEngine::get_confl_id(const PropBy confl, vector<int32_t>& units)
             units.push_back(unit_cl_IDs[x.var()]);
         }
     };
-    switch (confl.getType()) {
+    switch (confl.get_type()) {
         case binary_t:
             id = confl.get_id();
             unit_of(failBinLit);

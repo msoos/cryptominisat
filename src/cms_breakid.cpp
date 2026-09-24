@@ -111,8 +111,8 @@ struct EqCls {
 
         //same hash, same size
         for(uint32_t i = 0; i < cl1->size(); i++) {
-            if (cl1->getData()[i] != cl2->getData()[i]) {
-                return (cl1->getData()[i] < cl2->getData()[i]);
+            if (cl1->get_data()[i] != cl2->get_data()[i]) {
+                return (cl1->get_data()[i] < cl2->get_data()[i]);
             }
         }
 
@@ -133,7 +133,7 @@ static bool equiv(Clause* cl1, Clause* cl2) {
     }
 
     for(uint32_t i = 0; i < cl1->size(); i++) {
-        if (cl1->getData()[i] != cl2->getData()[i]) {
+        if (cl1->get_data()[i] != cl2->get_data()[i]) {
             return false;
         }
     }
@@ -166,7 +166,7 @@ bool BreakID::add_clauses()
     for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
         Lit lit = Lit::toLit(i2);
         for(const Watched& w: solver->watches[lit]) {
-            if (w.isBin() && !w.red() && lit < w.lit2()) {
+            if (w.is_bin() && !w.red() && lit < w.lit2()) {
                 this_clause.clear();
                 this_clause.push_back(lit);
                 this_clause.push_back(w.lit2());
@@ -350,7 +350,7 @@ void BreakID::remove_duplicates()
         assert(!cl->get_removed());
         assert(!cl->red());
         std::sort(cl->begin(), cl->end());
-        cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
+        cl->stats.hash_val = hash_clause(cl->get_data(), cl->size());
         dedup_cls.push_back(offs);
     }
 

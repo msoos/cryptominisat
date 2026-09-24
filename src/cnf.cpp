@@ -203,16 +203,16 @@ void CNF::update_watch(
     , const vector<uint32_t>& outer_to_inter
 ) {
     for (Watched& w: ws) {
-        if (w.isBin()) {
+        if (w.is_bin()) {
             w.setLit2(getUpdatedLit(w.lit2(), outer_to_inter));
             continue;
         }
 
-        if (w.isBNN()) continue;
+        if (w.is_bnn()) continue;
 
-        assert(w.isClause());
+        assert(w.is_clause());
         const Clause& cl = *cl_alloc.ptr(w.get_offset());
-        const Lit blocked_lit = getUpdatedLit(w.getBlockedLit(), outer_to_inter);
+        const Lit blocked_lit = getUpdatedLit(w.get_blocked_lit(), outer_to_inter);
         const bool found = std::find(cl.begin(), cl.end(), blocked_lit) != cl.end();
         w.setElimedLit(found ? blocked_lit : cl[2]);
     }
@@ -262,7 +262,7 @@ uint64_t CNF::print_mem_used_longclauses(const size_t total_mem) const
 
 size_t CNF::cl_size(const Watched& ws) const
 {
-    switch(ws.getType()) {
+    switch(ws.get_type()) {
         case WatchType::watch_binary_t:
             return 2;
 
@@ -289,7 +289,7 @@ string CNF::watches_to_string(const Lit lit, watch_subarray_const ws) const
 string CNF::watched_to_string(Lit other_lit, const Watched& ws) const
 {
     std::stringstream ss;
-    switch(ws.getType()) {
+    switch(ws.get_type()) {
         case WatchType::watch_binary_t:
             ss << other_lit << ", " << ws.lit2();
             if (ws.red()) {
@@ -376,7 +376,7 @@ void CNF::check_seen2_clean() const
 }
 
 void CNF::check_no_idx_in_watchlist() const {
-    for(const auto& ws: watches) for(const auto& w: ws) assert(!w.isIdx());
+    for(const auto& ws: watches) for(const auto& w: ws) assert(!w.is_idx());
 }
 
 void CNF::check_all_xorclause_attached() const {
@@ -423,16 +423,16 @@ bool CNF::norm_clause_is_attached(const ClOffset offset) const
             }
             for(const Watched& w: watches[cl[0]]) {
                 cout << "watch " << cl[0] << endl;
-                if (w.isClause() && w.get_offset() == offset) {
-                    cout << "Block lit: " << w.getBlockedLit()
-                    << " val: " << value(w.getBlockedLit()) << endl;
+                if (w.is_clause() && w.get_offset() == offset) {
+                    cout << "Block lit: " << w.get_blocked_lit()
+                    << " val: " << value(w.get_blocked_lit()) << endl;
                 }
             }
             for(const Watched& w: watches[cl[1]]) {
                 cout << "watch " << cl[1] << endl;
-                if (w.isClause() && w.get_offset() == offset) {
-                    cout << "Block lit: " << w.getBlockedLit()
-                    << " val: " << value(w.getBlockedLit()) << endl;
+                if (w.is_clause() && w.get_offset() == offset) {
+                    cout << "Block lit: " << w.get_blocked_lit()
+                    << " val: " << value(w.get_blocked_lit()) << endl;
                 }
             }
         }
@@ -448,7 +448,7 @@ void CNF::find_all_attached() const {
         const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[lit].size(); i2++) {
             const Watched& w = watches[lit][i2];
-            if (!w.isClause()) continue;
+            if (!w.is_clause()) continue;
 
             //Get clause
             Clause* cl = cl_alloc.ptr(w.get_offset());
@@ -456,11 +456,11 @@ void CNF::find_all_attached() const {
 
             bool satcl = satisfied(*cl);
             if (!satcl) {
-                if (value(w.getBlockedLit())  == l_True) {
+                if (value(w.get_blocked_lit())  == l_True) {
                     cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
-                    << w.getBlockedLit() << " is." << endl;
+                    << w.get_blocked_lit() << " is." << endl;
                 }
-                assert(value(w.getBlockedLit()) != l_True && "Blocked lit is satisfied but clause is NOT!!");
+                assert(value(w.get_blocked_lit()) != l_True && "Blocked lit is satisfied but clause is NOT!!");
             }
 
             //Assert watch correctness
@@ -549,11 +549,11 @@ void CNF::check_wrong_attach() const {
 
 void CNF::check_watchlist(watch_subarray_const ws) const {
     for(const Watched& w: ws) {
-        if (!w.isClause()) continue;
+        if (!w.is_clause()) continue;
 
         const ClOffset offs = w.get_offset();
         const Clause& c = *cl_alloc.ptr(offs);
-        Lit blockedLit = w.getBlockedLit();
+        Lit blockedLit = w.get_blocked_lit();
         /*cout << "Clause " << c << " blocked lit:  "<< blockedLit << " val: " << value(blockedLit)
         << " blocked removed:" << !(var_data[blockedLit.var()].removed == Removed::none)
         << " cl satisfied: " << satisfied(&c)
@@ -615,9 +615,9 @@ void CNF::print_all_clauses() const
         watch_subarray_const ws = watches[lit];
         cout << "watches[" << lit << "]" << endl;
         for (const auto& w : ws) {
-            if (w.isBin()) {
+            if (w.is_bin()) {
                 cout << "Binary clause part: " << lit << " , " << w.lit2() << endl;
-            } else if (w.isClause()) {
+            } else if (w.is_clause()) {
                 cout << "Normal clause offs " << w.get_offset() << endl;
             }
         }
@@ -665,7 +665,7 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
-            if (x.isBin() &&
+            if (x.is_bin() &&
                 !x.red() &&
                 l < x.lit2()) //don't count twice
             {
@@ -701,7 +701,7 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
-            if (x.isBin() &&
+            if (x.is_bin() &&
                 !x.red() &&
                 l.var() < x.lit2().var()) //don't count twice
             {
@@ -735,7 +735,7 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
-            if (x.isBin()) {
+            if (x.is_bin()) {
                 inc[x.lit2().var()]++;
                 inc[l.var()]++;
             }
@@ -834,7 +834,7 @@ void CNF::check_no_zero_ID_bins() const
         Lit l = Lit::toLit(i);
         for(const auto& w: watches[l]) {
             //only do once per binary
-            if (w.isBin()) {
+            if (w.is_bin()) {
                 if (w.get_id() == 0) {
                     cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_id() << endl;
                 }
@@ -848,7 +848,7 @@ void CNF::check_no_zero_ID_bins() const
 bool CNF::zero_irred_cls(const CMSat::Lit lit) const
 {
     for(auto const& w: watches[lit]) {
-        switch(w.getType()) {
+        switch(w.get_type()) {
             case WatchType::watch_binary_t:
                 if (w.red()) continue;
                 else return false;

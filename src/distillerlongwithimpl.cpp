@@ -93,7 +93,7 @@ void DistillerLongWithImpl::strengthen_clause_with_watch(
     , const Watched* wit
 ) {
     //Strengthening w/ bin
-    if (wit->isBin()
+    if (wit->is_bin()
         && seen[lit.toInt()] //We haven't yet removed it
     ) {
         if (seen[(~wit->lit2()).toInt()]) {
@@ -110,7 +110,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     , const Clause& cl
 ) {
     //Subsumption w/ bin
-    if (wit->isBin() &&
+    if (wit->is_bin() &&
         seen2[wit->lit2().toInt()]
     ) {
         //If subsuming irred with redundant, make the redundant into irred
@@ -127,7 +127,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     }
 
     //Extension w/ bin
-    if (wit->isBin()
+    if (wit->is_bin()
         && !wit->red()
         && !seen2[(~(wit->lit2())).toInt()]
     ) {
@@ -151,7 +151,7 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
         ; wit++
     ) {
         //Can't do anything with a clause
-        if (!wit->isBin()) continue;
+        if (!wit->is_bin()) continue;
 
         timeAvailable -= 5;
 
