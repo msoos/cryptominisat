@@ -430,6 +430,17 @@ DLL_PUBLIC void SATSolver::set_option(const std::string& name, const std::string
     if (num_threads > 1) set_num_threads(num_threads);
 }
 
+DLL_PUBLIC std::vector<std::string> SATSolver::get_option_names()
+{
+    std::vector<std::string> names;
+    SolverConf conf;
+    for_each_conf_opt(conf, [&](const ConfOpt& o, auto&) {
+        if (o.lib) names.push_back(o.name + 2);
+    });
+    names.push_back("polar");
+    return names;
+}
+
 struct OneThreadAddCls
 {
     OneThreadAddCls(DataForThread& _data_for_thread, size_t _tid) :

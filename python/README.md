@@ -125,6 +125,7 @@ Errors:
 
 Integer and boolean options take `"0"`/`"1"`. Run `cryptominisat5 --help` to
 see the default values and the full descriptions.
+`pycryptosat.get_option_names()` returns the names of all available options.
 
 General:
 

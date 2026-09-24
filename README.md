@@ -251,7 +251,8 @@ solver.set_option("polar", "rnd");
 ```
 It throws `std::invalid_argument` on an unknown option or bad value, and
 `std::runtime_error` if called too late. The options available are listed in
-[python/README.md](python/README.md#solver-options).
+[python/README.md](python/README.md#solver-options), and returned by
+`SATSolver::get_option_names()`.
 
 ## Multiple solutions
 To find multiple solutions to your problem, just run the solver in a loop
@@ -366,7 +367,6 @@ use, specify options prior to running make in a clean subdirectory: `cmake
 
 - `-DBUILD_SHARED_LIBS=<ON/OFF>` -- build shared (ON, default) or static (OFF)
   library and binary.
-- `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most
   problems)

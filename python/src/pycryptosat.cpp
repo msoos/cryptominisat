@@ -767,6 +767,34 @@ static PyObject* set_option(Solver *self, PyObject *args, PyObject *kwds)
 
 /*************************** Method definitions *************************/
 
+PyDoc_STRVAR(get_option_names_doc,
+"get_option_names()\n\
+Names of the options accepted by Solver(options=...) and Solver.set_option().\n\
+\n\
+:rtype: <list <str>>"
+);
+
+static PyObject* get_option_names(PyObject*, PyObject*)
+{
+    const std::vector<std::string> names = SATSolver::get_option_names();
+    PyObject* result = PyList_New(names.size());
+    if (!result) return NULL;
+    for (size_t i = 0; i < names.size(); i++) {
+        PyObject* name = PyUnicode_FromString(names[i].c_str());
+        if (!name) {
+            Py_DECREF(result);
+            return NULL;
+        }
+        PyList_SET_ITEM(result, i, name);
+    }
+    return result;
+}
+
+static PyMethodDef module_methods[] = {
+    {"get_option_names", get_option_names, METH_NOARGS, get_option_names_doc},
+    {NULL, NULL, 0, NULL}
+};
+
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, solve_doc},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
@@ -865,7 +893,7 @@ MODULE_INIT_FUNC(pycryptosat)
         MODULE_NAME,            /* m_name */
         MODULE_DOC,             /* m_doc */
         -1,                     /* m_size */
-        NULL,                   /* m_methods */
+        module_methods,         /* m_methods */
         NULL,                   /* m_reload */
         NULL,                   /* m_traverse */
         NULL,                   /* m_clear */

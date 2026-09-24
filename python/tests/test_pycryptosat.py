@@ -34,23 +34,11 @@ _MODULE_DIR = os.path.dirname(os.path.realpath(__file__))+os.path.sep
 
 
 def check_clause(clause, solution):
-    for lit in clause:
-        var = abs(lit)
-        if lit < 0:
-            inverted = True
-        else:
-            inverted = False
-
-        if solution[var] != inverted:
-            return True
+    return any(solution[abs(lit)] == (lit > 0) for lit in clause)
 
 
 def check_solution(clauses, solution):
-    for clause in clauses:
-        if check_clause(clause, solution) is False:
-            return False
-
-    return True
+    return all(check_clause(clause, solution) for clause in clauses)
 
 # -------------------------- test clauses --------------------------------
 
@@ -960,6 +948,227 @@ class TestOptions(unittest.TestCase):
         self.assertIn("options", Solver.__doc__)
         self.assertIn("set_option", Solver.set_option.__doc__)
 
+    def test_option_names_match_library(self):
+        names = pycryptosat.get_option_names()
+        self.assertIsInstance(names, list)
+        for name in names:
+            self.assertIsInstance(name, str)
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(set(names), set(EXPOSED_OPTIONS))
+        self.assertEqual(set(names), set(UNSIGNED_OPTIONS + SIGNED_OPTIONS
+            + BOOL_OPTIONS + DOUBLE_OPTIONS + ["branchstr", "schedule",
+            "preschedule", "polar"]))
+        for name in NOT_EXPOSED_OPTIONS:
+            self.assertNotIn(name, names)
+        self.assertIn("get_option_names", pycryptosat.get_option_names.__doc__)
+
+    def test_readme_lists_every_option(self):
+        import re
+        readme = _MODULE_DIR + ".." + os.path.sep + "README.md"
+        if not os.path.exists(readme):
+            self.skipTest("python/README.md not found")
+        text = open(readme).read()
+        start = text.index("## Solver options")
+        end = text.index("\n## ", start + 1)
+        listed = re.findall(r"^\| `(\w+)` \|", text[start:end], re.M)
+        self.assertEqual(len(listed), len(set(listed)))
+        self.assertEqual(set(listed), set(pycryptosat.get_option_names()))
+
+
+THREAD_COUNTS = (2, 3, 4, 8)
+
+
+def random_cnf(num_vars, num_cls, rnd, max_len=3):
+    return [[v if rnd.random() < 0.5 else -v
+             for v in rnd.sample(range(1, num_vars+1), rnd.randint(1, max_len))]
+            for _ in range(num_cls)]
+
+
+def brute_force_models(num_vars, clauses, xors=(), assumptions=()):
+    """All models of the clauses, XORs and assumptions, by enumeration"""
+    models = []
+    for bits in range(1 << num_vars):
+        sol = [None] + [bool((bits >> i) & 1) for i in range(num_vars)]
+        if all(sol[abs(lit)] == (lit > 0) for lit in assumptions) \
+                and check_solution(clauses, sol) \
+                and xors_satisfied(xors, sol):
+            models.append(tuple(sol))
+    return models
+
+
+def brute_force_sat(num_vars, clauses, xors=(), assumptions=()):
+    for bits in range(1 << num_vars):
+        sol = [None] + [bool((bits >> i) & 1) for i in range(num_vars)]
+        if all(sol[abs(lit)] == (lit > 0) for lit in assumptions) \
+                and check_solution(clauses, sol) \
+                and xors_satisfied(xors, sol):
+            return True
+    return False
+
+
+def pigeonhole(holes):
+    pigeons = holes + 1
+    var = lambda p, h: p*holes + h + 1
+    cls = [[var(p, h) for h in range(holes)] for p in range(pigeons)]
+    for h in range(holes):
+        for p1 in range(pigeons):
+            for p2 in range(p1+1, pigeons):
+                cls.append([-var(p1, h), -var(p2, h)])
+    return cls
+
+
+class TestThreads(unittest.TestCase):
+
+    def test_helpers_can_fail(self):
+        self.assertFalse(check_solution([[1, -2], [2]], (None, False, True)))
+        self.assertTrue(check_solution([[1, -2], [2]], (None, True, True)))
+        self.assertFalse(xors_satisfied([([1, 2], True)], (None, True, True)))
+        self.assertFalse(brute_force_sat(2, [[1], [-1, 2], [-2]]))
+        self.assertEqual(len(brute_force_models(3, [[1, 2]])), 6)
+
+    def check_result(self, solver, res, solution, num_vars, clauses,
+                     xors=(), assumptions=()):
+        expected = brute_force_sat(num_vars, clauses, xors, assumptions)
+        self.assertEqual(res, expected)
+        if res:
+            self.assertTrue(check_solution(clauses, solution))
+            self.assertTrue(xors_satisfied(xors, solution))
+            for lit in assumptions:
+                self.assertEqual(solution[abs(lit)], lit > 0)
+        elif assumptions:
+            confl = solver.get_conflict()
+            for lit in confl:
+                self.assertIn(-lit, assumptions)
+            self.assertFalse(brute_force_sat(
+                num_vars, clauses, xors, [-lit for lit in confl]))
+
+    def test_random_cnf_against_brute_force(self):
+        import random
+        for threads in THREAD_COUNTS:
+            for seed in range(20):
+                with self.subTest(threads=threads, seed=seed):
+                    rnd = random.Random(seed)
+                    clauses = random_cnf(10, 45, rnd)
+                    xors = [(rnd.sample(range(1, 11), rnd.randint(2, 4)),
+                             rnd.random() < 0.5)
+                            for _ in range(rnd.randint(0, 3))]
+                    solver = Solver(threads=threads)
+                    solver.add_clauses(clauses)
+                    for vs, rhs in xors:
+                        solver.add_xor_clause(vs, rhs)
+                    res, solution = solver.solve()
+                    self.check_result(solver, res, solution, 10, clauses, xors)
+
+    def test_incremental_with_assumptions(self):
+        import random
+        for threads in THREAD_COUNTS:
+            for seed in range(10):
+                with self.subTest(threads=threads, seed=seed):
+                    rnd = random.Random(seed)
+                    solver = Solver(threads=threads)
+                    clauses = [list(range(1, 11))]
+                    solver.add_clauses(clauses)
+                    for _ in range(8):
+                        batch = random_cnf(10, 6, rnd)
+                        solver.add_clauses(batch)
+                        clauses += batch
+                        for _ in range(3):
+                            assumps = [v if rnd.random() < 0.5 else -v for v
+                                       in rnd.sample(range(1, 11), rnd.randint(0, 4))]
+                            res, solution = solver.solve(assumps)
+                            self.check_result(solver, res, solution, 10,
+                                              clauses, assumptions=assumps)
+                        res, solution = solver.solve()
+                        self.check_result(solver, res, solution, 10, clauses)
+                        if not res:
+                            break
+
+    def test_enumerate_all_solutions(self):
+        import random
+        for threads in THREAD_COUNTS:
+            for seed in range(5):
+                with self.subTest(threads=threads, seed=seed):
+                    rnd = random.Random(seed)
+                    clauses = [list(range(1, 9))] + random_cnf(8, 12, rnd)
+                    expected = set(brute_force_models(8, clauses))
+                    solver = Solver(threads=threads)
+                    solver.add_clauses(clauses)
+                    found = set()
+                    while True:
+                        res, solution = solver.solve()
+                        if not res:
+                            break
+                        sol = tuple(solution[:9])
+                        self.assertNotIn(sol, found)
+                        found.add(sol)
+                        solver.add_clause([-v if sol[v] else v
+                                           for v in range(1, 9)])
+                    self.assertEqual(found, expected)
+
+    def test_xor_systems(self):
+        for threads in THREAD_COUNTS:
+            for seed in range(5):
+                with self.subTest(threads=threads, seed=seed):
+                    clauses, xors = planted_instance(30, 60, 20, seed)
+                    solver = Solver(threads=threads)
+                    solver.add_clauses(clauses)
+                    for vs, rhs in xors:
+                        solver.add_xor_clause(vs, rhs)
+                    res, solution = solver.solve()
+                    self.assertEqual(res, True)
+                    self.assertTrue(check_solution(clauses, solution))
+                    self.assertTrue(xors_satisfied(xors, solution))
+
+                    vs, rhs = xors[0]
+                    solver.add_xor_clause(vs, not rhs)
+                    self.assertEqual(solver.solve()[0], False)
+                    self.assertEqual(solver.is_satisfiable(), False)
+
+    def test_pigeonhole_unsat(self):
+        for threads in THREAD_COUNTS:
+            with self.subTest(threads=threads):
+                solver = Solver(threads=threads)
+                solver.add_clauses(pigeonhole(6))
+                self.assertEqual(solver.solve(), (False, None))
+
+    def test_confl_limit(self):
+        for threads in THREAD_COUNTS:
+            with self.subTest(threads=threads):
+                solver = Solver(threads=threads)
+                solver.add_clauses(pigeonhole(7))
+                self.assertEqual(solver.solve(confl_limit=0), (None, None))
+                self.assertEqual(solver.solve(), (False, None))
+
+    def test_nb_vars_and_is_satisfiable(self):
+        for threads in THREAD_COUNTS:
+            with self.subTest(threads=threads):
+                solver = Solver(threads=threads)
+                self.assertEqual(solver.nb_vars(), 0)
+                solver.add_clause([1, -7])
+                self.assertEqual(solver.nb_vars(), 7)
+                res, solution = solver.solve()
+                self.assertEqual(res, True)
+                self.assertEqual(len(solution), 8)
+                self.assertEqual(solver.is_satisfiable(), True)
+                solver.add_clauses([[-1], [7]])
+                self.assertEqual(solver.solve()[0], False)
+                self.assertEqual(solver.is_satisfiable(), False)
+
+    def test_many_solvers(self):
+        for i in range(40):
+            threads = THREAD_COUNTS[i % len(THREAD_COUNTS)]
+            solver = Solver(threads=threads)
+            solver.add_clauses(clauses1)
+            res, solution = solver.solve()
+            self.assertEqual(res, True)
+            self.assertTrue(check_solution(clauses1, solution))
+            del solver
+
+    def test_unused_solvers(self):
+        for threads in THREAD_COUNTS:
+            Solver(threads=threads)
+            Solver(threads=threads).solve()
+
 
 def run():
     print("sys.prefix: %s" % sys.prefix)
@@ -973,7 +1182,7 @@ def run():
     for cls in (TestXor, InitTester, TestSolve, TestNbVars, TestIsSatisfiable,
                 TestIncremental, TestSolveArgs, TestVersion, TestXorMixed,
                 TestGetConflict, TestEdgeCases, TestSolveTimeLimit,
-                TestOptions):
+                TestOptions, TestThreads):
         suite.addTests(loader.loadTestsFromTestCase(cls))
 
     runner = unittest.TextTestRunner(verbosity=2)

@@ -116,6 +116,7 @@ namespace CMSat {
         // std::invalid_argument on an unknown option or bad value,
         // std::runtime_error if called too late.
         void set_option(const std::string& name, const std::string& value);
+        static std::vector<std::string> get_option_names(); // accepted by set_option()
         void set_allow_otf_gauss(); //allow on-the-fly gaussian elimination
         void set_max_num_matrices(uint32_t val); //max number of gaussian elimination matrices
         void set_min_matrix_rows(uint32_t val); //below this many rows, a matrix is discarded
