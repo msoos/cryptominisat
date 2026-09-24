@@ -1,1 +1,3 @@
-To build, run `python -m build` from the main directory. To upload to pypi, run `twine upload ...`. The wheel binary should be obtained from `https://github.com/msoos/cryptominisat/actions/workflows/wheel-builder.yml`
+To build, run `python -m build` from the main directory. To upload to pypi, run
+`twine upload ...`. The wheel binary should be obtained from
+`https://github.com/msoos/cryptominisat/actions/workflows/wheel-builder.yml`

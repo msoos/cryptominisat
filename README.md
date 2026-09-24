@@ -18,8 +18,8 @@ bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
 
 ## Compiling
-Use of the [release binaries](https://github.com/msoos/cryptominisat/releases) is
-_strongly_ encouraged. The second best thing to use is Nix. Simply [install
+Use of the [release binaries](https://github.com/msoos/cryptominisat/releases)
+is _strongly_ encouraged. The second best thing to use is Nix. Simply [install
 nix](https://nixos.org/download/) and then:
 ```shell
 nix shell github:msoos/cryptominisat
@@ -123,6 +123,10 @@ True
 >>> print(sat)
 False
 ```
+
+Solver options such as `Solver(options={"maxmatrixrows": "5000"})` are
+listed in [python/README.md](python/README.md#solver-options).
+
 If you want to build the Python package from source, the build uses
 [scikit-build-core](https://github.com/scikit-build/scikit-build-core) which
 drives CMake — cadical and cadiback are fetched and compiled automatically,
@@ -237,6 +241,18 @@ Assumptions allow us to assume certain literal values for a _specific run_ but
 not all runs -- for all runs, we can simply add these assumptions as 1-long
 clauses.
 
+Command-line options can also be set from the library with
+`set_option(name, value)`, where the name is the option without the leading
+`--`. It must be called before any variable or clause is added, e.g. right
+after `set_num_threads(4)` above:
+```c++
+solver.set_option("maxmatrixrows", "5000");
+solver.set_option("polar", "rnd");
+```
+It throws `std::invalid_argument` on an unknown option or bad value, and
+`std::runtime_error` if called too late. The options available are listed in
+[python/README.md](python/README.md#solver-options).
+
 ## Multiple solutions
 To find multiple solutions to your problem, just run the solver in a loop
 and ban the previous solution found:
@@ -279,16 +295,21 @@ cargo build --release
 cargo test
 ```
 
-You can use it as per the [README](https://github.com/msoos/cryptominisat-rs/blob/master/README.markdown) in that repository. To include CryptoMiniSat in your Rust project, add the dependency to your `Cargo.toml` file:
+You can use it as per the
+[README](https://github.com/msoos/cryptominisat-rs/blob/master/README.markdown)
+in that repository. To include CryptoMiniSat in your Rust project, add the
+dependency to your `Cargo.toml` file:
 ```
 cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "master" }
 ```
 
-You can see an example project using CryptoMiniSat in Rust [here](https://github.com/msoos/caqe/).
+You can see an example project using CryptoMiniSat in Rust
+[here](https://github.com/msoos/caqe/).
 
 ## Preprocessing
-If you wish to use CryptoMiniSat as a preprocessor, we encourage you
-to try out our model counting preprocessor, [Arjun](https://www.github.com/meelgroup/arjun).
+If you wish to use CryptoMiniSat as a preprocessor, we encourage you to try out
+our model counting preprocessor,
+[Arjun](https://www.github.com/meelgroup/arjun).
 
 ## Gauss-Jordan elimination
 Since CryptoMiniSat 5.8, Gauss-Jordan elimination is compiled into the solver
@@ -314,7 +335,8 @@ Gauss options:
                                  usefulness ratio is recorded
 ```
 
-In particular, you may want to set `--autodisablegauss 0` in case you are sure it'll help.
+In particular, you may want to set `--autodisablegauss 0` in case you are sure
+it'll help.
 
 ## Proof Verification
 
@@ -342,16 +364,19 @@ The following arguments to cmake configure the generated build artifacts. To
 use, specify options prior to running make in a clean subdirectory: `cmake
 <options> ..`
 
-- `-DBUILD_SHARED_LIBS=<ON/OFF>` -- build shared (ON, default) or static (OFF) library and binary.
+- `-DBUILD_SHARED_LIBS=<ON/OFF>` -- build shared (ON, default) or static (OFF)
+  library and binary.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
-- `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on
-  most problems)
+- `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most
+  problems)
 - `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for
   [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR)
   interface support
-- `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory (contains `libcadical.a`). Auto-fetched and built if not set.
-- `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains `libcadiback.a`). Auto-fetched and built if not set.
+- `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory
+  (contains `libcadical.a`). Auto-fetched and built if not set.
+- `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains
+  `libcadiback.a`). Auto-fetched and built if not set.
 
 ## C usage
 See src/cryptominisat_c.h for details. This is an experimental feature.

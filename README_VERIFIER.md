@@ -3,7 +3,8 @@
 ## Overview
 
 CryptoMiniSat can emit a proof in FRAT format. The proof is then elaborated into
-XLRUP format and checked by `cake_xlrup`. Both tools come from the same repository.
+XLRUP format and checked by `cake_xlrup`. Both tools come from the same
+repository.
 
 The pipeline is:
 
@@ -32,8 +33,8 @@ cd cake_xlrup
 make
 ```
 
-Then symlink both binaries into the directory where your CNF file lives (or wherever
-you run verification from):
+Then symlink both binaries into the directory where your CNF file lives (or
+wherever you run verification from):
 
 ```bash
 ln -s /path/to/frat-xor/frat-xor        ./frat-xor
@@ -43,7 +44,8 @@ ln -s /path/to/frat-xor/cake_xlrup/cake_xlrup  ./cake_xlrup
 
 ## Step 1: Run CryptoMiniSat
 
-CryptoMiniSat takes **two file arguments**: the input CNF and the output proof file.
+CryptoMiniSat takes **two file arguments**: the input CNF and the output proof
+file.
 
 ```bash
 cryptominisat5 [options] input.cnf proof.frat
@@ -142,8 +144,8 @@ grep -v "^c" "$FRAT" > "$CLEAN"
 ./cake_xlrup "$CNF" "$XLRUP"
 ```
 
-The raw FRAT at `$FRAT` is kept unfiltered and contains all the `c ... start/end`
-comments from DEBUG_FRAT for inspection.
+The raw FRAT at `$FRAT` is kept unfiltered and contains all the
+`c ... start/end` comments from DEBUG_FRAT for inspection.
 
 2. Find the line in the XLRUP that fails, e.g. line 2557:
 

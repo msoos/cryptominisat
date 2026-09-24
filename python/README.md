@@ -12,10 +12,11 @@ pip install pycryptosat
 
 ## Building from source
 
-The build uses [scikit-build-core](https://github.com/scikit-build/scikit-build-core),
-which drives CMake under the hood. CMake automatically fetches and builds the
-required `cadical` and `cadiback` dependencies, so **no manual dependency
-installation is needed beyond GMP**.
+The build uses
+[scikit-build-core](https://github.com/scikit-build/scikit-build-core), which
+drives CMake under the hood. CMake automatically fetches and builds the required
+`cadical` and `cadiback` dependencies, so **no manual dependency installation is
+needed beyond GMP**.
 
 ### Quick start (Linux)
 
@@ -53,8 +54,8 @@ the `manylinux` ABI and is present on any standard distribution.
 ## Usage
 
 The `pycryptosat` module has one object, `Solver`, with the following methods:
-`solve`, `add_clause`, `add_clauses`, `add_xor_clause`, `nb_vars`,
-`is_satisfiable`, and `get_conflict`.
+`solve`, `add_clause`, `add_clauses`, `add_xor_clause`, `set_option`,
+`nb_vars`, `is_satisfiable`, and `get_conflict`.
 
 The function `add_clause()` takes an iterable list of literals such as
 `[1, 2]` which represents the truth `1 or 2 = True`. For example,
@@ -93,8 +94,96 @@ If instead of an assumption `add_clause()` would have been used, subsequent
   * `time_limit`: the time limit in seconds (float)
   * `confl_limit`: the conflict limit (integer)
   * `threads`: the number of threads to use (integer, default 1)
+  * `options`: solver options, see [Solver options](#solver-options) (dict)
 
-Both `time_limit` and `confl_limit` set a budget to the solver. The former is based on time elapsed while the former is based on number of conflicts met during search. If the solver runs out of budget, it returns with `(None, None)`. If both limits are used, the solver will terminate whenever one of the limits are hit (whichever first). Warning: Results from `time_limit` may differ from run to run, depending on compute load, etc. Use `confl_limit` for more reproducible runs.
+Both `time_limit` and `confl_limit` set a budget to the solver. The former is
+based on time elapsed while the latter is based on number of conflicts met
+during search. If the solver runs out of budget, it returns with `(None, None)`.
+If both limits are used, the solver will terminate whenever one of the limits
+are hit (whichever first). Warning: Results from `time_limit` may differ from
+run to run, depending on compute load, etc. Use `confl_limit` for more
+reproducible runs.
+
+## Solver options
+
+Solver options can be passed to the constructor as a dict, or set one by one
+with `set_option(name, value)`:
+
+```
+>>> from pycryptosat import Solver
+>>> s = Solver(options={"maxmatrixrows": "5000", "polar": "rnd"})
+>>> s.set_option("seed", "42")
+```
+
+Names are the `cryptominisat5` command-line options without the leading `--`,
+and both names and values must be strings. Options must be set before the
+first `add_clause()`, `add_clauses()`, `add_xor_clause()` or `solve()` call.
+Errors:
+  * `ValueError`: unknown option or invalid value
+  * `TypeError`: name or value is not a string, or `options` is not a dict
+  * `RuntimeError`: `set_option()` called too late
+
+Integer and boolean options take `"0"`/`"1"`. Run `cryptominisat5 --help` to
+see the default values and the full descriptions.
+
+General:
+
+| Option | Meaning |
+|---|---|
+| `seed` | Random seed |
+| `mult` | Multiplier for all simplification cutoffs |
+| `polar` | Polarity mode: `true`, `false`, `rnd`, `weight` or `auto` |
+| `branchstr` | Branching strategies to switch between while solving |
+
+Search:
+
+| Option | Meaning |
+|---|---|
+| `restart` | Enable restarts |
+| `stabilize` | Alternate stable and focused phases |
+| `reduce` | Enable learnt clause database reduction |
+| `lucky` | Search for lucky phases before the CDCL loop |
+| `sls` | Run local search during rephasing |
+| `rephase` | Enable resetting the saved phases |
+| `target` | Target phases: 0 = never, 1 = in stable phases, 2 = always |
+| `nonstop` | Never stop the search |
+
+Simplification:
+
+| Option | Meaning |
+|---|---|
+| `schedsimp` | Perform simplification rounds. 0 turns off all inprocessing |
+| `presimp` | Simplify at the very start |
+| `schedule` | Simplification schedule during the run |
+| `preschedule` | Simplification schedule at startup |
+| `confbtwsimp` | Conflicts before the first simplification |
+| `occsimp` | Occurrence-based simplification (BVE, subsumption, ...) |
+| `varelim` | Bounded variable elimination |
+| `bva` | Bounded variable addition |
+| `distill` | Clause distillation |
+| `sweep` | SAT sweeping |
+| `scc` | Find and replace equivalent literals |
+| `intree` | Intree probing |
+| `transred` | Transitive reduction of binary clauses |
+| `breakid` | Break symmetries with BreakID, if compiled in |
+
+XOR and Gaussian elimination:
+
+| Option | Meaning |
+|---|---|
+| `xor` | Recover XORs from the clauses |
+| `maxxorsize` | Largest XOR to recover (at most 12) |
+| `xorfindtout` | Effort limit for XOR recovery |
+| `maxxormat` | Largest matrix to echelonize during XOR recovery |
+| `xorgatemaxsize` | Largest clause XOR-gate finding considers |
+| `maxmatrixrows` | Gauss matrices with more rows are discarded |
+| `maxmatrixcols` | Gauss matrices with more columns are discarded |
+| `minmatrixrows` | Gauss matrices with fewer rows are discarded |
+| `maxnummatrices` | Maximum number of Gauss matrices |
+| `autodisablegauss` | Turn off Gauss matrices that perform badly |
+| `gaussusefulcutoff` | Usefulness ratio below which a matrix is turned off |
+| `gaussmincalls` | Gauss calls before a matrix may be turned off |
+| `gausscheckevery` | Check whether to turn off a matrix every N conflicts |
 
 ## Example
 

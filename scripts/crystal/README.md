@@ -7,11 +7,11 @@ will still be used, learnt from the solver's own runs.
 
 Three builds of the solver are involved:
 
-| build | cmake | what it does |
-|---|---|---|
-| normal | | reduce sorts candidates by glue, then size (kissat/CaDiCaL style) |
-| stats | `-DSTATS=ON` | as normal, plus at every reduce dumps every tracked clause's state to SQLite, and writes a FRAT proof with full hint chains |
-| predictor | `-DFINAL_PREDICTOR=ON` | as normal, but at every reduce predicts each clause's future use and sorts the candidates by it |
+- **normal**: reduce sorts candidates by glue, then size (kissat/CaDiCaL style)
+- **stats** (`-DSTATS=ON`): as normal, plus at every reduce dumps every tracked
+  clause's state to SQLite, and writes a FRAT proof with full hint chains
+- **predictor** (`-DFINAL_PREDICTOR=ON`): as normal, but at every reduce
+  predicts each clause's future use and sorts the candidates by it
 
 Only *which* candidates are deleted differs between normal and predictor,
 everything else (the `used` life, glue tiers, target fraction, flush) is
