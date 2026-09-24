@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <cstring>
 #include <thread>
 #include <charconv>
+#include <type_traits>
 #include <stdexcept>
 
 #include "main.h"
@@ -210,27 +211,44 @@ void Main::printResultFunc(
     }
 }
 
-static int fc_int(const std::string& s) {
-    int val = 0;
-    auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), val);
-    if (ec != std::errc{}) throw std::invalid_argument("not an integer: " + s);
-    if (ptr != s.data() + s.size()) throw std::invalid_argument("trailing characters in integer: " + s);
-    return val;
+template<class T> static T parse_opt(const std::string& s) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        return s;
+    } else if constexpr (std::is_same_v<T, bool>) {
+        return parse_opt<int>(s) != 0;
+    } else if constexpr (std::is_floating_point_v<T>) {
+        size_t pos = 0;
+        double val;
+        try { val = std::stod(s, &pos); }
+        catch (const std::exception&) { throw std::invalid_argument("not a number: " + s); }
+        if (pos != s.size()) throw std::invalid_argument("trailing characters in number: " + s);
+        return val;
+    } else if constexpr (std::is_integral_v<T>) {
+        T val{};
+        auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), val);
+        if (ec == std::errc::result_out_of_range) throw std::invalid_argument("integer out of range: " + s);
+        if (ec != std::errc{}) throw std::invalid_argument("not an integer: " + s);
+        if (ptr != s.data() + s.size()) throw std::invalid_argument("trailing characters in integer: " + s);
+        return val;
+    } else {
+        static_assert(sizeof(T) == 0, "parse_opt: unsupported option type");
+    }
 }
-static long long fc_ll(const std::string& s) {
-    long long val = 0;
-    auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), val);
-    if (ec != std::errc{}) throw std::invalid_argument("not an integer: " + s);
-    if (ptr != s.data() + s.size()) throw std::invalid_argument("trailing characters in integer: " + s);
-    return val;
+
+template<class T>
+argparse::Argument& Main::opt(const char* name, T& var, const char* help) {
+    return program.add_argument(name)
+        .action([&var](const std::string& a) { var = parse_opt<T>(a); })
+        .default_value(var)
+        .help(help);
 }
-static double fc_double(const std::string& s) {
-    size_t pos = 0;
-    double val;
-    try { val = std::stod(s, &pos); }
-    catch (const std::exception&) { throw std::invalid_argument("not a double: " + s); }
-    if (pos != s.size()) throw std::invalid_argument("trailing characters in double: " + s);
-    return val;
+
+template<class T>
+argparse::Argument& Main::opt(const char* short_name, const char* name, T& var, const char* help) {
+    return program.add_argument(short_name, name)
+        .action([&var](const std::string& a) { var = parse_opt<T>(a); })
+        .default_value(var)
+        .help(help);
 }
 
 void Main::readInAssumptions()
@@ -260,7 +278,7 @@ void Main::readInAssumptions()
 
         int x = 0;
         try {
-            x = fc_int(token);
+            x = parse_opt<int>(token);
         } catch (const std::invalid_argument&) {
             std::cerr
             << "ERROR! Could not parse assumptions file '"
@@ -290,14 +308,10 @@ void Main::add_supported_options() {
         .action([&](const auto ) {printVersionInfo(); exit(0);})
         .flag()
         .help("Print version information");
-    program.add_argument("--verb")
-        .action([&](const auto& a) {conf.verbosity = fc_int(a);})
-        .default_value(conf.verbosity)
-        .help("[0-10] Verbosity of solver. 0 = only solution");
-    program.add_argument("--xlrup")
-        .action([&](const auto& a) {xlrup_mode = fc_int(a);})
-        .default_value(1)
-        .help("Emit the proof in XLRUP format, checkable directly by cake_xlrup. Set to 0 to emit raw FRAT instead, for debugging proof generation with frat-rs [0..1]")
+    opt("--verb", conf.verbosity,
+        "[0-10] Verbosity of solver. 0 = only solution");
+    opt("--xlrup", xlrup_mode,
+        "Emit the proof in XLRUP format, checkable directly by cake_xlrup. Set to 0 to emit raw FRAT instead, for debugging proof generation with frat-rs [0..1]")
         .metavar("{0,1}");
     program.add_argument("--maxtime")
         .help("Stop solving after this much time (s)")
@@ -305,37 +319,23 @@ void Main::add_supported_options() {
     program.add_argument("--maxconfl")
         .help("Stop solving after this many conflicts")
         .scan<'d', uint64_t>();
-    program.add_argument("-r", "--random")
-        .action([&](const auto& a) {conf.orig_seed = fc_int(a);})
-        .default_value(conf.orig_seed)
-        .help("[0..] Random seed");
-    program.add_argument("-t", "--threads")
-        .default_value(1)
-        .action([&](const auto& a) {num_threads = fc_int(a);})
-        .help("Number of threads");
-    program.add_argument("-m", "--mult")
-        .action([&](const auto& a) {conf.orig_global_timeout_multiplier = fc_double(a);})
-        .default_value(conf.orig_global_timeout_multiplier)
-        .help("Time multiplier for all simplification cutoffs");
-    program.add_argument("--nextm")
-        .action([&](const auto& a) {conf.global_next_multiplier = fc_double(a);})
-        .default_value(conf.global_next_multiplier)
-        .help("Global multiplier when the next inprocessing should take place");
-    program.add_argument("--memoutmult")
-        .action([&](const auto& a) {conf.var_and_mem_out_mult = fc_double(a);})
-        .default_value(conf.var_and_mem_out_mult)
-        .help("Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing");
-    program.add_argument("--maxsol")
-        .action([&](const auto& a) {max_nr_of_solutions = fc_ll(a);})
-        .default_value(max_nr_of_solutions)
-        .help("Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea");
+    opt("-r", "--random", conf.orig_seed,
+        "[0..] Random seed");
+    opt("-t", "--threads", num_threads,
+        "Number of threads");
+    opt("-m", "--mult", conf.orig_global_timeout_multiplier,
+        "Time multiplier for all simplification cutoffs");
+    opt("--nextm", conf.global_next_multiplier,
+        "Global multiplier when the next inprocessing should take place");
+    opt("--memoutmult", conf.var_and_mem_out_mult,
+        "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing");
+    opt("--maxsol", max_nr_of_solutions,
+        "Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea");
     program.add_argument("--polar")
         .default_value("auto")
         .help("{true,false,rnd,weight,auto} Selects polarity mode. 'true'/'false' -> always branch positive/negative. 'weight' -> random, biased by the per-variable weight. 'auto' -> CaDiCaL's saved/target/best phases with rephasing");
-    program.add_argument("--scc")
-        .action([&](const auto& a) {conf.do_find_and_replace_eq_lits = fc_int(a);})
-        .default_value(conf.do_find_and_replace_eq_lits)
-        .help("Find equivalent literals through SCC and replace them");
+    opt("--scc", conf.do_find_and_replace_eq_lits,
+        "Find equivalent literals through SCC and replace them");
 
     #ifdef STATS_NEEDED
     program.add_argument("--clid")
@@ -345,144 +345,80 @@ void Main::add_supported_options() {
     #endif
 
     #ifdef FINAL_PREDICTOR
-    program.add_argument("--predloc")
-        .action([&](const auto& a) {conf.pred_conf_location = a;})
-        .default_value(conf.pred_conf_location)
-        .help("Directory with predictor-<table>-<tier>-<type>.json (see --predtables), empty = use built-in models");
-    program.add_argument("--predtype")
-        .action([&](const auto& a) {conf.predictor_type = a;})
-        .default_value(conf.predictor_type)
-        .help("Type of predictor. Supported: py, xgb");
-    program.add_argument("--predtables")
-        .action([&](const auto& a) {conf.pred_tables = a;})
-        .default_value(conf.pred_tables)
-        .help("Per short/long/forever: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all");
-    program.add_argument("--predbestfeats")
-        .action([&](const auto& a) {conf.predict_best_feat_fname = a;})
-        .default_value(conf.predict_best_feat_fname)
-        .help("Best features file, only for --predtype py");
+    opt("--predloc", conf.pred_conf_location,
+        "Directory with predictor-<table>-<tier>-<type>.json (see --predtables), empty = use built-in models");
+    opt("--predtype", conf.predictor_type,
+        "Type of predictor. Supported: py, xgb");
+    opt("--predtables", conf.pred_tables,
+        "Per short/long/forever: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all");
+    opt("--predbestfeats", conf.predict_best_feat_fname,
+        "Best features file, only for --predtype py");
 
-    program.add_argument("--predsortby")
-        .action([&](const auto& a) {conf.pred_sort_by = fc_int(a);})
-        .default_value(conf.pred_sort_by)
-        .help("Reduce removes the candidates with the lowest predicted use over the next: 0 = short, 1 = long, 2 = forever horizon, 3 = sum of the three (near-term counts 3x, long-term still counts)");
-    program.add_argument("--dumppreddistrib")
-        .action([&](const auto& a) {conf.dump_pred_distrib = fc_int(a);})
-        .default_value(conf.dump_pred_distrib)
-        .help("Dump predictions of all clauses at every reduce to pred_distrib.csv");
+    opt("--predsortby", conf.pred_sort_by,
+        "Reduce removes the candidates with the lowest predicted use over the next: 0 = short, 1 = long, 2 = forever horizon, 3 = sum of the three (near-term counts 3x, long-term still counts)");
+    opt("--dumppreddistrib", conf.dump_pred_distrib,
+        "Dump predictions of all clauses at every reduce to pred_distrib.csv");
     #endif
 
     /* po::options_description restartOptions("Restart options"); */
-    program.add_argument("--restart")
-        .action([&](const auto& a) {conf.do_restart = fc_int(a);})
-        .default_value(conf.do_restart)
-        .help("Enable restarts");
-    program.add_argument("--restartint")
-        .action([&](const auto& a) {conf.restartint = fc_int(a);})
-        .default_value(conf.restartint)
-        .help("Minimum number of conflicts between restarts");
-    program.add_argument("--restartmargin")
-        .action([&](const auto& a) {conf.restartmargin = fc_double(a);})
-        .default_value(conf.restartmargin)
-        .help("Percent the fast glue EMA must be above the slow one to restart");
-    program.add_argument("--emagluefast")
-        .action([&](const auto& a) {conf.emagluefast = fc_double(a);})
-        .default_value(conf.emagluefast)
-        .help("Window size of the fast glue EMA");
-    program.add_argument("--emaglueslow")
-        .action([&](const auto& a) {conf.emaglueslow = fc_double(a);})
-        .default_value(conf.emaglueslow)
-        .help("Window size of the slow glue EMA");
-    program.add_argument("--stabilize")
-        .action([&](const auto& a) {conf.do_stabilize = fc_int(a);})
-        .default_value(conf.do_stabilize)
-        .help("Alternate stable (reluctant doubling) and focused (glue EMA) phases");
-    program.add_argument("--stabilizeint")
-        .action([&](const auto& a) {conf.stabilizeint = fc_int(a);})
-        .default_value(conf.stabilizeint)
-        .help("Length of first stabilizing phase, in conflicts");
-    program.add_argument("--stabilizefactor")
-        .action([&](const auto& a) {conf.stabilizefactor = fc_double(a);})
-        .default_value(conf.stabilizefactor)
-        .help("Multiplier of stabilizing phase length at each phase change");
-    program.add_argument("--stabilizemaxint")
-        .action([&](const auto& a) {conf.stabilizemaxint = fc_int(a);})
-        .default_value(conf.stabilizemaxint)
-        .help("Maximum stabilizing phase length");
-    program.add_argument("--reluctant")
-        .action([&](const auto& a) {conf.reluctantint = fc_int(a);})
-        .default_value(conf.reluctantint)
-        .help("Reluctant doubling base period for stable-phase restarts, 0 = never restart there");
-    program.add_argument("--reluctantmax")
-        .action([&](const auto& a) {conf.reluctantmax = fc_int(a);})
-        .default_value(conf.reluctantmax)
-        .help("Maximum reluctant doubling period multiplier");
+    opt("--restart", conf.do_restart,
+        "Enable restarts");
+    opt("--restartint", conf.restartint,
+        "Minimum number of conflicts between restarts");
+    opt("--restartmargin", conf.restartmargin,
+        "Percent the fast glue EMA must be above the slow one to restart");
+    opt("--emagluefast", conf.emagluefast,
+        "Window size of the fast glue EMA");
+    opt("--emaglueslow", conf.emaglueslow,
+        "Window size of the slow glue EMA");
+    opt("--stabilize", conf.do_stabilize,
+        "Alternate stable (reluctant doubling) and focused (glue EMA) phases");
+    opt("--stabilizeint", conf.stabilizeint,
+        "Length of first stabilizing phase, in conflicts");
+    opt("--stabilizefactor", conf.stabilizefactor,
+        "Multiplier of stabilizing phase length at each phase change");
+    opt("--stabilizemaxint", conf.stabilizemaxint,
+        "Maximum stabilizing phase length");
+    opt("--reluctant", conf.reluctantint,
+        "Reluctant doubling base period for stable-phase restarts, 0 = never restart there");
+    opt("--reluctantmax", conf.reluctantmax,
+        "Maximum reluctant doubling period multiplier");
 
     /* po::options_description reduceDBOptions("Redundant clause options"); */
-    program.add_argument("--reduce")
-        .action([&](const auto& a) {conf.reduce = fc_int(a);})
-        .default_value(conf.reduce)
-        .help("Enable learnt clause DB reduction");
-    program.add_argument("--reduceint")
-        .action([&](const auto& a) {conf.reduceint = fc_int(a);})
-        .default_value(conf.reduceint)
-        .help("Base reduce interval, in conflicts");
-    program.add_argument("--reducetarget")
-        .action([&](const auto& a) {conf.reducetarget = fc_int(a);})
-        .default_value(conf.reducetarget)
-        .help("Percent of unused reduce candidates removed per reduce");
-    program.add_argument("--reducelow")
-        .action([&](const auto& a) {conf.reducelow = fc_int(a);})
-        .default_value(conf.reducelow)
-        .help("Fraction per mille of reduce candidates removed at the first reduce, rising towards --reducehigh as kissat. Set >= reducehigh to use --reducetarget");
-    program.add_argument("--reducehigh")
-        .action([&](const auto& a) {conf.reducehigh = fc_int(a);})
-        .default_value(conf.reducehigh)
-        .help("Asymptotic fraction per mille of reduce candidates removed");
-    program.add_argument("--reducekeepused")
-        .action([&](const auto& a) {conf.reduce_keep_used = fc_int(a);})
-        .default_value(conf.reduce_keep_used)
-        .help("Keep every learnt clause used since the last reduce, as CaDiCaL. 0: kissat, tier3 is always a candidate");
-    program.add_argument("--eagersubsume")
-        .action([&](const auto& a) {conf.eager_subsume = fc_int(a);})
-        .default_value(conf.eager_subsume)
-        .help("Demote the last learnt clauses subsumed by a new one, as kissat");
-    program.add_argument("--reducetier1glue")
-        .action([&](const auto& a) {conf.reducetier1glue = fc_int(a);})
-        .default_value(conf.reducetier1glue)
-        .help("Glue at/below which learnt clauses are kept forever");
-    program.add_argument("--reducetier2glue")
-        .action([&](const auto& a) {conf.reducetier2glue = fc_int(a);})
-        .default_value(conf.reducetier2glue)
-        .help("Glue at/below which learnt clauses get a double life");
-    program.add_argument("--dyntiers")
-        .action([&](const auto& a) {conf.dynamic_tiers = fc_int(a);})
-        .default_value(conf.dynamic_tiers)
-        .help("Recompute tier1/tier2 glue limits from glue usage at each reduce, as kissat");
-    program.add_argument("--flush")
-        .action([&](const auto& a) {conf.flush = fc_int(a);})
-        .default_value(conf.flush)
-        .help("Once in a while flush ALL unused redundant clauses");
-    program.add_argument("--flushfactor")
-        .action([&](const auto& a) {conf.flushfactor = fc_int(a);})
-        .default_value(conf.flushfactor)
-        .help("Flush interval multiplier");
-    program.add_argument("--flushint")
-        .action([&](const auto& a) {conf.flushint = fc_int(a);})
-        .default_value(conf.flushint)
-        .help("Initial flush interval, in conflicts");
+    opt("--reduce", conf.reduce,
+        "Enable learnt clause DB reduction");
+    opt("--reduceint", conf.reduceint,
+        "Base reduce interval, in conflicts");
+    opt("--reducetarget", conf.reducetarget,
+        "Percent of unused reduce candidates removed per reduce");
+    opt("--reducelow", conf.reducelow,
+        "Fraction per mille of reduce candidates removed at the first reduce, rising towards --reducehigh as kissat. Set >= reducehigh to use --reducetarget");
+    opt("--reducehigh", conf.reducehigh,
+        "Asymptotic fraction per mille of reduce candidates removed");
+    opt("--reducekeepused", conf.reduce_keep_used,
+        "Keep every learnt clause used since the last reduce, as CaDiCaL. 0: kissat, tier3 is always a candidate");
+    opt("--eagersubsume", conf.eager_subsume,
+        "Demote the last learnt clauses subsumed by a new one, as kissat");
+    opt("--reducetier1glue", conf.reducetier1glue,
+        "Glue at/below which learnt clauses are kept forever");
+    opt("--reducetier2glue", conf.reducetier2glue,
+        "Glue at/below which learnt clauses get a double life");
+    opt("--dyntiers", conf.dynamic_tiers,
+        "Recompute tier1/tier2 glue limits from glue usage at each reduce, as kissat");
+    opt("--flush", conf.flush,
+        "Once in a while flush ALL unused redundant clauses");
+    opt("--flushfactor", conf.flushfactor,
+        "Flush interval multiplier");
+    opt("--flushint", conf.flushint,
+        "Initial flush interval, in conflicts");
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    program.add_argument("--everypred")
-        .action([&](const auto& a) {conf.every_pred_reduce = fc_int(a);})
-        .default_value(conf.every_pred_reduce)
-        .help("Calculate satzilla features every N conflicts (STATS builds)");
+    opt("--everypred", conf.every_pred_reduce,
+        "Calculate satzilla features every N conflicts (STATS builds)");
     #endif
 
     /* po::options_description varPickOptions("Variable branching options"); */
-    program.add_argument("--branchstr")
-        .action([&](const auto& a) {conf.branch_strategy_setup = a;})
-        .default_value(conf.branch_strategy_setup)
-        .help("Branch strategy string that switches between different branch strategies while solving e.g. 'vsids1+vsids2'");
+    opt("--branchstr", conf.branch_strategy_setup,
+        "Branch strategy string that switches between different branch strategies while solving e.g. 'vsids1+vsids2'");
 
     program.add_argument("--nobansol")
         .flag()
@@ -493,162 +429,88 @@ void Main::add_supported_options() {
         .help("Parse special comments to run solve/simplify during parsing of CNF");
 
     /* po::options_description breakid_options("Breakid options"); */
-    program.add_argument("--breakid")
-        .action([&](const auto& a) {conf.do_breakid = fc_int(a);})
-        .default_value(conf.do_breakid)
-        .help("Run BreakID to break symmetries.");
-    program.add_argument("--breakideveryn")
-        .action([&](const auto& a) {conf.breakid_every_n = fc_int(a);})
-        .default_value(conf.breakid_every_n)
-        .help("Run BreakID every N simplification iterations");
-    program.add_argument("--breakidmaxlits")
-        .action([&](const auto& a) {conf.breakid_lits_limit_K = fc_ll(a);})
-        .default_value(conf.breakid_lits_limit_K)
-        .help("Maximum number of literals in thousands. If exceeded, BreakID will not run");
-    program.add_argument("--breakidmaxcls")
-        .action([&](const auto& a) {conf.breakid_cls_limit_K = fc_ll(a);})
-        .default_value(conf.breakid_cls_limit_K)
-        .help("Maximum number of clauses in thousands. If exceeded, BreakID will not run");
-    program.add_argument("--breakidmaxvars")
-        .action([&](const auto& a) {conf.breakid_vars_limit_K = fc_ll(a);})
-        .default_value(conf.breakid_vars_limit_K)
-        .help("Maximum number of variables in thousands. If exceeded, BreakID will not run");
-    program.add_argument("--breakidtime")
-        .action([&](const auto& a) {conf.breakid_time_limit_K = fc_ll(a);})
-        .default_value(conf.breakid_time_limit_K)
-        .help("Maximum number of steps taken during automorphism finding.");
-    program.add_argument("--breakidcls")
-        .action([&](const auto& a) {conf.breakid_max_constr_per_permut = fc_int(a);})
-        .default_value(conf.breakid_max_constr_per_permut)
-        .help("Maximum number of breaking clauses per permutation.");
-    program.add_argument("--breakidmatrix")
-        .action([&](const auto& a) {conf.breakid_matrix_detect = fc_int(a);})
-        .default_value(conf.breakid_matrix_detect)
-        .help("Detect matrix row interchangability");
+    opt("--breakid", conf.do_breakid,
+        "Run BreakID to break symmetries.");
+    opt("--breakideveryn", conf.breakid_every_n,
+        "Run BreakID every N simplification iterations");
+    opt("--breakidmaxlits", conf.breakid_lits_limit_K,
+        "Maximum number of literals in thousands. If exceeded, BreakID will not run");
+    opt("--breakidmaxcls", conf.breakid_cls_limit_K,
+        "Maximum number of clauses in thousands. If exceeded, BreakID will not run");
+    opt("--breakidmaxvars", conf.breakid_vars_limit_K,
+        "Maximum number of variables in thousands. If exceeded, BreakID will not run");
+    opt("--breakidtime", conf.breakid_time_limit_K,
+        "Maximum number of steps taken during automorphism finding.");
+    opt("--breakidcls", conf.breakid_max_constr_per_permut,
+        "Maximum number of breaking clauses per permutation.");
+    opt("--breakidmatrix", conf.breakid_matrix_detect,
+        "Detect matrix row interchangability");
 
     /* po::options_description sls_options("Stochastic Local Search options"); */
-    program.add_argument("--sls")
-        .action([&](const auto& a) {conf.do_sls = fc_int(a);})
-        .default_value(conf.do_sls)
-        .help("Run local search ('walk') during rephasing");
-    program.add_argument("--walknonstable")
-        .action([&](const auto& a) {conf.walknonstable = fc_int(a);})
-        .default_value(conf.walknonstable)
-        .help("Run local search during focused phases too");
-    program.add_argument("--walkseedphase")
-        .action([&](const auto& a) {conf.walkseedphase = fc_int(a);})
-        .default_value(conf.walkseedphase)
-        .help("Start local search off the CDCL phases, as CaDiCaL does");
-    program.add_argument("--walkinitially")
-        .action([&](const auto& a) {conf.walkinitially = fc_int(a);})
-        .default_value(conf.walkinitially)
-        .help("Local search rounds to run before simplifying and searching, 0=none");
-    program.add_argument("--walkxorweight")
-        .action([&](const auto& a) {conf.walkxorweight = fc_int(a);})
-        .default_value(conf.walkxorweight)
-        .help("Weight of XOR constraints in yalsat's break values, times 100 (range 0-1000)");
-    program.add_argument("--walkmineff")
-        .action([&](const auto& a) {conf.walkmineff = fc_int(a);})
-        .default_value(conf.walkmineff)
-        .help("Minimum local search effort, in yalsat mems");
-    program.add_argument("--walkmaxeff")
-        .action([&](const auto& a) {conf.walkmaxeff = fc_int(a);})
-        .default_value(conf.walkmaxeff)
-        .help("Maximum local search effort, in yalsat mems");
-    program.add_argument("--walkreleff")
-        .action([&](const auto& a) {conf.walkreleff = fc_int(a);})
-        .default_value(conf.walkreleff)
-        .help("Local search effort per mille of the search propagations done so far");
-    program.add_argument("--slsmaxmem")
-        .action([&](const auto& a) {conf.sls_memoutMB = fc_int(a);})
-        .default_value(conf.sls_memoutMB)
-        .help("Maximum number of MB to give to the local search solver. Skips local search if handing over the formula would need more.");
-    program.add_argument("--ccnrneighmaxsz")
-        .action([&](const auto& a) {conf.ccnr_neighbor_max_cl_size = fc_int(a);})
-        .default_value(conf.ccnr_neighbor_max_cl_size)
-        .help("CCNR builds no neighbor edges for clauses longer than this. The neighborhood is quadratic in clause size, so one huge clause costs GBs and makes every flip of its vars charge thousands of mems");
-    program.add_argument("--backboneccnrlim")
-        .action([&](const auto& a) {conf.backbone_ccnr_mems_limitM = fc_int(a);})
-        .default_value(conf.backbone_ccnr_mems_limitM)
-        .help("Mems budget, in millions, for each of the CCNR local search tries that pre-filter backbone candidates. Too low and no model is found, so cadiback must test every variable");
+    opt("--sls", conf.do_sls,
+        "Run local search ('walk') during rephasing");
+    opt("--walknonstable", conf.walknonstable,
+        "Run local search during focused phases too");
+    opt("--walkseedphase", conf.walkseedphase,
+        "Start local search off the CDCL phases, as CaDiCaL does");
+    opt("--walkinitially", conf.walkinitially,
+        "Local search rounds to run before simplifying and searching, 0=none");
+    opt("--walkxorweight", conf.walkxorweight,
+        "Weight of XOR constraints in yalsat's break values, times 100 (range 0-1000)");
+    opt("--walkmineff", conf.walkmineff,
+        "Minimum local search effort, in yalsat mems");
+    opt("--walkmaxeff", conf.walkmaxeff,
+        "Maximum local search effort, in yalsat mems");
+    opt("--walkreleff", conf.walkreleff,
+        "Local search effort per mille of the search propagations done so far");
+    opt("--slsmaxmem", conf.sls_memoutMB,
+        "Maximum number of MB to give to the local search solver. Skips local search if handing over the formula would need more.");
+    opt("--ccnrneighmaxsz", conf.ccnr_neighbor_max_cl_size,
+        "CCNR builds no neighbor edges for clauses longer than this. The neighborhood is quadratic in clause size, so one huge clause costs GBs and makes every flip of its vars charge thousands of mems");
+    opt("--backboneccnrlim", conf.backbone_ccnr_mems_limitM,
+        "Mems budget, in millions, for each of the CCNR local search tries that pre-filter backbone candidates. Too low and no model is found, so cadiback must test every variable");
 
     /* po::options_description rephase_options("Rephasing options"); */
-    program.add_argument("--rephase")
-        .action([&](const auto& a) {conf.do_rephase = fc_int(a);})
-        .default_value(conf.do_rephase)
-        .help("Enable resetting the saved phases");
-    program.add_argument("--rephaseint")
-        .action([&](const auto& a) {conf.rephaseint = fc_int(a);})
-        .default_value(conf.rephaseint)
-        .help("Rephase interval, in conflicts. The interval grows arithmetically.");
-    program.add_argument("--phase")
-        .action([&](const auto& a) {conf.phase = fc_int(a);})
-        .default_value(conf.phase)
-        .help("Default decision polarity");
-    program.add_argument("--lucky")
-        .action([&](const auto& a) {conf.lucky = fc_int(a);})
-        .default_value(conf.lucky)
-        .help("Search for lucky phases before the CDCL loop");
-    program.add_argument("--target")
-        .action([&](const auto& a) {conf.target_phases = fc_int(a);})
-        .default_value(conf.target_phases)
-        .help("Decide on target phases. 0 = never, 1 = stable phases only, 2 = always");
+    opt("--rephase", conf.do_rephase,
+        "Enable resetting the saved phases");
+    opt("--rephaseint", conf.rephaseint,
+        "Rephase interval, in conflicts. The interval grows arithmetically.");
+    opt("--phase", conf.phase,
+        "Default decision polarity");
+    opt("--lucky", conf.lucky,
+        "Search for lucky phases before the CDCL loop");
+    opt("--target", conf.target_phases,
+        "Decide on target phases. 0 = never, 1 = stable phases only, 2 = always");
 
     /* po::options_description probeOptions("Probing options"); */
-    program.add_argument("--transred")
-        .action([&](const auto& a) {conf.do_trans_red = fc_int(a);})
-        .default_value(conf.do_trans_red)
-        .help("Remove useless binary clauses (transitive reduction)");
-    program.add_argument("--intree")
-        .action([&](const auto& a) {conf.do_intree_probe = fc_int(a);})
-        .default_value(conf.do_intree_probe)
-        .help("Carry out intree-based probing");
-    program.add_argument("--fullprobe")
-        .action([&](const auto& a) {conf.do_full_probe = fc_int(a);})
-        .default_value(conf.do_full_probe)
-        .help("Regularly probe both polarities of variables during search");
-    program.add_argument("--fullprobemaxm")
-        .action([&](const auto& a) {conf.full_probe_time_limitM = fc_ll(a);})
-        .default_value(conf.full_probe_time_limitM)
-        .help("Time in mega-bogoprops to perform full probing");
-    program.add_argument("--intreemaxm")
-        .action([&](const auto& a) {conf.intree_time_limitM = fc_ll(a);})
-        .default_value(conf.intree_time_limitM)
-        .help("Time in mega-bogoprops to perform intree probing");
-    program.add_argument("--intreeeff")
-        .action([&](const auto& a) {conf.intree_effort = fc_double(a);})
-        .default_value(conf.intree_effort)
-        .help("Intree probing budget as a fraction of all propagations since its last call");
-    program.add_argument("--otfhyper")
-        .action([&](const auto& a) {conf.do_hyperbin_and_transred = fc_int(a);})
-        .default_value(conf.do_hyperbin_and_transred)
-        .help("Perform hyper-binary resolution during probing");
-    program.add_argument("--hyperkeepconfl")
-        .action([&](const auto& a) {conf.hyperbin_keep_confl = fc_double(a);})
-        .default_value(conf.hyperbin_keep_confl)
-        .help("Conflicts an unused intree hyper-bin is kept for before being dropped");
+    opt("--transred", conf.do_trans_red,
+        "Remove useless binary clauses (transitive reduction)");
+    opt("--intree", conf.do_intree_probe,
+        "Carry out intree-based probing");
+    opt("--fullprobe", conf.do_full_probe,
+        "Regularly probe both polarities of variables during search");
+    opt("--fullprobemaxm", conf.full_probe_time_limitM,
+        "Time in mega-bogoprops to perform full probing");
+    opt("--intreemaxm", conf.intree_time_limitM,
+        "Time in mega-bogoprops to perform intree probing");
+    opt("--intreeeff", conf.intree_effort,
+        "Intree probing budget as a fraction of all propagations since its last call");
+    opt("--otfhyper", conf.do_hyperbin_and_transred,
+        "Perform hyper-binary resolution during probing");
+    opt("--hyperkeepconfl", conf.hyperbin_keep_confl,
+        "Conflicts an unused intree hyper-bin is kept for before being dropped");
 
     /* po::options_description simp_schedules("Simplification schedules"); */
-    program.add_argument("--schedsimp")
-        .action([&](const auto& a) {conf.do_simplify_problem = fc_int(a);})
-        .default_value(conf.do_simplify_problem)
-        .help("Perform simplification rounds. If 0, we never perform any.");
-    program.add_argument("--presimp")
-        .action([&](const auto& a) {conf.simplify_at_startup = fc_int(a);})
-        .default_value(conf.simplify_at_startup)
-        .help("Perform simplification at the very start");
-    program.add_argument("--allpresimp")
-        .action([&](const auto& a) {conf.simplify_at_every_startup = fc_int(a);})
-        .default_value(conf.simplify_at_every_startup)
-        .help("Perform simplification at EVERY start -- only matters in library mode");
-    program.add_argument("-n", "--nonstop")
-        .action([&](const auto& a) {conf.never_stop_search = fc_int(a);})
-        .default_value(conf.never_stop_search)
-        .help("Never stop the search() process in class SATSolver");
-    program.add_argument("--maxnumsimppersolve")
-        .action([&](const auto& a) {conf.max_num_simplify_per_solve_call = fc_int(a);})
-        .default_value(conf.max_num_simplify_per_solve_call)
-        .help("Maximum number of simplifications to perform for every solve() call. After this, no more inprocessing will take place.");
+    opt("--schedsimp", conf.do_simplify_problem,
+        "Perform simplification rounds. If 0, we never perform any.");
+    opt("--presimp", conf.simplify_at_startup,
+        "Perform simplification at the very start");
+    opt("--allpresimp", conf.simplify_at_every_startup,
+        "Perform simplification at EVERY start -- only matters in library mode");
+    opt("-n", "--nonstop", conf.never_stop_search,
+        "Never stop the search() process in class SATSolver");
+    opt("--maxnumsimppersolve", conf.max_num_simplify_per_solve_call,
+        "Maximum number of simplifications to perform for every solve() call. After this, no more inprocessing will take place.");
 
     program.add_argument("--schedule")
         .action([&](const auto& a) {conf.simplify_schedule_nonstartup = a;})
@@ -656,523 +518,292 @@ void Main::add_supported_options() {
     program.add_argument("--preschedule")
         .action([&](const auto& a) {conf.simplify_schedule_startup = a;})
         .help("Schedule for simplification at startup");
-    program.add_argument("--occsimp")
-        .action([&](const auto& a) {conf.perform_occur_based_simp = fc_int(a);})
-        .default_value(conf.perform_occur_based_simp)
-        .help("Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)");
-    program.add_argument("--confbtwsimp")
-        .action([&](const auto& a) {conf.num_conflicts_of_search = fc_ll(a);})
-        .default_value(conf.num_conflicts_of_search)
-        .help("Start first simplification after this many conflicts");
-    program.add_argument("--confbtwsimpinc")
-        .action([&](const auto& a) {conf.num_conflicts_of_search_inc = fc_double(a);})
-        .default_value(conf.num_conflicts_of_search_inc)
-        .help("Simp rounds increment by this power of N");
+    opt("--occsimp", conf.perform_occur_based_simp,
+        "Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)");
+    opt("--confbtwsimp", conf.num_conflicts_of_search,
+        "Start first simplification after this many conflicts");
+    opt("--confbtwsimpinc", conf.num_conflicts_of_search_inc,
+        "Simp rounds increment by this power of N");
 
     /* po::options_description tern_res_options("Ternary resolution"); */
     std::ostringstream tern_max_create;
     tern_max_create << std::setprecision(2) << conf.ternary_max_create;
-    program.add_argument("--tern")
-        .action([&](const auto& a) {conf.do_ternary = fc_int(a);})
-        .default_value(conf.do_ternary)
-        .help("Perform Ternary resolution");
-    program.add_argument("--terntimelim")
-        .action([&](const auto& a) {conf.ternary_res_time_limitM = fc_ll(a);})
-        .default_value(conf.ternary_res_time_limitM)
-        .help("Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'");
-    program.add_argument("--terncreate")
-        .action([&](const auto& a) {conf.ternary_max_create = fc_double(a);})
-        .default_value(conf.ternary_max_create)
-        .help("Create only this multiple (of linked in cls) ternary resolution clauses per simp run");
-    program.add_argument("--ternbincreate")
-        .action([&](const auto& a) {conf.allow_ternary_bin_create = fc_int(a);})
-        .default_value(conf.allow_ternary_bin_create)
-        .help("Allow ternary resolving to generate binary clauses");
+    opt("--tern", conf.do_ternary,
+        "Perform Ternary resolution");
+    opt("--terntimelim", conf.ternary_res_time_limitM,
+        "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'");
+    opt("--terncreate", conf.ternary_max_create,
+        "Create only this multiple (of linked in cls) ternary resolution clauses per simp run");
+    opt("--ternbincreate", conf.allow_ternary_bin_create,
+        "Allow ternary resolving to generate binary clauses");
 
     /* po::options_description occ_mem_limits("Occ-based simplification memory limits"); */
-    program.add_argument("--occredmax")
-        .action([&](const auto& a) {conf.max_red_link_in_size = fc_int(a);})
-        .default_value(conf.max_red_link_in_size)
-        .help("Don't add to occur list any redundant clause larger than this");
-    program.add_argument("--occredmaxmb")
-        .action([&](const auto& a) {conf.max_occur_red_mb = fc_double(a);})
-        .default_value(conf.max_occur_red_mb)
-        .help("Don't allow redundant occur size to be beyond this many MB");
-    program.add_argument("--occirredmaxmb")
-        .action([&](const auto& a) {conf.max_occur_irred_mb = fc_double(a);})
-        .default_value(conf.max_occur_irred_mb)
-        .help("Don't allow irredundant occur size to be beyond this many MB");
+    opt("--occredmax", conf.max_red_link_in_size,
+        "Don't add to occur list any redundant clause larger than this");
+    opt("--occredmaxmb", conf.max_occur_red_mb,
+        "Don't allow redundant occur size to be beyond this many MB");
+    opt("--occirredmaxmb", conf.max_occur_irred_mb,
+        "Don't allow irredundant occur size to be beyond this many MB");
     ;
 
     /* po::options_description sub_str_time_limits("Occ-based subsumption and strengthening time limits"); */
-    program.add_argument("--strengthen")
-        .action([&](const auto& a) {conf.do_strengthen_with_occur = fc_int(a);})
-        .default_value(conf.do_strengthen_with_occur)
-        .help("Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system");
-    program.add_argument("--weakentimelim")
-        .action([&](const auto& a) {conf.weaken_time_limitM = fc_ll(a);})
-        .default_value(conf.weaken_time_limitM)
-        .help("Time-out in bogoprops M of weakening used");
-    program.add_argument("--substimelim")
-        .action([&](const auto& a) {conf.subsumption_time_limitM = fc_ll(a);})
-        .default_value(conf.subsumption_time_limitM)
-        .help("Time-out in bogoprops M of subsumption of long clauses with long clauses, after computing occur");
-    program.add_argument("--substimelimbinratio")
-        .action([&](const auto& a) {conf.subsumption_time_limit_ratio_sub_str_w_bin = fc_double(a);})
-        .default_value(conf.subsumption_time_limit_ratio_sub_str_w_bin)
-        .help("Ratio of subsumption time limit to spend on sub&str long clauses with bin");
-    program.add_argument("--substimelimlongratio")
-        .action([&](const auto& a) {conf.subsumption_time_limit_ratio_sub_w_long = fc_double(a);})
-        .default_value(conf.subsumption_time_limit_ratio_sub_w_long)
-        .help("Ratio of subsumption time limit to spend on sub long clauses with long");
-    program.add_argument("--strstimelim")
-        .action([&](const auto& a) {conf.strengthening_time_limitM = fc_ll(a);})
-        .default_value(conf.strengthening_time_limitM)
-        .help("Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur");
-    program.add_argument("--sublonggothrough")
-        .action([&](const auto& a) {conf.subsume_gothrough_multip = fc_double(a);})
-        .default_value(conf.subsume_gothrough_multip)
-        .help("How many times go through subsume");
+    opt("--strengthen", conf.do_strengthen_with_occur,
+        "Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system");
+    opt("--weakentimelim", conf.weaken_time_limitM,
+        "Time-out in bogoprops M of weakening used");
+    opt("--substimelim", conf.subsumption_time_limitM,
+        "Time-out in bogoprops M of subsumption of long clauses with long clauses, after computing occur");
+    opt("--substimelimbinratio", conf.subsumption_time_limit_ratio_sub_str_w_bin,
+        "Ratio of subsumption time limit to spend on sub&str long clauses with bin");
+    opt("--substimelimlongratio", conf.subsumption_time_limit_ratio_sub_w_long,
+        "Ratio of subsumption time limit to spend on sub long clauses with long");
+    opt("--strstimelim", conf.strengthening_time_limitM,
+        "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur");
+    opt("--sublonggothrough", conf.subsume_gothrough_multip,
+        "How many times go through subsume");
 
     /* po::options_description bva_options("BVA options"); */
-    program.add_argument("--bva")
-        .action([&](const auto& a) {conf.do_bva = fc_int(a);})
-        .default_value(conf.do_bva)
-        .help("Perform bounded variable addition");
+    opt("--bva", conf.do_bva,
+        "Perform bounded variable addition");
 
     /* po::options_description bve_options("BVE options"); */
-    program.add_argument("--varelim")
-        .action([&](const auto& a) {conf.do_var_elim = fc_int(a);})
-        .default_value(conf.do_var_elim)
-        .help("Perform variable elimination as per Een and Biere");
-    program.add_argument("--varelimto")
-        .action([&](const auto& a) {conf.varelim_time_limitM = fc_ll(a);})
-        .default_value(conf.varelim_time_limitM)
-        .help("Var elimination bogoprops M time limit");
-    program.add_argument("--varelimover")
-        .action([&](const auto& a) {conf.min_bva_gain = fc_int(a);})
-        .default_value(conf.min_bva_gain)
-        .help("Do BVE until the resulting no. of clause increase is less than X. Only power of 2 makes sense, i.e. 2,4,8...");
-    program.add_argument("--emptyelim")
-        .action([&](const auto& a) {conf.do_empty_varelim = fc_int(a);})
-        .default_value(conf.do_empty_varelim)
-        .help("Perform empty resolvent elimination using bit-map trick");
-    program.add_argument("--varelimmaxmb")
-        .action([&](const auto& a) {conf.var_linkin_limit_MB = fc_int(a);})
-        .default_value(conf.var_linkin_limit_MB)
-        .help("Maximum extra MB of memory to use for new clauses during varelim");
-    program.add_argument("--eratio")
-        .action([&](const auto& a) {conf.var_elim_ratio_per_iter = fc_double(a);})
-        .default_value(conf.var_elim_ratio_per_iter)
-        //, ssERatio.str()
-        .help("Eliminate this ratio of free variables at most per variable elimination iteration");
-    program.add_argument("--varelimocclim")
-        .action([&](const auto& a) {conf.varelim_occ_cutoff = fc_int(a);})
-        .default_value(conf.varelim_occ_cutoff)
-        .help("Don't try to eliminate a variable whose more frequent polarity occurs more than this many times. 0 = no limit");
-    program.add_argument("--varelimprodlim")
-        .action([&](const auto& a) {conf.varelim_occ_prod_cutoff = fc_int(a);})
-        .default_value(conf.varelim_occ_prod_cutoff)
-        .help("Don't try to eliminate a variable whose pos*neg occurrence product is over this");
-    program.add_argument("--varelimschedtouched")
-        .action([&](const auto& a) {conf.varelim_sched_only_touched = fc_int(a);})
-        .default_value(conf.varelim_sched_only_touched)
-        .help("Only schedule for elimination the vars whose clauses changed since BVE last looked (CaDiCaL's Flags::elim). 0 = schedule every eligible var");
-    program.add_argument("--weakenclsmaxsz")
-        .action([&](const auto& a) {conf.weaken_max_cls_size = fc_int(a);})
-        .default_value(conf.weaken_max_cls_size)
-        .help("Don't weaken a clause longer than this during BVE. 0 = no limit");
-    program.add_argument("--varelimclsmaxsz")
-        .action([&](const auto& a) {conf.varelim_max_cls_size = fc_int(a);})
-        .default_value(conf.varelim_max_cls_size)
-        .help("Don't try to eliminate a variable that occurs in a clause longer than this. 0 = no limit");
-    program.add_argument("--varelimclslim")
-        .action([&](const auto& a) {conf.velim_resolvent_too_large = fc_int(a);})
-        .default_value(conf.velim_resolvent_too_large)
-        .help("Maximum resolvent size during BVE, -1 = no limit");
-    program.add_argument("--varelimirregocclim")
-        .action([&](const auto& a) {conf.varelim_irreg_gate_occ_cutoff = fc_int(a);})
-        .default_value(conf.varelim_irreg_gate_occ_cutoff)
-        .help("Don't run kitten-based irregular gate finding if the variable has more occurrences than this");
-    program.add_argument("--varelimirregconfl")
-        .action([&](const auto& a) {conf.varelim_irreg_gate_confl_limit = fc_int(a);})
-        .default_value(conf.varelim_irreg_gate_confl_limit)
-        .help("Picosat conflict budget for one irregular gate query during BVE");
-    program.add_argument("--varelimirregunit")
-        .action([&](const auto& a) {conf.varelim_irreg_gate_unit = fc_int(a);})
-        .default_value(conf.varelim_irreg_gate_unit)
-        .help("Turn a one-sided irregular-gate core into a unit instead of a gate");
-    program.add_argument("--varelimprod")
-        .action([&](const auto& a) {conf.varelim_score_prod = fc_int(a);})
-        .default_value(conf.varelim_score_prod)
-        .help("Weight of pos*neg in the BVE ordering score");
-    program.add_argument("--varelimsum")
-        .action([&](const auto& a) {conf.varelim_score_sum = fc_int(a);})
-        .default_value(conf.varelim_score_sum)
-        .help("Weight of pos+neg in the BVE ordering score");
-    program.add_argument("--varelimcheckres")
-        .action([&](const auto& a) {conf.varelim_check_resolvent_subs = fc_int(a);})
-        .default_value(conf.varelim_check_resolvent_subs)
-        .help("BVE should check whether resolvents subsume others and check for exact size increase");
-    program.add_argument("--occrelocatelim")
-        .action([&](const auto& a) {conf.occ_relocate_lim = fc_int(a);})
-        .default_value(conf.occ_relocate_lim)
-        .help("When strengthening removes a literal whose occurrence list is longer than this, move the clause to a new place instead of searching the list");
+    opt("--varelim", conf.do_var_elim,
+        "Perform variable elimination as per Een and Biere");
+    opt("--varelimto", conf.varelim_time_limitM,
+        "Var elimination bogoprops M time limit");
+    opt("--varelimover", conf.min_bva_gain,
+        "Do BVE until the resulting no. of clause increase is less than X. Only power of 2 makes sense, i.e. 2,4,8...");
+    opt("--emptyelim", conf.do_empty_varelim,
+        "Perform empty resolvent elimination using bit-map trick");
+    opt("--varelimmaxmb", conf.var_linkin_limit_MB,
+        "Maximum extra MB of memory to use for new clauses during varelim");
+    opt("--eratio", conf.var_elim_ratio_per_iter,
+        "Eliminate this ratio of free variables at most per variable elimination iteration");
+    opt("--varelimocclim", conf.varelim_occ_cutoff,
+        "Don't try to eliminate a variable whose more frequent polarity occurs more than this many times. 0 = no limit");
+    opt("--varelimprodlim", conf.varelim_occ_prod_cutoff,
+        "Don't try to eliminate a variable whose pos*neg occurrence product is over this");
+    opt("--varelimschedtouched", conf.varelim_sched_only_touched,
+        "Only schedule for elimination the vars whose clauses changed since BVE last looked (CaDiCaL's Flags::elim). 0 = schedule every eligible var");
+    opt("--weakenclsmaxsz", conf.weaken_max_cls_size,
+        "Don't weaken a clause longer than this during BVE. 0 = no limit");
+    opt("--varelimclsmaxsz", conf.varelim_max_cls_size,
+        "Don't try to eliminate a variable that occurs in a clause longer than this. 0 = no limit");
+    opt("--varelimclslim", conf.velim_resolvent_too_large,
+        "Maximum resolvent size during BVE, -1 = no limit");
+    opt("--varelimirregocclim", conf.varelim_irreg_gate_occ_cutoff,
+        "Don't run kitten-based irregular gate finding if the variable has more occurrences than this");
+    opt("--varelimirregconfl", conf.varelim_irreg_gate_confl_limit,
+        "Picosat conflict budget for one irregular gate query during BVE");
+    opt("--varelimirregunit", conf.varelim_irreg_gate_unit,
+        "Turn a one-sided irregular-gate core into a unit instead of a gate");
+    opt("--varelimprod", conf.varelim_score_prod,
+        "Weight of pos*neg in the BVE ordering score");
+    opt("--varelimsum", conf.varelim_score_sum,
+        "Weight of pos+neg in the BVE ordering score");
+    opt("--varelimcheckres", conf.varelim_check_resolvent_subs,
+        "BVE should check whether resolvents subsume others and check for exact size increase");
+    opt("--occrelocatelim", conf.occ_relocate_lim,
+        "When strengthening removes a literal whose occurrence list is longer than this, move the clause to a new place instead of searching the list");
 
     /* po::options_description xorOptions("XOR-related options"); */
-    program.add_argument("--xor")
-        .action([&](const auto& a) {conf.do_find_xors = fc_int(a);})
-        .default_value(conf.do_find_xors)
-        .help("Discover long XORs");
-    program.add_argument("--maxxorsize")
-        .action([&](const auto& a) {conf.max_xor_to_find = fc_int(a);})
-        .default_value(conf.max_xor_to_find)
-        .help("Maximum XOR size to find");
-    program.add_argument("--xorfindtout")
-        .action([&](const auto& a) {conf.xor_finder_time_limitM = fc_ll(a);})
-        .default_value(conf.xor_finder_time_limitM)
-        .help("Time limit for finding XORs");
-    program.add_argument("--maxxormat")
-        .action([&](const auto& a) {conf.max_xor_matrix = fc_ll(a);})
-        .default_value(conf.max_xor_matrix)
-        .help("Maximum matrix size (=num elements) that we should try to echelonize");
+    opt("--xor", conf.do_find_xors,
+        "Discover long XORs");
+    opt("--maxxorsize", conf.max_xor_to_find,
+        "Maximum XOR size to find");
+    opt("--xorfindtout", conf.xor_finder_time_limitM,
+        "Time limit for finding XORs");
+    opt("--maxxormat", conf.max_xor_matrix,
+        "Maximum matrix size (=num elements) that we should try to echelonize");
 
     /* po::options_description gateOptions("Gate-related options"); */
-    program.add_argument("--gates")
-        .action([&](const auto& a) {conf.do_gate_find = fc_int(a);})
-        .default_value(conf.do_gate_find)
-        .help("Find gates.");
-    program.add_argument("--printgatedot")
-        .action([&](const auto& a) {conf.do_print_gate_dot = fc_int(a);})
-        .default_value(conf.do_print_gate_dot)
-        .help("Print gate structure regularly to file 'gatesX.dot'");
-    program.add_argument("--gatefindto")
-        .action([&](const auto& a) {conf.gatefinder_time_limitM = fc_ll(a);})
-        .default_value(conf.gatefinder_time_limitM)
-        .help("Max time in bogoprops M to find gates");
+    opt("--gates", conf.do_gate_find,
+        "Find gates.");
+    opt("--printgatedot", conf.do_print_gate_dot,
+        "Print gate structure regularly to file 'gatesX.dot'");
+    opt("--gatefindto", conf.gatefinder_time_limitM,
+        "Max time in bogoprops M to find gates");
 
     /* po::options_description conflOptions("Conflict options"); */
-    program.add_argument("--recur")
-        .action([&](const auto& a) {conf.do_recursive_minim = fc_int(a);})
-        .default_value(conf.do_recursive_minim)
-        .help("Perform recursive minimisation");
-    program.add_argument("--moreminim")
-        .action([&](const auto& a) {conf.do_minim_red_more = fc_int(a);})
-        .default_value(conf.do_minim_red_more)
-        .help("Perform strong minimisation at conflict gen.");
-    program.add_argument("--moremoreminim")
-        .action([&](const auto& a) {conf.do_minim_red_more_more = fc_int(a);})
-        .default_value(conf.do_minim_red_more_more)
-        .help("Perform even stronger minimisation at conflict gen.");
-    program.add_argument("--moremorealways")
-        .action([&](const auto& a) {conf.do_always_fminim = fc_int(a);})
-        .default_value(conf.do_always_fminim)
-        .help("Always strong-minimise clause");
-    program.add_argument("--decbased")
-        .action([&](const auto& a) {conf.do_decision_based_cl = fc_int(a);})
-        .default_value(conf.do_decision_based_cl)
-        .help("Create decision-based conflict clauses when the UIP clause is too large");
+    opt("--recur", conf.do_recursive_minim,
+        "Perform recursive minimisation");
+    opt("--moreminim", conf.do_minim_red_more,
+        "Perform strong minimisation at conflict gen.");
+    opt("--moremoreminim", conf.do_minim_red_more_more,
+        "Perform even stronger minimisation at conflict gen.");
+    opt("--moremorealways", conf.do_always_fminim,
+        "Always strong-minimise clause");
+    opt("--decbased", conf.do_decision_based_cl,
+        "Create decision-based conflict clauses when the UIP clause is too large");
 
     /* po::options_description propOptions("Glue options"); */
-    program.add_argument("--bumpreasondepth")
-        .action([&](const auto& a) {conf.bump_reason_depth = fc_int(a);})
-        .default_value(conf.bump_reason_depth)
-        .help("Bump vars in reasons of learnt clause lits up to this depth. 0 = off");
-    program.add_argument("--shrink")
-        .action([&](const auto& a) {conf.do_shrink_uip = fc_int(a);})
-        .default_value(conf.do_shrink_uip)
-        .help("All-UIP shrinking of learnt clauses");
-    program.add_argument("--otfs")
-        .action([&](const auto& a) {conf.do_otfs = fc_int(a);})
-        .default_value(conf.do_otfs)
-        .help("On-the-fly strengthening of clauses during conflict analysis");
+    opt("--bumpreasondepth", conf.bump_reason_depth,
+        "Bump vars in reasons of learnt clause lits up to this depth. 0 = off");
+    opt("--shrink", conf.do_shrink_uip,
+        "All-UIP shrinking of learnt clauses");
+    opt("--otfs", conf.do_otfs,
+        "On-the-fly strengthening of clauses during conflict analysis");
 
     /* po::options_description chrono_bt_opts("Propagation options"); */
-    program.add_argument("--diffdeclevelchrono")
-        .action([&](const auto& a) {conf.diff_declev_for_chrono = fc_int(a);})
-        .default_value(conf.diff_declev_for_chrono)
-        .help("Difference in decision level is more than this, perform chronological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).");
-    program.add_argument("--chronoreusetrail")
-        .action([&](const auto& a) {conf.do_chrono_reuse_trail = fc_int(a);})
-        .default_value(conf.do_chrono_reuse_trail)
-        .help("On backjump, only backtrack to the level of the best-ranked var above the jump level");
-    program.add_argument("--restartreusetrail")
-        .action([&](const auto& a) {conf.do_restart_reuse_trail = fc_int(a);})
-        .default_value(conf.do_restart_reuse_trail)
-        .help("On restart, keep decisions that would be re-made anyway");
+    opt("--diffdeclevelchrono", conf.diff_declev_for_chrono,
+        "Difference in decision level is more than this, perform chronological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).");
+    opt("--chronoreusetrail", conf.do_chrono_reuse_trail,
+        "On backjump, only backtrack to the level of the best-ranked var above the jump level");
+    opt("--restartreusetrail", conf.do_restart_reuse_trail,
+        "On restart, keep decisions that would be re-made anyway");
 
 #ifdef USE_SQLITE3
     /* po::options_description sqlOptions("SQL options"); */
-    program.add_argument("--sql")
-        .action([&](const auto& a) {sql = fc_int(a);})
-        .default_value(0)
-        .help("Write to SQL. 0 = no SQL, 1 or 2 = sqlite");
-    program.add_argument("--sqlitedb")
-        .action([&](const auto& a) {sqlite_filename = a;})
-        .default_value(sqlite_filename)
-        .help("SQLite database filename to write clause data to");
-    program.add_argument("--sqlitedboverwrite")
-        .action([&](const auto& a) {conf.sql_overwrite_file = fc_int(a);})
-        .default_value(conf.sql_overwrite_file)
-        .help("Overwrite the SQLite database file if it exists");
-    program.add_argument("--cldatadumpratio")
-        .action([&](const auto& a) {conf.dump_individual_cldata_ratio = fc_double(a);})
-        .default_value(conf.dump_individual_cldata_ratio)
-        .help("Only dump this ratio of clauses' data, randomly selected. Since machine learning doesn't need that much data, this can reduce the data you have to deal with.");
-    program.add_argument("--cllockdatagen")
-        .action([&](const auto& a) {conf.lock_for_data_gen_ratio = fc_double(a);})
-        .default_value(conf.lock_for_data_gen_ratio)
-        .help("Lock for data generation into lev0, setting locked_for_data_gen. Only works when clause is marked for dumping ('--cldatadumpratio' )");
+    opt("--sql", sql,
+        "Write to SQL. 0 = no SQL, 1 or 2 = sqlite");
+    opt("--sqlitedb", sqlite_filename,
+        "SQLite database filename to write clause data to");
+    opt("--sqlitedboverwrite", conf.sql_overwrite_file,
+        "Overwrite the SQLite database file if it exists");
+    opt("--cldatadumpratio", conf.dump_individual_cldata_ratio,
+        "Only dump this ratio of clauses' data, randomly selected. Since machine learning doesn't need that much data, this can reduce the data you have to deal with.");
+    opt("--cllockdatagen", conf.lock_for_data_gen_ratio,
+        "Lock for data generation into lev0, setting locked_for_data_gen. Only works when clause is marked for dumping ('--cldatadumpratio' )");
 #endif
 
     /* po::options_description printOptions("Printing options"); */
-    program.add_argument("--verbstat")
-        .action([&](const auto& a) {conf.verb_stats = fc_int(a);})
-        .default_value(conf.verb_stats)
-        .help("Change verbosity of statistics at the end of the solving [0..3]");
-    program.add_argument("--verbrestart")
-        .action([&](const auto& a) {conf.print_full_restart_stat = fc_int(a);})
-        .default_value(conf.print_full_restart_stat)
-        .help("Print more thorough, but different stats");
-    program.add_argument("--verballrestarts")
-        .action([&](const auto& a) {conf.print_all_restarts = fc_int(a);})
-        .default_value(conf.print_all_restarts)
-        .help("Print a line for every restart");
-    program.add_argument("--printsol","-s")
-        .action([&](const auto& a) {printResult = fc_int(a);})
-        .default_value(printResult)
-        .help("Print assignment if solution is SAT");
-    program.add_argument("--restartprint")
-        .action([&](const auto& a) {conf.print_restart_line_every_n_confl = fc_int(a);})
-        .default_value(conf.print_restart_line_every_n_confl)
-        .help("Print restart status lines at least every N conflicts");
+    opt("--verbstat", conf.verb_stats,
+        "Change verbosity of statistics at the end of the solving [0..3]");
+    opt("--verbrestart", conf.print_full_restart_stat,
+        "Print more thorough, but different stats");
+    opt("--verballrestarts", conf.print_all_restarts,
+        "Print a line for every restart");
+    opt("--printsol","-s", printResult,
+        "Print assignment if solution is SAT");
+    opt("--restartprint", conf.print_restart_line_every_n_confl,
+        "Print restart status lines at least every N conflicts");
 
 
     /* po::options_description distillOptions("Distill options"); */
-    program.add_argument("--distill")
-        .action([&](const auto& a) {conf.do_distill_clauses = fc_int(a);})
-        .default_value(conf.do_distill_clauses)
-        .help("Regularly execute clause distillation");
-    program.add_argument("--distillbin")
-        .action([&](const auto& a) {conf.do_distill_bin_clauses = fc_int(a);})
-        .default_value(conf.do_distill_bin_clauses)
-        .help("Regularly execute binary clause distillation");
-    program.add_argument("--distillbineff")
-        .action([&](const auto& a) {conf.distill_bin_effort = fc_double(a);})
-        .default_value(conf.distill_bin_effort)
-        .help("Binary clause distillation budget as a fraction of all propagations since its last call");
-    program.add_argument("--distillmaxm")
-        .action([&](const auto& a) {conf.distill_long_cls_time_limitM = fc_ll(a);})
-        .default_value(conf.distill_long_cls_time_limitM)
-        .help("Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating");
-    program.add_argument("--distillincconf")
-        .action([&](const auto& a) {conf.distill_increase_conf_ratio = fc_double(a);})
-        .default_value(conf.distill_increase_conf_ratio)
-        .help("Multiplier for current number of conflicts OTF distill");
-    program.add_argument("--distillminconf")
-        .action([&](const auto& a) {conf.distill_min_confl = fc_ll(a);})
-        .default_value(conf.distill_min_confl)
-        .help("Minimum number of conflicts between OTF distill");
-    program.add_argument("--distillredreleff")
-        .action([&](const auto& a) {conf.distill_red_releff = fc_int(a);})
-        .default_value(conf.distill_red_releff)
-        .help("Per-mille of all bogoprops since last call to spend distilling red cls");
-    program.add_argument("--distillirredreleff")
-        .action([&](const auto& a) {conf.distill_irred_releff = fc_int(a);})
-        .default_value(conf.distill_irred_releff)
-        .help("Per-mille of all bogoprops since last call to spend distilling irred cls");
-    program.add_argument("--distillmineffm")
-        .action([&](const auto& a) {conf.distill_min_effortM = fc_int(a);})
-        .default_value(conf.distill_min_effortM)
-        .help("Floor of the distill effort reference, in mega-bogoprops");
-    program.add_argument("--distillschedmax")
-        .action([&](const auto& a) {conf.distill_sched_max = fc_int(a);})
-        .default_value(conf.distill_sched_max)
-        .help("Max clauses scheduled per distill pass");
-    program.add_argument("--distillinst")
-        .action([&](const auto& a) {conf.distill_instantiate = fc_int(a);})
-        .default_value(conf.distill_instantiate)
-        .help("Try to remove the last literal during distillation");
-    program.add_argument("--xorgatemaxsize")
-        .action([&](const auto& a) {conf.xor_gate_find_maxsize = fc_int(a);})
-        .default_value(conf.xor_gate_find_maxsize)
-        .help("Largest clause XOR-gate finding considers, before the log2 occurrence cap");
-    program.add_argument("--distillremlevel")
-        .action([&](const auto& a) {conf.distill_rem_level = fc_int(a);})
-        .default_value(conf.distill_rem_level)
-        .help("Clause removal during distillation. 0 = never, 1 = only on a real conflict, 2 = also when a literal is positively implied");
-    program.add_argument("--distillirredalsoremratio")
-        .action([&](const auto& a) {conf.distill_irred_alsoremove_ratio = fc_double(a);})
-        .default_value(conf.distill_irred_alsoremove_ratio)
-        .help("How much of irred to distill when doing also removal");
-    program.add_argument("--distillirrednoremratio")
-        .action([&](const auto& a) {conf.distill_irred_noremove_ratio = fc_double(a);})
-        .default_value(conf.distill_irred_noremove_ratio)
-        .help("How much of irred to distill when doing no removal");
+    opt("--distill", conf.do_distill_clauses,
+        "Regularly execute clause distillation");
+    opt("--distillbin", conf.do_distill_bin_clauses,
+        "Regularly execute binary clause distillation");
+    opt("--distillbineff", conf.distill_bin_effort,
+        "Binary clause distillation budget as a fraction of all propagations since its last call");
+    opt("--distillmaxm", conf.distill_long_cls_time_limitM,
+        "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating");
+    opt("--distillincconf", conf.distill_increase_conf_ratio,
+        "Multiplier for current number of conflicts OTF distill");
+    opt("--distillminconf", conf.distill_min_confl,
+        "Minimum number of conflicts between OTF distill");
+    opt("--distillredreleff", conf.distill_red_releff,
+        "Per-mille of all bogoprops since last call to spend distilling red cls");
+    opt("--distillirredreleff", conf.distill_irred_releff,
+        "Per-mille of all bogoprops since last call to spend distilling irred cls");
+    opt("--distillmineffm", conf.distill_min_effortM,
+        "Floor of the distill effort reference, in mega-bogoprops");
+    opt("--distillschedmax", conf.distill_sched_max,
+        "Max clauses scheduled per distill pass");
+    opt("--distillinst", conf.distill_instantiate,
+        "Try to remove the last literal during distillation");
+    opt("--xorgatemaxsize", conf.xor_gate_find_maxsize,
+        "Largest clause XOR-gate finding considers, before the log2 occurrence cap");
+    opt("--distillremlevel", conf.distill_rem_level,
+        "Clause removal during distillation. 0 = never, 1 = only on a real conflict, 2 = also when a literal is positively implied");
+    opt("--distillirredalsoremratio", conf.distill_irred_alsoremove_ratio,
+        "How much of irred to distill when doing also removal");
+    opt("--distillirrednoremratio", conf.distill_irred_noremove_ratio,
+        "How much of irred to distill when doing no removal");
     ;
 
     /* po::options_description oracleOptions("Oracle options"); */
-    program.add_argument("--oraclemult")
-        .action([&](const auto& a) {conf.oracle_mult = fc_double(a);})
-        .default_value(conf.oracle_mult)
-        .help("Time multiplier for all oracle-based (oracle-vivif*, oracle-sparsify*) cutoffs");
-    program.add_argument("--oraclegetlearnts")
-        .action([&](const auto& a) {conf.oracle_get_learnts = fc_int(a);})
-        .default_value(conf.oracle_get_learnts)
-        .help("Keep the clauses the oracle learnt during vivification as redundant clauses");
-    program.add_argument("--oracleremovedislearnt")
-        .action([&](const auto& a) {conf.oracle_removed_is_learnt = fc_int(a);})
-        .default_value(conf.oracle_removed_is_learnt)
-        .help("Clauses removed by the oracle are re-added as redundant instead of being deleted");
-    program.add_argument("--oraclefindbins")
-        .action([&](const auto& a) {conf.oracle_find_bins = fc_int(a);})
-        .default_value(conf.oracle_find_bins)
-        .help("[0..] Effort spent looking for binary clauses during oracle vivification. 0 = off");
+    opt("--oraclemult", conf.oracle_mult,
+        "Time multiplier for all oracle-based (oracle-vivif*, oracle-sparsify*) cutoffs");
+    opt("--oraclegetlearnts", conf.oracle_get_learnts,
+        "Keep the clauses the oracle learnt during vivification as redundant clauses");
+    opt("--oracleremovedislearnt", conf.oracle_removed_is_learnt,
+        "Clauses removed by the oracle are re-added as redundant instead of being deleted");
+    opt("--oraclefindbins", conf.oracle_find_bins,
+        "[0..] Effort spent looking for binary clauses during oracle vivification. 0 = off");
     ;
 
     /* po::options_description sweep_opts("SAT sweeping options"); */
-    program.add_argument("--sweep")
-        .action([&](const auto& a) {conf.do_sweep = fc_int(a);})
-        .default_value(conf.do_sweep)
-        .help("Perform SAT sweeping with kitten (occ-sweep)");
-    program.add_argument("--sweeptimelimM")
-        .action([&](const auto& a) {conf.sweep_time_limitM = fc_double(a);})
-        .default_value(conf.sweep_time_limitM)
-        .help("Tick limit cap for one occ-sweep run, in millions");
-    program.add_argument("--sweepeff")
-        .action([&](const auto& a) {conf.sweep_effort = fc_double(a);})
-        .default_value(conf.sweep_effort)
-        .help("occ-sweep budget as a fraction of all bogoprops since its last call");
-    program.add_argument("--sweepmineffm")
-        .action([&](const auto& a) {conf.sweep_min_effortM = fc_double(a);})
-        .default_value(conf.sweep_min_effortM)
-        .help("Floor of the occ-sweep budget, in mega-ticks");
-    program.add_argument("--sweepvars")
-        .action([&](const auto& a) {conf.sweep_vars = fc_int(a);})
-        .default_value(conf.sweep_vars)
-        .help("Starting number of variables in a sweeping environment");
-    program.add_argument("--sweepclauses")
-        .action([&](const auto& a) {conf.sweep_clauses = fc_int(a);})
-        .default_value(conf.sweep_clauses)
-        .help("Starting number of clauses in a sweeping environment");
-    program.add_argument("--sweepdepth")
-        .action([&](const auto& a) {conf.sweep_depth = fc_int(a);})
-        .default_value(conf.sweep_depth)
-        .help("Starting depth of a sweeping environment");
-    program.add_argument("--sweepfliprounds")
-        .action([&](const auto& a) {conf.sweep_flip_rounds = fc_int(a);})
-        .default_value(conf.sweep_flip_rounds)
-        .help("Rounds of model flipping during sweeping");
+    opt("--sweep", conf.do_sweep,
+        "Perform SAT sweeping with kitten (occ-sweep)");
+    opt("--sweeptimelimM", conf.sweep_time_limitM,
+        "Tick limit cap for one occ-sweep run, in millions");
+    opt("--sweepeff", conf.sweep_effort,
+        "occ-sweep budget as a fraction of all bogoprops since its last call");
+    opt("--sweepmineffm", conf.sweep_min_effortM,
+        "Floor of the occ-sweep budget, in mega-ticks");
+    opt("--sweepvars", conf.sweep_vars,
+        "Starting number of variables in a sweeping environment");
+    opt("--sweepclauses", conf.sweep_clauses,
+        "Starting number of clauses in a sweeping environment");
+    opt("--sweepdepth", conf.sweep_depth,
+        "Starting depth of a sweeping environment");
+    opt("--sweepfliprounds", conf.sweep_flip_rounds,
+        "Rounds of model flipping during sweeping");
     ;
 
     /* po::options_description mem_save_opts("Memory saving options"); */
-    program.add_argument("--renumber")
-        .action([&](const auto& a) {conf.do_renumber_vars = fc_int(a);})
-        .default_value(conf.do_renumber_vars)
-        .help("Renumber variables to increase CPU cache efficiency");
-    program.add_argument("--mustconsolidate")
-        .action([&](const auto& a) {conf.must_always_conslidate = fc_int(a);})
-        .default_value(conf.must_always_conslidate)
-        .help("Always consolidate, even if not useful. This is used for debugging ONLY");
-    program.add_argument("--savemem")
-        .action([&](const auto& a) {conf.do_save_mem = fc_int(a);})
-        .default_value(conf.do_save_mem)
-        .help("Save memory by deallocating variable space after renumbering. Only works if renumbering is active.");
-    program.add_argument("--mustrenumber")
-        .action([&](const auto& a) {conf.must_renumber = fc_int(a);})
-        .default_value(conf.must_renumber)
-        .help("Treat all 'renumber' strategies as 'must-renumber'");
-    program.add_argument("--fullwatchconseveryn")
-        .action([&](const auto& a) {conf.full_watch_consolidate_every_n_confl = fc_ll(a);})
-        .default_value(conf.full_watch_consolidate_every_n_confl)
-        .help("Consolidate watchlists fully once every N conflicts. Scheduled during simplification rounds.");
+    opt("--renumber", conf.do_renumber_vars,
+        "Renumber variables to increase CPU cache efficiency");
+    opt("--mustconsolidate", conf.must_always_conslidate,
+        "Always consolidate, even if not useful. This is used for debugging ONLY");
+    opt("--savemem", conf.do_save_mem,
+        "Save memory by deallocating variable space after renumbering. Only works if renumbering is active.");
+    opt("--mustrenumber", conf.must_renumber,
+        "Treat all 'renumber' strategies as 'must-renumber'");
+    opt("--fullwatchconseveryn", conf.full_watch_consolidate_every_n_confl,
+        "Consolidate watchlists fully once every N conflicts. Scheduled during simplification rounds.");
 
     /* po::options_description miscOptions("Misc options"); */
-    program.add_argument("--strmaxt")
-        .action([&](const auto& a) {conf.watch_based_str_time_limitM = fc_ll(a);})
-        .default_value(conf.watch_based_str_time_limitM)
-        .help("Maximum MBP to spend on distilling long irred cls through watches");
-    program.add_argument("--implicitmanip")
-        .action([&](const auto& a) {conf.do_str_sub_implicit = fc_int(a);})
-        .default_value(conf.do_str_sub_implicit)
-        .help("Subsume and strengthen implicit clauses with each other");
-    program.add_argument("--implsubsto")
-        .action([&](const auto& a) {conf.subsume_implicit_time_limitM = fc_ll(a);})
-        .default_value(conf.subsume_implicit_time_limitM)
-        .help("Timeout (in bogoprop Millions) of implicit subsumption");
-    program.add_argument("--implstrto")
-        .action([&](const auto& a) {conf.distill_implicit_with_implicit_time_limitM = fc_ll(a);})
-        .default_value(conf.distill_implicit_with_implicit_time_limitM)
-        .help("Timeout (in bogoprop Millions) of implicit strengthening");
-    program.add_argument("--cardfind")
-        .action([&](const auto& a) {conf.do_find_card = fc_int(a);})
-        .default_value(conf.do_find_card)
-        .help("Find cardinality constraints");
+    opt("--strmaxt", conf.watch_based_str_time_limitM,
+        "Maximum MBP to spend on distilling long irred cls through watches");
+    opt("--implicitmanip", conf.do_str_sub_implicit,
+        "Subsume and strengthen implicit clauses with each other");
+    opt("--implsubsto", conf.subsume_implicit_time_limitM,
+        "Timeout (in bogoprop Millions) of implicit subsumption");
+    opt("--implstrto", conf.distill_implicit_with_implicit_time_limitM,
+        "Timeout (in bogoprop Millions) of implicit strengthening");
+    opt("--cardfind", conf.do_find_card,
+        "Find cardinality constraints");
 
     /* hiddenOptions.add_options() */
-    program.add_argument("--sync")
-        .action([&](const auto& a) {conf.sync_every_confl = fc_ll(a);})
-        .default_value(conf.sync_every_confl)
-        .help("Sync threads every N conflicts");
-    program.add_argument("--clearinter")
-        .action([&](const auto& a) {need_clean_exit = fc_int(a);})
-        .default_value(0)
-        .help("Interrupt threads cleanly, all the time");
+    opt("--sync", conf.sync_every_confl,
+        "Sync threads every N conflicts");
+    opt("--clearinter", need_clean_exit,
+        "Interrupt threads cleanly, all the time");
     program.add_argument("--zero-exit-status")
         .flag()
         .action([&](const auto&) {zero_exit_status = true;})
         .help("Exit with status zero in case the solving has finished without an issue");
-    program.add_argument("--printtimes")
-        .action([&](const auto& a) {conf.do_print_times = fc_int(a);})
-        .default_value(conf.do_print_times)
-        .help("Print time it took for each simplification run. If set to 0, logs are easier to compare");
-    program.add_argument("--maxsccdepth")
-        .action([&](const auto& a) {conf.max_scc_depth = fc_int(a);})
-        .default_value(conf.max_scc_depth)
-        .help("The maximum for scc search depth");
+    opt("--printtimes", conf.do_print_times,
+        "Print time it took for each simplification run. If set to 0, logs are easier to compare");
+    opt("--maxsccdepth", conf.max_scc_depth,
+        "The maximum for scc search depth");
     program.add_argument("--sampling")
         .help("Set sampling vars such as '1,84,44'. Can also be set via CNF using 'c p show 1 84 44 0'");
-    program.add_argument("--assump")
-        .action([&](const auto& a) {assump_filename = a;})
-        .default_value(assump_filename)
-        .help("Assumptions file");
+    opt("--assump", assump_filename,
+        "Assumptions file");
 
 /*     po::options_description gaussOptions("Gauss options"); */
-     program.add_argument("--maxmatrixrows")
-        .action([&](const auto& a) {conf.gaussconf.max_matrix_rows = fc_int(a);})
-        .default_value(conf.gaussconf.max_matrix_rows)
-        .help("Set maximum no. of rows for gaussian matrix. Too large matrices"
+     opt("--maxmatrixrows", conf.gaussconf.max_matrix_rows,
+        "Set maximum no. of rows for gaussian matrix. Too large matrices"
             " should be discarded for reasons of efficiency");
-     program.add_argument("--maxmatrixcols")
-        .action([&](const auto& a) {conf.gaussconf.max_matrix_columns = fc_int(a);})
-        .default_value(conf.gaussconf.max_matrix_columns)
-        .help("Set maximum no. of columns for gaussian matrix. Too large matrices"
+     opt("--maxmatrixcols", conf.gaussconf.max_matrix_columns,
+        "Set maximum no. of columns for gaussian matrix. Too large matrices"
             " should be discarded for reasons of efficiency");
-    program.add_argument("--autodisablegauss")
-        .action([&](const auto& a) {conf.gaussconf.autodisable = fc_int(a);})
-        .default_value(conf.gaussconf.autodisable)
-        .help("Automatically disable gauss when performing badly");
-    program.add_argument("--minmatrixrows")
-        .action([&](const auto& a) {conf.gaussconf.min_matrix_rows = fc_int(a);})
-        .default_value(conf.gaussconf.min_matrix_rows)
-        .help("Set minimum no. of rows for gaussian matrix. Normally, too small"
+    opt("--autodisablegauss", conf.gaussconf.autodisable,
+        "Automatically disable gauss when performing badly");
+    opt("--minmatrixrows", conf.gaussconf.min_matrix_rows,
+        "Set minimum no. of rows for gaussian matrix. Normally, too small"
             " matrices are discarded for reasons of efficiency");
-    program.add_argument("--maxnummatrices")
-        .action([&](const auto& a) {conf.gaussconf.max_num_matrices = fc_int(a);})
-        .default_value(conf.gaussconf.max_num_matrices)
-        .help("Maximum number of matrices to treat.");
-    program.add_argument("--gaussusefulcutoff")
-        .action([&](const auto& a) {conf.gaussconf.min_usefulness_cutoff = fc_double(a);})
-        .default_value(conf.gaussconf.min_usefulness_cutoff)
-        .help("Turn off Gauss if less than this many usefulness ratio is recorded");
-    program.add_argument("--gaussmincalls")
-        .action([&](const auto& a) {conf.gaussconf.autodisable_min_calls = fc_int(a);})
-        .default_value(conf.gaussconf.autodisable_min_calls)
-        .help("Only consider disabling a matrix after this many Gauss calls");
-    program.add_argument("--gausscheckevery")
-        .action([&](const auto& a) {conf.gaussconf.autodisable_check_every = fc_int(a);})
-        .default_value(conf.gaussconf.autodisable_check_every)
-        .help("Check whether to disable a matrix every this many conflicts");
+    opt("--maxnummatrices", conf.gaussconf.max_num_matrices,
+        "Maximum number of matrices to treat.");
+    opt("--gaussusefulcutoff", conf.gaussconf.min_usefulness_cutoff,
+        "Turn off Gauss if less than this many usefulness ratio is recorded");
+    opt("--gaussmincalls", conf.gaussconf.autodisable_min_calls,
+        "Only consider disabling a matrix after this many Gauss calls");
+    opt("--gausscheckevery", conf.gaussconf.autodisable_check_every,
+        "Check whether to disable a matrix every this many conflicts");
     program.add_argument("--dumpresult")
         .action([&](const auto& a) {result_fname = a;})
         .help("Write solution(s) to this file");
