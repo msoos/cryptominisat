@@ -1439,7 +1439,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
-        conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
         conf.diff_declev_for_chrono = -1;
         solver->setConf(conf);

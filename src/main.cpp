@@ -739,23 +739,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.do_bva = fc_int(a);})
         .default_value(conf.do_bva)
         .help("Perform bounded variable addition");
-    program.add_argument("--bvaeveryn")
-        .action([&](const auto& a) {conf.bva_every_n = fc_int(a);})
-        .default_value(conf.bva_every_n)
-        .help("Perform BVA only every N occ-simplify calls");
-    program.add_argument("--bvalim")
-        .action([&](const auto& a) {conf.bva_limit_per_call = fc_int(a);})
-        .default_value(conf.bva_limit_per_call)
-        .help("Maximum number of variables to add by BVA per call");
-    program.add_argument("--bva2lit")
-        .action([&](const auto& a) {conf.bva_also_twolit_diff = fc_int(a);})
-        .default_value(conf.bva_also_twolit_diff)
-        .help("BVA with 2-lit difference hack, too. Beware, this reduces the effectiveness of 1-lit diff");
-    program.add_argument("--bvato")
-        .action([&](const auto& a) {conf.bva_time_limitM = fc_ll(a);})
-        .default_value(conf.bva_time_limitM)
-        .help("BVA time limit in bogoprops M");
-    ;
 
     /* po::options_description bve_options("BVE options"); */
     program.add_argument("--varelim")

@@ -232,11 +232,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_bva(false)
         , min_bva_gain(16)
         , non_stop_bve(false)
-        , bva_limit_per_call(250000)
-        , bva_also_twolit_diff(true)
-        , bva_extra_lit_and_red_start(0)
-        , bva_time_limitM(50)
-        , bva_every_n(7)
 
         //Probing
         , do_full_probe    (false)
@@ -287,7 +282,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "breakid,"
              //occurrence based
             "occ-backw-sub-str,occ-clean-implicit,occ-sweep,occ-bve,"//occ-gates,"
-            "occ-bva,occ-ternary-res,occ-xor,"
+            "occ-ternary-res,occ-xor,"
             //pick up the equivalences occ-sweep found
             "must-scc-vrepl,card-find,"
             //consolidate after OCC
