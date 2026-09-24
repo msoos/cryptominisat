@@ -379,7 +379,6 @@ class Tester:
         cmd += "--bumpreasondepth %d " % random.choice([0, 1, 1, 2])
         cmd += "--shrink %d " % random.choice([0, 1, 1, 1])
         cmd += "--otfs %d " % random.choice([0, 1, 1, 1])
-        cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         # VERY short runs -- solver stops with INDETERMINATE, no checks possible
         if self.limited_run:
@@ -449,9 +448,6 @@ class Tester:
 
         # occ / varelim / bva limits
         cmd += "--bva %d " % random.choice([0, 0, 1])
-        cmd += "--bvalim %d " % random.choice([0, 5, 250000])
-        cmd += "--bva2lit %d " % random.choice([0, 1])
-        cmd += "--bvato %d " % random.choice([0, 2, 50])
         cmd += "--emptyelim %d " % random.choice([0, 1])
         cmd += "--eratio %s " % random.choice([0, 0.3, 1.6, 10])
         cmd += "--varelimto %d " % random.choice([0, 10, 750])
