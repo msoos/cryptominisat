@@ -399,7 +399,7 @@ bool DistillerLong::distill_long_cls_all(
                 }
                 if (is_prefix) {
                     Clause* cl = solver->cl_alloc.ptr(todo[at]);
-                    solver->detachClause(*cl);
+                    solver->detach_clause(*cl);
                     solver->free_cl(todo[at]);
                     removed[at] = 1;
                     num_subsumed++;

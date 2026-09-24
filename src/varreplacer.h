@@ -77,7 +77,7 @@ class VarReplacer
 #endif
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
-        void updateVars(
+        void update_vars(
             const vector<uint32_t>& outer_to_inter
             , const vector<uint32_t>& inter_to_outer
         );

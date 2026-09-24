@@ -39,7 +39,7 @@ BreakID::BreakID(Solver* _solver):
 {
 }
 
-void BreakID::updateVars(
+void BreakID::update_vars(
     const vector<uint32_t>& outer_to_inter
     , const vector<uint32_t>& /*inter_to_outer*/)
 {

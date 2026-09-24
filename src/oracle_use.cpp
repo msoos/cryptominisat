@@ -553,8 +553,8 @@ bool Solver::oracle_sparsify(bool fast)
                 removed_bin++;
                 Lit lit1 = c.bin.l1;
                 Lit lit2 = c.bin.l2;
-                findWatchedOfBin(watches, lit1, lit2, false, c.bin.ID).mark_bin_cl();
-                findWatchedOfBin(watches, lit2, lit1, false, c.bin.ID).mark_bin_cl();
+                find_watched_of_bin(watches, lit1, lit2, false, c.bin.ID).mark_bin_cl();
+                find_watched_of_bin(watches, lit2, lit1, false, c.bin.ID).mark_bin_cl();
             }
         }
         /* if (oracle.getStats().mems > mems_before_vivif) { */

@@ -39,7 +39,7 @@ static inline bool findWCl(watch_subarray_const ws, const ClOffset c)
     return i != end;
 }
 
-static inline void removeWCl(watch_subarray ws, const ClOffset c)
+static inline void remove_w_cl(watch_subarray ws, const ClOffset c)
 {
     Watched* i = ws.begin(), *end = ws.end();
     for (; i != end && (!i->is_clause() || i->get_offset() != c); i++);
@@ -127,7 +127,7 @@ inline bool removeWBin_except_marked(
     return true;
 }
 
-inline const Watched& findWatchedOfBin(
+inline const Watched& find_watched_of_bin(
     const watch_array& wsFull
     , const Lit lit1
     , const Lit lit2
@@ -144,7 +144,7 @@ inline const Watched& findWatchedOfBin(
     return *ws.begin();
 }
 
-inline Watched& findWatchedOfBin(
+inline Watched& find_watched_of_bin(
     watch_array& wsFull
     , const Lit lit1
     , const Lit lit2

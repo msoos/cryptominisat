@@ -96,7 +96,7 @@ void VarReplacer::save_on_var_memory()
 {
 }
 
-void VarReplacer::updateVars(
+void VarReplacer::update_vars(
     const std::vector< uint32_t >& /*outer_to_inter*/
     , const std::vector< uint32_t >& /*inter_to_outer*/
 ) {
@@ -183,7 +183,7 @@ void VarReplacer::attach_delayed_attach() {
         if (c->size() <= 2) solver->free_cl(c);
         else {
             c->unset_removed();
-            solver->attachClause(*c);
+            solver->attach_clause(*c);
         }
     }
     delayed_attach_or_free.clear();
@@ -485,7 +485,7 @@ inline void VarReplacer::updateBin(
         *solver->frat<< del << i->get_id() << orig_lit1 << orig_lit2 << fin;
         Watched* i2 = findWatchedOfBinMaybe(solver->watches, orig_lit2, orig_lit1, i->red(), orig_ID);
         if (i2) i2->set_ID(ID);
-        else findWatchedOfBin(solver->watches, lit2, orig_lit1, i->red(), orig_ID).set_ID(ID);
+        else find_watched_of_bin(solver->watches, lit2, orig_lit1, i->red(), orig_ID).set_ID(ID);
         i->set_ID(ID);
     }
 

@@ -78,28 +78,28 @@ struct Trail {
 
 struct RandHeap
 {
-    vector<unsigned char> in_heap;
+    vector<unsigned char> in_heap_flag;
     vector<uint32_t> vars;
 
-    bool inHeap(uint32_t x) const {
-        if (in_heap.size() <= x) {
+    bool in_heap(uint32_t x) const {
+        if (in_heap_flag.size() <= x) {
             return false;
         }
-        return in_heap[x];
+        return in_heap_flag[x];
     }
 
     void clear() {
-        in_heap.clear();
+        in_heap_flag.clear();
         vars.clear();
     }
 
     void insert(uint32_t x) {
-        assert(!inHeap(x));
-        if (in_heap.size() <= x) {
-            uint32_t n = x - in_heap.size() + 1;
-            in_heap.insert(in_heap.end(), n, false);
+        assert(!in_heap(x));
+        if (in_heap_flag.size() <= x) {
+            uint32_t n = x - in_heap_flag.size() + 1;
+            in_heap_flag.insert(in_heap_flag.end(), n, false);
         }
-        in_heap[x] = true;
+        in_heap_flag[x] = true;
         vars.push_back(x);
     }
 
@@ -116,32 +116,32 @@ struct RandHeap
 
     uint32_t mem_used() const {
         uint32_t ret = 0;
-        ret += in_heap.capacity() * sizeof(unsigned char);
+        ret += in_heap_flag.capacity() * sizeof(unsigned char);
         //ret += vars.capacity() * sizeof(uint32_t);
         return ret;
     }
 
     void build(const vector<uint32_t>& vs) {
-        in_heap.clear();
+        in_heap_flag.clear();
         uint32_t max = 0;
         for(const auto x: vs) {
             max = std::max(x, max);
         }
-        in_heap.resize(max+1, false);
+        in_heap_flag.resize(max+1, false);
         vars.clear();
         std::copy(
             vs.begin(),
             vs.end(),
             std::inserter(vars, vars.end()));
         for(const auto& x: vars) {
-            in_heap[x] = true;
+            in_heap_flag[x] = true;
         }
     }
 
     bool heap_property() const
     {
         for(const auto& x: vars) {
-            if (!in_heap[x]) {
+            if (!in_heap_flag[x]) {
                 return false;
             }
         }
@@ -159,8 +159,8 @@ struct RandHeap
         uint32_t picked = vars[which];
         std::swap(vars[which], vars[vars.size()-1]);
         vars.pop_back();
-        assert(inHeap(picked));
-        in_heap[picked] = false;
+        assert(in_heap(picked));
+        in_heap_flag[picked] = false;
 
         return picked;
     }
@@ -314,7 +314,7 @@ protected:
     lbool bnn_prop(
         const uint32_t bnn_idx, uint32_t level,
         Lit l, BNNPropType prop_t);
-    void attachClause(
+    void attach_clause(
         const Clause& c
         , const bool checkAttach = true
     );
@@ -363,7 +363,7 @@ protected:
     void     print_trail();
 
     //Var selection, activity, etc.
-    void updateVars(
+    void update_vars(
         const vector<uint32_t>& outer_to_inter
         , const vector<uint32_t>& inter_to_outer
     );

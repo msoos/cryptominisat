@@ -60,7 +60,7 @@ public:
         }
     }
 
-    const vector<uint32_t>& getTouchedList() const
+    const vector<uint32_t>& get_touched_list() const
     {
         return touched;
     }
@@ -128,7 +128,7 @@ public:
         }
     }
 
-    const vector<uint32_t>& getTouchedList() const
+    const vector<uint32_t>& get_touched_list() const
     {
         return touched;
     }

@@ -408,7 +408,7 @@ Clause* Solver::add_clause_int(
 
             //In class 'OccSimplifier' we don't need to attach normall
             if (attach_long) {
-                attachClause(*c);
+                attach_clause(*c);
             } else {
                 if (red) lit_stats.red_lits += ps.size();
                 else lit_stats.irred_lits += ps.size();
@@ -621,7 +621,7 @@ void Solver::add_bnn_clause_inter(
     ok = propagate<true>().isnullptr();
 }
 
-void Solver::attachClause(
+void Solver::attach_clause(
     const Clause& cl
     , const bool checkAttach
 ) {
@@ -630,7 +630,7 @@ void Solver::attachClause(
     else lit_stats.irred_lits += cl.size();
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachClause(cl, checkAttach);
+    PropEngine::attach_clause(cl, checkAttach);
 }
 
 void Solver::attach_bin_clause(
@@ -648,17 +648,17 @@ void Solver::attach_bin_clause(
     PropEngine::attach_bin_clause(lit1, lit2, red, ID, checkUnassignedFirst);
 }
 
-void Solver::detachClause(const Clause& cl, const bool remove_frat)
+void Solver::detach_clause(const Clause& cl, const bool remove_frat)
 {
     if (remove_frat) *frat << del << cl << fin;
     assert(cl.size() > 2);
     detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
 }
 
-void Solver::detachClause(const ClOffset offset, const bool remove_frat)
+void Solver::detach_clause(const ClOffset offset, const bool remove_frat)
 {
     Clause* cl = cl_alloc.ptr(offset);
-    detachClause(*cl, remove_frat);
+    detach_clause(*cl, remove_frat);
 }
 
 void Solver::detach_modified_clause(
@@ -950,13 +950,13 @@ bool Solver::renumber_variables(bool must_renumber)
 
     renumber_clauses(outer_to_inter);
     CNF::update_vars(outer_to_inter, inter_to_outer, inter_to_outer2);
-    PropEngine::updateVars(outer_to_inter, inter_to_outer);
-    Searcher::updateVars(outer_to_inter, inter_to_outer);
-    USE_BREAKID_DO(if (breakid) breakid->updateVars(outer_to_inter, inter_to_outer));
+    PropEngine::update_vars(outer_to_inter, inter_to_outer);
+    Searcher::update_vars(outer_to_inter, inter_to_outer);
+    USE_BREAKID_DO(if (breakid) breakid->update_vars(outer_to_inter, inter_to_outer));
 
     //Update sub-elements' vars
-    var_replacer->updateVars(outer_to_inter, inter_to_outer);
-    datasync->updateVars(outer_to_inter, inter_to_outer);
+    var_replacer->update_vars(outer_to_inter, inter_to_outer);
+    datasync->update_vars(outer_to_inter, inter_to_outer);
 
     //Tests
     test_renumbering();
@@ -3136,8 +3136,8 @@ void Solver::check_implicit_stats(const bool onlypairs) const
                 lits[0] = Lit::toLit(wsLit);
                 lits[1] = w.lit2();
                 std::sort(lits, lits + 2);
-                findWatchedOfBin(watches, lits[0], lits[1], w.red(), w.get_id());
-                findWatchedOfBin(watches, lits[1], lits[0], w.red(), w.get_id());
+                find_watched_of_bin(watches, lits[0], lits[1], w.red(), w.get_id());
+                find_watched_of_bin(watches, lits[1], lits[0], w.red(), w.get_id());
                 #endif
 
                 if (w.red()) thisNumRedBins++;
@@ -3830,7 +3830,7 @@ void Solver::detach_clauses_in_xors() {
         if (cl->size() <= maxsize_xor &&
                 xor_hashes.count(hash_xcl(cl)) &&
                 check_clause_represented_by_xor(*cl)) {
-            detachClause(*cl);
+            detach_clause(*cl);
             cl->stats.marked_clause = true;
             deleted++;
         }

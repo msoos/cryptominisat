@@ -58,11 +58,11 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     }
 
     //Update stats
-    cl.stats = ClauseStats::combineStats(cl.stats, ret.stats);
+    cl.stats = ClauseStats::combine_stats(cl.stats, ret.stats);
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     if (cl.red()) {
         auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
-        extra_stats = ClauseStatsExtra::combineStats(extra_stats, ret.stats_extra);
+        extra_stats = ClauseStatsExtra::combine_stats(extra_stats, ret.stats_extra);
     }
     #endif
 
@@ -99,10 +99,10 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         //-> ID kept will be 1st parameter
         //Stats will be merged together here then merged into the
         //subsuming clause's stats
-        ret.stats = ClauseStats::combineStats(tmpcl->stats, ret.stats);
+        ret.stats = ClauseStats::combine_stats(tmpcl->stats, ret.stats);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         if (tmpcl->red()) {
-            ret.stats_extra = ClauseStatsExtra::combineStats(
+            ret.stats_extra = ClauseStatsExtra::combine_stats(
                 solver->red_stats_extra[tmpcl->stats.extra_pos],
                 ret.stats_extra);
         }
@@ -157,12 +157,12 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             }
 
             //Update stats
-            cl.stats = ClauseStats::combineStats(cl.stats, cl2.stats);
+            cl.stats = ClauseStats::combine_stats(cl.stats, cl2.stats);
             #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
             if (cl.red() && cl2.red()) {
                 auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
                 auto& extra_stats2 = solver->red_stats_extra[cl2.stats.extra_pos];
-                extra_stats = ClauseStatsExtra::combineStats(extra_stats, extra_stats2);
+                extra_stats = ClauseStatsExtra::combine_stats(extra_stats, extra_stats2);
             }
             #endif
 

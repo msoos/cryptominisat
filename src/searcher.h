@@ -336,7 +336,7 @@ class Searcher : public HyperEngine
         ) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
-        void updateVars(
+        void update_vars(
             const vector<uint32_t>& outer_to_inter
             , const vector<uint32_t>& inter_to_outer
         );
@@ -562,7 +562,7 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 
     switch(type) {
         case branch::vsids:
-            if (!order_heap_vsids.inHeap(var)) order_heap_vsids.insert(var);
+            if (!order_heap_vsids.in_heap(var)) order_heap_vsids.insert(var);
             break;
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
@@ -573,7 +573,7 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
             if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) vmtf_update_queue_unassigned(var);
             break;
         case branch::rand:
-            if (!order_heap_rand.inHeap(var)) order_heap_rand.insert(var);
+            if (!order_heap_rand.in_heap(var)) order_heap_rand.insert(var);
             break;
         default:
             assert(false);
@@ -585,12 +585,12 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 
 inline void Searcher::insert_var_order_all(const uint32_t x)
 {
-    assert(!order_heap_vsids.inHeap(x));
+    assert(!order_heap_vsids.in_heap(x));
     SLOW_DEBUG_DO(assert(var_data[x].removed == Removed::none &&
         "All variables should be decision vars unless removed"));
     order_heap_vsids.insert(x);
 
-    assert(!order_heap_rand.inHeap(x));
+    assert(!order_heap_rand.in_heap(x));
     order_heap_rand.insert(x);
 
     vmtf_init_enqueue(x);
@@ -695,7 +695,7 @@ inline void Searcher::vsids_bump_var_act(const uint32_t var)
     }
 
     // Update order_heap with respect to new activity
-    if (order_heap_vsids.inHeap(var)) {
+    if (order_heap_vsids.in_heap(var)) {
         order_heap_vsids.decrease(var);
     }
 

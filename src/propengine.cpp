@@ -98,7 +98,7 @@ void PropEngine::save_on_var_memory()
  Handles 2, 3 and >3 clause sizes differently and specially
  */
 
-void PropEngine::attachClause(
+void PropEngine::attach_clause(
     const Clause& c
     , const bool checkAttach
 ) {
@@ -148,8 +148,8 @@ void PropEngine::detach_modified_clause(
     , const Clause* address
 ) {
     ClOffset offset = cl_alloc.get_offset(address);
-    removeWCl(watches[lit1], offset);
-    removeWCl(watches[lit2], offset);
+    remove_w_cl(watches[lit1], offset);
+    remove_w_cl(watches[lit2], offset);
 }
 
 PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
@@ -804,7 +804,7 @@ template PropBy PropEngine::propagate_core<true, false, true>();
 template PropBy PropEngine::propagate_core<true, true,  true>();
 
 
-void PropEngine::updateVars(
+void PropEngine::update_vars(
     [[maybe_unused]] const vector<uint32_t>& outer_to_inter,
     [[maybe_unused]] const vector<uint32_t>& inter_to_outer
 ) {

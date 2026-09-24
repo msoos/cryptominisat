@@ -117,7 +117,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_id()).setRed(false);
+            find_watched_of_bin(solver->watches, wit->lit2(), lit, true, wit->get_id()).setRed(false);
             solver->bin_tri.red_bins--;
             solver->bin_tri.irred_bins++;
         }
@@ -237,7 +237,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
         true, nullptr, true, lit_Undef, false, false,
         solver->frat->enabled() ? &hints : nullptr);
     if (c2 != nullptr) {
-        solver->detachClause(offset);
+        solver->detach_clause(offset);
         // new clause will inherit this clause's ID
         // so let's set this to 0, this way, when we free() it, it won't be
         // deleted as per cl_last_in_solver
@@ -325,7 +325,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
         if (red && !solver->reduceDB->likely_to_be_kept(*solver->cl_alloc.ptr(offset)))
             goto copy;
         if (sub_str_cl_with_watch(offset, also_strengthen)) {
-            solver->detachClause(offset);
+            solver->detach_clause(offset);
             solver->free_cl(offset);
             continue;
         }

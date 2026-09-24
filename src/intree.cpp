@@ -419,7 +419,7 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, const bool red_cl, cons
         ) {
             //Mark both
             w.mark_bin_cl();
-            Watched& other_w = findWatchedOfBin(
+            Watched& other_w = find_watched_of_bin(
                 solver->watches, w.lit2(), lit, w.red(), w.get_id());
             other_w.mark_bin_cl();
 

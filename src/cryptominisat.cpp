@@ -374,7 +374,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 
     data->cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
-        SolverConf conf = data->solvers[0]->getConf();
+        SolverConf conf = data->solvers[0]->get_conf();
         update_config(conf, i);
         data->solvers.push_back(new Solver(&conf, data->must_interrupt));
         data->cpu_times.push_back(0.0);
@@ -383,7 +383,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     //set shared data
     data->shared_data = new SharedData(data->solvers.size());
     for(unsigned i = 0; i < num; i++) {
-        SolverConf conf = data->solvers[i]->getConf();
+        SolverConf conf = data->solvers[i]->get_conf();
         if (i >= 1) {
             conf.verbosity = 0;
             conf.print_all_restarts = 0;
@@ -855,7 +855,7 @@ struct OneThreadCalc
         if (print_thread_start_and_finish) {
             data_for_thread.update_mutex->lock();
             std::ios::fmtflags f(cout.flags());
-            cout << data_for_thread.solvers[tid]->getConf().prefix << "Finished thread " << tid << " with result: " << ret
+            cout << data_for_thread.solvers[tid]->get_conf().prefix << "Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
             << (data_for_thread.cpu_times[tid]-start_time)
             << endl;
@@ -1399,7 +1399,7 @@ void DLL_PUBLIC SATSolver::set_lit_weight_internal(const Lit lit, const double v
 void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restart)
 {
     for (auto & solver : data->solvers) {
-        SolverConf conf = solver->getConf();
+        SolverConf conf = solver->get_conf();
         conf.doSLS = false;
         conf.doBreakid = false;
         //restart every fixed_restart conflicts: negative margin always fires
@@ -1421,7 +1421,7 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
 void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
     for (auto & solver : data->solvers) {
-        SolverConf conf = solver->getConf();
+        SolverConf conf = solver->get_conf();
         conf.doBreakid = false;
         conf.gaussconf.max_matrix_columns = 10000000;
         conf.gaussconf.max_matrix_rows = 10000;
@@ -1448,7 +1448,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 void DLL_PUBLIC SATSolver::set_up_for_arjun()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
-        SolverConf conf = data->solvers[i]->getConf();
+        SolverConf conf = data->solvers[i]->get_conf();
         conf.doBreakid = false;
         //conf.gaussconf.max_num_matrices = 0;
         //conf.xor_finder_time_limitM = 0;
@@ -1474,7 +1474,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 
 DLL_PUBLIC uint32_t SATSolver::get_verbosity() const
 {
-   const SolverConf& conf = data->solvers[0]->getConf();
+   const SolverConf& conf = data->solvers[0]->get_conf();
    return conf.verbosity;
 }
 

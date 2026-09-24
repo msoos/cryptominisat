@@ -120,7 +120,7 @@ void Searcher::save_on_var_memory()
 
 }
 
-void Searcher::updateVars(
+void Searcher::update_vars(
     [[maybe_unused]] const vector<uint32_t>& outer_to_inter
     , const vector<uint32_t>& inter_to_outer
 ) {
@@ -881,8 +881,8 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
     }
 
     //re-watch: blocked lits may be stale, so re-add both
-    removeWCl(watches[ow0], offset);
-    removeWCl(watches[ow1], offset);
+    remove_w_cl(watches[ow0], offset);
+    remove_w_cl(watches[ow1], offset);
     watches[cl[0]].push(Watched(offset, cl[1]));
     watches[cl[1]].push(Watched(offset, cl[0]));
 
@@ -1784,7 +1784,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
         default:
             //Long learnt
             stats.learntLongs++;
-            solver->attachClause(*cl, enq);
+            solver->attach_clause(*cl, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             bump_cl_act<inprocess>(cl);
@@ -1853,7 +1853,7 @@ void Searcher::set_clause_data(
     stats_extra.trailDepthHist_avg = hist.trailDepthHist.avg_nocheck();
 
 
-    stats_extra.glueHist_longterm_avg = hist.glueHist.getLongtTerm().avg();
+    stats_extra.glueHist_longterm_avg = hist.glueHist.get_longterm().avg();
     stats_extra.glueHist_avg = hist.glueHist.avg_nocheck();
     stats_extra.trail_depth_level = trail.size();
     stats_extra.glue_before_minim = glue_before_minim;
@@ -3444,11 +3444,11 @@ void Searcher::check_var_in_branch_strategy(const uint32_t var, const branch str
     bool found = false;
     switch(str) {
         case branch::vsids:
-            found = order_heap_vsids.inHeap(var);
+            found = order_heap_vsids.in_heap(var);
             break;
 
         case branch::rand:
-            found = order_heap_rand.inHeap(var);
+            found = order_heap_rand.in_heap(var);
             break;
 
         case branch::vmtf:
@@ -3570,7 +3570,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
         if (highestId != 0) {
             std::swap(lits[0], lits[highestId]);
             if (highestId > 1 && pb.get_type() == clause_t) {
-                removeWCl(watches[lits[highestId]], pb.get_offset());
+                remove_w_cl(watches[lits[highestId]], pb.get_offset());
                 watches[lits[0]].push(Watched(pb.get_offset(), lits[1]));
             }
         }

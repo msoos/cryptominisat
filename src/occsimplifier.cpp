@@ -299,7 +299,7 @@ void OccSimplifier::unlink_clause(
         for (const Lit lit: cl) {
             if (!(allow_empty_watch && solver->watches[lit].empty())) {
                 *limit_to_decrease -= 2*(long)solver->watches[lit].size();
-                removeWCl(solver->watches[lit], offset);
+                remove_w_cl(solver->watches[lit], offset);
             }
         }
     } else {
@@ -346,7 +346,7 @@ bool OccSimplifier::clean_clause(
             solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
         }
 
-        removeWCl(solver->watches[*i], offset);
+        remove_w_cl(solver->watches[*i], offset);
         if (!cl.red()) {
             removed_cl_with_var.touch(i->var());
             solver->mark_elim_cand(*i);
@@ -498,24 +498,24 @@ struct sort_smallest_first {
 
 uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const
 {
-    uint64_t memUsage = 0;
+    uint64_t mem_usage = 0;
     for (const ClOffset offs: toAdd) {
         Clause* cl = solver->cl_alloc.ptr(offs);
 
         //*2 because of the overhead of allocation
-        memUsage += cl->size()*sizeof(Watched)*2;
+        mem_usage += cl->size()*sizeof(Watched)*2;
     }
 
     //Estimate malloc overhead
-    memUsage += solver->num_active_vars()*2*40;
+    mem_usage += solver->num_active_vars()*2*40;
 
-    return memUsage;
+    return mem_usage;
 }
 
-void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
+void OccSimplifier::print_mem_usage_of_occur(uint64_t mem_usage) const
 {
     verb_print(2, "[occ] mem usage for occur "
-        << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB");
+        << std::setw(6) << mem_usage/(1024ULL*1024ULL) << " MB");
 }
 
 void OccSimplifier::print_linkin_data(const LinkInData& link_in_data) const
@@ -653,7 +653,7 @@ void OccSimplifier::add_back_to_solver() {
             *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
         } else if (complete_clean_clause(*cl)) {
-            solver->attachClause(*cl);
+            solver->attach_clause(*cl);
             if (cl->red()) {
                 assert(cl->stats.glue > 0);
                 assert(cl->stats.which_red_array < solver->long_red_cls.size());
@@ -1029,12 +1029,12 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     //during the mark_and_push_to_added_long_cl_cls_containing() below, we mark the clauses
     //so we don't add the same clause twice
     for(uint32_t i = 0
-        ; i < added_cl_to_var.getTouchedList().size()
+        ; i < added_cl_to_var.get_touched_list().size()
         && *limit_to_decrease > 0
         && !solver->must_interrupt_asap()
         ; i++
     ) {
-        uint32_t var = added_cl_to_var.getTouchedList()[i];
+        uint32_t var = added_cl_to_var.get_touched_list()[i];
         Lit lit = Lit(var, true);
         if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) goto end;
         if (!mark_and_push_to_added_long_cl_cls_containing(lit)) goto end;
@@ -1206,7 +1206,7 @@ bool OccSimplifier::eliminate_vars()
 
         added_cl_to_var.clear();
         removed_cl_with_var.touch(Lit(0, false));
-        while(!removed_cl_with_var.getTouchedList().empty()
+        while(!removed_cl_with_var.get_touched_list().empty()
             && *limit_to_decrease > 0
             && !solver->must_interrupt_asap()
             && solver->okay()
@@ -1258,14 +1258,14 @@ bool OccSimplifier::eliminate_vars()
 
             solver->clean_occur_from_removed_clauses_only_smudged();
 
-            verb_print(2, "size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size());
-            verb_print(2, "size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size());
+            verb_print(2, "size of added_cl_to_var    : " << added_cl_to_var.get_touched_list().size());
+            verb_print(2, "size of removed_cl_with_var: " << removed_cl_with_var.get_touched_list().size());
 
             if (!simulate_frw_sub_str_with_added_cl_to_var()) goto end;
 
             //These WILL ADD VARS BACK even though it's not changed.
             uint32_t re_added = 0;
-            for(uint32_t var: removed_cl_with_var.getTouchedList()) {
+            for(uint32_t var: removed_cl_with_var.get_touched_list()) {
                 if (!can_eliminate_var(var)) continue;
                 re_added++;
                 var_elim_complexity[var] = heuristicCalcVarElimScore(var);
@@ -1279,7 +1279,7 @@ bool OccSimplifier::eliminate_vars()
             verb_print(1, "[occ-bve-wave] " << bve_wave
                 << " tried " << (went_through - wave_last_through)
                 << " elimed " << (last_elimed - wave_last_elimed)
-                << " touched " << removed_cl_with_var.getTouchedList().size()
+                << " touched " << removed_cl_with_var.get_touched_list().size()
                 << " re-added " << re_added
                 << " heap " << velim_order.size());
             wave_last_through = went_through;
@@ -1339,7 +1339,7 @@ bool OccSimplifier::eliminate_vars()
         //Only raise the bound once the cheap one is exhausted, as CaDiCaL does.
         //If we ran out of budget the bound stays where it is, and the next call
         //picks up from here instead of starting over at 0.
-        round_complete = removed_cl_with_var.getTouchedList().empty()
+        round_complete = removed_cl_with_var.get_touched_list().empty()
             && velim_order.empty()
             && varelim_num_limit > 0
             && varelim_linkin_limit_bytes > 0
@@ -1463,8 +1463,8 @@ void OccSimplifier::promote_red_bin_to_irred(const vector<Lit>& lits, int32_t id
         elim_calc_need_update.touch(l);
         added_cl_to_var.touch(l);
     }
-    findWatchedOfBin(solver->watches, lits[1], lits[0], true, id).setRed(false);
-    findWatchedOfBin(solver->watches, lits[0], lits[1], true, id).setRed(false);
+    find_watched_of_bin(solver->watches, lits[1], lits[0], true, id).setRed(false);
+    find_watched_of_bin(solver->watches, lits[0], lits[1], true, id).setRed(false);
 }
 
 bool OccSimplifier::fill_occur_and_print_stats()
@@ -2005,7 +2005,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
                         dummy.push_back(l);
                     }
 
-                    auto s = ClauseStats::combineStats(cl1->stats, cl2->stats);
+                    auto s = ClauseStats::combine_stats(cl1->stats, cl2->stats);
                     //RUP chain, in propagation order: cl1 and cl2 force
                     //~g.lits[0] and ~g.lits[1], then the gate's defining
                     //clause conflicts.
@@ -2150,7 +2150,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
 
             for(auto const& l: gate.lits) {
                 solver->watches.smudge(l);
-                removeWCl(solver->watches[l], off);
+                remove_w_cl(solver->watches[l], off);
                 n_occurs[l.toInt()]--;
                 elim_calc_need_update.touch(l);
                 removed_cl_with_var.touch(l);
@@ -2790,9 +2790,9 @@ bool OccSimplifier::fill_occur() {
     }
 
     //Add irredundant to occur
-    uint64_t memUsage = calc_mem_usage_of_occur(solver->long_irred_cls);
-    print_mem_usage_of_occur(memUsage);
-    if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
+    uint64_t mem_usage = calc_mem_usage_of_occur(solver->long_irred_cls);
+    print_mem_usage_of_occur(mem_usage);
+    if (mem_usage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
         verb_print(1, "[occ] Memory usage of occur is too high, unlinking and skipping occur");
         CompleteDetachReatacher detRet(solver);
         detRet.reattachLongs(true);
@@ -2821,10 +2821,10 @@ bool OccSimplifier::fill_occur() {
             else rest.push_back(offs);
         }
 
-        memUsage = calc_mem_usage_of_occur(occ_link);
-        print_mem_usage_of_occur(memUsage);
+        mem_usage = calc_mem_usage_of_occur(occ_link);
+        print_mem_usage_of_occur(mem_usage);
         bool linkin = true;
-        if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
+        if (mem_usage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
             linkin = false;
         }
         //Sort, so we get the shortest ones in at least
@@ -4198,7 +4198,7 @@ bool OccSimplifier::generate_resolvents(
             } else if (neg.is_bin() && pos.is_clause()) {
                 stats = solver->cl_alloc.ptr(pos.get_offset())->stats;
             } else if (neg.is_clause() && pos.is_clause()) {
-                stats = ClauseStats::combineStats(
+                stats = ClauseStats::combine_stats(
                     solver->cl_alloc.ptr(pos.get_offset())->stats,
                     solver->cl_alloc.ptr(neg.get_offset())->stats);
             }
@@ -4702,9 +4702,9 @@ void OccSimplifier::check_n_occur() {
 void OccSimplifier::update_varelim_complexity_heap()
 {
     num_otf_update_until_now++;
-    for(uint32_t var: elim_calc_need_update.getTouchedList()) {
+    for(uint32_t var: elim_calc_need_update.get_touched_list()) {
         //No point in updating the score of this var
-        if (!can_eliminate_var(var) || !velim_order.inHeap(var)) {
+        if (!can_eliminate_var(var) || !velim_order.in_heap(var)) {
             continue;
         }
 
@@ -4720,7 +4720,7 @@ void OccSimplifier::update_varelim_complexity_heap()
 
     #ifdef CHECK_N_OCCUR
     for(uint32_t var = 0; var < solver->nVars(); var++) {
-        if (!can_eliminate_var(var) || !velim_order.inHeap(var)) {
+        if (!can_eliminate_var(var) || !velim_order.in_heap(var)) {
             continue;
         }
 
@@ -5230,7 +5230,7 @@ void OccSimplifier::order_vars_for_elim()
 
         bve_why.sched_added++;
         *limit_to_decrease -= 50;
-        assert(!velim_order.inHeap(var));
+        assert(!velim_order.in_heap(var));
         var_elim_complexity[var] = heuristicCalcVarElimScore(var);
         velim_order.insert(var);
     }
@@ -5458,7 +5458,7 @@ bool OccSimplifier::remove_literal(
         solver->mark_elim_cand(toRemoveLit);
     }
 
-    //removeWCl is O(occ): leave the entry to the lazy removed-clause cleanup
+    //remove_w_cl is O(occ): leave the entry to the lazy removed-clause cleanup
     if (only_set_is_removed && cl.size() == 2) {
         solver->watches.smudge(toRemoveLit);
     } else if (only_set_is_removed && !cl.red()
@@ -5466,7 +5466,7 @@ bool OccSimplifier::remove_literal(
         offset = relocate_clause(offset);
         solver->watches.smudge(toRemoveLit);
     } else {
-        removeWCl(solver->watches[toRemoveLit], offset);
+        remove_w_cl(solver->watches[toRemoveLit], offset);
     }
     if (solver->cl_alloc.ptr(offset)->red()) solver->lit_stats.red_lits--;
     else solver->lit_stats.irred_lits--;

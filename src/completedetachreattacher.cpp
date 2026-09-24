@@ -103,7 +103,7 @@ void CompleteDetachReatacher::attachClauses( vector<ClOffset>& cs) {
             assert(solver->value((*cl)[0]) == l_Undef);
             assert(solver->value((*cl)[1]) == l_Undef);
         }
-        solver->attachClause(*cl, false);
+        solver->attach_clause(*cl, false);
     }
 }
 
@@ -132,7 +132,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
         }
 
         if (clean_clause(cl)) {
-            solver->attachClause(*cl);
+            solver->attach_clause(*cl);
             *j++ = *i;
         } else {
             solver->free_cl(*i);

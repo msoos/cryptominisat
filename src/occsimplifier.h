@@ -387,7 +387,7 @@ private:
     LinkInData link_in_data_irred;
     LinkInData link_in_data_red;
     uint64_t calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const;
-    void     print_mem_usage_of_occur(uint64_t memUsage) const;
+    void     print_mem_usage_of_occur(uint64_t mem_usage) const;
     void     print_linkin_data(const LinkInData& link_in_data) const;
     OccSimplifier::LinkInData link_in_clauses(
         const vector<ClOffset>& toAdd

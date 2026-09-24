@@ -202,7 +202,7 @@ class Solver : public Searcher
         ///Long irred clause count that is right in both phases: during occur
         ///simplification the clauses live in OccSimplifier, not in long_irred_cls
         size_t num_long_irred_cls_anywhere() const;
-        const SolverConf& getConf() const;
+        const SolverConf& get_conf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;
         size_t get_num_vars_elimed() const;
@@ -280,7 +280,7 @@ class Solver : public Searcher
         void new_vars(const size_t n) override;
 
         //Attaching-detaching clauses
-        void attachClause(
+        void attach_clause(
             const Clause& c
             #ifdef DEBUG_ATTACH
             , const bool checkAttach = true
@@ -314,8 +314,8 @@ class Solver : public Searcher
 
             PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
-        void detachClause(const Clause& c, const bool remove_frat = true);
-        void detachClause(const ClOffset offset, const bool remove_frat = true);
+        void detach_clause(const Clause& c, const bool remove_frat = true);
+        void detach_clause(const ClOffset offset, const bool remove_frat = true);
         void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
@@ -585,7 +585,7 @@ inline const SolveStats& Solver::get_solve_stats() const
     return solve_stats;
 }
 
-inline const SolverConf& Solver::getConf() const
+inline const SolverConf& Solver::get_conf() const
 {
     return conf;
 }

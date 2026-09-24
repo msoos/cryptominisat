@@ -47,7 +47,7 @@ class DataSync
         void new_vars(const size_t n);
         bool syncData();
         void save_on_var_memory();
-        void updateVars(
+        void update_vars(
            const vector<uint32_t>& outer_to_inter
             , const vector<uint32_t>& inter_to_outer
         );

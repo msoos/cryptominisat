@@ -125,7 +125,7 @@ struct SearchHist {
         << " glue"
         << " "
         #ifdef STATS_NEEDED
-        << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
+        << std::right << glueHist.get_longterm().avgPrint(1, 5)
         #endif
         << "/" << std::left << glueHistLT.avgPrint(1, 5)
 
@@ -141,7 +141,7 @@ struct SearchHist {
 
         #ifdef STATS_NEEDED
         << " traild"
-        << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
+        << " " << std::right << trailDepthHist.get_longterm().avgPrint(0, 7)
         #endif
 
         << " traildd"

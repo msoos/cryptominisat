@@ -153,8 +153,8 @@ bool DistillerBin::out_of_budget()
 void DistillerBin::set_cands_marked(const Lit lit1, const bool mark)
 {
     for(const auto& c: cands) {
-        auto& w1 = findWatchedOfBin(solver->watches, lit1, c.lit2, false, c.ID);
-        auto& w2 = findWatchedOfBin(solver->watches, c.lit2, lit1, false, c.ID);
+        auto& w1 = find_watched_of_bin(solver->watches, lit1, c.lit2, false, c.ID);
+        auto& w2 = find_watched_of_bin(solver->watches, c.lit2, lit1, false, c.ID);
         if (mark) { w1.mark_bin_cl(); w2.mark_bin_cl(); }
         else { w1.unmark_bin_cl(); w2.unmark_bin_cl(); }
     }
@@ -250,8 +250,8 @@ bool DistillerBin::try_distill_bin(
     if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);
 
     //Disable this clause
-    findWatchedOfBin(solver->watches, lit1, lit2, false, ID).mark_bin_cl();
-    findWatchedOfBin(solver->watches, lit2, lit1, false, ID).mark_bin_cl();
+    find_watched_of_bin(solver->watches, lit1, lit2, false, ID).mark_bin_cl();
+    find_watched_of_bin(solver->watches, lit2, lit1, false, ID).mark_bin_cl();
 
     solver->new_decision_level();
     PropBy confl;
@@ -302,11 +302,11 @@ bool DistillerBin::try_distill_bin(
 
     //Nothing happened
     solver->cancel_until<false, true>(0);
-    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, ID);
+    auto &w1 = find_watched_of_bin(solver->watches, lit1, lit2, false, ID);
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();
 
-    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, ID);
+    auto &w2 = find_watched_of_bin(solver->watches, lit2, lit1, false, ID);
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
 

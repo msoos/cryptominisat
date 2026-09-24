@@ -121,7 +121,7 @@ struct ClauseStats
     ClauseStats()
     {
         //NOTE: we *MUST* set values to high default, as we do
-        //combineStats(default, newclause) to get combined stats.
+        //combine_stats(default, newclause) to get combined stats.
         //CL_MAX_GLUE, not 1000: eager subsume marks clauses with it
         glue = CL_MAX_GLUE;
         is_decision = false;
@@ -158,7 +158,7 @@ struct ClauseStats
     uint32_t props_made = 0; ///<Number of times caused propagation
     #endif
 
-    static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
+    static ClauseStats combine_stats(const ClauseStats& first, const ClauseStats& second)
     {
         //Create to-be-returned data
         ClauseStats ret = first;
@@ -325,7 +325,7 @@ struct ClauseStatsExtra
         stats.reset_rdb_stats();
     }
 
-    static ClauseStatsExtra combineStats(const ClauseStatsExtra& first, const ClauseStatsExtra& second)
+    static ClauseStatsExtra combine_stats(const ClauseStatsExtra& first, const ClauseStatsExtra& second)
     {
         //Create to-be-returned data
         ClauseStatsExtra ret = first;

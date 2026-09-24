@@ -122,7 +122,7 @@ bool DistillerLitRem::go_through_clauses(
 
         max_num_props -= cl.size();
         if (solver->satisfied(cl)) {
-            solver->detachClause(cl);
+            solver->detach_clause(cl);
             solver->free_cl(&cl);
             continue;
         }
@@ -274,7 +274,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
 
     //We can remove the literal
     (*solver->frat) << deldelay << cl << fin;
-    solver->detachClause(cl, false);
+    solver->detach_clause(cl, false);
     run_stats.num_lits_rem += orig_size - lits.size();
     run_stats.num_cl_shorten++;
 

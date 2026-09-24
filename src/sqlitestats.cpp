@@ -250,7 +250,7 @@ bool SQLiteStats::add_solverrun(const Solver* solver)
     //Inserting element into solverruns to get unique ID
     const int rc = sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr);
     if (rc) {
-        if (solver->getConf().verbosity >= 6) {
+        if (solver->get_conf().verbosity >= 6) {
             cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
             cerr << "c " << sqlite3_errmsg(db) << endl;
         }
@@ -549,10 +549,10 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->lit_stats.red_lits);
 
     //Conflict stats
-    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.getLongtTerm(),avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.glueHist.getLongtTerm().var()));
-    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.getLongtTerm(),getMin)
-    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.getLongtTerm(),getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.get_longterm(),avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.glueHist.get_longterm().var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.get_longterm(),getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.get_longterm(),getMax)
 
     bind_null_or_double(stmt, bindAt,   search_hist.conflSizeHist, avg)
     sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.conflSizeHist.var()));
@@ -575,10 +575,10 @@ void SQLiteStats::restart(
     bind_null_or_double(stmt, bindAt,   search_hist.branchDepthDeltaHist,getMin)
     bind_null_or_double(stmt, bindAt,   search_hist.branchDepthDeltaHist,getMax)
 
-    bind_null_or_double(stmt, bindAt, search_hist.trailDepthHist.getLongtTerm(),avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.trailDepthHist.getLongtTerm().var()));
-    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthHist.getLongtTerm(),getMin)
-    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthHist.getLongtTerm(),getMax)
+    bind_null_or_double(stmt, bindAt, search_hist.trailDepthHist.get_longterm(),avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.trailDepthHist.get_longterm().var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthHist.get_longterm(),getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthHist.get_longterm(),getMax)
 
     bind_null_or_double(stmt, bindAt,   search_hist.trailDepthDeltaHist,avg)
     sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.trailDepthDeltaHist.var()));
@@ -789,7 +789,7 @@ void SQLiteStats::clause_stats(
     bind_null_or_double(stmt_clause_stats, bindAt, hist.trailDepthHist,avg_nocheck)
     bind_null_or_double(stmt_clause_stats, bindAt, hist.conflSizeHist,avg)
     bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHist,avg_nocheck)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHist.getLongtTerm(),avg)
+    bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHist.get_longterm(),avg)
 
     run_sqlite_step(stmt_clause_stats, "clause_stats", bindAt);
 }
