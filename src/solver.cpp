@@ -472,9 +472,6 @@ void Solver::sort_and_clean_bnn(BNN& bnn)
 void Solver::attach_bnn(const uint32_t bnn_idx)
 {
     BNN* bnn = bnns[bnn_idx];
-
-//     cout << "Attaching BNN: " << *bnn << endl;
-
     for(const auto& l: *bnn) {
         watches[l].push(Watched(bnn_idx, WatchType::watch_bnn_t, bnn_pos_t));
         watches[~l].push(Watched(bnn_idx, WatchType::watch_bnn_t, bnn_neg_t));
@@ -804,15 +801,11 @@ void Solver::test_renumbering() const
     bool uninteresting_seen = false;
     bool problem = false;
     for(size_t i = 0; i < nVars(); i++) {
-        /* cout << "val[" << i << "]: " << value(i); */
         if (var_data[i].removed == Removed::elimed
             || var_data[i].removed == Removed::replaced
             || value(i) != l_Undef
         ) {
             uninteresting_seen = true;
-            /* cout << " set/removed" << endl; */
-        } else {
-            /* cout << " non-removed" << endl; */
         }
 
         if (value(i) == l_Undef
@@ -1910,7 +1903,6 @@ lbool Solver::execute_inprocess_strategy(
             //Nothing, just an empty comma, ignore
         } else if (token.substr(0,3) == "occ") {
             occ_strategy_tokens += token + ", ";
-            //cout << "occ_strategy_tokens now: " << occ_strategy_tokens  << endl;
         } else {
             cout << "ERROR: strategy '" << token << "' not recognised!" << endl;
             exit(-1);
@@ -3888,23 +3880,18 @@ vector<Lit> Solver::get_weight_translation() const {
 map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_new_var) {
     map<uint32_t, Lit> ret;
     for(const auto [origv, n] : orig_to_new_var) {
-        /* std::cout << "[solver remap] Remapping. Orig variable " << origv +1 */
-        /*     << " is defined to: " << n << std::endl; */
         assert(n != lit_Undef);
         assert(n.var() < nVarsOuter() && "Must have been inserted, since it hasn't been set");
         const Lit l_inter = map_outer_to_inter(var_replacer->get_lit_replaced_with_outer(n));
         if (value(l_inter) != l_Undef) {
-            /* cout << "[solver remap] Variable was assigned." << endl; */
             continue;
         }
         if (var_data[l_inter.var()].removed == Removed::elimed) {
-            /* cout << "[solver remap] Variable was eliminated." << endl; */
             continue;
         }
         assert(l_inter.var() < nVars());
         assert(value(l_inter) == l_Undef);
         ret[origv] = l_inter;
-        /* cout << "[solver remap] Variable is now internal variable: " << l_inter << endl; */
     }
     return ret;
 }

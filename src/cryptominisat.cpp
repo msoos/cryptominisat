@@ -831,9 +831,6 @@ struct OneThreadCalc
     {
         if (print_thread_start_and_finish) {
             start_time = cpu_time();
-            //data_for_thread.update_mutex->lock();
-            //cout << "c Starting thread " << tid << endl;
-            //data_for_thread.update_mutex->unlock();
         }
 
         //Add clauses and variables

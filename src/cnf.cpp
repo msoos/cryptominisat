@@ -554,10 +554,6 @@ void CNF::check_watchlist(watch_subarray_const ws) const {
         const ClOffset offs = w.get_offset();
         const Clause& c = *cl_alloc.ptr(offs);
         Lit blockedLit = w.get_blocked_lit();
-        /*cout << "Clause " << c << " blocked lit:  "<< blockedLit << " val: " << value(blockedLit)
-        << " blocked removed:" << !(var_data[blockedLit.var()].removed == Removed::none)
-        << " cl satisfied: " << satisfied(&c)
-        << endl;*/
         assert(blockedLit.var() < nVars());
 
         if (var_data[blockedLit.var()].removed == Removed::none

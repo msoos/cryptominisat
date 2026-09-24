@@ -561,9 +561,6 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
             link_in_lit_limit -= cl->size();
             clause_lits_added += cl->size();
         } else {
-            /*cout << "alsoOccur: " << alsoOccur
-            << " cl->size() < max_size: " << (cl->size() < max_size)
-            << " link_in_lit_limit: " << link_in_lit_limit << endl;*/
             //assert(cl->red());
             cl->set_occur_linked(false);
             link_in_data.cl_not_linked++;
@@ -1889,7 +1886,6 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
         // -a V  f V -x
         // -a V  g V  x
         // i.e. lhs[0] = f, lhs[2] = g, lhs[1] --> if TRUE selects lhs[2] otherwise lhs[1]
-        //cout << "out_a_all.s: " << out_a_all.size() << endl;
         for(uint32_t i2 = 0; i2 < out_a_all.size(); i2+=2) {
             ITEGate gate;
             gate.rhs = lit;
@@ -1900,7 +1896,6 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
                 Watched& w = out_a_all[i2+x];
                 assert(w.is_clause());
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                //cout << "c: " << *cl << endl;
                 for(const auto&l : *cl) {
                     if (!seen[l.var()]) {
                         gate.lhs[at++] = l;
@@ -3702,7 +3697,6 @@ bool OccSimplifier::find_ite_gate(
     }
 
     if (limit < 0) {
-        //cout << "ITE Gate find timeout limit reached" << endl;
         bvestats.gatefind_timeouts++;
     }
 
@@ -3730,7 +3724,6 @@ bool OccSimplifier::find_equivalence_gate(
     , vec<Watched>& out_b
 ) {
     assert(to_clear.empty());
-
     bool found = false;
     out_a.clear();
     out_b.clear();
@@ -3769,8 +3762,6 @@ bool OccSimplifier::find_xor_gate(
     , vec<Watched>& out_b
 ) {
     assert(to_clear.empty());
-    //cout << "Finding xor gate" << endl;
-
     bool found = false;
     int limit = solver->conf.varelim_gate_find_limit;
     out_a.clear();
@@ -3862,7 +3853,6 @@ bool OccSimplifier::find_xor_gate(
         }
 
         //Early abort, we should have found 3 by now
-        //cout << "Here par find s: " << parities_found.size() << endl;
         if (parities_found.size() != tofind/2) {
             continue;
         }

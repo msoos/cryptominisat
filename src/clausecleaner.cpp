@@ -203,7 +203,6 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
                 solver->watches.smudge(~bnn->out);
             }
             bnn->isRemoved = true;
-//             cout << "Removed BNN" << endl;
         }
         bnn->undefs = bnn->size();
         bnn->ts = 0;

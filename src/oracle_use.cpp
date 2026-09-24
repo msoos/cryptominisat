@@ -631,9 +631,6 @@ bool Solver::oracle_sparsify(bool fast)
     }
     long_irred_cls.resize(j);
 
-    //cout << "New cls size: " << clauses.size() << endl;
-    //Subsume();
-    //
     verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls

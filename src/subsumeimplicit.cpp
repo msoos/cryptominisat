@@ -89,8 +89,6 @@ uint32_t SubsumeImplicit::subsume_at_watch(
         *timeAvail -= (int64_t)(ws.size()*std::ceil(std::log((double)ws.size())) + 20);
         std::sort(ws.begin(), ws.end(), WatchSorterBinTriLong());
     }
-    /*cout << "---> Before" << endl;
-    print_watch_list(ws, lit);*/
 
     Watched* i = ws.begin();
     Watched* j = i;

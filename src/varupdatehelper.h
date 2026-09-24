@@ -120,7 +120,6 @@ inline void updateBySwap(T& to_update, T2& seen, const vector< uint32_t >& mappe
         while(true) {
             uint32_t swapwith = mapper.at(var);
             assert(seen.at(swapwith) == 0);
-            //std::cout << "Swapping " << var << " with " << swapwith << std::endl;
             using std::swap;
             swap(to_update[var], to_update[swapwith]);
             seen.at(swapwith) = 1;

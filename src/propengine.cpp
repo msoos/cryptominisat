@@ -196,7 +196,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t curr_level)
                         // watch to this
                         gwatches[x[i2]].push(GaussWatched::plain_xor(at));
                         x.watched[which] = i2;
-                        /* cout << "found new watch for xor: " << x << endl; */
                         goto next;
                     }
                 } else rhs ^= solver->value(x[i2]) == l_True;
@@ -204,7 +203,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t curr_level)
             assert(unknown < 2);
             if (unknown == 1) {
                 // this is the OTHER watch for sure
-                /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
                 x.prop_confl_watch = !which;
                 enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decision_level(), PropBy(PLAIN_XOR_SENTINEL, at));
@@ -213,14 +211,12 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t curr_level)
             }
             assert(unknown == 0);
             if (rhs != x.rhs) {
-                /* cout << "conflict because of xor: " << x << endl; */
                 x.prop_confl_watch = 2 + which;
                 confl = PropBy(PLAIN_XOR_SENTINEL, at);
                 *j++ = *i;
                 i++;
                 break;
             } else {
-                /* cout << "satisfied xor: " << x << endl; */
                 *j++ = *i;
             }
         } else {
@@ -347,7 +343,6 @@ lbool PropEngine::bnn_prop(
     if (ts+undefs < bnn->cutoff) {
         // we are under the cutoff no matter what undef+unknowns is
         if (bnn->set) {
-//                 cout << "returning l_False from bnn_prop" <<  "declev: " << decision_level() << endl;
             return l_False;
         }
 
@@ -358,7 +353,6 @@ lbool PropEngine::bnn_prop(
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
-//         cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
         return l_True;
     }
 
@@ -376,7 +370,6 @@ lbool PropEngine::bnn_prop(
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
-        //         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;        }
         return l_True;
     }
 
@@ -413,27 +406,12 @@ lbool PropEngine::bnn_prop(
 
 vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
 {
-//     cout << "Getting BNN reason, lit: " << lit << " bnn: " << *bnn << endl;
-//     cout << "values: ";
-//     for(const auto& l: bnn->in) {
-//         cout << l << " val: " << value(l) << " , ";
-//     }
-//     if (!bnn->set) {
-//         cout << " -- out : " << value(bnn->out);
-//     }
-//     cout << endl;
-
     if (lit == lit_Undef) {
         get_bnn_confl_reason(bnn, &bnn_confl_reason);
         return &bnn_confl_reason;
     }
 
     auto& reason = var_data[lit.var()].reason;
-//     cout
-//     << " reason lev: " << var_data[lit.var()].level
-//     << " sublev: " << var_data[lit.var()].sublevel
-//     << " reason type: " << var_data[lit.var()].reason.get_type()
-//     << endl;
     assert(reason.is_bnn());
     if (reason.bnn_reason_set()) {
         return &bnn_reasons[reason.get_bnn_reason()];
@@ -454,12 +432,6 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
     reason.set_bnn_reason(empty_slot);
 
     get_bnn_prop_reason(bnn, lit, ret);
-//     cout << "get_bnn_reason (" << lit << ") returning: ";
-//     for(const auto& l: *ret) {
-//         cout << l << " val(" << value(l) << ") ";
-//     }
-//     cout << "0" << endl;
-
     return ret;
 }
 

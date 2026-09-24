@@ -218,7 +218,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     *solver->frat << "UNSAT SET HERE" <<  __PRETTY_FUNCTION__ << "\n"; \
     assert(solver->unsat_cl_ID == 0);\
     solver->unsat_cl_ID = (x);\
-    /*cout << "set unsat CL ID here to " << (x) << endl;*/\
     /*assert(false);*/\
     } while (0)
 

@@ -62,8 +62,6 @@ std::string CardFinder::print_card(const vector<Lit>& lits) const {
 
 bool CardFinder::find_connector(Lit lit1, Lit lit2) const
 {
-    //cout << "Finding connector: " << lit1 << ", " << lit2 << endl;
-
     //look through the shorter one
     if (solver->watches[lit1].size() > solver->watches[lit2].size()) {
         std::swap(lit1, lit2);
@@ -136,11 +134,6 @@ void CardFinder::find_two_product_atmost1() {
                         vector<Lit>& card_col = cards[at_col];
                         if (card_col.empty()) continue;
 
-                        /*cout << "c [cardfind] Potential card for"
-                        << " row: " << print_card(card_row)
-                        << " -- col: " << print_card(card_col)
-                        << endl;*/
-
                         vector<Lit> card;
 
                         //mark all lits in row's bin-connected graph
@@ -158,7 +151,6 @@ void CardFinder::find_two_product_atmost1() {
                                 if (ws3.is_bin()) {
                                     Lit conn_lit = ws3.lit2();
                                     if (seen[conn_lit.toInt()]) {
-                                        //cout << "part of card: " << ~conn_lit << endl;
                                         card.push_back(~conn_lit);
                                     }
                                 }
@@ -166,8 +158,6 @@ void CardFinder::find_two_product_atmost1() {
                         }
 
                         if (card.size() > 2) {
-                            /*cout << "Reassembled two product: "
-                            << print_card(card) << endl;*/
                             new_cards.push_back(card);
                         }
 
@@ -217,21 +207,14 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
             continue;
         }
 
-        //cout << "c [cardfind] Clash on var " << lit << endl;
         for(auto ws: solver->watches[lit]) {
             if (ws.is_idx()) {
                 idx_pos.push_back(ws.get_idx());
-
-                /*cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
-                << print_card(cards[ws.get_idx()]) << endl;*/
             }
         }
         for(auto ws: solver->watches[~lit]) {
             if (ws.is_idx()) {
                 idx_neg.push_back(ws.get_idx());
-
-                /*cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
-                << print_card(cards[ws.get_idx()]) << endl;*/
             }
         }
 
@@ -265,8 +248,6 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
                 assert(found);
 
                 std::sort(new_card.begin(), new_card.end());
-                /*cout << "c [cardfind] -> Combined card: "
-                << print_card(new_card) << endl;*/
 
                 //The two parents can share literals, and can hold a literal
                 //and its negation. AMO over the set still holds, but a card
@@ -324,7 +305,6 @@ void CardFinder::find_pairwise_atmost1()
         const Lit l = Lit::toLit(i);
         vector<Lit> lits_in_card;
         if (seen[l.toInt()]) {
-            //cout << "Skipping " << l << " we have seen it before" << endl;
             continue;
         }
 
@@ -343,7 +323,6 @@ void CardFinder::find_pairwise_atmost1()
             }
             if (all_found) {
                 lits_in_card.push_back(~other);
-                // cout << "added to lits_in_card: " << ~other << endl;
             }
         }
         if (lits_in_card.size() > 1) {
@@ -363,10 +342,6 @@ void CardFinder::find_pairwise_atmost1()
             //fast push-back
             cards.resize(cards.size()+1);
             std::swap(cards[cards.size()-1], lits_in_card);
-
-        } else {
-            //cout << "lits_in_card.size():" << lits_in_card.size() << endl;
-            //cout << "Found none for " << l << endl;
         }
     }
 

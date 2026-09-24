@@ -436,7 +436,6 @@ void EGaussian::eliminate() {
 
         //We have found a "1" in this column
         if (row_with_1_in_col != end_row_it) {
-            //cout << "col zeroed:" << col << " var is: " << col_to_var[col] + 1 << endl;
             var_has_resp_row[col_to_var[col]] = 1;
 
             // swap row row_with_1_in_col and rowIt
@@ -660,7 +659,6 @@ gret EGaussian::init_adjust_matrix() {
             }
 
             default: // need to update watch list
-                // printf("%d:need to update watch list    n",row_id);
                 assert(non_resp_var != numeric_limits<uint32_t>::max());
 
                 // insert watch list
@@ -759,7 +757,6 @@ bool EGaussian::find_truths(
         return true;
     }
     #endif
-    // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     SLOW_DEBUG_DO(assert(row_n < num_rows));
     SLOW_DEBUG_DO(assert(satisfied_xors.size() > row_n));
@@ -853,8 +850,6 @@ bool EGaussian::find_truths(
         case gret::nothing_fnewwatch:
 
             find_truth_ret_fnewwatch++;
-            // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
-            // new_resp_var,orig_basic , p);
 
             if (was_resp_var) {
                 /// clear watchlist, because only one responsible value in watchlist
@@ -890,7 +885,6 @@ bool EGaussian::find_truths(
         case gret::nothing_satisfied:
 
             find_truth_ret_satisfied++;
-            // printf("%d:This row is nothing( maybe already true)     n",row_n);
             *j++ = *i;
             if (was_resp_var) { // recover
                 var_has_resp_row[row_to_var_non_resp[row_n]] = 0;
@@ -1137,9 +1131,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                     // this row already satisfied
                     case gret::nothing_satisfied:
                         elim_ret_satisfied++;
-
-                        // printf("%d:This row is nothing( maybe already true) in eliminate col
-                        // n",num_row);
 
                         watch_nonresp(row_i, p);
 
@@ -1450,7 +1441,6 @@ bool EGaussian::must_disable(GaussQData& gqd)
         uint64_t egcalled = elim_called + find_truth_ret_satisfied_precheck+find_truth_called_propgause;
         uint32_t limit = (double)egcalled*gconf.min_usefulness_cutoff;
         uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
-        //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
         if (egcalled > gconf.autodisable_min_calls && useful < limit) {
             if (solver->conf.verbosity >= 2) {
                 const double perc =

@@ -230,7 +230,6 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
         if (lit == torem) {
             lit = ~lit;
         }
-        //cout << "Enq: " << ~lit << endl;
         solver->enqueue<true>(~lit);
     }
     assert(solver->ok);
@@ -263,14 +262,6 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
             lits.push_back(l);
         }
     }
-//     cout
-//     << "Failed"
-//     << " confl.isnullptr(): " << confl.isnullptr()
-//     << " i: " << i
-//     << " at: " << at
-//     << " cl before: " << cl
-//     << " cl after: " << lits
-//     << endl;
 
     //We can remove the literal
     (*solver->frat) << deldelay << cl << fin;

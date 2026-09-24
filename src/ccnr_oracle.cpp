@@ -82,7 +82,6 @@ bool OracleLS::local_search(int64_t mems_limit) {
     for (t = 0; t < max_tries; t++) {
         for (step = 0; step < max_steps; step++) {
             if (unsat_cls.empty()) {
-                /* cout <<  "[ccnr] YAY, mems: " << mems << " steps: " << step << endl; */
                 verb_print(3, "[ccnr] YAY, mems: " << mems << " steps: " << step);
                 check_solution();
                 return true;
@@ -97,13 +96,10 @@ bool OracleLS::local_search(int64_t mems_limit) {
 
             flip(flipv);
             if (mems > mems_limit) {
-              /* cout << "mems limit reached, try: " << t << " step: " << setw(8) << step */
-              /*     << " unsat cls: " <<  unsat_cls.size() << endl; */
               verb_print(3, "[ccnr] mems limit reached, try: " << t << " step: " << setw(8) << step
                   << " unsat cls: " <<  unsat_cls.size());
               return false;
             }
-            /* cout << "num unsat cls: " << unsat_cls.size() << endl; */
 
             int u_cost = unsat_cls.size();
             if ((step & 0x3ffff) == 0x3ffff) {
@@ -131,7 +127,6 @@ void OracleLS::initialize() {
       } else {
         sol[v] = (*assump_map)[v];
       }
-      /* cout << "sol[" << v << "]: " << (int)sol[v] << endl; */
      }
 
     //unsat_appears, will be updated when calling unsat_a_clause function.
@@ -186,7 +181,6 @@ void OracleLS::initialize_variable_datas() {
 
 void OracleLS::adjust_assumps(const vector<int>& assumps_changed) {
     for(const auto& v: assumps_changed) {
-        /* cout << "adjust v: " << (int)v << " sol[v]:" << (int)sol[v] << endl; */
         int val = (*assump_map)[v];
         if (val == 2) {
             assert(sol[v] == 0 || sol[v] == 1);
@@ -246,7 +240,6 @@ int OracleLS::pick_var() {
       tries++;
     }
     if (!ok) return -1;
-    /* cout << "decided on cl_id: " << cid << " -- "; print_cl(cid); */
 
     best_score = std::numeric_limits<int64_t>::min();
     const auto& cl = cls[cid];
@@ -264,7 +257,6 @@ int OracleLS::pick_var() {
         }
     }
     assert(best_var != -1);
-    /* cout << "decided on var: " << best_var << endl; */
     return best_var;
 }
 
@@ -273,9 +265,6 @@ void OracleLS::check_clause(int cid) {
   for (const auto& l: cls[cid].lits) {
     if (sol[l.var_num] == l.sense) sat_cnt++;
   }
-  /* cout << "Checking cl_id: " << cid << " -- "; print_cl(cid); */
-  /* cout << "sat_cnt: " << sat_cnt << endl; */
-  /* cout << "cls[cid].sat_count: " << cls[cid].sat_count << endl; */
   assert(cls[cid].sat_count == sat_cnt);
 
   if (sat_cnt == 0) {
@@ -318,7 +307,6 @@ void OracleLS::flip(int v) {
         auto& cl = cls[l.cl_num];
         assert(cl.sat_count >= 0);
         assert(cl.sat_count <= (int)cl.lits.size());
-        /* cout << "checking effect on cl_id: " << l.cl_num << " -- "; print_cl(l.cl_num); */
 
         if (sol[v] == l.sense) {
             // make it sat
@@ -352,7 +340,6 @@ void OracleLS::flip(int v) {
           }
         }
 #ifdef SLOW_DEBUG
-        /* cout << "Effect on cl_id: " << l.cl_num << " -- "; print_cl(l.cl_num); */
         check_clause(l.cl_num);
         for(uint32_t i = 0; i < unsat_cls.size(); i++) {
           uint32_t clid = unsat_cls[i];
@@ -369,7 +356,6 @@ void OracleLS::flip(int v) {
     update_cc_after_flip(v);
 
 #ifdef SLOW_DEBUG
-    /* cout << "Done flip(). Checking all clauses" << endl; */
     for (uint32_t i = 0; i < cls.size(); i++) check_clause(i);
 #endif
 }
@@ -402,7 +388,6 @@ void OracleLS::update_cc_after_flip(int flipv) {
 }
 
 void OracleLS::sat_a_clause(int cl_id) {
-    /* cout << "sat_a_clause: cl_id: " << cl_id << endl; */
     assert(unsat_cls.size() > 0);
 
     //use the position of the clause to store the last unsat clause in stack
@@ -431,7 +416,6 @@ void OracleLS::sat_a_clause(int cl_id) {
 }
 
 void OracleLS::unsat_a_clause(int cl_id) {
-    /* cout << "unsat_a_clause: cl_id: " << cl_id << endl; */
     assert(cls[cl_id].sat_count == 0);
     unsat_cls.push_back(cl_id);
     idx_in_unsat_cls[cl_id] = unsat_cls.size()-1;

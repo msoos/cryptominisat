@@ -73,7 +73,6 @@ vector<lbool> solve(lbool& solution_val)
 
     while(!done) {
         MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-        //cout << "c solver " << mpi_rank << " got file msg " << num_msgs << endl;
 
         uint32_t i = 0;
         if (num_msgs == 0) {

@@ -3766,7 +3766,6 @@ void Searcher::create_new_fast_backw_assumption()
     uint32_t var = fast_backw.indic_to_var->at(indic.var());
     *fast_backw.test_indic = indic.var();
     *fast_backw.test_var = var;
-    //cout << "Testing: " << *fast_backw.test_var << endl;
     Lit l = Lit(var, false);
     fast_backw._assumptions->push_back(l);
 
@@ -3790,7 +3789,6 @@ lbool Searcher::new_decision_fast_backw()
             new_decision_level();
         } else if (value(p) == l_False) {
             //Deal with top 2 TRUE/FALSE
-//             cout << "Testing ret: " << l_False << endl;
             fast_backw._assumptions->pop_back();
             fast_backw._assumptions->pop_back();
             fast_backw.non_indep_vars->push_back(*fast_backw.test_var);
@@ -3828,9 +3826,6 @@ lbool Searcher::new_decision_fast_backw()
                 fast_backw.max_confl /= 2;
                 fast_backw.start_sumConflicts = sum_conflicts;
                 if (fast_backw.max_confl < 50) fast_backw.max_confl = 50;
-//                 cout << "HALF" << endl;
-            } else {
-//                 cout << "DIFF: " << (sum_conflicts-fast_backw.start_sumConflicts)/1000 << " k" << endl;
             }
 
             //Let's fix this up.
