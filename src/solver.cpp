@@ -1301,6 +1301,7 @@ void Solver::check_and_upd_config_parameters()
 
 lbool Solver::simplify_problem_outside(const string* strategy)
 {
+    const double my_time = cpu_time();
     #ifdef SLOW_DEBUG
     if (ok) {
         assert(check_order_heap_sanity());
@@ -1340,6 +1341,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
     unfill_assumptions_set();
     assumptions.clear();
     conf.conf_needed = true;
+    solveStats.time_in_solver += cpu_time() - my_time;
     return status;
 }
 
@@ -1375,6 +1377,7 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
+    const double my_time = cpu_time();
     if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
     copy_assumptions(_assumptions);
     reset_for_solving();
@@ -1433,6 +1436,11 @@ lbool Solver::solve_with_assumptions(
         solveStats.max_confl_per_solve = std::max(solveStats.max_confl_per_solve, confl);
         solveStats.solve_ret[status == l_True ? 0 : (status == l_False ? 1 : 2)]++;
         if (status == l_False) solveStats.confl_in_solves_unsat += confl;
+        const double t = cpu_time() - my_time;
+        solveStats.time_in_solver += t;
+        verb_print(1, "[solve] " << solveStats.num_solve_calls << " ret: " << status
+            << " confl: " << confl << " assumps: " << assumptions.size()
+            << " T: " << std::fixed << std::setprecision(2) << t);
     }
     unfill_assumptions_set();
     assumptions.clear();
@@ -2009,7 +2017,8 @@ void CMSat::Solver::print_stats(
     print_mode_stats();
     print_glue_usage();
     print_solve_call_stats();
-    if (conf.do_print_times) time_tally.print(conf.prefix, cpu_time);
+    //in library use the process also runs the caller, e.g. arjun in approxmc
+    if (conf.do_print_times) time_tally.print(conf.prefix, solveStats.time_in_solver);
 }
 
 //How the library was driven: solve()/simplify() calls, assumptions, matrices
@@ -2031,6 +2040,11 @@ void Solver::print_solve_call_stats() const
         , s.num_simplify, "inprocess rounds");
     print_stats_line(conf.prefix + "search() calls", num_search_called
         , float_div(sumConflicts, num_search_called), "conflicts per call");
+    if (conf.do_print_times) {
+        const double t = cpu_time();
+        print_stats_line(conf.prefix + "time in solve()/simplify()", s.time_in_solver
+            , stats_line_percent(s.time_in_solver, t), "% of process CPU time");
+    }
 
     const auto& g = gauss_tot;
     print_stats_line(conf.prefix + "matrix inits", g.inits, g.matrices, "matrices built");
