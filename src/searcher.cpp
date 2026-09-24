@@ -486,7 +486,7 @@ void Searcher::add_lits_to_learnt(
 template<bool inprocess>
 void Searcher::minimize_learnt_clause()
 {
-    const size_t origSize = learnt_clause.size();
+    const size_t orig_size = learnt_clause.size();
 
     to_clear = learnt_clause;
     if (conf.doRecursiveMinim) {
@@ -494,8 +494,8 @@ void Searcher::minimize_learnt_clause()
     } else {
         normalClMinim();
     }
-    stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
-    stats.rec_min_lit_rem += origSize - learnt_clause.size();
+    stats.recMinCl += ((orig_size - learnt_clause.size()) > 0);
+    stats.rec_min_lit_rem += orig_size - learnt_clause.size();
 
     if (conf.do_shrink_uip) shrink_learnt_clause<inprocess>();
 

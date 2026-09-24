@@ -140,8 +140,8 @@ class PropBy
         }
 
         //Binary prop
-        PropBy(const Lit lit, const bool redStep, int32_t _ID) :
-            red_step(redStep)
+        PropBy(const Lit lit, const bool _red_step, int32_t _ID) :
+            red_step(_red_step)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
@@ -152,12 +152,12 @@ class PropBy
         //For hyper-bin, etc.
         PropBy(
             const Lit lit
-            , bool redStep //Step that lead here from ancestor is redundant
+            , bool _red_step //Step that lead here from ancestor is redundant
             , bool hyperBin //It's a hyper-binary clause
             , bool hyperBinNotAdded //It's a hyper-binary clause, but was never added because all the rest was zero-level
             , int32_t _ID
         ) :
-            red_step(redStep)
+            red_step(_red_step)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
@@ -219,10 +219,10 @@ class PropBy
             return data2 & 2U;
         }
 
-        void setHyperbin(bool toSet)
+        void setHyperbin(bool to_set)
         {
             data2 &= ~2U;
-            data2 |= static_cast<uint32_t>(toSet) << 1;
+            data2 |= static_cast<uint32_t>(to_set) << 1;
         }
 
         [[nodiscard]] bool get_hyperbin_not_added() const
@@ -230,10 +230,10 @@ class PropBy
             return data2 & 4U;
         }
 
-        void setHyperbinNotAdded(bool toSet)
+        void setHyperbinNotAdded(bool to_set)
         {
             data2 &= ~4U;
-            data2 |= static_cast<uint32_t>(toSet) << 2;
+            data2 |= static_cast<uint32_t>(to_set) << 2;
         }
 
         Lit get_ancestor() const

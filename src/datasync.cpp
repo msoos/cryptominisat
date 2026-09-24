@@ -33,7 +33,7 @@ using namespace CMSat;
 
 DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
     solver(_solver)
-    , sharedData(_sharedData)
+    , shared_data(_sharedData)
     , seen(solver->seen)
     , to_clear(solver->to_clear)
 {
@@ -65,7 +65,7 @@ void DataSync::finish_up_mpi()
 
 void DataSync::set_shared_data(SharedData* _sharedData)
 {
-    sharedData = _sharedData;
+    shared_data = _sharedData;
     thread_id = _sharedData->cur_thread_id++;
     #ifdef USE_MPI
     set_up_for_mpi();
@@ -112,14 +112,14 @@ bool DataSync::syncData()
     }
     num_calls++;
 
-    assert(sharedData != nullptr);
+    assert(shared_data != nullptr);
     assert(solver->decision_level() == 0);
 
     //SEND data
     bool ok;
-    sharedData->unit_mutex.lock();
+    shared_data->unit_mutex.lock();
     ok = shareUnitData();
-    sharedData->unit_mutex.unlock();
+    shared_data->unit_mutex.unlock();
     if (!ok) {
         return false;
     }
@@ -129,11 +129,11 @@ bool DataSync::syncData()
     }
 
     //RECEIVE data
-    sharedData->bin_mutex.lock();
+    shared_data->bin_mutex.lock();
     extend_bins_if_needed();
     clear_set_binary_values();
     ok = shareBinData();
-    sharedData->bin_mutex.unlock();
+    shared_data->bin_mutex.unlock();
     if (!ok) {
         return false;
     }
@@ -147,8 +147,8 @@ bool DataSync::syncData()
         }
 
         if (!mpi_get_interrupt()) {
-            sharedData->unit_mutex.lock();
-            sharedData->bin_mutex.lock();
+            shared_data->unit_mutex.lock();
+            shared_data->bin_mutex.lock();
             ok = mpi_recv_from_others();
             assert(solver->conf.every_n_mpi_sync > 0);
             if (ok &&
@@ -156,8 +156,8 @@ bool DataSync::syncData()
             ) {
                 mpi_send_to_others();
             }
-            sharedData->unit_mutex.unlock();
-            sharedData->bin_mutex.unlock();
+            shared_data->unit_mutex.unlock();
+            shared_data->bin_mutex.unlock();
             if (!ok) {
                 return false;
             }
@@ -178,7 +178,7 @@ bool DataSync::shareUnitData()
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;
 
-    SharedData& shared = *sharedData;
+    SharedData& shared = *shared_data;
     if (shared.value.size() < solver->nVarsOuter()) {
         shared.value.insert(
             shared.value.end(),
@@ -249,8 +249,8 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 
 bool DataSync::syncBinFromOthers()
 {
-    for (uint32_t ws_lit = 0; ws_lit < sharedData->bins.size(); ws_lit++) {
-        if (sharedData->bins[ws_lit].data == nullptr) {
+    for (uint32_t ws_lit = 0; ws_lit < shared_data->bins.size(); ws_lit++) {
+        if (shared_data->bins[ws_lit].data == nullptr) {
             continue;
         }
 
@@ -263,7 +263,7 @@ bool DataSync::syncBinFromOthers()
             continue;
         }
 
-        vector<Lit>& bins = *sharedData->bins[ws_lit].data;
+        vector<Lit>& bins = *shared_data->bins[ws_lit].data;
         watch_subarray ws = solver->watches[lit1];
 
         assert(sync_finish.size() > ws_lit);
@@ -341,11 +341,11 @@ void DataSync::syncBinToOthers()
 bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 {
     assert(lit1 < lit2);
-    if (sharedData->bins[lit1.toInt()].data == nullptr) {
+    if (shared_data->bins[lit1.toInt()].data == nullptr) {
         return false;
     }
 
-    vector<Lit>& bins = *sharedData->bins[lit1.toInt()].data;
+    vector<Lit>& bins = *shared_data->bins[lit1.toInt()].data;
     for (const Lit lit : bins) {
         if (lit == lit2)
             return false;
@@ -363,18 +363,18 @@ void DataSync::clear_set_binary_values()
         lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->value(lit1) != l_Undef) {
-            sharedData->bins[i].clear();
+            shared_data->bins[i].clear();
         }
     }
 }
 
 void DataSync::extend_bins_if_needed()
 {
-    assert(sharedData->bins.size() <= (solver->nVarsOuter())*2);
-    if (sharedData->bins.size() == (solver->nVarsOuter())*2)
+    assert(shared_data->bins.size() <= (solver->nVarsOuter())*2);
+    if (shared_data->bins.size() == (solver->nVarsOuter())*2)
         return;
 
-    sharedData->bins.resize(solver->nVarsOuter()*2);
+    shared_data->bins.resize(solver->nVarsOuter()*2);
 }
 
 bool DataSync::shareBinData()
@@ -385,7 +385,7 @@ bool DataSync::shareBinData()
 
     bool ok = syncBinFromOthers();
     syncBinToOthers();
-    size_t mem = sharedData->calc_memory_use_bins();
+    size_t mem = shared_data->calc_memory_use_bins();
 
     if (solver->conf.verbosity >= 1) {
         cout
@@ -425,7 +425,7 @@ void DataSync::set_up_for_mpi()
         err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
         assert(err == MPI_SUCCESS);
         release_assert(mpi_rank != 0);
-        assert(sharedData != nullptr);
+        assert(shared_data != nullptr);
     }
 }
 
@@ -550,31 +550,31 @@ void DataSync::mpi_send_to_others()
 
 
     //Set up units
-    assert(solver->nVarsOutside() == sharedData->value.size());
+    assert(solver->nVarsOutside() == shared_data->value.size());
     vector<uint32_t> data;
     data.push_back(solver->nVarsOutside());
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
-        data.push_back(toInt(sharedData->value[var]));
+        data.push_back(toInt(shared_data->value[var]));
     }
 
     //Set up binaries
-    assert(sharedData->bins.size() == solver->nVarsOutside()*2);
+    assert(shared_data->bins.size() == solver->nVarsOutside()*2);
     uint32_t thisMpiSentBinData = 0;
     data.push_back(solver->nVarsOutside()*2);
 
     for(uint32_t ws_lit = 0; ws_lit < solver->nVarsOutside()*2; ws_lit++) {
         //Lit lit1 = ~Lit::toLit(ws_lit);
         assert(sync_mpi_finish.size() > ws_lit);
-        if (sharedData->bins[ws_lit].data == nullptr) {
+        if (shared_data->bins[ws_lit].data == nullptr) {
             data.push_back(0);
             continue;
         }
-        uint32_t size = sharedData->bins[ws_lit].data->size();
+        uint32_t size = shared_data->bins[ws_lit].data->size();
         assert(size >= sync_mpi_finish[ws_lit]);
         uint32_t sizeToSend = size - sync_mpi_finish[ws_lit];
         data.push_back(sizeToSend);
         for (uint32_t i = sync_mpi_finish[ws_lit]; i < size; i++) {
-            data.push_back(sharedData->bins[ws_lit].data->at(i).toInt());
+            data.push_back(shared_data->bins[ws_lit].data->at(i).toInt());
             thisMpiSentBinData++;
         }
         sync_mpi_finish[ws_lit] = size;

@@ -341,7 +341,7 @@ void EGaussian::compactify()
     newmat.resize(num_rows, num_dcols);
     for(uint32_t r = 0; r < num_rows; r++) {
         PackedRow to = newmat[r];
-        to.setZero();
+        to.set_zero();
         to.rhs() = mat[r].rhs();
         const uint32_t row = r;
         mat[r].for_each_set_bit([&](const uint32_t c) {
@@ -399,13 +399,13 @@ void EGaussian::create_temps()
     tofree.push_back(x);
     tmp_row = new PackedRow(num_64b, x);
 
-    /* cols_unset->setZero(); */
+    /* cols_unset->set_zero(); */
     cols_unset->rhs() = 0;
-    /* cols_vals->setZero(); */
+    /* cols_vals->set_zero(); */
     cols_vals->rhs() = 0;
-    /* tmp_col->setZero(); */
+    /* tmp_col->set_zero(); */
     tmp_col->rhs() = 0;
-    /* tmp_row->setZero(); */
+    /* tmp_row->set_zero(); */
     tmp_row->rhs() = 0;
 }
 
@@ -418,13 +418,13 @@ void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
 
 void EGaussian::eliminate() {
     PackedMatrix::iterator end_row_it = mat.begin() + num_rows;
-    PackedMatrix::iterator rowI = mat.begin();
+    PackedMatrix::iterator row_it = mat.begin();
     uint32_t row_i = 0;
     uint32_t col = 0;
 
     // Gauss-Jordan Elimination
     while (row_i != num_rows && col != num_cols) {
-        PackedMatrix::iterator row_with_1_in_col = rowI;
+        PackedMatrix::iterator row_with_1_in_col = row_it;
         uint32_t row_with_1_in_col_n = row_i;
 
         //Find first "1" in column.
@@ -440,8 +440,8 @@ void EGaussian::eliminate() {
             var_has_resp_row[col_to_var[col]] = 1;
 
             // swap row row_with_1_in_col and rowIt
-            if (row_with_1_in_col != rowI) {
-                (*rowI).swapBoth(*row_with_1_in_col);
+            if (row_with_1_in_col != row_it) {
+                (*row_it).swapBoth(*row_with_1_in_col);
                 if (reason_stride) std::swap_ranges(
                     reason_mat.begin() + (size_t)row_i*reason_stride,
                     reason_mat.begin() + (size_t)(row_i+1)*reason_stride,
@@ -456,15 +456,15 @@ void EGaussian::eliminate() {
                 ; ++k_row, k++
             ) {
                 // xor rows K and I
-                if (k_row != rowI) {
+                if (k_row != row_it) {
                     if ((*k_row)[col]) {
-                        (*k_row).xor_in(*rowI);
+                        (*k_row).xor_in(*row_it);
                         if (solver->frat->enabled()) xor_in_bdd(k, row_i);
                     }
                 }
             }
             row_i++;
-            ++rowI;
+            ++row_it;
         }
         col++;
     }
@@ -557,13 +557,13 @@ gret EGaussian::init_adjust_matrix() {
     frat_func_start();
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
-    PackedMatrix::iterator rowI = mat.begin(); //row index iterator
+    PackedMatrix::iterator row_it = mat.begin(); //row index iterator
     uint32_t row_i = 0;      // row index
     uint32_t adjust_zero = 0; //  elimination row
 
-    while (rowI != end) {
+    while (row_it != end) {
         uint32_t non_resp_var;
-        const uint32_t popcnt = (*rowI).find_watchVar(
+        const uint32_t popcnt = (*row_it).find_watchVar(
             tmp_clause, col_to_var, var_has_resp_row, non_resp_var);
 
         switch (popcnt) {
@@ -573,7 +573,7 @@ gret EGaussian::init_adjust_matrix() {
                 adjust_zero++;
 
                 // conflict
-                if ((*rowI).rhs()) {
+                if ((*row_it).rhs()) {
                     if (solver->frat->enabled()) {
                         *solver->frat << "init_adjust_matrix conflict\n";
                         const auto reason = xor_reason_create(row_i);
@@ -611,7 +611,7 @@ gret EGaussian::init_adjust_matrix() {
                 SLOW_DEBUG_DO(assert(check_row_satisfied(row_i)));
 
                 //adjusting
-                (*rowI).setZero(); // reset this row all zero
+                (*row_it).set_zero(); // reset this row all zero
                 row_to_var_non_resp.push_back(numeric_limits<uint32_t>::max());
                 var_has_resp_row[tmp_clause[0].var()] = 0;
                 return gret::prop;
@@ -651,8 +651,8 @@ gret EGaussian::init_adjust_matrix() {
                 }
 
                 // reset this row all zero, no need for this row
-                (*rowI).rhs() = 0;
-                (*rowI).setZero();
+                (*row_it).rhs() = 0;
+                (*row_it).set_zero();
 
                 row_to_var_non_resp.push_back(numeric_limits<uint32_t>::max()); // delete non-basic value in this row
                 var_has_resp_row[tmp_clause[0].var()] = 0; // delete basic value in this row
@@ -672,7 +672,7 @@ gret EGaussian::init_adjust_matrix() {
                 row_to_var_non_resp.push_back(non_resp_var); // record in this row non-basic variable
                 break;
         }
-        ++rowI;
+        ++row_it;
         row_i++;
     }
     assert(row_to_var_non_resp.size() == row_i - adjust_zero);
@@ -926,7 +926,7 @@ void EGaussian::update_cols_vals_set(bool force)
 
     //cancelled_since_val_update = true;
     if (cancelled_since_val_update || force) {
-        cols_vals->setZero();
+        cols_vals->set_zero();
         cols_unset->setOne();
 
         for(uint32_t d = 0; d < num_dcols; d++) {
@@ -993,7 +993,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
     const uint32_t elim_var = gqd.new_resp_var;
     const uint32_t dcol = var_to_dcol[elim_var];
     assert(dcol != unassigned_col);
-    PackedMatrix::iterator rowI = mat.begin();
+    PackedMatrix::iterator row_it = mat.begin();
     PackedMatrix::iterator end = mat.end();
     const bool frat = solver->frat->enabled();
     uint32_t row_i = 0;
@@ -1020,18 +1020,18 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
     elim_called++;
 
-    while (rowI != end) {
+    while (row_it != end) {
         //Row has a '1' in eliminating column, and it's not the row responsible
-        if (new_resp_row_n != row_i && (*rowI)[dcol]) {
+        if (new_resp_row_n != row_i && (*row_it)[dcol]) {
 
             // detect original non-basic watch list change or not
             const uint32_t orig_non_resp_var = row_to_var_non_resp[row_i];
             const bool watched_elim_var = (orig_non_resp_var == elim_var);
             SLOW_DEBUG_DO(assert(watched_elim_var ||
-                (*rowI)[var_to_dcol[orig_non_resp_var]]));
+                (*row_it)[var_to_dcol[orig_non_resp_var]]));
 
             SLOW_DEBUG_DO(assert(satisfied_xors[row_i] == 0));
-            (*rowI).xor_in(*tmp_row);
+            (*row_it).xor_in(*tmp_row);
             if (frat) xor_in_bdd(row_i, new_resp_row_n);
 
             elim_xored_rows++;
@@ -1042,7 +1042,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
             //      and then deal with it if we have to. The slot now stands for
             //      P, which this row does have, so the watched var is gone
             //      exactly when it was ELIM_VAR or when its own bit got cleared.
-            if (watched_elim_var || !(*rowI)[var_to_dcol[orig_non_resp_var]]) {
+            if (watched_elim_var || !(*row_it)[var_to_dcol[orig_non_resp_var]]) {
 
 
                 // Delete original non-responsible var from watch list
@@ -1061,7 +1061,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                 #ifdef SLOW_DEBUG
                 check_cols_unset_vals();
                 #endif
-                const gret ret = (*rowI).propGause(
+                const gret ret = (*row_it).propGause(
                     solver->assigns,
                     dcol_to_var,
                     var_has_resp_row,
@@ -1154,7 +1154,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
             } else {
             }
         }
-        ++rowI;
+        ++row_it;
         row_i++;
     }
 

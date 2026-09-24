@@ -604,12 +604,12 @@ size_t HyperEngine::mem_used() const
 void HyperEngine::enqueue_with_acestor_info(
     const Lit p
     , const Lit ancestor
-    , const bool redStep
+    , const bool red_step
     , const int32_t ID
 ) {
     //only called at decision level 1 during solving OR
     //during intree probing
-    enqueue<true>(p, decision_level(), PropBy(~ancestor, redStep, false, false, ID));
+    enqueue<true>(p, decision_level(), PropBy(~ancestor, red_step, false, false, ID));
 
     assert(var_data[ancestor.var()].level != 0);
 

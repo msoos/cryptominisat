@@ -39,10 +39,10 @@ class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData);
+        DataSync(Solver* solver, SharedData* shared_data);
         void finish_up_mpi();
         bool enabled();
-        void set_shared_data(SharedData* sharedData);
+        void set_shared_data(SharedData* shared_data);
         void new_var(const bool bva);
         void new_vars(const size_t n);
         bool syncData();
@@ -84,7 +84,7 @@ class DataSync
 
         //Other systems
         Solver* solver = nullptr;
-        SharedData* sharedData = nullptr;
+        SharedData* shared_data = nullptr;
 
         #ifdef USE_MPI
         void set_up_for_mpi();
@@ -120,7 +120,7 @@ inline const DataSync::Stats& DataSync::get_stats() const
 
 inline bool DataSync::enabled()
 {
-    return sharedData != nullptr;
+    return shared_data != nullptr;
 }
 
 }

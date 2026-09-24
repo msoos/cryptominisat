@@ -51,15 +51,15 @@ void CNF::new_var(
         enlarge_nonminimial_datastructs();
 
         uint32_t min_var = nVars()-1;
-        uint32_t maxVar = nVarsOuter()-1;
-        inter_to_outerMain.push_back(maxVar);
+        uint32_t max_var = nVarsOuter()-1;
+        inter_to_outerMain.push_back(max_var);
         const uint32_t x = inter_to_outerMain[min_var];
-        inter_to_outerMain[min_var] = maxVar;
-        inter_to_outerMain[maxVar] = x;
+        inter_to_outerMain[min_var] = max_var;
+        inter_to_outerMain[max_var] = x;
 
-        outer_to_interMain.push_back(maxVar);
-        outer_to_interMain[maxVar] = min_var;
-        outer_to_interMain[x] = maxVar;
+        outer_to_interMain.push_back(max_var);
+        outer_to_interMain[max_var] = min_var;
+        outer_to_interMain[x] = max_var;
 
         swapVars(nVarsOuter()-1);
         var_data[nVars()-1].is_bva = bva;
@@ -102,16 +102,16 @@ void CNF::new_vars(const size_t n)
 
     for(int i = n-1; i >= 0; i--) {
         const uint32_t min_var = nVars()-i-1;
-        const uint32_t maxVar = nVarsOuter()-i-1;
+        const uint32_t max_var = nVarsOuter()-i-1;
 
-        inter_to_outerMain[inter_at++] = maxVar;
+        inter_to_outerMain[inter_at++] = max_var;
         const uint32_t x = inter_to_outerMain[min_var];
-        inter_to_outerMain[min_var] = maxVar;
-        inter_to_outerMain[maxVar] = x;
+        inter_to_outerMain[min_var] = max_var;
+        inter_to_outerMain[max_var] = x;
 
-        outer_to_interMain[outer_at++] = maxVar;
-        outer_to_interMain[maxVar] = min_var;
-        outer_to_interMain[x] = maxVar;
+        outer_to_interMain[outer_at++] = max_var;
+        outer_to_interMain[max_var] = min_var;
+        outer_to_interMain[x] = max_var;
 
         swapVars(nVarsOuter()-i-1, i);
         var_data[nVars()-i-1].is_bva = false;

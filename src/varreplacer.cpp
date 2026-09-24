@@ -708,8 +708,8 @@ bool VarReplacer::handleUpdatedClause(
     std::sort(c.begin(), c.end());
     Lit p;
     uint32_t i, j;
-    const uint32_t origSize = c.size();
-    for (i = j = 0, p = lit_Undef; i != origSize; i++) {
+    const uint32_t orig_size = c.size();
+    for (i = j = 0, p = lit_Undef; i != orig_size; i++) {
         assert(solver->var_data[c[i].var()].removed == Removed::none);
         if (solver->value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
@@ -727,9 +727,9 @@ bool VarReplacer::handleUpdatedClause(
 
     run_stats.bogoprops += 10;
     if (c.red()) {
-        solver->lit_stats.red_lits -= origSize;
+        solver->lit_stats.red_lits -= orig_size;
     } else {
-        solver->lit_stats.irred_lits -= origSize;
+        solver->lit_stats.irred_lits -= orig_size;
     }
     delayed_attach_or_free.push_back(&c);
 
@@ -760,7 +760,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(orig_lit1);
         solver->watches.smudge(orig_lit2);
         delayedEnqueue.push_back(make_tuple(c[0], c.stats.id));
-        run_stats.removedLongLits += origSize;
+        run_stats.removedLongLits += orig_size;
         return true;
     case 2:
         c.set_removed();
@@ -768,7 +768,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(orig_lit2);
 
         solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.id);
-        run_stats.removedLongLits += origSize;
+        run_stats.removedLongLits += orig_size;
         return true;
 
     default:
@@ -793,7 +793,7 @@ bool VarReplacer::handleUpdatedClause(
             solver->watches.smudge(orig_lit2);
         }
 
-        run_stats.removedLongLits += origSize - c.size();
+        run_stats.removedLongLits += orig_size - c.size();
         return false;
     }
 
@@ -1200,7 +1200,7 @@ size_t VarReplacer::mem_used() const
 uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostream *os) const
 {
     uint32_t num = 0;
-    vector<Lit> tmpCl;
+    vector<Lit> tmp_cl;
     for (uint32_t var = 0; var < table.size(); var++) {
         const Lit lit = table[var];
         if (lit.var() == var)
@@ -1224,22 +1224,22 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
         }
 
         if (os) {
-            tmpCl.clear();
-            tmpCl.push_back(~lit1);
-            tmpCl.push_back(lit2);
-            std::sort(tmpCl.begin(), tmpCl.end());
+            tmp_cl.clear();
+            tmp_cl.push_back(~lit1);
+            tmp_cl.push_back(lit2);
+            std::sort(tmp_cl.begin(), tmp_cl.end());
 
             *os
-            << tmpCl[0] << " "
-            << tmpCl[1]
+            << tmp_cl[0] << " "
+            << tmp_cl[1]
             << " 0\n";
 
-            tmpCl[0] ^= true;
-            tmpCl[1] ^= true;
+            tmp_cl[0] ^= true;
+            tmp_cl[1] ^= true;
 
             *os
-            << tmpCl[0] << " "
-            << tmpCl[1]
+            << tmp_cl[0] << " "
+            << tmp_cl[1]
             << " 0\n";
         }
         num++;

@@ -319,7 +319,7 @@ class Solver : public Searcher
         void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
-            , const uint32_t origSize
+            , const uint32_t orig_size
             , const Clause* address
         );
         void add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID);
@@ -517,7 +517,7 @@ class Solver : public Searcher
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
-        mutable std::vector<Lit> tmpCl;
+        mutable std::vector<Lit> tmp_cl;
         mutable std::vector<uint32_t> tmpXor;
 
         /////////////////////////////
@@ -601,17 +601,17 @@ inline const BinTriStats& Solver::getBinTriStats() const
 }
 
 template<> inline vector<Lit> Solver::clause_outer_numbered(const vector<uint32_t>& cl) const {
-    tmpCl.clear();
-    for(const auto& l: cl) tmpCl.push_back(Lit(map_inter_to_outer(l), false));
+    tmp_cl.clear();
+    for(const auto& l: cl) tmp_cl.push_back(Lit(map_inter_to_outer(l), false));
 
-    return tmpCl;
+    return tmp_cl;
 }
 
 template<class T> inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const {
-    tmpCl.clear();
-    for(const auto& l: cl) tmpCl.push_back(map_inter_to_outer(l));
+    tmp_cl.clear();
+    for(const auto& l: cl) tmp_cl.push_back(map_inter_to_outer(l));
 
-    return tmpCl;
+    return tmp_cl;
 }
 
 template<class T>

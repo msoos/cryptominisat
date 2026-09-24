@@ -664,12 +664,12 @@ void Solver::detach_clause(const ClOffset offset, const bool remove_frat)
 void Solver::detach_modified_clause(
     const Lit lit1
     , const Lit lit2
-    , const uint32_t origSize
+    , const uint32_t orig_size
     , const Clause* address
 ) {
-    if (address->red()) lit_stats.red_lits -= origSize;
+    if (address->red()) lit_stats.red_lits -= orig_size;
     else {
-        lit_stats.irred_lits -= origSize;
+        lit_stats.irred_lits -= orig_size;
         mark_elim_cand(*address);
     }
     PropEngine::detach_modified_clause(lit1, lit2, address);

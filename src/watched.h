@@ -193,11 +193,11 @@ class Watched {
             data2 = (data2 & 3) | (ID<<2);
         }
 
-        void setRed(const bool toSet)
+        void setRed(const bool to_set)
         {
             DEBUG_WATCHED_DO(assert(is_bin()));
             DEBUG_WATCHED_DO(assert(red()));
-            assert(toSet == false);
+            assert(to_set == false);
             data2 &= (~(1U));
         }
 

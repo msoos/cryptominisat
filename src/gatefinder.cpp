@@ -48,13 +48,13 @@ GateFinder::GateFinder(OccSimplifier *_simplifier, Solver *_solver) :
 void GateFinder::cleanup()
 {
     solver->clean_occur_from_idx_types_only_smudged();
-    orGates.clear();
+    or_gates.clear();
 }
 
 void GateFinder::find_all()
 {
     run_stats.clear();
-    orGates.clear();
+    or_gates.clear();
 
     assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
@@ -75,8 +75,8 @@ void GateFinder::find_or_gates_and_update_stats()
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
     find_or_gates();
-    run_stats.gatesSize += 2*orGates.size();
-    run_stats.num+=orGates.size();
+    run_stats.gatesSize += 2*or_gates.size();
+    run_stats.num+=or_gates.size();
 
     const double time_used = cpu_time() - my_time;
     const bool time_out = (numMaxGateFinder <= 0);
@@ -191,7 +191,7 @@ void GateFinder::add_gate_if_not_already_inside(
     OrGate gate(rhs, lhs, ID);
     for (Watched ws: solver->watches[gate.rhs]) {
         if (ws.is_idx()
-            && orGates[ws.get_idx()] == gate
+            && or_gates[ws.get_idx()] == gate
         ) {
             return;
         }
@@ -201,8 +201,8 @@ void GateFinder::add_gate_if_not_already_inside(
 
 void GateFinder::link_in_gate(const OrGate& gate)
 {
-    const size_t at = orGates.size();
-    orGates.push_back(gate);
+    const size_t at = or_gates.size();
+    or_gates.push_back(gate);
     solver->watches[gate.rhs].push(Watched(at, WatchType::watch_idx_t));
     solver->watches.smudge(gate.rhs);
 }
@@ -217,9 +217,9 @@ void GateFinder::print_graphviz_dot()
     std::ofstream file(filenename.c_str(), std::ios::out);
     file << "digraph G {" << endl;
     vector<bool> gateUsed;
-    gateUsed.resize(orGates.size(), false);
+    gateUsed.resize(or_gates.size(), false);
     size_t index = 0;
-    for (const OrGate& orGate: orGates) {
+    for (const OrGate& orGate: or_gates) {
         for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {
                 if (!ws.is_idx()) {
@@ -258,7 +258,7 @@ void GateFinder::print_graphviz_dot()
         index++;
     }
 
-    for (index = 0; index < orGates.size(); index++) {
+    for (index = 0; index < or_gates.size(); index++) {
         if (gateUsed[index]) {
             file << "Gate" << index << " [ shape=\"point\"";
             file << ", size = 0.8";

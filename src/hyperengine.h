@@ -68,7 +68,7 @@ public:
     }
 
     void  enqueue_with_acestor_info(
-        const Lit p, const Lit ancestor, const bool redStep, const int32_t ID);
+        const Lit p, const Lit ancestor, const bool red_step, const int32_t ID);
 
 private:
     Lit   analyzeFail(PropBy propBy);

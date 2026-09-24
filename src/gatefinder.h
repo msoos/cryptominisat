@@ -121,7 +121,7 @@ private:
     vector<ClOffset> subs; //to reduce overhead of allocation
 
     //Indexes, gate data
-    vector<OrGate> orGates; //List of OR gates
+    vector<OrGate> or_gates; //List of OR gates
 
     //For temporaries
     vector<uint32_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
@@ -154,7 +154,7 @@ inline const GateFinder::Stats& GateFinder::get_stats() const
 
 inline const vector<OrGate>& GateFinder::get_gates() const
 {
-    return orGates;
+    return or_gates;
 }
 
 } //end namespace

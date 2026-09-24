@@ -227,15 +227,15 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 
         const Lit orig_lit1 = cl[0];
         const Lit orig_lit2 = cl[1];
-        const auto origSize = cl.size();
+        const auto orig_size = cl.size();
         const bool red = cl.red();
 
         if (clean_clause(cl)) {
             solver->watches.smudge(orig_lit1);
             solver->watches.smudge(orig_lit2);
             cl.set_removed();
-            if (red) solver->lit_stats.red_lits -= origSize;
-            else solver->lit_stats.irred_lits -= origSize;
+            if (red) solver->lit_stats.red_lits -= orig_size;
+            else solver->lit_stats.irred_lits -= orig_size;
             delayed_free.push_back(off);
         } else {
             cs[kept++] = off;
