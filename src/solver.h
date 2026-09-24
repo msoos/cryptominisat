@@ -80,6 +80,12 @@ struct SolveStats
     uint32_t num_simplify = 0;
     uint32_t num_simplify_this_solve_call = 0;
     uint32_t num_solve_calls = 0;
+    uint32_t num_user_simplify_calls = 0;
+    uint32_t solve_ret[3] = {0, 0, 0}; //l_True, l_False, l_Undef
+    uint64_t sum_assumps = 0;
+    uint64_t confl_at_solve_start = 0;
+    uint64_t max_confl_per_solve = 0;
+    uint64_t confl_in_solves_unsat = 0; //conflicts in solve() calls returning UNSAT
 };
 
 /// State of the formula at a [simp-stats] bef/aft point, so aft can color
@@ -484,6 +490,7 @@ class Solver : public Searcher
         lbool simplify_problem_outside(const string* strategy = nullptr);
 
         //Stats printing
+        void print_solve_call_stats() const;
         void print_norm_stats(
             const double cpu_time,
             const double cpu_time_total,

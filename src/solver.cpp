@@ -1313,6 +1313,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
 
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
+    solveStats.num_user_simplify_calls++;
     set_assumptions();
     uneliminate_sampling_set();
 
@@ -1360,6 +1361,8 @@ void Solver::reset_for_solving() {
     #endif
 
     solveStats.num_solve_calls++;
+    solveStats.sum_assumps += assumptions.size();
+    solveStats.confl_at_solve_start = sumConflicts;
     check_and_upd_config_parameters();
 
     //Reset parameters
@@ -1425,6 +1428,12 @@ lbool Solver::solve_with_assumptions(
     end:
     if (sqlStats) sqlStats->finishup(status);
     handle_found_solution(status, only_sampling_solution);
+    {
+        const uint64_t confl = sumConflicts - solveStats.confl_at_solve_start;
+        solveStats.max_confl_per_solve = std::max(solveStats.max_confl_per_solve, confl);
+        solveStats.solve_ret[status == l_True ? 0 : (status == l_False ? 1 : 2)]++;
+        if (status == l_False) solveStats.confl_in_solves_unsat += confl;
+    }
     unfill_assumptions_set();
     assumptions.clear();
     conf.max_confl = numeric_limits<uint64_t>::max();
@@ -1999,7 +2008,45 @@ void CMSat::Solver::print_stats(
     print_norm_stats(cpu_time, cpu_time_total, wallclock_time_started);
     print_mode_stats();
     print_glue_usage();
+    print_solve_call_stats();
     if (conf.do_print_times) time_tally.print(conf.prefix, cpu_time);
+}
+
+//How the library was driven: solve()/simplify() calls, assumptions, matrices
+void Solver::print_solve_call_stats() const
+{
+    const auto& s = solveStats;
+    verb_print(1, "------- SOLVE CALL STATS ---------");
+    print_stats_line(conf.prefix + "solve() calls", s.num_solve_calls);
+    print_stats_line(conf.prefix + "solve() SAT/UNSAT/UNDEF"
+        , std::to_string(s.solve_ret[0]) + "/" + std::to_string(s.solve_ret[1])
+            + "/" + std::to_string(s.solve_ret[2]));
+    print_stats_line(conf.prefix + "conflicts per solve()"
+        , float_div(sumConflicts, s.num_solve_calls), s.max_confl_per_solve, "max");
+    print_stats_line(conf.prefix + "conflicts in UNSAT solve()", s.confl_in_solves_unsat
+        , stats_line_percent(s.confl_in_solves_unsat, sumConflicts), "% of conflicts");
+    print_stats_line(conf.prefix + "assumptions per solve()"
+        , float_div(s.sum_assumps, s.num_solve_calls));
+    print_stats_line(conf.prefix + "simplify() by user", s.num_user_simplify_calls
+        , s.num_simplify, "inprocess rounds");
+    print_stats_line(conf.prefix + "search() calls", num_search_called
+        , float_div(sumConflicts, num_search_called), "conflicts per call");
+
+    const auto& g = gauss_tot;
+    print_stats_line(conf.prefix + "matrix inits", g.inits, g.matrices, "matrices built");
+    if (g.matrices == 0) return;
+    print_stats_line(conf.prefix + "matrix avg rows x cols"
+        , float_div(g.rows, g.matrices), float_div(g.cols, g.matrices), "cols");
+    print_stats_line(conf.prefix + "matrices auto-disabled", g.disabled
+        , stats_line_percent(g.disabled, g.matrices), "% of matrices");
+    print_stats_line(conf.prefix + "gauss find-truth calls", g.find_calls
+        , stats_line_percent(g.find_prop + g.find_confl, g.find_calls), "% prop or confl");
+    print_stats_line(conf.prefix + "gauss elim calls", g.elim_calls
+        , stats_line_percent(g.elim_prop + g.elim_confl, g.elim_calls), "% prop or confl");
+    print_stats_line(conf.prefix + "gauss props", g.props
+        , stats_line_percent(g.props, sumPropStats.propagations), "% of all props");
+    print_stats_line(conf.prefix + "gauss conflicts", g.confls
+        , stats_line_percent(g.confls, sumConflicts), "% of all conflicts");
 }
 
 void Solver::print_stats_time(
@@ -3226,6 +3273,7 @@ bool Solver::find_and_init_all_matrices() {
     detach_clauses_in_xors();
 
     verb_print(1, "[matrix] performing matrix init");
+    gauss_tot.inits++;
     MatrixFinder mfinder(solver);
     bool matrix_created;
     ok = mfinder.find_matrices(matrix_created);
