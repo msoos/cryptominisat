@@ -388,7 +388,7 @@ class Tester:
                 cmd += "--maxtime %d " % random.choice([0, 1, 2, 5])
 
         # restarts & branching
-        cmd += "--random %d " % random.choice([0, 1, random.randint(0, 1000000)])
+        cmd += "--seed %d " % random.choice([0, 1, random.randint(0, 1000000)])
         cmd += "--branchstr %s " % random.choice(
             ["vmtf", "vsids", "vmtf+vsids", "vsids+vmtf",
              "vmtf+vsids+rand", "rand+vsids", "vmtf+rand"])

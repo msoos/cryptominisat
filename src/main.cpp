@@ -319,7 +319,7 @@ void Main::add_supported_options() {
     program.add_argument("--maxconfl")
         .help("Stop solving after this many conflicts")
         .scan<'d', uint64_t>();
-    opt("-r", "--random", conf.orig_seed,
+    opt("-r", "--seed", conf.orig_seed,
         "[0..] Random seed");
     opt("-t", "--threads", num_threads,
         "Number of threads");
