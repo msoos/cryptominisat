@@ -1125,11 +1125,8 @@ DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
     ss << prefix << "Using VMTF, picosat, CaDiCaL, and CadiBack code by Armin Biere" << endl;
     #ifdef USE_BREAKID
     ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
-    ss << prefix << "Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
-    ss << prefix << "CMS is GPL licensed due to Bliss being linked. Build without Bliss to get MIT version" << endl;
-    #else
-    ss << prefix << "CMS is MIT licensed" << endl;
     #endif
+    ss << prefix << "CMS is MIT licensed" << endl;
     ss << prefix << "Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
     ss << prefix << "      by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
     ss << prefix << "Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;

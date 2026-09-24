@@ -25,24 +25,26 @@ nix](https://nixos.org/download/) and then:
 nix shell github:msoos/cryptominisat
 ```
 
-Then you will have `cryptominisat` binary available and ready to use.
+Then you will have the `cryptominisat5` binary available and ready to use.
 
 ### Building from source
 
-The build uses CMake and automatically fetches and compiles its `cadical` and
-`cadiback` dependencies, so no manual C++ dependency setup is needed beyond GMP
-and zlib. Install system packages:
+The build uses CMake and downloads and compiles its `cadical` and `cadiback`
+dependencies from GitHub, so it needs network access (or see `-Dcadical_DIR`
+below). GMP and pkg-config are required, zlib is optional (for reading
+gzipped CNFs). Install system packages:
 
 ```shell
 # Debian/Ubuntu
-sudo apt-get install build-essential cmake ninja-build git libgmp-dev zlib1g-dev
+sudo apt-get install build-essential cmake ninja-build git pkg-config \
+          libgmp-dev zlib1g-dev
 
 # macOS (brew)
-brew install cmake ninja gmp
+brew install cmake ninja pkgconf gmp
 
 # Windows: install MSYS2 (https://www.msys2.org/), then from the MINGW64 shell:
 pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja \
-          mingw-w64-x86_64-gmp mingw-w64-x86_64-zlib git
+          mingw-w64-x86_64-pkgconf mingw-w64-x86_64-gmp mingw-w64-x86_64-zlib git
 ```
 
 Then build (same commands on Linux, macOS, and Windows/MSYS2):
@@ -127,30 +129,12 @@ False
 Solver options such as `Solver(options={"maxmatrixrows": "5000"})` are
 listed in [python/README.md](python/README.md#solver-options).
 
-If you want to build the Python package from source, the build uses
-[scikit-build-core](https://github.com/scikit-build/scikit-build-core) which
-drives CMake — cadical and cadiback are fetched and compiled automatically,
-so no manual C++ dependency installation is needed beyond GMP.
-
+To build the Python package from source, install the system packages listed
+under [Building from source](#building-from-source), then:
 ```shell
-# Debian/Ubuntu
-sudo apt-get install build-essential cmake libgmp-dev python3-dev
-
-# macOS
-brew install cmake gmp
-
 git clone https://github.com/msoos/cryptominisat
 cd cryptominisat
-python3 -m venv venv
-source venv/bin/activate
-pip install scikit-build-core cmake ninja build
-pip install . --no-build-isolation
-```
-
-Or to produce a wheel file without installing:
-```shell
-python -m build --wheel --no-isolation   # wheel lands in dist/
-pip install dist/pycryptosat-*.whl
+pip install .
 ```
 
 ## Incremental Library Usage
@@ -160,6 +144,7 @@ such, the 1st CNF above would become:
 ```c++
 #include <cryptominisat5/cryptominisat.h>
 #include <assert.h>
+#include <iostream>
 #include <vector>
 using std::vector;
 using namespace CMSat;
@@ -223,23 +208,11 @@ int main()
 }
 ```
 
-The library usage also allows for assumptions. We can add these lines just
-before the `return 0;` above:
-```c++
-vector<Lit> assumptions;
-assumptions.push_back(Lit(2, true));
-lbool ret = solver.solve(&assumptions);
-assert(ret == l_False);
-
-ret = solver.solve();   // no assumption → solution exists again
-assert(ret == l_True);
-```
-
-Since we assume that variable 2 must be false, there is no solution. However,
-if we solve again, without the assumption, we get back the original solution.
-Assumptions allow us to assume certain literal values for a _specific run_ but
-not all runs -- for all runs, we can simply add these assumptions as 1-long
-clauses.
+In the example above, when we assume that variable 3 (index 2) is False, there
+is no solution. However, if we solve again without the assumption, we get back
+the original solution. Assumptions allow us to assume certain literal values
+for a _specific run_ but not all runs -- for all runs, we can simply add these
+assumptions as 1-long clauses, as done with "-3 0" at the end.
 
 Command-line options can also be set from the library with
 `set_option(name, value)`, where the name is the option without the leading
@@ -257,7 +230,7 @@ It throws `std::invalid_argument` on an unknown option or bad value, and
 ## Multiple solutions
 To find multiple solutions to your problem, just run the solver in a loop
 and ban the previous solution found:
-```c
+```c++
 while(true) {
     lbool ret = solver->solve();
     if (ret != l_True) {
@@ -312,76 +285,37 @@ If you wish to use CryptoMiniSat as a preprocessor, we encourage you to try out
 our model counting preprocessor,
 [Arjun](https://www.github.com/meelgroup/arjun).
 
-## Gauss-Jordan elimination
-Since CryptoMiniSat 5.8, Gauss-Jordan elimination is compiled into the solver
-by default. However, it will turn off automatically in case the solver observes
-GJ not to perform too well. To use Gaussian elimination, provide a CNF with
-xors in it (either in CNF or XOR+CNF form) and either run with default setup,
-or, tune it to your heart's desire:
-```plain
-Gauss options:
-  --maxmatrixrows arg (=2000)    Set maximum no. of rows for gaussian matrix.
-                                 Too large matrices should be discarded for
-                                 reasons of efficiency
-  --maxmatrixcols arg (=1000)    Set maximum no. of columns for gaussian
-                                 matrix. Too large matrices should be discarded
-                                 for reasons of efficiency
-  --autodisablegauss arg (=1)    Automatically disable gauss when performing
-                                 badly
-  --minmatrixrows arg (=3)       Set minimum no. of rows for gaussian matrix.
-                                 Normally, too small matrices are discarded for
-                                 reasons of efficiency
-  --maxnummatrices arg (=5)      Maximum number of matrices to treat.
-  --gaussusefulcutoff arg (=0.2) Turn off Gauss if less than this many
-                                 usefulness ratio is recorded
-```
-
-In particular, you may want to set `--autodisablegauss 0` in case you are sure
-it'll help.
-
 ## Proof Verification
-
-CryptoMiniSat can emit FRAT proofs that can be independently verified. Run the
-solver with a proof output file:
-
-```bash
-./cryptominisat5 input.cnf proof.frat
-```
-
-Then elaborate and check using tools from
+CryptoMiniSat emits XLRUP proofs that can be checked directly by the formally
+verified checker `cake_xlrup` from
 [meelgroup/frat-xor](https://github.com/meelgroup/frat-xor):
-
 ```bash
-grep -v "^c" proof.frat > proof_clean.frat
-./frat-xor elab proof_clean.frat input.cnf proof.xlrup
+./cryptominisat5 input.cnf proof.xlrup
 ./cake_xlrup input.cnf proof.xlrup
 ```
 
-`cake_xlrup` prints `s VERIFIED` on success. For full details, including
-debugging verification failures, see [README_VERIFIER.md](README_VERIFIER.md).
+`cake_xlrup` prints `s VERIFIED` on success.
 
 ## CMake Arguments
 The following arguments to cmake configure the generated build artifacts. To
 use, specify options prior to running make in a clean subdirectory: `cmake
 <options> ..`
 
+- `-Dcadical_DIR=<path>` -- a pre-built CaDiCaL: its CMake build directory or
+  install prefix. Fetched from GitHub and built if not set.
+- `-Dcadiback_DIR=<path>` -- same, for CaDiBack.
 - `-DBUILD_SHARED_LIBS=<ON/OFF>` -- build shared (ON, default) or static (OFF)
   library and binary.
-- `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most
   problems)
-- `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for
+- `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat5.so` for
   [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR)
   interface support
-- `-Dcadical_DIR=<path>` -- path to a pre-built CaDiCaL `build/` directory
-  (contains `libcadical.a`). Auto-fetched and built if not set.
-- `-Dcadiback_DIR=<path>` -- path to a pre-built CaDiBaCk directory (contains
-  `libcadiback.a`). Auto-fetched and built if not set.
+- `-DNOZLIB=<ON/OFF>` -- build without zlib, i.e. without gzipped CNF support
+- `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 
 ## C usage
 See src/cryptominisat_c.h for details. This is an experimental feature.
 
 ## License
-Everything that is needed to build by default is MIT licensed. If you
-specifically instruct the system it can build with Bliss, which are both GPL.
-However, by default CryptoMiniSat will not build with these.
+CryptoMiniSat is MIT licensed.
