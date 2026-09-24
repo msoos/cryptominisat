@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "cryptominisat.h"
 #include "solver.h"
+#include "conf_options.h"
 #include "frat.h"
 #include "shareddata.h"
 #include "solvertypesmini.h"
@@ -392,6 +393,41 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         data->solvers[i]->setConf(conf);
         data->solvers[i]->set_shared_data((SharedData*)data->shared_data);
     }
+}
+
+DLL_PUBLIC void SATSolver::set_option(const std::string& name, const std::string& value)
+{
+    if (nVars() > 0 || data->cls > 0 || !data->okay || data->num_solve_simplify_calls > 0)
+        throw std::runtime_error("set_option() must be called before adding variables or clauses, and before solving");
+    if (data->solvers[0]->frat->enabled() || data->sql)
+        throw std::runtime_error("set_option() must be called before enabling FRAT or SQL");
+
+    SolverConf conf = data->solvers[0]->get_conf();
+    bool found = false;
+    if (name == "polar") {
+        conf.polarity_mode = parse_polarity(value);
+        found = true;
+    } else {
+        for_each_conf_opt(conf, [&](const ConfOpt& o, auto& var) {
+            if (!o.lib || name != o.name + 2) return;
+            var = parse_opt<std::remove_reference_t<decltype(var)>>(value);
+            found = true;
+        });
+    }
+    if (!found) throw std::invalid_argument("unknown option: " + name);
+    check_conf(conf);
+
+    // Solver and its sub-objects read parts of the conf only when constructed,
+    // so rebuild them, the same as main.cpp passing the conf to the constructor
+    const size_t num_threads = data->solvers.size();
+    for (Solver* s : data->solvers) delete s;
+    data->solvers.clear();
+    data->cpu_times.clear();
+    delete data->shared_data;
+    data->shared_data = nullptr;
+    data->solvers.push_back(new Solver(&conf, data->must_interrupt));
+    data->cpu_times.push_back(0.0);
+    if (num_threads > 1) set_num_threads(num_threads);
 }
 
 struct OneThreadAddCls

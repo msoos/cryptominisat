@@ -3889,4 +3889,7 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
     }
 }
 
-void Searcher::set_seed(const uint32_t seed) { mtrand.seed(seed); }
+void Searcher::set_seed(const uint32_t seed) {
+    conf.orig_seed = seed;
+    mtrand.seed(seed);
+}

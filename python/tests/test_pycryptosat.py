@@ -604,6 +604,363 @@ class TestSolveTimeLimit(unittest.TestCase):
 # ------------------------------------------------------------------------
 
 
+# Every option settable via Solver(options=...) / set_option(), with sane
+# non-default values. Keep in sync with the entries marked lib in
+# src/conf_options.h, plus "polar".
+EXPOSED_OPTIONS = {
+    "seed": ["0", "42"],
+    "mult": ["0.5", "1e-1"],
+    "polar": ["true", "false", "rnd", "weight", "auto"],
+    "branchstr": ["vsids", "vmtf"],
+    "restart": ["0"],
+    "stabilize": ["0"],
+    "reduce": ["0"],
+    "lucky": ["0"],
+    "sls": ["0"],
+    "rephase": ["0"],
+    "target": ["0", "2"],
+    "nonstop": ["1"],
+    "schedsimp": ["0"],
+    "presimp": ["0"],
+    "occsimp": ["0"],
+    "varelim": ["0"],
+    "bva": ["0"],
+    "distill": ["0"],
+    "sweep": ["0"],
+    "scc": ["0"],
+    "intree": ["0"],
+    "transred": ["0"],
+    "breakid": ["0", "1"],
+    "confbtwsimp": ["1", "100"],
+    "schedule": ["scc-vrepl,sub-impl"],
+    "preschedule": ["occ-bve"],
+    "xor": ["0"],
+    "maxxorsize": ["3", "12"],
+    "xorfindtout": ["0", "10"],
+    "maxxormat": ["10"],
+    "xorgatemaxsize": ["3"],
+    "maxmatrixrows": ["1", "5000"],
+    "maxmatrixcols": ["1", "5000"],
+    "minmatrixrows": ["1", "100"],
+    "maxnummatrices": ["0", "3"],
+    "autodisablegauss": ["0", "1"],
+    "gaussusefulcutoff": ["0", "0.9"],
+    "gaussmincalls": ["1"],
+    "gausscheckevery": ["1"],
+}
+
+UNSIGNED_OPTIONS = ["seed", "confbtwsimp", "maxxorsize", "xorfindtout",
+    "maxxormat", "xorgatemaxsize", "maxmatrixrows", "maxmatrixcols",
+    "minmatrixrows", "maxnummatrices", "gaussmincalls", "gausscheckevery"]
+SIGNED_OPTIONS = ["restart", "stabilize", "reduce", "lucky", "sls", "rephase",
+    "target", "nonstop", "schedsimp", "presimp", "occsimp", "varelim", "bva",
+    "distill", "sweep", "scc", "intree", "transred", "xor"]
+BOOL_OPTIONS = ["autodisablegauss", "breakid"]
+DOUBLE_OPTIONS = ["mult", "gaussusefulcutoff"]
+
+# Command-line options that must NOT be settable from the library
+NOT_EXPOSED_OPTIONS = ["verb", "threads", "maxsol", "xlrup", "printsol",
+    "maxtime", "maxconfl", "occredmax", "reducetier1glue", "walkmineff",
+    "savemem", "renumber", "printtimes", "cardfind", "gates", "r", "t"]
+
+
+def planted_instance(num_vars, num_cls, num_xors, seed):
+    """Random 3-SAT clauses and XORs, all satisfied by one hidden solution"""
+    import random
+    rnd = random.Random(seed)
+    sol = [None] + [rnd.choice([True, False]) for _ in range(num_vars)]
+    cls = []
+    while len(cls) < num_cls:
+        cl = [v if rnd.random() < 0.5 else -v
+              for v in rnd.sample(range(1, num_vars+1), 3)]
+        if any(sol[abs(lit)] == (lit > 0) for lit in cl):
+            cls.append(cl)
+    xors = []
+    for _ in range(num_xors):
+        vs = rnd.sample(range(1, num_vars+1), rnd.randint(2, 6))
+        rhs = False
+        for v in vs:
+            rhs ^= sol[v]
+        xors.append((vs, rhs))
+    return cls, xors
+
+
+def xors_satisfied(xors, solution):
+    for vs, rhs in xors:
+        val = False
+        for v in vs:
+            val ^= solution[v]
+        if val != rhs:
+            return False
+    return True
+
+
+class TestOptions(unittest.TestCase):
+
+    def check_solves(self, **kwargs):
+        solver = Solver(**kwargs)
+        cls, xors = planted_instance(40, 150, 20, 1)
+        solver.add_clauses(cls)
+        for vs, rhs in xors:
+            solver.add_xor_clause(vs, rhs)
+        res, solution = solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(check_solution(cls, solution))
+        self.assertTrue(xors_satisfied(xors, solution))
+
+        solver = Solver(**kwargs)
+        solver.add_clauses(clauses2)
+        self.assertEqual(solver.solve()[0], False)
+
+    def test_every_exposed_option_solves_correctly(self):
+        for name, values in EXPOSED_OPTIONS.items():
+            for value in values:
+                with self.subTest(option=name, value=value):
+                    self.check_solves(options={name: value})
+
+                    solver = Solver()
+                    solver.set_option(name, value)
+                    solver.add_clauses(clauses1)
+                    res, solution = solver.solve()
+                    self.assertEqual(res, True)
+                    self.assertTrue(check_solution(clauses1, solution))
+
+    def test_all_exposed_options_at_once(self):
+        opts = {name: values[-1] for name, values in EXPOSED_OPTIONS.items()}
+        opts["nonstop"] = "0"
+        for threads in (1, 2):
+            with self.subTest(threads=threads):
+                self.check_solves(threads=threads, options=opts)
+
+    def test_options_with_threads(self):
+        for threads in (1, 2, 4):
+            with self.subTest(threads=threads):
+                self.check_solves(threads=threads, options={
+                    "seed": "3", "polar": "rnd", "minmatrixrows": "1",
+                    "autodisablegauss": "0", "branchstr": "vsids"})
+
+                solver = Solver(threads=threads)
+                solver.set_option("maxmatrixrows", "100")
+                solver.set_option("seed", "9")
+                solver.add_clauses(clauses1)
+                self.assertEqual(solver.solve()[0], True)
+
+    def test_gauss_on_xor_systems(self):
+        opts = {"minmatrixrows": "1", "autodisablegauss": "0",
+                "maxmatrixrows": "1000", "maxnummatrices": "10",
+                "gaussmincalls": "1", "gausscheckevery": "1",
+                "gaussusefulcutoff": "0"}
+        for seed in range(10):
+            with self.subTest(seed=seed):
+                _, xors = planted_instance(30, 0, 25, seed)
+                solver = Solver(options=opts)
+                for vs, rhs in xors:
+                    solver.add_xor_clause(vs, rhs)
+                res, solution = solver.solve()
+                self.assertEqual(res, True)
+                self.assertTrue(xors_satisfied(xors, solution))
+
+                # the sum of all XORs, with the wrong parity, contradicts them
+                total = {}
+                parity = False
+                for vs, rhs in xors:
+                    parity ^= rhs
+                    for v in vs:
+                        total[v] = not total.get(v, False)
+                vs = [v for v, odd in total.items() if odd]
+                if not vs:
+                    continue
+                solver = Solver(options=opts)
+                for x_vs, rhs in xors:
+                    solver.add_xor_clause(x_vs, rhs)
+                solver.add_xor_clause(vs, not parity)
+                self.assertEqual(solver.solve()[0], False)
+
+    def test_seed_is_deterministic(self):
+        cls, _ = planted_instance(60, 150, 0, 3)
+        for seed in ("0", "1", "12345"):
+            with self.subTest(seed=seed):
+                models = []
+                for _ in range(2):
+                    solver = Solver(options={"seed": seed, "polar": "rnd"})
+                    solver.add_clauses(cls)
+                    res, solution = solver.solve()
+                    self.assertEqual(res, True)
+                    self.assertTrue(check_solution(cls, solution))
+                    models.append(solution)
+                self.assertEqual(models[0], models[1])
+
+    def test_no_options(self):
+        for opts in (None, {}):
+            self.check_solves(options=opts)
+
+    def test_not_exposed_options_rejected(self):
+        for name in NOT_EXPOSED_OPTIONS:
+            with self.subTest(option=name):
+                self.assertRaises(ValueError, Solver, options={name: "1"})
+                self.assertRaises(ValueError, Solver().set_option, name, "1")
+
+    def test_bad_option_names(self):
+        for name in ("", "nosuchoption", "--seed", "-r", "SEED", " seed",
+                     "seed ", "gauss", "maxmatrixrow", "sééd"):
+            with self.subTest(option=name):
+                self.assertRaises(ValueError, Solver, options={name: "1"})
+                self.assertRaises(ValueError, Solver().set_option, name, "1")
+
+    def check_bad_values(self, names, values):
+        for name in names:
+            for value in values:
+                with self.subTest(option=name, value=value):
+                    self.assertRaises(ValueError, Solver,
+                                      options={name: value})
+                    self.assertRaises(ValueError, Solver().set_option,
+                                      name, value)
+
+    def test_bad_unsigned_values(self):
+        self.check_bad_values(UNSIGNED_OPTIONS, [
+            "", "abc", "-1", "1.5", "1e3", "10x", " 10", "0x10",
+            "99999999999999999999999"])
+
+    def test_bad_signed_values(self):
+        self.check_bad_values(SIGNED_OPTIONS, [
+            "", "abc", "1.5", "10x", " 1", "true",
+            "99999999999999999999999"])
+
+    def test_bad_bool_values(self):
+        self.check_bad_values(BOOL_OPTIONS, ["", "abc", "true", "1.0"])
+
+    def test_bad_double_values(self):
+        self.check_bad_values(DOUBLE_OPTIONS, ["", "abc", "1.5x", "1,5"])
+
+    def test_bad_polar_values(self):
+        self.check_bad_values(["polar"], ["", "TRUE", "random", "1", "auto "])
+
+    def test_good_numeric_formats(self):
+        for name in DOUBLE_OPTIONS:
+            for value in ("0", "1", "0.25", "1e-2", "-0.5"):
+                with self.subTest(option=name, value=value):
+                    Solver(options={name: value})
+        for name in SIGNED_OPTIONS:
+            for value in ("0", "1", "-1"):
+                with self.subTest(option=name, value=value):
+                    Solver(options={name: value})
+
+    def test_conf_sanity_check(self):
+        Solver(options={"maxxorsize": "12"})
+        self.assertRaises(ValueError, Solver, options={"maxxorsize": "13"})
+        self.assertRaises(ValueError, Solver().set_option, "maxxorsize", "13")
+
+    def test_error_message_names_the_problem(self):
+        with self.assertRaises(ValueError) as cm:
+            Solver(options={"nosuchoption": "1"})
+        self.assertIn("nosuchoption", str(cm.exception))
+        with self.assertRaises(ValueError) as cm:
+            Solver(options={"maxmatrixrows": "12abc"})
+        self.assertIn("12abc", str(cm.exception))
+        with self.assertRaises(ValueError) as cm:
+            Solver(options={"polar": "sideways"})
+        self.assertIn("sideways", str(cm.exception))
+
+    def test_wrong_types(self):
+        for opts in ([("seed", "1")], "seed=1", 1, ("seed", "1")):
+            with self.subTest(options=opts):
+                self.assertRaises(TypeError, Solver, options=opts)
+        for name, value in (("seed", 1), ("seed", 1.0), ("seed", None),
+                            ("seed", b"1"), (1, "1"), (None, "1"),
+                            (b"seed", "1")):
+            with self.subTest(name=name, value=value):
+                self.assertRaises(TypeError, Solver, options={name: value})
+                self.assertRaises(TypeError, Solver().set_option, name, value)
+
+    def test_set_option_arguments(self):
+        solver = Solver()
+        solver.set_option(name="seed", value="7")
+        solver.set_option("seed", value="8")
+        self.assertRaises(TypeError, solver.set_option)
+        self.assertRaises(TypeError, solver.set_option, "seed")
+        self.assertRaises(TypeError, solver.set_option, "seed", "1", "2")
+        self.assertRaises(TypeError, solver.set_option, nme="seed", value="1")
+
+    def test_set_option_repeatedly(self):
+        solver = Solver(threads=2, options={"maxmatrixrows": "10"})
+        for name, values in EXPOSED_OPTIONS.items():
+            if name == "nonstop":
+                continue
+            for value in values:
+                solver.set_option(name, value)
+        solver.add_clauses(clauses1)
+        res, solution = solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(check_solution(clauses1, solution))
+
+    def test_solver_usable_after_bad_option(self):
+        solver = Solver()
+        self.assertRaises(ValueError, solver.set_option, "seed", "abc")
+        self.assertRaises(ValueError, solver.set_option, "nosuchoption", "1")
+        self.assertRaises(ValueError, solver.set_option, "maxxorsize", "13")
+        solver.set_option("seed", "5")
+        solver.add_clauses(clauses3)
+        self.assertEqual(solver.solve(), (True, (None, False, False)))
+
+    def test_set_option_too_late(self):
+        def after_add_clause(s):
+            s.add_clause([1, 2])
+
+        def after_add_clauses(s):
+            s.add_clauses([[1], [-2, 3]])
+
+        def after_add_xor_clause(s):
+            s.add_xor_clause([1, 2], True)
+
+        def after_solve_empty(s):
+            s.solve()
+
+        def after_solve(s):
+            s.add_clauses(clauses1)
+            s.solve()
+
+        def after_unsat(s):
+            s.add_clauses(clauses2)
+            s.solve()
+
+        def after_solve_with_assumptions(s):
+            s.add_clause([1, 2])
+            s.solve([1])
+
+        for step in (after_add_clause, after_add_clauses, after_add_xor_clause,
+                     after_solve_empty, after_solve, after_unsat,
+                     after_solve_with_assumptions):
+            for threads in (1, 2):
+                with self.subTest(step=step.__name__, threads=threads):
+                    solver = Solver(threads=threads)
+                    step(solver)
+                    self.assertRaises(RuntimeError, solver.set_option,
+                                      "seed", "1")
+                    self.assertRaises(RuntimeError, solver.set_option,
+                                      "maxmatrixrows", "10")
+
+    def test_too_late_error_does_not_break_solver(self):
+        solver = Solver()
+        solver.add_clauses(clauses1)
+        self.assertRaises(RuntimeError, solver.set_option, "seed", "1")
+        res, solution = solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(check_solution(clauses1, solution))
+        solver.add_clause([-1])
+        res, solution = solver.solve()
+        self.assertEqual(res, True)
+        self.assertTrue(check_solution(clauses1 + [[-1]], solution))
+
+    def test_queries_do_not_make_it_too_late(self):
+        solver = Solver()
+        self.assertEqual(solver.nb_vars(), 0)
+        solver.set_option("seed", "1")
+
+    def test_docstrings(self):
+        self.assertIn("options", Solver.__doc__)
+        self.assertIn("set_option", Solver.set_option.__doc__)
+
+
 def run():
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s" % sys.version)
@@ -615,7 +972,8 @@ def run():
     suite = unittest.TestSuite()
     for cls in (TestXor, InitTester, TestSolve, TestNbVars, TestIsSatisfiable,
                 TestIncremental, TestSolveArgs, TestVersion, TestXorMixed,
-                TestGetConflict, TestEdgeCases, TestSolveTimeLimit):
+                TestGetConflict, TestEdgeCases, TestSolveTimeLimit,
+                TestOptions):
         suite.addTests(loader.loadTestsFromTestCase(cls))
 
     runner = unittest.TextTestRunner(verbosity=2)

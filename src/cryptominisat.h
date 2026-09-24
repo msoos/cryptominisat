@@ -109,6 +109,13 @@ namespace CMSat {
         ////////////////////////////
 
         void set_num_threads(unsigned n); //Number of threads to use. Must be set before any vars/clauses are added
+        // Set a command-line option by name, without the leading "--", e.g.
+        // set_option("maxmatrixrows", "5000"). Only the options marked lib in
+        // conf_options.h, plus "polar". Must be called before any variable or
+        // clause is added and before solve()/simplify(), FRAT or SQL. Throws
+        // std::invalid_argument on an unknown option or bad value,
+        // std::runtime_error if called too late.
+        void set_option(const std::string& name, const std::string& value);
         void set_allow_otf_gauss(); //allow on-the-fly gaussian elimination
         void set_max_num_matrices(uint32_t val); //max number of gaussian elimination matrices
         void set_min_matrix_rows(uint32_t val); //below this many rows, a matrix is discarded
