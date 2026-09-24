@@ -260,10 +260,10 @@ bool Solver::sort_and_clean_clause(
         } else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
-            if (varData[p.var()].removed != Removed::none) {
+            if (var_data[p.var()].removed != Removed::none) {
                 cout << "ERROR: clause " << origCl << " contains literal "
                 << p << " whose variable has been removed (removal type: "
-                << removed_type_to_string(varData[p.var()].removed)
+                << removed_type_to_string(var_data[p.var()].removed)
                 << " var-updated lit: "
                 << varReplacer->get_var_replaced_with(p)
                 << ")"
@@ -271,7 +271,7 @@ bool Solver::sort_and_clean_clause(
 
                 //Variables that have been eliminated cannot be added internally
                 //as part of a clause. That's a bug
-                assert(varData[p.var()].removed == Removed::none);
+                assert(var_data[p.var()].removed == Removed::none);
             }
         }
     }
@@ -318,7 +318,7 @@ Clause* Solver::add_clause_int(
     const auto stripped_units = [&]() {
         for(const Lit l: lits) {
             if (value(l) == l_False) {
-                assert(varData[l.var()].level == 0);
+                assert(var_data[l.var()].level == 0);
                 assert(unit_cl_IDs[l.var()] != 0);
                 *frat << unit_cl_IDs[l.var()];
             }
@@ -440,10 +440,10 @@ void Solver::sort_and_clean_bnn(BNN& bnn)
         } else {
             bnn[j++] = p = bnn[i];
 
-            if (varData[p.var()].removed != Removed::none) {
+            if (var_data[p.var()].removed != Removed::none) {
                 cout << "ERROR: BNN " << bnn << " contains literal "
                 << p << " whose variable has been removed (removal type: "
-                << removed_type_to_string(varData[p.var()].removed)
+                << removed_type_to_string(var_data[p.var()].removed)
                 << " var-updated lit: "
                 << varReplacer->get_var_replaced_with(p)
                 << ")"
@@ -451,7 +451,7 @@ void Solver::sort_and_clean_bnn(BNN& bnn)
 
                 //Variables that have been eliminated cannot be added internally
                 //as part of a clause. That's a bug
-                assert(varData[p.var()].removed == Removed::none);
+                assert(var_data[p.var()].removed == Removed::none);
             }
         }
     }
@@ -720,10 +720,10 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
     //Uneliminate vars
     if (get_num_vars_elimed() != 0) {
         for (const Lit& lit: ps) {
-            if (varData[lit.var()].removed == Removed::elimed && !occsimplifier->uneliminate(lit.var()))
+            if (var_data[lit.var()].removed == Removed::elimed && !occsimplifier->uneliminate(lit.var()))
                 return false;
 
-            assert(varData[lit.var()].removed == Removed::none);
+            assert(var_data[lit.var()].removed == Removed::none);
         }
     }
 
@@ -805,8 +805,8 @@ void Solver::test_renumbering() const
     bool problem = false;
     for(size_t i = 0; i < nVars(); i++) {
         /* cout << "val[" << i << "]: " << value(i); */
-        if (varData[i].removed == Removed::elimed
-            || varData[i].removed == Removed::replaced
+        if (var_data[i].removed == Removed::elimed
+            || var_data[i].removed == Removed::replaced
             || value(i) != l_Undef
         ) {
             uninteresting_seen = true;
@@ -816,8 +816,8 @@ void Solver::test_renumbering() const
         }
 
         if (value(i) == l_Undef
-            && varData[i].removed != Removed::elimed
-            && varData[i].removed != Removed::replaced
+            && var_data[i].removed != Removed::elimed
+            && var_data[i].removed != Removed::replaced
             && uninteresting_seen
         ) {
             problem = true;
@@ -879,8 +879,8 @@ size_t Solver::calculate_inter_to_outer_and_outer_to_inter(
     size_t num_effective_vars = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
-            || varData[i].removed == Removed::elimed
-            || varData[i].removed == Removed::replaced
+            || var_data[i].removed == Removed::elimed
+            || var_data[i].removed == Removed::replaced
         ) {
         } else {
             if (fin[i] == none) fin[i] = at++;
@@ -910,8 +910,8 @@ double Solver::calc_renumber_saving()
     uint32_t num_used = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
-            || varData[i].removed == Removed::elimed
-            || varData[i].removed == Removed::replaced
+            || var_data[i].removed == Removed::elimed
+            || var_data[i].removed == Removed::replaced
         ) {
             continue;
         }
@@ -1044,7 +1044,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 }
 
 void Solver::set_assumptions() {
-    SLOW_DEBUG_DO(for(const auto& x: varData) assert(x.assumption == l_Undef));
+    SLOW_DEBUG_DO(for(const auto& x: var_data) assert(x.assumption == l_Undef));
     conflict.clear();
 
     vector<Lit> tmp;
@@ -1066,13 +1066,13 @@ void Solver::uneliminate_sampling_set() {
 
 void Solver::add_assumption(const Lit assump)
 {
-    assert(varData[assump.var()].assumption == l_Undef);
-    assert(varData[assump.var()].removed == Removed::none);
+    assert(var_data[assump.var()].assumption == l_Undef);
+    assert(var_data[assump.var()].removed == Removed::none);
     assert(value(assump) == l_Undef);
 
     Lit outer_lit = map_inter_to_outer(assump);
     assumptions.push_back(outer_lit);
-    varData[assump.var()].assumption = assump.sign() ? l_False : l_True;
+    var_data[assump.var()].assumption = assump.sign() ? l_False : l_True;
 }
 
 void Solver::check_model_for_assumptions() const {
@@ -1188,8 +1188,8 @@ void Solver::extend_solution(const bool only_sampling_solution) {
             outer_var = varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 
-            assert(varData[int_var].removed == Removed::none);
-            if (int_var < nVars() && varData[int_var].removed == Removed::none)
+            assert(var_data[int_var].removed == Removed::none);
+            if (int_var < nVars() && var_data[int_var].removed == Removed::none)
                 assert(model[int_var] != l_Undef);
         }
     }
@@ -1208,10 +1208,10 @@ void Solver::extend_solution(const bool only_sampling_solution) {
             if (model[var] == l_Undef) {
                 cout << "ERROR: variable " << var+1 << " is set as sampling but is unset!" << endl;
                 cout << "NOTE: var " << var + 1 << " has removed value: "
-                << removed_type_to_string(varData[var].removed)
+                << removed_type_to_string(var_data[var].removed)
                 << " and is set to " << value(var) << endl;
 
-                if (varData[var].removed == Removed::replaced) {
+                if (var_data[var].removed == Removed::replaced) {
                     uint32_t v2 = varReplacer->get_var_replaced_with(var);
                     cout << " --> replaced with var " << v2 + 1 << " whose value is: " << value(v2) << endl;
                 }
@@ -2269,7 +2269,7 @@ uint64_t Solver::mem_used_vardata() const
 {
     uint64_t mem = 0;
     mem += assigns.capacity()*sizeof(lbool);
-    mem += varData.capacity()*sizeof(VarData);
+    mem += var_data.capacity()*sizeof(VarData);
 
     return mem;
 }
@@ -2423,7 +2423,7 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
 
             //Update to higher-up
             lit = varReplacer->get_lit_replaced_with(lit);
-            if (varData[lit.var()].is_bva == false) {
+            if (var_data[lit.var()].is_bva == false) {
                 if (backnumber) lits.push_back(map_inter_to_outer(lit));
                 else lits.push_back(lit);
 
@@ -2432,7 +2432,7 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
             //Everything it repaces has also been set
             const vector<uint32_t> vars = varReplacer->get_vars_replacing(lit.var());
             for(const uint32_t var: vars) {
-                if (varData[var].is_bva) continue;
+                if (var_data[var].is_bva) continue;
 
                 Lit tmp_lit = Lit(var, false);
                 assert(varReplacer->get_lit_replaced_with(tmp_lit).var() == lit.var());
@@ -2781,8 +2781,8 @@ void Solver::free_unused_watches()
 {
     for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
         const Lit lit = Lit::toLit(wsLit);
-        if (varData[lit.var()].removed == Removed::elimed
-            || varData[lit.var()].removed == Removed::replaced
+        if (var_data[lit.var()].removed == Removed::elimed
+            || var_data[lit.var()].removed == Removed::replaced
         ) {
             watch_subarray ws = watches[lit];
             assert(ws.empty());
@@ -2850,7 +2850,7 @@ bool Solver::prop_hints_for_cl(const vector<Lit>& cl_lits, vector<int32_t>& hint
     if (!p.isnullptr()) cid = get_confl_id(p, hints);
     //some lits may be false at level 0 already
     for(const Lit l: cl_lits) {
-        if (value(l) == l_False && varData[l.var()].level == 0)
+        if (value(l) == l_False && var_data[l.var()].level == 0)
             hints.push_back(unit_cl_IDs[l.var()]);
     }
     cancelUntil<false, true>(0);
@@ -2882,7 +2882,7 @@ bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
 
     const lbool val = value(lit);
     if (val == l_Undef) {
-        assert(varData[lit.var()].removed == Removed::none);
+        assert(var_data[lit.var()].removed == Removed::none);
         if (frat->enabled() && hints) {
             const auto id = ++clauseID;
             *frat << add << id << lit << fratchain << *hints << fin;
@@ -3026,7 +3026,7 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const {
     vector<pair<Lit, Lit> > bin_xors = varReplacer->get_all_binary_xors_outer();
     vector<pair<Lit, Lit> > ret;
     for(std::pair<Lit, Lit> p: bin_xors) {
-        if (!varData[p.first.var()].is_bva && !varData[p.second.var()].is_bva) ret.push_back(p);
+        if (!var_data[p.first.var()].is_bva && !var_data[p.second.var()].is_bva) ret.push_back(p);
     }
 
     return ret;
@@ -3043,18 +3043,18 @@ uint32_t Solver::num_active_vars() const
     uint32_t removed_non_decision = 0;
     for(uint32_t var = 0; var < nVarsOuter(); var++) {
         if (value(var) != l_Undef) {
-            if (varData[var].removed != Removed::none)
+            if (var_data[var].removed != Removed::none)
             {
                 cout << "ERROR: var " << var + 1 << " has removed: "
-                << removed_type_to_string(varData[var].removed)
+                << removed_type_to_string(var_data[var].removed)
                 << " but is set to " << value(var) << endl;
-                assert(varData[var].removed == Removed::none);
+                assert(var_data[var].removed == Removed::none);
                 exit(-1);
             }
             removed_set++;
             continue;
         }
-        switch(varData[var].removed) {
+        switch(var_data[var].removed) {
             case Removed::elimed :
                 removed_elimed++;
                 continue;
@@ -3064,7 +3064,7 @@ uint32_t Solver::num_active_vars() const
             case Removed::none:
                 break;
         }
-        if (varData[var].removed != Removed::none) {
+        if (var_data[var].removed != Removed::none) {
             removed_non_decision++;
         }
         numActive++;
@@ -3265,7 +3265,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
         verb_print(5, "XOR before outer numbering: " << x);
         bool OK = true;
         for(const auto v: x.get_vars()) {
-            if (varData[v].is_bva) {
+            if (var_data[v].is_bva) {
                 OK = false;
                 break;
             }
@@ -3646,7 +3646,7 @@ string Solver::serialize_solution_reconstruction_data() const
         ar << assigns;
         ar << inter_to_outerMain;
         ar << outer_to_interMain;
-        ar << varData;
+        ar << var_data;
         ar << minNumVars;
         CNF::serialize(ar);
         occsimplifier->serialize_elimed_cls(ar);
@@ -3667,7 +3667,7 @@ void Solver::create_from_solution_reconstruction_data(const string& data)
         ar >> assigns;
         ar >> inter_to_outerMain;
         ar >> outer_to_interMain;
-        ar >> varData;
+        ar >> var_data;
         ar >> minNumVars;
         CNF::unserialize(ar);
         occsimplifier->unserialize_elimed_cls(ar);
@@ -3703,12 +3703,12 @@ pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m
     // set values from model given
     for(size_t i = 0; i < m.size(); i++) {
         assigns[i] = m[i];
-        assert(varData[i].removed == Removed::none);
+        assert(var_data[i].removed == Removed::none);
     }
 
     // checking
     for(size_t i = 0; i < assigns.size(); i++) {
-        if (varData[i].removed == Removed::none) {
+        if (var_data[i].removed == Removed::none) {
             assert(assigns[i] != l_Undef);
         } else {
             assert(assigns[i] == l_Undef);
@@ -3861,7 +3861,7 @@ void Solver::detach_clauses_in_xors() {
 bool Solver::removed_var_ext(uint32_t var) const {
     var = map_outer_to_inter(var);
     if (value(var) != l_Undef) return true;
-    if (varData[var].removed != Removed::none) return true;
+    if (var_data[var].removed != Removed::none) return true;
     return false;
 }
 
@@ -3897,7 +3897,7 @@ map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_
             /* cout << "[solver remap] Variable was assigned." << endl; */
             continue;
         }
-        if (varData[l_inter.var()].removed == Removed::elimed) {
+        if (var_data[l_inter.var()].removed == Removed::elimed) {
             /* cout << "[solver remap] Variable was eliminated." << endl; */
             continue;
         }
@@ -3912,7 +3912,7 @@ map<uint32_t, Lit> Solver::update_var_mapping(const map<uint32_t, Lit>& orig_to_
 vector<uint32_t> Solver::get_elimed_vars() const {
     vector<uint32_t> ret;
     for(uint32_t i = 0; i < nVarsOuter(); i++) {
-        if (varData[i].removed == Removed::elimed) {
+        if (var_data[i].removed == Removed::elimed) {
             ret.push_back(map_inter_to_outer(i));
         }
     }
@@ -3924,7 +3924,7 @@ std::vector<std::vector<Lit>> Solver::get_cls_defining_var(const uint32_t outer_
     Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
     Lit l_inter  = map_outer_to_inter(l);
     assert(value(l_inter) == l_Undef);
-    assert(varData[l_inter.var()].removed == Removed::elimed);
+    assert(var_data[l_inter.var()].removed == Removed::elimed);
     return occsimplifier->get_elimed_clauses_for(outer_v);
 }
 
@@ -3951,7 +3951,7 @@ void Solver::set_outer_lit_weight(const Lit lit, const float weight) {
     assert(weight >= 0.0F);
     auto l = varReplacer->get_lit_replaced_with_outer(lit);
     l = map_outer_to_inter(l);
-    varData[l.var()].weight = l.sign() ? 1.0F-weight : weight;
+    var_data[l.var()].weight = l.sign() ? 1.0F-weight : weight;
 }
 
 vector<vector<uint8_t>> Solver::many_sls(int64_t mems, uint32_t num) {

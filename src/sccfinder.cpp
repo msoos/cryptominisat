@@ -95,7 +95,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
     }
 
     const Lit vertLit = Lit::toLit(vertex);
-    if (solver->varData[vertLit.var()].removed != Removed::none) {
+    if (solver->var_data[vertLit.var()].removed != Removed::none) {
         return;
     }
 

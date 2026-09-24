@@ -214,7 +214,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         std::sort(lits.begin(), lits.end());
         for(auto& l: lits) l = l.unsign();
         Xor found_xor(lits, poss_xor.getRHS());
-        SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->varData[lit.var()].removed == Removed::none));
+        SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->var_data[lit.var()].removed == Removed::none));
 
         add_found_xor(found_xor);
         assert(poss_xor.get_fully_used().size() == poss_xor.get_offsets().size());

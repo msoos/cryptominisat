@@ -372,7 +372,7 @@ void Sweeper::init_backbone_and_partition()
     partition.clear();
     for (const uint32_t idx : env_vars) {
         if (solver->value(idx) != l_Undef) continue;
-        if (solver->varData[idx].removed != Removed::none) continue;
+        if (solver->var_data[idx].removed != Removed::none) continue;
         const Lit pos(idx, false);
         const signed char tmp = kitten_value(kit, pos.toInt());
         const Lit cand = (tmp < 0) ? ~pos : pos;
@@ -686,7 +686,7 @@ bool Sweeper::equivalence_candidates(Lit lit, Lit other)
 void Sweeper::sweep_variable(uint32_t v)
 {
     if (solver->value(v) != l_Undef) return;
-    if (solver->varData[v].removed != Removed::none) return;
+    if (solver->var_data[v].removed != Removed::none) return;
     const Lit start(v, false);
     if (repr(start) != start) return;
     swept_vars++;
@@ -785,7 +785,7 @@ bool Sweeper::sweep()
         cands.clear();
         for (uint32_t v = 0; v < nvars; v++) {
             if (solver->value(v) != l_Undef) continue;
-            if (solver->varData[v].removed != Removed::none) continue;
+            if (solver->var_data[v].removed != Removed::none) continue;
             const uint64_t pos = occs->n_occurs[Lit(v, false).toInt()];
             const uint64_t neg = occs->n_occurs[Lit(v, true).toInt()];
             if (!pos || !neg) continue;

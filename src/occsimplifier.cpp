@@ -169,7 +169,7 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
 vector<vector<Lit>> OccSimplifier::get_elimed_clauses_for(const uint32_t outer_v) {
     build_elimed_map();
     [[maybe_unused]] const uint32_t inter_v = solver->map_outer_to_inter(outer_v);
-    assert(solver->varData[inter_v].removed == Removed::elimed && "Variable must be eliminated");
+    assert(solver->var_data[inter_v].removed == Removed::elimed && "Variable must be eliminated");
 
     const uint32_t at_elimed_cls = blk_var_to_cls[outer_v];
     if (at_elimed_cls == numeric_limits<uint32_t>::max()) return {};
@@ -227,7 +227,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     //Either a variable is not eliminated, or its value is undef
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         [[maybe_unused]] const uint32_t outer = solver->map_inter_to_outer(i);
-        assert(solver->varData[i].removed != Removed::elimed
+        assert(solver->var_data[i].removed != Removed::elimed
             || (solver->value(i) == l_Undef && solver->model_value(outer) == l_Undef)
         );
     }
@@ -583,20 +583,20 @@ bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
         //The clause was too long, and wasn't linked in
         //but has been var-elimed, so remove it
         if (!cl->get_occur_linked()
-            && solver->varData[l.var()].removed == Removed::elimed
+            && solver->var_data[l.var()].removed == Removed::elimed
         ) {
             notLinkedNeedFree = true;
         }
 
         if (cl->get_occur_linked()
-            && solver->varData[l.var()].removed != Removed::none
+            && solver->var_data[l.var()].removed != Removed::none
         ) {
             std::cerr
             << "ERROR! Clause " << *cl
             << " red: " << cl->red()
             << " contains lit " << l
             << " which has removed status"
-            << removed_type_to_string(solver->varData[l.var()].removed)
+            << removed_type_to_string(solver->var_data[l.var()].removed)
             << endl;
 
             assert(false);
@@ -617,7 +617,7 @@ void OccSimplifier::check_cls_sanity() {
         assert(cl->size() > 2);
     }
     for ([[maybe_unused]] const auto& x: solver->xorclauses)
-        for ([[maybe_unused]] const auto& v: x) assert(solver->varData[v].removed == Removed::none);
+        for ([[maybe_unused]] const auto& v: x) assert(solver->var_data[v].removed == Removed::none);
 }
 
 size_t OccSimplifier::num_irred_long_cls_in_occur() const {
@@ -791,7 +791,7 @@ void OccSimplifier::eliminate_xor_vars()
     for(uint32_t i = 0; i < xs.size(); i++) if (!deleted[i]) xs[j++] = xs[i];
     xs.resize(j);
     SLOW_DEBUG_DO(for(const auto& x: xs) {
-        for(const auto& v: x) assert(solver->varData[v].removed == Removed::none);
+        for(const auto& v: x) assert(solver->var_data[v].removed == Removed::none);
     });
     free_clauses_to_free();
 
@@ -870,7 +870,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var, bool ignore_xor) const
 
     assert(var < solver->nVars());
     if (solver->value(var) != l_Undef ||
-        solver->varData[var].removed != Removed::none ||
+        solver->var_data[var].removed != Removed::none ||
         solver->var_inside_assumptions(var) != l_Undef ||
         (!ignore_xor && xorclauses_vars[var]) ||
         ((solver->conf.sampling_vars_set || solver->fast_backw.fast_backw_on) &&
@@ -1076,7 +1076,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     limit_to_decrease = &resolvent_sub_time_limit;
     bool timed_out = false;
     for (uint32_t var = 0; var < solver->nVars() && !timed_out; var++) {
-        if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
+        if (solver->value(var) != l_Undef || solver->var_data[var].removed != Removed::none) continue;
         const Lit lit(var, false);
         if (solver->watches[lit].empty() || solver->watches[~lit].empty()) continue;
 
@@ -1201,7 +1201,7 @@ bool OccSimplifier::eliminate_vars()
         limit_to_decrease = &norm_varelim_time_limit;
         order_vars_for_elim();
         if (velim_order.size() < 400) {
-            for(auto& v: solver->varData) v.occ_simp_tried = 0;
+            for(auto& v: solver->var_data) v.occ_simp_tried = 0;
         }
 
         added_cl_to_var.clear();
@@ -1224,7 +1224,7 @@ bool OccSimplifier::eliminate_vars()
                 assert(solver->prop_at_head());
                 assert(limit_to_decrease == &norm_varelim_time_limit);
                 uint32_t var = velim_order.removeMin();
-                solver->varData[var].elim_cand = 0;
+                solver->var_data[var].elim_cand = 0;
 
                 //Stats
                 *limit_to_decrease -= 20;
@@ -1737,7 +1737,7 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
     auto ret = vars;
 
     for(uint32_t v = 0; v < solver->nVars(); v++) {
-        assert(solver->varData[v].removed == Removed::none);
+        assert(solver->var_data[v].removed == Removed::none);
         if (seen[v] == 1) continue;
         //once definable, v joins the defining set for the variables after it
         if (definable_by_kitten(v, st) == l_True) {
@@ -1773,10 +1773,10 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     DefinableStats st;
     vector<uint32_t> vars2;
     for(const uint32_t& v: vars) {
-        assert(solver->varData[v].removed == Removed::none
-            || solver->varData[v].removed == Removed::replaced);
+        assert(solver->var_data[v].removed == Removed::none
+            || solver->var_data[v].removed == Removed::replaced);
         const uint32_t v2 = solver->varReplacer->get_var_replaced_with(v);
-        assert(solver->varData[v2].removed == Removed::none);
+        assert(solver->var_data[v2].removed == Removed::none);
         assert(v2 < seen.size());
 
         if (seen[v2]) continue;
@@ -1786,7 +1786,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 
     std::reverse(vars2.begin(), vars2.end());
     for(const auto& v: vars2) {
-        assert(solver->varData[v].removed == Removed::none);
+        assert(solver->var_data[v].removed == Removed::none);
         if (solver->value(v) != l_Undef) continue;
         //v is definable: drop it from the set the remaining ones may use
         if (definable_by_kitten(v, st) == l_True) seen[v] = 0;
@@ -1821,7 +1821,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
         v2 = solver->map_outer_to_inter(v2);
         if (solver->value(v2) != l_Undef) continue;
         if (sampl_var_pairs.count(v2)) continue;
-        assert(solver->varData[v2].removed == Removed::none);
+        assert(solver->var_data[v2].removed == Removed::none);
         sampl_var_pairs[v2] = v;
     }
 
@@ -2397,7 +2397,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
             uint32_t var = solver->fast_backw.indic_to_var->at(p.var());
             p = solver->varReplacer->get_lit_replaced_with_outer(p);
             p = solver->map_outer_to_inter(p);
-            assert(solver->varData[p.var()].removed == Removed::none);
+            assert(solver->var_data[p.var()].removed == Removed::none);
             sampling_vars_occsimp[p.var()] = true;
 
             //Deal with indicators: var, var + orig_num_vars
@@ -2405,14 +2405,14 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
             uint32_t var2 = var + solver->fast_backw.orig_num_vars;
             var = solver->varReplacer->get_var_replaced_with_outer(var);
             var = solver->map_outer_to_inter(var);
-            assert(solver->varData[var].removed == Removed::none);
+            assert(solver->var_data[var].removed == Removed::none);
             if (sampling_vars_occsimp.size() > var) {
                 sampling_vars_occsimp[var] = true;
             }
 
             var2 = solver->varReplacer->get_var_replaced_with_outer(var2);
             var2 = solver->map_outer_to_inter(var2);
-            assert(solver->varData[var2].removed == Removed::none);
+            assert(solver->var_data[var2].removed == Removed::none);
             if (sampling_vars_occsimp.size() > var2) {
                 sampling_vars_occsimp[var2] = true;
             }
@@ -2863,14 +2863,14 @@ bool OccSimplifier::uneliminate(uint32_t var)
     assert(solver->okay());
 
     //Check that it was really eliminated
-    assert(solver->varData[var].removed == Removed::elimed);
+    assert(solver->var_data[var].removed == Removed::elimed);
     assert(solver->value(var) == l_Undef);
 
     build_elimed_map();
 
     //Uneliminate it in theory
     bvestats_global.numVarsElimed--;
-    solver->varData[var].removed = Removed::none;
+    solver->var_data[var].removed = Removed::none;
     solver->mark_elim_cand(var);
     solver->set_decision_var(var);
 
@@ -3016,7 +3016,7 @@ void OccSimplifier::sanityCheckElimedVars() const {
         const Clause* cl = solver->cl_alloc.ptr(off);
         if (cl->freed()) continue;
         for (const Lit lit: *cl) {
-            if (solver->varData[lit.var()].removed == Removed::elimed) {
+            if (solver->var_data[lit.var()].removed == Removed::elimed) {
                 cout
                 << "Error: elimed var -- Lit " << lit << " in clause"
                 << endl
@@ -3033,8 +3033,8 @@ void OccSimplifier::sanityCheckElimedVars() const {
         watch_subarray_const ws = solver->watches[lit];
         for (const auto& w : ws) {
             if (w.isBin()) {
-                if (solver->varData[lit.var()].removed == Removed::elimed
-                        || solver->varData[w.lit2().var()].removed == Removed::elimed
+                if (solver->var_data[lit.var()].removed == Removed::elimed
+                        || solver->var_data[w.lit2().var()].removed == Removed::elimed
                 ) {
                     cout
                     << "Error: A var is elimed in a binary clause: "
@@ -3109,7 +3109,7 @@ void OccSimplifier::clean_elimed_cls()
     uint64_t j_lits = 0;
     for (auto end = elimed_cls.end(); i != end; ++i) {
         const uint32_t elimed_on = solver->map_outer_to_inter(i->at(0, elimed_cls_lits).var());
-        if (solver->varData[elimed_on].removed == Removed::elimed
+        if (solver->var_data[elimed_on].removed == Removed::elimed
             && solver->value(elimed_on) != l_Undef
         ) {
             cerr << "ERROR: var " << Lit(elimed_on, false) << " elimed,"
@@ -3124,7 +3124,7 @@ void OccSimplifier::clean_elimed_cls()
             i->start = numeric_limits<uint64_t>::max();
             i->end = numeric_limits<uint64_t>::max();
         } else {
-            assert(solver->varData[elimed_on].removed == Removed::elimed);
+            assert(solver->var_data[elimed_on].removed == Removed::elimed);
 
             //beware we might change this
             const size_t sz = i->size();
@@ -4002,7 +4002,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
         //(unit-propagating the kept lit), the propagations, the conflict
         vector<int32_t> units, rsns;
         for(const Lit l: *cl) {
-            if (solver->value(l) != l_Undef && solver->varData[l.var()].level == 0) {
+            if (solver->value(l) != l_Undef && solver->var_data[l.var()].level == 0) {
                 assert(solver->unit_cl_IDs[l.var()] != 0);
                 units.push_back(solver->unit_cl_IDs[l.var()]);
             }
@@ -4367,7 +4367,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents_inner(const uint32_t var)
 {
     bve_why.entered++;
     assert(solver->ok);
-    assert(solver->varData[var].removed == Removed::none);
+    assert(solver->var_data[var].removed == Removed::none);
     assert(solver->value(var) == l_Undef);
     resolvents.clear();
     elim_unit_resolvents.clear();
@@ -4736,8 +4736,8 @@ void OccSimplifier::update_varelim_complexity_heap()
 
 void OccSimplifier::set_var_as_eliminated(const uint32_t var)
 {
-    assert(solver->varData[var].removed == Removed::none);
-    solver->varData[var].removed = Removed::elimed;
+    assert(solver->var_data[var].removed == Removed::none);
+    solver->var_data[var].removed = Removed::elimed;
 
     bvestats_global.numVarsElimed++;
 }
@@ -4804,7 +4804,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
     //Order them for removal
     vector<uint32_t> vars;
     for(uint32_t v = 0; v < solver->nVars(); v++) {
-        if (solver->varData[v].removed == Removed::none &&
+        if (solver->var_data[v].removed == Removed::none &&
             solver->value(v) == l_Undef)
         {
             vars.push_back(v);
@@ -4864,10 +4864,10 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     //     if this is NOT on, but the FRW subsumption is ON, then
     //     the E part of Arjun is working terribly!!
     if (solver->conf.varelim_check_resolvent_subs &&
-        !solver->varData[var].occ_simp_tried &&
+        !solver->var_data[var].occ_simp_tried &&
         (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 20))
     {
-        solver->varData[var].occ_simp_tried = 1;
+        solver->var_data[var].occ_simp_tried = 1;
         uint32_t rem = 0;
         occ_based_lit_rem(var, rem);
     }
@@ -5203,7 +5203,7 @@ void OccSimplifier::increase_elim_bound()
     if (grow == 0) grow = 1;
     else grow *= 2;
     grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
-    for(auto& v: solver->varData) v.elim_cand = 1;
+    for(auto& v: solver->var_data) v.elim_cand = 1;
     verb_print(1, "[occ-bve] new elimination bound " << grow);
 }
 
@@ -5225,7 +5225,7 @@ void OccSimplifier::order_vars_for_elim()
         //CaDiCaL only schedules variables that occurred in an irredundant
         //clause removed or shrunk since we last tried them
         if (solver->conf.varelim_sched_only_touched
-            && !solver->varData[var].elim_cand
+            && !solver->var_data[var].elim_cand
         ) { bve_why.sched_no_elim_cand++; continue; }
 
         bve_why.sched_added++;
@@ -5240,7 +5240,7 @@ void OccSimplifier::order_vars_for_elim()
 void OccSimplifier::check_elimed_vars_are_unassigned() const
 {
     for (size_t i = 0; i < solver->nVarsOuter(); i++) {
-        if (solver->varData[i].removed == Removed::elimed) {
+        if (solver->var_data[i].removed == Removed::elimed) {
             assert(solver->value(i) == l_Undef);
         }
     }
@@ -5251,7 +5251,7 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
     assert(solver->ok);
     int64_t checkNumElimed = 0;
     for (size_t i = 0; i < solver->nVarsOuter(); i++) {
-        if (solver->varData[i].removed == Removed::elimed) {
+        if (solver->var_data[i].removed == Removed::elimed) {
             checkNumElimed++;
             assert(solver->value(i) == l_Undef);
         }

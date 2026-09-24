@@ -46,7 +46,7 @@ bool Solver::full_probe(const bool bin_only)
     vector<uint32_t> vars;
     for(uint32_t i = 0; i < nVars(); i++) {
         Lit l(i, false);
-        if (value(l) == l_Undef && varData[i].removed == Removed::none)
+        if (value(l) == l_Undef && var_data[i].removed == Removed::none)
             vars.push_back(i);
     }
     std::shuffle(vars.begin(), vars.end(), mtrand);
@@ -62,7 +62,7 @@ bool Solver::full_probe(const bool bin_only)
         if (seen2[l.var()] == 3) continue;
 
         if (value(l) == l_Undef &&
-            varData[v].removed == Removed::none)
+            var_data[v].removed == Removed::none)
         {
             bool ret;
             if (bin_only) ret = probe_inter<true>(l, min_props);
@@ -254,7 +254,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 
     l = varReplacer->get_lit_replaced_with_outer(l);
     l = map_outer_to_inter(l);
-    if (varData[l.var()].removed != Removed::none) {
+    if (var_data[l.var()].removed != Removed::none) {
         //TODO
         return l_Undef;
     }
@@ -287,7 +287,7 @@ lbool Solver::probe_all_outside(const vector<uint32_t>& vars)
         assert(outer_v < nVarsOuter());
         Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
         l = map_outer_to_inter(l);
-        if (varData[l.var()].removed != Removed::none) continue;
+        if (var_data[l.var()].removed != Removed::none) continue;
         if (value(l) != l_Undef) continue;
 
         //we have seen it in every combination, nothing will be learnt

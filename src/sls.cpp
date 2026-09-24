@@ -84,7 +84,7 @@ void SLS::run(const int64_t mems)
     if (improved) {
         solver->sls_minimum = minimum;
         for(uint32_t v = 0; v < solver->nVars(); v++)
-            if (sls.has_value(v)) solver->varData[v].saved_polarity = sls.value(v);
+            if (sls.has_value(v)) solver->var_data[v].saved_polarity = sls.value(v);
     }
 
     const double time_used = cpu_time()-my_time;

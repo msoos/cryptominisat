@@ -445,7 +445,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
     MYFLAG++;
     uint32_t nblevels = 0;
     for (Lit lit: ps) {
-        int l = varData[lit.var()].level;
+        int l = var_data[lit.var()].level;
         if (l != 0 && permDiff[l] != MYFLAG) {
             permDiff[l] = MYFLAG;
             nblevels++;
@@ -540,17 +540,17 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     SLOW_DEBUG_DO(assert(trail.size() <= nVarsOuter()));
-    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    SLOW_DEBUG_DO(assert(var_data[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
     STATS_DO(if (!inprocess) { if (p.sign()) propStats.varSetNeg++; else propStats.varSetPos++; });
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
-    if (!inprocess) varData[v].saved_polarity = !sign; //phase saving during search
-    varData[v].reason = from;
-    varData[v].level = level;
-    varData[v].sublevel = trail.size();
+    if (!inprocess) var_data[v].saved_polarity = !sign; //phase saving during search
+    var_data[v].reason = from;
+    var_data[v].level = level;
+    var_data[v].sublevel = trail.size();
 
     if (level == 0 && frat->enabled()) enqueue_level0_frat(p, from, do_unit_frat);
 
@@ -647,7 +647,7 @@ inline void PropEngine::enqueue_light(const Lit p)
 {
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    SLOW_DEBUG_DO(assert(var_data[v].removed == Removed::none));
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
 
     const bool sign = p.sign();
@@ -670,8 +670,8 @@ inline void PropEngine::attach_bin_clause(
         assert(value(lit2) == l_Undef || value(lit2) == l_False);
     }
 
-    assert(varData[lit1.var()].removed == Removed::none);
-    assert(varData[lit2.var()].removed == Removed::none);
+    assert(var_data[lit1.var()].removed == Removed::none);
+    assert(var_data[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
     watches[lit1].push(Watched(lit2, red, ID));

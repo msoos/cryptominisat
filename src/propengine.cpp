@@ -112,7 +112,7 @@ void PropEngine::attachClause(
 
     #ifdef DEBUG_ATTACH
     for (uint32_t i = 0; i < c.size(); i++) {
-        assert(varData[c[i].var()].removed == Removed::none);
+        assert(var_data[c[i].var()].removed == Removed::none);
     }
     #endif //DEBUG_ATTACH
 
@@ -124,7 +124,7 @@ void PropEngine::attachClause(
 void PropEngine::attach_xor_clause(uint32_t at) {
     Xor& x = xorclauses[at];
     assert(x.size() > 2);
-    DEBUG_ATTACH_MORE_DO(for (const auto& v: x) assert(varData[v].removed == Removed::none));
+    DEBUG_ATTACH_MORE_DO(for (const auto& v: x) assert(var_data[v].removed == Removed::none));
 
     assert(value(x[0]) == l_Undef);
     assert(value(x[1]) == l_Undef);
@@ -428,11 +428,11 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
         return &bnn_confl_reason;
     }
 
-    auto& reason = varData[lit.var()].reason;
+    auto& reason = var_data[lit.var()].reason;
 //     cout
-//     << " reason lev: " << varData[lit.var()].level
-//     << " sublev: " << varData[lit.var()].sublevel
-//     << " reason type: " << varData[lit.var()].reason.getType()
+//     << " reason lev: " << var_data[lit.var()].level
+//     << " sublev: " << var_data[lit.var()].sublevel
+//     << " reason type: " << var_data[lit.var()].reason.getType()
 //     << endl;
     assert(reason.isBNN());
     if (reason.bnn_reason_set()) {
@@ -506,8 +506,8 @@ void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
     uint32_t at = 0;
     for(uint32_t i = 0; i < ret->size(); i ++) {
         Lit l = (*ret)[i];
-        if (varData[l.var()].sublevel >= maxsublevel) {
-            maxsublevel = varData[l.var()].sublevel;
+        if (var_data[l.var()].sublevel >= maxsublevel) {
+            maxsublevel = var_data[l.var()].sublevel;
             at = i;
         }
     }
@@ -531,7 +531,7 @@ void PropEngine::get_bnn_prop_reason(
             //Caused it to meet cutoff
             int32_t need = bnn->cutoff;
             for(const auto& l: *bnn) {
-                if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
+                if (var_data[l.var()].sublevel <= var_data[lit.var()].sublevel
                     && value(l) == l_True)
                 {
                     need--;
@@ -549,7 +549,7 @@ void PropEngine::get_bnn_prop_reason(
             //Caused it to meet cutoff
             int32_t need = bnn->size()-bnn->cutoff+1;
             for(const auto& l: *bnn) {
-                if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
+                if (var_data[l.var()].sublevel <= var_data[lit.var()].sublevel
                     && value(l) == l_False)
                 {
                     need--;
@@ -568,7 +568,7 @@ void PropEngine::get_bnn_prop_reason(
             ret->push_back(bnn->out ^ (value(bnn->out) == l_True));
         }
         for(const auto& l: *bnn) {
-            if (varData[l.var()].sublevel < varData[lit.var()].sublevel) {
+            if (var_data[l.var()].sublevel < var_data[lit.var()].sublevel) {
                 if (bnn->set ||
                     (!bnn->set && value(bnn->out) == l_True))
                 {
@@ -674,7 +674,7 @@ bool PropEngine::prop_long_cl(
             uint32_t nMaxInd = 1;
             // pass over all the literals in the clause and find the one with the biggest level
             for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
-                uint32_t nLevel = varData[c[nInd].var()].level;
+                uint32_t nLevel = var_data[c[nInd].var()].level;
                 if (nLevel > nMaxLevel) {
                     nMaxLevel = nLevel;
                     nMaxInd = nInd;
@@ -717,14 +717,14 @@ void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
 
 void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
 {
-    if (!varData[l.var()].propagated) return;
+    if (!var_data[l.var()].propagated) return;
     watch_subarray ws = watches[~l];
     for (const auto& i: ws) {
         if (i.isBNN()) {
             reverse_one_bnn(i.get_bnn(), i.get_bnn_prop_t());
         }
     }
-    varData[l.var()].propagated = false;
+    var_data[l.var()].propagated = false;
 }
 
 template<bool inprocess, bool red_also, bool distill_use>
@@ -734,7 +734,7 @@ PropBy PropEngine::propagate_core()
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
-        if (!bnns.empty()) varData[p.var()].propagated = true; //only reverse_prop() reads it
+        if (!bnns.empty()) var_data[p.var()].propagated = true; //only reverse_prop() reads it
         watch_subarray ws = watches[~p];
         uint32_t currLevel = trail[qhead].lev;
 
@@ -815,11 +815,11 @@ void PropEngine::updateVars(
 void PropEngine::print_trail()
 {
     for(size_t i = trail_lim[0]; i < trail.size(); i++) {
-        assert(varData[trail[i].lit.var()].level == trail[i].lev);
+        assert(var_data[trail[i].lit.var()].level == trail[i].lev);
         cout
         << "trail " << i << ":" << trail[i].lit
         << " lev: " << trail[i].lev
-        << " reason: " << varData[trail[i].lit.var()].reason
+        << " reason: " << var_data[trail[i].lit.var()].reason
         << endl;
     }
 }
@@ -878,9 +878,9 @@ inline bool PropEngine::prop_bin_cl_occur(
         if (frat->enabled() && last_occ_confl_id == 0) {
             last_occ_confl_id = ws.get_id();
             last_occ_confl_units.clear();
-            if (varData[p.var()].level == 0)
+            if (var_data[p.var()].level == 0)
                 last_occ_confl_units.push_back(unit_cl_IDs[p.var()]);
-            if (varData[ws.lit2().var()].level == 0)
+            if (var_data[ws.lit2().var()].level == 0)
                 last_occ_confl_units.push_back(unit_cl_IDs[ws.lit2().var()]);
         }
         return false;
@@ -919,7 +919,7 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
             last_occ_confl_id = cl.stats.id;
             last_occ_confl_units.clear();
             for (const Lit lit: cl) {
-                if (varData[lit.var()].level == 0)
+                if (var_data[lit.var()].level == 0)
                     last_occ_confl_units.push_back(unit_cl_IDs[lit.var()]);
             }
         }
@@ -990,7 +990,7 @@ void PropEngine::vmtf_check_unassigned()
     while (at  != numeric_limits<uint32_t>::max()) {
         at = vmtf_links[at].next;
         if (at != numeric_limits<uint32_t>::max()) {
-            if (value(at) == l_Undef && varData[at].removed == Removed::none) {
+            if (value(at) == l_Undef && var_data[at].removed == Removed::none) {
                 cout << "vmtf OOPS, var " << at+1 << " would have been unassigned. btab[var]: " << vmtf_btab[at] << endl;
                 unassigned++;
             }
@@ -1095,13 +1095,13 @@ void PropEngine::collect_trail_seg_hints(
     const uint32_t end = std::min<uint32_t>(end_at, trail.size());
     for(uint32_t i = start; i < end; i++) {
         if (trail[i].lit.var() == skip_var) continue;
-        const PropBy r = varData[trail[i].lit.var()].reason;
+        const PropBy r = var_data[trail[i].lit.var()].reason;
         if (r.isnullptr()) continue;
         int32_t id;
         switch (r.getType()) {
             case binary_t:
                 id = r.get_id();
-                if (varData[r.lit2().var()].level == 0) {
+                if (var_data[r.lit2().var()].level == 0) {
                     assert(unit_cl_IDs[r.lit2().var()] != 0);
                     units.push_back(unit_cl_IDs[r.lit2().var()]);
                 }
@@ -1110,7 +1110,7 @@ void PropEngine::collect_trail_seg_hints(
                 Clause* cl = cl_alloc.ptr(r.get_offset());
                 id = cl->stats.id;
                 for (const Lit x: *cl) {
-                    if (varData[x.var()].level == 0) {
+                    if (var_data[x.var()].level == 0) {
                         assert(unit_cl_IDs[x.var()] != 0);
                         units.push_back(unit_cl_IDs[x.var()]);
                     }
@@ -1120,7 +1120,7 @@ void PropEngine::collect_trail_seg_hints(
             case xor_t: {
                 auto cl = get_xor_reason(r, id);
                 for (const Lit x: *cl) {
-                    if (varData[x.var()].level == 0) {
+                    if (var_data[x.var()].level == 0) {
                         assert(unit_cl_IDs[x.var()] != 0);
                         units.push_back(unit_cl_IDs[x.var()]);
                     }
@@ -1139,7 +1139,7 @@ int32_t PropEngine::get_reason_id(const PropBy r, vector<int32_t>& units)
     assert(frat->enabled());
     int32_t id;
     const auto unit_of = [&](const Lit x) {
-        if (value(x) != l_Undef && varData[x.var()].level == 0) {
+        if (value(x) != l_Undef && var_data[x.var()].level == 0) {
             assert(unit_cl_IDs[x.var()] != 0);
             units.push_back(unit_cl_IDs[x.var()]);
         }
@@ -1171,7 +1171,7 @@ int32_t PropEngine::get_confl_id(const PropBy confl, vector<int32_t>& units)
     assert(frat->enabled());
     int32_t id;
     const auto unit_of = [&](const Lit x) {
-        if (varData[x.var()].level == 0) {
+        if (var_data[x.var()].level == 0) {
             assert(unit_cl_IDs[x.var()] != 0);
             units.push_back(unit_cl_IDs[x.var()]);
         }

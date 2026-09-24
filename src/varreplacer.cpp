@@ -72,11 +72,11 @@ void VarReplacer::check_no_replaced_var_set() const
 {
     for(uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         if (solver->value(var) != l_Undef) {
-            if (solver->varData[var].removed != Removed::none) {
+            if (solver->var_data[var].removed != Removed::none) {
                 cout << "ERROR: var " << var + 1 << " has removed: "
-                << removed_type_to_string(solver->varData[var].removed)
+                << removed_type_to_string(solver->var_data[var].removed)
                 << " but is set to " << solver->value(var) << endl;
-                assert(solver->varData[var].removed == Removed::none);
+                assert(solver->var_data[var].removed == Removed::none);
                 exit(-1);
             }
         }
@@ -110,18 +110,18 @@ void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
 
     //Not replaced_with, or not replaceable, so skip
     if (orig_var == replaced_with_var
-        || solver->varData[replaced_with_var].removed == Removed::elimed
+        || solver->var_data[replaced_with_var].removed == Removed::elimed
     ) {
         return;
     }
 
     //Has already been handled previously, just skip
-    if (solver->varData[orig_var].removed == Removed::replaced) return;
+    if (solver->var_data[orig_var].removed == Removed::replaced) return;
 
     //Okay, so unset decision, and set the other one decision
     assert(orig_var != replaced_with_var);
-    solver->varData[orig_var].removed = Removed::replaced;
-    assert(solver->varData[replaced_with_var].removed == Removed::none);
+    solver->var_data[orig_var].removed = Removed::replaced;
+    assert(solver->var_data[replaced_with_var].removed == Removed::none);
     assert(solver->value(replaced_with_var) == l_Undef);
     assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
 }
@@ -293,7 +293,7 @@ void VarReplacer::emit_direct_eqbins()
 {
     eqbin_ids.assign(solver->nVars(), {0, 0});
     for(uint32_t v = 0; v < solver->nVars(); v++) {
-        if (solver->varData[v].removed != Removed::none) continue;
+        if (solver->var_data[v].removed != Removed::none) continue;
         const Lit l(v, false);
         const Lit r = get_lit_replaced_with(l);
         if (r == l) continue;
@@ -710,7 +710,7 @@ bool VarReplacer::handleUpdatedClause(
     uint32_t i, j;
     const uint32_t origSize = c.size();
     for (i = j = 0, p = lit_Undef; i != origSize; i++) {
-        assert(solver->varData[c[i].var()].removed == Removed::none);
+        assert(solver->var_data[c[i].var()].removed == Removed::none);
         if (solver->value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
             break;
@@ -806,7 +806,7 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     assert(solver->model.size() > var);
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
-    assert(solver->varData[sub_var_inter].removed == Removed::replaced);
+    assert(solver->var_data[sub_var_inter].removed == Removed::replaced);
     assert(solver->model_value(sub_var) == l_Undef);
 
     if (solver->conf.verbosity > 10) {
@@ -873,8 +873,8 @@ void VarReplacer::replaceChecks(const uint32_t var1, const uint32_t var2) const
     assert(solver->value(var1) == l_Undef);
     assert(solver->value(var2) == l_Undef);
 
-    assert(solver->varData[var1].removed == Removed::none);
-    assert(solver->varData[var2].removed == Removed::none);
+    assert(solver->var_data[var1].removed == Removed::none);
+    assert(solver->var_data[var2].removed == Removed::none);
 }
 
 bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
@@ -1022,8 +1022,8 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id2, lit1, ~lit2});
 
     //None should be removed, only maybe queued for replacement
-    assert(solver->varData[lit1.var()].removed == Removed::none);
-    assert(solver->varData[lit2.var()].removed == Removed::none);
+    assert(solver->var_data[lit1.var()].removed == Removed::none);
+    assert(solver->var_data[lit2.var()].removed == Removed::none);
 
     const lbool val1 = solver->value(lit1);
     const lbool val2 = solver->value(lit2);
@@ -1095,8 +1095,8 @@ void VarReplacer::checkUnsetSanity()
         const Lit repLit = get_lit_replaced_with(Lit(i, false));
         const uint32_t repVar = get_var_replaced_with(i);
 
-        if (solver->varData[i].removed == Removed::none
-            && solver->varData[repVar].removed == Removed::none
+        if (solver->var_data[i].removed == Removed::none
+            && solver->var_data[repVar].removed == Removed::none
             && solver->value(i) != solver->value(repLit)
         ) {
             cout

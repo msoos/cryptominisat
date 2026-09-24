@@ -41,16 +41,16 @@ void SolutionExtender::extend() {
     verb_print(10, "Exteding solution -- SolutionExtender::extend()");
 
     #ifdef SLOW_DEBUG
-    for(uint32_t i = 0; i < solver->varData.size(); i++) {
+    for(uint32_t i = 0; i < solver->var_data.size(); i++) {
         uint32_t v_inter = solver->map_outer_to_inter(i);
         if (
             //decomposed's solution has beed added already, it SHOULD be set
             //but everything else is NOT OK
-            solver->varData[v_inter].removed != Removed::none
+            solver->var_data[v_inter].removed != Removed::none
         ) {
             if (solver->model[i] != l_Undef)
                 cout << "ERROR: variable " << i + 1 << " set even though it's removed: "
-                << removed_type_to_string(solver->varData[v_inter].removed) << endl;
+                << removed_type_to_string(solver->var_data[v_inter].removed) << endl;
             assert(solver->model[i] == l_Undef);
         }
     }
@@ -95,7 +95,7 @@ void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
 
     #ifdef SLOW_DEBUG
     const uint32_t elimedOn_inter = solver->map_outer_to_inter(elimed_on);
-    assert(solver->varData[elimedOn_inter].removed == Removed::elimed);
+    assert(solver->var_data[elimedOn_inter].removed == Removed::elimed);
     #endif
 
     //Elimed clauses set its value already
@@ -113,7 +113,7 @@ void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t el
 
     #ifdef SLOW_DEBUG
     const uint32_t elimed_on_inter = solver->map_outer_to_inter(elimed_on);
-    assert(solver->varData[elimed_on_inter].removed == Removed::elimed);
+    assert(solver->var_data[elimed_on_inter].removed == Removed::elimed);
     assert(contains_var(lits, elimed_on));
     #endif
 
@@ -127,7 +127,7 @@ void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t el
         for(Lit l: lits) {
             uint32_t v_inter = solver->map_outer_to_inter(l.var());
             cout << "Value of " << l << " : " << solver-> model_value(l)
-            << " removed: " << removed_type_to_string(solver->varData[v_inter].removed)
+            << " removed: " << removed_type_to_string(solver->var_data[v_inter].removed)
             << endl;
         }
     }

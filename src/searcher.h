@@ -107,17 +107,17 @@ class Searcher : public HyperEngine
         ///Returns l_Undef if not inside, l_True/l_False otherwise
         lbool var_inside_assumptions(const uint32_t var) const {
             SLOW_DEBUG_DO(assert(var < nVars()));
-            return varData[var].assumption;
+            return var_data[var].assumption;
         }
         lbool lit_inside_assumptions(const Lit lit) const
         {
             #ifdef SLOW_DEBUG
             assert(lit.var() < nVars());
             #endif
-            if (varData[lit.var()].assumption == l_Undef) {
+            if (var_data[lit.var()].assumption == l_Undef) {
                 return l_Undef;
             } else {
-                lbool val = varData[lit.var()].assumption;
+                lbool val = var_data[lit.var()].assumption;
                 return val ^ lit.sign();
             }
         }
@@ -532,7 +532,7 @@ class Searcher : public HyperEngine
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
 {
-    return ((uint32_t)1) << (varData[x].level & 31);
+    return ((uint32_t)1) << (var_data[x].level & 31);
 }
 
 inline const SearchStats& Searcher::get_stats() const
@@ -557,7 +557,7 @@ inline void Searcher::insert_var_order(const uint32_t x)
 
 inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 {
-    SLOW_DEBUG_DO(assert(varData[var].removed == Removed::none
+    SLOW_DEBUG_DO(assert(var_data[var].removed == Removed::none
         && "All variables should be decision vars unless removed"));
 
     switch(type) {
@@ -586,7 +586,7 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 inline void Searcher::insert_var_order_all(const uint32_t x)
 {
     assert(!order_heap_vsids.inHeap(x));
-    SLOW_DEBUG_DO(assert(varData[x].removed == Removed::none &&
+    SLOW_DEBUG_DO(assert(var_data[x].removed == Removed::none &&
         "All variables should be decision vars unless removed"));
     order_heap_vsids.insert(x);
 
@@ -645,8 +645,8 @@ inline void Searcher::decayClauseAct()
 //CaDiCaL's 'decide_phase'
 inline bool Searcher::decide_phase(const uint32_t var, const bool target) const
 {
-    if (target && varData[var].target_polarity_set) return varData[var].target_polarity;
-    return varData[var].saved_polarity;
+    if (target && var_data[var].target_polarity_set) return var_data[var].target_polarity;
+    return var_data[var].saved_polarity;
 }
 
 inline bool Searcher::pick_polarity(const uint32_t var)
@@ -663,7 +663,7 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 
         case PolarityMode::polarmode_weighted: {
             float rnd = std::uniform_real_distribution<float>(0,1)(mtrand);
-            return rnd < varData[var].weight;
+            return rnd < var_data[var].weight;
         }
 
         case PolarityMode::polarmode_automatic:

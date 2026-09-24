@@ -62,7 +62,7 @@ void CNF::new_var(
         outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-1);
-        varData[nVars()-1].is_bva = bva;
+        var_data[nVars()-1].is_bva = bva;
         if (bva) num_bva_vars++;
     } else {
         //Old var, re-inserted
@@ -114,7 +114,7 @@ void CNF::new_vars(const size_t n)
         outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-i-1, i);
-        varData[nVars()-i-1].is_bva = false;
+        var_data[nVars()-i-1].is_bva = false;
     }
 
     #ifdef SLOW_DEBUG
@@ -125,7 +125,7 @@ void CNF::new_vars(const size_t n)
 void CNF::swapVars(const uint32_t which, const int off_by)
 {
     std::swap(assigns[nVars()-off_by-1], assigns[which]);
-    std::swap(varData[nVars()-off_by-1], varData[which]);
+    std::swap(var_data[nVars()-off_by-1], var_data[which]);
 }
 
 void CNF::enlarge_nonminimial_datastructs(size_t n)
@@ -134,9 +134,9 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
     unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
     unit_cl_XIDs.insert(unit_cl_XIDs.end(), n, 0);
     for(uint32_t i = 0; i < n; i++) {
-        varData.push_back(VarData(varData.size()));
+        var_data.push_back(VarData(var_data.size()));
         //CaDiCaL's initial phase: positive by default
-        varData.back().saved_polarity = conf.phase;
+        var_data.back().saved_polarity = conf.phase;
     }
     depth.insert(depth.end(), n, 0);
 }
@@ -152,7 +152,7 @@ void CNF::enlarge_minimal_datastructs(size_t n)
 
 void CNF::save_on_var_memory()
 {
-    //never resize varData --> contains info about what is replaced/etc.
+    //never resize var_data --> contains info about what is replaced/etc.
     //never resize assigns --> contains 0-level assigns
     //never resize inter_to_outerMain, outer_to_interMain
 
@@ -223,7 +223,7 @@ void CNF::update_vars(
     , const vector<uint32_t>& inter_to_outer
     , const vector<uint32_t>& inter_to_outer2
 ) {
-    updateArray(varData, inter_to_outer);
+    updateArray(var_data, inter_to_outer);
     updateArray(assigns, inter_to_outer);
     updateArray(unit_cl_IDs, inter_to_outer);
     updateArray(unit_cl_XIDs, inter_to_outer);
@@ -555,12 +555,12 @@ void CNF::check_watchlist(watch_subarray_const ws) const {
         const Clause& c = *cl_alloc.ptr(offs);
         Lit blockedLit = w.getBlockedLit();
         /*cout << "Clause " << c << " blocked lit:  "<< blockedLit << " val: " << value(blockedLit)
-        << " blocked removed:" << !(varData[blockedLit.var()].removed == Removed::none)
+        << " blocked removed:" << !(var_data[blockedLit.var()].removed == Removed::none)
         << " cl satisfied: " << satisfied(&c)
         << endl;*/
         assert(blockedLit.var() < nVars());
 
-        if (varData[blockedLit.var()].removed == Removed::none
+        if (var_data[blockedLit.var()].removed == Removed::none
             //0-level FALSE --> clause cleaner removed it from clause, that's OK
             && value(blockedLit) != l_False
             && !satisfied(c)

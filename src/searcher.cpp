@@ -149,13 +149,9 @@ inline void Searcher::add_lit_to_learnt(
     , const uint32_t nDecisionLevel
 ) {
     const uint32_t var = lit.var();
-//     cout << "Lit to learnt lit: " << lit << " dec level: " << nDecisionLevel << endl;
-//     cout << "varData[var].removed: "
-//     << removed_type_to_string(varData[var].removed) << endl;
-    assert(varData[var].removed == Removed::none);
+    assert(var_data[var].removed == Removed::none);
 
-
-    if (varData[var].level == 0) {
+    if (var_data[var].level == 0) {
         if (frat->enabled()) {
             assert(unit_cl_IDs[var] != 0);
             lrat.units.push_back(unit_cl_IDs[var]);
@@ -183,7 +179,7 @@ inline void Searcher::add_lit_to_learnt(
         }
     }
 
-    if (varData[var].level >= nDecisionLevel) {
+    if (var_data[var].level >= nDecisionLevel) {
         pathC++;
         otfs_cur_lev_seen.push_back(var);
     } else {
@@ -201,7 +197,7 @@ inline void Searcher::recursiveConfClauseMin()
 
     size_t i, j;
     for (i = j = 1; i < learnt_clause.size(); i++) {
-        if (varData[learnt_clause[i].var()].reason.isnullptr()
+        if (var_data[learnt_clause[i].var()].reason.isnullptr()
             || !litRedundant(learnt_clause[i], abstract_level)
         ) {
             learnt_clause[j++] = learnt_clause[i];
@@ -215,7 +211,7 @@ void Searcher::normalClMinim()
 {
     size_t i,j;
     for (i = j = 1; i < learnt_clause.size(); i++) {
-        const PropBy& reason = varData[learnt_clause[i].var()].reason;
+        const PropBy& reason = var_data[learnt_clause[i].var()].reason;
         size_t size;
         Lit *lits = nullptr;
         int32_t id = 0;
@@ -263,7 +259,7 @@ void Searcher::normalClMinim()
         bool remove = true;
         for (size_t k = 0; k < size; k++) {
             const Lit p = (type == binary_t) ? reason.lit2() : lits[k+1];
-            if (!seen[p.var()] && varData[p.var()].level > 0) {
+            if (!seen[p.var()] && var_data[p.var()].level > 0) {
                 remove = false;
                 break;
             }
@@ -273,10 +269,10 @@ void Searcher::normalClMinim()
             continue;
         }
         if (frat->enabled()) {
-            lrat.reasons.push_back({varData[learnt_clause[i].var()].sublevel, id});
+            lrat.reasons.push_back({var_data[learnt_clause[i].var()].sublevel, id});
             for (size_t k = 0; k < size; k++) {
                 const Lit p = (type == binary_t) ? reason.lit2() : lits[k+1];
-                if (varData[p.var()].level == 0) {
+                if (var_data[p.var()].level == 0) {
                     assert(unit_cl_IDs[p.var()] != 0);
                     lrat.units.push_back(unit_cl_IDs[p.var()]);
                 }
@@ -448,7 +444,7 @@ void Searcher::add_lits_to_learnt(
     }
     if (frat->enabled()) {
         if (p == lit_Undef) lrat.confl_id = id;
-        else lrat.reasons.push_back({varData[p.var()].sublevel, id});
+        else lrat.reasons.push_back({var_data[p.var()].sublevel, id});
     }
     size_t i = 0;
     bool cont = true;
@@ -545,7 +541,7 @@ bool Searcher::try_shrink_block(
         open--;
         if (open == 0) break;
 
-        const PropBy reason = varData[uip.var()].reason;
+        const PropBy reason = var_data[uip.var()].reason;
         const PropByType type = reason.getType();
         if (type == null_clause_t) { ok = false; break; }
 
@@ -588,7 +584,7 @@ bool Searcher::try_shrink_block(
         for (size_t k2 = 0; k2 < size; k2++) {
             const Lit q = (type == binary_t) ? reason.lit2() : lits[k2+1];
             const uint32_t qv = q.var();
-            const uint32_t qlev = varData[qv].level;
+            const uint32_t qlev = var_data[qv].level;
             if (qlev == 0) {
                 if (frat->enabled()) {
                     assert(unit_cl_IDs[qv] != 0);
@@ -607,7 +603,7 @@ bool Searcher::try_shrink_block(
 
             //lower level: in clause/proven redundant, or provably redundant
             if (seen[qv]) continue;
-            if (varData[qv].reason.isnullptr()
+            if (var_data[qv].reason.isnullptr()
                 || !litRedundant(q, abstract_levels)
             ) {
                 ok = false;
@@ -666,8 +662,8 @@ void Searcher::shrink_learnt_clause()
     //[0] is the 1UIP, sort the rest by (level, trail pos) descending
     std::sort(learnt_clause.begin()+1, learnt_clause.end(),
         [this](const Lit a, const Lit b) {
-            const auto& va = varData[a.var()];
-            const auto& vb = varData[b.var()];
+            const auto& va = var_data[a.var()];
+            const auto& vb = var_data[b.var()];
             if (va.level != vb.level) return va.level > vb.level;
             return va.sublevel > vb.sublevel;
         });
@@ -681,11 +677,11 @@ void Searcher::shrink_learnt_clause()
     uint32_t j = 1;
     uint32_t i = 1;
     while (i < learnt_clause.size()) {
-        const uint32_t blevel = varData[learnt_clause[i].var()].level;
-        const uint32_t max_trail = varData[learnt_clause[i].var()].sublevel;
+        const uint32_t blevel = var_data[learnt_clause[i].var()].level;
+        const uint32_t max_trail = var_data[learnt_clause[i].var()].sublevel;
         uint32_t block_end = i+1;
         while (block_end < learnt_clause.size()
-            && varData[learnt_clause[block_end].var()].level == blevel
+            && var_data[learnt_clause[block_end].var()].level == blevel
         ) {
             block_end++;
         }
@@ -725,7 +721,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
                 max_i = i;
         }
         std::swap(learnt_clause[max_i], learnt_clause[1]);
-        return varData[learnt_clause[1].var()].level;
+        return var_data[learnt_clause[1].var()].level;
     }
 }
 
@@ -764,7 +760,7 @@ void Searcher::create_learnt_clause(PropBy confl)
         }
         default: release_assert(false);
     }
-    uint32_t nDecisionLevel = varData[lit0.var()].level;
+    uint32_t nDecisionLevel = var_data[lit0.var()].level;
 
     // 1st UIP clause generation
     learnt_clause.push_back(lit_Undef); //make space for ~p
@@ -817,8 +813,8 @@ void Searcher::create_learnt_clause(PropBy confl)
             assert(p != lit_Undef);
         } while(trail[index+1].lev < nDecisionLevel);
 
-        confl = varData[p.var()].reason;
-        assert(varData[p.var()].level > 0);
+        confl = var_data[p.var()].reason;
+        assert(var_data[p.var()].level > 0);
 
         //This clears out vars that haven't been added to learnt_clause,
         //but their 'seen' has been set
@@ -845,7 +841,7 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
     otfs_tmp_lits.clear();
     for (const Lit l: cl) {
         if (l == p) continue;
-        if (varData[l.var()].level == 0) {
+        if (var_data[l.var()].level == 0) {
             assert(value(l) == l_False);
             continue;
         }
@@ -857,8 +853,8 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
     for (uint32_t w = 0; w < 2; w++) {
         uint32_t best = w;
         for (uint32_t i2 = w+1; i2 < otfs_tmp_lits.size(); i2++) {
-            const auto& va = varData[otfs_tmp_lits[i2].var()];
-            const auto& vb = varData[otfs_tmp_lits[best].var()];
+            const auto& va = var_data[otfs_tmp_lits[i2].var()];
+            const auto& vb = var_data[otfs_tmp_lits[best].var()];
             if (va.level > vb.level
                 || (va.level == vb.level && va.sublevel > vb.sublevel)
             ) {
@@ -977,11 +973,11 @@ void Searcher::simple_create_learnt_clause(
             until = out_learnt.size();
         }
         p = trail[index + 1].lit;
-        confl = varData[p.var()].reason;
+        confl = var_data[p.var()].reason;
 
         //under normal circumstances this does not happen, but here, it can
         //reason is undefined for level 0
-        if (varData[p.var()].level == 0) {
+        if (var_data[p.var()].level == 0) {
             confl = PropBy();
         }
         seen[p.var()] = 0;
@@ -1008,8 +1004,8 @@ struct vmtf_bump_sort {
 //Bump vars in the reasons of the learnt clause, as in CaDiCaL
 void Searcher::bump_reason_side_lit(const Lit lit, const uint32_t depth)
 {
-    if (varData[lit.var()].level == 0) return;
-    const PropBy& reason = varData[lit.var()].reason;
+    if (var_data[lit.var()].level == 0) return;
+    const PropBy& reason = var_data[lit.var()].reason;
     const PropByType type = reason.getType();
 
     Lit* lits = nullptr;
@@ -1034,7 +1030,7 @@ void Searcher::bump_reason_side_lit(const Lit lit, const uint32_t depth)
     for (size_t i = 0; i < size; i++) {
         const Lit q = (type == binary_t) ? reason.lit2() : lits[i+1];
         const uint32_t var = q.var();
-        if (seen[var] || varData[var].level == 0) continue;
+        if (seen[var] || var_data[var].level == 0) continue;
         seen[var] = 1;
         toClear.push_back(q);
 
@@ -1180,7 +1176,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         #endif
 
         Lit p_analyze = analyze_stack.top();
-        const PropBy reason = varData[analyze_stack.top().var()].reason;
+        const PropBy reason = var_data[analyze_stack.top().var()].reason;
         PropByType type = reason.getType();
         analyze_stack.pop();
 
@@ -1224,7 +1220,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             default: release_assert(false);
         }
         if (frat->enabled()) {
-            lrat.reasons.push_back({varData[p_analyze.var()].sublevel, ID});
+            lrat.reasons.push_back({var_data[p_analyze.var()].sublevel, ID});
         }
 
         for (size_t i = 0
@@ -1249,7 +1245,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
             stats.recMinimCost++;
 
-            if (varData[p2.var()].level == 0) {
+            if (var_data[p2.var()].level == 0) {
                 if (frat->enabled()) {
                     assert(unit_cl_IDs[p2.var()] != 0);
                     lrat.units.push_back(unit_cl_IDs[p2.var()]);
@@ -1258,7 +1254,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
 
             if (!seen[p2.var()]) {
-                if (!varData[p2.var()].reason.isnullptr()
+                if (!var_data[p2.var()].reason.isnullptr()
                     && (abstractLevel(p2.var()) & abstract_levels) != 0
                 ) {
                     seen[p2.var()] = 1;
@@ -1323,7 +1319,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
 
     //It's been set at level 0. The seen[] may not be large enough to do
     //seen[p.var()] -- we might have mem-saved that
-    if (varData[p.var()].level == 0) {
+    if (var_data[p.var()].level == 0) {
         return;
     }
 
@@ -1333,9 +1329,9 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
     for (int64_t i = (int64_t)trail.size() - 1; i >= (int64_t)trail_lim[0]; i--) {
         const uint32_t x = trail[i].lit.var();
         if (seen[x]) {
-            const PropBy reason = varData[x].reason;
+            const PropBy reason = var_data[x].reason;
             if (reason.isnullptr()) {
-                assert(varData[x].level > 0);
+                assert(var_data[x].level > 0);
                 out_conflict.push_back(~trail[i].lit);
             } else {
                 int32_t ID;
@@ -1345,7 +1341,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         ID = cl.stats.id;
                         assert(value(cl[0]) == l_True);
                         for(const Lit lit: cl) {
-                            if (varData[lit.var()].level > 0) {
+                            if (var_data[lit.var()].level > 0) {
                                 seen[lit.var()] = 1;
                             }
                         }
@@ -1355,14 +1351,14 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                     case bnn_t : {
                         vector<Lit>* cl = get_bnn_reason(bnns[reason.getBNNidx()], lit_Undef);
                         for(const Lit lit: *cl) {
-                            if (varData[lit.var()].level > 0)seen[lit.var()] = 1;
+                            if (var_data[lit.var()].level > 0)seen[lit.var()] = 1;
                         }
                         break;
                     }
 
                     case binary_t: {
                         const Lit lit = reason.lit2();
-                        if (varData[lit.var()].level > 0) seen[lit.var()] = 1;
+                        if (var_data[lit.var()].level > 0) seen[lit.var()] = 1;
                         ID = reason.get_id();
                         break;
                     }
@@ -1371,7 +1367,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         auto cl = get_xor_reason(reason, ID);
                         assert(value((*cl)[0]) == l_True);
                         for(const Lit lit: *cl) {
-                            if (varData[lit.var()].level > 0) seen[lit.var()] = 1;
+                            if (var_data[lit.var()].level > 0) seen[lit.var()] = 1;
                         }
                         break;
                     }
@@ -1420,7 +1416,7 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
         //in case of symmetry breaking, we can be in trouble
         //then, the orig_outside is actually lit_Undef
         //in these cases, the symmetry breaking literal needs to be taken out
-        if (!varData[inter_assumptions[at_assump].second.var()].is_bva) {
+        if (!var_data[inter_assumptions[at_assump].second.var()].is_bva) {
             //Update to correct outside lit
             out_conflict[j++] = ~inter_assumptions[at_assump].first;
         }
@@ -1530,7 +1526,7 @@ uint32_t Searcher::reuse_trail_level()
     while (res < decisionLevel()) {
         const uint32_t v = trail[trail_lim[res]].lit.var();
         //with chrono BT this slot may not be a real decision
-        if (varData[v].level != res+1 || !varData[v].reason.isnullptr()) break;
+        if (var_data[v].level != res+1 || !var_data[v].reason.isnullptr()) break;
         const bool keep = use_vsids
             ? var_act_vsids[v] >= var_act_vsids[next]
             : vmtf_btab[v] >= vmtf_btab[next];
@@ -1675,7 +1671,7 @@ lbool Searcher::new_decision() {
         Lit p = solver->assumptions[solver->decisionLevel()];
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = solver->map_outer_to_inter(p);
-        SLOW_DEBUG_DO(assert(varData[p.var()].removed == Removed::none));
+        SLOW_DEBUG_DO(assert(var_data[p.var()].removed == Removed::none));
 
         if (value(p) == l_True) {
             // Dummy decision level:
@@ -2052,8 +2048,8 @@ bool Searcher::handle_conflict(PropBy confl)
     if (otfs_driving) {
         //OTFS strengthened an existing clause into the asserting clause
         Clause* cl = cl_alloc.ptr(otfs_driving_cl);
-        assert(varData[(*cl)[0].var()].level > varData[(*cl)[1].var()].level);
-        const uint32_t new_btlevel = varData[(*cl)[1].var()].level;
+        assert(var_data[(*cl)[0].var()].level > var_data[(*cl)[1].var()].level);
+        const uint32_t new_btlevel = var_data[(*cl)[1].var()].level;
         cancelUntil(new_btlevel);
         assert(value((*cl)[0]) == l_Undef);
         enqueue<false>((*cl)[0], new_btlevel, PropBy(otfs_driving_cl));
@@ -2084,7 +2080,7 @@ bool Searcher::handle_conflict(PropBy confl)
         }
         for(Lit l: decision_clause) {
             seen[l.toInt()] = 0;
-            assert(varData[l.var()].reason == PropBy());
+            assert(var_data[l.var()].reason == PropBy());
         }
     }
 
@@ -2374,8 +2370,8 @@ void Searcher::rebuildOrderHeap() {
     vector<uint32_t> vs;
     vs.reserve(nVars());
     for (uint32_t v = 0; v < nVars(); v++) {
-        if (varData[v].removed != Removed::none
-                || (value(v) != l_Undef && varData[v].level == 0)) continue;
+        if (var_data[v].removed != Removed::none
+                || (value(v) != l_Undef && var_data[v].level == 0)) continue;
         else vs.push_back(v);
     }
 
@@ -2485,11 +2481,11 @@ bool Searcher::rephasing() const
 void Searcher::rephase_as(const char type)
 {
     switch (type) {
-        case 'O': for(auto& v: varData) v.saved_polarity = conf.phase; break;
-        case 'I': for(auto& v: varData) v.saved_polarity = !conf.phase; break;
-        case 'F': for(auto& v: varData) v.saved_polarity = !v.saved_polarity; break;
-        case '#': for(auto& v: varData) v.saved_polarity = rnd_uint(mtrand, 1); break;
-        case 'B': for(auto& v: varData)
+        case 'O': for(auto& v: var_data) v.saved_polarity = conf.phase; break;
+        case 'I': for(auto& v: var_data) v.saved_polarity = !conf.phase; break;
+        case 'F': for(auto& v: var_data) v.saved_polarity = !v.saved_polarity; break;
+        case '#': for(auto& v: var_data) v.saved_polarity = rnd_uint(mtrand, 1); break;
+        case 'B': for(auto& v: var_data)
                       if (v.best_polarity_set) v.saved_polarity = v.best_polarity;
                   break;
         case 'W': { SLS sls(solver); sls.run_during_search(); break; }
@@ -2502,7 +2498,7 @@ void Searcher::rephase()
     assert(decisionLevel() == 0);
     num_rephased++;
 
-    for(auto& v: varData) v.target_polarity_set = false;
+    for(auto& v: var_data) v.target_polarity_set = false;
     target_assigned = 0;
 
     // The schedules of CaDiCaL's 'rephase': a one-off prefix, then a cycle.
@@ -2964,10 +2960,10 @@ void Searcher::check_need_restart() {
 void Searcher::print_solution_varreplace_status() const
 {
     for(size_t var = 0; var < nVarsOuter(); var++) {
-        if (varData[var].removed == Removed::replaced
-            || varData[var].removed == Removed::elimed
+        if (var_data[var].removed == Removed::replaced
+            || var_data[var].removed == Removed::elimed
         ) {
-            assert(value(var) == l_Undef || varData[var].level == 0);
+            assert(value(var) == l_Undef || var_data[var].level == 0);
         }
 
     }
@@ -3056,11 +3052,11 @@ inline Lit Searcher::pickBranchLit() {
             }
         }
         if (v == var_Undef) break;
-        if (varData[v].removed == Removed::replaced) {
+        if (var_data[v].removed == Removed::replaced) {
             vmtf_dequeue(v);
             continue;
         }
-        assert(varData[v].removed == Removed::none);
+        assert(var_data[v].removed == Removed::none);
         break;
     }
 
@@ -3071,7 +3067,7 @@ inline Lit Searcher::pickBranchLit() {
         next = lit_Undef;
     }
 
-    SLOW_DEBUG_DO(assert(next == lit_Undef || solver->varData[next.var()].removed == Removed::none));
+    SLOW_DEBUG_DO(assert(next == lit_Undef || solver->var_data[next.var()].removed == Removed::none));
 
     return next;
 }
@@ -3250,7 +3246,7 @@ PropBy Searcher::propagate() {
         if (!ret.isnullptr()) {
             int32_t id;
             for(size_t i = last_trail; i < trail.size(); i++) {
-                const auto propby = varData[trail[i].lit.var()].reason;
+                const auto propby = var_data[trail[i].lit.var()].reason;
                 if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, id);
             }
             // We need this check, because apparently GJ can set unsat during prop
@@ -3291,12 +3287,12 @@ size_t Searcher::mem_used() const
 
 void Searcher::fill_assumptions_set()
 {
-    SLOW_DEBUG_DO(for(auto x: varData) assert(x.assumption == l_Undef));
+    SLOW_DEBUG_DO(for(auto x: var_data) assert(x.assumption == l_Undef));
     for(Lit p: assumptions) {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = solver->map_outer_to_inter(p);
         // NOTE: this MAY set the same variable TWICE to different values!
-        varData[p.var()].assumption = p.sign() ? l_False : l_True;
+        var_data[p.var()].assumption = p.sign() ? l_False : l_True;
     }
 }
 
@@ -3304,9 +3300,9 @@ void Searcher::unfill_assumptions_set() {
     for(Lit p: assumptions) {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = solver->map_outer_to_inter(p);
-        varData[p.var()].assumption = l_Undef;
+        var_data[p.var()].assumption = l_Undef;
     }
-    SLOW_DEBUG_DO( for(auto x: varData) assert(x.assumption == l_Undef));
+    SLOW_DEBUG_DO( for(auto x: var_data) assert(x.assumption == l_Undef));
 }
 
 void Searcher::vsids_decay_var_act()
@@ -3350,7 +3346,7 @@ inline void Searcher::update_target_and_best()
     }
 
     if (no_conflict_until > target_assigned) {
-        for(auto& v: varData) {
+        for(auto& v: var_data) {
             v.target_polarity = v.saved_polarity;
             v.target_polarity_set = true;
         }
@@ -3358,7 +3354,7 @@ inline void Searcher::update_target_and_best()
     }
 
     if (no_conflict_until > best_assigned) {
-        for(auto& v: varData) {
+        for(auto& v: var_data) {
             v.best_polarity = v.saved_polarity;
             v.best_polarity_set = true;
         }
@@ -3401,19 +3397,19 @@ void Searcher::cancelUntil(uint32_t blevel)
             assert(value(var) != l_Undef);
 
             //Clear out BNN reason on backtrack
-            if (varData[var].reason.isBNN() &&
-                varData[var].reason.bnn_reason_set())
+            if (var_data[var].reason.isBNN() &&
+                var_data[var].reason.bnn_reason_set())
             {
-                uint32_t reason_idx = varData[var].reason.get_bnn_reason();
+                uint32_t reason_idx = var_data[var].reason.get_bnn_reason();
                 bnn_reasons_empty_slots.push_back(reason_idx);
-                varData[var].reason = PropBy();
+                var_data[var].reason = PropBy();
             }
             if (!bnns.empty()) reverse_prop(trail[i].lit);
 
 
 
             if (trail[i].lev <= blevel) {
-                varData[var].sublevel = j;
+                var_data[var].sublevel = j;
                 trail[j++] = trail[i];
             } else {
                 assigns[var] = l_Undef;
@@ -3500,17 +3496,17 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
     ConflictData data;
 
     if (pb.getType() == PropByType::binary_t) {
-        data.nHighestLevel = varData[failBinLit.var()].level;
+        data.nHighestLevel = var_data[failBinLit.var()].level;
 
         if (data.nHighestLevel == decisionLevel()
-            && varData[pb.lit2().var()].level == decisionLevel()
+            && var_data[pb.lit2().var()].level == decisionLevel()
         ) {
             return data;
         }
 
         uint32_t highestId = 0;
         // find the largest decision level in the clause
-        uint32_t nLevel = varData[pb.lit2().var()].level;
+        uint32_t nLevel = var_data[pb.lit2().var()].level;
         if (nLevel > data.nHighestLevel) {
             highestId = 1;
             data.nHighestLevel = nLevel;
@@ -3554,9 +3550,9 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
                 release_assert(false);
         }
 
-        data.nHighestLevel = varData[lits[0].var()].level;
+        data.nHighestLevel = var_data[lits[0].var()].level;
         if (data.nHighestLevel == decisionLevel()
-            && varData[lits[1].var()].level == decisionLevel()
+            && var_data[lits[1].var()].level == decisionLevel()
         ) {
             return data;
         }
@@ -3564,7 +3560,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
         uint32_t highestId = 0;
         // find the largest decision level in the lits
         for (uint32_t nLitId = 1; nLitId < size; ++nLitId) {
-            uint32_t nLevel = varData[lits[nLitId].var()].level;
+            uint32_t nLevel = var_data[lits[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
@@ -3589,10 +3585,10 @@ bool Searcher::check_order_heap_sanity() {
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 
-            assert(varData[int_var].removed == Removed::none);
+            assert(var_data[int_var].removed == Removed::none);
 
             if (int_var < nVars() &&
-                varData[int_var].removed == Removed::none &&
+                var_data[int_var].removed == Removed::none &&
                 value(int_var) == l_Undef
             ) {
                 check_var_in_branch_strategy(int_var, branch::vsids);
@@ -3604,14 +3600,14 @@ bool Searcher::check_order_heap_sanity() {
 
     vector<uint32_t> tmp;
     for(size_t i = 0; i < nVars(); i++) {
-        if (varData[i].removed == Removed::none && value(i) == l_Undef) {
+        if (var_data[i].removed == Removed::none && value(i) == l_Undef) {
             tmp.push_back(i);
             check_var_in_branch_strategy(i, branch::vsids);
             check_var_in_branch_strategy(i, branch::rand);
         }
     }
     check_all_in_vmtf_branch_strategy(tmp);
-    order_heap_vsids.run_check([=] (uint32_t v) { assert(varData[v].removed == Removed::none); });
+    order_heap_vsids.run_check([=] (uint32_t v) { assert(var_data[v].removed == Removed::none); });
 
     assert(order_heap_vsids.heap_property());
     assert(order_heap_rand.heap_property());
@@ -3629,7 +3625,7 @@ bool Searcher::attach_xorclauses() {
 
     uint32_t j = 0;
     for(auto &x : xorclauses) {
-        SLOW_DEBUG_DO(for(const auto& v: x) assert(varData[v].removed == Removed::none));
+        SLOW_DEBUG_DO(for(const auto& v: x) assert(var_data[v].removed == Removed::none));
         if (x.trivial()) {
             assert(x.reason_cl_ID == 0);
             continue;
@@ -3714,16 +3710,16 @@ void Searcher::check_assumptions_sanity() {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = solver->map_outer_to_inter(p);
         ass_set.insert(p.var());
-        assert(p.var() < varData.size());
-        assert(varData[p.var()].removed == Removed::none);
-        if (varData[p.var()].assumption == l_Undef)
-            cout << "ERROR: Assump " << p << " has .assumption : " << varData[p.var()].assumption << endl;
-        assert(varData[p.var()].assumption != l_Undef);
+        assert(p.var() < var_data.size());
+        assert(var_data[p.var()].removed == Removed::none);
+        if (var_data[p.var()].assumption == l_Undef)
+            cout << "ERROR: Assump " << p << " has .assumption : " << var_data[p.var()].assumption << endl;
+        assert(var_data[p.var()].assumption != l_Undef);
     }
     // check that no other var has .assumption set
     for(uint32_t v = 0; v < nVars(); v++) {
-        if (!ass_set.count(v)) assert(varData[v].assumption == l_Undef);
-        else assert(varData[v].assumption != l_Undef);
+        if (!ass_set.count(v)) assert(var_data[v].assumption == l_Undef);
+        else assert(var_data[v].assumption != l_Undef);
     }
 }
 
@@ -3787,7 +3783,7 @@ lbool Searcher::new_decision_fast_backw()
         Lit p = fast_backw._assumptions->at(decisionLevel());
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = map_outer_to_inter(p);
-        assert(varData[p.var()].removed == Removed::none);
+        assert(var_data[p.var()].removed == Removed::none);
 
         if (value(p) == l_True) {
             // Dummy decision level:

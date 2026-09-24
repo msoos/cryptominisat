@@ -67,7 +67,7 @@ DistillerLong::DistillerLong(Solver* _solver) :
 void DistillerLong::analyze_visit(const Lit l, bool& only_bin)
 {
     (void)only_bin;
-    const auto& vd = solver->varData[l.var()];
+    const auto& vd = solver->var_data[l.var()];
     if (vd.level == 0) return;
     auto& s = solver->seen[l.var()*2];
     if (s) return;
@@ -118,7 +118,7 @@ bool DistillerLong::post_process_analysis(const Clause& cl, const Lit subsume_li
     for (const Lit l: cl) {
         if (l == subsume_lit) continue;
         if (solver->value(l) != l_False) { all_dec = false; break; }
-        const auto& vd = solver->varData[l.var()];
+        const auto& vd = solver->var_data[l.var()];
         if (vd.level == 0) continue;
         if (!vd.reason.isnullptr()) { all_dec = false; break; }
         if (!solver->seen[l.var()*2]) { all_dec = false; break; }
@@ -129,7 +129,7 @@ bool DistillerLong::post_process_analysis(const Clause& cl, const Lit subsume_li
     for (const Lit l: cl) {
         if (l == subsume_lit) { kept_lits.push_back(l); continue; }
         if (solver->value(l) != l_False) continue;          //true/unassigned: flush
-        const auto& vd = solver->varData[l.var()];
+        const auto& vd = solver->var_data[l.var()];
         if (vd.level == 0) continue;                        //fixed false: drop
         if (!vd.reason.isnullptr()) continue;               //implied false: flush
         if (solver->seen[l.var()*2]) kept_lits.push_back(l); //used decision: keep
@@ -147,19 +147,19 @@ void DistillerLong::analysis_hints(const Lit subsume_lit, const PropBy confl)
     props_tmp.clear();
     for (const uint32_t v: analyzed_vars) {
         if (subsume_lit != lit_Undef && v == subsume_lit.var()) continue;
-        if (!solver->varData[v].reason.isnullptr()) props_tmp.push_back(v);
+        if (!solver->var_data[v].reason.isnullptr()) props_tmp.push_back(v);
     }
     std::sort(props_tmp.begin(), props_tmp.end(),
         [this](const uint32_t a, const uint32_t b) {
-            return solver->varData[a].sublevel < solver->varData[b].sublevel;
+            return solver->var_data[a].sublevel < solver->var_data[b].sublevel;
         });
     vector<int32_t> rsns;
     for (const uint32_t v: props_tmp)
-        rsns.push_back(solver->get_reason_id(solver->varData[v].reason, hint_units));
+        rsns.push_back(solver->get_reason_id(solver->var_data[v].reason, hint_units));
     int32_t final_id;
     if (subsume_lit != lit_Undef)
         final_id = solver->get_reason_id(
-            solver->varData[subsume_lit.var()].reason, hint_units);
+            solver->var_data[subsume_lit.var()].reason, hint_units);
     else
         final_id = solver->get_confl_id(confl, hint_units);
     hints = hint_units;
@@ -573,7 +573,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     sorted.clear();
     for (const Lit l: cl) {
         const lbool val = solver->value(l);
-        if (val != l_Undef && solver->varData[l.var()].level == 0) {
+        if (val != l_Undef && solver->var_data[l.var()].level == 0) {
             if (val == l_True) return remove_cl();
             if (solver->frat->enabled())
                 hint_units.push_back(solver->unit_cl_IDs[l.var()]);
@@ -590,8 +590,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     //If this clause forced one of its literals on the reused trail, it may
     //not be used to prove itself redundant: backtrack below that level
     if (solver->decisionLevel() > 0 && solver->clause_locked(cl, offset)) {
-        assert(solver->varData[cl[0].var()].level > 0);
-        solver->cancelUntil<false, true>(solver->varData[cl[0].var()].level - 1);
+        assert(solver->var_data[cl[0].var()].level > 0);
+        solver->cancelUntil<false, true>(solver->var_data[cl[0].var()].level - 1);
     }
 
     //Reuse the decisions of the previous candidate as long as they match
@@ -628,7 +628,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             }
             if (!confl.isnullptr()) break;
         } else if (val == l_False) {
-            if (solver->varData[lit.var()].reason.isnullptr()) {
+            if (solver->var_data[lit.var()].reason.isnullptr()) {
                 //one of our own (possibly reused) decisions
                 kept_lits.push_back(lit);
             } else if (only_remove) {
@@ -641,7 +641,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             assert(val == l_True);
             kept_lits.push_back(lit);
             True_confl = true;
-            confl = solver->varData[lit.var()].reason;
+            confl = solver->var_data[lit.var()].reason;
             break;
         }
     }
@@ -694,7 +694,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             solver->seen[subsume_lit.var()*2] = 1;
             analyzed_vars.push_back(subsume_lit.var());
             analyzed_ok = analyze_seen_reasons(
-                solver->varData[subsume_lit.var()].reason, only_bin);
+                solver->var_data[subsume_lit.var()].reason, only_bin);
         } else {
             if (confl.getType() == binary_t)
                 analyze_visit(solver->get_fail_bin_lit(), only_bin);
@@ -730,8 +730,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (!subsumed && !only_remove && solver->conf.distill_instantiate) {
         const Lit last = sorted.back();
         if (solver->value(last) == l_False
-            && solver->varData[last.var()].reason.isnullptr()
-            && solver->varData[last.var()].level == solver->decisionLevel()
+            && solver->var_data[last.var()].reason.isnullptr()
+            && solver->var_data[last.var()].level == solver->decisionLevel()
         ) {
             solver->cancelUntil<false, true>(solver->decisionLevel()-1);
             solver->new_decision_level();

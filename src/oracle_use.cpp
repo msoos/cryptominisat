@@ -173,8 +173,8 @@ lbool Solver::oracle_find_bins(sspp::oracle::Oracle& oracle, const vector<vector
     };
 
     for (const auto& vp: varp) {
-        if (varData[vp.v1].removed != Removed::none) continue;
-        if (varData[vp.v2].removed != Removed::none) continue;
+        if (var_data[vp.v1].removed != Removed::none) continue;
+        if (var_data[vp.v2].removed != Removed::none) continue;
         if (value(vp.v1) != l_Undef) continue;
         if (value(vp.v2) != l_Undef) continue;
         if (oracle.getStats().mems > tot_mems) return l_Undef;

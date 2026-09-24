@@ -49,7 +49,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     if (trail.size() - trail_lim.back() == 1) {
         //Set up root node
         Lit root = trail[qhead].lit;
-        varData[root.var()].reason = PropBy(~lit_Undef, false, false, false, 0);
+        var_data[root.var()].reason = PropBy(~lit_Undef, false, false, false, 0);
     }
 
     uint32_t nlBinQHead = qhead;
@@ -166,7 +166,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
     const auto src_cl_hints = [&]() {
         if (cl) {
             for(const Lit l: *cl) {
-                if (varData[l.var()].level == 0) {
+                if (var_data[l.var()].level == 0) {
                     assert(unit_cl_IDs[l.var()] != 0);
                     *frat << unit_cl_IDs[l.var()];
                 }
@@ -191,7 +191,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
                 tmp_anc_chain.clear();
                 Lit x = a;
                 while (x != deepestAncestor) {
-                    const PropBy& r = varData[x.var()].reason;
+                    const PropBy& r = var_data[x.var()].reason;
                     tmp_anc_chain.push_back(r.get_id());
                     x = r.getAncestor();
                 }
@@ -220,8 +220,8 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
     }
 
     enqueue_with_acestor_info(p, deepestAncestor, true, ID);
-    varData[p.var()].reason.setHyperbin(true);
-    varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
+    var_data[p.var()].reason.setHyperbin(true);
+    var_data[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
 
 /**
@@ -235,7 +235,7 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     , bool thisStepRed
 ) {
     propStats.otfHyperTime += 1;
-    const PropBy& data = varData[conflict.var()].reason;
+    const PropBy& data = var_data[conflict.var()].reason;
 
     bool onlyIrred = !data.isRedStep();
     Lit lookingForAncestor = data.getAncestor();
@@ -346,7 +346,7 @@ bool HyperEngine::is_ancestor_of(
             return true;
         }
 
-        const PropBy& data = varData[thisAncestor.var()].reason;
+        const PropBy& data = var_data[thisAncestor.var()].reason;
         if ((onlyIrred && data.isRedStep())
             || data.getHyperbinNotAdded()
         ) {
@@ -370,7 +370,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
     for (const Lit lit : cl) {
         if (lit != p) {
             assert(value(lit) == l_False);
-            if (varData[lit.var()].level != 0)
+            if (var_data[lit.var()].level != 0)
                 currAncestors.push_back(~lit);
         }
     }
@@ -390,10 +390,10 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
     switch(propBy.getType()) {
         case binary_t: {
             const Lit lit = ~propBy.lit2();
-            if (varData[lit.var()].level != 0)
+            if (var_data[lit.var()].level != 0)
                 currAncestors.push_back(lit);
 
-            if (varData[failBinLit.var()].level != 0)
+            if (var_data[failBinLit.var()].level != 0)
                 currAncestors.push_back(~failBinLit);
 
             break;
@@ -403,7 +403,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
             const uint32_t offset = propBy.get_offset();
             const Clause& cl = *cl_alloc.ptr(offset);
             for(size_t i = 0; i < cl.size(); i++) {
-                if (varData[cl[i].var()].level != 0)
+                if (var_data[cl[i].var()].level != 0)
                     currAncestors.push_back(~cl[i]);
             }
             break;
@@ -459,7 +459,7 @@ Lit HyperEngine::deepest_common_ancestor()
             }
 
             //Update ancestor to its own ancestor, i.e. step up this 'thread'
-            *it = varData[it->var()].reason.getAncestor();
+            *it = var_data[it->var()].reason.getAncestor();
         }
     }
     assert(foundLit != lit_Undef);
@@ -478,19 +478,19 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
 {
     //The binary clause we should remove
     const BinaryClause clauseToRemove(
-        ~varData[lit.var()].reason.getAncestor(),
+        ~var_data[lit.var()].reason.getAncestor(),
         lit,
-        varData[lit.var()].reason.isRedStep(),
+        var_data[lit.var()].reason.isRedStep(),
         ID);
 
     //We now remove the clause
     //If it's hyper-bin, then we remove the to-be-added hyper-binary clause
     //However, if the hyper-bin was never added because only 1 literal was unbound at level 0 (i.e. through
     //clause cleaning, the clause would have been 2-long), then we don't do anything.
-    if (!varData[lit.var()].reason.getHyperbin()) {
+    if (!var_data[lit.var()].reason.getHyperbin()) {
         propStats.otfHyperTime += 2;
         uselessBin.insert(clauseToRemove);
-    } else if (!varData[lit.var()].reason.getHyperbinNotAdded()) {
+    } else if (!var_data[lit.var()].reason.getHyperbinNotAdded()) {
         propStats.otfHyperTime += needToAddBinClause.size()/4;
         std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
 
@@ -527,7 +527,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
         confl = PropBy(~p, k->red(), k->get_id());
         return PROP_FAIL;
 
-    } else if (varData[lit.var()].level != 0 && perform_transitive_reduction) {
+    } else if (var_data[lit.var()].level != 0 && perform_transitive_reduction) {
         //Propaged already
         assert(val == l_True);
 
@@ -535,15 +535,15 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
         //Remove this one
         if (remove == p) {
-            const Lit origAnc = varData[lit.var()].reason.getAncestor();
-            const int32_t origID = varData[lit.var()].reason.get_id();
+            const Lit origAnc = var_data[lit.var()].reason.getAncestor();
+            const int32_t origID = var_data[lit.var()].reason.get_id();
             assert(origAnc != lit_Undef);
 
             remove_bin_clause(lit, origID);
 
             //Update data indicating what lead to lit
-            varData[lit.var()].reason = PropBy(~p, k->red(), false, false, k->get_id());
-            assert(varData[p.var()].level != 0);
+            var_data[lit.var()].reason = PropBy(~p, k->red(), false, false, k->get_id());
+            assert(var_data[p.var()].level != 0);
             depth[lit.var()] = depth[p.var()] + 1;
             //NOTE: we don't update the levels of other literals... :S
 
@@ -611,7 +611,7 @@ void HyperEngine::enqueue_with_acestor_info(
     //during intree probing
     enqueue<true>(p, decisionLevel(), PropBy(~ancestor, redStep, false, false, ID));
 
-    assert(varData[ancestor.var()].level != 0);
+    assert(var_data[ancestor.var()].level != 0);
 
     if (use_depth_trick) {
         depth[p.var()] = depth[ancestor.var()] + 1;

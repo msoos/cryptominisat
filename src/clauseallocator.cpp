@@ -281,7 +281,7 @@ void ClauseAllocator::consolidate(
 
     //Fix up propBy
     for (size_t i = 0; i < solver->nVars(); i++) {
-        VarData& vdata = solver->varData[i];
+        VarData& vdata = solver->var_data[i];
         if (vdata.reason.isClause()) {
             if (vdata.removed == Removed::none
                 && solver->decisionLevel() >= vdata.level

@@ -66,7 +66,7 @@ bool Lucky::assume(const Lit lit)
 bool Lucky::assume_rest(const bool polar)
 {
     for(uint32_t v = 0; v < solver->nVars(); v++) {
-        if (solver->varData[v].removed != Removed::none) continue;
+        if (solver->var_data[v].removed != Removed::none) continue;
         if (solver->value(v) != l_Undef) continue;
         if (!assume(Lit(v, !polar))) return false;
     }
@@ -166,7 +166,7 @@ int Lucky::backward_satisfiable(const bool polar)
     assert(solver->decisionLevel() == 0);
     for(int i = (int)solver->nVars()-1; i >= 0; i--) {
         const uint32_t v = i;
-        if (solver->varData[v].removed != Removed::none) continue;
+        if (solver->var_data[v].removed != Removed::none) continue;
         if (solver->value(v) != l_Undef) continue;
         if (!assume(Lit(v, !polar))) return aborted ? -1 : 0;
     }

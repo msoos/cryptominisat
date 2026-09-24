@@ -115,7 +115,7 @@ struct ColSorter {
         }
 
         return false;
-        //return solver->varData[a].level < solver->varData[b].level;
+        //return solver->var_data[a].level < solver->var_data[b].level;
         //return solver->var_act_vsids[a] > solver->var_act_vsids[b];
     }
 
@@ -725,7 +725,7 @@ uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
 
     for (uint32_t i = 1; i < cl->size(); i++) {
         Lit l = (*cl)[i];
-        uint32_t nLevel = solver->varData[l.var()].level;
+        uint32_t nLevel = solver->var_data[l.var()].level;
         if (nLevel > nMaxLevel) {
             nMaxLevel = nLevel;
             nMaxInd = i;
@@ -972,7 +972,7 @@ void EGaussian::prop_lit(
         for(auto const& a: *x) {
             assert(solver->value(a) != l_True);
             if (solver->value(a) == l_False) {
-                assert(solver->varData[a.var()].level == 0);
+                assert(solver->var_data[a.var()].level == 0);
                 assert(solver->unit_cl_IDs[a.var()] != 0);
             }
             if (solver->value(a) == l_Undef) num_unset ++;

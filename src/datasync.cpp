@@ -207,7 +207,7 @@ bool DataSync::shareUnitData()
         if (otherVal != l_Undef) {
             assert(thisVal == l_Undef);
             Lit litToEnqueue = thisLit ^ (otherVal == l_False);
-            if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
+            if (solver->var_data[litToEnqueue.var()].removed != Removed::none) {
                 continue;
             }
 
@@ -257,7 +257,7 @@ bool DataSync::syncBinFromOthers()
         Lit lit1 = Lit::toLit(wsLit);
         lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
-        if (solver->varData[lit1.var()].removed != Removed::none
+        if (solver->var_data[lit1.var()].removed != Removed::none
             || solver->value(lit1.var()) != l_Undef
         ) {
             continue;
@@ -284,7 +284,7 @@ bool DataSync::syncBinFromOthers(
     , watch_subarray ws
 ) {
     assert(solver->varReplacer->get_lit_replaced_with(lit) == lit);
-    assert(solver->varData[lit.var()].removed == Removed::none);
+    assert(solver->var_data[lit.var()].removed == Removed::none);
 
     assert(toClear.empty());
     for (const Watched& w: ws) {
@@ -300,7 +300,7 @@ bool DataSync::syncBinFromOthers(
         Lit otherLit = bins[i];
         otherLit = solver->varReplacer->get_lit_replaced_with_outer(otherLit);
         otherLit = solver->map_outer_to_inter(otherLit);
-        if (solver->varData[otherLit.var()].removed != Removed::none
+        if (solver->var_data[otherLit.var()].removed != Removed::none
             || solver->value(otherLit) != l_Undef
         ) {
             continue;
@@ -404,8 +404,8 @@ bool DataSync::shareBinData()
 void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
 {
     if (!enabled()) return;
-    if (solver->varData[lit1.var()].is_bva) return;
-    if (solver->varData[lit2.var()].is_bva) return;
+    if (solver->var_data[lit1.var()].is_bva) return;
+    if (solver->var_data[lit2.var()].is_bva) return;
 
     lit1 = solver->map_inter_to_outer(lit1);
     lit2 = solver->map_inter_to_outer(lit2);
@@ -622,7 +622,7 @@ bool DataSync::mpi_get_unit(
     assert(otherVal != l_Undef);
     assert(thisVal == l_Undef);
     Lit litToEnqueue = lit1 ^ (otherVal == l_False);
-    if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
+    if (solver->var_data[litToEnqueue.var()].removed != Removed::none) {
         return true;
     }
 

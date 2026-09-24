@@ -50,7 +50,7 @@ template<class T>
 CMS_yalsat::add_cl_ret CMS_yalsat::add_this_clause(const T& cl) {
     lits.clear();
     for(const Lit lit: cl) {
-        assert(solver->varData[lit.var()].removed == Removed::none);
+        assert(solver->var_data[lit.var()].removed == Removed::none);
         lbool val = solver->value(lit);
         if (val == l_Undef) val = solver->lit_inside_assumptions(lit);
 
@@ -82,7 +82,7 @@ CMS_yalsat::add_cl_ret CMS_yalsat::add_this_xor(const Xor& x) {
     bool rhs = x.rhs;
     for(const uint32_t v: x) {
         //XORs held by a matrix may mention variables the CNF no longer has
-        if (solver->varData[v].removed != Removed::none) return add_cl_ret::skipped_cl;
+        if (solver->var_data[v].removed != Removed::none) return add_cl_ret::skipped_cl;
         lbool val = solver->value(v);
         if (val == l_Undef) val = solver->lit_inside_assumptions(Lit(v, false));
 
@@ -200,7 +200,7 @@ int64_t CMS_yalsat::count_unsat(int64_t& cnf, int64_t& xr) const {
         bool rhs = x.rhs;
         bool any = false;
         for(const uint32_t v: x) {
-            if (solver->varData[v].removed != Removed::none) return true;
+            if (solver->var_data[v].removed != Removed::none) return true;
             lbool val = solver->value(v);
             if (val == l_Undef) val = solver->lit_inside_assumptions(Lit(v, false));
             if (val == l_True) rhs ^= true;

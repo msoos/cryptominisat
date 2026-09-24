@@ -95,9 +95,9 @@ public:
     vec<vec<GaussWatched>> gwatches;
     uint32_t num_sls_called = 0;
     int64_t sls_minimum = std::numeric_limits<int64_t>::max(); //fewest unsat cls local search reached
-    vector<VarData> varData;
-    void mark_elim_cand(const uint32_t var) { varData[var].elim_cand = 1; }
-    void mark_elim_cand(const Lit lit) { varData[lit.var()].elim_cand = 1; }
+    vector<VarData> var_data;
+    void mark_elim_cand(const uint32_t var) { var_data[var].elim_cand = 1; }
+    void mark_elim_cand(const Lit lit) { var_data[lit.var()].elim_cand = 1; }
     void mark_elim_cand(const Clause& cl) { for(const Lit l: cl) mark_elim_cand(l); }
     branch branch_strategy = branch::vsids;
     string branch_strategy_str = "VSIDS";
@@ -182,7 +182,7 @@ public:
                "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID");
         return ok;
     }
-    auto level(Lit l) const { return varData[l.var()].level; }
+    auto level(Lit l) const { return var_data[l.var()].level; }
     [[nodiscard]] lbool value (const uint32_t x) const { return assigns[x]; }
     [[nodiscard]] lbool value (const Lit p) const { return assigns[p.var()] ^ p.sign(); }
     [[nodiscard]] bool must_interrupt_asap() const { return must_interrupt_inter->load(std::memory_order_relaxed); }
@@ -452,8 +452,8 @@ inline void CNF::clean_occur_from_idx(const Lit lit)
 inline bool CNF::clause_locked(const Clause& c, const ClOffset offset) const
 {
     return value(c[0]) == l_True
-        && varData[c[0].var()].reason.isClause()
-        && varData[c[0].var()].reason.get_offset() == offset;
+        && var_data[c[0].var()].reason.isClause()
+        && var_data[c[0].var()].reason.get_offset() == offset;
 }
 
 inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
@@ -570,7 +570,7 @@ template<class T> void CNF::clean_xor_no_prop(T& ps, bool& rhs) {
             //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
 
-            assert(varData[p.var()].removed != Removed::elimed);
+            assert(var_data[p.var()].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
             rhs ^= value(ps[i]) == l_True;
@@ -609,7 +609,7 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
         } else if (value(x[i]) == l_Undef) {
             //Add and remember as last one to have been added
             x[j++] = p = x[i];
-            assert(varData[p].removed != Removed::elimed);
+            assert(var_data[p].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
             chain.push_back(unit_cl_XIDs[x[i]]);
@@ -655,7 +655,7 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t x
             rhs ^= ps[i].sign();
             ps[i] = ps[i].unsign();
             ps[j++] = p = ps[i];
-            assert(varData[p.var()].removed != Removed::elimed);
+            assert(var_data[p.var()].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
             chain.push_back(unit_cl_XIDs[ps[i].var()]);

@@ -114,7 +114,7 @@ void InTree::fill_roots()
     for(uint32_t i = 0; i < solver->nVars()*2; i++)
     {
         Lit lit(i/2, i%2);
-        if (solver->varData[lit.var()].removed != Removed::none
+        if (solver->var_data[lit.var()].removed != Removed::none
             || solver->value(lit) != l_Undef
         ) {
             continue;
@@ -262,7 +262,7 @@ void InTree::tree_look()
                 ResetReason tmp = reset_reason_stack.back();
                 reset_reason_stack.pop_back();
                 if (tmp.var_reason_changed != var_Undef) {
-                    solver->varData[tmp.var_reason_changed].reason = tmp.orig_propby;
+                    solver->var_data[tmp.var_reason_changed].reason = tmp.orig_propby;
                 }
             }
         }
@@ -301,8 +301,8 @@ bool InTree::handle_lit_popped_from_queue(
     if (other_lit != lit_Undef) {
         //update 'other_lit' 's ancestor to 'lit'
         assert(solver->value(other_lit) == l_True);
-        reset_reason_stack.back() = ResetReason(other_lit.var(), solver->varData[other_lit.var()].reason);
-        solver->varData[other_lit.var()].reason = PropBy(~lit, red, false, false, ID);
+        reset_reason_stack.back() = ResetReason(other_lit.var(), solver->var_data[other_lit.var()].reason);
+        solver->var_data[other_lit.var()].reason = PropBy(~lit, red, false, false, ID);
         verb_print(10, "Set reason for VAR " << other_lit.var()+1
         << " to: " << ~lit << " red: " << (int)red);
     }

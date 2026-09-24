@@ -81,7 +81,7 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
             v = solver->varReplacer->get_var_replaced_with_outer(v);
             v = solver->map_outer_to_inter(v);
             if (solver->value(v) != l_Undef) continue;
-            if (solver->varData[v].removed != Removed::none) continue;
+            if (solver->var_data[v].removed != Removed::none) continue;
             ret_set.insert(v);
         }
     } else {
@@ -256,7 +256,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
 }
 
 bool GetClauseQuery::all_vars_outside(const vector<Lit>& cl) const {
-    for(const auto& l: cl) if (solver->varData[solver->map_outer_to_inter(l.var())].is_bva)
+    for(const auto& l: cl) if (solver->var_data[solver->map_outer_to_inter(l.var())].is_bva)
         return false;
 
     return true;

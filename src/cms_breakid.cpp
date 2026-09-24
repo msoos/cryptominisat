@@ -56,7 +56,7 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
     brkid_lits.clear();
     for(size_t i3 = 0; i3 < cl.size(); i3++) {
         Lit lit = cl[i3];
-        assert(solver->varData[lit.var()].removed == Removed::none);
+        assert(solver->var_data[lit.var()].removed == Removed::none);
         lbool val = l_Undef;
         if (solver->value(lit) != l_Undef) {
             val = solver->value(lit);
@@ -403,7 +403,7 @@ void BreakID::break_symms_in_cms()
             symm_var = solver->nVars()-1;
             solver->add_assumption(Lit(symm_var, true));
         }
-        assert(solver->varData[symm_var].removed == Removed::none);
+        assert(solver->var_data[symm_var].removed == Removed::none);
     }
 
     auto brk = breakid->get_brk_cls();
@@ -446,7 +446,7 @@ void BreakID::start_new_solving()
         return;
     }
 
-    assert(solver->varData[symm_var].removed == Removed::none);
+    assert(solver->var_data[symm_var].removed == Removed::none);
     assert(solver->value(symm_var) != l_False
         && "The symm var can never be foreced to FALSE, logic error");
 

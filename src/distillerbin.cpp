@@ -270,7 +270,7 @@ bool DistillerBin::try_distill_bin(
                 solver->collect_trail_seg_hints(
                     solver->trail_begin_of_level(0), hints, rsns);
                 //lit2 may be false at level 0 already
-                if (solver->varData[lit2.var()].level == 0) {
+                if (solver->var_data[lit2.var()].level == 0) {
                     assert(solver->unit_cl_IDs[lit2.var()] != 0);
                     hints.push_back(solver->unit_cl_IDs[lit2.var()]);
                 }

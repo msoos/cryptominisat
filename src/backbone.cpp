@@ -111,7 +111,7 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
 // does not follow from the irredundant set, or that we fed ccnr the wrong thing.
 static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
     assert(sol.size() == solver->nVars()+1);
-    auto live = [&](const uint32_t v) { return solver->varData[v].removed == Removed::none; };
+    auto live = [&](const uint32_t v) { return solver->var_data[v].removed == Removed::none; };
     auto sat = [&](const Lit l) { return sol[l.var()+1] == (l.sign() ? 0 : 1); };
 
     for(uint32_t v = 0; v < solver->nVars(); v++) {
@@ -211,7 +211,7 @@ static bool add_backbone_units(Solver* solver, const vector<int>& learned_units)
         if (l == 0) continue;
         const Lit lit = Lit(abs(l)-1, l < 0);
         if (solver->value(lit.var()) != l_Undef) continue;
-        if (solver->varData[lit.var()].removed != Removed::none) continue;
+        if (solver->var_data[lit.var()].removed != Removed::none) continue;
         tmp.clear();
         tmp.push_back(lit);
         solver->add_clause_int(tmp);
@@ -257,7 +257,7 @@ static uint32_t add_backbone_bins(Solver* solver, const vector<int>& learned_bin
             continue;
         }
         const Lit lit = Lit(abs(l)-1, l < 0);
-        if (solver->varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
+        if (solver->var_data[lit.var()].removed != Removed::none) {ignore = true; continue;}
         if (solver->value(lit.var()) != l_Undef) {ignore = true; continue;}
         tmp.push_back(lit);
     }
