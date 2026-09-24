@@ -289,7 +289,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             use_matrix = false;
         }
 
-        if (m.rows > solver->conf.gaussconf.min_matrix_rows) {
+        if (m.rows >= solver->conf.gaussconf.min_matrix_rows) {
             //Override in case sampling vars ratio is high
             if (solver->conf.sampling_vars_set) {
                 verb_print(2, "[matrix] ratio_sampling: " << ratio_sampling);
