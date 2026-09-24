@@ -79,12 +79,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthe
 
 end:
     globalStats += runStats;
-    if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->conf.prefix);
-        else
-            runStats.print_short(solver);
-    }
+    if (solver->conf.verbosity) runStats.print_short(solver);
     SLOW_DEBUG_DO(solver->check_seen_clean());
     SLOW_DEBUG_DO(solver->check_seen2_clean());
     runStats.clear();

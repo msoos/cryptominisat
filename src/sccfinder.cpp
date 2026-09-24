@@ -73,12 +73,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     //Update & print stats
     runStats.cpu_time = cpu_time() - my_time;
     runStats.foundXorsNew = binxors.size();
-    if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->conf.prefix);
-        else
-            runStats.print_short(solver);
-    }
+    if (solver->conf.verbosity) runStats.print_short(solver);
     globalStats += runStats;
 
     if (bogoprops_given) {

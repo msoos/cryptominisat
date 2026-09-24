@@ -1322,7 +1322,6 @@ void Main::manually_parse_some_options()
     } catch (std::logic_error& e) {
         fileNamePresent = false;
     }
-    if (conf.verbosity >= 3) cout << "c Outputting solution to console" << endl;
 }
 
 void Main::parseCommandLine() {

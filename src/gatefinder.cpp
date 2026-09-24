@@ -60,7 +60,6 @@ void GateFinder::find_all()
     find_or_gates_and_update_stats();
     if (solver->conf.doPrintGateDot) print_graphviz_dot();
 
-    if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
     globalStats += runStats;
 }
 
@@ -304,69 +303,5 @@ GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
     num += other.num;
 
     return *this;
-}
-
-void GateFinder::Stats::print(const size_t nVars, const string& pre) const
-{
-    cout << pre << "-------- GATE FINDING ----------" << endl;
-    print_stats_line("c time"
-        , total_time()
-    );
-
-    print_stats_line("c find gate time"
-        , findGateTime
-        , stats_line_percent(findGateTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gate-based cl-sh time"
-        , orBasedTime
-        , stats_line_percent(orBasedTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gate-based cl-rem time"
-        , andBasedTime
-        , stats_line_percent(andBasedTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gate-based varrep time"
-        , varReplaceTime
-        , stats_line_percent(varReplaceTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gatefinder cl-short"
-        , orGateUseful
-        , stats_line_percent(orGateUseful, numLongCls)
-        , "% long cls"
-    );
-
-    print_stats_line("c gatefinder lits-rem"
-        , litsRem
-        , stats_line_percent(litsRem, numLongClsLits)
-        , "% long cls lits"
-    );
-
-    print_stats_line("c gatefinder cl-rem"
-        , andGateUseful
-        , stats_line_percent(andGateUseful, numLongCls)
-        , "% long cls"
-    );
-
-    print_stats_line("c gatefinder cl-rem's lits"
-        , clauseSizeRem
-        , stats_line_percent(clauseSizeRem, numLongClsLits)
-        , "% long cls lits"
-    );
-
-    print_stats_line("c gatefinder var-rep"
-        , varReplaced
-        , stats_line_percent(varReplaced, nVars)
-        , "% vars"
-    );
-
-    cout << pre << "-------- GATE FINDING END ----------" << endl;
 }
 

@@ -1407,13 +1407,7 @@ end:
         << " T: " << std::fixed << std::setprecision(2) << time_used
         << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << (time_remain*100.0) << "%");
-    if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3) {
-            runStats.print(solver->nVarsOuter(), this);
-            bvestats.print(solver->conf.prefix);
-        } else
-            runStats.print_extra_times(solver->conf.prefix.c_str());
-    }
+    if (solver->conf.verbosity) runStats.print_extra_times(solver->conf.prefix.c_str());
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -3223,13 +3217,6 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit, bool only_s
             solver->detach_bin_clause(lits[0], lits[1], red, watch.get_id(), true, true);
         } else {
             // IDX for XOR elimination
-        }
-
-        if (solver->conf.verbosity >= 3 && !lits.empty()) {
-            cout
-            << "Eliminated clause " << lits << " (red: " << red << ")"
-            << " on var " << lit.var()+1
-            << endl;
         }
     }
 }

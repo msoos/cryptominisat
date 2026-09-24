@@ -511,11 +511,6 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
-            if (solver->conf.verbosity >= 3) {
-                cout
-                << "c Need to finish distillation -- ran out of prop (=allocated time)"
-                << endl;
-            }
             runStats.timeOut++;
             time_out = true;
         }

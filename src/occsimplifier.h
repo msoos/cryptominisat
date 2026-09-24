@@ -104,18 +104,6 @@ struct BVEStats
             << " tested: " << testedToElimVars << endl;
     }
 
-    void print(const string& prefix) const {
-        print_stats_line(prefix + "timeouted" , stats_line_percent(varElimTimeOut, numCalls) , "% called");
-        print_stats_line(prefix + "v-elimed" , numVarsElimed , "% vars");
-        print_stats_line(prefix + "cl-new" , newClauses);
-        print_stats_line(prefix + "tried to elim" , triedToElimVars);
-        print_stats_line(prefix + "cl-elim-bin" , clauses_elimed_bin);
-        print_stats_line(prefix + "cl-elim-long" , clauses_elimed_long);
-        print_stats_line(prefix + "cl-elim-avg-s",
-                safe_div(clauses_elimed_sumsize,clauses_elimed_bin + clauses_elimed_long));
-        cout << prefix << "irreg-gate-found / tried / entered: " << irreg_gate_found << " / " << irreg_gate_tried << "/ " << irreg_gate_entered << endl;
-        cout << prefix << "irreg-gate-units / no-chain: " << irreg_gate_units << " / " << irreg_gate_units_no_chain << endl;
-    }
     void clear() {
         *this = BVEStats{};
     }

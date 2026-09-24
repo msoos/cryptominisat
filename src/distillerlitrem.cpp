@@ -55,12 +55,7 @@ bool DistillerLitRem::distill_lit_rem()
 
 end:
     globalStats += runStats;
-    if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars(), solver->conf.prefix);
-        else
-            runStats.print_short(solver);
-    }
+    if (solver->conf.verbosity) runStats.print_short(solver);
     runStats.clear();
 
     return solver->okay();
@@ -103,11 +98,6 @@ bool DistillerLitRem::go_through_clauses(
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
-            if (solver->conf.verbosity >= 3) {
-                cout
-                << "c Need to finish distillation -- ran out of prop (=allocated time)"
-                << endl;
-            }
             runStats.timeOut++;
             time_out = true;
         }
@@ -206,11 +196,6 @@ bool DistillerLitRem::distill_long_cls_all(
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 3) {
-        cout << solver->conf.prefix << "[distill-litrem] "
-        << " tried: " << runStats.checkedClauses << "/" << offs.size()
-        << endl;
-    }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -349,38 +334,6 @@ void DistillerLitRem::Stats::print_short(const Solver* _solver) const
     << " 0-depth-assigns: " << zeroDepthAssigns
     << _solver->conf.print_times(time_used, timeOut)
     << endl;
-}
-
-void DistillerLitRem::Stats::print(const size_t nVars, const string& pre) const
-{
-    cout << pre << "-------- DISTILL-LITREM STATS --------" << endl;
-    print_stats_line("c time"
-        , time_used
-        , ratio_for_stat(time_used, numCalled)
-        , "per call"
-    );
-
-    print_stats_line("c timed out"
-        , timeOut
-        , stats_line_percent(timeOut, numCalled)
-        , "% of calls"
-    );
-
-    print_stats_line("c distill/checked/potential"
-        , numClShorten
-        , checkedClauses
-        , potentialClauses
-    );
-
-    print_stats_line("c lits-rem",
-        numLitsRem
-    );
-    print_stats_line("c 0-depth-assigns",
-        zeroDepthAssigns
-        , stats_line_percent(zeroDepthAssigns, nVars)
-        , "% of vars"
-    );
-    cout << pre << "-------- DISTILL STATS END --------" << endl;
 }
 
 double DistillerLitRem::mem_used() const

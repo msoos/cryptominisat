@@ -61,10 +61,7 @@ bool DistillerBin::distill()
     else backoff = std::max(backoff/2.0, 1.0);
 
     globalStats += runStats;
-    if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
-        else runStats.print_short(solver);
-    }
+    if (solver->conf.verbosity) runStats.print_short(solver);
     runStats.clear();
     frat_func_end();
 
