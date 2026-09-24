@@ -782,9 +782,11 @@ PropBy PropEngine::propagate_core()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        //Skip the call when there is nothing to do: it showed at 6% in perf
+        //Skip the call when there is nothing to do: it showed at 6% in perf,
+        //and at 10% on approxmc when called with an empty gwatches list
         if (!distill_use && confl.isnullptr()
             && (!gmatrices.empty() || !xorclauses.empty())
+            && !gwatches[p.var()].empty()
         ) {
             confl = gauss_jordan_elim(p, currLevel);
         }
