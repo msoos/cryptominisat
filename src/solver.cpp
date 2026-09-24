@@ -1436,6 +1436,9 @@ lbool Solver::solve_with_assumptions(
         solveStats.max_confl_per_solve = std::max(solveStats.max_confl_per_solve, confl);
         solveStats.solve_ret[status == l_True ? 0 : (status == l_False ? 1 : 2)]++;
         if (status == l_False) solveStats.confl_in_solves_unsat += confl;
+        uint32_t b = 0;
+        for(uint64_t c = confl; c > 0 && b < 5; c /= 10) b++;
+        solveStats.confl_per_solve_hist[b]++;
         const double t = cpu_time() - my_time;
         solveStats.time_in_solver += t;
         verb_print(1, "[solve] " << solveStats.num_solve_calls << " ret: " << status
@@ -2034,6 +2037,12 @@ void Solver::print_solve_call_stats() const
         , float_div(sumConflicts, s.num_solve_calls), s.max_confl_per_solve, "max");
     print_stats_line(conf.prefix + "conflicts in UNSAT solve()", s.confl_in_solves_unsat
         , stats_line_percent(s.confl_in_solves_unsat, sumConflicts), "% of conflicts");
+    {
+        std::stringstream ss;
+        const char* names[6] = {"0", "<10", "<100", "<1K", "<10K", "10K+"};
+        for(uint32_t i = 0; i < 6; i++) ss << names[i] << ":" << s.confl_per_solve_hist[i] << " ";
+        print_stats_line(conf.prefix + "solve() calls by conflicts", ss.str());
+    }
     print_stats_line(conf.prefix + "assumptions per solve()"
         , float_div(s.sum_assumps, s.num_solve_calls));
     print_stats_line(conf.prefix + "simplify() by user", s.num_user_simplify_calls

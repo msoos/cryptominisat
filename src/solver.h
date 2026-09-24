@@ -86,6 +86,7 @@ struct SolveStats
     uint64_t confl_at_solve_start = 0;
     uint64_t max_confl_per_solve = 0;
     uint64_t confl_in_solves_unsat = 0; //conflicts in solve() calls returning UNSAT
+    uint32_t confl_per_solve_hist[6] = {}; //0, <10, <100, <1K, <10K, 10K+
     double time_in_solver = 0; //CPU time inside solve() and simplify() calls
     //what the user added through the API
     uint64_t cls_added = 0;
