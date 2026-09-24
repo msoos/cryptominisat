@@ -47,7 +47,7 @@ DistillerBin::DistillerBin(Solver* _solver) :
 bool DistillerBin::distill()
 {
     assert(solver->ok);
-    numCalls++;
+    num_calls++;
     run_stats.clear();
     frat_func_start();
 
@@ -57,7 +57,7 @@ bool DistillerBin::distill()
 
     //Mostly useless: run less often
     const uint64_t useful = run_stats.clRemoved + run_stats.numClShorten;
-    if (useful*50 < run_stats.checkedClauses) backoff = std::min(backoff*2.0, 16.0);
+    if (useful*50 < run_stats.checked_clauses) backoff = std::min(backoff*2.0, 16.0);
     else backoff = std::max(backoff/2.0, 1.0);
 
     global_stats += run_stats;
@@ -79,22 +79,22 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     frat_func_start();
 
     //Time-limiting
-    maxNumProps =
+    max_num_props =
         solver->conf.distill_long_cls_time_limitM*200LL*1000ULL
         *solver->conf.global_timeout_multiplier;
 
     if (solver->lit_stats.irred_lits + solver->lit_stats.red_lits <
             (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
     ) {
-        maxNumProps *=2;
+        max_num_props *=2;
     }
-    maxNumProps *= time_mult;
+    max_num_props *= time_mult;
     const int64_t rel = solver->conf.distill_bin_effort*(double)(solver->all_bogoprops() - last_all_props);
-    maxNumProps = std::min<int64_t>(maxNumProps, std::max<int64_t>(rel, 1000LL*1000LL));
-    orig_maxNumProps = maxNumProps;
+    max_num_props = std::min<int64_t>(max_num_props, std::max<int64_t>(rel, 1000LL*1000LL));
+    orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->prop_stats.bogoProps;
+    oldBogoProps = solver->prop_stats.bogo_props;
     uint32_t potential_size = solver->bin_tri.irred_bins;
     run_stats.potentialClauses += potential_size;
     run_stats.numCalled += 1;
@@ -115,10 +115,10 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps),
         orig_maxNumProps);
         verb_print(2, "[distill-bin] cls" << " tried: "
-                << run_stats.checkedClauses << "/" << potential_size);
+                << run_stats.checked_clauses << "/" << potential_size);
     if (solver->sql_stats) {
         solver->sql_stats->time_passed(
             solver
@@ -132,7 +132,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
     //Update stats
     run_stats.time_used += time_used;
-    run_stats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
     last_all_props = solver->all_bogoprops();
 
     return solver->okay();
@@ -140,7 +140,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
 bool DistillerBin::out_of_budget()
 {
-    if ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+    if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
         || solver->must_interrupt_asap()
     ) {
         verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
@@ -179,10 +179,10 @@ bool DistillerBin::go_through_bins(const Lit lit1)
         if (out_of_budget()) return true;
 
         const Lit lit2 = w.lit2();
-        run_stats.checkedClauses++;
-        maxNumProps -= solver->watches[lit1].size();
-        maxNumProps -= solver->watches[lit2].size();
-        maxNumProps -= 2;
+        run_stats.checked_clauses++;
+        max_num_props -= solver->watches[lit1].size();
+        max_num_props -= solver->watches[lit2].size();
+        max_num_props -= 2;
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
             remove_bin(lit1, lit2, w.get_id());
             run_stats.clRemoved++;
@@ -317,10 +317,10 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
     timeOut += other.timeOut;
-    zeroDepthAssigns += other.zeroDepthAssigns;
+    zero_depth_assigns += other.zero_depth_assigns;
     numClShorten += other.numClShorten;
     numLitsRem += other.numLitsRem;
-    checkedClauses += other.checkedClauses;
+    checked_clauses += other.checked_clauses;
     potentialClauses += other.potentialClauses;
     numCalled += other.numCalled;
     clRemoved += other.clRemoved;
@@ -332,10 +332,10 @@ void DistillerBin::Stats::print_short(const Solver* solver) const
 {
     verb_print(1, "[distill-bin]"
     << " useful/checked/potential: " << numClShorten+clRemoved
-    << "/" << checkedClauses << "/" << potentialClauses
+    << "/" << checked_clauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " cl-rem: " << clRemoved
-    << " 0-depth-assigns: " << zeroDepthAssigns
+    << " 0-depth-assigns: " << zero_depth_assigns
     << solver->conf.print_times(time_used, timeOut));
 }
 
@@ -356,7 +356,7 @@ void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
 
     print_stats_line("c distill/checked/potential"
         , numClShorten
-        , checkedClauses
+        , checked_clauses
         , potentialClauses
     );
 
@@ -364,8 +364,8 @@ void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
         numLitsRem
     );
     print_stats_line("c 0-depth-assigns",
-        zeroDepthAssigns
-        , stats_line_percent(zeroDepthAssigns, nVars)
+        zero_depth_assigns
+        , stats_line_percent(zero_depth_assigns, nVars)
         , "% of vars"
     );
     cout << pre << "-------- DISTILL STATS END --------" << endl;

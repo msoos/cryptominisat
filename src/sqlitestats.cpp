@@ -528,7 +528,7 @@ void SQLiteStats::restart(
 ) {
     sqlite3_stmt* stmt = stmtRst;
 
-    const SearchHist& searchHist = search->getHistory();
+    const SearchHist& search_hist = search->getHistory();
     const BinTriStats& bin_tri = solver->getBinTriStats();
 
     int bindAt = 1;
@@ -536,7 +536,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmt, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmt, bindAt++, solver->sum_conflicts);
-    sqlite3_bind_int  (stmt, bindAt++, searchHist.num_conflicts_this_restart);
+    sqlite3_bind_int  (stmt, bindAt++, search_hist.num_conflicts_this_restart);
     sqlite3_bind_double(stmt, bindAt++, cpu_time());
 
 
@@ -549,41 +549,41 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->lit_stats.red_lits);
 
     //Conflict stats
-    bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.glueHist.getLongtTerm().var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.getLongtTerm(),avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.glueHist.getLongtTerm().var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.getLongtTerm(),getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.glueHist.getLongtTerm(),getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.conflSizeHist, avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.conflSizeHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.conflSizeHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.conflSizeHist,getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.conflSizeHist, avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.conflSizeHist.var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.conflSizeHist,getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.conflSizeHist,getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.numResolutionsHist, avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.numResolutionsHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.numResolutionsHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.numResolutionsHist,getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.numResolutionsHist, avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.numResolutionsHist.var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.numResolutionsHist,getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.numResolutionsHist,getMax)
 
     //Search stats
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthHist,avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.branchDepthHist.var()));
-    bind_null_or_double(stmt, bindAt, searchHist.branchDepthHist,getMin)
-    bind_null_or_double(stmt, bindAt, searchHist.branchDepthHist,getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.branchDepthHist,avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.branchDepthHist.var()));
+    bind_null_or_double(stmt, bindAt, search_hist.branchDepthHist,getMin)
+    bind_null_or_double(stmt, bindAt, search_hist.branchDepthHist,getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthDeltaHist,avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.branchDepthDeltaHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthDeltaHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthDeltaHist,getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.branchDepthDeltaHist,avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.branchDepthDeltaHist.var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.branchDepthDeltaHist,getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.branchDepthDeltaHist,getMax)
 
-    bind_null_or_double(stmt, bindAt, searchHist.trailDepthHist.getLongtTerm(),avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.trailDepthHist.getLongtTerm().var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthHist.getLongtTerm(),getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthHist.getLongtTerm(),getMax)
+    bind_null_or_double(stmt, bindAt, search_hist.trailDepthHist.getLongtTerm(),avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.trailDepthHist.getLongtTerm().var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthHist.getLongtTerm(),getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthHist.getLongtTerm(),getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.trailDepthDeltaHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,getMax)
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthDeltaHist,avg)
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(search_hist.trailDepthDeltaHist.var()));
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthDeltaHist,getMin)
+    bind_null_or_double(stmt, bindAt,   search_hist.trailDepthDeltaHist,getMax)
 
     //Red
     sqlite3_bind_int64(stmt, bindAt++, thisStats.learntUnits);

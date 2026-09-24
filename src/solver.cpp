@@ -198,24 +198,24 @@ bool Solver::add_xor_clause_inter(
 
     if (ps.empty()) {
         if (rhs) {
-            *frat << implyclfromx << ++clauseID << fratchain << xid2 << fin;
-            set_unsat_cl_id(clauseID);
+            *frat << implyclfromx << ++clause_id << fratchain << xid2 << fin;
+            set_unsat_cl_id(clause_id);
             ok = false;
         } else assert(xid2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
         return okay();
     } else if (ps.size() == 1) {
         ps[0] ^= !rhs;
-        const auto ID = ++clauseID;
+        const auto ID = ++clause_id;
         *frat << implyclfromx << ID << ps << fratchain << xid2 << fin;
         *frat << delx << xid2 << fin;
         add_clause_int_frat(ps, ID);
     } else if (ps.size() == 2) {
         ps[0] ^= !rhs;
-        const auto id1 = ++clauseID;
+        const auto id1 = ++clause_id;
         *frat << implyclfromx << id1 << ps << fratchain << xid2 << fin;
         add_clause_int_frat(ps, id1);
         ps[0] ^= true; ps[1] ^= true;
-        const auto id2 = ++clauseID;
+        const auto id2 = ++clause_id;
         *frat << implyclfromx << id2 << ps << fratchain << xid2 << fin;
         add_clause_int_frat(ps, id2);
         ps[0] ^= true; ps[1] ^= true;
@@ -332,7 +332,7 @@ Clause* Solver::add_clause_int(
         assert(add_frat);
         ID = cl_stats->id;
         if (ps != lits) {
-            ID = ++clauseID;
+            ID = ++clause_id;
             *frat << add << ID << ps;
             if (frat->enabled()) {
                 *frat << fratchain;
@@ -343,7 +343,7 @@ Clause* Solver::add_clause_int(
             *frat << del << cl_stats->id << lits << fin;
         }
     } else {
-        ID = ++clauseID;
+        ID = ++clause_id;
         if (add_frat) {
             size_t i = 0;
             if (frat_first != lit_Undef) {
@@ -747,7 +747,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
         //XLRUP: inputs numbered by file position
         clstats.id = next_input_cl_id++;
     } else {
-        clstats.id = ++clauseID;
+        clstats.id = ++clause_id;
     }
     if (!restore)
       *frat << "add_clause_outer\n" << origcl << clstats.id << outer_ps << fin;
@@ -1644,7 +1644,7 @@ lbool Solver::iterate_until_solved() {
             goto end;
         }
         //Searcher::solve() clears prop_stats, don't lose inprocessing's props
-        outside_search_props += prop_stats.bogoProps + prop_stats.otfHyperTime;
+        outside_search_props += prop_stats.bogo_props + prop_stats.otf_hyper_time;
         status = solve(num_confl);
 
         //Check for effectiveness
@@ -2884,7 +2884,7 @@ bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
     if (val == l_Undef) {
         assert(var_data[lit.var()].removed == Removed::none);
         if (frat->enabled() && hints) {
-            const auto id = ++clauseID;
+            const auto id = ++clause_id;
             *frat << add << id << lit << fratchain << *hints << fin;
             enqueue_registered_unit<false>(lit, id);
         } else {
@@ -2896,12 +2896,12 @@ bool Solver::fully_enqueue_this(const Lit lit, const vector<int32_t>* hints)
             return false;
         }
     } else if (val == l_False) {
-        *frat << add << ++clauseID;
+        *frat << add << ++clause_id;
         if (frat->enabled() && hints) {
             *frat << fratchain << unit_cl_IDs[lit.var()] << *hints;
         }
         *frat << fin;
-        if (unsat_cl_ID == 0) set_unsat_cl_id(clauseID);
+        if (unsat_cl_ID == 0) set_unsat_cl_id(clause_id);
         ok = false;
         return false;
     }

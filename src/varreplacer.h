@@ -96,10 +96,10 @@ class VarReplacer
             void print(const size_t nVars, const string& prefix) const;
             void print_short(const Solver* solver) const;
 
-            uint64_t numCalls = 0;
+            uint64_t num_calls = 0;
             double cpu_time = 0;
             uint64_t replacedLits = 0;
-            uint64_t zeroDepthAssigns = 0;
+            uint64_t zero_depth_assigns = 0;
             uint64_t actuallyReplacedVars = 0;
             uint64_t removedBinClauses = 0;
             uint64_t removedLongClauses = 0;

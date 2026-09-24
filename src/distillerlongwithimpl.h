@@ -168,7 +168,7 @@ class DistillerLongWithImpl {
         //Global status
         Stats run_stats;
         Stats global_stats;
-        size_t numCalls = 0;
+        size_t num_calls = 0;
 
 };
 

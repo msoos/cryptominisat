@@ -339,7 +339,7 @@ size_t CNF::mem_used() const
     mem += sizeof(bin_tri);
     mem += seen.capacity()*sizeof(uint16_t);
     mem += seen2.capacity()*sizeof(uint8_t);
-    mem += toClear.capacity()*sizeof(Lit);
+    mem += to_clear.capacity()*sizeof(Lit);
 
     return mem;
 }

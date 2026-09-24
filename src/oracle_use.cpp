@@ -268,7 +268,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         } else if (conf.oracle_get_learnts) {
             ClauseStats s;
             s.which_red_array = 0;
-            s.id = ++clauseID;
+            s.id = ++clause_id;
             s.glue = cl.size();
             Clause* cl2 = add_clause_int(tmp2, true, &s);
             if (cl2) long_red_cls[0].push_back(cl_alloc.get_offset(cl2));

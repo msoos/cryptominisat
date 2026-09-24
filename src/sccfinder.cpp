@@ -43,7 +43,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 {
     assert(binxors.empty());
     run_stats.clear();
-    run_stats.numCalls = 1;
+    run_stats.num_calls = 1;
     depth_warning_issued = false;
     const double my_time = cpu_time();
 

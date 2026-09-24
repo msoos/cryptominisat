@@ -322,8 +322,8 @@ struct PropStats
     PropStats& operator+=(const PropStats& other)
     {
         propagations += other.propagations;
-        bogoProps += other.bogoProps;
-        otfHyperTime += other.otfHyperTime;
+        bogo_props += other.bogo_props;
+        otf_hyper_time += other.otf_hyper_time;
         otfHyperPropCalled += other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
         varSetPos += other.varSetPos;
@@ -337,8 +337,8 @@ struct PropStats
     PropStats& operator-=(const PropStats& other)
     {
         propagations -= other.propagations;
-        bogoProps -= other.bogoProps;
-        otfHyperTime -= other.otfHyperTime;
+        bogo_props -= other.bogo_props;
+        otf_hyper_time -= other.otf_hyper_time;
         otfHyperPropCalled -= other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
         varSetPos -= other.varSetPos;
@@ -366,13 +366,13 @@ struct PropStats
     void print(const double cpu_time, const string& pre) const
     {
         cout << pre << "PROP stats" << endl;
-        print_stats_line("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
-            , ratio_for_stat(bogoProps, cpu_time*1000.0*1000.0)
+        print_stats_line("c Mbogo-props", (double)bogo_props/(1000.0*1000.0)
+            , ratio_for_stat(bogo_props, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
-        print_stats_line("c MHyper-props", (double)otfHyperTime/(1000.0*1000.0)
-            , ratio_for_stat(otfHyperTime, cpu_time*1000.0*1000.0)
+        print_stats_line("c MHyper-props", (double)otf_hyper_time/(1000.0*1000.0)
+            , ratio_for_stat(otf_hyper_time, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
@@ -401,8 +401,8 @@ struct PropStats
     }
 
     uint64_t propagations = 0; ///<Number of propagations made
-    uint64_t bogoProps = 0;    ///<An approximation of time
-    uint64_t otfHyperTime = 0;
+    uint64_t bogo_props = 0;    ///<An approximation of time
+    uint64_t otf_hyper_time = 0;
     uint32_t otfHyperPropCalled = 0;
 
     #ifdef STATS_NEEDED

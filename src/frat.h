@@ -102,11 +102,11 @@ public:
     bool something_delayed() override { return delete_filled; }
     bool enabled() override { return true; }
 
-    Frat& operator<<(const int32_t clauseID) override
+    Frat& operator<<(const int32_t clause_id) override
     {
-        assert(clauseID != 0);
-        if (must_delete_next) byteDRUPdID(clauseID);
-        else byteDRUPaID(clauseID);
+        assert(clause_id != 0);
+        if (must_delete_next) byteDRUPdID(clause_id);
+        else byteDRUPaID(clause_id);
         return *this;
     }
 

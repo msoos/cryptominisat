@@ -488,7 +488,7 @@ void Searcher::minimize_learnt_clause()
 {
     const size_t origSize = learnt_clause.size();
 
-    toClear = learnt_clause;
+    to_clear = learnt_clause;
     if (conf.doRecursiveMinim) {
         recursiveConfClauseMin();
     } else {
@@ -499,10 +499,10 @@ void Searcher::minimize_learnt_clause()
 
     if (conf.do_shrink_uip) shrink_learnt_clause<inprocess>();
 
-    for (const Lit lit: toClear) {
+    for (const Lit lit: to_clear) {
         seen[lit.var()] = 0;
     }
-    toClear.clear();
+    to_clear.clear();
 }
 
 //Try to replace all clause lits of one level with that level's UIP.
@@ -610,7 +610,7 @@ bool Searcher::try_shrink_block(
                 break;
             }
             seen[qv] = 1;
-            toClear.push_back(q);
+            to_clear.push_back(q);
         }
         if (!ok) break;
         assert(pos > 0);
@@ -622,7 +622,7 @@ bool Searcher::try_shrink_block(
         //shrunken-away lits are implied by the block UIP, keep as redundant
         if (ok && !seen[v]) {
             seen[v] = 1;
-            toClear.push_back(Lit(v, false));
+            to_clear.push_back(Lit(v, false));
         }
     }
     shrink_seen2_clear.clear();
@@ -631,7 +631,7 @@ bool Searcher::try_shrink_block(
     replace_with = ~uip;
     if (!seen[uip.var()]) {
         seen[uip.var()] = 1;
-        toClear.push_back(uip);
+        to_clear.push_back(uip);
     }
     if (frat->enabled()) {
         for (const auto& r: tmp_block_reasons) lrat.reasons.push_back(r);
@@ -870,7 +870,7 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
     if (cl.red()) lit_stats.red_lits -= removed_num;
     else lit_stats.irred_lits -= removed_num;
 
-    cl.stats.id = ++clauseID;
+    cl.stats.id = ++clause_id;
     if (frat->enabled()) {
         //the strengthened clause equals the current resolvent, so the
         //chain collected so far is exactly its derivation
@@ -1032,7 +1032,7 @@ void Searcher::bump_reason_side_lit(const Lit lit, const uint32_t depth)
         const uint32_t var = q.var();
         if (seen[var] || var_data[var].level == 0) continue;
         seen[var] = 1;
-        toClear.push_back(q);
+        to_clear.push_back(q);
 
         switch (branch_strategy) {
             case branch::vsids:
@@ -1050,16 +1050,16 @@ void Searcher::bump_reason_side_lit(const Lit lit, const uint32_t depth)
 
 void Searcher::bump_reason_side_lits()
 {
-    assert(toClear.empty());
+    assert(to_clear.empty());
     for (const Lit l: learnt_clause) {
         seen[l.var()] = 1;
-        toClear.push_back(l);
+        to_clear.push_back(l);
     }
     const uint32_t depth = conf.bump_reason_depth
         + rst.stable;
     for (const Lit l: learnt_clause) bump_reason_side_lit(l, depth);
-    for (const Lit l: toClear) seen[l.var()] = 0;
-    toClear.clear();
+    for (const Lit l: to_clear) seen[l.var()] = 0;
+    to_clear.clear();
 }
 
 template<bool inprocess>
@@ -1079,7 +1079,7 @@ void Searcher::analyze_conflict(
     learnt_clause.clear();
     chain.clear();
     lrat.clear();
-    assert(toClear.empty());
+    assert(to_clear.empty());
     implied_by_learnts.clear();
     assert(decision_level() > 0);
 
@@ -1167,7 +1167,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
     analyze_stack.clear();
     analyze_stack.push(p);
 
-    size_t top = toClear.size();
+    size_t top = to_clear.size();
     const size_t chain_rsn_top = lrat.reasons.size();
     const size_t chain_unit_top = lrat.units.size();
     while (!analyze_stack.empty()) {
@@ -1259,13 +1259,13 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 ) {
                     seen[p2.var()] = 1;
                     analyze_stack.push(p2);
-                    toClear.push_back(p2);
+                    to_clear.push_back(p2);
                 } else {
                     //Return to where we started before function executed
-                    for (size_t j = top; j < toClear.size(); j++) {
-                        seen[toClear[j].var()] = 0;
+                    for (size_t j = top; j < to_clear.size(); j++) {
+                        seen[to_clear[j].var()] = 0;
                     }
-                    toClear.resize(top);
+                    to_clear.resize(top);
                     lrat.reasons.resize(chain_rsn_top);
                     lrat.units.resize(chain_unit_top);
                     return false;
@@ -1902,7 +1902,7 @@ Clause* Searcher::handle_last_confl(
     #endif
 
     Clause* cl;
-    ID = ++clauseID;
+    ID = ++clause_id;
     if (frat->enabled()) {
         *frat << add << ID << learnt_clause;
         add_chain();
@@ -2025,10 +2025,10 @@ bool Searcher::handle_conflict(PropBy confl)
                 "decLevel: " << decision_level());
         if (unsat_cl_ID == 0) {
             if (frat->enabled()) build_level0_confl_chain(confl);
-            *frat << add << ++clauseID;
+            *frat << add << ++clause_id;
             add_chain();
             *frat << fin;
-            set_unsat_cl_id(clauseID);
+            set_unsat_cl_id(clause_id);
         }
         solver->ok = false;
         return false;
@@ -3180,7 +3180,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
             //the add was emitted with hints at creation, keep its ID
             ID = b.get_id();
         } else {
-            ID = ++clauseID;
+            ID = ++clause_id;
         }
         solver->attach_bin_clause(b.getLit1(), b.getLit2(), true, ID, false);
         added++;
@@ -3197,11 +3197,11 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 
     if (conf.doTransRed) {
         for(auto const& b: uselessBin) {
-            prop_stats.otfHyperTime += 2;
+            prop_stats.otf_hyper_time += 2;
             verb_print(10, "Removing binary clause: " << b
                 << " except marked: " << except_marked);
-            prop_stats.otfHyperTime += solver->watches[b.getLit1()].size()/2;
-            prop_stats.otfHyperTime += solver->watches[b.getLit2()].size()/2;
+            prop_stats.otf_hyper_time += solver->watches[b.getLit1()].size()/2;
+            prop_stats.otf_hyper_time += solver->watches[b.getLit2()].size()/2;
             bool removed;
             if (except_marked) {
                 bool rem1 = removeWBin_except_marked(
@@ -3252,10 +3252,10 @@ PropBy Searcher::propagate() {
             // We need this check, because apparently GJ can set unsat during prop
             if (unsat_cl_ID == 0) {
                 build_level0_confl_chain(ret);
-                *frat << add << ++clauseID;
+                *frat << add << ++clause_id;
                 add_chain();
                 *frat << fin;
-                set_unsat_cl_id(clauseID);
+                set_unsat_cl_id(clause_id);
             }
         }
     }
@@ -3633,12 +3633,12 @@ bool Searcher::attach_xorclauses() {
         if (x.size() == 2) {
             vector<Lit> lits = vars_to_lits(x.vars);
             lits[0] ^= !x.rhs;
-            const auto id1 = ++clauseID;
+            const auto id1 = ++clause_id;
             *frat << implyclfromx << id1 << lits << fratchain << x.xid << fin;
             solver->add_clause_int_frat(lits, id1);
             if (!okay()) return false;
             lits[0] ^= true; lits[1] ^= true;
-            const auto id2 = ++clauseID;
+            const auto id2 = ++clause_id;
             *frat << implyclfromx << id2 << lits << fratchain << x.xid << fin;
             solver->add_clause_int_frat(lits, id2);
             if (!okay()) return false;

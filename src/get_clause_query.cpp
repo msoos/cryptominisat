@@ -73,7 +73,7 @@ void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
 vector<uint32_t> GetClauseQuery::translate_sampl_set(
     const vector<uint32_t>& sampl_set)
 {
-    assert(solver->toClear.empty());
+    assert(solver->to_clear.empty());
     set<uint32_t> ret_set;
     if (simplified) {
         assert(solver->get_num_bva_vars() == 0);

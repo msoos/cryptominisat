@@ -1165,8 +1165,8 @@ DLL_PUBLIC void SATSolver::reserve_input_clause_ids(const uint32_t num_cls)
     Solver* s = data->solvers[0];
     if (!s->frat->enabled()) return;
     //only the first header of the first parse reserves
-    if (s->clauseID != 0 || s->input_cl_ids_reserved != 0) return;
-    s->clauseID = num_cls;
+    if (s->clause_id != 0 || s->input_cl_ids_reserved != 0) return;
+    s->clause_id = num_cls;
     s->input_cl_ids_reserved = num_cls;
     s->next_input_cl_id = 1;
 }

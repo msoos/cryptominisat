@@ -278,7 +278,7 @@ void Sweeper::add_core(uint32_t which)
                             if (occs->seen[l.toInt()]) continue;
                             if (!unit_at_collect[l.var()]) continue;
                             occs->seen[l.toInt()] = 1;
-                            occs->toClear.push_back(l);
+                            occs->to_clear.push_back(l);
                             assert(solver->unit_cl_IDs[l.var()] != 0);
                             tmp_hints.push_back(solver->unit_cl_IDs[l.var()]);
                         }
@@ -289,13 +289,13 @@ void Sweeper::add_core(uint32_t which)
                 assert(chain_id != 0);
                 tmp_hints.push_back(chain_id);
             }
-            for (const Lit l : occs->toClear) occs->seen[l.toInt()] = 0;
-            occs->toClear.clear();
+            for (const Lit l : occs->to_clear) occs->seen[l.toInt()] = 0;
+            occs->to_clear.clear();
         }
 
         const size_t nsz = pc.lits.size();
         if (nsz == 0) {
-            const int32_t id = ++solver->clauseID;
+            const int32_t id = ++solver->clause_id;
             *solver->frat << add << id;
             if (fr && !tmp_hints.empty()) *solver->frat << fratchain << tmp_hints;
             *solver->frat << fin;
@@ -309,7 +309,7 @@ void Sweeper::add_core(uint32_t which)
             if (solver->value(u) == l_True) {
                 if (fr) pc.cms_id = solver->unit_cl_IDs[u.var()];
             } else if (solver->value(u) == l_False) {
-                const int32_t id = ++solver->clauseID;
+                const int32_t id = ++solver->clause_id;
                 if (fr) {
                     assert(solver->unit_cl_IDs[u.var()] != 0);
                     tmp_hints.push_back(solver->unit_cl_IDs[u.var()]);
@@ -321,7 +321,7 @@ void Sweeper::add_core(uint32_t which)
                 solver->ok = false;
                 return;
             } else {
-                const int32_t id = ++solver->clauseID;
+                const int32_t id = ++solver->clause_id;
                 if (fr) {
                     *solver->frat << add << id << u;
                     if (!tmp_hints.empty()) *solver->frat << fratchain << tmp_hints;
@@ -338,7 +338,7 @@ void Sweeper::add_core(uint32_t which)
 
         //larger lemma: needed in the proof only, deleted in clear_core
         if (fr) {
-            const int32_t id = ++solver->clauseID;
+            const int32_t id = ++solver->clause_id;
             *solver->frat << add << id << pc.lits;
             if (!tmp_hints.empty()) *solver->frat << fratchain << tmp_hints;
             *solver->frat << fin;

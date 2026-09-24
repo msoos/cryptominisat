@@ -503,7 +503,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_id) {
 
     if (solver->frat->enabled()) {
         Xor reason = xor_reason_create(row);
-        out_id = ++solver->clauseID;
+        out_id = ++solver->clause_id;
         assert(tofill.size() == reason.size());
         *solver->frat << implyclfromx << out_id << tofill << fratchain << reason.xid << fin;
         *solver->frat << delx << reason << fin;
@@ -577,7 +577,7 @@ gret EGaussian::init_adjust_matrix() {
                     if (solver->frat->enabled()) {
                         *solver->frat << "init_adjust_matrix conflict\n";
                         const auto reason = xor_reason_create(row_i);
-                        const int32_t ID = ++solver->clauseID;
+                        const int32_t ID = ++solver->clause_id;
                         *solver->frat << implyclfromx << ID << fratchain << reason.xid << fin;
                         *solver->frat << delx << reason << fin;
                         set_unsat_cl_id(ID);
@@ -595,12 +595,12 @@ gret EGaussian::init_adjust_matrix() {
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 if (solver->frat->enabled()) {
                     const auto reason = xor_reason_create(row_i);
-                    const int32_t ID = ++solver->clauseID;
+                    const int32_t ID = ++solver->clause_id;
                     *solver->frat << implyclfromx << ID << tmp_clause[0] << fratchain << reason.xid << fin;
                     *solver->frat << delx << reason << fin;
                     del_unit_cls.push_back(make_pair(ID, tmp_clause[0]));
                     //the registered unit survives, del_unit_cls deletes ID
-                    const int32_t id2 = ++solver->clauseID;
+                    const int32_t id2 = ++solver->clause_id;
                     *solver->frat << add << id2 << tmp_clause[0] << fratchain << ID << fin;
                     solver->enqueue_registered_unit<false>(tmp_clause[0], id2);
                 } else {
@@ -628,12 +628,12 @@ gret EGaussian::init_adjust_matrix() {
                     vector<Lit> out = tmp_clause;
                     if (out.size() < 2) std::abort();
                     out[0] ^= !mat[row_i].rhs();
-                    int32_t id = ++solver->clauseID;
+                    int32_t id = ++solver->clause_id;
                     *solver->frat << implyclfromx << id << out << fratchain << reason.xid << fin;
                     solver->attach_bin_clause(out[0], out[1], false, id);
 
                     out[0] = out[0]^true; out[1] = out[1]^true;
-                    int32_t id2 = ++solver->clauseID;
+                    int32_t id2 = ++solver->clause_id;
                     *solver->frat << implyclfromx << id2 << out << fratchain << reason.xid << fin;
                     solver->attach_bin_clause(out[0], out[1], false, id2);
 
@@ -643,10 +643,10 @@ gret EGaussian::init_adjust_matrix() {
                     vector<Lit> out = tmp_clause;
                     if (out.size() < 2) std::abort();
                     out[0] ^= !mat[row_i].rhs();
-                    int32_t id = ++solver->clauseID;
+                    int32_t id = ++solver->clause_id;
                     solver->attach_bin_clause(out[0], out[1], false, id);
                     out[0] = out[0]^true; out[1] = out[1]^true;
-                    int32_t id2 = ++solver->clauseID;
+                    int32_t id2 = ++solver->clause_id;
                     solver->attach_bin_clause(out[0], out[1], false, id2);
                 }
 
@@ -811,13 +811,13 @@ bool EGaussian::find_truths(
             if (solver->decision_level() == 0 && solver->frat->enabled()) {
                 int32_t out_id;
                 vector<Lit>* rcl = get_reason(row_n, out_id);
-                *solver->frat << add << ++solver->clauseID << fratchain;
+                *solver->frat << add << ++solver->clause_id << fratchain;
                 for(const Lit l: *rcl) {
                     assert(solver->unit_cl_IDs[l.var()] != 0);
                     *solver->frat << solver->unit_cl_IDs[l.var()];
                 }
                 *solver->frat << out_id << fin;
-                set_unsat_cl_id(solver->clauseID);
+                set_unsat_cl_id(solver->clause_id);
             }
 
             if (was_resp_var) { // recover
@@ -1089,7 +1089,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         if (solver->decision_level() == 0 && solver->frat->enabled() && !unsat_set) {
                             int32_t ID;
                             vector<Lit>* rcl = get_reason(row_i, ID);
-                            int32_t fin_ID = ++solver->clauseID;
+                            int32_t fin_ID = ++solver->clause_id;
                             *solver->frat << add << fin_ID << fratchain;
                             for(const Lit l: *rcl) {
                                 assert(solver->unit_cl_IDs[l.var()] != 0);

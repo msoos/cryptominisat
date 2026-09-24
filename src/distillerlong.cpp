@@ -273,11 +273,11 @@ bool DistillerLong::distill_long_cls_all(
     double my_time = cpu_time();
     const size_t origTrailSize = solver->trail_size();
 
-    maxNumProps = (int64_t)budget;
-    orig_maxNumProps = maxNumProps;
+    max_num_props = (int64_t)budget;
+    orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->prop_stats.bogoProps;
+    oldBogoProps = solver->prop_stats.bogo_props;
     run_stats.numCalled += 1;
 
     //Select candidates. prio 0: not checked since their bit was cleared,
@@ -322,7 +322,7 @@ bool DistillerLong::distill_long_cls_all(
     //A candidate costs ~1K bogoprops at least, so a small budget must not
     //pay for sorting thousands of candidates it will never reach
     const uint32_t sched_max = std::min<uint64_t>(solver->conf.distill_sched_max,
-        std::max<uint64_t>(100, maxNumProps / 1000));
+        std::max<uint64_t>(100, max_num_props / 1000));
     if (todo.size() > sched_max) {
         vector<uint32_t> idx(todo.size());
         for(uint32_t i = 0; i < todo.size(); i++) idx[i] = i;
@@ -449,7 +449,7 @@ bool DistillerLong::distill_long_cls_all(
     const uint32_t orig_todo_size = todo.size();
     run_stats.potentialClauses += orig_todo_size;
 
-    assert(run_stats.checkedClauses == 0);
+    assert(run_stats.checked_clauses == 0);
     bool time_out = go_through_clauses(todo, also_remove, only_remove);
 
     //Add back the prioritized clauses
@@ -457,12 +457,12 @@ bool DistillerLong::distill_long_cls_all(
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
         const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
         cout << solver->conf.prefix << tag
-        << " cls tried: " << run_stats.checkedClauses << "/" << orig_todo_size
+        << " cls tried: " << run_stats.checked_clauses << "/" << orig_todo_size
         << " cl-rem: " << run_stats.clRemoved
         << " cl-sh: " << run_stats.numClShorten
         << " lit-rem: " << run_stats.numLitsRem
@@ -470,7 +470,7 @@ bool DistillerLong::distill_long_cls_all(
         << endl;
         cout << solver->conf.prefix << tag
         << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
-        << " used(M): " << (double)((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps)/1e6
+        << " used(M): " << (double)((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps)/1e6
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -486,7 +486,7 @@ bool DistillerLong::distill_long_cls_all(
 
     //Update stats
     run_stats.time_used += time_used;
-    run_stats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
 
     frat_func_end();
     return solver->okay();
@@ -508,7 +508,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         Clause& cl = *solver->cl_alloc.ptr(offset);
 
         //if done enough, stop doing it
-        if ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
             || solver->must_interrupt_asap()
         ) {
             run_stats.timeOut++;
@@ -516,11 +516,11 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         }
 
         //Time to dereference
-        maxNumProps -= 5;
+        max_num_props -= 5;
 
         if (also_remove) cl.tried_to_remove = 1;
         else cl.distilled = 1;
-        run_stats.checkedClauses++;
+        run_stats.checked_clauses++;
         assert(cl.size() > 2);
 
         //Try to distill clause
@@ -618,7 +618,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             solver->enqueue<true>(~lit);
             kept_lits.push_back(lit);
 
-            maxNumProps -= 5;
+            max_num_props -= 5;
             if (!red && also_remove) {
                 //ONLY propagate on irred
                 confl = solver->propagate<true, false, true>();
@@ -736,7 +736,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             solver->cancel_until<false, true>(solver->decision_level()-1);
             solver->new_decision_level();
             solver->enqueue<true>(last);
-            maxNumProps -= 5;
+            max_num_props -= 5;
             PropBy confl2;
             if (!red && also_remove) confl2 = solver->propagate<true, false, true>();
             else confl2 = solver->propagate<true, true, true>();
@@ -838,10 +838,10 @@ DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
     timeOut += other.timeOut;
-    zeroDepthAssigns += other.zeroDepthAssigns;
+    zero_depth_assigns += other.zero_depth_assigns;
     numClShorten += other.numClShorten;
     numLitsRem += other.numLitsRem;
-    checkedClauses += other.checkedClauses;
+    checked_clauses += other.checked_clauses;
     potentialClauses += other.potentialClauses;
     numCalled += other.numCalled;
     clRemoved += other.clRemoved;
@@ -866,7 +866,7 @@ void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
 
     print_stats_line("c distill/checked/potential"
         , numClShorten
-        , checkedClauses
+        , checked_clauses
         , potentialClauses
     );
 
@@ -874,8 +874,8 @@ void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
         numLitsRem
     );
     print_stats_line("c 0-depth-assigns",
-        zeroDepthAssigns
-        , stats_line_percent(zeroDepthAssigns, nVars)
+        zero_depth_assigns
+        , stats_line_percent(zero_depth_assigns, nVars)
         , "% of vars"
     );
     cout << pre << "-------- DISTILL STATS END --------" << endl;

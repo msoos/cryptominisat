@@ -62,7 +62,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     solver(_solver)
     , seen(solver->seen)
     , seen2(solver->seen2)
-    , toClear(solver->toClear)
+    , to_clear(solver->to_clear)
     , velim_order(VarOrderLt(varElimComplexity))
 {
     sub_str = new SubsumeStrengthen(this, solver);
@@ -1166,7 +1166,7 @@ bool OccSimplifier::eliminate_vars()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
     bvestats.clear();
-    bvestats.numCalls = 1;
+    bvestats.num_calls = 1;
 
     //Go through the ordered list of variables to eliminate. Note that "grow"
     //(CaDiCaL's elimination bound) is NOT reset here: it persists across calls
@@ -2326,7 +2326,7 @@ bool OccSimplifier::setup() {
     frat_func_start();
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(toClear.empty());
+    assert(to_clear.empty());
     added_long_cl.clear();
     added_irred_bin.clear();
     added_cl_to_var.clear();
@@ -2354,7 +2354,7 @@ bool OccSimplifier::setup() {
     //Setup
     clause_lits_added = 0;
     run_stats.clear();
-    run_stats.numCalls++;
+    run_stats.num_calls++;
     clauses.clear();
     set_limits();
     limit_to_decrease = &strengthening_time_limit;
@@ -3343,7 +3343,7 @@ bool OccSimplifier::build_core_unit_chain(const Lit unit_lit)
         }
         //the empty clause is the unit, add_clause_int gives it its ID
         if (!c.lits.empty()) {
-            lem.id = ++solver->clauseID;
+            lem.id = ++solver->clause_id;
             kid_to_id[c.kid] = lem.id;
         }
     }
@@ -3457,12 +3457,12 @@ bool OccSimplifier::find_or_gate(
     out_a.clear();
     out_b.clear();
 
-    assert(toClear.empty());
+    assert(to_clear.empty());
     for(const Watched w: a) {
         if (w.isBin()) {
             SLOW_DEBUG_DO(assert(!w.red()));
             seen[(~w.lit2()).toInt()] = w.get_id();
-            toClear.push_back(~w.lit2());
+            to_clear.push_back(~w.lit2());
         }
     }
 
@@ -3501,10 +3501,10 @@ bool OccSimplifier::find_or_gate(
         }
     }
 
-    for(Lit l: toClear) {
+    for(Lit l: to_clear) {
         seen[l.toInt()] = 0;
     }
-    toClear.clear();
+    to_clear.clear();
 
     return found;
 }
@@ -3535,7 +3535,7 @@ bool OccSimplifier::find_ite_gate(
     //      lits[1]  = -x
     //      lits[2]  =  g
     Lit lits[3];
-    assert(toClear.empty());
+    assert(to_clear.empty());
     for(uint32_t i = 0; i < a.size() && limit >= 0; i++, limit--) {
         const Watched& w = a[i];
         if (w.isBin() || w.isBNN()) {
@@ -3551,10 +3551,10 @@ bool OccSimplifier::find_ite_gate(
         }
 
         //Clear seen
-        for(const auto& l: toClear) {
+        for(const auto& l: to_clear) {
             seen[l.var()] = 0;
         }
-        toClear.clear();
+        to_clear.clear();
         out_a.push(w);
 
         //Set up base
@@ -3565,7 +3565,7 @@ bool OccSimplifier::find_ite_gate(
             }
             lits[at++] = l;
             seen[l.var()] = 1;
-            toClear.push_back(l);
+            to_clear.push_back(l);
         }
         assert(at == 2);
 
@@ -3619,7 +3619,7 @@ bool OccSimplifier::find_ite_gate(
 
             std::sort(cl2->begin(), cl2->end());
             seen[lits[2].var()] = 1;
-            toClear.push_back(lits[2]);
+            to_clear.push_back(lits[2]);
             out_a.push(w2);
             break;
         }
@@ -3706,10 +3706,10 @@ bool OccSimplifier::find_ite_gate(
         bvestats.gatefind_timeouts++;
     }
 
-    for(Lit l: toClear) {
+    for(Lit l: to_clear) {
         seen[l.var()] = 0;
     }
-    toClear.clear();
+    to_clear.clear();
 
     if (found && out_a_all == nullptr) {
         assert(out_a.size() == 2);
@@ -3729,7 +3729,7 @@ bool OccSimplifier::find_equivalence_gate(
     , vec<Watched>& out_a
     , vec<Watched>& out_b
 ) {
-    assert(toClear.empty());
+    assert(to_clear.empty());
 
     bool found = false;
     out_a.clear();
@@ -3739,7 +3739,7 @@ bool OccSimplifier::find_equivalence_gate(
         if (w.isBin()) {
             SLOW_DEBUG_DO(assert(!w.red()));
             seen[w.lit2().toInt()] = w.get_id();
-            toClear.push_back(w.lit2());
+            to_clear.push_back(w.lit2());
         }
     }
 
@@ -3755,8 +3755,8 @@ bool OccSimplifier::find_equivalence_gate(
         }
     }
 
-    for(const auto& l: toClear) seen[l.toInt()] = 0;
-    toClear.clear();
+    for(const auto& l: to_clear) seen[l.toInt()] = 0;
+    to_clear.clear();
 
     return found;
 }
@@ -3768,7 +3768,7 @@ bool OccSimplifier::find_xor_gate(
     , vec<Watched>& out_a
     , vec<Watched>& out_b
 ) {
-    assert(toClear.empty());
+    assert(to_clear.empty());
     //cout << "Finding xor gate" << endl;
 
     bool found = false;
@@ -3800,15 +3800,15 @@ bool OccSimplifier::find_xor_gate(
         tofind = 1ULL<<(size-1);
 
         //Clear seen
-        for(const auto& l: toClear) {
+        for(const auto& l: to_clear) {
             seen[l.var()] = 0;
         }
-        toClear.clear();
+        to_clear.clear();
 
         parity = 0;
         for(const auto& l: *cl) {
             seen [l.var()] = 1;
-            toClear.push_back(l);
+            to_clear.push_back(l);
             parity ^= l.sign();
         }
         out_a.clear();
@@ -3925,10 +3925,10 @@ bool OccSimplifier::find_xor_gate(
     }
 
     //Clear seen
-    for(const auto& l: toClear) {
+    for(const auto& l: to_clear) {
         seen[l.var()] = 0;
     }
-    toClear.clear();
+    to_clear.clear();
 
     //Clear cl markings
     for(const auto& cl: toclear_marked_cls) {
@@ -4274,14 +4274,14 @@ void OccSimplifier::weaken(const Lit lit, const vec<Watched>& in, vector<Lit>& o
             out.push_back(lit);
             out.push_back(c.lit2());
             seen[c.lit2().toInt()] = 1;
-            toClear.push_back(c.lit2());
+            to_clear.push_back(c.lit2());
             orig_sz = 2;
         } else if (c.isClause()) {
             const Clause* cl = solver->cl_alloc.ptr(c.get_offset());
             for(auto const& l: *cl) {
                 if (l != lit) {
                     seen[l.toInt()] = 1;
-                    toClear.push_back(l);
+                    to_clear.push_back(l);
                 }
                 out.push_back(l);
             }
@@ -4302,12 +4302,12 @@ void OccSimplifier::weaken(const Lit lit, const vec<Watched>& in, vector<Lit>& o
                 Lit toadd = ~w.lit2();
                 out.push_back(toadd);
                 seen[(toadd).toInt()] = 1;
-                toClear.push_back(toadd);
+                to_clear.push_back(toadd);
             }
         }
         out.push_back(lit_Undef);
-        for(auto const &l: toClear) seen[l.toInt()] = 0;
-        toClear.clear();
+        for(auto const &l: to_clear) seen[l.toInt()] = 0;
+        to_clear.clear();
         at = out.size();
     }
 
@@ -4653,7 +4653,7 @@ bool OccSimplifier::add_varelim_resolvent(
     } else if (finalLits.size() == 2) {
         n_occurs[finalLits[0].toInt()]++;
         n_occurs[finalLits[1].toInt()]++;
-        added_irred_bin.push_back({finalLits[0], finalLits[1], solver->clauseID});
+        added_irred_bin.push_back({finalLits[0], finalLits[1], solver->clause_id});
 
         // 8 = watch space
         varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(8);
@@ -5323,7 +5323,7 @@ void OccSimplifier::Stats::clear()
 
 OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
 {
-    numCalls += other.numCalls;
+    num_calls += other.num_calls;
 
     //Time
     linkInTime += other.linkInTime;
@@ -5377,8 +5377,8 @@ void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
     );
 
     print_stats_line("c called"
-        ,  numCalls
-        , float_div(total_time(occs), numCalls)
+        ,  num_calls
+        , float_div(total_time(occs), num_calls)
         , "s per call"
     );
 
@@ -5413,7 +5413,7 @@ Clause* OccSimplifier::full_add_clause(
     if (!newCl && final_lits.size() == 2 && !red) {
         n_occurs[final_lits[0].toInt()]++;
         n_occurs[final_lits[1].toInt()]++;
-        added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clauseID});
+        added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clause_id});
     }
     if (solver->okay()) {
         solver->ok = solver->propagate_occur<false>(limit_to_decrease);

@@ -101,7 +101,7 @@ private:
     size_t hyperbin_added;
     size_t removedIrredBin;
     size_t removedRedBin;
-    size_t numCalls = 0;
+    size_t num_calls = 0;
 
     Solver* solver;
     vector<uint32_t>& seen;

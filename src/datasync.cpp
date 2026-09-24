@@ -35,7 +35,7 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
     solver(_solver)
     , sharedData(_sharedData)
     , seen(solver->seen)
-    , toClear(solver->toClear)
+    , to_clear(solver->to_clear)
 {
 }
 
@@ -110,7 +110,7 @@ bool DataSync::syncData()
     ) {
         return true;
     }
-    numCalls++;
+    num_calls++;
 
     assert(sharedData != nullptr);
     assert(solver->decision_level() == 0);
@@ -152,7 +152,7 @@ bool DataSync::syncData()
             ok = mpi_recv_from_others();
             assert(solver->conf.every_n_mpi_sync > 0);
             if (ok &&
-                numCalls % solver->conf.every_n_mpi_sync == solver->conf.every_n_mpi_sync-1
+                num_calls % solver->conf.every_n_mpi_sync == solver->conf.every_n_mpi_sync-1
             ) {
                 mpi_send_to_others();
             }
@@ -286,10 +286,10 @@ bool DataSync::syncBinFromOthers(
     assert(solver->var_replacer->get_lit_replaced_with(lit) == lit);
     assert(solver->var_data[lit.var()].removed == Removed::none);
 
-    assert(toClear.empty());
+    assert(to_clear.empty());
     for (const Watched& w: ws) {
         if (w.isBin()) {
-            toClear.push_back(w.lit2());
+            to_clear.push_back(w.lit2());
             assert(seen.size() > w.lit2().toInt());
             seen[w.lit2().toInt()] = true;
         }
@@ -321,10 +321,10 @@ bool DataSync::syncBinFromOthers(
     finished = bins.size();
 
     end:
-    for (const Lit l: toClear) {
+    for (const Lit l: to_clear) {
         seen[l.toInt()] = false;
     }
-    toClear.clear();
+    to_clear.clear();
 
     return solver->okay();
 }

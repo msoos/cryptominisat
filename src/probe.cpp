@@ -37,7 +37,7 @@ bool Solver::full_probe(const bool bin_only)
 
     const size_t orig_num_free_vars = solver->get_num_free_vars();
     double my_time = cpu_time();
-    int64_t start_bogoprops = solver->prop_stats.bogoProps;
+    int64_t start_bogoprops = solver->prop_stats.bogo_props;
     int64_t bogoprops_to_use =
         solver->conf.full_probe_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
@@ -52,7 +52,7 @@ bool Solver::full_probe(const bool bin_only)
     std::shuffle(vars.begin(), vars.end(), mtrand);
 
     for(auto const& v: vars) {
-        if ((int64_t)solver->prop_stats.bogoProps > start_bogoprops + bogoprops_to_use)
+        if ((int64_t)solver->prop_stats.bogo_props > start_bogoprops + bogoprops_to_use)
             break;
 
         uint32_t min_props;
@@ -79,8 +79,8 @@ bool Solver::full_probe(const bool bin_only)
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = 1.0-float_div(
-        (int64_t)solver->prop_stats.bogoProps-start_bogoprops, bogoprops_to_use);
-    const bool time_out = ((int64_t)solver->prop_stats.bogoProps > start_bogoprops + bogoprops_to_use);
+        (int64_t)solver->prop_stats.bogo_props-start_bogoprops, bogoprops_to_use);
+    const bool time_out = ((int64_t)solver->prop_stats.bogo_props > start_bogoprops + bogoprops_to_use);
 
     verb_print(1,
         "[full-probe]"
@@ -107,7 +107,7 @@ bool Solver::full_probe(const bool bin_only)
 
 template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_props)
 {
-    prop_stats.bogoProps+=2;
+    prop_stats.bogo_props+=2;
     const bool fr = frat->enabled();
 
     //Probe l
@@ -124,7 +124,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     }
     min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
-        toClear.push_back(trail[i].lit);
+        to_clear.push_back(trail[i].lit);
         //seen[x] == 0 -> not propagated
         //seen[x] == 1 -> propagated as POS
         //seen[x] == 2 -> propagated as NEG
@@ -191,16 +191,16 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
             //I am not going to deal with the messy version of it already being set
             if (value(bp_lit) == l_Undef) {
                 //(~l, bp) follows from the l-probe, (l, bp) from the ~l-probe
-                *solver->frat << add << ++clauseID << ~l << bp_lit;
+                *solver->frat << add << ++clause_id << ~l << bp_lit;
                 if (fr) *solver->frat << fratchain << probe_hints_pos;
                 *solver->frat << fin;
-                const int32_t c1 = clauseID;
-                *solver->frat << add << ++clauseID << l << bp_lit;
+                const int32_t c1 = clause_id;
+                *solver->frat << add << ++clause_id << l << bp_lit;
                 if (fr) *solver->frat << fratchain << probe_hints_neg;
                 *solver->frat << fin;
-                const int32_t c2 = clauseID;
+                const int32_t c2 = clause_id;
                 if (fr) {
-                    const auto id = ++clauseID;
+                    const auto id = ++clause_id;
                     *solver->frat << add << id << bp_lit << fratchain << c1 << c2 << fin;
                     enqueue_registered_unit<true>(bp_lit, id);
                 } else {
@@ -241,8 +241,8 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     }
 
     end:
-    for(auto clear_l: toClear) seen[clear_l.var()] = 0;
-    toClear.clear();
+    for(auto clear_l: to_clear) seen[clear_l.var()] = 0;
+    to_clear.clear();
     return okay();
 }
 

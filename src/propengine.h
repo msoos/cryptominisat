@@ -374,7 +374,7 @@ protected:
         mem += CNF::mem_used();
         mem += trail.capacity()*sizeof(Lit);
         mem += trail_lim.capacity()*sizeof(uint32_t);
-        mem += toClear.capacity()*sizeof(Lit);
+        mem += to_clear.capacity()*sizeof(Lit);
         return mem;
     }
 
@@ -555,7 +555,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     if (level == 0 && frat->enabled()) enqueue_level0_frat(p, from, do_unit_frat);
 
     trail.push_back(Trail(p, level));
-    if (inprocess) prop_stats.bogoProps += 1;
+    if (inprocess) prop_stats.bogo_props += 1;
 }
 
 template<bool bin_only>
@@ -570,7 +570,7 @@ PropBy PropEngine::propagate_light()
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        prop_stats.bogoProps += ws.size()/4 + 1;
+        prop_stats.bogo_props += ws.size()/4 + 1;
         for (; i != end; i++) {
             if (!confl.isnullptr()) break;
 
@@ -588,7 +588,7 @@ PropBy PropEngine::propagate_light()
                     *j++ = *i;
                     continue;
                 }
-                prop_stats.bogoProps += 4;
+                prop_stats.bogo_props += 4;
                 const ClOffset offset = i->get_offset();
                 Clause& c = *cl_alloc.ptr(offset);
 
@@ -653,7 +653,7 @@ inline void PropEngine::enqueue_light(const Lit p)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     trail.push_back(Trail(p, 1));
-    prop_stats.bogoProps += 1;
+    prop_stats.bogo_props += 1;
 }
 
 inline void PropEngine::attach_bin_clause(

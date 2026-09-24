@@ -47,7 +47,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier
         *0.5;
-    time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
+    time_limit = (double)time_limit * std::min(std::pow((double)(num_calls+1), 0.2), 3.0);
     frat_func_start();
 
     aborted = false;
@@ -138,7 +138,7 @@ bool InTree::intree_probe() {
     hyperbin_added = 0;
     removedIrredBin = 0;
     removedRedBin = 0;
-    numCalls++;
+    num_calls++;
     frat_func_start();
 
     if (!solver->conf.doFindAndReplaceEqLits) {
@@ -162,12 +162,12 @@ bool InTree::intree_probe() {
     double my_time = cpu_time();
     bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
-    bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
+    bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(num_calls+1), 0.3);
     const int64_t rel = solver->conf.intree_effort*(double)(solver->all_bogoprops() - last_all_props);
     bogoprops_to_use = std::min<int64_t>(bogoprops_to_use, std::max<int64_t>(rel, 5LL*1000LL*1000LL));
     start_bogoprops = used_props();
     solver->clean_unused_hyper_bins();
-    const int32_t first_hyper_id = solver->clauseID + 1;
+    const int32_t first_hyper_id = solver->clause_id + 1;
 
     fill_roots();
     std::shuffle(roots.begin(), roots.end(), solver->mtrand);
@@ -184,7 +184,7 @@ bool InTree::intree_probe() {
     tree_look();
     unmark_all_bins();
     if (solver->frat->enabled()) solver->flush_ghost_hyper_bins();
-    solver->add_hyper_bin_range(first_hyper_id, solver->clauseID + 1);
+    solver->add_hyper_bin_range(first_hyper_id, solver->clause_id + 1);
 
     const double time_used = cpu_time() - my_time;
     const int64_t used = used_props() - start_bogoprops;
@@ -215,7 +215,7 @@ bool InTree::intree_probe() {
 
 int64_t InTree::used_props() const
 {
-    return solver->prop_stats.bogoProps + solver->prop_stats.otfHyperTime;
+    return solver->prop_stats.bogo_props + solver->prop_stats.otf_hyper_time;
 }
 
 void InTree::unmark_all_bins()
@@ -316,8 +316,8 @@ bool InTree::handle_lit_popped_from_queue(
             uint64_t max_hyper_time = numeric_limits<uint64_t>::max();
             if (!solver->frat->enabled()) {
                 max_hyper_time =
-                solver->prop_stats.otfHyperTime
-                + solver->prop_stats.bogoProps
+                solver->prop_stats.otf_hyper_time
+                + solver->prop_stats.bogo_props
                 + 1600ULL*1000ULL*1000ULL;
             }
 
@@ -375,7 +375,7 @@ bool InTree::empty_failed_list()
             if (fr) {
                 vector<int32_t> hints;
                 solver->prop_hints_for_unit(lit, hints);
-                const auto id = ++solver->clauseID;
+                const auto id = ++solver->clause_id;
                 *solver->frat << add << id << lit << fratchain << hints << fin;
                 solver->enqueue_registered_unit<true>(lit, id);
             } else {
@@ -388,8 +388,8 @@ bool InTree::empty_failed_list()
         } else if (solver->value(lit) == l_False) {
             //with frat on, the propagation above conflicts instead
             assert(!fr);
-            *solver->frat << add << ++solver->clauseID << fin;
-            set_unsat_cl_id(solver->clauseID);
+            *solver->frat << add << ++solver->clause_id << fin;
+            set_unsat_cl_id(solver->clause_id);
             solver->ok = false;
             return false;
         }

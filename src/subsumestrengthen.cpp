@@ -674,18 +674,18 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 remove_binary_cl(subs[j]);
             } else { //strengthen: the resolvent is the unit subsLits[j]
                 lbool val = solver->value(subsLits[j]);
-                const int32_t ID = ++solver->clauseID;
+                const int32_t ID = ++solver->clause_id;
                 if (val == l_False) {
                     (*solver->frat) << add << ID << subsLits[j];
                     if (solver->frat->enabled() && impl_id != 0)
                         (*solver->frat) << fratchain << impl_id << subs[j].ws.get_id();
                     (*solver->frat) << fin;
-                    (*solver->frat) << add << ++solver->clauseID;
+                    (*solver->frat) << add << ++solver->clause_id;
                     if (solver->frat->enabled())
                         (*solver->frat) << fratchain
                             << solver->unit_cl_IDs[subsLits[j].var()] << ID;
                     (*solver->frat) << fin;
-                    set_unsat_cl_id(solver->clauseID);
+                    set_unsat_cl_id(solver->clause_id);
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {

@@ -42,7 +42,7 @@ DistillerLongWithImpl::DistillerLongWithImpl(Solver* _solver) :
     solver(_solver)
     , seen(solver->seen)
     , seen2(solver->seen2)
-    , numCalls(0)
+    , num_calls(0)
 {}
 
 bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthen)
@@ -50,7 +50,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthe
     SLOW_DEBUG_DO(solver->check_seen_clean());
     SLOW_DEBUG_DO(solver->check_seen2_clean());
     assert(solver->ok);
-    numCalls++;
+    num_calls++;
     if (!solver->clause_cleaner->remove_and_clean_all()) goto end;
     frat_func_start();
 

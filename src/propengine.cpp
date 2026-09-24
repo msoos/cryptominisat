@@ -629,7 +629,7 @@ bool PropEngine::prop_long_cl(
         *j++ = *i;
         return true;
     }
-    if (inprocess) prop_stats.bogoProps += 4;
+    if (inprocess) prop_stats.bogo_props += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
@@ -742,7 +742,7 @@ PropBy PropEngine::propagate_core()
         Watched* j = i;
         Watched* end = ws.end();
         //Also in search: effort budgets of inprocessing are relative to it
-        prop_stats.bogoProps += ws.size()/4 + 1;
+        prop_stats.bogo_props += ws.size()/4 + 1;
         prop_stats.propagations++;
         simpDB_props--;
         for (; i != end; i++) {
@@ -853,13 +853,13 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
     assert(gmatrices.empty());
 
     if (decision_level() == 0 && !ret) {
-        *frat << add << ++clauseID;
+        *frat << add << ++clause_id;
         if (frat->enabled()) {
             assert(last_occ_confl_id != 0);
             *frat << fratchain << last_occ_confl_units << last_occ_confl_id;
         }
         *frat << fin;
-        set_unsat_cl_id(clauseID);
+        set_unsat_cl_id(clause_id);
     }
     if (decision_level() == 0) { last_occ_confl_id = 0; last_occ_confl_units.clear(); }
 
@@ -964,7 +964,7 @@ void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool 
         default: break; //null/BNN: no hints
     }
 
-    const auto id = ++clauseID;
+    const auto id = ++clause_id;
     const auto xid = ++clauseXID;
     *frat << add << id << p;
     if (reason_id != 0) {
@@ -1244,7 +1244,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             if (x.reason_cl_ID == 0 || x.reason_cl != tmp_xor_reason) {
                 if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
                 x.reason_cl = tmp_xor_reason;
-                x.reason_cl_ID = ++clauseID;
+                x.reason_cl_ID = ++clause_id;
                 *frat << implyclfromx << x.reason_cl_ID << x.reason_cl
                     << FratFlag::fratchain << x.xid << fin;
             }

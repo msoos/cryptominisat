@@ -247,8 +247,8 @@ class Solver : public Searcher
         uint64_t outside_search_props = 0;
         //Monotonic, deterministic measure of all propagation work so far
         uint64_t all_bogoprops() const {
-            return sum_prop_stats.bogoProps + sum_prop_stats.otfHyperTime
-                + prop_stats.bogoProps + prop_stats.otfHyperTime + outside_search_props;
+            return sum_prop_stats.bogo_props + sum_prop_stats.otf_hyper_time
+                + prop_stats.bogo_props + prop_stats.otf_hyper_time + outside_search_props;
         }
 
         bool prop_at_head() const;

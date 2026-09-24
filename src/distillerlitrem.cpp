@@ -42,7 +42,7 @@ DistillerLitRem::DistillerLitRem(Solver* _solver) :
 bool DistillerLitRem::distill_lit_rem()
 {
     assert(solver->ok);
-    numCalls++;
+    num_calls++;
     run_stats.clear();
 
 
@@ -95,7 +95,7 @@ bool DistillerLitRem::go_through_clauses(
         }
 
         //if done enough, stop doing it
-        if ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
             || solver->must_interrupt_asap()
         ) {
             run_stats.timeOut++;
@@ -112,15 +112,15 @@ bool DistillerLitRem::go_through_clauses(
         }
 
         //Time to dereference
-        maxNumProps -= 5;
-        run_stats.checkedClauses++;
+        max_num_props -= 5;
+        run_stats.checked_clauses++;
         assert(cl.size() > 2);
 
         //we will detach the clause no matter what
-        maxNumProps -= solver->watches[cl[0]].size();
-        maxNumProps -= solver->watches[cl[1]].size();
+        max_num_props -= solver->watches[cl[0]].size();
+        max_num_props -= solver->watches[cl[1]].size();
 
-        maxNumProps -= cl.size();
+        max_num_props -= cl.size();
         if (solver->satisfied(cl)) {
             solver->detachClause(cl);
             solver->free_cl(&cl);
@@ -156,20 +156,20 @@ bool DistillerLitRem::distill_long_cls_all(
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
-    maxNumProps =
+    max_num_props =
         5*1000LL*1000ULL
         *solver->conf.global_timeout_multiplier;
 
     if (solver->lit_stats.irred_lits + solver->lit_stats.red_lits <
             (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
     ) {
-        maxNumProps *=2;
+        max_num_props *=2;
     }
-    maxNumProps *= time_mult;
-    orig_maxNumProps = maxNumProps;
+    max_num_props *= time_mult;
+    orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->prop_stats.bogoProps;
+    oldBogoProps = solver->prop_stats.bogo_props;
     run_stats.potentialClauses += offs.size();
     run_stats.numCalled += 1;
 
@@ -188,7 +188,7 @@ bool DistillerLitRem::distill_long_cls_all(
     }
 
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->sql_stats) {
         solver->sql_stats->time_passed(
@@ -202,7 +202,7 @@ bool DistillerLitRem::distill_long_cls_all(
 
 
     //Update stats
-    run_stats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
 
     return solver->okay();
 }
@@ -305,10 +305,10 @@ DistillerLitRem::Stats& DistillerLitRem::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
     timeOut += other.timeOut;
-    zeroDepthAssigns += other.zeroDepthAssigns;
+    zero_depth_assigns += other.zero_depth_assigns;
     numClShorten += other.numClShorten;
     numLitsRem += other.numLitsRem;
-    checkedClauses += other.checkedClauses;
+    checked_clauses += other.checked_clauses;
     potentialClauses += other.potentialClauses;
     numCalled += other.numCalled;
 
@@ -320,9 +320,9 @@ void DistillerLitRem::Stats::print_short(const Solver* _solver) const
     cout
     << "c [distill-litrem]"
     << " useful: "<< numClShorten
-    << "/" << checkedClauses << "/" << potentialClauses
+    << "/" << checked_clauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
-    << " 0-depth-assigns: " << zeroDepthAssigns
+    << " 0-depth-assigns: " << zero_depth_assigns
     << _solver->conf.print_times(time_used, timeOut)
     << endl;
 }

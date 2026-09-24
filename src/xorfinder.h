@@ -148,7 +148,7 @@ public:
         void print_short(const Solver* solver, const double time_remain) const;
 
         //Time
-        uint32_t numCalls = 0;
+        uint32_t num_calls = 0;
         double findTime = 0.0;
         uint32_t time_outs = 0;
 
@@ -198,7 +198,7 @@ private:
 
     //Other temporaries
     vector<uint32_t> occ_cnt;
-    vector<Lit>& toClear;
+    vector<Lit>& to_clear;
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
     vector<uint32_t> interesting;

@@ -108,9 +108,9 @@ class DataSync
         #endif
 
         //misc
-        uint32_t numCalls = 0;
+        uint32_t num_calls = 0;
         vector<uint32_t>& seen;
-        vector<Lit>& toClear;
+        vector<Lit>& to_clear;
 };
 
 inline const DataSync::Stats& DataSync::get_stats() const

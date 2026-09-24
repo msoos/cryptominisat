@@ -110,12 +110,12 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define INC_ID(cl) \
     do { \
         auto prev_id = (cl).stats.id; \
-        (cl).stats.id = ++solver->clauseID; \
+        (cl).stats.id = ++solver->clause_id; \
         if (solver->sql_stats && (cl).stats.is_tracked) solver->sql_stats->update_id(prev_id, (cl).stats.id); \
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
-#define INC_ID(cl) do { (cl).stats.id = ++solver->clauseID; } while (0)
+#define INC_ID(cl) do { (cl).stats.id = ++solver->clause_id; } while (0)
 #endif
 // NOTE: xid's are not tracked during stats -- we must have XOR finding etc disabled
 #define INC_XID(x) do { (x).xid = ++solver->clauseXID; } while (0)

@@ -164,7 +164,7 @@ public:
     vector<uint32_t> bnn_reasons_empty_slots;
     BinTriStats bin_tri;
     LitStats lit_stats;
-    int32_t clauseID = 0;
+    int32_t clause_id = 0;
     int32_t clauseXID = 0;
     int64_t restartID = 1;
     SQLStats* sql_stats = nullptr;
@@ -174,7 +174,7 @@ public:
     vector<uint32_t> seen;
     vector<uint8_t> seen2;
     vector<uint64_t> permDiff;
-    vector<Lit>      toClear;
+    vector<Lit>      to_clear;
     uint64_t MYFLAG = 1;
 
     [[nodiscard]] bool okay() const {

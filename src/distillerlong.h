@@ -58,10 +58,10 @@ class DistillerLong {
 
             double time_used = 0.0;
             uint64_t timeOut = 0;
-            uint64_t zeroDepthAssigns = 0;
+            uint64_t zero_depth_assigns = 0;
             uint64_t numClShorten = 0;
             uint64_t numLitsRem = 0;
-            uint64_t checkedClauses = 0;
+            uint64_t checked_clauses = 0;
             uint64_t potentialClauses = 0;
             uint64_t numCalled = 0;
             uint64_t clRemoved = 0;
@@ -101,7 +101,7 @@ class DistillerLong {
         vector<Lit> kept_lits;
         vector<Lit> lits;
         uint64_t oldBogoProps;
-        int64_t maxNumProps;
+        int64_t max_num_props;
         int64_t orig_maxNumProps;
 
         //Global status

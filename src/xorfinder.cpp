@@ -41,7 +41,7 @@ using std::endl;
 XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     occsimplifier(_occsimplifier)
     , solver(_solver)
-    , toClear(_solver->toClear)
+    , to_clear(_solver->to_clear)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
 {
@@ -126,7 +126,7 @@ bool XorFinder::find_xors() {
     const auto orig_num_xors = solver->xorclauses.size();
 
     run_stats.clear();
-    run_stats.numCalls = 1;
+    run_stats.num_calls = 1;
     grab_mem();
 
     for(auto& gw: solver->gwatches) gw.clear();

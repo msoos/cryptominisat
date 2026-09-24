@@ -40,7 +40,7 @@ GateFinder::GateFinder(OccSimplifier *_simplifier, Solver *_solver) :
     , solver(_solver)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
-    , toClear(solver->toClear)
+    , to_clear(solver->to_clear)
 {
 //     sizeSortedOcc.resize(solver->conf.maxGateBasedClReduceSize+1);
 }
@@ -136,7 +136,7 @@ void GateFinder::find_or_gates()
 
 void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 {
-    assert(toClear.empty());
+    assert(to_clear.empty());
 
     //From the clauses
     //a V -b
@@ -147,7 +147,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     for(const Watched w: ws) {
         if (w.isBin() && !w.red()) {
             seen[(~w.lit2()).toInt()] = 1;
-            toClear.push_back(~w.lit2());
+            to_clear.push_back(~w.lit2());
         }
     }
     //avoid loops
@@ -179,9 +179,9 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
         add_gate_if_not_already_inside(lit, tmp_lhs, cl.stats.id);
     }
 
-    *simplifier->limit_to_decrease -= toClear.size();
-    for(const Lit toclear: toClear) seen[toclear.toInt()] = 0;
-    toClear.clear();
+    *simplifier->limit_to_decrease -= to_clear.size();
+    for(const Lit toclear: to_clear) seen[toclear.toInt()] = 0;
+    to_clear.clear();
 }
 
 

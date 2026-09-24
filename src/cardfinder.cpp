@@ -41,7 +41,7 @@ CardFinder::CardFinder(Solver* _solver) :
     solver(_solver)
     , seen(solver->seen)
     , seen2(solver->seen2)
-    , toClear(solver->toClear)
+    , to_clear(solver->to_clear)
 {
 }
 
@@ -319,7 +319,7 @@ void CardFinder::clean_empty_cards()
 //
 void CardFinder::find_pairwise_atmost1()
 {
-    assert(toClear.size() == 0);
+    assert(to_clear.size() == 0);
     for (uint32_t i = 0; i < solver->nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         vector<Lit> lits_in_card;
@@ -350,7 +350,7 @@ void CardFinder::find_pairwise_atmost1()
             lits_in_card.push_back(l);
             for(const Lit l_c: lits_in_card) {
                 if (!seen[l_c.toInt()]) {
-                    toClear.push_back(l_c);
+                    to_clear.push_back(l_c);
                 }
                 seen[l_c.toInt()]++;
                 solver->watches[l_c].push(Watched(cards.size(), WatchType::watch_idx_t));
@@ -376,14 +376,14 @@ void CardFinder::find_pairwise_atmost1()
     //  x1+x2+x3 <= 1 and \not x3+x4+x5 <= 1
     //See sect. 3.2 of same paper
     //
-    std::sort(toClear.begin(), toClear.end());
+    std::sort(to_clear.begin(), to_clear.end());
     vector<uint32_t> vars_with_clash;
-    get_vars_with_clash(toClear, vars_with_clash);
+    get_vars_with_clash(to_clear, vars_with_clash);
     deal_with_clash(vars_with_clash);
-    for(const Lit x: toClear) {
+    for(const Lit x: to_clear) {
         seen[x.toInt()] = 0;
     }
-    toClear.clear();
+    to_clear.clear();
 }
 
 void CardFinder::find_cards()

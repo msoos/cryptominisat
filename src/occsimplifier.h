@@ -74,7 +74,7 @@ struct ElimedClauses {
 
 struct BVEStats
 {
-    uint64_t numCalls = 0;
+    uint64_t num_calls = 0;
     double timeUsed = 0.0;
 
     int64_t numVarsElimed = 0;
@@ -229,7 +229,7 @@ public:
         void clear();
         double total_time(OccSimplifier* occs) const;
 
-        uint64_t numCalls = 0;
+        uint64_t num_calls = 0;
         uint64_t ternary_added_tri = 0;
         uint64_t ternary_added_bin = 0;
 
@@ -340,7 +340,7 @@ private:
     Solver*  solver;              ///<The solver this simplifier is connected to
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
-    vector<Lit>& toClear;
+    vector<Lit>& to_clear;
     vector<bool> sampling_vars_occsimp;
     vector<bool> xorclauses_vars;
 
