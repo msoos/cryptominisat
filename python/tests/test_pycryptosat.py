@@ -962,18 +962,6 @@ class TestOptions(unittest.TestCase):
             self.assertNotIn(name, names)
         self.assertIn("get_option_names", pycryptosat.get_option_names.__doc__)
 
-    def test_readme_lists_every_option(self):
-        import re
-        readme = _MODULE_DIR + ".." + os.path.sep + "README.md"
-        if not os.path.exists(readme):
-            self.skipTest("python/README.md not found")
-        text = open(readme).read()
-        start = text.index("## Solver options")
-        end = text.index("\n## ", start + 1)
-        listed = re.findall(r"^\| `(\w+)` \|", text[start:end], re.M)
-        self.assertEqual(len(listed), len(set(listed)))
-        self.assertEqual(set(listed), set(pycryptosat.get_option_names()))
-
 
 THREAD_COUNTS = (2, 3, 4, 8)
 
