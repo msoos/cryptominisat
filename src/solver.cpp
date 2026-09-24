@@ -2167,7 +2167,9 @@ void Solver::print_norm_stats(
     );
 
     if (sumConflicts > 0) {
+        //all learnts live in pool 0 since the CaDiCaL port, the others are empty
         for(uint32_t i = 0; i < longRedCls.size(); i ++) {
+            if (i > 0 && longRedClsSizes[i] == 0) continue;
             std::stringstream ss;
             ss << conf.prefix + "avg cls in red " << i;
             print_stats_line(ss.str()
