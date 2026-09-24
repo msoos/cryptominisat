@@ -153,11 +153,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define frat_func_end_raw() do { } while (0)
 #endif
 
-#ifdef USE_BREAKID
-#define USE_BREAKID_DO(x) do { x; } while (0)
-#else
-#define USE_BREAKID_DO(x) do { } while (0)
-#endif
 
 #ifdef SLOW_DEBUG
 #define SLOW_DEBUG_DO(x) do { x; } while (0)

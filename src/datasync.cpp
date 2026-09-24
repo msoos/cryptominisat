@@ -229,7 +229,7 @@ bool DataSync::shareUnitData()
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [sync " << thread_id << "  ]"
+        << solver->conf.prefix << "[sync " << thread_id << "  ]"
         << " got units " << thisGotUnitData
         << " (total: " << stats.recvUnitData << ")"
         << " sent units " << thisSentUnitData
@@ -389,7 +389,7 @@ bool DataSync::shareBinData()
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [sync " << thread_id << "  ]"
+        << solver->conf.prefix << "[sync " << thread_id << "  ]"
         << " got bins " << (stats.recvBinData - oldRecvBinData)
         << " (total: " << stats.recvBinData << ")"
         << " sent bins " << (stats.sentBinData - oldSentBinData)

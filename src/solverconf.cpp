@@ -55,10 +55,6 @@ using std::numeric_limits;
 //1813642 out-9896604.wlm01-0-drat0 242 146 96   6d8c7e2  _satcomp2020 --simdrat 1
 //1867880 out-9896604.wlm01-1-drat0 237 139 98   6d8c7e2  _satcomp2020 --simdrat 1 --diffdeclevelchrono 0
 
-//XOR is good, even on GAUSS
-//1755046 out-9896604.wlm01-8-drat0  250 146 104 edd5be7  _devel --xor 1 --breakid 1 --breakideveryn 5
-//1773691 out-9896604.wlm01-13-drat0 247 144 103 edd5be7  _devel --xor 0 --breakid 1 --breakideveryn 5
-
 //Tuning to
 //1684592 out-9915739.wlm01-3-drat0 256 149 107 b3b7cfb  _devel --printsol 0 --xorfindtout 400 --gaussusefulcutoff 0.2
 
@@ -217,17 +213,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ternary_max_create(0.3)
         , allow_ternary_bin_create(false)
 
-        //BreakID
-        , do_breakid(false)
-        , breakid_use_assump(true)
-        , breakid_every_n(5)
-        , breakid_vars_limit_K(300)
-        , breakid_cls_limit_K(600)
-        , breakid_lits_limit_K(3500)
-        , breakid_time_limit_K(2000)
-        , breakid_max_constr_per_permut(50)
-        , breakid_matrix_detect(true)
-
         //Bounded variable addition
         , do_bva(false)
         , min_bva_gain(16)
@@ -270,7 +255,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_startup(
             "sub-impl, occ-backw-sub,"
             "scc-vrepl,"
-            "breakid, "
             "occ-sweep, occ-bve,occ-xor,"
             "must-scc-vrepl"
         )
@@ -279,7 +263,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //"scc-vrepl,"
             //"intree-probe,"
             "scc-vrepl,sub-impl,"
-            "breakid,"
              //occurrence based
             "occ-backw-sub-str,occ-clean-implicit,occ-sweep,occ-bve,"//occ-gates,"
             "occ-ternary-res,occ-xor,"

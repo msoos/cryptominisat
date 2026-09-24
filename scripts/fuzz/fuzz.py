@@ -28,6 +28,8 @@ import random
 from random import choice
 import optparse
 import glob
+import shlex
+import string
 import resource
 from verifier import *
 from functools import partial
@@ -210,8 +212,9 @@ class Tester:
 
     def __init__(self):
         self.ignoreNoSolution = False
+        self.prefix = "c "
         self.extra_opts_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss", "sql", "breakid", "predshort"])
+            ["xor", "autodisablegauss", "sql", "predshort"])
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.only_sampling = False
@@ -304,7 +307,7 @@ class Tester:
         sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
         sched_opts += "renumber, must-renumber,"
-        sched_opts += "card-find, breakid, cl-consolidate,"
+        sched_opts += "card-find, cl-consolidate,"
         sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
 
         # type of schedule
@@ -327,10 +330,15 @@ class Tester:
         #   --printsol 0: the verifier needs the 'v' lines
         #   --maxsol/--nobansol: changes output contract, verifier cannot check
         #   --assump/--debuglib/--sampling/--threads: handled elsewhere
-        #   --breakid*: BreakID is not compiled into normal builds
         #   'sls' schedule token: assert(false) in solver
         self.sqlitedbfname = None
         cmd = " --zero-exit-status "
+
+        self.prefix = "c "
+        if random.randint(0, 2) == 0:
+            chars = string.ascii_letters + string.digits + " []-_:"
+            self.prefix += "".join(random.choice(chars) for _ in range(random.randint(1, 5)))
+            cmd += "--prefix %s " % shlex.quote(self.prefix)
 
         # disable gauss when gauss is compiled in but asked not to be used
         #if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
@@ -346,12 +354,6 @@ class Tester:
         cmd += "--flushint %d " % random.choice([1000, 100000])
         cmd += "--xor %d " % random.choice([0, 0, 1])
         cmd += "--maxxormat %d " % random.choice([0, 1, 10])
-
-        # if "breakid" in self.extra_opts_supported:
-        #     cmd += "--breakid %d " % random.choice([1]*10+[0])
-        #     cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
-        #     cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
-        #     cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
 
         if options.gauss:
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
@@ -709,6 +711,12 @@ class Tester:
             print("Return code of CryptoMiniSat is not 0, it is: %d -- error!" % retcode)
             self.write_repro_script(fname, fname_frat)
             exit(-1)
+
+        for line in consoleOutput.splitlines():
+            if not line.startswith((self.prefix, "s ", "v ")):
+                print("Output line does not start with prefix '%s': '%s'" % (self.prefix, line))
+                self.write_repro_script(fname, fname_frat)
+                exit(-1)
 
         # if library debug is set, check it
         if (self.needDebugLib):

@@ -76,6 +76,7 @@ struct ConfOpt {
 // these with argparse, SATSolver::set_option() looks up the ones marked lib.
 template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--verb", "[0-10] Verbosity of solver. 0 = only solution"}, conf.verbosity);
+    f({"--prefix", "Prefix of every comment line printed"}, conf.prefix);
     f({"--seed", "[0..] Random seed", true, "-r"}, conf.orig_seed);
     f({"--mult", "Time multiplier for all simplification cutoffs", true, "-m"}, conf.orig_global_timeout_multiplier);
     f({"--nextm", "Global multiplier when the next inprocessing should take place"}, conf.global_next_multiplier);
@@ -117,14 +118,6 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--everypred", "Calculate satzilla features every N conflicts (STATS builds)"}, conf.every_pred_reduce);
     #endif
     f({"--branchstr", "Branch strategy string that switches between different branch strategies while solving e.g. 'vsids1+vsids2'", true}, conf.branch_strategy_setup);
-    f({"--breakid", "Run BreakID to break symmetries.", true}, conf.do_breakid);
-    f({"--breakideveryn", "Run BreakID every N simplification iterations"}, conf.breakid_every_n);
-    f({"--breakidmaxlits", "Maximum number of literals in thousands. If exceeded, BreakID will not run"}, conf.breakid_lits_limit_K);
-    f({"--breakidmaxcls", "Maximum number of clauses in thousands. If exceeded, BreakID will not run"}, conf.breakid_cls_limit_K);
-    f({"--breakidmaxvars", "Maximum number of variables in thousands. If exceeded, BreakID will not run"}, conf.breakid_vars_limit_K);
-    f({"--breakidtime", "Maximum number of steps taken during automorphism finding."}, conf.breakid_time_limit_K);
-    f({"--breakidcls", "Maximum number of breaking clauses per permutation."}, conf.breakid_max_constr_per_permut);
-    f({"--breakidmatrix", "Detect matrix row interchangability"}, conf.breakid_matrix_detect);
     f({"--sls", "Run local search ('walk') during rephasing", true}, conf.do_sls);
     f({"--walknonstable", "Run local search during focused phases too"}, conf.walknonstable);
     f({"--walkseedphase", "Start local search off the CDCL phases, as CaDiCaL does"}, conf.walkseedphase);
@@ -275,12 +268,6 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
 
 // Throws std::invalid_argument on a bad combination of options
 inline void check_conf(SolverConf& conf) {
-    #ifndef USE_BREAKID
-    if (conf.do_breakid) {
-        if (conf.verbosity) std::cout << "c BreakID not compiled in, disabling" << std::endl;
-        conf.do_breakid = false;
-    }
-    #endif
     if (conf.walkmineff > conf.walkmaxeff)
         throw std::invalid_argument("'--walkmineff' must not be above '--walkmaxeff'");
     if (conf.max_xor_to_find > MAX_XOR_RECOVER_SIZE)

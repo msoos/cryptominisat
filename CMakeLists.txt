@@ -445,7 +445,6 @@ if(NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     endif()
 endif()
 
-set(breakid_DIR  "" CACHE PATH "breakid install/build prefix (contains lib/cmake/breakid/). Auto-resolved if empty.")
 set(cadical_DIR  "" CACHE PATH "cadical install/build prefix (contains lib/cmake/cadical/). Auto-resolved if empty.")
 set(cadiback_DIR "" CACHE PATH "cadiback install/build prefix (contains lib/cmake/cadiback/). Auto-resolved if empty.")
 
@@ -483,46 +482,19 @@ endif()
 option(MIT "Build with only MIT licensed components" OFF)
 
 # -----------------------------------------------------------------------------
-# Look for BreakID
+# MPI
 # -----------------------------------------------------------------------------
-option(NOBREAKID "Disable BreakID" ON)
 option(NOMPI "Disable MPI" ON)
 if(NOT NOMPI)
     find_package(MPI)
     if(MPI_FOUND)
         add_compile_definitions(USE_MPI)
-        set(NOBREAKID ON)
         #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
     else()
          message(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
     endif()
 endif()
 
-if(NOT NOBREAKID)
-    if(NOT TARGET breakid)
-        if(breakid_DIR)
-            find_package(breakid CONFIG REQUIRED HINTS "${breakid_DIR}")
-            message(STATUS "BreakID: using pre-built at ${breakid_DIR}")
-        else()
-            FetchContent_Declare(breakid
-                GIT_REPOSITORY https://github.com/meelgroup/breakid
-                GIT_TAG        master
-                GIT_SHALLOW    TRUE)
-            FetchContent_MakeAvailable(breakid)
-            message(STATUS "BreakID: fetched from GitHub")
-        endif()
-    endif()
-    # find_package() exports BREAKID_LIBRARIES/BREAKID_INCLUDE_DIRS; the
-    # FetchContent path instead exposes the `breakid` target directly, carrying
-    # its include dirs as usage requirements. src/CMakeLists.txt gates on
-    # BREAKID_LIBRARIES, so set it to the target name in the FetchContent case.
-    if(NOT BREAKID_LIBRARIES)
-        set(BREAKID_LIBRARIES breakid)
-    endif()
-    message(STATUS "BreakID -- libraries: ${BREAKID_LIBRARIES}")
-    message(STATUS "BreakID -- include dirs: ${BREAKID_INCLUDE_DIRS}")
-    add_compile_definitions(USE_BREAKID)
-endif()
 find_package(PkgConfig REQUIRED)
 if(APPLE)
     execute_process(COMMAND brew --prefix OUTPUT_VARIABLE _homebrew_prefix OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)

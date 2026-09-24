@@ -202,13 +202,13 @@ bool SQLiteStats::connectServer(const Solver* solver)
 
     if (sqlite3_exec(db, "PRAGMA synchronous = OFF", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Problem setting pragma synchronous = OFF to SQLite DB" << endl;
-        cerr << "c " << sqlite3_errmsg(db) << endl;
+        cerr << solver->conf.prefix << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
 
     if (sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Problem setting pragma journal_mode = MEMORY to SQLite DB" << endl;
-        cerr << "c " << sqlite3_errmsg(db) << endl;
+        cerr << solver->conf.prefix << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
 
@@ -224,7 +224,7 @@ void SQLiteStats::begin_transaction()
 {
     if (sqlite3_exec(db, "BEGIN TRANSACTION", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Beginning SQLITE transaction" << endl;
-        cerr << "c " << sqlite3_errmsg(db) << endl;
+        cerr << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
 }
@@ -233,7 +233,7 @@ void SQLiteStats::end_transaction()
 {
     if (sqlite3_exec(db, "END TRANSACTION", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Beginning SQLITE transaction" << endl;
-        cerr << "c " << sqlite3_errmsg(db) << endl;
+        cerr << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
 }
@@ -251,8 +251,8 @@ bool SQLiteStats::add_solverrun(const Solver* solver)
     const int rc = sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr);
     if (rc) {
         if (solver->get_conf().verbosity >= 6) {
-            cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
-            cerr << "c " << sqlite3_errmsg(db) << endl;
+            cerr << solver->conf.prefix << "ERROR Couldn't insert into table 'solverruns'" << endl;
+            cerr << solver->conf.prefix << sqlite3_errmsg(db) << endl;
         }
 
         return false;

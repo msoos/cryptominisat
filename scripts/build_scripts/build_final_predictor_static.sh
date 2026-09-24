@@ -17,6 +17,6 @@ rm -rf tests
 rm -rf deps
 rm -rf _deps
 rm -f ${SAT_DIR}/cryptominisat/tests/cnf-files/*sqlite
-cmake -DFINAL_PREDICTOR=ON -DBUILD_SHARED_LIBS=OFF -DNOBREAKID=ON -Dcadical_DIR="${SAT_DIR}/cadical/build" -Dcadiback_DIR="${SAT_DIR}/cadiback" -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
+cmake -DFINAL_PREDICTOR=ON -DBUILD_SHARED_LIBS=OFF -Dcadical_DIR="${SAT_DIR}/cadical/build" -Dcadiback_DIR="${SAT_DIR}/cadiback" -DGMP_LIBRARY=/usr/local/lib/libgmp.a -DGMPXX_LIBRARY=/usr/local/lib/libgmpxx.a ..
 make -j$(nproc)
 strip cryptominisat5

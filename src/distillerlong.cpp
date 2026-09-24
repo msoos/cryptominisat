@@ -267,7 +267,7 @@ bool DistillerLong::distill_long_cls_all(
 ) {
     assert(solver->ok);
     if (budget <= 0.0) return solver->okay();
-    verb_print(6, "c Doing distillation branch for long clauses");
+    verb_print(6, "Doing distillation branch for long clauses");
     frat_func_start();
 
     double my_time = cpu_time();
@@ -852,28 +852,28 @@ DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
 void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
 {
     cout << pre << "-------- DISTILL-LONG STATS --------" << endl;
-    print_stats_line("c time"
+    print_stats_line(pre, "time"
         , time_used
         , ratio_for_stat(time_used, num_called)
         , "per call"
     );
 
-    print_stats_line("c timed out"
+    print_stats_line(pre, "timed out"
         , time_out
         , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 
-    print_stats_line("c distill/checked/potential"
+    print_stats_line(pre, "distill/checked/potential"
         , num_cl_shorten
         , checked_clauses
         , potential_clauses
     );
 
-    print_stats_line("c lits-rem",
+    print_stats_line(pre, "lits-rem",
         num_lits_rem
     );
-    print_stats_line("c 0-depth-assigns",
+    print_stats_line(pre, "0-depth-assigns",
         zero_depth_assigns
         , stats_line_percent(zero_depth_assigns, nVars)
         , "% of vars"

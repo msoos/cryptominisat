@@ -1291,9 +1291,7 @@ bool OccSimplifier::eliminate_vars()
             verb_print(2, "another run ?");
         }
         #ifdef DEBUG_VARELIM
-        if (solver->conf.verbosity >= 2) {
-            cout << "c finished here" << endl;
-        }
+        verb_print(2, "finished here");
         #endif
         solver->clean_occur_from_removed_clauses_only_smudged();
 
@@ -4824,12 +4822,8 @@ bool OccSimplifier::all_occ_based_lit_rem()
     }
 
     double time_used = cpu_time() - my_time;
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-lit-rem] Occ Lit Rem: " << removed_all
-        << solver->conf.print_times(time_used)
-        << endl;
-    }
+    verb_print(1, "[occ-lit-rem] Occ Lit Rem: " << removed_all
+        << solver->conf.print_times(time_used));
     if (solver->sql_stats) {
         solver->sql_stats->time_passed_min(
             solver
@@ -5360,19 +5354,19 @@ void OccSimplifier::Stats::print_extra_times(const char* prefix) const
 void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
 {
     cout << occs->solver->conf.prefix << "-------- OccSimplifier STATS ----------" << endl;
-    print_stats_line("c time"
+    print_stats_line(occs->solver->conf.prefix, "time"
         , total_time(occs)
         , stats_line_percent(varElimTime, total_time(occs))
         , "% var-elim"
     );
 
-    print_stats_line("c called"
+    print_stats_line(occs->solver->conf.prefix, "called"
         ,  num_calls
         , float_div(total_time(occs), num_calls)
         , "s per call"
     );
 
-    print_stats_line("c 0-depth assigns"
+    print_stats_line(occs->solver->conf.prefix, "0-depth assigns"
         , zeroDepthAssings
         , stats_line_percent(zeroDepthAssings, nVars)
         , "% vars"

@@ -3,7 +3,7 @@ p cnf 3 2
 1 2 0
 -2 3 0
 c Blank lines and surrounding whitespace in the assumptions file are tolerated
-c CHECK: ^Assume: 1$
-c CHECK-NEXT: ^Assume: -2$
-c CHECK-NEXT: ^Assume: 3$
+c CHECK: ^c Assume: 1$
+c CHECK-NEXT: ^c Assume: -2$
+c CHECK-NEXT: ^c Assume: 3$
 c CHECK: ^s SATISFIABLE$

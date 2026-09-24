@@ -342,28 +342,28 @@ void DistillerBin::Stats::print_short(const Solver* solver) const
 void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
 {
     cout << pre << "-------- DISTILL-BIN STATS --------" << endl;
-    print_stats_line("c time"
+    print_stats_line(pre, "time"
         , time_used
         , ratio_for_stat(time_used, num_called)
         , "per call"
     );
 
-    print_stats_line("c timed out"
+    print_stats_line(pre, "timed out"
         , time_out
         , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 
-    print_stats_line("c distill/checked/potential"
+    print_stats_line(pre, "distill/checked/potential"
         , num_cl_shorten
         , checked_clauses
         , potential_clauses
     );
 
-    print_stats_line("c lits-rem",
+    print_stats_line(pre, "lits-rem",
         num_lits_rem
     );
-    print_stats_line("c 0-depth-assigns",
+    print_stats_line(pre, "0-depth-assigns",
         zero_depth_assigns
         , stats_line_percent(zero_depth_assigns, nVars)
         , "% of vars"

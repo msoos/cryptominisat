@@ -192,19 +192,19 @@ void SubsumeImplicit::Stats::print_short(const Solver* solver, const char* calle
 void SubsumeImplicit::Stats::print(const char* caller, const string& pre) const
 {
     cout << pre << "-------- IMPLICIT SUB " << caller << " STATS --------" << endl;
-    print_stats_line("c time"
+    print_stats_line(pre, "time"
         , time_used
         , float_div(time_used, num_called)
         , "per call"
     );
 
-    print_stats_line("c timed out"
+    print_stats_line(pre, "timed out"
         , time_out
         , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 
-    print_stats_line("c rem bins"
+    print_stats_line(pre, "rem bins"
         , remBins
     );
     cout << pre << "-------- IMPLICIT SUB STATS END --------" << endl;

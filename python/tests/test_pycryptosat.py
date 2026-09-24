@@ -618,7 +618,6 @@ EXPOSED_OPTIONS = {
     "scc": ["0"],
     "intree": ["0"],
     "transred": ["0"],
-    "breakid": ["0", "1"],
     "confbtwsimp": ["1", "100"],
     "schedule": ["scc-vrepl,sub-impl"],
     "preschedule": ["occ-bve"],
@@ -643,7 +642,7 @@ UNSIGNED_OPTIONS = ["seed", "confbtwsimp", "maxxorsize", "xorfindtout",
 SIGNED_OPTIONS = ["restart", "stabilize", "reduce", "lucky", "sls", "rephase",
     "target", "nonstop", "schedsimp", "presimp", "occsimp", "varelim", "bva",
     "distill", "sweep", "scc", "intree", "transred", "xor"]
-BOOL_OPTIONS = ["autodisablegauss", "breakid"]
+BOOL_OPTIONS = ["autodisablegauss"]
 DOUBLE_OPTIONS = ["mult", "gaussusefulcutoff"]
 
 # Command-line options that must NOT be settable from the library

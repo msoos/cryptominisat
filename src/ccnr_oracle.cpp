@@ -493,7 +493,7 @@ void OracleLS::check_solution() {
             }
         }
         if (!sat_flag) {
-            cout << "c Error: verify error in cl_id : " << cid << " -- "; print_cl(cid);
+            cout << solver->conf.prefix << "Error: verify error in cl_id : " << cid << " -- "; print_cl(cid);
             exit(-1);
             return;
         }

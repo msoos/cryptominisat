@@ -309,7 +309,7 @@ DistillerLitRem::Stats& DistillerLitRem::Stats::operator+=(const Stats& other)
 void DistillerLitRem::Stats::print_short(const Solver* _solver) const
 {
     cout
-    << "c [distill-litrem]"
+    << _solver->conf.prefix << "[distill-litrem]"
     << " useful: "<< num_cl_shorten
     << "/" << checked_clauses << "/" << potential_clauses
     << " lits-rem: " << num_lits_rem

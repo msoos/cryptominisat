@@ -312,42 +312,42 @@ void ReduceDB::print_reduce_stats() const
 {
     const auto& r = rstats_tot;
     const string p = solver->conf.prefix;
-    print_stats_line(p + "reductions", num_reductions,
+    print_stats_line(p, "reductions", num_reductions,
         float_div(r.sum_red_before, num_reductions), "avg red cls at reduce");
-    print_stats_line(p + "reduce interval avg",
+    print_stats_line(p, "reduce interval avg",
         (uint64_t)(num_reductions ? solver->sum_conflicts / num_reductions : 0),
         float_div(solver->sum_conflicts, num_reductions) / (double)solver->conf.reduceint,
         "x reduceint");
-    print_stats_line(p + "learnt cls uses", solver->sum_clause_uses(),
+    print_stats_line(p, "learnt cls uses", solver->sum_clause_uses(),
         stats_line_percent(solver->sum_clause_uses(), solver->sum_conflicts), "% of conflicts, as kissat's clauses_used");
-    print_stats_line(p + "reduce candidates", r.cands,
+    print_stats_line(p, "reduce candidates", r.cands,
         stats_line_percent(r.cands, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
-    print_stats_line(p + "reduce removed", r.removed,
+    print_stats_line(p, "reduce removed", r.removed,
         stats_line_percent(r.removed, r.cands), "% of candidates");
-    print_stats_line(p + "reduce removed tier1", r.removed_tier[0],
+    print_stats_line(p, "reduce removed tier1", r.removed_tier[0],
         stats_line_percent(r.removed_tier[0], r.removed), "% of removed");
-    print_stats_line(p + "reduce removed tier2", r.removed_tier[1],
+    print_stats_line(p, "reduce removed tier2", r.removed_tier[1],
         stats_line_percent(r.removed_tier[1], r.removed), "% of removed");
-    print_stats_line(p + "reduce removed tier3", r.removed_tier[2],
+    print_stats_line(p, "reduce removed tier3", r.removed_tier[2],
         stats_line_percent(r.removed_tier[2], r.removed), "% of removed");
     for(int t = 0; t < 3; t++) {
-        print_stats_line(p + "avg red cls in tier" + std::to_string(t+1),
+        print_stats_line(p, "avg red cls in tier" + std::to_string(t+1),
             float_div(r.live_tier[t], num_reductions),
             stats_line_percent(r.live_tier[t], r.live_tier[0] + r.live_tier[1] + r.live_tier[2]),
             "% of red cls seen");
     }
     {
         const uint64_t tot = r.used_hist[0]+r.used_hist[1]+r.used_hist[2]+r.used_hist[3]+r.used_hist[4];
-        print_stats_line(p + "red cls used since last reduce", r.used_hist[4],
+        print_stats_line(p, "red cls used since last reduce", r.used_hist[4],
             stats_line_percent(r.used_hist[4], tot), "% of red cls seen");
-        print_stats_line(p + "red cls with life 0", r.used_hist[0],
+        print_stats_line(p, "red cls with life 0", r.used_hist[0],
             stats_line_percent(r.used_hist[0], tot), "% of red cls seen");
     }
-    print_stats_line(p + "reduce kept used", r.kept_used,
+    print_stats_line(p, "reduce kept used", r.kept_used,
         stats_line_percent(r.kept_used, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
-    print_stats_line(p + "reduce kept tier1-keep", r.kept_keep,
+    print_stats_line(p, "reduce kept tier1-keep", r.kept_keep,
         stats_line_percent(r.kept_keep, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
-    print_stats_line(p + "reduce kept locked", r.locked,
+    print_stats_line(p, "reduce kept locked", r.locked,
         stats_line_percent(r.locked, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
 }
 

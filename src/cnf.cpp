@@ -250,7 +250,7 @@ uint64_t CNF::mem_used_longclauses() const
 uint64_t CNF::print_mem_used_longclauses(const size_t total_mem) const
 {
     uint64_t mem = mem_used_longclauses();
-    print_stats_line("c Mem for longclauses"
+    print_stats_line(conf.prefix, "Mem for longclauses"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, total_mem)

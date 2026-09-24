@@ -366,13 +366,6 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         throw std::runtime_error(err);
     }
 
-    #ifdef USE_BREAKID
-    if (num > 1) {
-        cout << "ERROR: BreakID cannot work with multiple threads. Something is off in the memory allocation of the library that's likely 'static'. Perhaps in 'bliss'. Exiting." << endl;
-        exit(-1);
-    }
-    #endif
-
     data->cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = data->solvers[0]->get_conf();
@@ -1123,9 +1116,6 @@ DLL_PUBLIC std::string SATSolver::get_thanks_info(const char* prefix)
 {
     std::stringstream ss;
     ss << prefix << "Using VMTF, picosat, CaDiCaL, and CadiBack code by Armin Biere" << endl;
-    #ifdef USE_BREAKID
-    ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
-    #endif
     ss << prefix << "CMS is MIT licensed" << endl;
     ss << prefix << "Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
     ss << prefix << "      by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
@@ -1179,7 +1169,6 @@ DLL_PUBLIC void SATSolver::set_frat(FILE* os)
         exit(-1);
     }
 
-    data->solvers[0]->conf.do_breakid = false;
     data->solvers[0]->add_frat(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
@@ -1195,7 +1184,6 @@ DLL_PUBLIC void SATSolver::set_xlrup(FILE* os)
         exit(-1);
     }
 
-    data->solvers[0]->conf.do_breakid = false;
     data->solvers[0]->add_xlrup(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
@@ -1442,7 +1430,6 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
     for (auto & solver : data->solvers) {
         SolverConf conf = solver->get_conf();
         conf.do_sls = false;
-        conf.do_breakid = false;
         //restart every fixed_restart conflicts: negative margin always fires
         conf.do_stabilize = 0;
         conf.restartint = fixed_restart;
@@ -1463,7 +1450,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
     for (auto & solver : data->solvers) {
         SolverConf conf = solver->get_conf();
-        conf.do_breakid = false;
         conf.gaussconf.max_matrix_columns = 10000000;
         conf.gaussconf.max_matrix_rows = 10000;
         conf.gaussconf.max_num_matrices = 2;
@@ -1490,7 +1476,6 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->get_conf();
-        conf.do_breakid = false;
         //conf.gaussconf.max_num_matrices = 0;
         //conf.xor_finder_time_limitM = 0;
         //conf.xor_detach_reattach = true;
@@ -1526,11 +1511,6 @@ DLL_PUBLIC void SATSolver::set_single_run()
         exit(-1);
     }
     data->promised_single_call = true;
-
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.breakid_use_assump = false;
-    }
 }
 
 DLL_PUBLIC std::vector<uint32_t> SATSolver::get_lit_incidence()

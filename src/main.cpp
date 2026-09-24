@@ -59,7 +59,7 @@ Main::Main(int _argc, char** _argv) :
 void Main::readInAFile(SATSolver* solver2, const string& filename) {
     std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
     solver2->add_sql_tag("filename", filename);
-    if (conf.verbosity) cout << "c Reading file '" << filename << "'" << endl;
+    if (conf.verbosity) cout << conf.prefix << "Reading file '" << filename << "'" << endl;
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
     DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
@@ -67,6 +67,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename) {
     gzFile in = gzopen(filename.c_str(), "rb");
     DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
+    parser.prefix = conf.prefix;
 
     if (in == nullptr) {
         std::cerr
@@ -91,7 +92,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename) {
 
 void Main::readInStandardInput(SATSolver* solver2)
 {
-    if (conf.verbosity) cout << "c Reading from standard input... Use '-h' or '--help' for help." << endl;
+    if (conf.verbosity) cout << conf.prefix << "Reading from standard input... Use '-h' or '--help' for help." << endl;
     std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
 
     #ifndef USE_ZLIB
@@ -110,6 +111,7 @@ void Main::readInStandardInput(SATSolver* solver2)
     #else
     DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
+    parser.prefix = conf.prefix;
 
     if (!parser.parse_DIMACS(in, false)) exit(-1);
     #ifdef USE_ZLIB
@@ -130,13 +132,13 @@ void Main::parseInAllFiles(SATSolver* solver2)
     if (conf.verbosity) {
         if (num_threads > 1) {
             cout
-            << "c Sum parsing time among all threads (wall time will differ): "
+            << conf.prefix << "Sum parsing time among all threads (wall time will differ): "
             << std::fixed << std::setprecision(2)
             << (cpuTimeTotal() - my_timeTotal)
             << " s" << endl;
         } else {
             cout
-            << "c Parsing time: "
+            << conf.prefix << "Parsing time: "
             << std::fixed << std::setprecision(2)
             << (cpu_time() - my_time)
             << " s" << endl;
@@ -166,7 +168,7 @@ void Main::printResultFunc(
     }
     if (ret == l_True && !printResult && !toFile)
     {
-        cout << "c Not printing satisfying assignment. "
+        cout << conf.prefix << "Not printing satisfying assignment. "
         "Use the '--printsol 1' option for that" << endl;
     }
 
@@ -197,7 +199,7 @@ void Main::printResultFunc(
                 num_undef = print_model(solver, os, &solver->get_sampl_vars());
             }
             if (num_undef && !toFile && conf.verbosity) {
-                cout << "c NOTE: " << num_undef << " variables are UNDEF. Sampling vars set:"
+                cout << conf.prefix << "NOTE: " << num_undef << " variables are UNDEF. Sampling vars set:"
                     << solver->get_sampl_vars_set() << endl;
             }
         }
@@ -266,7 +268,7 @@ void Main::readInAssumptions()
             std::exit(1);
         }
 
-        cout << "Assume: " << x << endl;
+        cout << conf.prefix << "Assume: " << x << endl;
         assumps.push_back(Lit(std::abs(x)-1, x < 0));
     }
 }
@@ -488,9 +490,9 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
 
     if (thread_num > num_cores && conf.verbosity) {
         std::cout
-        << "c WARNING: Number of threads requested is more than the number of"
+        << conf.prefix << "WARNING: Number of threads requested is more than the number of"
         << " cores reported by the system.\n"
-        << "c WARNING: This is not a good idea in general. It's best to set the"
+        << conf.prefix << "WARNING: This is not a good idea in general. It's best to set the"
         << " number of threads to the number of real cores" << endl;
     }
 }
@@ -516,7 +518,7 @@ int Main::solve()
     if (conf.verbosity) {
         printVersionInfo();
         cout
-        << "c Executed with command line: "
+        << conf.prefix << "Executed with command line: "
         << commandLine
         << endl;
     }
@@ -541,7 +543,7 @@ int Main::solve()
     lbool ret = multi_solutions();
     if (ret == l_Undef && conf.verbosity) {
         cout
-        << "c Not finished running -- signal caught or some maximum reached"
+        << conf.prefix << "Not finished running -- signal caught or some maximum reached"
         << endl;
     }
     if (conf.verbosity) {
@@ -558,10 +560,10 @@ int Main::solve()
        // as multi_solutions() doesn't. Don't print for a single solution.
        if (conf.verbosity) {
            cout
-           << "c Number of solutions found until now: "
+           << conf.prefix << "Number of solutions found until now: "
            << std::setw(6) << max_nr_of_solutions
            << endl
-           << "c maxsol reached"
+           << conf.prefix << "maxsol reached"
            << endl;
        }
     }
@@ -592,7 +594,7 @@ lbool Main::multi_solutions()
 
             if (conf.verbosity) {
                 cout
-                << "c Number of solutions found until now: "
+                << conf.prefix << "Number of solutions found until now: "
                 << std::setw(6) << current_nr_of_solutions
                 << endl;
             }
@@ -628,12 +630,12 @@ void Main::ban_found_solution() {
 
 void Main::printVersionInfo()
 {
-    cout << "c " << "CMS SHA1: " << solver->get_version_sha1() << endl;
-    cout << "c " << "CaDiCaL SHA1: " << solver->get_cadical_version_sha1() << endl;
-    cout << "c " << "CadiBack SHA1: " << solver->get_cadiback_version_sha1() << endl;
-    cout << "c " << "CryptoMiniSat version " << solver->get_version() << endl;
-    cout << "c " << "CMS compilation env " << solver->get_compilation_env() << endl;
-    cout << solver->get_thanks_info("c ") << endl;
+    cout << conf.prefix << "CMS SHA1: " << solver->get_version_sha1() << endl;
+    cout << conf.prefix << "CaDiCaL SHA1: " << solver->get_cadical_version_sha1() << endl;
+    cout << conf.prefix << "CadiBack SHA1: " << solver->get_cadiback_version_sha1() << endl;
+    cout << conf.prefix << "CryptoMiniSat version " << solver->get_version() << endl;
+    cout << conf.prefix << "CMS compilation env " << solver->get_compilation_env() << endl;
+    cout << solver->get_thanks_info(conf.prefix.c_str()) << endl;
 }
 
 int Main::correctReturnValue(const lbool ret) const

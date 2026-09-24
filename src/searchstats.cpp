@@ -154,25 +154,25 @@ SearchStats SearchStats::operator-(const SearchStats& other) const
 
 void SearchStats::printCommon(uint64_t props, bool do_print_times, const string& prefix) const
 {
-    print_stats_line(prefix + "restarts"
+    print_stats_line(prefix, "restarts"
         , num_restarts
         , float_div(conflicts, num_restarts)
         , "confls per restart"
 
     );
     if (do_print_times)
-    print_stats_line(prefix + "time", cpu_time);
-    print_stats_line(prefix + "decisions", decisions
+    print_stats_line(prefix, "time", cpu_time);
+    print_stats_line(prefix, "decisions", decisions
         , stats_line_percent(decisionsRand, decisions)
         , "% random"
     );
 
-    print_stats_line(prefix + "propagations"
+    print_stats_line(prefix, "propagations"
                      , print_value_kilo_mega(props, false)
                      , print_value_kilo_mega(ratio_for_stat(props, cpu_time), false),
                      "props/s");
 
-    print_stats_line(prefix + "decisions/conflicts"
+    print_stats_line(prefix, "decisions/conflicts"
         , float_div(decisions, conflicts)
     );
 }
@@ -181,14 +181,14 @@ void SearchStats::print_short(uint64_t props, bool do_print_times, const string&
 {
     //Restarts stats
     printCommon(props, do_print_times, prefix);
-    print_stats_line(prefix + "conflicts", conflicts);
-    print_stats_line(prefix + "conf lits non-minim"
+    print_stats_line(prefix, "conflicts", conflicts);
+    print_stats_line(prefix, "conf lits non-minim"
         , lits_red_non_min
         , float_div(lits_red_non_min, conflicts)
         , "lit/confl"
     );
 
-    print_stats_line(prefix + "conf lits final"
+    print_stats_line(prefix, "conf lits final"
         , float_div(litsRedFinal, conflicts)
     );
 
@@ -197,23 +197,23 @@ void SearchStats::print_short(uint64_t props, bool do_print_times, const string&
 void SearchStats::print(uint64_t props, bool do_print_times, const string& prefix) const
 {
     printCommon(props, do_print_times, prefix);
-    print_stats_line(prefix + "conflicts", conflicts);
+    print_stats_line(prefix, "conflicts", conflicts);
 
     /*assert(numConflicts
         == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
 
     cout << prefix << "LEARNT stats" << endl;
-    print_stats_line(prefix + "units learnt"
+    print_stats_line(prefix, "units learnt"
         , learntUnits
         , stats_line_percent(learntUnits, conflicts)
         , "% of conflicts");
 
-    print_stats_line(prefix + "bins learnt"
+    print_stats_line(prefix, "bins learnt"
         , learnt_bins
         , stats_line_percent(learnt_bins, conflicts)
         , "% of conflicts");
 
-    print_stats_line(prefix + "long learnt"
+    print_stats_line(prefix, "long learnt"
         , learntLongs
         , stats_line_percent(learntLongs, conflicts)
         , "% of conflicts"
@@ -221,96 +221,96 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
 
 
     cout << prefix << "SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
-    print_stats_line(prefix + "advProp called"
+    print_stats_line(prefix, "advProp called"
         , advancedPropCalled
     );
-    print_stats_line(prefix + "hyper-bin add bin"
+    print_stats_line(prefix, "hyper-bin add bin"
         , hyperBinAdded
         , ratio_for_stat(hyperBinAdded, advancedPropCalled)
         , "bin/call"
     );
-    print_stats_line(prefix + "trans-red rem irred bin"
+    print_stats_line(prefix, "trans-red rem irred bin"
         , transReduRemIrred
         , ratio_for_stat(transReduRemIrred, advancedPropCalled)
         , "bin/call"
     );
-    print_stats_line(prefix + "trans-red rem red bin"
+    print_stats_line(prefix, "trans-red rem red bin"
         , transReduRemRed
         , ratio_for_stat(transReduRemRed, advancedPropCalled)
         , "bin/call"
     );
 
     cout << prefix << "CONFL LITS stats" << endl;
-    print_stats_line(prefix + "orig "
+    print_stats_line(prefix, "orig "
         , lits_red_non_min
         , ratio_for_stat(lits_red_non_min, conflicts)
         , "lit/confl"
     );
 
-    print_stats_line(prefix + "recurs-min effective"
+    print_stats_line(prefix, "recurs-min effective"
         , recMinCl
         , stats_line_percent(recMinCl, conflicts)
         , "% attempt successful"
     );
 
-    print_stats_line(prefix + "recurs-min lits"
+    print_stats_line(prefix, "recurs-min lits"
         , rec_min_lit_rem
         , stats_line_percent(rec_min_lit_rem, lits_red_non_min)
         , "% less overall"
     );
 
-    print_stats_line(prefix + "shrink effective"
+    print_stats_line(prefix, "shrink effective"
         , shrinkCl
         , stats_line_percent(shrinkCl, conflicts)
         , "% attempt successful"
     );
 
-    print_stats_line(prefix + "shrink lits"
+    print_stats_line(prefix, "shrink lits"
         , shrinkLitRem
         , stats_line_percent(shrinkLitRem, lits_red_non_min)
         , "% less overall"
     );
 
-    print_stats_line(prefix + "otfs str/driving"
+    print_stats_line(prefix, "otfs str/driving"
         , otfsStr
         , otfsDriving
         , "strengthened/driving"
     );
 
-    print_stats_line(prefix + "permDiff call%"
+    print_stats_line(prefix, "permDiff call%"
         , stats_line_percent(permDiff_attempt, conflicts)
         , stats_line_percent(permDiff_success, permDiff_attempt)
         , "% attempt successful"
     );
 
-    print_stats_line(prefix + "permDiff lits-rem"
+    print_stats_line(prefix, "permDiff lits-rem"
         , permDiff_rem_lits
         , ratio_for_stat(permDiff_rem_lits, permDiff_attempt)
         , "less lits/cl on attempts"
      );
 
 
-    print_stats_line(prefix + "further-min call%"
+    print_stats_line(prefix, "further-min call%"
         , stats_line_percent(furtherShrinkAttempt, conflicts)
         , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
         , "% attempt successful"
     );
 
-    print_stats_line(prefix + "bintri-min lits"
+    print_stats_line(prefix, "bintri-min lits"
         , binTriShrinkedClause
         , stats_line_percent(binTriShrinkedClause, lits_red_non_min)
         , "% less overall"
     );
 
-    print_stats_line(prefix + "final avg"
+    print_stats_line(prefix, "final avg"
         , ratio_for_stat(litsRedFinal, conflicts)
     );
 
     //General stats
-    //print_stats_line(prefix + "Memory used", (double)mem_used / 1048576.0, " MB");
+    //print_stats_line(prefix, "Memory used", (double)mem_used / 1048576.0, " MB");
     #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
-    print_stats_line(prefix + "single-thread CPU time", cpu_time, " s");
+    print_stats_line(prefix, "single-thread CPU time", cpu_time, " s");
     #else
-    print_stats_line(prefix + "all-threads sum CPU time", cpu_time, " s");
+    print_stats_line(prefix, "all-threads sum CPU time", cpu_time, " s");
     #endif
 }

@@ -1186,7 +1186,7 @@ void EGaussian::add_to(GaussTotals& t) const
 void EGaussian::print_matrix_stats(uint32_t verbosity)
 {
     std::stringstream ss;
-    ss << "c [g " << matrix_no << "] ";
+    ss << solver->conf.prefix << "[g " << matrix_no << "] ";
     const std::string pre = ss.str();
 
     if (verbosity == 1) {

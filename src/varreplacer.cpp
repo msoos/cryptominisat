@@ -32,9 +32,6 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "sccfinder.h"
 #include "watchalgos.h"
-#ifdef USE_BREAKID
-#include "cms_breakid.h"
-#endif
 
 #include <iostream>
 #include <iomanip>
@@ -249,7 +246,6 @@ bool VarReplacer::perform_replace() {
         //* We shouldn't because then non-dominators would end up in the 'trail'
         if (!enqueueDelayedEnqueue()) return;
 
-        USE_BREAKID_DO(if (solver->breakid) solver->breakid->update_var_after_varreplace());
     }();
 
     delayed_attach_or_free.clear();
@@ -809,10 +805,8 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     assert(solver->var_data[sub_var_inter].removed == Removed::replaced);
     assert(solver->model_value(sub_var) == l_Undef);
 
-    if (solver->conf.verbosity > 10) {
-        cout << "Varreplace-extend: setting outer " << sub_var+1
-        << " to " << to_set << " because of " << var+1 << endl;
-    }
+    verb_print(11, "Varreplace-extend: setting outer " << sub_var+1
+        << " to " << to_set << " because of " << var+1);
     solver->model[sub_var] = to_set;
 }
 
@@ -1249,17 +1243,17 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
 
 void VarReplacer::print_some_stats(const double global_cpu_time, const string& prefix) const
 {
-    print_stats_line(prefix + "vrep replace time"
+    print_stats_line(prefix, "vrep replace time"
         , global_stats.cpu_time
         , stats_line_percent(global_stats.cpu_time, global_cpu_time)
         , "% time"
     );
 
-    print_stats_line(prefix + "vrep tree roots"
+    print_stats_line(prefix, "vrep tree roots"
         , getNumTrees()
     );
 
-    print_stats_line(prefix + "vrep trees' crown"
+    print_stats_line(prefix, "vrep trees' crown"
         , get_num_replaced_vars()
         , float_div(get_num_replaced_vars(), getNumTrees())
         , "leafs/tree"
@@ -1269,41 +1263,41 @@ void VarReplacer::print_some_stats(const double global_cpu_time, const string& p
 void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
 {
         cout << prefix << "--------- VAR REPLACE STATS ----------" << endl;
-        print_stats_line(prefix + "time"
+        print_stats_line(prefix, "time"
             , cpu_time
             , float_div(cpu_time, num_calls)
             , "per call"
         );
 
-        print_stats_line(prefix + "trees' crown"
+        print_stats_line(prefix, "trees' crown"
             , actuallyReplacedVars
             , stats_line_percent(actuallyReplacedVars, nVars)
             , "% of vars"
         );
 
-        print_stats_line(prefix + "0-depth assigns"
+        print_stats_line(prefix, "0-depth assigns"
             , zero_depth_assigns
             , stats_line_percent(zero_depth_assigns, nVars)
             , "% vars"
         );
 
-        print_stats_line(prefix + "lits replaced"
+        print_stats_line(prefix, "lits replaced"
             , replaced_lits
         );
 
-        print_stats_line(prefix + "bin cls removed"
+        print_stats_line(prefix, "bin cls removed"
             , removedBinClauses
         );
 
-        print_stats_line(prefix + "long cls removed"
+        print_stats_line(prefix, "long cls removed"
             , removedLongClauses
         );
 
-        print_stats_line(prefix + "long lits removed"
+        print_stats_line(prefix, "long lits removed"
             , removedLongLits
         );
 
-         print_stats_line(prefix + "bogoprops"
+         print_stats_line(prefix, "bogoprops"
             , bogoprops
         );
         cout << prefix << "--------- VAR REPLACE STATS END ----------" << endl;

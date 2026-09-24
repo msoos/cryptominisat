@@ -1161,7 +1161,7 @@ void Searcher::analyze_conflict(
 bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 {
     #ifdef DEBUG_LITREDUNDANT
-    cout << "c " << __func__ << " called" << endl;
+    cout << conf.prefix << __func__ << " called" << endl;
     #endif
 
     analyze_stack.clear();
@@ -2195,7 +2195,7 @@ void Searcher::check_calc_satzilla_features(bool force)
 void Searcher::print_restart_header()
 {
     cout
-    << "c"
+    << conf.prefix
     << " " << std::setw(4) << "res"
     << " " << std::setw(4) << "pol"
     << " " << std::setw(4) << "bran"

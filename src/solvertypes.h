@@ -193,13 +193,14 @@ inline string print_value_kilo_mega(const int64_t value, bool setw = true)
 }
 
 template<class T, class T2> void print_stats_line(
-    const string& left
+    const string& prefix
+    , const string& left
     , T value
     , T2 value2
     , const string& extra
 ) {
     cout
-    << std::fixed << std::left << std::setw(27) << left
+    << std::fixed << std::left << std::setw(27) << (prefix + left)
     << ": " << std::setw(11) << std::setprecision(2) << value
     << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
     << " " << extra << ")"
@@ -208,13 +209,14 @@ template<class T, class T2> void print_stats_line(
 }
 
 inline void print_stats_line(
-    const string& left
+    const string& prefix
+    , const string& left
     , uint64_t value
     , uint64_t value2
     , uint64_t value3
 ) {
     cout
-    << std::fixed << std::left << std::setw(27) << left
+    << std::fixed << std::left << std::setw(27) << (prefix + left)
     << ": " << std::setw(11) << std::setprecision(2) << value
     << "/" << value2
     << "/" << value3
@@ -223,14 +225,15 @@ inline void print_stats_line(
 }
 
 template<class T, class T2> void print_stats_line(
-    const string& left
+    const string& prefix
+    , const string& left
     , T value
     , const string& extra1
     , T2 value2
     , const string& extra2
 ) {
     cout
-    << std::fixed << std::left << std::setw(27) << left
+    << std::fixed << std::left << std::setw(27) << (prefix + left)
     << ": " << std::setw(11) << std::setprecision(2) << value
     << " " << extra1
     << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
@@ -240,11 +243,12 @@ template<class T, class T2> void print_stats_line(
 }
 
 template<class T> void print_stats_line(
-    const string& left
+    const string& prefix
+    , const string& left
     , T value
 ) {
     cout
-    << std::fixed << std::left << std::setw(27) << left
+    << std::fixed << std::left << std::setw(27) << (prefix + left)
     << ": " << std::setw(11) << std::setprecision(2)
     << value
     << " "
@@ -253,12 +257,13 @@ template<class T> void print_stats_line(
 }
 
 template<class T> void print_stats_line(
-    const string& left
+    const string& prefix
+    , const string& left
     , T value
     , const string& extra
 ) {
     cout
-    << std::fixed << std::left << std::setw(27) << left
+    << std::fixed << std::left << std::setw(27) << (prefix + left)
     << ": " << std::setw(11) << std::setprecision(2)
     << value
     << " " << extra
@@ -366,33 +371,33 @@ struct PropStats
     void print(const double cpu_time, const string& pre) const
     {
         cout << pre << "PROP stats" << endl;
-        print_stats_line("c Mbogo-props", (double)bogo_props/(1000.0*1000.0)
+        print_stats_line(pre, "Mbogo-props", (double)bogo_props/(1000.0*1000.0)
             , ratio_for_stat(bogo_props, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
-        print_stats_line("c MHyper-props", (double)otf_hyper_time/(1000.0*1000.0)
+        print_stats_line(pre, "MHyper-props", (double)otf_hyper_time/(1000.0*1000.0)
             , ratio_for_stat(otf_hyper_time, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
-        print_stats_line("c Mprops", (double)propagations/(1000.0*1000.0)
+        print_stats_line(pre, "Mprops", (double)propagations/(1000.0*1000.0)
             , ratio_for_stat(propagations, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
         #ifdef STATS_NEEDED
-        print_stats_line("c varSetPos", var_set_pos
+        print_stats_line(pre, "varSetPos", var_set_pos
             , stats_line_percent(var_set_pos, propagations)
             , "% of propagations"
         );
 
-        print_stats_line("c varSetNeg", var_set_neg
+        print_stats_line(pre, "varSetNeg", var_set_neg
             , stats_line_percent(var_set_neg, propagations)
             , "% of propagations"
         );
 
-        print_stats_line("c flipped", varFlipped
+        print_stats_line(pre, "flipped", varFlipped
             , stats_line_percent(varFlipped, propagations)
             , "% of propagations"
         );

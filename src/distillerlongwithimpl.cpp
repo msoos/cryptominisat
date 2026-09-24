@@ -431,10 +431,10 @@ void DistillerLongWithImpl::Stats::print(const string& pre) const
 {
     cout << pre << "-------- STRENGTHEN STATS --------" << endl;
     cout << pre << "--> watch-based on irred cls" << endl;
-    irred_watch_based.print();
+    irred_watch_based.print(pre);
 
     cout << pre << "--> watch-based on red cls" << endl;
-    red_watch_based.print();
+    red_watch_based.print(pre);
     cout << pre << "-------- STRENGTHEN STATS END --------" << endl;
 }
 
@@ -452,33 +452,33 @@ void DistillerLongWithImpl::Stats::WatchBased::print_short(
     << solver->conf.print_times(cpu_time, ranOutOfTime));
 }
 
-void DistillerLongWithImpl::Stats::WatchBased::print() const
+void DistillerLongWithImpl::Stats::WatchBased::print(const string& pre) const
 {
-    print_stats_line("c time"
+    print_stats_line(pre, "time"
         , cpu_time
         , ratio_for_stat(cpu_time, num_called)
         , "s/call"
     );
 
-    print_stats_line("c shrinked/tried/total"
+    print_stats_line(pre, "shrinked/tried/total"
         , shrinked
         , triedCls
         , totalCls
     );
 
-    print_stats_line("c subsumed/tried/total"
+    print_stats_line(pre, "subsumed/tried/total"
         , numClSubsumed
         , triedCls
         , totalCls
     );
 
-    print_stats_line("c lits-rem"
+    print_stats_line(pre, "lits-rem"
         , num_lits_rem
         , stats_line_percent(num_lits_rem, totalLits)
         , "% of lits tried"
     );
 
-    print_stats_line("c called "
+    print_stats_line(pre, "called "
         , num_called
         , stats_line_percent(ranOutOfTime, num_called)
         , "% ran out of time"

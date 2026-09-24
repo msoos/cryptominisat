@@ -73,9 +73,6 @@ extern "C" {
 }
 #include "cryptominisat.h"
 
-#ifdef USE_BREAKID
-#include "cms_breakid.h"
-#endif
 
 using namespace CMSat;
 using std::cout;
@@ -94,10 +91,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
 {
     sql_stats = nullptr;
     intree = new InTree(this);
-
-#ifdef USE_BREAKID
-    if (conf.do_breakid) breakid = new BreakID(this);
-#endif
 
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
@@ -141,9 +134,6 @@ Solver::~Solver()
     delete subsumeImplicit;
     delete datasync;
     delete reduceDB;
-#ifdef USE_BREAKID
-    delete breakid;
-#endif
     delete card_finder;
 }
 
@@ -945,7 +935,6 @@ bool Solver::renumber_variables(bool must_renumber)
     CNF::update_vars(outer_to_inter, inter_to_outer, inter_to_outer2);
     PropEngine::update_vars(outer_to_inter, inter_to_outer);
     Searcher::update_vars(outer_to_inter, inter_to_outer);
-    USE_BREAKID_DO(if (breakid) breakid->update_vars(outer_to_inter, inter_to_outer));
 
     //Update sub-elements' vars
     var_replacer->update_vars(outer_to_inter, inter_to_outer);
@@ -1126,7 +1115,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
             conf.do_minim_red_more = false;
             if (conf.verbosity) {
                 cout
-                << "c more minimization effectiveness low: "
+                << conf.prefix << "more minimization effectiveness low: "
                 << std::fixed << std::setprecision(2) << remPercent
                 << " % lits removed --> disabling"
                 << endl;
@@ -1135,7 +1124,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
             more_red_minim_limit_binary_actual = 3*conf.more_red_minim_limit_binary;
             if (conf.verbosity) {
                 cout
-                << "c more minimization effectiveness good: "
+                << conf.prefix << "more minimization effectiveness good: "
                 << std::fixed << std::setprecision(2) << remPercent
                 << " % --> increasing limit to 3x"
                 << endl;
@@ -1144,7 +1133,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
             more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
             if (conf.verbosity) {
                 cout
-                << "c more minimization effectiveness OK: "
+                << conf.prefix << "more minimization effectiveness OK: "
                 << std::fixed << std::setprecision(2) << remPercent
                 << " % --> setting limit to norm"
                 << endl;
@@ -1226,7 +1215,7 @@ void Solver::set_up_sql_writer()
     bool ret = sql_stats->setup(this);
     if (!ret) {
         std::cerr
-        << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
+        << conf.prefix << "ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
         std::exit(-1);
     }
 }
@@ -1256,22 +1245,11 @@ void Solver::check_and_upd_config_parameters()
         if (!conf.do_hyperbin_and_transred) {
             if (conf.verbosity) {
                 cout
-                << "c OTF hyper-bin is needed for BProp in FRAT, turning it back"
+                << conf.prefix << "OTF hyper-bin is needed for BProp in FRAT, turning it back"
                 << endl;
             }
             conf.do_hyperbin_and_transred = true;
         }
-
-        #ifdef USE_BREAKID
-        if (conf.do_breakid) {
-            if (conf.verbosity) {
-                cout
-                << "c BreakID is not supported with FRAT, turning it off"
-                << endl;
-            }
-            conf.do_breakid = false;
-        }
-        #endif
     }
 
     if (conf.sampling_vars_set) {
@@ -1306,17 +1284,13 @@ lbool Solver::simplify_problem_outside(const string* strategy)
         goto end;
     }
     check_and_upd_config_parameters();
-    USE_BREAKID_DO(if (breakid) breakid->start_new_solving());
 
     //ignore "no simplify" if explicitly called
     if (nVars() > 0 /*&& conf.do_simplify_problem*/) {
         bool backup_sls = conf.do_sls;
-        bool backup_breakid = conf.do_breakid;
         conf.do_sls = false;
-        conf.do_breakid = false;
         status = simplify_problem(false, strategy ? *strategy : conf.simplify_schedule_nonstartup);
         conf.do_sls = backup_sls;
-        conf.do_breakid = backup_breakid;
     }
 
     end:
@@ -1377,7 +1351,6 @@ lbool Solver::solve_with_assumptions(
     }
     assert(prop_at_head());
     assert(okay());
-    USE_BREAKID_DO(if (breakid) breakid->start_new_solving());
 
     //CaDiCaL runs its initial local search after preprocessing; we run it before,
     //as variable elimination and XOR recovery wreck the local search landscape.
@@ -1437,14 +1410,7 @@ lbool Solver::solve_with_assumptions(
     assert(decision_level()== 0);
     assert(!ok || prop_at_head());
     if (_assumptions == nullptr || _assumptions->empty()) {
-        #ifdef USE_BREAKID
-        if (assumptions.empty()) {
-            verb_print(1, "[breakid] Under BreakID it's UNSAT. Assumed lit: " << breakid->get_assumed_lit());
-        } else
-        #endif
-        {
-            if (status == l_False)  assert(!okay());
-        }
+        if (status == l_False)  assert(!okay());
     }
 
     write_final_frat_clauses();
@@ -1697,7 +1663,6 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
         if (conf.conf_needed) update_assump_conflict_to_orig_outer(conflict);
     }
 
-    USE_BREAKID_DO( if (breakid) breakid->finished_solving());
     DEBUG_IMPLICIT_STATS_DO(check_implicit_stats());
     if (sql_stats) sql_stats->time_passed_min(this, "solution extend", cpu_time() - mytime);
 }
@@ -1887,18 +1852,6 @@ lbool Solver::execute_inprocess_strategy(
                     return l_False;
                 }
             }
-        } else if (token == "breakid") {
-            if (conf.do_breakid
-                && !frat->enabled()
-                && (solve_stats.num_simplify == 0 ||
-                   (solve_stats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
-            ) {
-                #ifdef USE_BREAKID
-                if (!breakid->doit()) return l_False;
-                #else
-                verb_print(1,"[breakid] BreakID not compiled in, skipping");
-                #endif
-            }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore
         } else if (token.substr(0,3) == "occ") {
@@ -1987,7 +1940,7 @@ void CMSat::Solver::print_stats(
 {
     verb_print(1, "------- FINAL TOTAL SEARCH STATS ---------");
     if (conf.do_print_times) {
-        print_stats_line(conf.prefix + "UIP search time"
+        print_stats_line(conf.prefix, "UIP search time"
             , sum_search_stats.cpu_time
             , stats_line_percent(sum_search_stats.cpu_time, cpu_time)
             , "% time"
@@ -2010,52 +1963,52 @@ void Solver::print_solve_call_stats() const
 {
     const auto& s = solve_stats;
     verb_print(1, "------- SOLVE CALL STATS ---------");
-    print_stats_line(conf.prefix + "solve() calls", s.num_solve_calls);
-    print_stats_line(conf.prefix + "solve() SAT/UNSAT/UNDEF"
+    print_stats_line(conf.prefix, "solve() calls", s.num_solve_calls);
+    print_stats_line(conf.prefix, "solve() SAT/UNSAT/UNDEF"
         , std::to_string(s.solve_ret[0]) + "/" + std::to_string(s.solve_ret[1])
             + "/" + std::to_string(s.solve_ret[2]));
-    print_stats_line(conf.prefix + "conflicts per solve()"
+    print_stats_line(conf.prefix, "conflicts per solve()"
         , float_div(sum_conflicts, s.num_solve_calls), s.max_confl_per_solve, "max");
-    print_stats_line(conf.prefix + "conflicts in UNSAT solve()", s.confl_in_solves_unsat
+    print_stats_line(conf.prefix, "conflicts in UNSAT solve()", s.confl_in_solves_unsat
         , stats_line_percent(s.confl_in_solves_unsat, sum_conflicts), "% of conflicts");
     {
         std::stringstream ss;
         const char* names[6] = {"0", "<10", "<100", "<1K", "<10K", "10K+"};
         for(uint32_t i = 0; i < 6; i++) ss << names[i] << ":" << s.confl_per_solve_hist[i] << " ";
-        print_stats_line(conf.prefix + "solve() calls by conflicts", ss.str());
+        print_stats_line(conf.prefix, "solve() calls by conflicts", ss.str());
     }
-    print_stats_line(conf.prefix + "assumptions per solve()"
+    print_stats_line(conf.prefix, "assumptions per solve()"
         , float_div(s.sum_assumps, s.num_solve_calls));
-    print_stats_line(conf.prefix + "simplify() by user", s.num_user_simplify_calls
+    print_stats_line(conf.prefix, "simplify() by user", s.num_user_simplify_calls
         , s.num_simplify, "inprocess rounds");
-    print_stats_line(conf.prefix + "search() calls", num_search_called
+    print_stats_line(conf.prefix, "search() calls", num_search_called
         , float_div(sum_conflicts, num_search_called), "conflicts per call");
     if (conf.do_print_times) {
         const double t = cpu_time();
-        print_stats_line(conf.prefix + "time in solve()/simplify()", s.time_in_solver
+        print_stats_line(conf.prefix, "time in solve()/simplify()", s.time_in_solver
             , stats_line_percent(s.time_in_solver, t), "% of process CPU time");
     }
-    print_stats_line(conf.prefix + "clauses added by user", s.cls_added
+    print_stats_line(conf.prefix, "clauses added by user", s.cls_added
         , float_div(s.cl_lits_added, s.cls_added), "avg lits");
-    print_stats_line(conf.prefix + "xors added by user", s.xors_added
+    print_stats_line(conf.prefix, "xors added by user", s.xors_added
         , float_div(s.xor_lits_added, s.xors_added), "avg vars");
-    if (s.bnns_added) print_stats_line(conf.prefix + "bnns added by user", s.bnns_added);
-    print_stats_line(conf.prefix + "vars created by user", nVarsOuter());
+    if (s.bnns_added) print_stats_line(conf.prefix, "bnns added by user", s.bnns_added);
+    print_stats_line(conf.prefix, "vars created by user", nVarsOuter());
 
     const auto& g = gauss_tot;
-    print_stats_line(conf.prefix + "matrix inits", g.inits, g.matrices, "matrices built");
+    print_stats_line(conf.prefix, "matrix inits", g.inits, g.matrices, "matrices built");
     if (g.matrices == 0) return;
-    print_stats_line(conf.prefix + "matrix avg rows x cols"
+    print_stats_line(conf.prefix, "matrix avg rows x cols"
         , float_div(g.rows, g.matrices), float_div(g.cols, g.matrices), "cols");
-    print_stats_line(conf.prefix + "matrices auto-disabled", g.disabled
+    print_stats_line(conf.prefix, "matrices auto-disabled", g.disabled
         , stats_line_percent(g.disabled, g.matrices), "% of matrices");
-    print_stats_line(conf.prefix + "gauss find-truth calls", g.find_calls
+    print_stats_line(conf.prefix, "gauss find-truth calls", g.find_calls
         , stats_line_percent(g.find_prop + g.find_confl, g.find_calls), "% prop or confl");
-    print_stats_line(conf.prefix + "gauss elim calls", g.elim_calls
+    print_stats_line(conf.prefix, "gauss elim calls", g.elim_calls
         , stats_line_percent(g.elim_prop + g.elim_confl, g.elim_calls), "% prop or confl");
-    print_stats_line(conf.prefix + "gauss props", g.props
+    print_stats_line(conf.prefix, "gauss props", g.props
         , stats_line_percent(g.props, sum_prop_stats.propagations), "% of all props");
-    print_stats_line(conf.prefix + "gauss conflicts", g.confls
+    print_stats_line(conf.prefix, "gauss conflicts", g.confls
         , stats_line_percent(g.confls, sum_conflicts), "% of all conflicts");
 }
 
@@ -2065,11 +2018,11 @@ void Solver::print_stats_time(
     const double wallclock_time_started) const
 {
     if (conf.do_print_times) {
-        print_stats_line(conf.prefix + "Total time (this thread)", cpu_time);
+        print_stats_line(conf.prefix, "Total time (this thread)", cpu_time);
         if (cpu_time != cpu_time_total) {
-            print_stats_line(conf.prefix + "Total time (all threads)", cpu_time_total);
+            print_stats_line(conf.prefix, "Total time (all threads)", cpu_time_total);
             if (wallclock_time_started != 0.0) {
-                print_stats_line(conf.prefix + "Wall clock time: ", (real_time_sec() - wallclock_time_started));
+                print_stats_line(conf.prefix, "Wall clock time: ", (real_time_sec() - wallclock_time_started));
             }
         }
     }
@@ -2081,24 +2034,24 @@ void Solver::print_norm_stats(
     const double wallclock_time_started) const
 {
     sum_search_stats.print_short(sum_prop_stats.propagations, conf.do_print_times, conf.prefix);
-    print_stats_line(conf.prefix + "props/decision"
+    print_stats_line(conf.prefix, "props/decision"
         , float_div(prop_stats.propagations, sum_search_stats.decisions)
     );
-    print_stats_line(conf.prefix + "props/conflict"
+    print_stats_line(conf.prefix, "props/conflict"
         , float_div(prop_stats.propagations, sum_conflicts)
     );
 
-    print_stats_line(conf.prefix + "0-depth assigns", trail.size()
+    print_stats_line(conf.prefix, "0-depth assigns", trail.size()
         , stats_line_percent(trail.size(), nVars())
         , "% vars"
     );
-    print_stats_line(conf.prefix + "0-depth assigns by CNF"
+    print_stats_line(conf.prefix, "0-depth assigns by CNF"
         , zeroLevAssignsByCNF
         , stats_line_percent(zeroLevAssignsByCNF, nVars())
         , "% vars"
     );
 
-    print_stats_line(conf.prefix + "reduceDB time"
+    print_stats_line(conf.prefix, "reduceDB time"
         , reduceDB->get_total_time()
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)
         , "% time"
@@ -2108,7 +2061,7 @@ void Solver::print_norm_stats(
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
-            print_stats_line(conf.prefix + "OccSimplifier time"
+            print_stats_line(conf.prefix, "OccSimplifier time"
                 , occsimplifier->get_stats().total_time(occsimplifier)
                 , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
                 , "% time"
@@ -2116,7 +2069,7 @@ void Solver::print_norm_stats(
         occsimplifier->get_stats().print_extra_times(conf.prefix.c_str());
         occsimplifier->get_sub_str()->get_stats().print_short(this);
     }
-    print_stats_line(conf.prefix + "SCC time"
+    print_stats_line(conf.prefix, "SCC time"
         , var_replacer->get_scc_finder()->get_stats().cpu_time
         , stats_line_percent(var_replacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
         , "% time"
@@ -2125,23 +2078,23 @@ void Solver::print_norm_stats(
     var_replacer->print_some_stats(cpu_time, conf.prefix);
 
     //var_replacer->get_stats().print_short(nVars());
-    print_stats_line(conf.prefix + "distill long time"
+    print_stats_line(conf.prefix, "distill long time"
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
-    print_stats_line(conf.prefix + "distill bin time"
+    print_stats_line(conf.prefix, "distill bin time"
                     , distill_bin_cls->get_stats().time_used
                     , stats_line_percent(distill_bin_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
 
-    print_stats_line(conf.prefix + "strength cache-irred time"
+    print_stats_line(conf.prefix, "strength cache-irred time"
                     , dist_long_with_impl->get_stats().irred_watch_based.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().irred_watch_based.cpu_time, cpu_time)
                     , "% time"
     );
-    print_stats_line(conf.prefix + "strength cache-red time"
+    print_stats_line(conf.prefix, "strength cache-red time"
                     , dist_long_with_impl->get_stats().red_watch_based.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().red_watch_based.cpu_time, cpu_time)
                     , "% time"
@@ -2152,41 +2105,41 @@ void Solver::print_norm_stats(
         for(uint32_t i = 0; i < long_red_cls.size(); i ++) {
             if (i > 0 && longRedClsSizes[i] == 0) continue;
             std::stringstream ss;
-            ss << conf.prefix + "avg cls in red " << i;
-            print_stats_line(ss.str()
+            ss << "avg cls in red " << i;
+            print_stats_line(conf.prefix, ss.str()
                 , (double)longRedClsSizes[i]/(double)sum_conflicts
             );
         }
     }
 
     #ifdef STATS_NEEDED
-    print_stats_line(conf.prefix + "DB locked ratio",
+    print_stats_line(conf.prefix, "DB locked ratio",
         stats_line_percent(reduceDB->locked_for_data_gen_total, reduceDB->locked_for_data_gen_cls)
     );
     #endif
 
     if (conf.do_print_times) {
-        print_stats_line(conf.prefix + "Conflicts in UIP"
+        print_stats_line(conf.prefix, "Conflicts in UIP"
             , sum_conflicts
             , float_div(sum_conflicts, cpu_time)
             , "confl/time_this_thread"
         );
     } else {
-        print_stats_line(conf.prefix + "Conflicts in UIP", sum_conflicts);
+        print_stats_line(conf.prefix, "Conflicts in UIP", sum_conflicts);
     }
     double vm_unused;
     std::string max_mem_usage;
     double max_rss_mem_mb = (double)::mem_used(vm_unused, &max_mem_usage)/(1024UL*1024UL);
     if (max_mem_usage.empty()) {
-        print_stats_line(conf.prefix + "Mem used"
+        print_stats_line(conf.prefix, "Mem used"
             , max_rss_mem_mb
             , "MB"
         );
     } else {
-        print_stats_line(conf.prefix + "Max Memory (rss) used"
+        print_stats_line(conf.prefix, "Max Memory (rss) used"
             , max_mem_usage
         );
-//      print_stats_line(conf.prefix + "Virt mem used at exit"
+//      print_stats_line(conf.prefix, "Virt mem used at exit"
 //         , vm_usage/(1024UL*1024UL)
 //         , "MB"
 //     );
@@ -2230,7 +2183,7 @@ void Solver::print_full_stats(
 uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
 {
     size_t alloc = watches.mem_used_alloc();
-    print_stats_line(conf.prefix + "[mem] watch alloc"
+    print_stats_line(conf.prefix, "[mem] watch alloc"
         , alloc/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(alloc, rss_mem_used)
@@ -2238,7 +2191,7 @@ uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
     );
 
     size_t array = watches.mem_used_array();
-    print_stats_line(conf.prefix + "[mem] watch array"
+    print_stats_line(conf.prefix, "[mem] watch array"
         , array/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(array, rss_mem_used)
@@ -2269,7 +2222,7 @@ uint64_t Solver::mem_used_vardata() const
 void Solver::print_mem_stats() const
 {
     const uint64_t rss_mem = rss_mem_used();
-    print_stats_line(conf.prefix + "Mem used"
+    print_stats_line(conf.prefix, "Mem used"
         , rss_mem/(1024UL*1024UL)
         , "MB"
     );
@@ -2280,7 +2233,7 @@ void Solver::print_mem_stats() const
 
     size_t mem = 0;
     mem += mem_used_vardata();
-    print_stats_line(conf.prefix + "Mem for assings&vardata"
+    print_stats_line(conf.prefix, "Mem for assings&vardata"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem)
@@ -2289,7 +2242,7 @@ void Solver::print_mem_stats() const
     account += mem;
 
     mem = mem_used();
-    print_stats_line(conf.prefix + "Mem for search&solve"
+    print_stats_line(conf.prefix, "Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem)
@@ -2298,7 +2251,7 @@ void Solver::print_mem_stats() const
     account += mem;
 
     mem = CNF::mem_used_renumberer();
-    print_stats_line(conf.prefix + "Mem for renumberer"
+    print_stats_line(conf.prefix, "Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem)
@@ -2308,7 +2261,7 @@ void Solver::print_mem_stats() const
 
     if (occsimplifier) {
         mem = occsimplifier->mem_used();
-        print_stats_line(conf.prefix + "Mem for occsimplifier"
+        print_stats_line(conf.prefix, "Mem for occsimplifier"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem)
@@ -2318,7 +2271,7 @@ void Solver::print_mem_stats() const
     }
 
     mem = var_replacer->mem_used();
-    print_stats_line(conf.prefix + "Mem for var_replacer&SCC"
+    print_stats_line(conf.prefix, "Mem for var_replacer&SCC"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem)
@@ -2328,7 +2281,7 @@ void Solver::print_mem_stats() const
 
     if (subsumeImplicit) {
         mem = subsumeImplicit->mem_used();
-        print_stats_line(conf.prefix + "Mem for impl subsume"
+        print_stats_line(conf.prefix, "Mem for impl subsume"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem)
@@ -2341,7 +2294,7 @@ void Solver::print_mem_stats() const
     mem = distill_long_cls->mem_used();
     mem += dist_long_with_impl->mem_used();
     mem += dist_impl_with_impl->mem_used();
-    print_stats_line(conf.prefix + "Mem for 3 distills"
+    print_stats_line(conf.prefix, "Mem for 3 distills"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem)
@@ -2349,11 +2302,11 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    print_stats_line(conf.prefix + "Accounted for mem (rss)"
+    print_stats_line(conf.prefix, "Accounted for mem (rss)"
         , stats_line_percent(account, rss_mem)
         , "%"
     );
-    print_stats_line(conf.prefix + "Accounted for mem (vm)"
+    print_stats_line(conf.prefix, "Accounted for mem (vm)"
         , stats_line_percent(account, memUsedTotal())
         , "%"
     );
@@ -2389,7 +2342,7 @@ void Solver::print_clause_size_distrib()
     }
 
     cout
-    << "c clause size stats."
+    << conf.prefix << "clause size stats."
     << " size3: " << size3
     << " size4: " << size4
     << " size5: " << size5
@@ -2506,7 +2459,7 @@ bool Solver::verify_model() const
 
     if (conf.verbosity && verificationOK) {
         cout
-        << "c Verified "
+        << conf.prefix << "Verified "
         << long_irred_cls.size() + long_red_cls.size()
             + bin_tri.irred_bins + bin_tri.red_bins
         << " clause(s)."
@@ -3324,9 +3277,7 @@ bool Solver::init_all_matrices() {
         if (!created) {
             gqueuedata[i].disabled = true;
             delete g;
-            if (conf.verbosity > 5) {
-                cout << "DELETED matrix" << endl;
-            }
+            if (conf.verbosity > 5) cout << conf.prefix << "DELETED matrix" << endl;
             g = nullptr;
         }
     }

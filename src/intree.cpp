@@ -149,11 +149,7 @@ bool InTree::intree_probe() {
     bool aborted = false;
     if (!replace_until_fixedpoint(aborted)) return solver->okay();
     if (aborted) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [intree] SCC too expensive, depth exceeded or equivalences under GJ: aborting"
-            << endl;
-        }
+        verb_print(1, "[intree] SCC too expensive, depth exceeded or equivalences under GJ: aborting");
         solver->use_depth_trick = true;
         solver->perform_transitive_reduction = true;
         return solver->okay();

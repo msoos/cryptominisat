@@ -145,10 +145,7 @@ struct ClauseStats
     uint32_t locked_for_data_gen:1;
     uint32_t is_ternary_resolvent:1;
     uint32_t is_tracked:1;
-    union {
-        float   activity;
-        uint32_t hash_val; //used in BreakID to remove equivalent clauses
-    };
+    float activity;
     int32_t id;
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)

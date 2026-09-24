@@ -133,7 +133,6 @@ Simplification:
 | `scc` | Find and replace equivalent literals |
 | `intree` | Intree probing |
 | `transred` | Transitive reduction of binary clauses |
-| `breakid` | Break symmetries with BreakID, if compiled in |
 
 XOR and Gaussian elimination:
 

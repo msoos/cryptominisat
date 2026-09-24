@@ -234,17 +234,6 @@ class DLL_PUBLIC SolverConf
         double ternary_max_create;
         int    allow_ternary_bin_create;
 
-        //BreakID
-        bool do_breakid;
-        bool breakid_use_assump; ///< If false breaks library use of solver
-        uint32_t breakid_every_n;
-        uint32_t breakid_vars_limit_K;
-        uint64_t breakid_cls_limit_K;
-        uint64_t breakid_lits_limit_K;
-        int64_t breakid_time_limit_K;
-        int breakid_max_constr_per_permut;
-        bool breakid_matrix_detect;
-
         //BVA
         int      do_bva;
         int min_bva_gain; ///<CaDiCaL's elimboundmax: largest elimination bound we ramp up to

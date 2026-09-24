@@ -199,11 +199,6 @@ if(MPI_FOUND)
     set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
 endif()
 
-if(BREAKID_LIBRARIES)
-    set(cryptoms_lib_files ${cryptoms_lib_files} cms_breakid.cpp)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
-endif()
-
 if(STATS)
     set(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
@@ -232,7 +227,6 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${MPI_INCLUDE_PATH}
     $<INSTALL_INTERFACE:include>
-    ${BREAKID_INCLUDE_DIRS}
 )
 set(CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

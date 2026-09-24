@@ -879,19 +879,19 @@ void SubsumeStrengthen::Stats::print_short(const Solver* s) const
 void SubsumeStrengthen::Stats::print(const string& prefix) const
 {
     cout << prefix << "-------- SubsumeStrengthen STATS ----------" << endl;
-    print_stats_line(prefix + "cl-subs"
+    print_stats_line(prefix, "cl-subs"
         , sub0.numSubsumed + sub1.sub
         , " Clauses"
     );
-    print_stats_line(prefix + "cl-str rem lit"
+    print_stats_line(prefix, "cl-str rem lit"
         , sub1.str
         , " Lits"
     );
-    print_stats_line(prefix + "cl-sub T"
+    print_stats_line(prefix, "cl-sub T"
         , subsumeTime
         , " s"
     );
-    print_stats_line(prefix + "cl-str T"
+    print_stats_line(prefix, "cl-str T"
         , strengthenTime
         , " s"
     );

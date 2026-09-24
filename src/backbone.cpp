@@ -298,7 +298,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     bool backbone_limit_hit = false;
     const double cadiback_start_time = cpu_time();
     int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits,
-        orig_max_confl, &backbone_limit_hit);
+        orig_max_confl, &backbone_limit_hit, conf.prefix);
     const double cadiback_time = cpu_time() - cadiback_start_time;
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;

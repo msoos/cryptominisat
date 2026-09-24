@@ -35,7 +35,6 @@ node_modules
 ml-data
 pycryptosat.egg-info
 compile_commands.json
-tests/breakid*
 web
 src/predict
 scripts/linpb*
