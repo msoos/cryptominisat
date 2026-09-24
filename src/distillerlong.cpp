@@ -36,13 +36,8 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_SUBSUME_NONEXIST
-#endif
 
-//#define VERBOSE_DEBUG
 
-//#define VERBOSE_SUBSUME_NONEXIST
 
 //CaDiCaL's vivify_more_noccs: literal order for the trie effect. Higher
 //Jeroslow-Wang-style score first; ties broken as in CaDiCaL.

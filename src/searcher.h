@@ -371,12 +371,10 @@ class Searcher : public HyperEngine
             const uint32_t level,
             const bool enqueue,
             const uint64_t ID);
-        void  print_learning_debug_info(const int32_t ID) const;
         template<bool inprocess>
         void add_lits_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
         template<bool inprocess>
         void create_learnt_clause(PropBy confl);
-        void debug_print_resolving_clause(const PropBy confl) const;
         template<bool inprocess>
         void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);

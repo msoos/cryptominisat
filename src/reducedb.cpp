@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include "cl_predictors_py.h"
 #endif
 
-// #define VERBOSE_DEBUG
 
 
 #include <functional>

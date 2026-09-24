@@ -34,7 +34,6 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-//#define VERBOSE_DEBUG
 
 using std::map;
 using std::vector;

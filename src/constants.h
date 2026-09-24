@@ -156,10 +156,8 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_PRINT(x) do { std::cout << x << std::endl; } while (0)
-#define VERBOSE_DEBUG_DO(x) do { x; } while (0)
 #else
 #define VERBOSE_PRINT(x) do { } while (0)
-#define VERBOSE_DEBUG_DO(x) do { } while (0)
 #endif
 
 #ifdef USE_BREAKID
@@ -211,13 +209,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define DEBUG_IMPLICIT_STATS_DO(x) do { } while (0)
 #endif
 
-
-#ifdef VERBOSE_DEBUG
-#define FAST_DEBUG
-#define DEBUG_ATTACH_FULL
-#define VERBOSE_DEBUG_XOR
-#define VERBOSE_DEBUG_RECONSTRUCT
-#endif
 
 #ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)

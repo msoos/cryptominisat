@@ -59,7 +59,6 @@ void GateFinder::find_all()
     assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
     if (solver->conf.doPrintGateDot) print_graphviz_dot();
-    VERBOSE_DEBUG_DO(for(auto g: orGates) cout << "found: OR gate" << g << endl;);
 
     if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
     globalStats += runStats;

@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <iomanip>
 #include <cmath>
 
-//#define VERBOSE_DEBUG
 //#define PART_FINDING
 
 using namespace CMSat;
@@ -167,11 +166,6 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         matrix_no++;
     }
 
-    #ifdef VERBOSE_DEBUG
-    for (const auto& m : reverseTable) {
-        cout << "XOR table set: "; for (const auto& a: m.second) cout << a << ", "; cout << "----" << endl;
-    }
-    #endif
 
     // setup_matrices_attach_remaining_cls() empties xorclauses and pushes back
     // only the ones from unused matrices, so count them before the call

@@ -52,12 +52,6 @@ extern "C" {
 #include "kitten.h"
 }
 
-//#define VERBOSE_DEBUG
-#ifdef VERBOSE_DEBUG
-#define BIT_MORE_VERBOSITY
-#define VERBOSE_DEBUG_XOR_FINDER
-#define VERBOSE_DEBUG_VARELIM
-#endif
 
 using namespace CMSat;
 using std::cout;
@@ -238,10 +232,6 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         );
     }
 
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "Number of elimed clauses: " << elimed_cls.size() << endl;
-    print_elimed_clauses_reverse();
-    #endif
 
     //go through in reverse order
     vector<Lit> lits;
@@ -2167,7 +2157,6 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 }
             }
 
-            VERBOSE_DEBUG_DO(solver->print_clause("shortening", *cl));
             for(auto const& l: gate.lits) {
                 solver->watches.smudge(l);
                 removeWCl(solver->watches[l], off);
@@ -2193,7 +2182,6 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             }
             INC_ID(*cl);
             (*solver->frat) << add << *cl << fratchain << solver->chain << lrog_orig_id << fin << findelay;
-            VERBOSE_DEBUG_DO(solver->print_clause("shortened", *cl));
             if (!clean_clause(off, true)) {
                 for(auto const& l: gate.lits) seen[l.toInt()] = 0;
                 goto end;
@@ -2491,7 +2479,6 @@ bool OccSimplifier::ternary_res()
             && *limit_to_decrease > 0
             && ternary_res_cls_limit > 0
         ) {
-            VERBOSE_DEBUG_DO(solver->print_clause("performing tri with", *cl));
             if (!perform_ternary(cl, offs, sub1_ret)) goto end;
         }
     }
@@ -2881,9 +2868,6 @@ bool OccSimplifier::fill_occur() {
 // Takes INTERNAL var
 bool OccSimplifier::uneliminate(uint32_t var)
 {
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "calling uneliminate() on var" << var+1 << endl;
-    #endif
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
@@ -2914,15 +2898,6 @@ bool OccSimplifier::uneliminate(uint32_t var)
     assert(elimed_cls[at_elimed_cls].at(0, elimed_cls_lits).var() == var);
 
     //Re-insert into Solver
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout
-    << "Uneliminating cl ";
-    for(size_t i=0; i< elimed_cls[at_elimed_cls].size(); i++){
-        cout << elimed_cls[at_elimed_cls].at(i, elimed_cls_lits) << " ";
-    }
-    cout << " on var " << var+1
-    << endl;
-    #endif
 
     vector<Lit> lits;
     size_t bat = 1; // 0th is marker
@@ -4174,11 +4149,6 @@ bool OccSimplifier::generate_resolvents_weakened(
                     seen[l.toInt()] = 1;
                 }
             }
-            #ifdef VERBOSE_DEBUG
-            cout << "Dummy after neg: ";
-            for(auto const& l: dummy) cout << l << ", ";
-            cout << " taut: " << tautological << endl;
-            #endif
 
             for (uint32_t x = poss_start; x < i; x++) seen[tmp_poss[x].toInt()] = 0;
             for (uint32_t x = negs_start; x < i2; x++) seen[tmp_negs[x].toInt()] = 0;
@@ -4231,9 +4201,6 @@ bool OccSimplifier::generate_resolvents(
             if (solver->satisfied(dummy)) continue;
             if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
 
-            #ifdef VERBOSE_DEBUG_VARELIM
-            cout << "Adding new clause due to varelim: " << dummy << endl;
-            #endif
 
             //CaDiCaL's elim_propagate: a unit resolvent is free, it does not
             //count against the bound and is kept even if elimination fails

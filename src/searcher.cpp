@@ -339,39 +339,6 @@ void Searcher::build_level0_confl_chain(const PropBy confl)
     chain.push_back(id);
 }
 
-void Searcher::debug_print_resolving_clause(const PropBy confl) const
-{
-#ifndef DEBUG_RESOLV
-    //Avoid unused parameter warning
-    (void) confl;
-#else
-    switch(confl.getType()) {
-        case binary_t: {
-            cout << "resolv bin: " << confl.lit2() << endl;
-            break;
-        }
-
-        case clause_t: {
-            Clause* cl = cl_alloc.ptr(confl.get_offset());
-            cout << "resolv (long): " << *cl << endl;
-            break;
-        }
-
-        case xor_t: {
-            //in the future, we'll have XOR clauses. Not yet.
-            assert(false);
-            exit(-1);
-            break;
-        }
-
-        case null_clause_t: {
-            assert(false);
-            break;
-        }
-    }
-#endif
-}
-
 //Improve glue, as kissat's promote: the tier follows from the glue
 void Searcher::promote_clause(Clause* cl, const uint32_t new_glue)
 {
@@ -1463,11 +1430,6 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
     std::sort(out_conflict.begin(), out_conflict.end());
     assert(out_conflict.size() <= assumptions.size());
     //They now are in the order where we can go through them linearly
-#ifdef VERBOSE_DEBUG
-    cout << "doing conflict reconstruction." << endl;
-    for(const auto& a: inter_assumptions) cout << "ass:" << a.first << " " << a.second << endl;
-    cout << "out confl:" << out_conflict << endl;
-#endif
 
     uint32_t at_assump = 0;
     uint32_t j = 0;
@@ -1864,15 +1826,6 @@ void Searcher::attach_and_enqueue_learnt_clause(
 
             break;
     }
-}
-
-void Searcher::print_learning_debug_info(const int32_t ID) const
-{
-    cout
-    << "Learning: " << learnt_clause << " ID: " << ID
-    << " -- reverting var " << learnt_clause[0].var()+1
-    << " to " << !learnt_clause[0].sign()
-    << endl;
 }
 
 
@@ -3527,11 +3480,6 @@ void Searcher::cancelUntil<true, true>(uint32_t level);
 template<bool do_insert_var_order, bool inprocess>
 void Searcher::cancelUntil(uint32_t blevel)
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Canceling until level " << blevel;
-    if (blevel > 0) cout << " sublevel: " << trail_lim[blevel];
-    cout << endl;
-    #endif
 
     if (decisionLevel() > blevel) {
         if (!inprocess) {
@@ -3576,13 +3524,6 @@ void Searcher::cancelUntil(uint32_t blevel)
         trail_lim.resize(blevel);
     }
 
-    #ifdef VERBOSE_DEBUG
-    cout << "Canceling finished. Now at level: " << decisionLevel();
-    if (trail.size() > 0) {
-        cout << " sublevel: " << trail.size()-1;
-    }
-    cout << endl;
-    #endif
 }
 
 void Searcher::cancelUntil_light()

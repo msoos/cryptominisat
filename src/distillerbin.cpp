@@ -38,11 +38,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_SUBSUME_NONEXIST
-#endif
 
-//#define VERBOSE_SUBSUME_NONEXIST
 
 DistillerBin::DistillerBin(Solver* _solver) :
     solver(_solver)

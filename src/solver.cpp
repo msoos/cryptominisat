@@ -2499,9 +2499,6 @@ bool Solver::verify_model_implicit_clauses() const
 
 bool Solver::verify_model_long_clauses(const vector<ClOffset>& cs) const
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Checking clauses whether they have been properly satisfied." << endl;
-    #endif
 
     bool verificationOK = true;
 

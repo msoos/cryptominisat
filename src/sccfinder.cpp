@@ -159,14 +159,6 @@ void SCCFinder::add_bin_xor_in_tmp()
             && solver->value(binxor.vars[1]) == l_Undef
         ) {
             runStats.foundXors++;
-            #ifdef VERBOSE_DEBUG
-            cout << "SCC says: "
-            << binxor.vars[0] +1
-            << " XOR "
-            << binxor.vars[1] +1
-            << " = " << binxor.rhs
-            << endl;
-            #endif
         }
     }
 }

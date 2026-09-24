@@ -33,7 +33,6 @@ THE SOFTWARE.
 using namespace CMSat;
 
 //#define DEBUG_CLEAN
-//#define VERBOSE_DEBUG
 
 ClauseCleaner::ClauseCleaner(Solver* _solver) :
     solver(_solver)
@@ -501,7 +500,6 @@ bool ClauseCleaner::clean_all_xor_clauses() {
 // Returns okay(), it can lead to UNSAT
 bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
     assert(solver->ok);
-    VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "Cleaning XOR: " << x << endl);
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {

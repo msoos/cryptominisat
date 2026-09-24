@@ -32,7 +32,6 @@ THE SOFTWARE.
 #include <algorithm>
 #include <array>
 
-//#define VERBOSE_DEBUG
 
 using namespace CMSat;
 
@@ -373,14 +372,6 @@ void inline SubsumeStrengthen::fill_sub_str(
             out_subsumed.push_back(OccurClause(lit, w));
             out_lits.push_back(litSub);
 
-            #ifdef VERBOSE_DEBUG
-            if (litSub == lit_Undef) cout << "subsume-d: ";
-            else cout << "backw_sub_str_with_long-ed (lit: "
-                << litSub
-                << ") clause offset: "
-                << w.get_offset()
-                << endl;
-            #endif
         }
     }
 }
@@ -587,13 +578,6 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     , vector<OccurClause>& out_subsumed //List of clauses
     , bool only_irred
 ) {
-    #ifdef VERBOSE_DEBUG
-    cout << "find_subsumed: ";
-    for (const Lit lit: ps) {
-        cout << lit << " , ";
-    }
-    cout << endl;
-    #endif
 
     const uint32_t smallest = find_smallest_watchlist_for_clause(ps);
     const Lit lit = ps[smallest];
@@ -759,20 +743,11 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
-            #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 6)
-                cout << "subsumed clause " << cl2 << endl;
-            #endif
             if (!cl2.red()) ret_sub_str.subsumedIrred = true;
 
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
         } else { //Strengthen
-            #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 6) {
-                cout << "strenghtened clause " << cl2 << endl;
-            }
-            #endif
             const vector<int32_t> h = {impl_id, cl2.stats.id};
             if (!simplifier->remove_literal(offset2, subsLits[j], true,
                     solver->frat->enabled() && impl_id != 0 ? &h : nullptr)) return false;

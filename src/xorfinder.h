@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #pragma once
 
-//#define VERBOSE_DEBUG_XOR_FINDER
 
 #include <cstdint>
 #include <vector>
@@ -56,9 +55,6 @@ class PossibleXor {
             size = cl.size();
             offsets.clear();
             fully_used.clear();
-            #ifdef VERBOSE_DEBUG_XOR_FINDER
-            cout << "Trying to create XOR from clause: " << cl << endl;
-            #endif
 
             assert(cl.size() <= sizeof(origCl)/sizeof(Lit)
                 && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
@@ -229,15 +225,6 @@ template<class T> void PossibleXor::add(
     , const ClOffset offset
     , vector<uint32_t>& varsMissing
 ) {
-    #ifdef VERBOSE_DEBUG_XOR_FINDER
-    cout << "Adding to XOR: " << cl << endl;
-
-    cout << "FoundComb before:" << endl;
-    for(size_t i = 0; i < foundComb.size(); i++) {
-        cout << "foundComb[" << i << "]: " << (int)foundComb[i] << endl;
-    }
-    cout << "----" << endl;
-    #endif
 
     //It's the base clause, skip.
     if (!offsets.empty() && offset == offsets[0])
@@ -300,14 +287,6 @@ template<class T> void PossibleXor::add(
         fully_used.push_back(varsMissing.empty());
     }
 
-    #ifdef VERBOSE_DEBUG_XOR_FINDER
-    cout << "whichOne was:" << whichOne << endl;
-    cout << "FoundComb after:" << endl;
-    for(size_t i = 0; i < foundComb.size(); i++) {
-        cout << "foundComb[" << i << "]: " << foundComb[i] << endl;
-    }
-    cout << "----" << endl;
-    #endif
 }
 
 inline bool PossibleXor::foundAll() const
@@ -326,11 +305,6 @@ inline bool PossibleXor::foundAll() const
         }
     }
 
-    #ifdef VERBOSE_DEBUG_XOR_FINDER
-    if (OK) {
-        cout << "Found all for this clause" << endl;
-    }
-    #endif
 
     return OK;
 }

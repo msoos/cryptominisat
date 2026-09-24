@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include "occsimplifier.h"
 #include "gaussian.h"
 
-//#define VERBOSE_DEBUG_SOLUTIONEXTENDER
 
 using namespace CMSat;
 
@@ -93,9 +92,6 @@ inline bool SolutionExtender::xor_satisfied(const vector< Lit >& lits) const {
 //called with _outer_ variable in "elimed_on"
 void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
 {
-    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout << "dummy elimed lit (outer) " << elimed_on + 1 << endl;
-    #endif
 
     #ifdef SLOW_DEBUG
     const uint32_t elimedOn_inter = solver->map_outer_to_inter(elimed_on);
@@ -114,9 +110,6 @@ void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
 }
 
 void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t elimed_on) {
-    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout << "outer clause: " << lits << endl;
-    #endif
 
     #ifdef SLOW_DEBUG
     const uint32_t elimed_on_inter = solver->map_outer_to_inter(elimed_on);

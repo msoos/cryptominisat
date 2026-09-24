@@ -46,7 +46,6 @@ THE SOFTWARE.
 
 using std::make_pair;
 
-// #define VERBOSE_DEBUG
 // #define SLOW_DEBUG
 
 // don't delete gauss watches, but check when propagating and
@@ -158,22 +157,6 @@ void EGaussian::select_columnorder() {
     std::sort(vars_needed.begin(), vars_needed.end(),c);
     c.finishup();
 
-    #ifdef COL_ORDER_DEBUG_VERBOSE_DEBUG
-    cout << "col order: " << endl;
-    for(auto& x: vars_needed) {
-        bool assump = false;
-        for(const auto& ass: solver->assumptions) {
-            if (solver->map_outer_to_inter(ass.lit_outer).var() == x) {
-                assump = true;
-            }
-        }
-        cout << "assump:" << (int)assump
-        << " act: " << std::setprecision(2) << std::scientific
-        << solver->var_act_vsids[x] << std::fixed
-        << " level: " << solver->varData[x].level
-        << endl;
-    }
-    #endif
 
     col_to_var.clear();
     for (uint32_t v : vars_needed) {
@@ -182,17 +165,6 @@ void EGaussian::select_columnorder() {
         var_to_col[v] = col_to_var.size() - 1;
     }
 
-    #ifdef VERBOSE_DEBUG_MORE
-    cout << "(" << matrix_no << ") num_xorclauses: " << num_xorclauses << endl;
-    cout << "(" << matrix_no << ") col_to_var: ";
-    std::copy(col_to_var.begin(), col_to_var.end(),
-              std::ostream_iterator<uint32_t>(cout, ","));
-    cout << endl;
-    cout << "num_cols:" << num_cols << endl;
-    cout << "col is set:" << endl;
-    std::copy(col_is_set.begin(), col_is_set.end(),
-              std::ostream_iterator<char>(cout, ","));
-    #endif
 }
 
 void EGaussian::fill_matrix() {
@@ -759,11 +731,6 @@ void EGaussian::delete_gausswatch(
             ws_t[at].row_n, var, at);
     }
 
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "mat[" << matrix_no << "] "
-    << "Tried cleaning watch of var: " << var+1 << endl;
-    #endif
 }
 
 uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
@@ -923,10 +890,8 @@ bool EGaussian::find_truths(
                 clear_gwatches(new_resp_var);
                 VERBOSE_PRINT("Cleared watchlist for new resp var: " << new_resp_var+1);
                 VERBOSE_PRINT("After clear...");
-                VERBOSE_DEBUG_DO(print_gwatches(new_resp_var));
             }
             assert(new_resp_var != var);
-            //VERBOSE_DEBUG_DO(print_gwatches(new_resp_var));
             SLOW_DEBUG_DO(check_row_not_in_watch(new_resp_var, row_n));
             solver->gwatches[new_resp_var].push(GaussWatched(row_n, matrix_no));
 
@@ -1087,14 +1052,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
     if (solver->value(p) == l_True) cols_vals->setBit(dcol);
     else cols_vals->clearBit(dcol);
 
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "mat[" << matrix_no << "] "
-    << "** eliminating this D slot: " << dcol << endl
-    << "-> row that will be the SOLE one having a 1: " << gqd.new_resp_row << endl
-    << "-> var associated with col: " << gqd.new_resp_var+1
-    <<  endl;
-    #endif
     elim_called++;
 
     while (rowI != end) {
@@ -1217,13 +1174,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                     // find new watch list
                     case gret::nothing_fnewwatch:
                         elim_ret_fnewwatch++;
-                        #ifdef VERBOSE_DEBUG
-                        cout
-                        << "---> Nothing, clause NOT already satisfied, pushing in "
-                        << new_non_resp_var+1 << " as non-responsible var ( "
-                        << row_i << " row) "
-                        << endl;
-                        #endif
 
                         watch_nonresp(row_i, new_non_resp_var);
                         break;
@@ -1258,11 +1208,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
     }
 
     // Debug_funtion();
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "mat[" << matrix_no << "] "
-    << "eliminate_col - exiting. " << endl;
-    #endif
 }
 
 void EGaussian::print_matrix() {
@@ -1423,23 +1368,6 @@ void EGaussian::check_row_not_in_watch(const uint32_t v, const uint32_t row_num)
             assert(false);
         }
     }
-}
-
-void EGaussian::print_gwatches(const uint32_t var) const
-{
-    vec<GaussWatched> mycopy;
-    for(const auto& x: solver->gwatches[var]) {
-        mycopy.push(x);
-    }
-
-    std::sort(mycopy.begin(), mycopy.end());
-    cout << "Watch for var " << var+1 << ": ";
-    for(const auto& x: mycopy) {
-        cout
-        << "(Mat num: " << x.matrix_num
-        << " row_n: " << x.row_n << ") ";
-    }
-    cout << endl;
 }
 
 

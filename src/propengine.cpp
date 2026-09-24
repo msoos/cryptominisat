@@ -1246,13 +1246,6 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             assert(value(lit) == l_False);
             tmp_xor_reason.push_back(lit);
         }
-        VERBOSE_DEBUG_DO(
-            cout << "XOR Reason: " << tmp_xor_reason << endl;
-            for(const auto& l: tmp_xor_reason) {
-                cout << "l: " << l << " value: " << value(l)
-                << " level:" << varData[l.var()].level
-                << " type: " << removed_type_to_string(varData[l.var()].removed) << endl;
-            });
 
         // Some sanity checks
         if (x.prop_confl_watch < 2) assert(rhs == x.rhs && "It's a prop, so rhs must match");

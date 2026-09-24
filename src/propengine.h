@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #pragma once
 
-// #define VERBOSE_DEBUG
 #include <cstdio>
 #include <string.h>
 #include <stack>

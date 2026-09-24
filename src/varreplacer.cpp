@@ -43,17 +43,11 @@ using std::cout;
 using std::endl;
 using std::make_tuple;
 
-#ifdef VERBOSE_DEBUG
-#define REPLACE_STATISTICS
-#define VERBOSE_DEBUG_BIN_REPLACER
-#endif
 
 using namespace CMSat;
 
-//#define VERBOSE_DEBUG
 //#define REPLACE_STATISTICS
 //#define DEBUG_BIN_REPLACER
-//#define VERBOSE_DEBUG_BIN_REPLACER
 
 VarReplacer::VarReplacer(Solver* _solver) :
     solver(_solver)
@@ -589,10 +583,6 @@ bool VarReplacer::replaceImplicit()
     }
     delayed_attach_bin.clear();
 
-    #ifdef VERBOSE_DEBUG_BIN_REPLACER
-    cout << "c debug bin replacer start" << endl;
-    cout << "c debug bin replacer end" << endl;
-    #endif
 
     updateStatsFromImplStats();
     solver->watches.clear_smudged();
@@ -827,11 +817,6 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
     assert(solver->varData[sub_var_inter].removed == Removed::replaced);
-    #ifdef VERBOSE_DEBUG
-    if (solver->model_value(sub_var) != l_Undef) {
-        cout << "ERROR: var " << sub_var +1 << " is set but it's replaced!" << endl;
-    }
-    #endif
     assert(solver->model_value(sub_var) == l_Undef);
 
     if (solver->conf.verbosity > 10) {
@@ -1025,12 +1010,6 @@ bool VarReplacer::handleOneSet(
 }
 
 bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_true) {
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "replace() called with var " <<  Lit(var1, false)
-    << " and var " << Lit(var2, false)
-    << " with xor_is_true " << xor_is_true << endl;
-    #endif
 
     replaceChecks(var1, var2);
 
