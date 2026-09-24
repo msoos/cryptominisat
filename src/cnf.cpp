@@ -50,15 +50,15 @@ void CNF::new_var(
         //completely new var
         enlarge_nonminimial_datastructs();
 
-        uint32_t minVar = nVars()-1;
+        uint32_t min_var = nVars()-1;
         uint32_t maxVar = nVarsOuter()-1;
         inter_to_outerMain.push_back(maxVar);
-        const uint32_t x = inter_to_outerMain[minVar];
-        inter_to_outerMain[minVar] = maxVar;
+        const uint32_t x = inter_to_outerMain[min_var];
+        inter_to_outerMain[min_var] = maxVar;
         inter_to_outerMain[maxVar] = x;
 
         outer_to_interMain.push_back(maxVar);
-        outer_to_interMain[maxVar] = minVar;
+        outer_to_interMain[maxVar] = min_var;
         outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-1);
@@ -68,14 +68,14 @@ void CNF::new_var(
         //Old var, re-inserted
         assert(orig_outer < nVarsOuter());
 
-        const uint32_t minVar = nVars()-1;
-        uint32_t k = inter_to_outerMain[minVar];
+        const uint32_t min_var = nVars()-1;
+        uint32_t k = inter_to_outerMain[min_var];
         uint32_t z = outer_to_interMain[orig_outer];
-        inter_to_outerMain[minVar] = orig_outer;
+        inter_to_outerMain[min_var] = orig_outer;
         inter_to_outerMain[z] = k;
 
         outer_to_interMain[k] = z;
-        outer_to_interMain[orig_outer] = minVar;
+        outer_to_interMain[orig_outer] = min_var;
 
         swapVars(z);
     }
@@ -101,16 +101,16 @@ void CNF::new_vars(const size_t n)
     outer_to_interMain.insert(outer_to_interMain.end(), n, 0);
 
     for(int i = n-1; i >= 0; i--) {
-        const uint32_t minVar = nVars()-i-1;
+        const uint32_t min_var = nVars()-i-1;
         const uint32_t maxVar = nVarsOuter()-i-1;
 
         inter_to_outerMain[inter_at++] = maxVar;
-        const uint32_t x = inter_to_outerMain[minVar];
-        inter_to_outerMain[minVar] = maxVar;
+        const uint32_t x = inter_to_outerMain[min_var];
+        inter_to_outerMain[min_var] = maxVar;
         inter_to_outerMain[maxVar] = x;
 
         outer_to_interMain[outer_at++] = maxVar;
-        outer_to_interMain[maxVar] = minVar;
+        outer_to_interMain[maxVar] = min_var;
         outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-i-1, i);
@@ -610,8 +610,8 @@ void CNF::print_all_clauses() const
     }
 
 
-    for (uint32_t wsLit = 0; wsLit < watches.size(); wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (uint32_t ws_lit = 0; ws_lit < watches.size(); ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         watch_subarray_const ws = watches[lit];
         cout << "watches[" << lit << "]" << endl;
         for (const auto& w : ws) {

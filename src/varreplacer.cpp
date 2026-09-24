@@ -330,7 +330,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             assert(v < solver->nVars());
             Lit l = Lit(v, false);
             if (get_lit_replaced_with_fast(l) != l) {
-                run_stats.replacedLits++;
+                run_stats.replaced_lits++;
                 Xor* old_x = nullptr;
                 if (solver->frat->enabled()) old_x = new Xor(x);
                 const Lit l2 = get_lit_replaced_with_fast(l);
@@ -498,17 +498,17 @@ inline void VarReplacer::updateBin(
 
 void VarReplacer::updateStatsFromImplStats()
 {
-    assert(impl_tmp_stats.removedRedBin % 2 == 0);
-    solver->bin_tri.red_bins -= impl_tmp_stats.removedRedBin/2;
+    assert(impl_tmp_stats.removed_red_bin % 2 == 0);
+    solver->bin_tri.red_bins -= impl_tmp_stats.removed_red_bin/2;
 
-    assert(impl_tmp_stats.removedIrredBin % 2 == 0);
-    solver->bin_tri.irred_bins -= impl_tmp_stats.removedIrredBin/2;
+    assert(impl_tmp_stats.removed_irred_bin % 2 == 0);
+    solver->bin_tri.irred_bins -= impl_tmp_stats.removed_irred_bin/2;
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->check_implicit_stats();
     #endif
 
-    run_stats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
+    run_stats.removedBinClauses += impl_tmp_stats.removed_red_bin/2 + impl_tmp_stats.removed_irred_bin/2;
 
     impl_tmp_stats.clear();
 }
@@ -550,7 +550,7 @@ bool VarReplacer::replaceImplicit()
             Lit lit1 = orig_lit1;
             if (get_lit_replaced_with_fast(lit1) != lit1) {
                 lit1 = get_lit_replaced_with_fast(lit1);
-                run_stats.replacedLits++;
+                run_stats.replaced_lits++;
                 solver->watches.smudge(orig_lit2);
             }
 
@@ -559,7 +559,7 @@ bool VarReplacer::replaceImplicit()
             if (get_lit_replaced_with_fast(lit2) != lit2) {
                 lit2 = get_lit_replaced_with_fast(lit2);
                 i->setLit2(lit2);
-                run_stats.replacedLits++;
+                run_stats.replaced_lits++;
             }
 
             assert(i->is_bin());
@@ -588,7 +588,7 @@ void VarReplacer::replace_bnn_lit(Lit& l, uint32_t idx, bool& changed)
     removeWBNN(solver->watches, ~l, idx);
     changed = true;
     l = get_lit_replaced_with_fast(l);
-    run_stats.replacedLits++;
+    run_stats.replaced_lits++;
 }
 
 bool VarReplacer::replace_bnns() {
@@ -661,7 +661,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
                 changed = true;
                 if (solver->frat->enabled()) tmp_upd_eqbins.push_back(eqbin_for(l));
                 l = get_lit_replaced_with_fast(l);
-                run_stats.replacedLits++;
+                run_stats.replaced_lits++;
             }
         }
 
@@ -820,8 +820,8 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
 void VarReplacer::extend_model(const uint32_t var)
 {
     assert(solver->model[var] != l_Undef);
-    auto it = reverseTable.find(var);
-    if (it == reverseTable.end()) return;
+    auto it = reverse_table.find(var);
+    if (it == reverse_table.end()) return;
 
     assert(it->first == var);
     for(const uint32_t sub_var: it->second)
@@ -832,7 +832,7 @@ void VarReplacer::extend_pop_queue(vector<Lit>& pop)
 {
     vector<Lit> extra;
     for (Lit p: pop) {
-        const auto& repl = reverseTable[p.var()];
+        const auto& repl = reverse_table[p.var()];
         for(uint32_t x: repl) {
             extra.push_back(Lit(x, table[x].sign() ^ p.sign()));
         }
@@ -846,7 +846,7 @@ void VarReplacer::extend_pop_queue(vector<Lit>& pop)
 void VarReplacer::extend_model_already_set()
 {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (auto& it : reverseTable) {
+    for (auto& it : reverse_table) {
         if (solver->model_value(it.first) == l_Undef) continue;
         for(const uint32_t sub_var: it.second)
             set_sub_var_during_solution_extension(it.first, sub_var);
@@ -855,7 +855,7 @@ void VarReplacer::extend_model_already_set()
 
 void VarReplacer::extend_model_all() {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (const auto& m: reverseTable) {
+    for (const auto& m: reverse_table) {
         if (solver->model_value(m.first) == l_Undef) {
             solver->model[m.first] = l_False;
             verb_print(10, "Forced " << m.first << " to some value (false, but could be anything)");
@@ -1049,15 +1049,15 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
 
 bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
 {
-    if (reverseTable.find(lit1.var()) == reverseTable.end()) {
-        reverseTable[lit2.var()].push_back(lit1.var());
+    if (reverse_table.find(lit1.var()) == reverse_table.end()) {
+        reverse_table[lit2.var()].push_back(lit1.var());
         table[lit1.var()] = lit2 ^ lit1.sign();
         replacedVars++;
         return true;
     }
 
-    if (reverseTable.find(lit2.var()) == reverseTable.end()) {
-        reverseTable[lit1.var()].push_back(lit2.var());
+    if (reverse_table.find(lit2.var()) == reverse_table.end()) {
+        reverse_table[lit1.var()].push_back(lit2.var());
         table[lit2.var()] = lit1 ^ lit2.sign();
         replacedVars++;
         return true;
@@ -1074,19 +1074,19 @@ bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
 */
 void VarReplacer::setAllThatPointsHereTo(const uint32_t var, const Lit lit)
 {
-    auto it = reverseTable.find(var);
-    if (it != reverseTable.end()) {
+    auto it = reverse_table.find(var);
+    if (it != reverse_table.end()) {
         for(const uint32_t var2: it->second) {
             assert(table[var2].var() == var);
             if (lit.var() != var2) {
                 table[var2] = lit ^ table[var2].sign();
-                reverseTable[lit.var()].push_back(var2);
+                reverse_table[lit.var()].push_back(var2);
             }
         }
-        reverseTable.erase(it);
+        reverse_table.erase(it);
     }
     table[var] = lit;
-    reverseTable[lit.var()].push_back(var);
+    reverse_table[lit.var()].push_back(var);
 }
 
 void VarReplacer::checkUnsetSanity()
@@ -1189,11 +1189,11 @@ size_t VarReplacer::mem_used() const
     b += scc_finder->mem_used();
     b += delayedEnqueue.capacity()*2*sizeof(Lit);
     b += table.capacity()*sizeof(Lit);
-    for(const auto& it : reverseTable) {
+    for(const auto& it : reverse_table) {
         b += it.second.capacity()*sizeof(Lit);
     }
     //TODO under-counting
-    b += reverseTable.size()*(sizeof(uint32_t) + sizeof(vector<uint32_t>));
+    b += reverse_table.size()*(sizeof(uint32_t) + sizeof(vector<uint32_t>));
     return b;
 }
 
@@ -1288,7 +1288,7 @@ void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
         );
 
         print_stats_line(prefix + "lits replaced"
-            , replacedLits
+            , replaced_lits
         );
 
         print_stats_line(prefix + "bin cls removed"
@@ -1313,7 +1313,7 @@ void VarReplacer::Stats::print_short(const Solver* solver) const
 {
     verb_print(1, "[vrep]"
     << " vars " << actuallyReplacedVars
-    << " lits " << replacedLits
+    << " lits " << replaced_lits
     << " rem-bin-cls " << removedBinClauses
     << " rem-long-cls " << removedLongClauses
     << " BP " << bogoprops/(1000*1000) << "M"
@@ -1324,7 +1324,7 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
 {
     num_calls += other.num_calls;
     cpu_time += other.cpu_time;
-    replacedLits += other.replacedLits;
+    replaced_lits += other.replaced_lits;
     zero_depth_assigns += other.zero_depth_assigns;
     actuallyReplacedVars += other.actuallyReplacedVars;
     removedBinClauses += other.removedBinClauses;
@@ -1369,8 +1369,8 @@ vector<uint32_t> VarReplacer::get_vars_replacing(uint32_t var) const
 {
     vector<uint32_t> ret;
     var = solver->map_inter_to_outer(var);
-    auto it = reverseTable.find(var);
-    if (it != reverseTable.end()) {
+    auto it = reverse_table.find(var);
+    if (it != reverse_table.end()) {
         for(uint32_t v: it->second) {
             ret.push_back(solver->map_outer_to_inter(v));
         }

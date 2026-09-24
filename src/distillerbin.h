@@ -62,8 +62,8 @@ class DistillerBin {
             uint64_t num_lits_rem = 0;
             uint64_t checked_clauses = 0;
             uint64_t potential_clauses = 0;
-            uint64_t numCalled = 0;
-            uint64_t clRemoved = 0;
+            uint64_t num_called = 0;
+            uint64_t cl_removed = 0;
         };
 
         const Stats& get_stats() const;
@@ -94,7 +94,7 @@ class DistillerBin {
 
         //For distill
         vector<Lit> lits;
-        uint64_t oldBogoProps;
+        uint64_t old_bogo_props;
         int64_t max_num_props;
         int64_t orig_maxNumProps;
 

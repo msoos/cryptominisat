@@ -55,7 +55,7 @@ struct VariableVariance
 };
 
 struct ConflictData {
-    uint32_t nHighestLevel;
+    uint32_t n_highest_level;
 };
 
 class Searcher : public HyperEngine

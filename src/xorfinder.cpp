@@ -63,7 +63,7 @@ void XorFinder::find_xors_based_on_long_clauses() {
         if (cl->freed() || cl->get_removed() || cl->red()) continue;
 
         //Too large -> too expensive
-        if (cl->size() > solver->conf.maxXorToFind) continue;
+        if (cl->size() > solver->conf.max_xor_to_find) continue;
 
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
@@ -144,7 +144,7 @@ bool XorFinder::find_xors() {
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
-    assert(orig_num_xors + run_stats.foundXors == solver->xorclauses.size());
+    assert(orig_num_xors + run_stats.found_xors == solver->xorclauses.size());
     // TODO FRAT
     /* clean_equivalent_xors(solver->xorclauses); */
 
@@ -232,7 +232,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     frat_func_start();
     solver->xorclauses.push_back(found_xor);
     Xor& added = solver->xorclauses.back();
-    run_stats.foundXors++;
+    run_stats.found_xors++;
     run_stats.sumSizeXors += found_xor.size();
     run_stats.maxsize = std::max<uint32_t>(run_stats.maxsize, found_xor.size());
     run_stats.minsize = std::min<uint32_t>(run_stats.minsize, found_xor.size());
@@ -275,12 +275,12 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             }
 
             xor_find_time_limit -= 1;
-            poss_xor.add(binvec, numeric_limits<ClOffset>::max(), varsMissing);
+            poss_xor.add(binvec, numeric_limits<ClOffset>::max(), vars_missing);
             if (poss_xor.foundAll())
                 break;
         } else {
             if (w.get_blocked_lit().toInt() == lit_Undef.toInt())
-                //Clauses are ordered, lit_Undef means it's larger than maxXorToFind
+                //Clauses are ordered, lit_Undef means it's larger than max_xor_to_find
                 break;
 
             if (w.get_blocked_lit().toInt() == lit_Error.toInt())
@@ -344,7 +344,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             }
 
             xor_find_time_limit -= cl.size()/4+1;
-            poss_xor.add(cl, offset, varsMissing);
+            poss_xor.add(cl, offset, vars_missing);
             if (poss_xor.foundAll())
                 break;
         }
@@ -401,7 +401,7 @@ size_t XorFinder::mem_used() const
 
     //Temporary
     mem += tmpClause.capacity()*sizeof(Lit);
-    mem += varsMissing.capacity()*sizeof(uint32_t);
+    mem += vars_missing.capacity()*sizeof(uint32_t);
 
     return mem;
 }
@@ -414,11 +414,11 @@ void XorFinder::grab_mem()
 
 void XorFinder::Stats::print_short(const Solver* solver, double time_remain) const
 {
-    cout << solver->conf.prefix << "[occ-xor] found " << std::setw(6) << foundXors;
-    if (foundXors > 0) {
+    cout << solver->conf.prefix << "[occ-xor] found " << std::setw(6) << found_xors;
+    if (found_xors > 0) {
         cout
         << " avg sz " << std::setw(3) << std::fixed << std::setprecision(1)
-        << float_div(sumSizeXors, foundXors)
+        << float_div(sumSizeXors, found_xors)
         << " min sz " << std::setw(2) << std::fixed << std::setprecision(1)
         << minsize
         << " max sz " << std::setw(2) << std::fixed << std::setprecision(1)
@@ -435,7 +435,7 @@ XorFinder::Stats& XorFinder::Stats::operator+=(const XorFinder::Stats& other)
     findTime += other.findTime;
 
     //XOR
-    foundXors += other.foundXors;
+    found_xors += other.found_xors;
     sumSizeXors += other.sumSizeXors;
 
     //Usefulness

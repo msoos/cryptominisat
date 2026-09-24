@@ -326,8 +326,8 @@ struct PropStats
         otf_hyper_time += other.otf_hyper_time;
         otfHyperPropCalled += other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        varSetPos += other.varSetPos;
-        varSetNeg += other.varSetNeg;
+        var_set_pos += other.var_set_pos;
+        var_set_neg += other.var_set_neg;
         varFlipped += other.varFlipped;
         #endif
 
@@ -341,8 +341,8 @@ struct PropStats
         otf_hyper_time -= other.otf_hyper_time;
         otfHyperPropCalled -= other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        varSetPos -= other.varSetPos;
-        varSetNeg -= other.varSetNeg;
+        var_set_pos -= other.var_set_pos;
+        var_set_neg -= other.var_set_neg;
         varFlipped -= other.varFlipped;
         #endif
 
@@ -382,13 +382,13 @@ struct PropStats
         );
 
         #ifdef STATS_NEEDED
-        print_stats_line("c varSetPos", varSetPos
-            , stats_line_percent(varSetPos, propagations)
+        print_stats_line("c varSetPos", var_set_pos
+            , stats_line_percent(var_set_pos, propagations)
             , "% of propagations"
         );
 
-        print_stats_line("c varSetNeg", varSetNeg
-            , stats_line_percent(varSetNeg, propagations)
+        print_stats_line("c varSetNeg", var_set_neg
+            , stats_line_percent(var_set_neg, propagations)
             , "% of propagations"
         );
 
@@ -406,8 +406,8 @@ struct PropStats
     uint32_t otfHyperPropCalled = 0;
 
     #ifdef STATS_NEEDED
-    uint64_t varSetPos = 0;
-    uint64_t varSetNeg = 0;
+    uint64_t var_set_pos = 0;
+    uint64_t var_set_neg = 0;
     uint64_t varFlipped = 0;
     #endif
 };

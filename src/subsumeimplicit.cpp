@@ -126,7 +126,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     const uint64_t orig_timeAvailable =
         1000LL*1000LL*solver->conf.subsume_implicit_time_limitM
         *solver->conf.global_timeout_multiplier;
-    timeAvailable = orig_timeAvailable;
+    time_available = orig_timeAvailable;
     run_stats.clear();
     frat_func_start();
 
@@ -136,17 +136,17 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     //Randomize starting point
     const size_t rnd_start = rnd_uint(solver->mtrand, solver->watches.size()-1);
     size_t num_done = 0;
-    for (;num_done < solver->watches.size() && timeAvailable > 0 && !solver->must_interrupt_asap()
+    for (;num_done < solver->watches.size() && time_available > 0 && !solver->must_interrupt_asap()
          ;num_done++
     ) {
         const size_t at = (rnd_start + num_done)  % solver->watches.size();
-        subsume_at_watch(at, &timeAvailable);
+        subsume_at_watch(at, &time_available);
     }
 
     const double time_used = cpu_time() - my_time;
-    const bool time_out = (timeAvailable <= 0);
-    const double time_remain = float_div(timeAvailable, orig_timeAvailable);
-    run_stats.numCalled++;
+    const bool time_out = (time_available <= 0);
+    const double time_remain = float_div(time_available, orig_timeAvailable);
+    run_stats.num_called++;
     run_stats.time_used += time_used;
     run_stats.time_out += time_out;
     if (solver->conf.verbosity) {
@@ -174,7 +174,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
 
 SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit::Stats& other)
 {
-    numCalled+= other.numCalled;
+    num_called+= other.num_called;
     time_out += other.time_out;
     time_used += other.time_used;
     remBins += other.remBins;
@@ -196,13 +196,13 @@ void SubsumeImplicit::Stats::print(const char* caller, const string& pre) const
     cout << pre << "-------- IMPLICIT SUB " << caller << " STATS --------" << endl;
     print_stats_line("c time"
         , time_used
-        , float_div(time_used, numCalled)
+        , float_div(time_used, num_called)
         , "per call"
     );
 
     print_stats_line("c timed out"
         , time_out
-        , stats_line_percent(time_out, numCalled)
+        , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 

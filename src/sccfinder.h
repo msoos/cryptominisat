@@ -49,7 +49,7 @@ class SCCFinder {
 
             uint64_t num_calls = 0;
             double cpu_time = 0.0;
-            uint64_t foundXors = 0;
+            uint64_t found_xors = 0;
             uint64_t foundXorsNew = 0;
             uint64_t bogoprops = 0;
 
@@ -57,7 +57,7 @@ class SCCFinder {
             {
                 num_calls += other.num_calls;
                 cpu_time += other.cpu_time;
-                foundXors += other.foundXors;
+                found_xors += other.found_xors;
                 foundXorsNew += other.foundXorsNew;
                 bogoprops += other.bogoprops;
 
@@ -81,7 +81,7 @@ class SCCFinder {
 
                 print_stats_line("c found"
                     , foundXorsNew
-                    , stats_line_percent(foundXorsNew, foundXors)
+                    , stats_line_percent(foundXorsNew, found_xors)
                     , "% of all found"
                 );
 

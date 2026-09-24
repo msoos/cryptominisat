@@ -367,30 +367,30 @@ void DimacsParser<C, S>::write_solution_to_debuglib_file(const lbool ret) const
 {
     //Open file for writing
     std::string s = get_debuglib_fname();
-    std::ofstream partFile;
-    partFile.open(s.c_str());
-    if (!partFile) {
+    std::ofstream part_file;
+    part_file.open(s.c_str());
+    if (!part_file) {
         std::cerr << "ERROR: Cannot open part file '" << s << "'";
         std::exit(-1);
     }
 
     //Output to part file the result
     if (ret == l_True) {
-        partFile << "s SATISFIABLE\n";
-        partFile << "v ";
+        part_file << "s SATISFIABLE\n";
+        part_file << "v ";
         for (uint32_t i = 0; i != solver->nVars(); i++) {
             if (solver->get_model()[i] != l_Undef)
-                partFile
+                part_file
                 << ((solver->get_model()[i]==l_True) ? "" : "-")
                 << (i+1) <<  " ";
         }
-        partFile << "0\n";
+        part_file << "0\n";
     } else if (ret == l_False) {
-        partFile << "conflict ";
+        part_file << "conflict ";
         for (Lit lit: solver->get_conflict()) {
-            partFile << lit << " ";
+            part_file << lit << " ";
         }
-        partFile
+        part_file
         << "\ns UNSAT\n";
     } else if (ret == l_Undef) {
         cout << "c timeout, exiting" << endl;
@@ -398,7 +398,7 @@ void DimacsParser<C, S>::write_solution_to_debuglib_file(const lbool ret) const
     } else {
         assert(false);
     }
-    partFile.close();
+    part_file.close();
 }
 #endif
 

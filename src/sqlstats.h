@@ -80,10 +80,10 @@ public:
     ) = 0;
 
     virtual void restart(
-        const uint32_t restartID
+        const uint32_t restart_id
         , const uint32_t rest_stable
         , const PropStats& thisPropStats
-        , const SearchStats& thisStats
+        , const SearchStats& this_stats
         , const Solver* solver
         , const Searcher* searcher
     ) = 0;
@@ -118,7 +118,7 @@ public:
     virtual void clause_stats(
         const Solver* solver
         , uint64_t clid
-        , uint64_t restartID
+        , uint64_t restart_id
         , uint32_t glue
         , uint32_t glue_before_minim
         , uint32_t size

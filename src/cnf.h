@@ -166,7 +166,7 @@ public:
     LitStats lit_stats;
     int32_t clause_id = 0;
     int32_t clauseXID = 0;
-    int64_t restartID = 1;
+    int64_t restart_id = 1;
     SQLStats* sql_stats = nullptr;
     bool weighted = false;
 

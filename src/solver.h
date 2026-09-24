@@ -480,7 +480,7 @@ class Solver : public Searcher
 
         bool sort_and_clean_clause(
             vector<Lit>& ps
-            , const vector<Lit>& origCl
+            , const vector<Lit>& orig_cl
             , const bool red
             , const bool sorted = false
         );

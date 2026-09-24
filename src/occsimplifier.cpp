@@ -1473,13 +1473,13 @@ bool OccSimplifier::fill_occur_and_print_stats()
     remove_all_longs_from_watches();
     if (!fill_occur()) return false;
     sanityCheckElimedVars();
-    const double linkInTime = cpu_time() - my_time;
-    run_stats.linkInTime += linkInTime;
+    const double link_in_time = cpu_time() - my_time;
+    run_stats.link_in_time += link_in_time;
     if (solver->sql_stats) {
         solver->sql_stats->time_passed_min(
             solver
             , "occur build"
-            , linkInTime
+            , link_in_time
         );
     }
 
@@ -1550,7 +1550,7 @@ void OccSimplifier::sort_occurs_and_set_abst()
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
                 if (cl->freed() || cl->get_removed()) {
                     w.setElimedLit(lit_Error);
-                } else if (cl->size() > solver->conf.maxXorToFind) {
+                } else if (cl->size() > solver->conf.max_xor_to_find) {
                     w.setElimedLit(lit_Undef);
                 } else {
                     w.setElimedLit(Lit::toLit(cl->abst));
@@ -1586,18 +1586,18 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     return or_gates;
 }
 
-uint32_t OccSimplifier::add_cls_to_kitten_definable(const Lit wsLit) {
-    /* assert(seen[wsLit.var()] == 1); */
+uint32_t OccSimplifier::add_cls_to_kitten_definable(const Lit ws_lit) {
+    /* assert(seen[ws_lit.var()] == 1); */
 
     uint32_t added = 0;
-    for(const auto& w: solver->watches[wsLit]) {
+    for(const auto& w: solver->watches[ws_lit]) {
         if (w.is_clause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
             assert(!cl.get_removed());
             assert(!cl.red());
             bool only_sampl = true;
             for(const auto& l: cl) {
-                if (l.var() != wsLit.var() && !seen[l.var()]) {
+                if (l.var() != ws_lit.var() && !seen[l.var()]) {
                     only_sampl = false;
                     break;
                 }
@@ -1606,7 +1606,7 @@ uint32_t OccSimplifier::add_cls_to_kitten_definable(const Lit wsLit) {
                 added++;
                 kit_cl_tmp.clear();
                 for(const auto& l: cl) {
-                    if (l != wsLit) kit_cl_tmp.push_back(l.toInt());
+                    if (l != ws_lit) kit_cl_tmp.push_back(l.toInt());
                 }
                 bvestats.kitlits_added += kit_cl_tmp.size();
                 kitten_clause(kit, kit_cl_tmp.size(), kit_cl_tmp.data());
@@ -2558,22 +2558,22 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         tmp_tern_res.assign(newcl.lits.begin(), newcl.lits.begin() + newcl.size);
 
         const vector<int32_t> hints = {newcl.parents.first, newcl.parents.second};
-        Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, &stats, true, &hints);
-        if (newCl) {
+        Clause* new_cl = full_add_clause(tmp_tern_res, finalLits_ternary, &stats, true, &hints);
+        if (new_cl) {
             #ifdef STATS_NEEDED
-            newCl->stats.is_tracked = to_track;
+            new_cl->stats.is_tracked = to_track;
             if (to_track) {
-                stats_extra.orig_ID = newCl->stats.id;
-                if (solver->sql_stats) solver->sql_stats->update_id(newCl->stats.id, newCl->stats.id);
+                stats_extra.orig_ID = new_cl->stats.id;
+                if (solver->sql_stats) solver->sql_stats->update_id(new_cl->stats.id, new_cl->stats.id);
             }
-            newCl->stats.locked_for_data_gen = to_track &&
+            new_cl->stats.locked_for_data_gen = to_track &&
                 (double)rnd_uint(solver->mtrand,100000)/100000.0  < solver->conf.lock_for_data_gen_ratio;
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             solver->red_stats_extra.push_back(stats_extra);
-            newCl->stats.extra_pos = solver->red_stats_extra.size()-1;
+            new_cl->stats.extra_pos = solver->red_stats_extra.size()-1;
             #endif
-            tern_res_offs.push_back(solver->cl_alloc.get_offset(newCl));
+            tern_res_offs.push_back(solver->cl_alloc.get_offset(new_cl));
         } else {
             if (!solver->okay()) return false;
         }
@@ -2778,8 +2778,8 @@ bool OccSimplifier::backward_sub_str()
 
 bool OccSimplifier::fill_occur() {
     //Calculate binary clauses' contribution to n_occurs
-    for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (size_t ws_lit = 0; ws_lit < solver->watches.size(); ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         watch_subarray_const ws = solver->watches[lit];
         for (const auto& w: ws) {
             if (w.is_bin() && !w.red() && lit < w.lit2()) {
@@ -3028,8 +3028,8 @@ void OccSimplifier::sanityCheckElimedVars() const {
     }
 
     //Then, sanity-check the binary clauses
-    for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (size_t ws_lit = 0; ws_lit < solver->watches.size(); ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         watch_subarray_const ws = solver->watches[lit];
         for (const auto& w : ws) {
             if (w.is_bin()) {
@@ -4620,10 +4620,10 @@ bool OccSimplifier::add_varelim_resolvent(
     assert(solver->prop_at_head());
 
     bvestats.newClauses++;
-    Clause* newCl = nullptr;
+    Clause* new_cl = nullptr;
 
     ClauseStats backup_stats(stats);
-    newCl = solver->add_clause_int(
+    new_cl = solver->add_clause_int(
         final_lits //Literals in new clause
         , false //Is the new clause redundant?
         , &backup_stats//Statistics for this new clause (usage, etc.)
@@ -4640,9 +4640,9 @@ bool OccSimplifier::add_varelim_resolvent(
         return false;
     }
 
-    if (newCl != nullptr) {
-        link_in_clause(*newCl);
-        ClOffset offset = solver->cl_alloc.get_offset(newCl);
+    if (new_cl != nullptr) {
+        link_in_clause(*new_cl);
+        ClOffset offset = solver->cl_alloc.get_offset(new_cl);
         clauses.push_back(offset);
         added_long_cl.push_back(offset);
 
@@ -4898,18 +4898,18 @@ end:
 
 void OccSimplifier::add_pos_lits_to_dummy_and_seen(
     const Watched& ps
-    , const Lit& posLit
+    , const Lit& pos_lit
 ) {
     if (ps.is_bin()) {
         *limit_to_decrease -= 1;
-        assert(ps.lit2() != posLit);
+        assert(ps.lit2() != pos_lit);
         seen[ps.lit2().toInt()] = 1;
         dummy.push_back(ps.lit2());
     } else if (ps.is_clause()) {
         Clause& cl = *solver->cl_alloc.ptr(ps.get_offset());
         *limit_to_decrease -= (long)cl.size()/2;
         for (const Lit lit : cl) {
-            if (lit != posLit) {
+            if (lit != pos_lit) {
                 seen[lit.toInt()] = 1;
                 dummy.push_back(lit);
             }
@@ -4919,11 +4919,11 @@ void OccSimplifier::add_pos_lits_to_dummy_and_seen(
 
 bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
     const Watched& qs
-    , const Lit& posLit
+    , const Lit& pos_lit
 ) {
     if (qs.is_bin()) {
         *limit_to_decrease -= 1;
-        assert(qs.lit2() != ~posLit);
+        assert(qs.lit2() != ~pos_lit);
 
         if (seen[(~qs.lit2()).toInt()]) return true;
         if (!seen[qs.lit2().toInt()]) {
@@ -4934,7 +4934,7 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
         Clause& cl = *solver->cl_alloc.ptr(qs.get_offset());
         *limit_to_decrease -= (long)cl.size()/2;
         for (const Lit lit: cl) {
-            if (lit == ~posLit)
+            if (lit == ~pos_lit)
                 continue;
 
             if (seen[(~lit).toInt()]) {
@@ -4954,7 +4954,7 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
 bool OccSimplifier::resolve_clauses(
     const Watched& ps
     , const Watched& qs
-    , const Lit& posLit
+    , const Lit& pos_lit
 ) {
     //If clause has already been freed, skip
     if (ps.is_clause()) {
@@ -4967,8 +4967,8 @@ bool OccSimplifier::resolve_clauses(
     }
 
     dummy.clear();
-    add_pos_lits_to_dummy_and_seen(ps, posLit);
-    bool tautological = add_neg_lits_to_dummy_and_seen(qs, posLit);
+    add_pos_lits_to_dummy_and_seen(ps, pos_lit);
+    bool tautological = add_neg_lits_to_dummy_and_seen(qs, pos_lit);
 
     *limit_to_decrease -= (long)dummy.size()/2 + 1;
     for (const Lit lit: dummy) {
@@ -5309,7 +5309,7 @@ void OccSimplifier::link_in_clause(Clause& cl)
 
 double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
 {
-    return linkInTime + varElimTime + xorTime + triresolveTime
+    return link_in_time + varElimTime + xorTime + triresolveTime
         + finalCleanupTime
         + occs->sub_str->get_stats().subsumeTime
         + occs->sub_str->get_stats().strengthenTime
@@ -5326,7 +5326,7 @@ OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
     num_calls += other.num_calls;
 
     //Time
-    linkInTime += other.linkInTime;
+    link_in_time += other.link_in_time;
     varElimTime += other.varElimTime;
     xorTime += other.xorTime;
     triresolveTime += other.triresolveTime;
@@ -5361,9 +5361,9 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
 void OccSimplifier::Stats::print_extra_times(const char* prefix) const
 {
     cout << prefix
-    << "[occur] link-in T: " << linkInTime
+    << "[occur] link-in T: " << link_in_time
     << " cleanup T: " << finalCleanupTime
-    << " overhead T: " << linkInTime+finalCleanupTime
+    << " overhead T: " << link_in_time+finalCleanupTime
     << endl;
 }
 
@@ -5398,7 +5398,7 @@ Clause* OccSimplifier::full_add_clause(
     bool red,
     const vector<int32_t>* hints)
 {
-    Clause* newCl = solver->add_clause_int(
+    Clause* new_cl = solver->add_clause_int(
         tmp_cl//Literals in new clause
         , red //Is the new clause redundant?
         , cl_stats
@@ -5410,7 +5410,7 @@ Clause* OccSimplifier::full_add_clause(
 
     //the bin is already attached, so count it even if propagation below
     //finds UNSAT -- n_occurs must match the watchlists at all times
-    if (!newCl && final_lits.size() == 2 && !red) {
+    if (!new_cl && final_lits.size() == 2 && !red) {
         n_occurs[final_lits[0].toInt()]++;
         n_occurs[final_lits[1].toInt()]++;
         added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clause_id});
@@ -5422,14 +5422,14 @@ Clause* OccSimplifier::full_add_clause(
         return nullptr;
     }
 
-    if (newCl) {
-        link_in_clause(*newCl);
-        ClOffset offset = solver->cl_alloc.get_offset(newCl);
+    if (new_cl) {
+        link_in_clause(*new_cl);
+        ClOffset offset = solver->cl_alloc.get_offset(new_cl);
         clauses.push_back(offset);
         added_long_cl.push_back(offset);
     }
 
-    return newCl;
+    return new_cl;
 }
 
 bool OccSimplifier::remove_literal(

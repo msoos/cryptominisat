@@ -825,8 +825,8 @@ void Main::add_supported_options() {
         .default_value(conf.doFindXors)
         .help("Discover long XORs");
     program.add_argument("--maxxorsize")
-        .action([&](const auto& a) {conf.maxXorToFind = fc_int(a);})
-        .default_value(conf.maxXorToFind)
+        .action([&](const auto& a) {conf.max_xor_to_find = fc_int(a);})
+        .default_value(conf.max_xor_to_find)
         .help("Maximum XOR size to find");
     program.add_argument("--xorfindtout")
         .action([&](const auto& a) {conf.xor_finder_time_limitM = fc_ll(a);})
@@ -1267,7 +1267,7 @@ void Main::manually_parse_some_options()
         exit(-1);
     }
 
-    if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
+    if (conf.max_xor_to_find > MAX_XOR_RECOVER_SIZE) {
         cout << "ERROR: The '--maxxorsize' parameter cannot be larger than " << MAX_XOR_RECOVER_SIZE << endl;
         exit(-1);
     }

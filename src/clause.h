@@ -62,16 +62,16 @@ struct AtecedentData
 
     uint64_t num() const
     {
-        return binRed + binIrred + longIrred + longRed;
+        return bin_red + bin_irred + long_irred + long_red;
     }
 
     template<class T2>
     AtecedentData& operator+=(const AtecedentData<T2>& other)
     {
-        binRed += other.binRed;
-        binIrred += other.binIrred;
-        longIrred += other.longIrred;
-        longRed += other.longRed;
+        bin_red += other.bin_red;
+        bin_irred += other.bin_irred;
+        long_irred += other.long_irred;
+        long_red += other.long_red;
 
         glue_long_reds += other.glue_long_reds;
         size_longs += other.size_longs;
@@ -82,10 +82,10 @@ struct AtecedentData
     template<class T2>
     AtecedentData& operator-=(const AtecedentData<T2>& other)
     {
-        binRed -= other.binRed;
-        binIrred -= other.binIrred;
-        longIrred -= other.longIrred;
-        longRed -= other.longRed;
+        bin_red -= other.bin_red;
+        bin_irred -= other.bin_irred;
+        long_irred -= other.long_irred;
+        long_red -= other.long_red;
 
         glue_long_reds -= other.glue_long_reds;
         size_longs -= other.size_longs;
@@ -96,17 +96,17 @@ struct AtecedentData
     uint32_t sum_size() const
     {
         uint32_t sum = 0;
-        sum += binIrred*2;
-        sum += binRed*2;
+        sum += bin_irred*2;
+        sum += bin_red*2;
         sum += size_longs.get_sum();
 
         return sum;
     }
 
-    T binRed = 0;
-    T binIrred = 0;
-    T longIrred = 0;
-    T longRed = 0;
+    T bin_red = 0;
+    T bin_irred = 0;
+    T long_irred = 0;
+    T long_red = 0;
     AvgCalc<uint32_t> glue_long_reds;
     AvgCalc<uint32_t> size_longs;
 };

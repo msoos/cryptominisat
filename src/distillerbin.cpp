@@ -56,7 +56,7 @@ bool DistillerBin::distill()
     (void)distill_bin_cls_all(1.0);
 
     //Mostly useless: run less often
-    const uint64_t useful = run_stats.clRemoved + run_stats.num_cl_shorten;
+    const uint64_t useful = run_stats.cl_removed + run_stats.num_cl_shorten;
     if (useful*50 < run_stats.checked_clauses) backoff = std::min(backoff*2.0, 16.0);
     else backoff = std::max(backoff/2.0, 1.0);
 
@@ -94,10 +94,10 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->prop_stats.bogo_props;
+    old_bogo_props = solver->prop_stats.bogo_props;
     uint32_t potential_size = solver->bin_tri.irred_bins;
     run_stats.potential_clauses += potential_size;
-    run_stats.numCalled += 1;
+    run_stats.num_called += 1;
 
     bool time_out = false;
     vector<Lit> todo;
@@ -115,7 +115,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props),
         orig_maxNumProps);
         verb_print(2, "[distill-bin] cls" << " tried: "
                 << run_stats.checked_clauses << "/" << potential_size);
@@ -140,7 +140,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
 bool DistillerBin::out_of_budget()
 {
-    if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
+    if ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props >= max_num_props
         || solver->must_interrupt_asap()
     ) {
         verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
@@ -185,7 +185,7 @@ bool DistillerBin::go_through_bins(const Lit lit1)
         max_num_props -= 2;
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
             remove_bin(lit1, lit2, w.get_id());
-            run_stats.clRemoved++;
+            run_stats.cl_removed++;
             continue;
         }
         cands.push_back({lit2, w.get_id()});
@@ -222,14 +222,14 @@ bool DistillerBin::go_through_bins(const Lit lit1)
     set_cands_marked(lit1, false);
 
     for(const auto& c: to_rem) remove_bin(lit1, c.lit2, c.ID);
-    run_stats.clRemoved += to_rem.size();
+    run_stats.cl_removed += to_rem.size();
 
     // Implies a unit, needs the per-bin path for the proof
     for(const auto& c: fallback) {
         if (timeout || (timeout = out_of_budget())) break;
         if (solver->value(lit1) == l_True || solver->value(c.lit2) == l_True) {
             remove_bin(lit1, c.lit2, c.ID);
-            run_stats.clRemoved++;
+            run_stats.cl_removed++;
             continue;
         }
         if (!try_distill_bin(lit1, c.lit2, c.ID)) return false;
@@ -296,7 +296,7 @@ bool DistillerBin::try_distill_bin(
         solver->cancel_until<false, true>(0);
         solver->detach_bin_clause(lit1, lit2, false, ID);
         (*solver->frat) << del << ID << lit1 << lit2 << fin;
-        run_stats.clRemoved++;
+        run_stats.cl_removed++;
         return true;
     }
 
@@ -322,8 +322,8 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
     num_lits_rem += other.num_lits_rem;
     checked_clauses += other.checked_clauses;
     potential_clauses += other.potential_clauses;
-    numCalled += other.numCalled;
-    clRemoved += other.clRemoved;
+    num_called += other.num_called;
+    cl_removed += other.cl_removed;
 
     return *this;
 }
@@ -331,10 +331,10 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
 void DistillerBin::Stats::print_short(const Solver* solver) const
 {
     verb_print(1, "[distill-bin]"
-    << " useful/checked/potential: " << num_cl_shorten+clRemoved
+    << " useful/checked/potential: " << num_cl_shorten+cl_removed
     << "/" << checked_clauses << "/" << potential_clauses
     << " lits-rem: " << num_lits_rem
-    << " cl-rem: " << clRemoved
+    << " cl-rem: " << cl_removed
     << " 0-depth-assigns: " << zero_depth_assigns
     << solver->conf.print_times(time_used, time_out));
 }
@@ -344,13 +344,13 @@ void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
     cout << pre << "-------- DISTILL-BIN STATS --------" << endl;
     print_stats_line("c time"
         , time_used
-        , ratio_for_stat(time_used, numCalled)
+        , ratio_for_stat(time_used, num_called)
         , "per call"
     );
 
     print_stats_line("c timed out"
         , time_out
-        , stats_line_percent(time_out, numCalled)
+        , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 

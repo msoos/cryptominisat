@@ -107,17 +107,17 @@ void ClauseCleaner::clean_implicit_clauses()
     impl_data = ImplicitData();
     const size_t end = solver->watches.size();
     constexpr size_t prefetch_distance = 2;
-    for (size_t wsLit = 0; wsLit < end; wsLit++) {
+    for (size_t ws_lit = 0; ws_lit < end; ws_lit++) {
         // Prefetch a few watchlists ahead to hide memory latency.
-        const size_t prefetch_at = wsLit + prefetch_distance;
+        const size_t prefetch_at = ws_lit + prefetch_distance;
         if (prefetch_at < end && !solver->watches[Lit::toLit(prefetch_at)].empty()) {
             solver->watches.prefetch(prefetch_at);
         }
 
-        watch_subarray ws = solver->watches[Lit::toLit(wsLit)];
+        watch_subarray ws = solver->watches[Lit::toLit(ws_lit)];
         if (ws.empty()) continue;
 
-        clean_implicit_watchlist(ws, Lit::toLit(wsLit));
+        clean_implicit_watchlist(ws, Lit::toLit(ws_lit));
     }
     impl_data.update_solver_stats(solver);
 
@@ -391,8 +391,8 @@ bool ClauseCleaner::remove_and_clean_all() {
     if (solver->okay()) {
         //Once we have cleaned the watchlists
         //no watchlist whose lit is set may be non-empty
-        for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
-            const Lit lit = Lit::toLit(wsLit);
+        for (size_t ws_lit = 0; ws_lit < solver->watches.size(); ws_lit++) {
+            const Lit lit = Lit::toLit(ws_lit);
             if (solver->value(lit) != l_Undef) {
                 const auto& wl = solver->watches[lit];
                 if (!wl.empty()) {

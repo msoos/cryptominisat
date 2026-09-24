@@ -38,23 +38,23 @@ int num_threads = 2;
 
 vector<lbool> solve(lbool& solution_val)
 {
-    int err, mpiRank, mpiSize;
-    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    int err, mpi_rank, mpi_size;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     assert(err == MPI_SUCCESS);
-    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     assert(err == MPI_SUCCESS);
     CMSat::SolverConf conf;
-    conf.verbosity = 0; //(mpiRank == 1);
+    conf.verbosity = 0; //(mpi_rank == 1);
     conf.is_mpi = true;
     conf.do_bva = false;
 
-    if (mpiSize > 1 && mpiRank > 1) {
-        conf.origSeed = mpiRank*2000; //this will be added T that is the thread number within the MPI
-        if (mpiRank % 6 == 3) {
+    if (mpi_size > 1 && mpi_rank > 1) {
+        conf.origSeed = mpi_rank*2000; //this will be added T that is the thread number within the MPI
+        if (mpi_rank % 6 == 3) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             conf.restartmargin = 25;
         }
-        if (mpiRank % 6 == 4) {
+        if (mpi_rank % 6 == 4) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
             conf.do_stabilize = 0;
         }
@@ -73,7 +73,7 @@ vector<lbool> solve(lbool& solution_val)
 
     while(!done) {
         MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-        //cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
+        //cout << "c solver " << mpi_rank << " got file msg " << num_msgs << endl;
 
         uint32_t i = 0;
         if (num_msgs == 0) {
@@ -112,14 +112,14 @@ int main(int argc, char** argv)
     err = MPI_Init(&argc, &argv);
     assert(err == MPI_SUCCESS);
 
-    int mpiRank, mpiSize;
-    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    int mpi_rank, mpi_size;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     assert(err == MPI_SUCCESS);
 
-    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     assert(err == MPI_SUCCESS);
 
-    if (mpiSize <= 1) {
+    if (mpi_size <= 1) {
         cout << "ERROR: you must run on at least 2 MPI nodes" << endl;
         cout << "NOTE: If using mpirun, use: mpirun -c NUM_PROCESSES ./cryptominisat5_mpi FILENAME NUM_THREADS" << endl;
         exit(-1);
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
     }
 
 
-    if (mpiRank == 0) {
+    if (mpi_rank == 0) {
         std::string filename(argv[1]);
         cout << "c Filename is: " << filename << endl;
         cout << "c num threads used: " << num_threads << endl;

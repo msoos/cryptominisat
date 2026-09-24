@@ -42,8 +42,8 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
 void DataSync::finish_up_mpi()
 {
     #ifdef USE_MPI
-    if (mpiSendData) {
-        //mpiSendData is only non-nullptr when MPI is on and it's the 0 thread
+    if (mpi_send_data) {
+        //mpi_send_data is only non-nullptr when MPI is on and it's the 0 thread
         assert(solver->conf.is_mpi);
         assert(solver->conf.thread_num == 0);
 
@@ -57,8 +57,8 @@ void DataSync::finish_up_mpi()
             err = MPI_Cancel(&sendReq);
             assert(err == MPI_SUCCESS);
         }*/
-        delete[] mpiSendData;
-        mpiSendData = nullptr;
+        delete[] mpi_send_data;
+        mpi_send_data = nullptr;
     }
     #endif
 }
@@ -78,10 +78,10 @@ void DataSync::new_var(const bool bva)
         return;
 
     if (!bva) {
-        syncFinish.push_back(0);
-        syncFinish.push_back(0);
+        sync_finish.push_back(0);
+        sync_finish.push_back(0);
     }
-    assert(solver->nVarsOuter()*2 == syncFinish.size());
+    assert(solver->nVarsOuter()*2 == sync_finish.size());
 }
 
 void DataSync::new_vars(size_t n)
@@ -89,8 +89,8 @@ void DataSync::new_vars(size_t n)
     if (!enabled())
         return;
 
-    syncFinish.insert(syncFinish.end(), 2*n, 0);
-    assert(solver->nVarsOuter()*2 == syncFinish.size());
+    sync_finish.insert(sync_finish.end(), 2*n, 0);
+    assert(solver->nVarsOuter()*2 == sync_finish.size());
 }
 
 void DataSync::save_on_var_memory()
@@ -142,8 +142,8 @@ bool DataSync::syncData()
     if (solver->conf.is_mpi
         && solver->conf.thread_num == 0)
     {
-        if (syncMPIFinish.size() < solver->nVarsOutside()*2) {
-            syncMPIFinish.resize(solver->nVarsOutside()*2, 0);
+        if (sync_mpi_finish.size() < solver->nVarsOutside()*2) {
+            sync_mpi_finish.resize(solver->nVarsOutside()*2, 0);
         }
 
         if (!mpi_get_interrupt()) {
@@ -188,15 +188,15 @@ bool DataSync::shareUnitData()
         Lit thisLit = Lit(var, false);
         thisLit = solver->var_replacer->get_lit_replaced_with_outer(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
-        const lbool thisVal = solver->value(thisLit);
-        const lbool otherVal = shared.value[var];
+        const lbool this_val = solver->value(thisLit);
+        const lbool other_val = shared.value[var];
 
-        if (thisVal == l_Undef && otherVal == l_Undef) {
+        if (this_val == l_Undef && other_val == l_Undef) {
             continue;
         }
 
-        if (thisVal != l_Undef && otherVal != l_Undef) {
-            if (thisVal != otherVal) {
+        if (this_val != l_Undef && other_val != l_Undef) {
+            if (this_val != other_val) {
                 solver->ok = false;
                 return false;
             } else {
@@ -204,9 +204,9 @@ bool DataSync::shareUnitData()
             }
         }
 
-        if (otherVal != l_Undef) {
-            assert(thisVal == l_Undef);
-            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
+        if (other_val != l_Undef) {
+            assert(this_val == l_Undef);
+            Lit litToEnqueue = thisLit ^ (other_val == l_False);
             if (solver->var_data[litToEnqueue.var()].removed != Removed::none) {
                 continue;
             }
@@ -217,9 +217,9 @@ bool DataSync::shareUnitData()
             continue;
         }
 
-        if (thisVal != l_Undef) {
-            assert(otherVal == l_Undef);
-            shared.value[var] = thisVal;
+        if (this_val != l_Undef) {
+            assert(other_val == l_Undef);
+            shared.value[var] = this_val;
             thisSentUnitData++;
             continue;
         }
@@ -249,12 +249,12 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 
 bool DataSync::syncBinFromOthers()
 {
-    for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
-        if (sharedData->bins[wsLit].data == nullptr) {
+    for (uint32_t ws_lit = 0; ws_lit < sharedData->bins.size(); ws_lit++) {
+        if (sharedData->bins[ws_lit].data == nullptr) {
             continue;
         }
 
-        Lit lit1 = Lit::toLit(wsLit);
+        Lit lit1 = Lit::toLit(ws_lit);
         lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->var_data[lit1.var()].removed != Removed::none
@@ -263,12 +263,12 @@ bool DataSync::syncBinFromOthers()
             continue;
         }
 
-        vector<Lit>& bins = *sharedData->bins[wsLit].data;
+        vector<Lit>& bins = *sharedData->bins[ws_lit].data;
         watch_subarray ws = solver->watches[lit1];
 
-        assert(syncFinish.size() > wsLit);
-        if (bins.size() > syncFinish[wsLit]
-            && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)
+        assert(sync_finish.size() > ws_lit);
+        if (bins.size() > sync_finish[ws_lit]
+            && !syncBinFromOthers(lit1, bins, sync_finish[ws_lit], ws)
         ) {
             return false;
         }
@@ -419,12 +419,12 @@ void DataSync::set_up_for_mpi()
 {
     if (solver->conf.is_mpi) {
         int err;
-        err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+        err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
         assert(err == MPI_SUCCESS);
 
-        err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+        err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
         assert(err == MPI_SUCCESS);
-        release_assert(mpiRank != 0);
+        release_assert(mpi_rank != 0);
         assert(sharedData != nullptr);
     }
 }
@@ -496,8 +496,8 @@ bool DataSync::mpi_recv_from_others()
     assert(solver->nVarsOutside() == buf[at]);
     at++;
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++, at++) {
-        const lbool otherVal = toLbool(buf[at]);
-        if (!mpi_get_unit(otherVal, var, thisMpiRecvUnitData)) {
+        const lbool other_val = toLbool(buf[at]);
+        if (!mpi_get_unit(other_val, var, thisMpiRecvUnitData)) {
             goto end;
         }
     }
@@ -510,8 +510,8 @@ bool DataSync::mpi_recv_from_others()
     //Binary clauses
     assert(buf[at] == solver->nVarsOutside()*2);
     at++;
-    for (uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+    for (uint32_t ws_lit = 0; ws_lit < solver->nVarsOutside()*2; ws_lit++) {
+        Lit lit = Lit::toLit(ws_lit);
         uint32_t num = buf[at];
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
@@ -532,7 +532,7 @@ void DataSync::mpi_send_to_others()
     int err;
 
     //We still are sending data, let's do that first
-    if (mpiSendData != nullptr) {
+    if (mpi_send_data != nullptr) {
 
         /*MPI_Status status;
         int op_completed;
@@ -541,8 +541,8 @@ void DataSync::mpi_send_to_others()
         if (op_completed) {
             err = MPI_Wait(&sendReq, &status);
             assert(err == MPI_SUCCESS);*/
-            delete[] mpiSendData;
-            mpiSendData = nullptr;
+            delete[] mpi_send_data;
+            mpi_send_data = nullptr;
         /*} else {
             return;
         }*/
@@ -562,37 +562,37 @@ void DataSync::mpi_send_to_others()
     uint32_t thisMpiSentBinData = 0;
     data.push_back(solver->nVarsOutside()*2);
 
-    for(uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
-        //Lit lit1 = ~Lit::toLit(wsLit);
-        assert(syncMPIFinish.size() > wsLit);
-        if (sharedData->bins[wsLit].data == nullptr) {
+    for(uint32_t ws_lit = 0; ws_lit < solver->nVarsOutside()*2; ws_lit++) {
+        //Lit lit1 = ~Lit::toLit(ws_lit);
+        assert(sync_mpi_finish.size() > ws_lit);
+        if (sharedData->bins[ws_lit].data == nullptr) {
             data.push_back(0);
             continue;
         }
-        uint32_t size = sharedData->bins[wsLit].data->size();
-        assert(size >= syncMPIFinish[wsLit]);
-        uint32_t sizeToSend = size - syncMPIFinish[wsLit];
+        uint32_t size = sharedData->bins[ws_lit].data->size();
+        assert(size >= sync_mpi_finish[ws_lit]);
+        uint32_t sizeToSend = size - sync_mpi_finish[ws_lit];
         data.push_back(sizeToSend);
-        for (uint32_t i = syncMPIFinish[wsLit]; i < size; i++) {
-            data.push_back(sharedData->bins[wsLit].data->at(i).toInt());
+        for (uint32_t i = sync_mpi_finish[ws_lit]; i < size; i++) {
+            data.push_back(sharedData->bins[ws_lit].data->at(i).toInt());
             thisMpiSentBinData++;
         }
-        syncMPIFinish[wsLit] = size;
+        sync_mpi_finish[ws_lit] = size;
     }
     mpiSentBinData += thisMpiSentBinData;
 
 
     //Send the data
-    mpiSendData = new uint32_t[data.size()];
-    std::copy(data.begin(), data.end(), mpiSendData);
-    //err = MPI_Isend(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
-    err = MPI_Send(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
+    mpi_send_data = new uint32_t[data.size()];
+    std::copy(data.begin(), data.end(), mpi_send_data);
+    //err = MPI_Isend(mpi_send_data, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
+    err = MPI_Send(mpi_send_data, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
     assert(err == MPI_SUCCESS);
 
 }
 
 bool DataSync::mpi_get_unit(
-    const lbool otherVal,
+    const lbool other_val,
     const uint32_t var,
     uint32_t& thisGotUnitData
 ) {
@@ -600,18 +600,18 @@ bool DataSync::mpi_get_unit(
     Lit lit1 = solver->map_to_with_bva(l);
     lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
     lit1 = solver->map_outer_to_inter(lit1);
-    const lbool thisVal = solver->value(lit1);
+    const lbool this_val = solver->value(lit1);
 
-    if (thisVal == otherVal) {
+    if (this_val == other_val) {
         return true;
     }
 
-    if (otherVal == l_Undef) {
+    if (other_val == l_Undef) {
         return true;
     }
 
-    if (thisVal != l_Undef) {
-        if (thisVal != otherVal) {
+    if (this_val != l_Undef) {
+        if (this_val != other_val) {
             solver->ok = false;
             return false;
         } else {
@@ -619,9 +619,9 @@ bool DataSync::mpi_get_unit(
         }
     }
 
-    assert(otherVal != l_Undef);
-    assert(thisVal == l_Undef);
-    Lit litToEnqueue = lit1 ^ (otherVal == l_False);
+    assert(other_val != l_Undef);
+    assert(this_val == l_Undef);
+    Lit litToEnqueue = lit1 ^ (other_val == l_False);
     if (solver->var_data[litToEnqueue.var()].removed != Removed::none) {
         return true;
     }

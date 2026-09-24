@@ -81,10 +81,10 @@ public:
     ) override;
 
     virtual void restart(
-        const uint32_t restartID
+        const uint32_t restart_id
         , const uint32_t rest_stable
         , const PropStats& thisPropStats
-        , const SearchStats& thisStats
+        , const SearchStats& this_stats
         , const Solver* solver
         , const Searcher* searcher
     ) override;
@@ -118,7 +118,7 @@ public:
     void clause_stats(
         const Solver* solver
         , uint64_t clid
-        , const uint64_t restartID
+        , const uint64_t restart_id
         , uint32_t glue
         , uint32_t glue_before_minim
         , uint32_t size
@@ -155,7 +155,7 @@ private:
     void run_sqlite_step(
         sqlite3_stmt* stmt,
         const char* name,
-        const uint32_t bindAt);
+        const uint32_t bind_at);
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();

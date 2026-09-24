@@ -56,10 +56,10 @@ class PossibleXor {
             offsets.clear();
             fully_used.clear();
 
-            assert(cl.size() <= sizeof(origCl)/sizeof(Lit)
+            assert(cl.size() <= sizeof(orig_cl)/sizeof(Lit)
                 && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
             for(size_t i = 0; i < size; i++) {
-                origCl[i] = cl[i];
+                orig_cl[i] = cl[i];
                 if (i > 0)
                     assert(cl[i-1] < cl[i]);
             }
@@ -75,7 +75,7 @@ class PossibleXor {
         void clear_seen(vector<uint32_t>& seen)
         {
             for (uint32_t i = 0; i < size; i++) {
-                seen[origCl[i].var()] = 0;
+                seen[orig_cl[i].var()] = 0;
             }
         }
 
@@ -86,7 +86,7 @@ class PossibleXor {
 
         //Add
         template<class T>
-        void add(const T& cl, const ClOffset offset, vector<uint32_t>& varsMissing);
+        void add(const T& cl, const ClOffset offset, vector<uint32_t>& vars_missing);
 
         const vector<ClOffset>& get_offsets() const { return offsets; }
         const vector<char>& get_fully_used() const { return fully_used; }
@@ -99,9 +99,9 @@ class PossibleXor {
             rhs = true;
             uint32_t whichOne = 0;
             for (uint32_t i = 0; i < size; i++) {
-                rhs ^= origCl[i].sign();
-                whichOne += ((uint32_t)origCl[i].sign()) << i;
-                seen[origCl[i].var()] = 1;
+                rhs ^= orig_cl[i].sign();
+                whichOne += ((uint32_t)orig_cl[i].sign()) << i;
+                seen[orig_cl[i].var()] = 1;
             }
 
             foundComb.clear();
@@ -123,7 +123,7 @@ class PossibleXor {
         // 0 1 0
         // 0 0 1
         vector<char> foundComb;
-        Lit origCl[MAX_XOR_RECOVER_SIZE];
+        Lit orig_cl[MAX_XOR_RECOVER_SIZE];
         cl_abst_type abst;
         uint32_t size;
         bool rhs;
@@ -153,7 +153,7 @@ public:
         uint32_t time_outs = 0;
 
         //XOR stats
-        uint64_t foundXors = 0;
+        uint64_t found_xors = 0;
         uint64_t sumSizeXors = 0;
         uint32_t minsize = numeric_limits<uint32_t>::max();
         uint32_t maxsize = numeric_limits<uint32_t>::min();
@@ -193,7 +193,7 @@ private:
 
     //Temporary
     vector<Lit> tmpClause;
-    vector<uint32_t> varsMissing;
+    vector<uint32_t> vars_missing;
     vector<Lit> binvec;
 
     //Other temporaries
@@ -223,7 +223,7 @@ inline bool PossibleXor::getRHS() const
 template<class T> void PossibleXor::add(
     const T& cl
     , const ClOffset offset
-    , vector<uint32_t>& varsMissing
+    , vector<uint32_t>& vars_missing
 ) {
 
     //It's the base clause, skip.
@@ -233,11 +233,11 @@ template<class T> void PossibleXor::add(
     assert(cl.size() <= size);
 
     //If clause covers more than one combination, this is used to calculate which ones
-    varsMissing.clear();
+    vars_missing.clear();
 
     //Position of literal in the ORIGINAL clause.
     //This may be larger than the position in the current clause (as some literals could be missing)
-    uint32_t origI = 0;
+    uint32_t orig_i = 0;
 
     //Position in current clause
     uint32_t i = 0;
@@ -250,41 +250,41 @@ template<class T> void PossibleXor::add(
     for (typename T::const_iterator
         l = cl.begin(), end = cl.end()
         ; l != end
-        ; ++l, i++, origI++
+        ; ++l, i++, orig_i++
     ) {
         thisRhs ^= l->sign();
 
         //some variables might be missing in the middle
-        while(cl[i].var() != origCl[origI].var()) {
-            varsMissing.push_back(origI);
-            origI++;
-            assert(origI < size && "cl must be sorted");
+        while(cl[i].var() != orig_cl[orig_i].var()) {
+            vars_missing.push_back(orig_i);
+            orig_i++;
+            assert(orig_i < size && "cl must be sorted");
         }
         if (i > 0) {
             assert(cl[i-1] < cl[i] && "Must be sorted");
         }
-        whichOne |= ((uint32_t)l->sign()) << origI;
+        whichOne |= ((uint32_t)l->sign()) << orig_i;
     }
 
     //if vars are missing from the end
-    while(origI < size) {
-        varsMissing.push_back(origI);
-        origI++;
+    while(orig_i < size) {
+        vars_missing.push_back(orig_i);
+        orig_i++;
     }
 
     assert(cl.size() < size || rhs == thisRhs);
 
     //set to true every combination for the missing variables
-    for (uint32_t j = 0; j < 1UL<<(varsMissing.size()); j++) {
+    for (uint32_t j = 0; j < 1UL<<(vars_missing.size()); j++) {
         uint32_t thisWhichOne = whichOne;
-        for (uint32_t i2 = 0; i2 < varsMissing.size(); i2++) {
-            if (bit(j, i2)) thisWhichOne+= 1<<(varsMissing[i2]);
+        for (uint32_t i2 = 0; i2 < vars_missing.size(); i2++) {
+            if (bit(j, i2)) thisWhichOne+= 1<<(vars_missing[i2]);
         }
         foundComb[thisWhichOne] = true;
     }
     if (offset != numeric_limits<ClOffset>::max()) {
         offsets.push_back(offset);
-        fully_used.push_back(varsMissing.empty());
+        fully_used.push_back(vars_missing.empty());
     }
 
 }

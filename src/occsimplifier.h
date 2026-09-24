@@ -183,7 +183,7 @@ public:
     vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
     void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
-    uint32_t add_cls_to_kitten_definable(const Lit wsLit);
+    uint32_t add_cls_to_kitten_definable(const Lit ws_lit);
     struct DefinableStats {
         uint32_t ran = 0;
         uint32_t definable = 0;
@@ -234,7 +234,7 @@ public:
         uint64_t ternary_added_bin = 0;
 
         //Time stats
-        double linkInTime = 0;
+        double link_in_time = 0;
         double varElimTime = 0;
         double xorTime = 0;
         double triresolveTime = 0;
@@ -648,11 +648,11 @@ private:
     );
     void add_pos_lits_to_dummy_and_seen(
         const Watched& ps
-        , const Lit& posLit
+        , const Lit& pos_lit
     );
     bool add_neg_lits_to_dummy_and_seen(
         const Watched& qs
-        , const Lit& posLit
+        , const Lit& pos_lit
     );
     bool eliminate_vars();
     void eliminate_empty_resolvent_vars();

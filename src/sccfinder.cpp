@@ -153,7 +153,7 @@ void SCCFinder::add_bin_xor_in_tmp()
         if (solver->value(binxor.vars[0]) == l_Undef
             && solver->value(binxor.vars[1]) == l_Undef
         ) {
-            run_stats.foundXors++;
+            run_stats.found_xors++;
         }
     }
 }

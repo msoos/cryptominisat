@@ -95,7 +95,7 @@ bool DistillerLitRem::go_through_clauses(
         }
 
         //if done enough, stop doing it
-        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
+        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props >= max_num_props
             || solver->must_interrupt_asap()
         ) {
             run_stats.time_out++;
@@ -169,9 +169,9 @@ bool DistillerLitRem::distill_long_cls_all(
     orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->prop_stats.bogo_props;
+    old_bogo_props = solver->prop_stats.bogo_props;
     run_stats.potential_clauses += offs.size();
-    run_stats.numCalled += 1;
+    run_stats.num_called += 1;
 
     bool time_out = false;
     for(uint32_t i = 0; i < 10 && !time_out; i++) {
@@ -188,7 +188,7 @@ bool DistillerLitRem::distill_long_cls_all(
     }
 
     const double time_remain = float_div(
-        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props),
         orig_maxNumProps);
     if (solver->sql_stats) {
         solver->sql_stats->time_passed(
@@ -310,7 +310,7 @@ DistillerLitRem::Stats& DistillerLitRem::Stats::operator+=(const Stats& other)
     num_lits_rem += other.num_lits_rem;
     checked_clauses += other.checked_clauses;
     potential_clauses += other.potential_clauses;
-    numCalled += other.numCalled;
+    num_called += other.num_called;
 
     return *this;
 }

@@ -263,7 +263,7 @@ class DLL_PUBLIC SolverConf
 
         //XORs
         int      doFindXors;
-        unsigned maxXorToFind;
+        unsigned max_xor_to_find;
         unsigned maxXorToFindSlow;
         uint64_t maxXORMatrix;
         uint64_t xor_finder_time_limitM;

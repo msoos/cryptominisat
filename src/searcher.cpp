@@ -314,7 +314,7 @@ void Searcher::build_level0_confl_chain(const PropBy confl)
     switch (confl.get_type()) {
         case binary_t:
             id = confl.get_id();
-            chain.push_back(unit_cl_IDs[failBinLit.var()]);
+            chain.push_back(unit_cl_IDs[fail_bin_lit.var()]);
             chain.push_back(unit_cl_IDs[confl.lit2().var()]);
             break;
         case clause_t: {
@@ -373,15 +373,15 @@ void Searcher::add_lits_to_learnt(
 
             if (confl.is_red_step()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                antec_data.binRed++;
+                antec_data.bin_red++;
                 #endif
-                stats.resolvs.binRed++;
+                stats.resolvs.bin_red++;
                 if (!hyper_bin_ranges.empty()) mark_hyper_bin_used(id);
             } else {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                antec_data.binIrred++;
+                antec_data.bin_irred++;
                 #endif
-                stats.resolvs.binIrred++;
+                stats.resolvs.bin_irred++;
             }
             break;
         }
@@ -395,15 +395,15 @@ void Searcher::add_lits_to_learnt(
             sumAntecedentsLits += cl->size();
 
             if (cl->red()) {
-                stats.resolvs.longRed++;
+                stats.resolvs.long_red++;
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                antec_data.longRed++;
+                antec_data.long_red++;
                 antec_data.glue_long_reds.push(cl->stats.glue);
                 #endif
             } else {
-                stats.resolvs.longIrred++;
+                stats.resolvs.long_irred++;
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                antec_data.longIrred++;
+                antec_data.long_irred++;
                 #endif
             }
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -453,7 +453,7 @@ void Searcher::add_lits_to_learnt(
         switch (confl.get_type()) {
             case binary_t:
                 if (i == 0) {
-                    x = failBinLit;
+                    x = fail_bin_lit;
                 } else {
                     x = confl.lit2();
                     cont = false;
@@ -495,7 +495,7 @@ void Searcher::minimize_learnt_clause()
         normalClMinim();
     }
     stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
-    stats.recMinLitRem += origSize - learnt_clause.size();
+    stats.rec_min_lit_rem += origSize - learnt_clause.size();
 
     if (conf.do_shrink_uip) shrink_learnt_clause<inprocess>();
 
@@ -739,7 +739,7 @@ void Searcher::create_learnt_clause(PropBy confl)
     Lit lit0 = lit_Error;
     switch (confl.get_type()) {
         case binary_t : {
-            lit0 = failBinLit;
+            lit0 = fail_bin_lit;
             break;
         }
         case xor_t: {
@@ -906,7 +906,7 @@ void Searcher::simple_create_learnt_clause(
         switch (confl.get_type()) {
             case binary_t: {
                 if (p == lit_Undef && True_confl == false) {
-                    Lit q = failBinLit;
+                    Lit q = fail_bin_lit;
                     if (!seen[q.var()]) {
                         seen[q.var()] = 1;
                         mypathC++;
@@ -1099,7 +1099,7 @@ void Searcher::analyze_conflict(
         size_before_minim = 0;
         return;
     }
-    stats.litsRedNonMin += learnt_clause.size();
+    stats.lits_red_non_min += learnt_clause.size();
 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     glue_before_minim = calc_glue(learnt_clause);
     size_before_minim = learnt_clause.size();
@@ -1572,7 +1572,7 @@ lbool Searcher::search()
             (decision_level() == 0 ? 0 : trail_lim[decision_level()-1]);
         if (!confl.isnullptr()) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            hist.trailDepthHist.push(trail.size());
+            hist.trail_depth_hist.push(trail.size());
             #endif
             hist.trailDepthHistLonger.push(trail.size());
             if (!handle_conflict(confl)) {
@@ -1736,7 +1736,7 @@ void Searcher::update_history_stats(
     hist.conflSizeHistLT.push(learnt_clause.size());
     hist.trailDepthHistLT.push(trail.size());
     hist.glueHistLT.push(glue);
-    hist.glueHist.push(glue);
+    hist.glue_hist.push(glue);
 
     //restart scheduling
     rst.cur.fast.update(glue);
@@ -1775,7 +1775,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             break;
         case 2:
             //Binary learnt
-            stats.learntBins++;
+            stats.learnt_bins++;
             //solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, ID, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(learnt_clause[1], true, ID));
@@ -1812,7 +1812,7 @@ void Searcher::dump_sql_clause_data(
     solver->sql_stats->clause_stats(
         solver
         , clid
-        , restartID
+        , restart_id
         , glue
         , glue_before_minim
         , size
@@ -1844,17 +1844,17 @@ void Searcher::set_clause_data(
     stats_extra.size_before_minim = size_before_minim;
     stats_extra.decision_level = old_decision_level;
     stats_extra.learnt_rst_type = rst.stable;
-    stats_extra.antecedents_longIrred = antec_data.longIrred;
-    stats_extra.antecedents_longRed = antec_data.longRed;
+    stats_extra.antecedents_longIrred = antec_data.long_irred;
+    stats_extra.antecedents_longRed = antec_data.long_red;
     stats_extra.trailDepthHistLT_avg = hist.trailDepthHistLT.avg();
     stats_extra.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();
     stats_extra.antec_data_sum_sizeHistLT_avg = hist.antec_data_sum_sizeHistLT.avg();
     stats_extra.branchDepthHistQueue_avg = hist.branchDepthHistQueue.avg_nocheck();
-    stats_extra.trailDepthHist_avg = hist.trailDepthHist.avg_nocheck();
+    stats_extra.trailDepthHist_avg = hist.trail_depth_hist.avg_nocheck();
 
 
-    stats_extra.glueHist_longterm_avg = hist.glueHist.get_longterm().avg();
-    stats_extra.glueHist_avg = hist.glueHist.avg_nocheck();
+    stats_extra.glueHist_longterm_avg = hist.glue_hist.get_longterm().avg();
+    stats_extra.glueHist_avg = hist.glue_hist.avg_nocheck();
     stats_extra.trail_depth_level = trail.size();
     stats_extra.glue_before_minim = glue_before_minim;
     stats_extra.overlapHistLT_avg = hist.overlapHistLT.avg();
@@ -1863,8 +1863,8 @@ void Searcher::set_clause_data(
     stats_extra.numResolutionsHistLT_avg =  hist.numResolutionsHistLT.avg();
     stats_extra.conflSizeHist_avg = hist.conflSizeHist.avg();
     stats_extra.glueHistLT_avg = hist.glueHistLT.avg();
-    stats_extra.antecedents_binred = antec_data.binRed;
-    stats_extra.antecedents_binIrred = antec_data.binIrred;
+    stats_extra.antecedents_binred = antec_data.bin_red;
+    stats_extra.antecedents_binIrred = antec_data.bin_irred;
 
     stats_extra.orig_glue = orig_glue;
 //     stats_extra.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();
@@ -2020,7 +2020,7 @@ bool Searcher::handle_conflict(PropBy confl)
     params.confl_this_rst++;
 
     ConflictData data = find_conflict_level(confl);
-    if (data.nHighestLevel == 0) {
+    if (data.n_highest_level == 0) {
         verb_print(10, "find_conflict_level() gives 0, so UNSAT for whole formula. "
                 "decLevel: " << decision_level());
         if (unsat_cl_ID == 0) {
@@ -2094,7 +2094,7 @@ bool Searcher::handle_conflict(PropBy confl)
         && (((int)decision_level() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
     ) {
         chrono_backtrack++;
-        cancel_until(data.nHighestLevel -1);
+        cancel_until(data.n_highest_level -1);
     } else {
         non_chrono_backtrack++;
         uint32_t bt_level = backtrack_level;
@@ -2104,7 +2104,7 @@ bool Searcher::handle_conflict(PropBy confl)
             && gmatrices.empty()
             && bnns.empty()
         ) {
-            bt_level = chrono_reuse_trail_level(backtrack_level, data.nHighestLevel-1);
+            bt_level = chrono_reuse_trail_level(backtrack_level, data.n_highest_level-1);
         }
         cancel_until(bt_level);
     }
@@ -2281,12 +2281,12 @@ inline void Searcher::dump_restart_sql()
 {
     //Propagation stats
     PropStats thisPropStats = prop_stats - lastSQLPropStats;
-    SearchStats thisStats = stats - lastSQLGlobalStats;
+    SearchStats this_stats = stats - lastSQLGlobalStats;
     solver->sql_stats->restart(
-        restartID
+        restart_id
         , rst.stable
         , thisPropStats
-        , thisStats
+        , this_stats
         , solver
         , this
     );
@@ -2449,7 +2449,7 @@ inline void Searcher::dump_search_loop_stats(double my_time)
         dump_restart_sql();
     }
     #endif
-    restartID++;
+    restart_id++;
 }
 
 bool Searcher::must_abort(const lbool status) {
@@ -2708,8 +2708,8 @@ void Searcher::clean_unused_hyper_bins()
 
     uint64_t removed = 0;
     const size_t end = watches.size();
-    for (size_t wsLit = 0; wsLit < end; wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (size_t ws_lit = 0; ws_lit < end; ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         watch_subarray ws = watches[lit];
         if (ws.empty()) continue;
         Watched* j = ws.begin();
@@ -3153,7 +3153,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 {
     size_t added = 0;
 
-    for(auto const& b: solver->needToAddBinClause) {
+    for(auto const& b: solver->need_to_add_bin_clause) {
         lbool val1 = value(b.get_lit1());
         lbool val2 = value(b.get_lit2());
 
@@ -3185,7 +3185,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
         solver->attach_bin_clause(b.get_lit1(), b.get_lit2(), true, ID, false);
         added++;
     }
-    solver->needToAddBinClause.clear();
+    solver->need_to_add_bin_clause.clear();
 
     return added;
 }
@@ -3496,9 +3496,9 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
     ConflictData data;
 
     if (pb.get_type() == PropByType::binary_t) {
-        data.nHighestLevel = var_data[failBinLit.var()].level;
+        data.n_highest_level = var_data[fail_bin_lit.var()].level;
 
-        if (data.nHighestLevel == decision_level()
+        if (data.n_highest_level == decision_level()
             && var_data[pb.lit2().var()].level == decision_level()
         ) {
             return data;
@@ -3506,18 +3506,18 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
 
         uint32_t highestId = 0;
         // find the largest decision level in the clause
-        uint32_t nLevel = var_data[pb.lit2().var()].level;
-        if (nLevel > data.nHighestLevel) {
+        uint32_t n_level = var_data[pb.lit2().var()].level;
+        if (n_level > data.n_highest_level) {
             highestId = 1;
-            data.nHighestLevel = nLevel;
+            data.n_highest_level = n_level;
         }
 
         //TODO
         // we might want to swap here if highestID is not 0
         if (highestId != 0) {
             Lit back = pb.lit2();
-            pb = PropBy(failBinLit, pb.is_red_step(), pb.get_id());
-            failBinLit = back;
+            pb = PropBy(fail_bin_lit, pb.is_red_step(), pb.get_id());
+            fail_bin_lit = back;
         }
     } else {
         Lit* lits = nullptr;
@@ -3550,8 +3550,8 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
                 release_assert(false);
         }
 
-        data.nHighestLevel = var_data[lits[0].var()].level;
-        if (data.nHighestLevel == decision_level()
+        data.n_highest_level = var_data[lits[0].var()].level;
+        if (data.n_highest_level == decision_level()
             && var_data[lits[1].var()].level == decision_level()
         ) {
             return data;
@@ -3560,10 +3560,10 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
         uint32_t highestId = 0;
         // find the largest decision level in the lits
         for (uint32_t nLitId = 1; nLitId < size; ++nLitId) {
-            uint32_t nLevel = var_data[lits[nLitId].var()].level;
-            if (nLevel > data.nHighestLevel) {
+            uint32_t n_level = var_data[lits[nLitId].var()].level;
+            if (n_level > data.n_highest_level) {
                 highestId = nLitId;
-                data.nHighestLevel = nLevel;
+                data.n_highest_level = n_level;
             }
         }
 

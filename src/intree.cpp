@@ -136,8 +136,8 @@ bool InTree::intree_probe() {
     solver->use_depth_trick = false;
     solver->perform_transitive_reduction = true;
     hyperbin_added = 0;
-    removedIrredBin = 0;
-    removedRedBin = 0;
+    removed_irred_bin = 0;
+    removed_red_bin = 0;
     num_calls++;
     frat_func_start();
 
@@ -196,8 +196,8 @@ bool InTree::intree_probe() {
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " vars"
         << " hyper-added: " << hyperbin_added
-        << " trans-irred: " << removedIrredBin
-        << " trans-red: " << removedRedBin
+        << " trans-irred: " << removed_irred_bin
+        << " trans-red: " << removed_red_bin
         << " budget(M): " << std::setprecision(2) << (double)bogoprops_to_use/1e6
         << " used(M): " << (double)used/1e6
         << solver->conf.print_times(time_used,  time_out, time_remain));
@@ -338,14 +338,14 @@ bool InTree::handle_lit_popped_from_queue(
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);
             auto [a, b] = solver->remove_useless_bins(true);
-            removedIrredBin += a;
-            removedRedBin += b;
+            removed_irred_bin += a;
+            removed_red_bin += b;
         }
         solver->uselessBin.clear();
         //FRAT: their adds were emitted at creation, delete before dropping
-        for(const auto& b: solver->needToAddBinClause)
+        for(const auto& b: solver->need_to_add_bin_clause)
             *solver->frat << del << b.get_id() << b.get_lit1() << b.get_lit2() << fin;
-        solver->needToAddBinClause.clear();
+        solver->need_to_add_bin_clause.clear();
     }
 
     return timeout;

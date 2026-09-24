@@ -98,7 +98,7 @@ class VarReplacer
 
             uint64_t num_calls = 0;
             double cpu_time = 0;
-            uint64_t replacedLits = 0;
+            uint64_t replaced_lits = 0;
             uint64_t zero_depth_assigns = 0;
             uint64_t actuallyReplacedVars = 0;
             uint64_t removedBinClauses = 0;
@@ -187,8 +187,8 @@ class VarReplacer
         struct ImplicitTmpStats
         {
             ImplicitTmpStats() :
-                removedRedBin(0)
-                , removedIrredBin(0)
+                removed_red_bin(0)
+                , removed_irred_bin(0)
             {
             }
 
@@ -196,9 +196,9 @@ class VarReplacer
             {
                 if (ws.is_bin()) {
                     if (ws.red()) {
-                        removedRedBin++;
+                        removed_red_bin++;
                     } else {
-                        removedIrredBin++;
+                        removed_irred_bin++;
                     }
                 } else {
                     assert(false);
@@ -210,8 +210,8 @@ class VarReplacer
                 *this = ImplicitTmpStats();
             }
 
-            size_t removedRedBin;
-            size_t removedIrredBin;
+            size_t removed_red_bin;
+            size_t removed_irred_bin;
         };
         ImplicitTmpStats impl_tmp_stats;
         void updateBin(
@@ -243,7 +243,7 @@ class VarReplacer
 
         ///mapping of variable to set of variables it replaces
         //Everything is OUTER here.
-        map<uint32_t, vector<uint32_t>> reverseTable;
+        map<uint32_t, vector<uint32_t>> reverse_table;
 
         //FRAT
         vector<tuple<int32_t, Lit, Lit>> bins_for_frat;
@@ -295,13 +295,13 @@ inline bool VarReplacer::isReplaced_fast(const Lit lit) const
 
 inline size_t VarReplacer::getNumTrees() const
 {
-    return reverseTable.size();
+    return reverse_table.size();
 }
 
 inline vector<uint32_t> VarReplacer::get_vars_replacing_others() const
 {
     vector<uint32_t> replacingVars;
-    for(const auto& it: reverseTable) {
+    for(const auto& it: reverse_table) {
         replacingVars.push_back(it.first);
     }
     return replacingVars;
@@ -309,8 +309,8 @@ inline vector<uint32_t> VarReplacer::get_vars_replacing_others() const
 
 inline bool VarReplacer::var_is_replacing(const uint32_t var)
 {
-    auto it = reverseTable.find(var);
-    return it != reverseTable.end();
+    auto it = reverse_table.find(var);
+    return it != reverse_table.end();
 }
 
 inline const VarReplacer::Stats& VarReplacer::get_stats() const
@@ -339,14 +339,14 @@ template<class T>
 void VarReplacer::serialize_tables(T& ar) const
 {
     ar << table;
-    ar << reverseTable;
+    ar << reverse_table;
 }
 
 template<class T>
 void VarReplacer::unserialize_tables(T& ar)
 {
     ar >> table;
-    ar >> reverseTable;
+    ar >> reverse_table;
 }
 #endif
 

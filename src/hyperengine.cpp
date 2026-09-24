@@ -55,7 +55,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     uint32_t nlBinQHead = qhead;
     uint32_t lBinQHead = qhead;
 
-    needToAddBinClause.clear();
+    need_to_add_bin_clause.clear();
     PropResult ret = PROP_NOTHING;
     start:
 
@@ -178,11 +178,11 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
     const int32_t ID = ++clause_id;
-    if (currAncestors.size() > 1) {
-        if (frat->enabled()) tmp_orig_ancestors = currAncestors;
+    if (curr_ancestors.size() > 1) {
+        if (frat->enabled()) tmp_orig_ancestors = curr_ancestors;
         deepestAncestor = deepest_common_ancestor();
 
-        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
+        need_to_add_bin_clause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
         if (frat->enabled()) {
             //hints: per ancestor, its bin chain down from the common
             //ancestor, then the source clause
@@ -205,9 +205,9 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
         hyperBinNotAdded = false;
     } else {
         //0-level propagation is NEVER made by propFull
-        assert(currAncestors.size() > 0);
+        assert(curr_ancestors.size() > 0);
 
-        deepestAncestor = currAncestors[0];
+        deepestAncestor = curr_ancestors[0];
         hyperBinNotAdded = true;
         if (frat->enabled()) {
             //materialize the never-attached bin: it serves as a reason, so
@@ -231,33 +231,33 @@ Return which one is to be removed
 */
 Lit HyperEngine::remove_which_bin_due_to_trans_red(
     Lit conflict
-    , Lit thisAncestor
+    , Lit this_ancestor
     , bool thisStepRed
 ) {
     prop_stats.otf_hyper_time += 1;
     const PropBy& data = var_data[conflict.var()].reason;
 
     bool onlyIrred = !data.is_red_step();
-    Lit lookingForAncestor = data.get_ancestor();
+    Lit looking_for_ancestor = data.get_ancestor();
 
-    if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
+    if (this_ancestor == lit_Undef || looking_for_ancestor == lit_Undef)
         return lit_Undef;
 
     prop_stats.otf_hyper_time += 1;
     bool second_is_deeper = false;
     bool ambivalent = true;
     if (use_depth_trick) {
-        ambivalent = depth[thisAncestor.var()] == depth[lookingForAncestor.var()];
-        if (depth[thisAncestor.var()] < depth[lookingForAncestor.var()]) {
+        ambivalent = depth[this_ancestor.var()] == depth[looking_for_ancestor.var()];
+        if (depth[this_ancestor.var()] < depth[looking_for_ancestor.var()]) {
             second_is_deeper = true;
         }
     }
     #ifdef DEBUG_DEPTH
     cout
-    << "1st: " << std::setw(6) << thisAncestor
-    << " depth: " << std::setw(4) << depth[thisAncestor.var()]
-    << "  2nd: " << std::setw(6) << lookingForAncestor
-    << " depth: " << std::setw(4) << depth[lookingForAncestor.var()]
+    << "1st: " << std::setw(6) << this_ancestor
+    << " depth: " << std::setw(4) << depth[this_ancestor.var()]
+    << "  2nd: " << std::setw(6) << looking_for_ancestor
+    << " depth: " << std::setw(4) << depth[looking_for_ancestor.var()]
     ;
     #endif
 
@@ -265,36 +265,36 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     if ((ambivalent || !second_is_deeper) &&
         is_ancestor_of(
         conflict
-        , thisAncestor
+        , this_ancestor
         , thisStepRed
         , onlyIrred
-        , lookingForAncestor
+        , looking_for_ancestor
         )
     ) {
         #ifdef DEBUG_DEPTH
         cout << " -- OK" << endl;
         #endif
         //assert(ambivalent || !second_is_deeper);
-        return thisAncestor;
+        return this_ancestor;
     }
 
     onlyIrred = !thisStepRed;
     thisStepRed = data.is_red_step();
-    std::swap(lookingForAncestor, thisAncestor);
+    std::swap(looking_for_ancestor, this_ancestor);
     if ((ambivalent || second_is_deeper) &&
         is_ancestor_of(
         conflict
-        , thisAncestor
+        , this_ancestor
         , thisStepRed
         , onlyIrred
-        , lookingForAncestor
+        , looking_for_ancestor
         )
     ) {
         #ifdef DEBUG_DEPTH
         cout << " -- OK" << endl;
         #endif
         //assert(ambivalent || second_is_deeper);
-        return thisAncestor;
+        return this_ancestor;
     }
 
     #ifdef DEBUG_DEPTH
@@ -305,24 +305,24 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
 }
 
 /**
-hop backwards from thisAncestor until:
+hop backwards from this_ancestor until:
 1) we reach ancestor of 'conflict' -- at this point, we return TRUE
 2) we reach an invalid point. Either root, or an invalid hop. We return FALSE.
 */
 bool HyperEngine::is_ancestor_of(
     const Lit conflict
-    , Lit thisAncestor
+    , Lit this_ancestor
     , const bool thisStepRed
     , const bool onlyIrred
-    , const Lit lookingForAncestor
+    , const Lit looking_for_ancestor
 ) {
     prop_stats.otf_hyper_time += 1;
 
     //Was propagated at level 0 -- clause_cleaner will remove the clause
-    if (lookingForAncestor == lit_Undef)
+    if (looking_for_ancestor == lit_Undef)
         return false;
 
-    if (lookingForAncestor == thisAncestor) {
+    if (looking_for_ancestor == this_ancestor) {
         return false;
     }
 
@@ -332,28 +332,28 @@ bool HyperEngine::is_ancestor_of(
     }
 
     //This is as low as we should search -- we cannot find what we are searchig for lower than this
-    const size_t bottom = depth[lookingForAncestor.var()];
+    const size_t bottom = depth[looking_for_ancestor.var()];
 
-    while(thisAncestor != lit_Undef
-        && (!use_depth_trick || bottom <= depth[thisAncestor.var()])
+    while(this_ancestor != lit_Undef
+        && (!use_depth_trick || bottom <= depth[this_ancestor.var()])
     ) {
 
-        if (thisAncestor == conflict) {
+        if (this_ancestor == conflict) {
             return false;
         }
 
-        if (thisAncestor == lookingForAncestor) {
+        if (this_ancestor == looking_for_ancestor) {
             return true;
         }
 
-        const PropBy& data = var_data[thisAncestor.var()].reason;
+        const PropBy& data = var_data[this_ancestor.var()].reason;
         if ((onlyIrred && data.is_red_step())
             || data.get_hyperbin_not_added()
         ) {
             return false;  //reached would-be redundant hop (but this is irred)
         }
 
-        thisAncestor = data.get_ancestor();
+        this_ancestor = data.get_ancestor();
         prop_stats.otf_hyper_time += 1;
     }
 
@@ -366,12 +366,12 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
     assert(value(p.var()) == l_Undef);
 
 
-    currAncestors.clear();
+    curr_ancestors.clear();
     for (const Lit lit : cl) {
         if (lit != p) {
             assert(value(lit) == l_False);
             if (var_data[lit.var()].level != 0)
-                currAncestors.push_back(~lit);
+                curr_ancestors.push_back(~lit);
         }
     }
 
@@ -382,19 +382,19 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
 Lit HyperEngine::analyzeFail(const PropBy propBy)
 {
     //Clear out the datastructs we will be usin
-    currAncestors.clear();
+    curr_ancestors.clear();
 
     //First, we set the ancestors, based on the clause
     //Each literal in the clause is an ancestor. So just 'push' them inside the
-    //'currAncestors' variable
+    //'curr_ancestors' variable
     switch(propBy.get_type()) {
         case binary_t: {
             const Lit lit = ~propBy.lit2();
             if (var_data[lit.var()].level != 0)
-                currAncestors.push_back(lit);
+                curr_ancestors.push_back(lit);
 
-            if (var_data[failBinLit.var()].level != 0)
-                currAncestors.push_back(~failBinLit);
+            if (var_data[fail_bin_lit.var()].level != 0)
+                curr_ancestors.push_back(~fail_bin_lit);
 
             break;
         }
@@ -404,7 +404,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
             const Clause& cl = *cl_alloc.ptr(offset);
             for(size_t i = 0; i < cl.size(); i++) {
                 if (var_data[cl[i].var()].level != 0)
-                    currAncestors.push_back(~cl[i]);
+                    curr_ancestors.push_back(~cl[i]);
             }
             break;
         }
@@ -429,7 +429,7 @@ Lit HyperEngine::deepest_common_ancestor()
     Lit foundLit = lit_Undef;
     while(foundLit == lit_Undef) {
         size_t num_lit_undef = 0;
-        for (auto it = currAncestors.begin(), end = currAncestors.end(); it != end; ++it) {
+        for (auto it = curr_ancestors.begin(), end = curr_ancestors.end(); it != end; ++it) {
             prop_stats.otf_hyper_time += 1;
 
             //We have reached the top of the graph, the other 'threads' that
@@ -437,7 +437,7 @@ Lit HyperEngine::deepest_common_ancestor()
             //common ancestor
             if (*it == lit_Undef) {
                 num_lit_undef++;
-                assert(num_lit_undef != currAncestors.size());
+                assert(num_lit_undef != curr_ancestors.size());
                 continue;
             }
 
@@ -453,7 +453,7 @@ Lit HyperEngine::deepest_common_ancestor()
             //Is this point where all the 'threads' that are stepping backwards
             //reach each other? If so, we have found what we were looking for!
             //We can exit, and return 'foundLit'
-            if (seen[it->toInt()] == currAncestors.size()) {
+            if (seen[it->toInt()] == curr_ancestors.size()) {
                 foundLit = *it;
                 break;
             }
@@ -491,18 +491,18 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
         prop_stats.otf_hyper_time += 2;
         uselessBin.insert(clauseToRemove);
     } else if (!var_data[lit.var()].reason.get_hyperbin_not_added()) {
-        prop_stats.otf_hyper_time += needToAddBinClause.size()/4;
-        std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
+        prop_stats.otf_hyper_time += need_to_add_bin_clause.size()/4;
+        std::set<BinaryClause>::iterator it = need_to_add_bin_clause.find(clauseToRemove);
 
         //In case this is called after a backtrack to decision_level 1
         //then in fact we might have already cleaned the
-        //'needToAddBinClause'. When called from probing, the IF below
+        //'need_to_add_bin_clause'. When called from probing, the IF below
         //must ALWAYS be true
-        if (it != needToAddBinClause.end()) {
+        if (it != need_to_add_bin_clause.end()) {
             prop_stats.otf_hyper_time += 2;
             //FRAT: its add was emitted at creation, delete it
             *frat << del << it->get_id() << it->get_lit1() << it->get_lit2() << fin;
-            needToAddBinClause.erase(it);
+            need_to_add_bin_clause.erase(it);
         }
         //This will subsume the clause later, so don't remove it
     }
@@ -523,7 +523,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
     } else if (val == l_False) {
         //Conflict
 
-        failBinLit = lit;
+        fail_bin_lit = lit;
         confl = PropBy(~p, k->red(), k->get_id());
         return PROP_FAIL;
 
@@ -596,7 +596,7 @@ size_t HyperEngine::mem_used() const
 {
     size_t mem = 0;
     mem += PropEngine::mem_used();
-    mem += currAncestors.capacity()*sizeof(Lit);
+    mem += curr_ancestors.capacity()*sizeof(Lit);
 
     return mem;
 }

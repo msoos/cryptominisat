@@ -277,8 +277,8 @@ bool DistillerLong::distill_long_cls_all(
     orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->prop_stats.bogo_props;
-    run_stats.numCalled += 1;
+    old_bogo_props = solver->prop_stats.bogo_props;
+    run_stats.num_called += 1;
 
     //Select candidates. prio 0: not checked since their bit was cleared,
     //as CaDiCaL's 'vivify' bit; prio 1: the rest (irred only)
@@ -408,7 +408,7 @@ bool DistillerLong::distill_long_cls_all(
                 }
             }
             if (num_subsumed) {
-                run_stats.clRemoved += num_subsumed;
+                run_stats.cl_removed += num_subsumed;
                 uint32_t j = 0;
                 for(uint32_t i = 0; i < todo.size(); i++) {
                     if (removed[i]) continue;
@@ -457,20 +457,20 @@ bool DistillerLong::distill_long_cls_all(
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
         const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
         cout << solver->conf.prefix << tag
         << " cls tried: " << run_stats.checked_clauses << "/" << orig_todo_size
-        << " cl-rem: " << run_stats.clRemoved
+        << " cl-rem: " << run_stats.cl_removed
         << " cl-sh: " << run_stats.num_cl_shorten
         << " lit-rem: " << run_stats.num_lits_rem
         << " 0-depth-ass: " << (solver->trail_size() - orig_trail_size)
         << endl;
         cout << solver->conf.prefix << tag
         << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
-        << " used(M): " << (double)((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps)/1e6
+        << " used(M): " << (double)((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props)/1e6
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -508,7 +508,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         Clause& cl = *solver->cl_alloc.ptr(offset);
 
         //if done enough, stop doing it
-        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
+        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props >= max_num_props
             || solver->must_interrupt_asap()
         ) {
             run_stats.time_out++;
@@ -562,7 +562,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
         *solver->frat << findelay;
         solver->free_cl(offset);
-        run_stats.clRemoved++;
+        run_stats.cl_removed++;
         frat_func_end();
         return CL_OFFSET_MAX;
     };
@@ -843,8 +843,8 @@ DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
     num_lits_rem += other.num_lits_rem;
     checked_clauses += other.checked_clauses;
     potential_clauses += other.potential_clauses;
-    numCalled += other.numCalled;
-    clRemoved += other.clRemoved;
+    num_called += other.num_called;
+    cl_removed += other.cl_removed;
 
     return *this;
 }
@@ -854,13 +854,13 @@ void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
     cout << pre << "-------- DISTILL-LONG STATS --------" << endl;
     print_stats_line("c time"
         , time_used
-        , ratio_for_stat(time_used, numCalled)
+        , ratio_for_stat(time_used, num_called)
         , "per call"
     );
 
     print_stats_line("c timed out"
         , time_out
-        , stats_line_percent(time_out, numCalled)
+        , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 

@@ -129,34 +129,34 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     for(int i = 0; i < predgen::NUM_RAW; i++) {
         PyList_SetItem(raw_names, i, PyUnicode_FromString(predgen::raw_names[i]));
     }
-    pArgs = PyTuple_New(2);
-    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
-    PyTuple_SetItem(pArgs, 1, raw_names);
-    PyObject* ret = PyObject_CallObject(set_up_features, pArgs);
+    p_args = PyTuple_New(2);
+    PyTuple_SetItem(p_args, 0, PyUnicode_FromString(best_feats_fname.c_str()));
+    PyTuple_SetItem(p_args, 1, raw_names);
+    PyObject* ret = PyObject_CallObject(set_up_features, p_args);
     if (ret == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to set up features!" << endl;
         exit(-1);
     }
     //Py_DECREF(set_up_features);
-    Py_DECREF(pArgs);
+    Py_DECREF(p_args);
     Py_DECREF(ret);
 
 
     //Load models
     PyObject* load_models = PyDict_GetItemString(pDict, "load_models");
-    pArgs = PyTuple_New(3);
-    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(short_fname.c_str()));
-    PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
-    PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
-    ret = PyObject_CallObject(load_models, pArgs);
+    p_args = PyTuple_New(3);
+    PyTuple_SetItem(p_args, 0, PyUnicode_FromString(short_fname.c_str()));
+    PyTuple_SetItem(p_args, 1, PyUnicode_FromString(long_fname.c_str()));
+    PyTuple_SetItem(p_args, 2, PyUnicode_FromString(forever_fname.c_str()));
+    ret = PyObject_CallObject(load_models, p_args);
     if (ret == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to load models !" << endl;
         exit(-1);
     }
     //Py_DECREF(load_models);
-    Py_DECREF(pArgs);
+    Py_DECREF(p_args);
     Py_DECREF(ret);
     //Py_DECREF(pModule);
     //Py_DECREF(pDict);
@@ -187,12 +187,12 @@ void ClPredictorsPy::predict_all(
     assert(pArray != nullptr);
 
     // Tuple to hold the arguments to the method
-    pArgs = PyTuple_New(1);
-    PyTuple_SetItem(pArgs, 0, pArray);
+    p_args = PyTuple_New(1);
+    PyTuple_SetItem(p_args, 0, pArray);
 
     // Call the function with the arguments
-    PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
-    Py_DECREF(pArgs);
+    PyObject* pResult = PyObject_CallObject(pFunc, p_args);
+    Py_DECREF(p_args);
     if(pResult == nullptr) {
         PyErr_Print();
         cout << "Calling the add method failed" << endl;

@@ -31,44 +31,44 @@ using std::numeric_limits;
 
 namespace CMSat {
 
-uint32_t getUpdatedVar(uint32_t toUpdate, const vector< uint32_t >& mapper);
-Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);
+uint32_t getUpdatedVar(uint32_t to_update, const vector< uint32_t >& mapper);
+Lit getUpdatedLit(Lit to_update, const vector< uint32_t >& mapper);
 
 template<typename T>
-void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
+void updateArray(T& to_update, const vector< uint32_t >& mapper)
 {
-    T backup = toUpdate;
-    for(size_t i = 0; i < toUpdate.size(); i++) {
-        toUpdate.at(i) = backup.at(mapper.at(i));
+    T backup = to_update;
+    for(size_t i = 0; i < to_update.size(); i++) {
+        to_update.at(i) = backup.at(mapper.at(i));
     }
 }
 
 template<typename T>
-void updateArrayRev(T& toUpdate, const vector< uint32_t >& mapper)
+void updateArrayRev(T& to_update, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() >= mapper.size());
-    T backup = toUpdate;
+    assert(to_update.size() >= mapper.size());
+    T backup = to_update;
     for(size_t i = 0; i < mapper.size(); i++) {
-        toUpdate[mapper[i]] = backup[i];
+        to_update[mapper[i]] = backup[i];
     }
 }
 
 template<typename T>
-void updateArrayMapCopy(T& toUpdate, const vector< uint32_t >& mapper)
+void updateArrayMapCopy(T& to_update, const vector< uint32_t >& mapper)
 {
-    //assert(toUpdate.size() == mapper.size());
-    T backup = toUpdate;
-    for(size_t i = 0; i < toUpdate.size(); i++) {
+    //assert(to_update.size() == mapper.size());
+    T backup = to_update;
+    for(size_t i = 0; i < to_update.size(); i++) {
         if (backup[i] < mapper.size()) {
-            toUpdate[i] = mapper[backup[i]];
+            to_update[i] = mapper[backup[i]];
         }
     }
 }
 
 template<typename T>
-void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
+void updateLitsMap(T& to_update, const vector< uint32_t >& mapper)
 {
-    for (auto& l: toUpdate) {
+    for (auto& l: to_update) {
         if (l.var() < mapper.size()) {
             l = getUpdatedLit(l, mapper);
         }
@@ -76,39 +76,39 @@ void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
 }
 
 template<typename T>
-void updateVarsMap(T& toUpdate, const vector< uint32_t >& mapper)
+void updateVarsMap(T& to_update, const vector< uint32_t >& mapper)
 {
-    for (auto& v: toUpdate) {
+    for (auto& v: to_update) {
         if (v < mapper.size()) {
             v = getUpdatedVar(v, mapper);
         }
     }
 }
 
-inline Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper)
+inline Lit getUpdatedLit(Lit to_update, const vector< uint32_t >& mapper)
 {
-    return Lit(getUpdatedVar(toUpdate.var(), mapper), toUpdate.sign());
+    return Lit(getUpdatedVar(to_update.var(), mapper), to_update.sign());
 }
 
-inline uint32_t getUpdatedVar(uint32_t toUpdate, const vector< uint32_t >& mapper)
+inline uint32_t getUpdatedVar(uint32_t to_update, const vector< uint32_t >& mapper)
 {
-    return mapper.at(toUpdate);
+    return mapper.at(to_update);
 }
 
-inline uint32_t getUpdatedVarMaxToMax(uint32_t toUpdate, const vector< uint32_t >& mapper)
+inline uint32_t getUpdatedVarMaxToMax(uint32_t to_update, const vector< uint32_t >& mapper)
 {
-    if (toUpdate == numeric_limits<uint32_t>::max()) {
+    if (to_update == numeric_limits<uint32_t>::max()) {
         return numeric_limits<uint32_t>::max();
     }
-    return mapper.at(toUpdate);
+    return mapper.at(to_update);
 }
 
 template<typename T, typename T2>
-inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper)
+inline void updateBySwap(T& to_update, T2& seen, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() <= mapper.size());
-    assert(toUpdate.size() <= seen.size());
-    for(size_t i = 0; i < toUpdate.size(); i++) {
+    assert(to_update.size() <= mapper.size());
+    assert(to_update.size() <= seen.size());
+    for(size_t i = 0; i < to_update.size(); i++) {
         if (seen.at(i)) {
             //Already updated, skip
             continue;
@@ -122,7 +122,7 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
             assert(seen.at(swapwith) == 0);
             //std::cout << "Swapping " << var << " with " << swapwith << std::endl;
             using std::swap;
-            swap(toUpdate[var], toUpdate[swapwith]);
+            swap(to_update[var], to_update[swapwith]);
             seen.at(swapwith) = 1;
             var = swapwith;
 
@@ -135,7 +135,7 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
     }
 
     //clear seen
-    for(size_t i = 0; i < toUpdate.size(); i++) {
+    for(size_t i = 0; i < to_update.size(); i++) {
         assert(seen.at(i) == 1);
         seen.at(i) = 0;
     }

@@ -720,14 +720,14 @@ uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
 {
     int32_t ID;
     auto cl = get_reason(row_n, ID);
-    uint32_t nMaxLevel = gqd.currLevel;
+    uint32_t nMaxLevel = gqd.curr_level;
     uint32_t nMaxInd = 1;
 
     for (uint32_t i = 1; i < cl->size(); i++) {
         Lit l = (*cl)[i];
-        uint32_t nLevel = solver->var_data[l.var()].level;
-        if (nLevel > nMaxLevel) {
-            nMaxLevel = nLevel;
+        uint32_t n_level = solver->var_data[l.var()].level;
+        if (n_level > nMaxLevel) {
+            nMaxLevel = n_level;
             nMaxInd = i;
         }
     }
@@ -960,7 +960,7 @@ void EGaussian::prop_lit(
     const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop)
 {
     uint32_t lev;
-    if (gqd.currLevel == solver->decision_level()) lev = gqd.currLevel;
+    if (gqd.curr_level == solver->decision_level()) lev = gqd.curr_level;
     else lev = get_max_level(gqd, row_i);
     if (lev == 0 && solver->frat->enabled()) {
         //we produce the reason, because we need it immediately, since it's toplevel

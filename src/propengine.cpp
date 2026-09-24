@@ -152,7 +152,7 @@ void PropEngine::detach_modified_clause(
     remove_w_cl(watches[lit2], offset);
 }
 
-PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
+PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t curr_level)
 {
     const uint32_t pv = p.var();
     assert(!gmatrices.empty() || !xorclauses.empty()); //the hot caller checks
@@ -240,7 +240,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             gqd.new_resp_var = numeric_limits<uint32_t>::max();
             gqd.new_resp_row = numeric_limits<uint32_t>::max();
             gqd.do_eliminate = false;
-            gqd.currLevel = currLevel;
+            gqd.curr_level = curr_level;
 
             if (gmatrices[matnum]->find_truths(i, j, pv, i->row_n, gqd)) {
                 continue;
@@ -594,21 +594,21 @@ void PropEngine::get_bnn_prop_reason(
 
 Need to be somewhat tricky if the clause indicates that current assignment
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
-sets failBinLit
+sets fail_bin_lit
 */
 template<bool inprocess>
 inline bool PropEngine::prop_bin_cl(
     const Watched* i
     , const Lit p
     , PropBy& confl
-    , uint32_t currLevel
+    , uint32_t curr_level
 ) {
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
-        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_id()));
+        enqueue<inprocess>(i->lit2(), curr_level, PropBy(~p, i->red(), i->get_id()));
     } else if (val == l_False) {
         confl = PropBy(~p, i->red(), i->get_id());
-        failBinLit = i->lit2();
+        fail_bin_lit = i->lit2();
         qhead = trail.size();
         return false;
     }
@@ -622,7 +622,7 @@ bool PropEngine::prop_long_cl(
     , Watched*& j
     , const Lit p
     , PropBy& confl
-    , uint32_t currLevel
+    , uint32_t curr_level
 ) {
     //Blocked literal is satisfied, so clause is satisfied
     if (value(i->get_blocked_lit()) == l_True) {
@@ -667,16 +667,16 @@ bool PropEngine::prop_long_cl(
             #endif
         }
 
-        if (currLevel == decision_level()) {
-            enqueue<inprocess>(c[0], currLevel, PropBy(offset));
+        if (curr_level == decision_level()) {
+            enqueue<inprocess>(c[0], curr_level, PropBy(offset));
         } else {
-            uint32_t nMaxLevel = currLevel;
+            uint32_t nMaxLevel = curr_level;
             uint32_t nMaxInd = 1;
             // pass over all the literals in the clause and find the one with the biggest level
             for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
-                uint32_t nLevel = var_data[c[nInd].var()].level;
-                if (nLevel > nMaxLevel) {
-                    nMaxLevel = nLevel;
+                uint32_t n_level = var_data[c[nInd].var()].level;
+                if (n_level > nMaxLevel) {
+                    nMaxLevel = n_level;
                     nMaxInd = nInd;
                 }
             }
@@ -736,7 +736,7 @@ PropBy PropEngine::propagate_core()
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         if (!bnns.empty()) var_data[p.var()].propagated = true; //only reverse_prop() reads it
         watch_subarray ws = watches[~p];
-        uint32_t currLevel = trail[qhead].lev;
+        uint32_t curr_level = trail[qhead].lev;
 
         Watched* i = ws.begin();
         Watched* j = i;
@@ -751,21 +751,21 @@ PropBy PropEngine::propagate_core()
                 *j++ = *i;
                 if (!red_also && i->red()) continue;
                 if (distill_use && i->bin_cl_marked()) continue;
-                prop_bin_cl<inprocess>(i, p, confl, currLevel);
+                prop_bin_cl<inprocess>(i, p, confl, curr_level);
                 continue;
             }
 
             // propagate BNN constraint
             if (i->is_bnn()) {
                 *j++ = *i;
-                const lbool val = bnn_prop(i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
+                const lbool val = bnn_prop(i->get_bnn(), curr_level, p, i->get_bnn_prop_t());
                 if (val == l_False) confl = PropBy(i->get_bnn(), nullptr);
                 continue;
             }
 
             //propagate normal clause
             assert(i->is_clause());
-            prop_long_cl<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
+            prop_long_cl<inprocess, red_also, distill_use>(i, j, p, confl, curr_level);
         }
         while (i != end) {
             *j++ = *i++;
@@ -779,7 +779,7 @@ PropBy PropEngine::propagate_core()
             && (!gmatrices.empty() || !xorclauses.empty())
             && !gwatches[p.var()].empty()
         ) {
-            confl = gauss_jordan_elim(p, currLevel);
+            confl = gauss_jordan_elim(p, curr_level);
         }
 
         qhead++;
@@ -1179,7 +1179,7 @@ int32_t PropEngine::get_confl_id(const PropBy confl, vector<int32_t>& units)
     switch (confl.get_type()) {
         case binary_t:
             id = confl.get_id();
-            unit_of(failBinLit);
+            unit_of(fail_bin_lit);
             unit_of(confl.lit2());
             break;
         case clause_t: {

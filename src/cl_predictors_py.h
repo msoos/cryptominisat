@@ -92,7 +92,7 @@ private:
     PyObject *pFunc = nullptr;
     PyObject *pRet[3];
     PyObject *pArray = nullptr;
-    PyObject *pArgs = nullptr;
+    PyObject *p_args = nullptr;
     PyArrayObject* ret_data[3];
     PyObject* pModule;
 };

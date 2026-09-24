@@ -64,7 +64,7 @@ class DistillerLongWithImpl {
                 uint64_t totalCls = 0;
                 uint64_t totalLits = 0;
                 uint64_t ranOutOfTime = 0;
-                uint64_t numCalled = 0;
+                uint64_t num_called = 0;
 
                 void clear()
                 {
@@ -85,14 +85,14 @@ class DistillerLongWithImpl {
                     totalCls += other.totalCls;
                     totalLits += other.totalLits;
                     ranOutOfTime += other.ranOutOfTime;
-                    numCalled += other.numCalled;
+                    num_called += other.num_called;
 
                     return  *this;
                 }
             };
 
-            WatchBased irredWatchBased;
-            WatchBased redWatchBased;
+            WatchBased irred_watch_based;
+            WatchBased red_watch_based;
         };
 
         const Stats& get_stats() const;
@@ -139,7 +139,7 @@ class DistillerLongWithImpl {
             , Watched* wit
             , const Clause& cl
         );
-        Stats::WatchBased tmpStats;
+        Stats::WatchBased tmp_stats;
         //bool needToFinish;
         bool sub_str_cl_with_watch(
             ClOffset& offset
@@ -156,7 +156,7 @@ class DistillerLongWithImpl {
             , bool red
             , bool also_strengthen
         );
-        int64_t timeAvailable;
+        int64_t time_available;
 
         //Working set
         Solver* solver;

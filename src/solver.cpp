@@ -235,7 +235,7 @@ bool Solver::add_xor_clause_inter(
 //Deals with INTERNAL variables
 bool Solver::sort_and_clean_clause(
     vector<Lit>& ps
-    , const vector<Lit>& origCl
+    , const vector<Lit>& orig_cl
     , const bool red
     , const bool sorted
 ) {
@@ -261,7 +261,7 @@ bool Solver::sort_and_clean_clause(
             ps[j++] = p = ps[i];
 
             if (var_data[p.var()].removed != Removed::none) {
-                cout << "ERROR: clause " << origCl << " contains literal "
+                cout << "ERROR: clause " << orig_cl << " contains literal "
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(var_data[p.var()].removed)
                 << " var-updated lit: "
@@ -1096,9 +1096,9 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
     const SearchStats& srch_stats = Searcher::get_stats();
     if (status == l_Undef
         && conf.doRecursiveMinim
-        && srch_stats.recMinLitRem + srch_stats.litsRedNonMin > 100000
+        && srch_stats.rec_min_lit_rem + srch_stats.lits_red_non_min > 100000
     ) {
-        double remPercent = float_div(srch_stats.recMinLitRem, srch_stats.litsRedNonMin)*100.0;
+        double remPercent = float_div(srch_stats.rec_min_lit_rem, srch_stats.lits_red_non_min)*100.0;
         double costPerGained = float_div(srch_stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
             conf.doRecursiveMinim = false;
@@ -1245,8 +1245,8 @@ void Solver::check_xor_cut_config_sanity() const
         exit(-1);
     }
 
-    if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
-        std::cerr << "ERROR: maximum XOR size to find (" << conf.maxXorToFind
+    if (conf.max_xor_to_find > MAX_XOR_RECOVER_SIZE) {
+        std::cerr << "ERROR: maximum XOR size to find (" << conf.max_xor_to_find
         << ") cannot be larger than MAX_XOR_RECOVER_SIZE (" << MAX_XOR_RECOVER_SIZE << ")" << endl;
         exit(-1);
     }
@@ -2145,13 +2145,13 @@ void Solver::print_norm_stats(
     );
 
     print_stats_line(conf.prefix + "strength cache-irred time"
-                    , dist_long_with_impl->get_stats().irredWatchBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().irredWatchBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irred_watch_based.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irred_watch_based.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line(conf.prefix + "strength cache-red time"
-                    , dist_long_with_impl->get_stats().redWatchBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().redWatchBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().red_watch_based.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().red_watch_based.cpu_time, cpu_time)
                     , "% time"
     );
 
@@ -2458,8 +2458,8 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
 
 bool Solver::verify_model_implicit_clauses() const
 {
-    for (uint32_t wsLit = 0; wsLit < watches.size(); wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (uint32_t ws_lit = 0; ws_lit < watches.size(); ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         watch_subarray_const ws = watches[lit];
 
         for (Watched w: ws) {
@@ -2735,8 +2735,8 @@ void Solver::check_all_nonxor_clause_propagated() const {
 void Solver::check_implicit_propagated() const
 {
     const double my_time = cpu_time();
-    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (size_t ws_lit = 0; ws_lit < watches.size(); ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         watch_subarray_const ws = watches[lit];
         for(const auto& w : ws) {
             //Satisfied, or not implicit, skip
@@ -2779,8 +2779,8 @@ size_t Solver::get_num_vars_elimed() const {
 
 void Solver::free_unused_watches()
 {
-    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
-        const Lit lit = Lit::toLit(wsLit);
+    for (size_t ws_lit = 0; ws_lit < watches.size(); ws_lit++) {
+        const Lit lit = Lit::toLit(ws_lit);
         if (var_data[lit.var()].removed == Removed::elimed
             || var_data[lit.var()].removed == Removed::replaced
         ) {
@@ -3104,7 +3104,7 @@ SatZillaFeatures Solver::calculate_satzilla_features()
         satzilla_feat.props_per_confl = (double)sum_conflicts / (double)sum_prop_stats.propagations;
         satzilla_feat.confl_per_restart = (double)sum_conflicts / (double)sum_search_stats.num_restarts;
         satzilla_feat.decisions_per_conflict = (double)sum_search_stats.decisions / (double)sum_conflicts;
-        satzilla_feat.learnt_bins_per_confl = (double)sum_search_stats.learntBins / (double)sum_conflicts;
+        satzilla_feat.learnt_bins_per_confl = (double)sum_search_stats.learnt_bins / (double)sum_conflicts;
     }
 
     if (sql_stats) {
@@ -3127,13 +3127,13 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     uint64_t thisNumRedBins = 0;
     uint64_t thisNumIrredBins = 0;
 
-    for (size_t wsLit = 0; wsLit < watches.size(); wsLit++) {
-        watch_subarray_const ws = watches[Lit::toLit(wsLit)];
+    for (size_t ws_lit = 0; ws_lit < watches.size(); ws_lit++) {
+        watch_subarray_const ws = watches[Lit::toLit(ws_lit)];
         for(const auto& w: ws) {
             if (w.is_bin()) {
                 #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
                 Lit lits[2];
-                lits[0] = Lit::toLit(wsLit);
+                lits[0] = Lit::toLit(ws_lit);
                 lits[1] = w.lit2();
                 std::sort(lits, lits + 2);
                 find_watched_of_bin(watches, lits[0], lits[1], w.red(), w.get_id());

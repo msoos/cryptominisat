@@ -57,10 +57,10 @@ public:
     uint64_t  decisionFlippedPolar = 0;
 
     //Clause shrinking
-    uint64_t litsRedNonMin = 0;
+    uint64_t lits_red_non_min = 0;
     uint64_t litsRedFinal = 0;
     uint64_t recMinCl = 0;
-    uint64_t recMinLitRem = 0;
+    uint64_t rec_min_lit_rem = 0;
     uint64_t shrinkCl = 0;
     uint64_t shrinkLitRem = 0;
     uint64_t otfsStr = 0;
@@ -79,7 +79,7 @@ public:
 
     //Learnt clause stats
     uint64_t learntUnits = 0;
-    uint64_t learntBins = 0;
+    uint64_t learnt_bins = 0;
     uint64_t learntLongs = 0;
     uint64_t otfSubsumed = 0;
     uint64_t otfSubsumedImplicit = 0;

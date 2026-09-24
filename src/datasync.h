@@ -79,7 +79,7 @@ class DataSync
 
         //stats
         uint64_t lastSyncConf = 0;
-        vector<uint32_t> syncFinish;
+        vector<uint32_t> sync_finish;
         Stats stats;
 
         //Other systems
@@ -92,16 +92,16 @@ class DataSync
         void mpi_send_to_others();
         bool mpi_get_interrupt();
         bool mpi_get_unit(
-            const lbool otherVal,
+            const lbool other_val,
             const uint32_t var,
             uint32_t& thisGotUnitData
         );
-        vector<uint32_t> syncMPIFinish;
+        vector<uint32_t> sync_mpi_finish;
         MPI_Request   sendReq;
-        uint32_t*     mpiSendData = nullptr;
+        uint32_t*     mpi_send_data = nullptr;
 
-        int           mpiRank = 0;
-        int           mpiSize = 0;
+        int           mpi_rank = 0;
+        int           mpi_size = 0;
         uint32_t      mpiRecvUnitData = 0;
         uint32_t      mpiRecvBinData = 0;
         uint32_t      mpiSentBinData = 0;

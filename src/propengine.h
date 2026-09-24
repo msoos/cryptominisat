@@ -218,7 +218,7 @@ public:
     Lit trail_at(const uint32_t at) const { return trail[at].lit; }
     int32_t last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
     vector<int32_t> last_occ_confl_units;
-    Lit get_fail_bin_lit() const { return failBinLit; }
+    Lit get_fail_bin_lit() const { return fail_bin_lit; }
     int32_t get_confl_id(const PropBy confl, vector<int32_t>& units);
     int32_t get_reason_id(const PropBy r, vector<int32_t>& units);
     //register clause `id` (already in the proof) as THE unit clause of p's
@@ -300,7 +300,7 @@ protected:
     vector<Trail>  trail; ///< Assignment stack; stores all assignments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
-    Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
+    Lit                 fail_bin_lit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
     vector<int32_t>     tmp_unit_hints;   ///< FRAT hints for level-0 units
 
     friend class EGaussian;
@@ -404,7 +404,7 @@ private:
         const Watched* i
         , const Lit p
         , PropBy& confl
-        , uint32_t currLevel
+        , uint32_t curr_level
     );
     template<bool inprocess, bool red_also, bool distill_use>
     bool prop_long_cl(
@@ -412,11 +412,11 @@ private:
         , Watched*& j
         , const Lit p
         , PropBy& confl
-        , uint32_t currLevel
+        , uint32_t curr_level
     );
     void enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat);
 
-    PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
+    PropBy gauss_jordan_elim(const Lit p, const uint32_t curr_level);
 };
 
 inline void PropEngine::new_decision_level()
@@ -543,7 +543,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     SLOW_DEBUG_DO(assert(var_data[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
-    STATS_DO(if (!inprocess) { if (p.sign()) prop_stats.varSetNeg++; else prop_stats.varSetPos++; });
+    STATS_DO(if (!inprocess) { if (p.sign()) prop_stats.var_set_neg++; else prop_stats.var_set_pos++; });
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);

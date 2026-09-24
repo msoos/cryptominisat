@@ -33,17 +33,17 @@ using namespace CMSat;
 DataSyncServer::DataSyncServer()
 {
     int err;
-    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     assert(err == MPI_SUCCESS);
 
-    sendRequests.resize(mpiSize);
-    sendRequestsFinished.resize(mpiSize, true);
-    interruptRequests.resize(mpiSize);
+    sendRequests.resize(mpi_size);
+    sendRequestsFinished.resize(mpi_size, true);
+    interruptRequests.resize(mpi_size);
 
-    int mpiRank;
-    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    int mpi_rank;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     assert(err == MPI_SUCCESS);
-    assert(mpiRank == 0);
+    assert(mpi_rank == 0);
 
     assert(sizeof(unsigned) == sizeof(uint32_t));
 }
@@ -109,8 +109,8 @@ void DataSyncServer::mpi_recv_from_others()
     //for each Lit, there is SIZE of elements that follow, then the elements
     assert(buf[at] == num_vars*2);
     at++;
-    for (uint32_t wsLit = 0; wsLit < num_vars*2; wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
+    for (uint32_t ws_lit = 0; ws_lit < num_vars*2; ws_lit++) {
+        Lit lit = ~Lit::toLit(ws_lit);
         uint32_t num = buf[at];
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
@@ -149,7 +149,7 @@ void DataSyncServer::finish_data_send()
 
     int err;
     int numFinished = 0;
-    for (int i = 1; i < mpiSize; i++) {
+    for (int i = 1; i < mpi_size; i++) {
         if (sendRequestsFinished[i]) {
             numFinished++;
             continue;
@@ -176,7 +176,7 @@ void DataSyncServer::finish_data_send()
             numFinished++;
         }
     }
-    if (numFinished != mpiSize-1) {
+    if (numFinished != mpi_size-1) {
         return;
     }
     send_requests_finished = true;
@@ -204,21 +204,21 @@ void DataSyncServer::sendDataToAll()
     data.push_back((uint32_t)num_vars*2);
     for (uint32_t at = 0; at < bins.size(); at++) {
         const vector<Lit>& binSet = bins[at];
-        assert(binSet.size() >= syncMPIFinish[at]);
-        uint32_t sizeToSend = binSet.size() - syncMPIFinish[at];
+        assert(binSet.size() >= sync_mpi_finish[at]);
+        uint32_t sizeToSend = binSet.size() - sync_mpi_finish[at];
         data.push_back(sizeToSend);
-        for (uint32_t i = syncMPIFinish[at]; i < binSet.size(); i++) {
+        for (uint32_t i = sync_mpi_finish[at]; i < binSet.size(); i++) {
             data.push_back(binSet[i].toInt());
             thisSentBinData++;
         }
-        syncMPIFinish[at] = binSet.size();
+        sync_mpi_finish[at] = binSet.size();
     }
     sentBinData += thisSentBinData;
 
     //Send data as tag 0
     sendData = new uint32_t[data.size()];
     std::copy(data.begin(), data.end(), sendData);
-    for (int i = 1; i < mpiSize; i++) {
+    for (int i = 1; i < mpi_size; i++) {
         err = MPI_Isend(sendData, data.size(), MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &(sendRequests[i]));
         assert(err == MPI_SUCCESS);
         sendRequestsFinished[i] = false;
@@ -276,7 +276,7 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
     << " got solution from " << source << std::endl;
 
     //Send to all except: the one who sent it (source) and ourselves (0)
-    for (int i = 1; i < mpiSize; i++) {
+    for (int i = 1; i < mpi_size; i++) {
         if (i == source) {
             continue;
         }
@@ -318,7 +318,7 @@ void CMSat::DataSyncServer::send_cnf_to_solvers()
 
     value.resize(num_vars, l_Undef);
     bins.resize(num_vars*2);
-    syncMPIFinish.resize(num_vars*2, 0);
+    sync_mpi_finish.resize(num_vars*2, 0);
 
     int err;
     bool finished = false;
@@ -382,7 +382,7 @@ lbool DataSyncServer::actAsServer()
         mpi_recv_from_others();
         finish_data_send();
 
-        if (lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket &&
+        if (lastSendNumGotPacket+(mpi_size/2)+1 < numGotPacket &&
             send_requests_finished &&
             !interrupt_sent)
         {

@@ -92,14 +92,14 @@ class ClauseAllocator {
     private:
         void update_offsets(
             vector<ClOffset>& offsets,
-            ClOffset* newDataStart,
+            ClOffset* new_data_start,
             ClOffset*& new_ptr
         );
         void move_one_watchlist(
-            watch_subarray& ws, ClOffset* newDataStart, ClOffset*& new_ptr);
+            watch_subarray& ws, ClOffset* new_data_start, ClOffset*& new_ptr);
 
         ClOffset move_cl(
-            ClOffset* newDataStart
+            ClOffset* new_data_start
             , ClOffset*& new_ptr
             , Clause* old
         );

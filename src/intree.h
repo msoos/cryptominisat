@@ -99,8 +99,8 @@ private:
     int64_t used_props() const;
 
     size_t hyperbin_added;
-    size_t removedIrredBin;
-    size_t removedRedBin;
+    size_t removed_irred_bin;
+    size_t removed_red_bin;
     size_t num_calls = 0;
 
     Solver* solver;
