@@ -257,7 +257,6 @@ class VarReplacer
         vector<int32_t> tmp_upd_eqbins; ///< eqbins of the lits replaced in the current clause
 
         //Stats
-        void printReplaceStats() const;
         uint64_t replacedVars = 0; ///<Num vars replaced during var-replacement
         uint64_t lastReplacedVars = 0;
         Stats runStats;

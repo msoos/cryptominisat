@@ -104,14 +104,6 @@ void VarReplacer::updateVars(
     //hence, it needs no update
 }
 
-void VarReplacer::printReplaceStats() const
-{
-    for (uint32_t i = 0; i < table.size(); i++) {
-        if (table[i].var() == i) continue;
-        cout << "Replacing var " << i+1 << " with Lit " << table[i] << endl;
-    }
-}
-
 void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
     uint32_t orig_var = orig.var();
     uint32_t replaced_with_var = replaced_with.var();
@@ -222,7 +214,6 @@ bool VarReplacer::perform_replace() {
 
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
-    if (solver->conf.verbosity >= 5) printReplaceStats();
 
     if (solver->frat->enabled()) emit_direct_eqbins();
     update_all_vardata();

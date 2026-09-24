@@ -159,7 +159,6 @@ bool XorFinder::find_xors() {
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpu_time() - my_time;
     runStats.time_outs += time_out;
-    solver->print_xors(solver->xorclauses);
 
     if (solver->conf.verbosity) runStats.print_short(solver, time_remain);
     globalStats += runStats;

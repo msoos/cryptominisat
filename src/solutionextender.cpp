@@ -117,16 +117,6 @@ void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t el
     assert(contains_var(lits, elimed_on));
     #endif
 
-    if (solver->conf.verbosity >= 10) {
-        for(Lit lit: lits) {
-            Lit lit_inter = solver->map_outer_to_inter(lit);
-            cout << lit << ": " << solver->model_value(lit)
-            << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
-            << ", ";
-        }
-        cout << "elimed on: " <<  elimed_on+1 << endl;
-    }
-
     if (solver->model_value(elimed_on) != l_Undef) {
         cout << "ERROR: Model value for var " << elimed_on+1 << " is "
         << solver->model_value(elimed_on)

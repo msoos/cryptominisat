@@ -867,15 +867,6 @@ bool CNF::zero_irred_cls(const CMSat::Lit lit) const
     return true;
 }
 
-void CNF::print_xors(const vector<Xor>& xors)
-{
-    if (conf.verbosity >= 5) {
-        cout << conf.prefix << "Orig XORs: " << endl;
-        for(auto const& x: xors) cout << conf.prefix << x << endl;
-        cout << conf.prefix << "-> Total: " << xors.size() << " xors" << endl;
-    }
-}
-
 void CNF::add_chain() {
     if (frat->enabled() && !chain.empty()) *frat << fratchain << chain;
 }

@@ -153,9 +153,6 @@ void Solver::set_sqlite(
     #ifdef USE_SQLITE3
     sqlStats = new SQLiteStats(filename);
     if (!sqlStats->setup(this)) exit(-1);
-    if (conf.verbosity >= 4) {
-        cout << conf.prefix << "Connected to SQLite server" << endl;
-    }
     if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
     #else
     std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
@@ -382,10 +379,6 @@ Clause* Solver::add_clause_int(
         case 0:
             set_unsat_cl_id(ID);
             ok = false;
-            if (conf.verbosity >= 6) {
-                cout << conf.prefix << "solver received clause through addClause(): " << lits
-                << " that became an empty clause at toplevel --> UNSAT" << endl;
-            }
             return nullptr;
         case 1: {
             assert(decisionLevel() == 0);

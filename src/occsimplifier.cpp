@@ -4635,13 +4635,6 @@ bool OccSimplifier::add_varelim_resolvent(
     bvestats.newClauses++;
     Clause* newCl = nullptr;
 
-    if (solver->conf.verbosity >= 5) {
-        cout
-        << "adding v-elim resolvent: "
-        << finalLits
-        << endl;
-    }
-
     ClauseStats backup_stats(stats);
     newCl = solver->add_clause_int(
         finalLits //Literals in new clause
@@ -4754,21 +4747,8 @@ void OccSimplifier::update_varelim_complexity_heap()
     #endif
 }
 
-void OccSimplifier::print_var_elim_complexity_stats(const uint32_t var) const
-{
-    if (solver->conf.verbosity >= 5) {
-        cout << "var " << var +1 << " trying complexity: " << varElimComplexity[var] << endl;
-    }
-}
-
 void OccSimplifier::set_var_as_eliminated(const uint32_t var)
 {
-    const Lit lit = Lit(var, false);
-    if (solver->conf.verbosity >= 5) {
-        cout << "Elimination of var "
-        <<  solver->map_inter_to_outer(lit)
-        << " finished " << endl;
-    }
     assert(solver->varData[var].removed == Removed::none);
     solver->varData[var].removed = Removed::elimed;
 
@@ -4853,13 +4833,6 @@ bool OccSimplifier::all_occ_based_lit_rem()
         uint32_t removed = 0;
         if (!occ_based_lit_rem(v, removed)) goto end;
         removed_all += removed;
-        if (solver->conf.verbosity >= 5) {
-            cout << "occ-lit-rem finished var " << v
-            << " occ_p: " << n_occurs[Lit(v, false).toInt()]
-            << " occ_n: " << n_occurs[Lit(v, true).toInt()]
-            << " rem: " << removed
-            << endl;
-        }
     }
 
     if (!sub_str_with_added_long_and_bin(false)) goto end;
@@ -4897,7 +4870,6 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     assert(solver->ok);
     assert(solver->prop_at_head());
 
-    print_var_elim_complexity_stats(var);
     bvestats.testedToElimVars++;
     const Lit lit = Lit(var, false);
 

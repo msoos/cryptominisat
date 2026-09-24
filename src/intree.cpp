@@ -245,11 +245,6 @@ void InTree::tree_look()
         const QueueElem elem = queue.front();
         queue.pop_front();
 
-        if (solver->conf.verbosity >= 10) {
-            cout << "Dequeued [[" << elem << "]] dec lev:"
-            << solver->decisionLevel() << endl;
-        }
-
         if (elem.propagated != lit_Undef) {
             timeout = handle_lit_popped_from_queue(
                 elem.propagated, elem.other_lit, elem.red, elem.ID);
@@ -268,9 +263,6 @@ void InTree::tree_look()
                 reset_reason_stack.pop_back();
                 if (tmp.var_reason_changed != var_Undef) {
                     solver->varData[tmp.var_reason_changed].reason = tmp.orig_propby;
-                    if (solver->conf.verbosity >= 10) {
-                        cout << "RESet reason for VAR " << tmp.var_reason_changed+1 << " to:  ????" << /*tmp.orig_propby.lit2() << */ " red: " << (int)tmp.orig_propby.isRedStep() << endl;
-                    }
                 }
             }
         }
@@ -339,9 +331,6 @@ bool InTree::handle_lit_popped_from_queue(
         if (!ok && !timeout) {
             depth_failed.back() = 1;
             failed.push_back(~lit);
-            if (solver->conf.verbosity >= 10) {
-                cout << "(timeout?) Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
-            }
             //FRAT: attach the pending hyper-bins even on failure -- they are
             //what makes the failure visible to plain unit propagation later
             if (solver->frat->enabled())

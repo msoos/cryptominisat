@@ -131,10 +131,6 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         assert(!cl.get_removed());
         assert(!cl.freed());
 
-        if (solver->conf.verbosity >= 6)
-            cout << "backw_sub_str_with_long-ing with clause:" << cl
-                << " offset: " << offset << endl;
-
         find_subsumed_and_strengthened(
             offset
             , cl
@@ -205,8 +201,6 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     ) {
         *simplifier->limit_to_decrease -= 3;
         wenThrough++;
-        if (solver->conf.verbosity >= 5 && wenThrough % 10000 == 0)
-            cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
 
         const size_t at = wenThrough % simplifier->clauses.size();
         const ClOffset offset = simplifier->clauses[at];
@@ -261,11 +255,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
         wenThrough++;
 
         //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
-        }
 
         const size_t at = wenThrough % simplifier->clauses.size();
         ClOffset offset = simplifier->clauses[at];

@@ -603,7 +603,6 @@ private:
     int32_t     watch_cl_id(const Watched& w) const;
     uint32_t    watch_cl_size(const Watched& w) const;
     void        update_varelim_complexity_heap();
-    void        print_var_elim_complexity_stats(const uint32_t var) const;
 
     //OccSimp
     bool        try_remove_lit_via_occurrence_simpl(const OccurClause& occ_cl);

@@ -712,12 +712,6 @@ void Searcher::shrink_learnt_clause()
 
 void Searcher::print_fully_minimized_learnt_clause() const
 {
-    if (conf.verbosity >= 6) {
-        cout << "Final clause: " << learnt_clause << endl;
-        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-            cout << "lev learnt_clause[" << i << "]:" << varData[learnt_clause[i].var()].level << endl;
-        }
-    }
 }
 
 size_t Searcher::find_backtrack_level_of_learnt()
@@ -2070,8 +2064,6 @@ bool Searcher::handle_conflict(PropBy confl)
     }
     solver->datasync->signal_new_long_clause(learnt_clause);
 
-    if (conf.verbosity >= 6) print_clause("learnt", learnt_clause);
-
     update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
 
@@ -2153,7 +2145,6 @@ bool Searcher::handle_conflict(PropBy confl)
         std::swap(decision_clause[0], decision_clause[i]);
 
         learnt_clause = decision_clause;
-        if (conf.verbosity >= 6) print_clause("learnt", learnt_clause);
         cl = handle_last_confl(
             learnt_clause.size(), // glue is the number of decisions, i.e. the size of decision clause
             old_decision_level,
@@ -2467,12 +2458,6 @@ inline void Searcher::dump_search_loop_stats(double my_time)
 
 bool Searcher::must_abort(const lbool status) {
     if (status != l_Undef) {
-        if (conf.verbosity >= 6) {
-            cout
-            << "c Returned status of search() is " << status << " at confl:"
-            << sumConflicts
-            << endl;
-        }
         return true;
     }
 
@@ -3009,17 +2994,6 @@ void Searcher::print_solution_varreplace_status() const
             assert(value(var) == l_Undef || varData[var].level == 0);
         }
 
-        if (conf.verbosity >= 6
-            && varData[var].removed == Removed::replaced
-            && value(var) != l_Undef
-        ) {
-            cout
-            << "var: " << var
-            << " value: " << value(var)
-            << " level:" << varData[var].level
-            << " type: " << removed_type_to_string(varData[var].removed)
-            << endl;
-        }
     }
 }
 

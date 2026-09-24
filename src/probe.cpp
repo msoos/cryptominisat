@@ -41,7 +41,6 @@ bool Solver::full_probe(const bool bin_only)
     int64_t bogoprops_to_use =
         solver->conf.full_probe_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
-    uint64_t probed = 0;
     const auto orig_repl = varReplacer->get_num_replaced_vars();
 
     vector<uint32_t> vars;
@@ -65,19 +64,11 @@ bool Solver::full_probe(const bool bin_only)
         if (value(l) == l_Undef &&
             varData[v].removed == Removed::none)
         {
-            probed++;
             bool ret;
             if (bin_only) ret = probe_inter<true>(l, min_props);
             else ret = probe_inter<false>(l, min_props);
             if (!ret) goto cleanup;
 
-            if (conf.verbosity >= 5) {
-                const double time_remain = 1.0-float_div(
-                (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
-                verb_print(5, "probe time remain: " << time_remain << " probed: " << probed
-                << " set: "  << (orig_num_free_vars - solver->get_num_free_vars())
-                << " T: " << (cpu_time() - my_time));
-            }
         }
     }
 

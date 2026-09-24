@@ -152,7 +152,6 @@ public:
     //
     // NOTE: XORs that are currently in matrixes are not in xorclauses.
     vector<Xor> xorclauses;
-    void print_xors(const vector<Xor>& xors);
 
     // variables that have been removed due to them being ONLY in XORs
     // that have beeen XOR-ed together and hence the variable is no longer
@@ -489,20 +488,8 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
 inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
 {
     for (Lit& lit: ps) {
-        const Lit origLit = lit;
-
-        //Update variable numbering
         assert(lit.var() < nVarsOuter());
         lit = map_outer_to_inter(lit);
-
-        if (conf.verbosity >= 52) {
-            cout
-            << "var-renumber updating lit "
-            << origLit
-            << " to lit "
-            << lit
-            << endl;
-        }
     }
 }
 
