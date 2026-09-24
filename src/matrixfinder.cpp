@@ -128,7 +128,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         solver->gqueuedata.clear();
         return solver->attach_xorclauses();
     }
-    if (!solver->conf.gaussconf.doMatrixFind) {
+    if (!solver->conf.gaussconf.do_matrix_find) {
         verb_print(1,"Matrix finding disabled through switch. Not using matrixes");
         solver->gqueuedata.clear();
         return solver->attach_xorclauses();

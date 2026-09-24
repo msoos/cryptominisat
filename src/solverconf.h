@@ -65,7 +65,7 @@ class GaussConf
     uint32_t max_num_matrices = 1000000; //Maximum number of matrices
 
     //Matrix extraction config
-    bool doMatrixFind = true;
+    bool do_matrix_find = true;
     uint32_t min_gauss_xor_clauses = 2;
     uint32_t max_gauss_xor_clauses = 500000;
 };
@@ -131,16 +131,16 @@ class DLL_PUBLIC SolverConf
         int      lucky;            ///<Search for lucky phases before the CDCL loop
         int      target_phases;    ///<Decide on target phases (1=stable phases only, 2=always)
 
-        unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
-        int doAlwaysFMinim;
+        unsigned  short_term_history_size; ///< Rolling avg. glue window size
+        int do_always_fminim;
 
         //Branch strategy
         string branch_strategy_setup;
 
         //Clause minimisation
-        int doRecursiveMinim;
-        int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        int doMinimRedMoreMore;
+        int do_recursive_minim;
+        int do_minim_red_more;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
+        int do_minim_red_more_more;
         unsigned max_glue_more_minim;
         unsigned max_size_more_minim;
         unsigned more_red_minim_limit_binary;
@@ -149,15 +149,15 @@ class DLL_PUBLIC SolverConf
         //Verbosity
         int  verbosity;  ///<Verbosity level 0-2: normal  3+ extreme
 
-        int  doPrintGateDot; ///< Print DOT file of gates
+        int  do_print_gate_dot; ///< Print DOT file of gates
         int  print_full_restart_stat;
         int  print_all_restarts;
-        int  verbStats;
+        int  verb_stats;
         int do_print_times; ///Print times during verbose output
         int print_restart_line_every_n_confl;
 
         //Limits
-        double   maxTime;
+        double   max_time;
         uint64_t max_confl;
 
         //Glues
@@ -188,7 +188,7 @@ class DLL_PUBLIC SolverConf
         double    lock_for_data_gen_ratio;
 
         //Var-elim
-        int      doVarElim;          ///<Perform variable elimination
+        int      do_var_elim;          ///<Perform variable elimination
         uint32_t varelim_occ_cutoff; ///<CaDiCaL's elimocclim: cap on the *larger* polarity's occurrences, 0 = off
         uint64_t varelim_occ_prod_cutoff; ///<Cap on pos*neg, i.e. on the number of resolutions we would attempt
         uint32_t varelim_max_cls_size; ///<Refuse a var occurring in a clause longer than this, 0 = off (default)
@@ -199,7 +199,7 @@ class DLL_PUBLIC SolverConf
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
         long long varelim_sub_str_limitM;
-        double    varElimRatioPerIter;
+        double    var_elim_ratio_per_iter;
         int velim_resolvent_too_large; //-1 == no limit
         int varelim_score_prod; ///<CaDiCaL's elimprod, weight of pos*neg in the elim score
         int varelim_score_sum;  ///<CaDiCaL's elimsum, weight of pos+neg in the elim score
@@ -229,13 +229,13 @@ class DLL_PUBLIC SolverConf
         uint32_t occ_relocate_lim;
 
         //Ternary resolution
-        bool doTernary;
+        bool do_ternary;
         long long ternary_res_time_limitM;
         double ternary_max_create;
         int    allow_ternary_bin_create;
 
         //BreakID
-        bool doBreakid;
+        bool do_breakid;
         bool breakid_use_assump; ///< If false breaks library use of solver
         uint32_t breakid_every_n;
         uint32_t breakid_vars_limit_K;
@@ -252,8 +252,8 @@ class DLL_PUBLIC SolverConf
 
         //Probing
         int      do_full_probe;
-        int      doIntreeProbe;
-        int      doTransRed;   ///<carry out transitive reduction
+        int      do_intree_probe;
+        int      do_trans_red;   ///<carry out transitive reduction
         unsigned long long   full_probe_time_limitM;
         unsigned long long   intree_time_limitM;
         double intree_effort = 0.8; //fraction of all bogoprops since last call
@@ -262,15 +262,15 @@ class DLL_PUBLIC SolverConf
         double    hyperbin_keep_confl = 15000; ///<Unused hyper-bins are dropped after this many conflicts
 
         //XORs
-        int      doFindXors;
+        int      do_find_xors;
         unsigned max_xor_to_find;
-        unsigned maxXorToFindSlow;
-        uint64_t maxXORMatrix;
+        unsigned max_xor_to_find_slow;
+        uint64_t max_xor_matrix;
         uint64_t xor_finder_time_limitM;
         int      allow_elim_xor_vars;
 
         //Cardinality
-        int      doFindCard;
+        int      do_find_card;
 
         #ifdef FINAL_PREDICTOR
         //Predictor system
@@ -281,7 +281,7 @@ class DLL_PUBLIC SolverConf
         #endif
 
         //Var-replacement
-        int doFindAndReplaceEqLits;
+        int do_find_and_replace_eq_lits;
         int max_scc_depth;
 
         //Iterative Alo Scheduling
@@ -300,14 +300,14 @@ class DLL_PUBLIC SolverConf
         //Simplification
         int      perform_occur_based_simp;
         int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution
-        unsigned maxRedLinkInSize;
-        double maxOccurIrredMB;
-        double maxOccurRedMB;
-        double maxOccurRedLitLinkedM;
+        unsigned max_red_link_in_size;
+        double max_occur_irred_mb;
+        double max_occur_red_mb;
+        double max_occur_red_lit_linked_m;
         double   subsume_gothrough_multip;
 
         //Local search, as in CaDiCaL
-        int      doSLS;            ///<Enable local search ('walk') during rephasing
+        int      do_sls;            ///<Enable local search ('walk') during rephasing
         int      walknonstable;    ///<Also run local search during focused phases
         int      walkseedphase;    ///<Start local search off the CDCL phases, as CaDiCaL does
         uint32_t walkinitially;    ///<Local search rounds to run before simplifying and searching
@@ -335,20 +335,20 @@ class DLL_PUBLIC SolverConf
         double distill_irred_noremove_ratio;
 
         //Memory savings
-        int       doRenumberVars;
+        int       do_renumber_vars;
         int       must_renumber; ///< if set, all "renumber" is treated as a "must-renumber"
-        int       doSaveMem;
+        int       do_save_mem;
         uint64_t  full_watch_consolidate_every_n_confl;
         int must_always_conslidate = 0; // only used for debugging
 
         //Misc Optimisations
-        int      doStrSubImplicit;
+        int      do_str_sub_implicit;
         long long  subsume_implicit_time_limitM;
         long long  distill_implicit_with_implicit_time_limitM;
         int do_subs_with_resolvent_clauses;
 
         //Gates
-        int doGateFind; ///< Find OR gates
+        int do_gate_find; ///< Find OR gates
         long long gatefinder_time_limitM;
 
         //Gauss
@@ -394,7 +394,7 @@ class DLL_PUBLIC SolverConf
         uint32_t sweep_flip_rounds = 1;
 
         //Misc
-        unsigned origSeed;
+        unsigned orig_seed;
         int      conf_needed = true;
         string   prefix;
 };

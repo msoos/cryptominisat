@@ -306,8 +306,8 @@ void Main::add_supported_options() {
         .help("Stop solving after this many conflicts")
         .scan<'d', uint64_t>();
     program.add_argument("-r", "--random")
-        .action([&](const auto& a) {conf.origSeed = fc_int(a);})
-        .default_value(conf.origSeed)
+        .action([&](const auto& a) {conf.orig_seed = fc_int(a);})
+        .default_value(conf.orig_seed)
         .help("[0..] Random seed");
     program.add_argument("-t", "--threads")
         .default_value(1)
@@ -333,8 +333,8 @@ void Main::add_supported_options() {
         .default_value("auto")
         .help("{true,false,rnd,weight,auto} Selects polarity mode. 'true'/'false' -> always branch positive/negative. 'weight' -> random, biased by the per-variable weight. 'auto' -> CaDiCaL's saved/target/best phases with rephasing");
     program.add_argument("--scc")
-        .action([&](const auto& a) {conf.doFindAndReplaceEqLits = fc_int(a);})
-        .default_value(conf.doFindAndReplaceEqLits)
+        .action([&](const auto& a) {conf.do_find_and_replace_eq_lits = fc_int(a);})
+        .default_value(conf.do_find_and_replace_eq_lits)
         .help("Find equivalent literals through SCC and replace them");
 
     #ifdef STATS_NEEDED
@@ -494,8 +494,8 @@ void Main::add_supported_options() {
 
     /* po::options_description breakid_options("Breakid options"); */
     program.add_argument("--breakid")
-        .action([&](const auto& a) {conf.doBreakid = fc_int(a);})
-        .default_value(conf.doBreakid)
+        .action([&](const auto& a) {conf.do_breakid = fc_int(a);})
+        .default_value(conf.do_breakid)
         .help("Run BreakID to break symmetries.");
     program.add_argument("--breakideveryn")
         .action([&](const auto& a) {conf.breakid_every_n = fc_int(a);})
@@ -528,8 +528,8 @@ void Main::add_supported_options() {
 
     /* po::options_description sls_options("Stochastic Local Search options"); */
     program.add_argument("--sls")
-        .action([&](const auto& a) {conf.doSLS = fc_int(a);})
-        .default_value(conf.doSLS)
+        .action([&](const auto& a) {conf.do_sls = fc_int(a);})
+        .default_value(conf.do_sls)
         .help("Run local search ('walk') during rephasing");
     program.add_argument("--walknonstable")
         .action([&](const auto& a) {conf.walknonstable = fc_int(a);})
@@ -596,12 +596,12 @@ void Main::add_supported_options() {
 
     /* po::options_description probeOptions("Probing options"); */
     program.add_argument("--transred")
-        .action([&](const auto& a) {conf.doTransRed = fc_int(a);})
-        .default_value(conf.doTransRed)
+        .action([&](const auto& a) {conf.do_trans_red = fc_int(a);})
+        .default_value(conf.do_trans_red)
         .help("Remove useless binary clauses (transitive reduction)");
     program.add_argument("--intree")
-        .action([&](const auto& a) {conf.doIntreeProbe = fc_int(a);})
-        .default_value(conf.doIntreeProbe)
+        .action([&](const auto& a) {conf.do_intree_probe = fc_int(a);})
+        .default_value(conf.do_intree_probe)
         .help("Carry out intree-based probing");
     program.add_argument("--fullprobe")
         .action([&](const auto& a) {conf.do_full_probe = fc_int(a);})
@@ -673,8 +673,8 @@ void Main::add_supported_options() {
     std::ostringstream tern_max_create;
     tern_max_create << std::setprecision(2) << conf.ternary_max_create;
     program.add_argument("--tern")
-        .action([&](const auto& a) {conf.doTernary = fc_int(a);})
-        .default_value(conf.doTernary)
+        .action([&](const auto& a) {conf.do_ternary = fc_int(a);})
+        .default_value(conf.do_ternary)
         .help("Perform Ternary resolution");
     program.add_argument("--terntimelim")
         .action([&](const auto& a) {conf.ternary_res_time_limitM = fc_ll(a);})
@@ -691,16 +691,16 @@ void Main::add_supported_options() {
 
     /* po::options_description occ_mem_limits("Occ-based simplification memory limits"); */
     program.add_argument("--occredmax")
-        .action([&](const auto& a) {conf.maxRedLinkInSize = fc_int(a);})
-        .default_value(conf.maxRedLinkInSize)
+        .action([&](const auto& a) {conf.max_red_link_in_size = fc_int(a);})
+        .default_value(conf.max_red_link_in_size)
         .help("Don't add to occur list any redundant clause larger than this");
     program.add_argument("--occredmaxmb")
-        .action([&](const auto& a) {conf.maxOccurRedMB = fc_double(a);})
-        .default_value(conf.maxOccurRedMB)
+        .action([&](const auto& a) {conf.max_occur_red_mb = fc_double(a);})
+        .default_value(conf.max_occur_red_mb)
         .help("Don't allow redundant occur size to be beyond this many MB");
     program.add_argument("--occirredmaxmb")
-        .action([&](const auto& a) {conf.maxOccurIrredMB = fc_double(a);})
-        .default_value(conf.maxOccurIrredMB)
+        .action([&](const auto& a) {conf.max_occur_irred_mb = fc_double(a);})
+        .default_value(conf.max_occur_irred_mb)
         .help("Don't allow irredundant occur size to be beyond this many MB");
     ;
 
@@ -742,8 +742,8 @@ void Main::add_supported_options() {
 
     /* po::options_description bve_options("BVE options"); */
     program.add_argument("--varelim")
-        .action([&](const auto& a) {conf.doVarElim = fc_int(a);})
-        .default_value(conf.doVarElim)
+        .action([&](const auto& a) {conf.do_var_elim = fc_int(a);})
+        .default_value(conf.do_var_elim)
         .help("Perform variable elimination as per Een and Biere");
     program.add_argument("--varelimto")
         .action([&](const auto& a) {conf.varelim_time_limitM = fc_ll(a);})
@@ -762,8 +762,8 @@ void Main::add_supported_options() {
         .default_value(conf.var_linkin_limit_MB)
         .help("Maximum extra MB of memory to use for new clauses during varelim");
     program.add_argument("--eratio")
-        .action([&](const auto& a) {conf.varElimRatioPerIter = fc_double(a);})
-        .default_value(conf.varElimRatioPerIter)
+        .action([&](const auto& a) {conf.var_elim_ratio_per_iter = fc_double(a);})
+        .default_value(conf.var_elim_ratio_per_iter)
         //, ssERatio.str()
         .help("Eliminate this ratio of free variables at most per variable elimination iteration");
     program.add_argument("--varelimocclim")
@@ -821,8 +821,8 @@ void Main::add_supported_options() {
 
     /* po::options_description xorOptions("XOR-related options"); */
     program.add_argument("--xor")
-        .action([&](const auto& a) {conf.doFindXors = fc_int(a);})
-        .default_value(conf.doFindXors)
+        .action([&](const auto& a) {conf.do_find_xors = fc_int(a);})
+        .default_value(conf.do_find_xors)
         .help("Discover long XORs");
     program.add_argument("--maxxorsize")
         .action([&](const auto& a) {conf.max_xor_to_find = fc_int(a);})
@@ -833,18 +833,18 @@ void Main::add_supported_options() {
         .default_value(conf.xor_finder_time_limitM)
         .help("Time limit for finding XORs");
     program.add_argument("--maxxormat")
-        .action([&](const auto& a) {conf.maxXORMatrix = fc_ll(a);})
-        .default_value(conf.maxXORMatrix)
+        .action([&](const auto& a) {conf.max_xor_matrix = fc_ll(a);})
+        .default_value(conf.max_xor_matrix)
         .help("Maximum matrix size (=num elements) that we should try to echelonize");
 
     /* po::options_description gateOptions("Gate-related options"); */
     program.add_argument("--gates")
-        .action([&](const auto& a) {conf.doGateFind = fc_int(a);})
-        .default_value(conf.doGateFind)
+        .action([&](const auto& a) {conf.do_gate_find = fc_int(a);})
+        .default_value(conf.do_gate_find)
         .help("Find gates.");
     program.add_argument("--printgatedot")
-        .action([&](const auto& a) {conf.doPrintGateDot = fc_int(a);})
-        .default_value(conf.doPrintGateDot)
+        .action([&](const auto& a) {conf.do_print_gate_dot = fc_int(a);})
+        .default_value(conf.do_print_gate_dot)
         .help("Print gate structure regularly to file 'gatesX.dot'");
     program.add_argument("--gatefindto")
         .action([&](const auto& a) {conf.gatefinder_time_limitM = fc_ll(a);})
@@ -853,20 +853,20 @@ void Main::add_supported_options() {
 
     /* po::options_description conflOptions("Conflict options"); */
     program.add_argument("--recur")
-        .action([&](const auto& a) {conf.doRecursiveMinim = fc_int(a);})
-        .default_value(conf.doRecursiveMinim)
+        .action([&](const auto& a) {conf.do_recursive_minim = fc_int(a);})
+        .default_value(conf.do_recursive_minim)
         .help("Perform recursive minimisation");
     program.add_argument("--moreminim")
-        .action([&](const auto& a) {conf.doMinimRedMore = fc_int(a);})
-        .default_value(conf.doMinimRedMore)
+        .action([&](const auto& a) {conf.do_minim_red_more = fc_int(a);})
+        .default_value(conf.do_minim_red_more)
         .help("Perform strong minimisation at conflict gen.");
     program.add_argument("--moremoreminim")
-        .action([&](const auto& a) {conf.doMinimRedMoreMore = fc_int(a);})
-        .default_value(conf.doMinimRedMoreMore)
+        .action([&](const auto& a) {conf.do_minim_red_more_more = fc_int(a);})
+        .default_value(conf.do_minim_red_more_more)
         .help("Perform even stronger minimisation at conflict gen.");
     program.add_argument("--moremorealways")
-        .action([&](const auto& a) {conf.doAlwaysFMinim = fc_int(a);})
-        .default_value(conf.doAlwaysFMinim)
+        .action([&](const auto& a) {conf.do_always_fminim = fc_int(a);})
+        .default_value(conf.do_always_fminim)
         .help("Always strong-minimise clause");
     program.add_argument("--decbased")
         .action([&](const auto& a) {conf.do_decision_based_cl = fc_int(a);})
@@ -927,8 +927,8 @@ void Main::add_supported_options() {
 
     /* po::options_description printOptions("Printing options"); */
     program.add_argument("--verbstat")
-        .action([&](const auto& a) {conf.verbStats = fc_int(a);})
-        .default_value(conf.verbStats)
+        .action([&](const auto& a) {conf.verb_stats = fc_int(a);})
+        .default_value(conf.verb_stats)
         .help("Change verbosity of statistics at the end of the solving [0..3]");
     program.add_argument("--verbrestart")
         .action([&](const auto& a) {conf.print_full_restart_stat = fc_int(a);})
@@ -1067,16 +1067,16 @@ void Main::add_supported_options() {
 
     /* po::options_description mem_save_opts("Memory saving options"); */
     program.add_argument("--renumber")
-        .action([&](const auto& a) {conf.doRenumberVars = fc_int(a);})
-        .default_value(conf.doRenumberVars)
+        .action([&](const auto& a) {conf.do_renumber_vars = fc_int(a);})
+        .default_value(conf.do_renumber_vars)
         .help("Renumber variables to increase CPU cache efficiency");
     program.add_argument("--mustconsolidate")
         .action([&](const auto& a) {conf.must_always_conslidate = fc_int(a);})
         .default_value(conf.must_always_conslidate)
         .help("Always consolidate, even if not useful. This is used for debugging ONLY");
     program.add_argument("--savemem")
-        .action([&](const auto& a) {conf.doSaveMem = fc_int(a);})
-        .default_value(conf.doSaveMem)
+        .action([&](const auto& a) {conf.do_save_mem = fc_int(a);})
+        .default_value(conf.do_save_mem)
         .help("Save memory by deallocating variable space after renumbering. Only works if renumbering is active.");
     program.add_argument("--mustrenumber")
         .action([&](const auto& a) {conf.must_renumber = fc_int(a);})
@@ -1093,8 +1093,8 @@ void Main::add_supported_options() {
         .default_value(conf.watch_based_str_time_limitM)
         .help("Maximum MBP to spend on distilling long irred cls through watches");
     program.add_argument("--implicitmanip")
-        .action([&](const auto& a) {conf.doStrSubImplicit = fc_int(a);})
-        .default_value(conf.doStrSubImplicit)
+        .action([&](const auto& a) {conf.do_str_sub_implicit = fc_int(a);})
+        .default_value(conf.do_str_sub_implicit)
         .help("Subsume and strengthen implicit clauses with each other");
     program.add_argument("--implsubsto")
         .action([&](const auto& a) {conf.subsume_implicit_time_limitM = fc_ll(a);})
@@ -1105,8 +1105,8 @@ void Main::add_supported_options() {
         .default_value(conf.distill_implicit_with_implicit_time_limitM)
         .help("Timeout (in bogoprop Millions) of implicit strengthening");
     program.add_argument("--cardfind")
-        .action([&](const auto& a) {conf.doFindCard = fc_int(a);})
-        .default_value(conf.doFindCard)
+        .action([&](const auto& a) {conf.do_find_card = fc_int(a);})
+        .default_value(conf.do_find_card)
         .help("Find cardinality constraints");
 
     /* hiddenOptions.add_options() */
@@ -1256,9 +1256,9 @@ void Main::parse_sampling_vars()
 void Main::manually_parse_some_options()
 {
     #ifndef USE_BREAKID
-    if (conf.doBreakid) {
+    if (conf.do_breakid) {
         if (conf.verbosity) cout << "c BreakID not compiled in, disabling" << endl;
-        conf.doBreakid = false;
+        conf.do_breakid = false;
     }
     #endif
 
@@ -1272,7 +1272,7 @@ void Main::manually_parse_some_options()
         exit(-1);
     }
 
-    if (conf.shortTermHistorySize <= 0) {
+    if (conf.short_term_history_size <= 0) {
         cout
         << "You MUST give a short term history size (\"--gluehist\")" << endl
         << "  greater than 0!"

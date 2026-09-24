@@ -58,7 +58,7 @@ void GateFinder::find_all()
 
     assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
-    if (solver->conf.doPrintGateDot) print_graphviz_dot();
+    if (solver->conf.do_print_gate_dot) print_graphviz_dot();
 
     global_stats += run_stats;
 }

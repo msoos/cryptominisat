@@ -199,7 +199,7 @@ bool BreakID::doit()
     assert(!solver->frat->enabled());
     num_lits_in_graph = 0;
 
-    if (!solver->conf.doStrSubImplicit) {
+    if (!solver->conf.do_str_sub_implicit) {
         verb_print(1, "[breakid] cannot run BreakID without implicit submsumption, it would find too many (bad) symmetries");
         return solver->okay();
     }

@@ -42,7 +42,7 @@ InTree::InTree(Solver* _solver) :
 
 bool InTree::replace_until_fixedpoint(bool& aborted)
 {
-    assert(solver->conf.doFindAndReplaceEqLits);
+    assert(solver->conf.do_find_and_replace_eq_lits);
     uint64_t time_limit =
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier
@@ -141,7 +141,7 @@ bool InTree::intree_probe() {
     num_calls++;
     frat_func_start();
 
-    if (!solver->conf.doFindAndReplaceEqLits) {
+    if (!solver->conf.do_find_and_replace_eq_lits) {
       verb_print(1, "[intree] SCC is not allowed, intree cannot work this way, aborting");
       return solver->okay();
     }

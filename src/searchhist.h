@@ -98,24 +98,24 @@ struct SearchHist {
         #endif
     }
 
-    void reset_glueHist_size(size_t shortTermHistorySize)
+    void reset_glueHist_size(size_t short_term_history_size)
     {
-        glue_hist.clearAndResize(shortTermHistorySize);
+        glue_hist.clearAndResize(short_term_history_size);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-        backtrackLevelHist.clearAndResize(shortTermHistorySize);
-        trail_depth_hist.clearAndResize(shortTermHistorySize);
-        branchDepthHistQueue.clearAndResize(shortTermHistorySize);
+        backtrackLevelHist.clearAndResize(short_term_history_size);
+        trail_depth_hist.clearAndResize(short_term_history_size);
+        branchDepthHistQueue.clearAndResize(short_term_history_size);
         #endif
     }
 
-    void setSize(const size_t shortTermHistorySize)
+    void setSize(const size_t short_term_history_size)
     {
-        glue_hist.clearAndResize(shortTermHistorySize);
-        trailDepthHistLonger.clearAndResize(shortTermHistorySize);
+        glue_hist.clearAndResize(short_term_history_size);
+        trailDepthHistLonger.clearAndResize(short_term_history_size);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-        backtrackLevelHist.clearAndResize(shortTermHistorySize);
-        trail_depth_hist.clearAndResize(shortTermHistorySize);
-        branchDepthHistQueue.clearAndResize(shortTermHistorySize);
+        backtrackLevelHist.clearAndResize(short_term_history_size);
+        trail_depth_hist.clearAndResize(short_term_history_size);
+        branchDepthHistQueue.clearAndResize(short_term_history_size);
         #endif
     }
 

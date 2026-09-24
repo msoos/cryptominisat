@@ -49,7 +49,7 @@ vector<lbool> solve(lbool& solution_val)
     conf.do_bva = false;
 
     if (mpi_size > 1 && mpi_rank > 1) {
-        conf.origSeed = mpi_rank*2000; //this will be added T that is the thread number within the MPI
+        conf.orig_seed = mpi_rank*2000; //this will be added T that is the thread number within the MPI
         if (mpi_rank % 6 == 3) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             conf.restartmargin = 25;

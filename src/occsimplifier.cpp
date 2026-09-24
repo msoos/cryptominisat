@@ -1567,8 +1567,8 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     gate_finder = new GateFinder(this, solver);
 
     startup = false;
-    double backup = solver->conf.maxOccurRedMB;
-    solver->conf.maxOccurRedMB = 0;
+    double backup = solver->conf.max_occur_red_mb;
+    solver->conf.max_occur_red_mb = 0;
     if (!setup()) {
         delete gate_finder;
         gate_finder = nullptr;
@@ -1581,7 +1581,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     delete gate_finder;
     gate_finder = nullptr;
 
-    solver->conf.maxOccurRedMB = backup;
+    solver->conf.max_occur_red_mb = backup;
     finish_up(orig_trail_size);
     return or_gates;
 }
@@ -1728,8 +1728,8 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
     auto orig_trail_sz = solver->trail_size();
 
     startup = false;
-    double backup = solver->conf.maxOccurRedMB;
-    solver->conf.maxOccurRedMB = 0;
+    double backup = solver->conf.max_occur_red_mb;
+    solver->conf.max_occur_red_mb = 0;
     if (!setup()) return vars;
 
     DefinableStats st;
@@ -1751,7 +1751,7 @@ vector<uint32_t> OccSimplifier::extend_definable_by_irreg_gate(const vector<uint
                << " kitten ran: " << st.ran << " definable: " << st.definable
                << " too-many-occ: " << st.too_many_occ);
 
-    solver->conf.maxOccurRedMB = backup;
+    solver->conf.max_occur_red_mb = backup;
     finish_up(orig_trail_sz);
     return ret;
 }
@@ -1766,8 +1766,8 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     auto orig_trail_size = solver->trail_size();
 
     startup = false;
-    double backup = solver->conf.maxOccurRedMB;
-    solver->conf.maxOccurRedMB = 0;
+    double backup = solver->conf.max_occur_red_mb;
+    solver->conf.max_occur_red_mb = 0;
     if (!setup()) return vars;
 
     DefinableStats st;
@@ -1798,7 +1798,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
                << " kitten ran: " << st.ran << " definable: " << st.definable
                << " 0-occ: " << st.no_occ << " too-many-occ: " << st.too_many_occ);
 
-    solver->conf.maxOccurRedMB = backup;
+    solver->conf.max_occur_red_mb = backup;
     finish_up(orig_trail_size);
     return ret;
 }
@@ -1810,8 +1810,8 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
 
     auto orig_trail_size = solver->trail_size();
     startup = false;
-    const double backup = solver->conf.maxOccurRedMB;
-    solver->conf.maxOccurRedMB = 0;
+    const double backup = solver->conf.max_occur_red_mb;
+    solver->conf.max_occur_red_mb = 0;
     const double my_time = cpu_time();
 
     // Clean up sampl_vars from replaced and set variables
@@ -1849,7 +1849,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
     double time_used = cpu_time() - my_time;
     verb_print(1, "[empty] empty_occ: " << empty_occ << solver->conf.print_times(time_used));
 
-    solver->conf.maxOccurRedMB = backup;
+    solver->conf.max_occur_red_mb = backup;
     finish_up(orig_trail_size);
 }
 
@@ -1859,8 +1859,8 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
     auto orig_trail_size = solver->trail_size();
 
     startup = false;
-    double backup = solver->conf.maxOccurRedMB;
-    solver->conf.maxOccurRedMB = 0;
+    double backup = solver->conf.max_occur_red_mb;
+    solver->conf.max_occur_red_mb = 0;
     if (!setup()) {
         delete gate_finder;
         gate_finder = nullptr;
@@ -1916,7 +1916,7 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
         }
     }
 
-    solver->conf.maxOccurRedMB = backup;
+    solver->conf.max_occur_red_mb = backup;
     finish_up(orig_trail_size);
     return or_gates;
 }
@@ -2214,7 +2214,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
     SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
     while(std::getline(ss, token, ',')) {
-        if (cpu_time() > solver->conf.maxTime
+        if (cpu_time() > solver->conf.max_time
             || solver->must_interrupt_asap()
             || solver->nVars() == 0
             || !solver->okay()
@@ -2267,13 +2267,13 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             backward_sub();
         } else if (token == "occ-del-elimed") {
         } else if (token == "occ-ternary-res") {
-            if (solver->conf.doTernary) {
+            if (solver->conf.do_ternary) {
                 ternary_res();
             }
         } else if (token == "occ-xor") {
 #ifndef STATS_NEEDED
             CHECK_N_OCCUR_DO(check_n_occur());
-            if (solver->conf.doFindXors) {
+            if (solver->conf.do_find_xors) {
                 XorFinder finder(this, solver);
                 finder.find_xors(); // beware can set UNSAT flag (ok = false)
                 for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;
@@ -2289,7 +2289,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-bve-empty") {
             if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
         } else if (token == "occ-bve") {
-            if (solver->conf.doVarElim) {
+            if (solver->conf.do_var_elim) {
                 if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
                 if (solver->conf.do_full_varelim) if (!eliminate_vars()) continue;
                 if (solver->conf.do_xor_varelim) eliminate_xor_vars();
@@ -2792,7 +2792,7 @@ bool OccSimplifier::fill_occur() {
     //Add irredundant to occur
     uint64_t mem_usage = calc_mem_usage_of_occur(solver->long_irred_cls);
     print_mem_usage_of_occur(mem_usage);
-    if (mem_usage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
+    if (mem_usage > solver->conf.max_occur_irred_mb*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
         verb_print(1, "[occ] Memory usage of occur is too high, unlinking and skipping occur");
         CompleteDetachReatacher detRet(solver);
         detRet.reattachLongs(true);
@@ -2812,7 +2812,7 @@ bool OccSimplifier::fill_occur() {
 
     //Add redundant to occur. Only the likely-kept ones: linking in the
     //whole DB makes every occ-based pass go over it all
-    if (solver->conf.maxRedLinkInSize > 0) {
+    if (solver->conf.max_red_link_in_size > 0) {
         vector<ClOffset> occ_link;
         vector<ClOffset> rest;
         for(const ClOffset offs: solver->long_red_cls[0]) {
@@ -2824,7 +2824,7 @@ bool OccSimplifier::fill_occur() {
         mem_usage = calc_mem_usage_of_occur(occ_link);
         print_mem_usage_of_occur(mem_usage);
         bool linkin = true;
-        if (mem_usage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
+        if (mem_usage > solver->conf.max_occur_red_mb*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
             linkin = false;
         }
         //Sort, so we get the shortest ones in at least
@@ -2833,8 +2833,8 @@ bool OccSimplifier::fill_occur() {
         link_in_data_red = link_in_clauses(
             occ_link
             , linkin
-            , solver->conf.maxRedLinkInSize
-            , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
+            , solver->conf.max_red_link_in_size
+            , solver->conf.max_occur_red_lit_linked_m*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
         );
         solver->long_red_cls[0] = rest;
     }
@@ -3091,7 +3091,7 @@ void OccSimplifier::set_limits()
     strengthening_time_limit *= 2;
     varelim_sub_str_limit *= 10;
 
-    varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
+    varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.var_elim_ratio_per_iter);
     varelim_linkin_limit_bytes = solver->conf.var_linkin_limit_MB *1000LL*1000LL*solver->conf.var_and_mem_out_mult;
 
     if (!solver->conf.do_strengthen_with_occur) {

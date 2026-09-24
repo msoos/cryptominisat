@@ -78,7 +78,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     var_inc_vsids = 1;
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-    hist.setSize(conf.shortTermHistorySize);
+    hist.setSize(conf.short_term_history_size);
 
     tier1_glue = conf.reducetier1glue;
     tier2_glue = conf.reducetier2glue;
@@ -489,7 +489,7 @@ void Searcher::minimize_learnt_clause()
     const size_t orig_size = learnt_clause.size();
 
     to_clear = learnt_clause;
-    if (conf.doRecursiveMinim) {
+    if (conf.do_recursive_minim) {
         recursiveConfClauseMin();
     } else {
         normalClMinim();
@@ -1116,13 +1116,13 @@ void Searcher::analyze_conflict(
 
     if (glue <= conf.max_glue_more_minim) {
         bool doit = false;
-        if (conf.doMinimRedMoreMore == 1 && learnt_clause.size() <= conf.max_size_more_minim) {
+        if (conf.do_minim_red_more_more == 1 && learnt_clause.size() <= conf.max_size_more_minim) {
             doit = true;
         }
-        if (conf.doMinimRedMoreMore == 2 && learnt_clause.size() > conf.max_size_more_minim) {
+        if (conf.do_minim_red_more_more == 2 && learnt_clause.size() > conf.max_size_more_minim) {
             doit = true;
         }
-        if (conf.doMinimRedMoreMore == 3) {
+        if (conf.do_minim_red_more_more == 3) {
             doit = true;
         }
         if (doit) {
@@ -1494,8 +1494,8 @@ bool Searcher::must_do_level0_work() const
         if (conf.do_full_probe && sum_conflicts > next_full_probe) return true;
         if (conf.do_distill_bin_clauses && sum_conflicts > next_bins_distill) return true;
         if (conf.do_distill_clauses && sum_conflicts > next_sub_str_with_bin) return true;
-        if (conf.doStrSubImplicit && sum_conflicts > next_str_impl_with_impl) return true;
-        if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && sum_conflicts > next_intree)
+        if (conf.do_str_sub_implicit && sum_conflicts > next_str_impl_with_impl) return true;
+        if (conf.do_intree_probe && conf.do_find_and_replace_eq_lits && sum_conflicts > next_intree)
             return true;
     }
     if (rephasing()) return true;
@@ -1550,7 +1550,7 @@ lbool Searcher::search()
     stats.num_restarts++;
     restarts_in_mode[rst.stable]++;
     hist.clear();
-    hist.reset_glueHist_size(conf.shortTermHistorySize);
+    hist.reset_glueHist_size(conf.short_term_history_size);
 
     assert(solver->prop_at_head());
 
@@ -2458,7 +2458,7 @@ bool Searcher::must_abort(const lbool status) {
     }
 
     if (stats.conflicts >= max_confl_per_search_solve_call) return true;
-    if (cpu_time() >= conf.maxTime) return true;
+    if (cpu_time() >= conf.max_time) return true;
     if (solver->must_interrupt_asap()) return true;
     return false;
 }
@@ -2503,7 +2503,7 @@ void Searcher::rephase()
 
     // The schedules of CaDiCaL's 'rephase': a one-off prefix, then a cycle.
     const bool single = !conf.do_stabilize;
-    const bool walk = conf.doSLS && (single || rst.stable || conf.walknonstable);
+    const bool walk = conf.do_sls && (single || rst.stable || conf.walknonstable);
     const char* prefix;
     const char* cycle;
     if (single) {
@@ -2548,7 +2548,7 @@ bool Searcher::intree_if_needed()
     //Without hyper-bin, intree falls back to propagate<true>(), which runs GJ
     //at every tree level: too expensive, and clashes with its reason re-parenting
     if (!conf.do_hyperbin_and_transred && !gmatrices.empty()) return ret;
-    if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
+    if (conf.do_intree_probe && conf.do_find_and_replace_eq_lits && !conf.never_stop_search &&
         sum_conflicts > next_intree
     ) {
 
@@ -2751,7 +2751,7 @@ bool Searcher::str_impl_with_impl_if_needed()
     assert(okay());
     bool ret = okay();
 
-    if (conf.doStrSubImplicit && sum_conflicts > next_str_impl_with_impl) {
+    if (conf.do_str_sub_implicit && sum_conflicts > next_str_impl_with_impl) {
         TimeScope ts(solver->time_tally, "str-impl");
         ret &= solver->dist_impl_with_impl->str_impl_w_impl();
         if (ret) solver->subsumeImplicit->subsume_implicit();
@@ -2938,7 +2938,7 @@ bool Searcher::restarting()
 void Searcher::check_need_restart() {
     //It's expensive to check the time all the time
     if ((stats.conflicts & 0xff) == 0xff) {
-        if (cpu_time() > conf.maxTime) params.must_stop = true;
+        if (cpu_time() > conf.max_time) params.must_stop = true;
         if (must_interrupt_asap())  {
             verb_print(3, "must_interrupt_asap() is set, restartig as soon as possible!");
             params.must_stop = true;
@@ -3195,7 +3195,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
     size_t removedIrred = 0;
     size_t removedRed = 0;
 
-    if (conf.doTransRed) {
+    if (conf.do_trans_red) {
         for(auto const& b: uselessBin) {
             prop_stats.otf_hyper_time += 2;
             verb_print(10, "Removing binary clause: " << b

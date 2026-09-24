@@ -165,7 +165,7 @@ DLL_PUBLIC SATSolver::~SATSolver()
 void update_config(SolverConf& conf, unsigned thread_num)
 {
     //Don't accidentally reconfigure everything to a specific value!
-    conf.origSeed += thread_num;
+    conf.orig_seed += thread_num;
     conf.thread_num = thread_num;
 
     switch(thread_num % 23) {
@@ -177,7 +177,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 1: {
             //Minisat-like
             conf.branch_strategy_setup = "vsids";
-            conf.varElimRatioPerIter = 1;
+            conf.var_elim_ratio_per_iter = 1;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
             break;
@@ -196,7 +196,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 4: {
             //Similar to CMS 5.0
             conf.branch_strategy_setup = "vsids";
-            conf.varElimRatioPerIter = 0.4;
+            conf.var_elim_ratio_per_iter = 0.4;
             conf.do_bva = false;
 
             break;
@@ -215,7 +215,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 7: {
             conf.branch_strategy_setup = "vsids";
             conf.do_bva = false;
-            conf.varElimRatioPerIter = 1;
+            conf.var_elim_ratio_per_iter = 1;
             break;
         }
         case 8: {
@@ -236,7 +236,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 11: {
             conf.branch_strategy_setup = "vsids";
-            conf.varElimRatioPerIter = 1;
+            conf.var_elim_ratio_per_iter = 1;
 
             break;
         }
@@ -249,7 +249,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 13: {
             //Minisat-like
-            conf.varElimRatioPerIter = 1;
+            conf.var_elim_ratio_per_iter = 1;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
             break;
@@ -258,7 +258,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             //Different glue limit
             conf.branch_strategy_setup = "vsids";
             conf.do_bva = false;
-            conf.doMinimRedMoreMore = 1;
+            conf.do_minim_red_more_more = 1;
             conf.max_num_lits_more_more_red_min = 3;
             conf.max_glue_more_minim = 4;
             break;
@@ -271,7 +271,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 16: {
             //Similar to CMS 5.0
-            conf.varElimRatioPerIter = 0.4;
+            conf.var_elim_ratio_per_iter = 0.4;
 
             break;
         }
@@ -287,7 +287,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 19: {
             conf.do_bva = false;
-            conf.doMinimRedMoreMore = 0;
+            conf.do_minim_red_more_more = 0;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_binary = 600;
@@ -313,7 +313,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 22: {
             conf.branch_strategy_setup = "vmtf";
-            conf.doMinimRedMoreMore = 0;
+            conf.do_minim_red_more_more = 0;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_binary = 600;
@@ -323,7 +323,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         default: {
-            conf.varElimRatioPerIter = 0.1*(thread_num % 9);
+            conf.var_elim_ratio_per_iter = 0.1*(thread_num % 9);
             if (thread_num % 4 == 0) {
                 conf.restartmargin = 5 + 5*(thread_num % 5);
             }
@@ -331,7 +331,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
                 conf.do_stabilize = 0;
             }
             conf.restartint = 2 + (thread_num % 5);
-            conf.doMinimRedMoreMore = ((thread_num % 5) == 1);
+            conf.do_minim_red_more_more = ((thread_num % 5) == 1);
             break;
         }
     }
@@ -387,7 +387,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         if (i >= 1) {
             conf.verbosity = 0;
             conf.print_all_restarts = 0;
-            conf.doFindXors = 0;
+            conf.do_find_xors = 0;
         }
         data->solvers[i]->setConf(conf);
         data->solvers[i]->set_shared_data((SharedData*)data->shared_data);
@@ -480,7 +480,7 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 
   const auto target_time = cpu_time() + max_time;
   for (Solver* s : data->solvers) {
-    s->conf.maxTime = target_time;
+    s->conf.max_time = target_time;
   }
 }
 
@@ -509,7 +509,7 @@ DLL_PUBLIC void SATSolver::set_no_simplify()
 {
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        s.conf.doRenumberVars = false;
+        s.conf.do_renumber_vars = false;
         s.conf.simplify_at_startup = false;
         s.conf.simplify_at_every_startup = false;
         s.conf.full_simplify_at_startup = false;
@@ -524,7 +524,7 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
         Solver& s = *solver;
         //s.conf.reconfigure_at = 0;
         //s.conf.reconfigure_val = 15;
-        s.conf.doFindXors = true;
+        s.conf.do_find_xors = true;
         s.conf.gaussconf.max_num_matrices = 10;
         s.conf.gaussconf.max_matrix_columns = 10000000;
         s.conf.gaussconf.max_matrix_rows = 10000;
@@ -586,7 +586,7 @@ DLL_PUBLIC void SATSolver::set_gates(const bool gates)
 {
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        s.conf.doGateFind = gates;
+        s.conf.do_gate_find = gates;
     }
 }
 
@@ -640,7 +640,7 @@ DLL_PUBLIC void SATSolver::set_no_bve()
 {
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        s.conf.doVarElim = false;
+        s.conf.do_var_elim = false;
     }
 }
 
@@ -648,7 +648,7 @@ DLL_PUBLIC void SATSolver::set_bve(int bve)
 {
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        s.conf.doVarElim = bve;
+        s.conf.do_var_elim = bve;
     }
 }
 
@@ -903,7 +903,7 @@ lbool calc(
     if (data->timeout != numeric_limits<double>::max()) {
         for (size_t i = 0; i < data->solvers.size(); ++i) {
             Solver& s = *data->solvers[i];
-            s.conf.maxTime = cpu_time() + data->timeout;
+            s.conf.max_time = cpu_time() + data->timeout;
         }
     }
 
@@ -1123,7 +1123,7 @@ DLL_PUBLIC void SATSolver::set_find_xors(bool do_find_xors)
 {
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        s.conf.doFindXors = do_find_xors;
+        s.conf.do_find_xors = do_find_xors;
     }
 }
 
@@ -1138,7 +1138,7 @@ DLL_PUBLIC void SATSolver::set_frat(FILE* os)
         exit(-1);
     }
 
-    data->solvers[0]->conf.doBreakid = false;
+    data->solvers[0]->conf.do_breakid = false;
     data->solvers[0]->add_frat(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
@@ -1154,7 +1154,7 @@ DLL_PUBLIC void SATSolver::set_xlrup(FILE* os)
         exit(-1);
     }
 
-    data->solvers[0]->conf.doBreakid = false;
+    data->solvers[0]->conf.do_breakid = false;
     data->solvers[0]->add_xlrup(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
@@ -1400,8 +1400,8 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
 {
     for (auto & solver : data->solvers) {
         SolverConf conf = solver->get_conf();
-        conf.doSLS = false;
-        conf.doBreakid = false;
+        conf.do_sls = false;
+        conf.do_breakid = false;
         //restart every fixed_restart conflicts: negative margin always fires
         conf.do_stabilize = 0;
         conf.restartint = fixed_restart;
@@ -1409,9 +1409,9 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
         conf.never_stop_search = true;
         conf.branch_strategy_setup = "rand";
         conf.simplify_at_startup = false;
-        conf.doFindAndReplaceEqLits = false;
+        conf.do_find_and_replace_eq_lits = false;
         conf.do_distill_clauses = false;
-        conf.doFindXors = false;
+        conf.do_find_xors = false;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_weighted;
 
         solver->setConf(conf);
@@ -1422,7 +1422,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
     for (auto & solver : data->solvers) {
         SolverConf conf = solver->get_conf();
-        conf.doBreakid = false;
+        conf.do_breakid = false;
         conf.gaussconf.max_matrix_columns = 10000000;
         conf.gaussconf.max_matrix_rows = 10000;
         conf.gaussconf.max_num_matrices = 2;
@@ -1438,7 +1438,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.distill_long_cls_time_limitM = 10ULL;
 
         conf.simplify_at_startup = 1;
-        conf.varElimRatioPerIter = 1;
+        conf.var_elim_ratio_per_iter = 1;
         conf.do_simplify_problem = true;
         conf.diff_declev_for_chrono = -1;
         solver->setConf(conf);
@@ -1449,7 +1449,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->get_conf();
-        conf.doBreakid = false;
+        conf.do_breakid = false;
         //conf.gaussconf.max_num_matrices = 0;
         //conf.xor_finder_time_limitM = 0;
         //conf.xor_detach_reattach = true;
@@ -1458,10 +1458,10 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.do_bva = false;
 //         conf.polar_stable_every_n = 100000; //i.e. never use stable polarities
         conf.do_hyperbin_and_transred = false;
-        conf.doTransRed = false;
+        conf.do_trans_red = false;
 
         //conf.do_simplify_problem = false; //no simplification without explicity calling it
-//         conf.varElimRatioPerIter = 1;
+//         conf.var_elim_ratio_per_iter = 1;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
 
@@ -1519,7 +1519,7 @@ DLL_PUBLIC vector<ITEGate> SATSolver::get_recovered_ite_gates()
 DLL_PUBLIC void SATSolver::set_renumber(const bool renumber)
 {
     for(auto& s: data->solvers) {
-        s->conf.doRenumberVars = renumber;
+        s->conf.do_renumber_vars = renumber;
     }
 }
 
@@ -1543,11 +1543,11 @@ DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);
     data->solvers[0]->fast_backw = fast_backw;
-    bool backup_doVarElim = data->solvers[0]->conf.doVarElim;
-    data->solvers[0]->conf.doVarElim = true;
+    bool backup_doVarElim = data->solvers[0]->conf.do_var_elim;
+    data->solvers[0]->conf.do_var_elim = true;
     const auto ret = solve(nullptr, true);
     data->solvers[0]->fast_backw = FastBackwData();
-    data->solvers[0]->conf.doVarElim = backup_doVarElim;
+    data->solvers[0]->conf.do_var_elim = backup_doVarElim;
 
     return ret;
 }
@@ -1569,7 +1569,7 @@ DLL_PUBLIC void SATSolver::set_intree_probe(int val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.doIntreeProbe = val;
+        s.conf.do_intree_probe = val;
     }
 }
 
@@ -1602,7 +1602,7 @@ DLL_PUBLIC void SATSolver::set_sls(int val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.doSLS = val;
+        s.conf.do_sls = val;
     }
 }
 
@@ -1618,7 +1618,7 @@ DLL_PUBLIC void SATSolver::set_scc(int val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.doFindAndReplaceEqLits = val;
+        s.conf.do_find_and_replace_eq_lits = val;
     }
 }
 
@@ -1716,7 +1716,7 @@ DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.varElimRatioPerIter = val;
+        s.conf.var_elim_ratio_per_iter = val;
     }
 }
 
@@ -1732,7 +1732,7 @@ DLL_PUBLIC void SATSolver::set_max_red_linkin_size(uint32_t sz)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.maxRedLinkInSize = sz;
+        s.conf.max_red_link_in_size = sz;
     }
 }
 

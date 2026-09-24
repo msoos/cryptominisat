@@ -96,13 +96,13 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     intree = new InTree(this);
 
 #ifdef USE_BREAKID
-    if (conf.doBreakid) breakid = new BreakID(this);
+    if (conf.do_breakid) breakid = new BreakID(this);
 #endif
 
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
     }
-    if (conf.doFindCard) {
+    if (conf.do_find_card) {
         card_finder = new CardFinder(this);
     }
     distill_long_cls = new DistillerLong(this);
@@ -112,7 +112,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     dist_impl_with_impl = new StrImplWImpl(this);
     clause_cleaner = new ClauseCleaner(this);
     var_replacer = new VarReplacer(this);
-    if (conf.doStrSubImplicit) {
+    if (conf.do_str_sub_implicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
     datasync = new DataSync(this, nullptr);
@@ -972,7 +972,7 @@ bool Solver::renumber_variables(bool must_renumber)
             , time_used
         );
     }
-    if (conf.doSaveMem) save_on_var_memory(numEffectiveVars);
+    if (conf.do_save_mem) save_on_var_memory(numEffectiveVars);
 
     SLOW_DEBUG_DO(for(const auto& x: xorclauses) for(const auto& v: x.vars) assert(v < nVars()));
 
@@ -1095,13 +1095,13 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
 {
     const SearchStats& srch_stats = Searcher::get_stats();
     if (status == l_Undef
-        && conf.doRecursiveMinim
+        && conf.do_recursive_minim
         && srch_stats.rec_min_lit_rem + srch_stats.lits_red_non_min > 100000
     ) {
         double remPercent = float_div(srch_stats.rec_min_lit_rem, srch_stats.lits_red_non_min)*100.0;
         double costPerGained = float_div(srch_stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
-            conf.doRecursiveMinim = false;
+            conf.do_recursive_minim = false;
             verb_print(1,
                 "recursive minimization too costly: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
@@ -1121,7 +1121,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
 {
     const SearchStats& search_stats = Searcher::get_stats();
     if (status == l_Undef
-        && conf.doMinimRedMore
+        && conf.do_minim_red_more
         && search_stats.moreMinimLitsStart > 100000
     ) {
         double remPercent = float_div(
@@ -1130,7 +1130,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
 
         //TODO take into account the limit on the number of first literals, too
         if (remPercent < 1.0) {
-            conf.doMinimRedMore = false;
+            conf.do_minim_red_more = false;
             if (conf.verbosity) {
                 cout
                 << "c more minimization effectiveness low: "
@@ -1254,7 +1254,7 @@ void Solver::check_xor_cut_config_sanity() const
 
 void Solver::check_and_upd_config_parameters()
 {
-    if (conf.shortTermHistorySize <= 0) {
+    if (conf.short_term_history_size <= 0) {
         std::cerr << "ERROR: You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
         exit(-1);
     }
@@ -1270,13 +1270,13 @@ void Solver::check_and_upd_config_parameters()
         }
 
         #ifdef USE_BREAKID
-        if (conf.doBreakid) {
+        if (conf.do_breakid) {
             if (conf.verbosity) {
                 cout
                 << "c BreakID is not supported with FRAT, turning it off"
                 << endl;
             }
-            conf.doBreakid = false;
+            conf.do_breakid = false;
         }
         #endif
     }
@@ -1317,13 +1317,13 @@ lbool Solver::simplify_problem_outside(const string* strategy)
 
     //ignore "no simplify" if explicitly called
     if (nVars() > 0 /*&& conf.do_simplify_problem*/) {
-        bool backup_sls = conf.doSLS;
-        bool backup_breakid = conf.doBreakid;
-        conf.doSLS = false;
-        conf.doBreakid = false;
+        bool backup_sls = conf.do_sls;
+        bool backup_breakid = conf.do_breakid;
+        conf.do_sls = false;
+        conf.do_breakid = false;
         status = simplify_problem(false, strategy ? *strategy : conf.simplify_schedule_nonstartup);
-        conf.doSLS = backup_sls;
-        conf.doBreakid = backup_breakid;
+        conf.do_sls = backup_sls;
+        conf.do_breakid = backup_breakid;
     }
 
     end:
@@ -1389,7 +1389,7 @@ lbool Solver::solve_with_assumptions(
     //CaDiCaL runs its initial local search after preprocessing; we run it before,
     //as variable elimination and XOR recovery wreck the local search landscape.
     //Only on the first solve call: later ones get the walks that rephasing does.
-    if (status == l_Undef && conf.doSLS && conf.walkinitially && num_sls_called == 0) {
+    if (status == l_Undef && conf.do_sls && conf.walkinitially && num_sls_called == 0) {
         SLS sls(this);
         sls.run_initially();
     }
@@ -1437,7 +1437,7 @@ lbool Solver::solve_with_assumptions(
     unfill_assumptions_set();
     assumptions.clear();
     conf.max_confl = numeric_limits<uint64_t>::max();
-    conf.maxTime = numeric_limits<double>::max();
+    conf.max_time = numeric_limits<double>::max();
     datasync->finish_up_mpi();
     conf.conf_needed = true;
     set_must_interrupt_asap();
@@ -1630,7 +1630,7 @@ lbool Solver::iterate_until_solved() {
 
     while (status == l_Undef
         && !must_interrupt_asap()
-        && cpu_time() < conf.maxTime
+        && cpu_time() < conf.max_time
         && sum_conflicts < conf.max_confl
     ) {
         iteration_num++;
@@ -1662,7 +1662,7 @@ lbool Solver::iterate_until_solved() {
 
         //If we are over the limit, exit
         if (sum_conflicts >= conf.max_confl
-            || cpu_time() > conf.maxTime
+            || cpu_time() > conf.max_time
             || must_interrupt_asap()
         ) break;
 
@@ -1719,7 +1719,7 @@ lbool Solver::execute_inprocess_strategy(
 
     while(std::getline(ss, token, ',')) {
         if (sum_conflicts >= conf.max_confl
-            || cpu_time() > conf.maxTime
+            || cpu_time() > conf.max_time
             || must_interrupt_asap()
             || nVars() == 0
             || !okay()
@@ -1750,7 +1750,7 @@ lbool Solver::execute_inprocess_strategy(
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
-            if (sum_conflicts >= conf.max_confl || cpu_time() > conf.maxTime
+            if (sum_conflicts >= conf.max_confl || cpu_time() > conf.max_time
                 || must_interrupt_asap() || nVars() == 0 || !ok) {
                 break;
             }
@@ -1769,7 +1769,7 @@ lbool Solver::execute_inprocess_strategy(
         }
 
         if (token == "scc-vrepl") {
-            if (conf.doFindAndReplaceEqLits) {
+            if (conf.do_find_and_replace_eq_lits) {
                 var_replacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
             }
@@ -1805,29 +1805,29 @@ lbool Solver::execute_inprocess_strategy(
                 backbone_simpl(30LL*1000LL, true, backbone_found);
             }
         } else if (token == "must-scc-vrepl") {
-            if (conf.doFindAndReplaceEqLits) {
+            if (conf.do_find_and_replace_eq_lits) {
                 var_replacer->replace_if_enough_is_found();
             }
         } else if (token == "full-probe") {
             if (!full_probe(false)) return l_False;
         } else if (token == "card-find") {
-            if (conf.doFindCard) {
+            if (conf.do_find_card) {
                 card_finder->find_cards();
             }
         } else if (token == "sub-impl") {
             //subsume BIN with BIN
-            if (conf.doStrSubImplicit) {
+            if (conf.do_str_sub_implicit) {
                 subsumeImplicit->subsume_implicit();
             }
         } else if (token == "sls") {
             assert(false && "unsupported");
-            /* if (conf.doSLS) { */
+            /* if (conf.do_sls) { */
             /*     SLS sls(this); */
             /*     sls.run(0); */
             /* } */
         } else if (token == "intree-probe") {
             if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
-            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) intree->intree_probe();
+            if (conf.do_intree_probe && conf.do_find_and_replace_eq_lits) intree->intree_probe();
         } else if (token == "sub-str-cls-with-bin") {
             //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
@@ -1883,19 +1883,19 @@ lbool Solver::execute_inprocess_strategy(
                 distill_long_cls->distill(false, true);
             }
         } else if (token == "str-impl") {
-            if (conf.doStrSubImplicit) {
+            if (conf.do_str_sub_implicit) {
                 dist_impl_with_impl->str_impl_w_impl();
             }
         } else if (token == "cl-consolidate") {
             cl_alloc.consolidate(this, conf.must_always_conslidate, true);
         } else if (token == "renumber" || token == "must-renumber") {
-            if (conf.doRenumberVars && !frat->enabled()) {
+            if (conf.do_renumber_vars && !frat->enabled()) {
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
             }
         } else if (token == "breakid") {
-            if (conf.doBreakid
+            if (conf.do_breakid
                 && !frat->enabled()
                 && (solve_stats.num_simplify == 0 ||
                    (solve_stats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
@@ -2002,7 +2002,7 @@ void CMSat::Solver::print_stats(
         );
     }
 
-    if (conf.verbStats > 1) {
+    if (conf.verb_stats > 1) {
         print_full_stats(cpu_time, cpu_time_total, wallclock_time_started);
     }
     print_norm_stats(cpu_time, cpu_time_total, wallclock_time_started);
@@ -2219,7 +2219,7 @@ void Solver::print_full_stats(
     }
 
     //TODO after TRI to LONG conversion
-    /*if (occsimplifier && conf.doGateFind) {
+    /*if (occsimplifier && conf.do_gate_find) {
         occsimplifier->print_gatefinder_stats();
     }*/
 
@@ -2229,7 +2229,7 @@ void Solver::print_full_stats(
     distill_bin_cls->get_stats().print(nVarsOuter(), conf.prefix);
     dist_long_with_impl->get_stats().print(conf.prefix);
 
-    if (conf.doStrSubImplicit) {
+    if (conf.do_str_sub_implicit) {
         subsumeImplicit->get_stats().print("", conf.prefix);
     }
     print_mem_stats();

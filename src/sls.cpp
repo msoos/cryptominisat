@@ -77,7 +77,7 @@ void SLS::run(const int64_t mems)
         for(uint32_t v = 0; v < solver->nVars(); v++)
             if (sls.has_value(v)) sls.set_phase(v, solver->decide_phase(v, true));
 
-    const int64_t minimum = sls.run(mems, solver->conf.origSeed + solver->num_sls_called);
+    const int64_t minimum = sls.run(mems, solver->conf.orig_seed + solver->num_sls_called);
     solver->num_sls_called++;
 
     const bool improved = minimum >= 0 && minimum < solver->sls_minimum;
@@ -107,7 +107,7 @@ vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num)
     for(uint32_t i = 0; i < num; i++) {
         CMS_yalsat sls(solver);
         if (!sls.init_problem() || sls.get_num_cls() == 0) break;
-        if (sls.run(mems, solver->conf.origSeed + i) != 0) continue;
+        if (sls.run(mems, solver->conf.orig_seed + i) != 0) continue;
 
         vector<uint8_t> sol(solver->nVars(), 0);
         for(uint32_t v = 0; v < solver->nVars(); v++) {

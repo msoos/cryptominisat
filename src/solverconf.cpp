@@ -119,16 +119,16 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , phase(1) //positive, as in CaDiCaL
         , lucky(1)
         , target_phases(1)
-        , shortTermHistorySize (50)
-        , doAlwaysFMinim(false)
+        , short_term_history_size (50)
+        , do_always_fminim(false)
 
         //branch strategy
         , branch_strategy_setup("vmtf+vsids")
 
         //Clause minimisation
-        , doRecursiveMinim (true)
-        , doMinimRedMore(true)
-        , doMinimRedMoreMore(2)
+        , do_recursive_minim (true)
+        , do_minim_red_more(true)
+        , do_minim_red_more_more(2)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_binary(200)
@@ -136,15 +136,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Verbosity
         , verbosity        (0)
-        , doPrintGateDot   (false)
+        , do_print_gate_dot   (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)
-        , verbStats        (1)
+        , verb_stats        (1)
         , do_print_times(1)
         , print_restart_line_every_n_confl(8192)
 
         //Limits
-        , maxTime          (numeric_limits<double>::max())
+        , max_time          (numeric_limits<double>::max())
         , max_confl         (numeric_limits<uint64_t>::max())
 
         //Glues
@@ -170,7 +170,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , lock_for_data_gen_ratio(0.1)
 
         //Var-elim
-        , doVarElim        (true)
+        , do_var_elim        (true)
         , varelim_occ_cutoff(0)
         , varelim_occ_prod_cutoff(10000)
         , varelim_max_cls_size(0)
@@ -181,7 +181,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(750)
         , varelim_sub_str_limitM(600)
-        , varElimRatioPerIter(1.60)
+        , var_elim_ratio_per_iter(1.60)
         , velim_resolvent_too_large(100)
         , varelim_score_prod(1)
         , varelim_score_sum(1)
@@ -212,13 +212,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(true)
+        , do_ternary(true)
         , ternary_res_time_limitM(100)
         , ternary_max_create(0.3)
         , allow_ternary_bin_create(false)
 
         //BreakID
-        , doBreakid(false)
+        , do_breakid(false)
         , breakid_use_assump(true)
         , breakid_every_n(5)
         , breakid_vars_limit_K(300)
@@ -235,26 +235,26 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Probing
         , do_full_probe    (false)
-        , doIntreeProbe    (true)
-        , doTransRed       (true)
+        , do_intree_probe    (true)
+        , do_trans_red       (true)
         , full_probe_time_limitM(20ULL)
         , intree_time_limitM(400ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , do_hyperbin_and_transred(true)
 
         //XOR
-        , doFindXors       (true)
+        , do_find_xors       (true)
         , max_xor_to_find     (MAX_XOR_RECOVER_SIZE)
-        , maxXorToFindSlow (5)
-        , maxXORMatrix     (400ULL)
+        , max_xor_to_find_slow (5)
+        , max_xor_matrix     (400ULL)
         , xor_finder_time_limitM(400)
         , allow_elim_xor_vars(1)
 
         //Cardinality
-        , doFindCard(0)
+        , do_find_card(0)
 
         //Var-replacer
-        , doFindAndReplaceEqLits(true)
+        , do_find_and_replace_eq_lits(true)
         , max_scc_depth (30000)
 
         //Iterative Alo Scheduling
@@ -296,14 +296,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Occur based simplification
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
-        , maxRedLinkInSize (50)
-        , maxOccurIrredMB  (2500)
-        , maxOccurRedMB    (600)
-        , maxOccurRedLitLinkedM(50)
+        , max_red_link_in_size (50)
+        , max_occur_irred_mb  (2500)
+        , max_occur_red_mb    (600)
+        , max_occur_red_lit_linked_m(50)
         , subsume_gothrough_multip(1.0)
 
         //Local search, as in CaDiCaL
-        , doSLS(true)
+        , do_sls(true)
         , walknonstable(1)
         , walkseedphase(0)
         , walkinitially(2)
@@ -330,19 +330,19 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_irred_noremove_ratio(1.0) //from out-3946531.wlm01-15-drat0
 
         //Memory savings
-        , doRenumberVars   (true)
+        , do_renumber_vars   (true)
         , must_renumber    (false)
-        , doSaveMem        (true)
+        , do_save_mem        (true)
         , full_watch_consolidate_every_n_confl (4ULL*1000ULL*1000ULL) //validated in run 8113323.wlm01
 
         //Misc optimisations
-        , doStrSubImplicit (true)
+        , do_str_sub_implicit (true)
         , subsume_implicit_time_limitM(100LL)
         , distill_implicit_with_implicit_time_limitM(200LL)
         , do_subs_with_resolvent_clauses(true)
 
         //Gates
-        , doGateFind       (false)
+        , do_gate_find       (false)
         , gatefinder_time_limitM(200)
 
         //Timeouts
@@ -366,7 +366,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , oracle_find_bins(0)
 
         //misc
-        , origSeed(0)
+        , orig_seed(0)
         , prefix("c ")
 {
 }
