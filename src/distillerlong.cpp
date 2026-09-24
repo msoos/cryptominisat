@@ -271,7 +271,7 @@ bool DistillerLong::distill_long_cls_all(
     frat_func_start();
 
     double my_time = cpu_time();
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
 
     max_num_props = (int64_t)budget;
     orig_maxNumProps = max_num_props;
@@ -447,7 +447,7 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     const uint32_t orig_todo_size = todo.size();
-    run_stats.potentialClauses += orig_todo_size;
+    run_stats.potential_clauses += orig_todo_size;
 
     assert(run_stats.checked_clauses == 0);
     bool time_out = go_through_clauses(todo, also_remove, only_remove);
@@ -464,9 +464,9 @@ bool DistillerLong::distill_long_cls_all(
         cout << solver->conf.prefix << tag
         << " cls tried: " << run_stats.checked_clauses << "/" << orig_todo_size
         << " cl-rem: " << run_stats.clRemoved
-        << " cl-sh: " << run_stats.numClShorten
-        << " lit-rem: " << run_stats.numLitsRem
-        << " 0-depth-ass: " << (solver->trail_size() - origTrailSize)
+        << " cl-sh: " << run_stats.num_cl_shorten
+        << " lit-rem: " << run_stats.num_lits_rem
+        << " 0-depth-ass: " << (solver->trail_size() - orig_trail_size)
         << endl;
         cout << solver->conf.prefix << tag
         << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
@@ -486,7 +486,7 @@ bool DistillerLong::distill_long_cls_all(
 
     //Update stats
     run_stats.time_used += time_used;
-    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - orig_trail_size;
 
     frat_func_end();
     return solver->okay();
@@ -511,7 +511,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
             || solver->must_interrupt_asap()
         ) {
-            run_stats.timeOut++;
+            run_stats.time_out++;
             time_out = true;
         }
 
@@ -796,8 +796,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     solver->cancel_until<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-    run_stats.numLitsRem += orig_size - kept_lits.size();
-    run_stats.numClShorten++;
+    run_stats.num_lits_rem += orig_size - kept_lits.size();
+    run_stats.num_cl_shorten++;
 
     //Make new clause
     lits.resize(kept_lits.size());
@@ -837,12 +837,12 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
-    timeOut += other.timeOut;
+    time_out += other.time_out;
     zero_depth_assigns += other.zero_depth_assigns;
-    numClShorten += other.numClShorten;
-    numLitsRem += other.numLitsRem;
+    num_cl_shorten += other.num_cl_shorten;
+    num_lits_rem += other.num_lits_rem;
     checked_clauses += other.checked_clauses;
-    potentialClauses += other.potentialClauses;
+    potential_clauses += other.potential_clauses;
     numCalled += other.numCalled;
     clRemoved += other.clRemoved;
 
@@ -859,19 +859,19 @@ void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
     );
 
     print_stats_line("c timed out"
-        , timeOut
-        , stats_line_percent(timeOut, numCalled)
+        , time_out
+        , stats_line_percent(time_out, numCalled)
         , "% of calls"
     );
 
     print_stats_line("c distill/checked/potential"
-        , numClShorten
+        , num_cl_shorten
         , checked_clauses
-        , potentialClauses
+        , potential_clauses
     );
 
     print_stats_line("c lits-rem",
-        numLitsRem
+        num_lits_rem
     );
     print_stats_line("c 0-depth-assigns",
         zero_depth_assigns

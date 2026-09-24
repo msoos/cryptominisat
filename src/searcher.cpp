@@ -1547,7 +1547,7 @@ lbool Searcher::search()
     const double my_time = cpu_time();
 
     //Stats reset & update
-    stats.numRestarts++;
+    stats.num_restarts++;
     restarts_in_mode[rst.stable]++;
     hist.clear();
     hist.reset_glueHist_size(conf.shortTermHistorySize);
@@ -3146,7 +3146,7 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
 
 uint64_t Searcher::sumRestarts() const
 {
-    return stats.numRestarts + solver->get_stats().numRestarts;
+    return stats.num_restarts + solver->get_stats().num_restarts;
 }
 
 size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)

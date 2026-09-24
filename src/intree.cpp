@@ -401,7 +401,7 @@ bool InTree::empty_failed_list()
 
 
 // (lit V otherlit) exists -> (~otherlit, lit) in queue
-// Next: (~otherLit, lit2) exists -> (~lit2, ~otherLit) in queue
+// Next: (~other_lit, lit2) exists -> (~lit2, ~other_lit) in queue
 // --> original ~otherlit got enqueued by lit2 = False (--> PropBy(lit2) ).
 
 void InTree::enqueue(const Lit lit, const Lit other_lit, const bool red_cl, const int32_t ID)

@@ -138,7 +138,7 @@ private:
 
     vector<OccurClause> subs;
     vec<Watched> tmp;
-    vector<Lit> subsLits;
+    vector<Lit> subs_lits;
     vector<Lit> tmpLits;
     size_t tried_bin_tri = 0;
     uint64_t subsumedBin = 0;

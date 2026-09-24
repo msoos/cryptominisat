@@ -57,12 +57,12 @@ class DistillerLong {
             void print(const size_t nVars, const string& pre) const;
 
             double time_used = 0.0;
-            uint64_t timeOut = 0;
+            uint64_t time_out = 0;
             uint64_t zero_depth_assigns = 0;
-            uint64_t numClShorten = 0;
-            uint64_t numLitsRem = 0;
+            uint64_t num_cl_shorten = 0;
+            uint64_t num_lits_rem = 0;
             uint64_t checked_clauses = 0;
-            uint64_t potentialClauses = 0;
+            uint64_t potential_clauses = 0;
             uint64_t numCalled = 0;
             uint64_t clRemoved = 0;
         };

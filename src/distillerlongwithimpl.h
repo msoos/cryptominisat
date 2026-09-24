@@ -57,7 +57,7 @@ class DistillerLongWithImpl {
             struct WatchBased
             {
                 double cpu_time = 0.0;
-                uint64_t numLitsRem = 0;
+                uint64_t num_lits_rem = 0;
                 uint64_t numClSubsumed = 0;
                 uint64_t triedCls = 0;
                 uint64_t shrinked = 0;
@@ -78,7 +78,7 @@ class DistillerLongWithImpl {
                 WatchBased& operator+=(const WatchBased& other)
                 {
                     cpu_time += other.cpu_time;
-                    numLitsRem += other.numLitsRem;
+                    num_lits_rem += other.num_lits_rem;
                     numClSubsumed += other.numClSubsumed;
                     triedCls += other.triedCls;
                     shrinked += other.shrinked;

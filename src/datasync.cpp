@@ -297,19 +297,19 @@ bool DataSync::syncBinFromOthers(
 
     vector<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
-        Lit otherLit = bins[i];
-        otherLit = solver->var_replacer->get_lit_replaced_with_outer(otherLit);
-        otherLit = solver->map_outer_to_inter(otherLit);
-        if (solver->var_data[otherLit.var()].removed != Removed::none
-            || solver->value(otherLit) != l_Undef
+        Lit other_lit = bins[i];
+        other_lit = solver->var_replacer->get_lit_replaced_with_outer(other_lit);
+        other_lit = solver->map_outer_to_inter(other_lit);
+        if (solver->var_data[other_lit.var()].removed != Removed::none
+            || solver->value(other_lit) != l_Undef
         ) {
             continue;
         }
-        assert(seen.size() > otherLit.toInt());
-        if (!seen[otherLit.toInt()]) {
+        assert(seen.size() > other_lit.toInt());
+        if (!seen[other_lit.toInt()]) {
             stats.recvBinData++;
             lits[0] = lit;
-            lits[1] = otherLit;
+            lits[1] = other_lit;
 
             //Don't add FRAT: it would add to the thread data, too
             solver->add_clause_int(lits, true, nullptr, true, nullptr, false);
@@ -515,8 +515,8 @@ bool DataSync::mpi_recv_from_others()
         uint32_t num = buf[at];
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
-            Lit otherLit = Lit::toLit(buf[at]);
-            thisMpiRecvBinData += add_bin_to_threads(lit, otherLit);
+            Lit other_lit = Lit::toLit(buf[at]);
+            thisMpiRecvBinData += add_bin_to_threads(lit, other_lit);
         }
     }
     mpiRecvBinData += thisMpiRecvBinData;

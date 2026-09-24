@@ -48,7 +48,7 @@ public:
     void print(uint64_t props, bool do_print_times, const string& prefix) const;
 
     //Restart stats
-    uint64_t numRestarts = 0;
+    uint64_t num_restarts = 0;
 
     //Decisions
     uint64_t  decisions = 0;

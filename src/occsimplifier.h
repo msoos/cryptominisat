@@ -77,7 +77,7 @@ struct BVEStats
     uint64_t num_calls = 0;
     double timeUsed = 0.0;
 
-    int64_t numVarsElimed = 0;
+    int64_t num_vars_elimed = 0;
     uint64_t varElimTimeOut = 0;
     uint64_t clauses_elimed_long = 0;
     uint64_t clauses_elimed_bin = 0;
@@ -218,7 +218,7 @@ public:
     void extend_model(SolutionExtender* extender);
     uint32_t get_num_elimed_vars() const
     {
-        return bvestats_global.numVarsElimed;
+        return bvestats_global.num_vars_elimed;
     }
 
     struct Stats
@@ -289,7 +289,7 @@ public:
 
     //Setup and teardown. Should be private, but testing needs it to be public
     bool setup();
-    void finish_up(size_t origTrailSize);
+    void finish_up(size_t orig_trail_size);
 
     // Count live irred long clauses currently held in OccSimplifier::clauses
     // (during occ-* steps, solver->long_irred_cls is empty — they live here)
@@ -412,7 +412,7 @@ private:
     uint32_t    sum_irred_cls_longs_lits() const;
     Clause *    full_add_clause(
         const vector<Lit>& tmp_cl,
-        vector<Lit>& finalLits,
+        vector<Lit>& final_lits,
         ClauseStats* cl_stats,
         bool red,
         const vector<int32_t>* hints = nullptr
@@ -429,17 +429,17 @@ private:
     /// CaDiCaL's lim.elimbound: persists across eliminate_vars() calls and only
     /// doubles once a full pass at the current bound finished.
     uint32_t grow = 0;
-    vector<int64_t> varElimComplexity;
+    vector<int64_t> var_elim_complexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
         explicit VarOrderLt(const vector<int64_t>& _varElimComplexity) :
-            varElimComplexity(_varElimComplexity) {}
+            var_elim_complexity(_varElimComplexity) {}
 
         bool operator()(uint32_t x, uint32_t y) const {
-            return varElimComplexity[x] < varElimComplexity[y];
+            return var_elim_complexity[x] < var_elim_complexity[y];
         }
 
-        const vector<int64_t>& varElimComplexity;
+        const vector<int64_t>& var_elim_complexity;
     };
     void        order_vars_for_elim();
     void        increase_elim_bound();
@@ -576,9 +576,9 @@ private:
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
+    bool        add_varelim_resolvent(vector<Lit>& final_lits, const ClauseStats& stats,
                                       const vector<int32_t>& hints);
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
+    bool        add_varelim_resolvent(vector<Lit>& final_lits, const ClauseStats& stats,
                                       const std::pair<int32_t, int32_t>& parents);
     vector<int32_t> varelim_hints_tmp;
     int32_t     watch_cl_id(const Watched& w) const;

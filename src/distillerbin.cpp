@@ -56,7 +56,7 @@ bool DistillerBin::distill()
     (void)distill_bin_cls_all(1.0);
 
     //Mostly useless: run less often
-    const uint64_t useful = run_stats.clRemoved + run_stats.numClShorten;
+    const uint64_t useful = run_stats.clRemoved + run_stats.num_cl_shorten;
     if (useful*50 < run_stats.checked_clauses) backoff = std::min(backoff*2.0, 16.0);
     else backoff = std::max(backoff/2.0, 1.0);
 
@@ -75,7 +75,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     verb_print(6, "Doing distillation branch for long clauses");
 
     double my_time = cpu_time();
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
     frat_func_start();
 
     //Time-limiting
@@ -96,7 +96,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     //stats setup
     oldBogoProps = solver->prop_stats.bogo_props;
     uint32_t potential_size = solver->bin_tri.irred_bins;
-    run_stats.potentialClauses += potential_size;
+    run_stats.potential_clauses += potential_size;
     run_stats.numCalled += 1;
 
     bool time_out = false;
@@ -132,7 +132,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
     //Update stats
     run_stats.time_used += time_used;
-    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - orig_trail_size;
     last_all_props = solver->all_bogoprops();
 
     return solver->okay();
@@ -144,7 +144,7 @@ bool DistillerBin::out_of_budget()
         || solver->must_interrupt_asap()
     ) {
         verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
-        run_stats.timeOut++;
+        run_stats.time_out++;
         return true;
     }
     return false;
@@ -284,7 +284,7 @@ bool DistillerBin::try_distill_bin(
                 solver->frat->enabled() ? &hints : nullptr);
             solver->detach_bin_clause(lit1, lit2, false, ID);
             (*solver->frat) << del << ID << lit1 << lit2 << fin;
-            run_stats.numClShorten++;
+            run_stats.num_cl_shorten++;
             return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
             solver->enqueue<true>(~lit2);
@@ -316,12 +316,12 @@ bool DistillerBin::try_distill_bin(
 DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
-    timeOut += other.timeOut;
+    time_out += other.time_out;
     zero_depth_assigns += other.zero_depth_assigns;
-    numClShorten += other.numClShorten;
-    numLitsRem += other.numLitsRem;
+    num_cl_shorten += other.num_cl_shorten;
+    num_lits_rem += other.num_lits_rem;
     checked_clauses += other.checked_clauses;
-    potentialClauses += other.potentialClauses;
+    potential_clauses += other.potential_clauses;
     numCalled += other.numCalled;
     clRemoved += other.clRemoved;
 
@@ -331,12 +331,12 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
 void DistillerBin::Stats::print_short(const Solver* solver) const
 {
     verb_print(1, "[distill-bin]"
-    << " useful/checked/potential: " << numClShorten+clRemoved
-    << "/" << checked_clauses << "/" << potentialClauses
-    << " lits-rem: " << numLitsRem
+    << " useful/checked/potential: " << num_cl_shorten+clRemoved
+    << "/" << checked_clauses << "/" << potential_clauses
+    << " lits-rem: " << num_lits_rem
     << " cl-rem: " << clRemoved
     << " 0-depth-assigns: " << zero_depth_assigns
-    << solver->conf.print_times(time_used, timeOut));
+    << solver->conf.print_times(time_used, time_out));
 }
 
 void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
@@ -349,19 +349,19 @@ void DistillerBin::Stats::print(const size_t nVars, const string& pre) const
     );
 
     print_stats_line("c timed out"
-        , timeOut
-        , stats_line_percent(timeOut, numCalled)
+        , time_out
+        , stats_line_percent(time_out, numCalled)
         , "% of calls"
     );
 
     print_stats_line("c distill/checked/potential"
-        , numClShorten
+        , num_cl_shorten
         , checked_clauses
-        , potentialClauses
+        , potential_clauses
     );
 
     print_stats_line("c lits-rem",
-        numLitsRem
+        num_lits_rem
     );
     print_stats_line("c 0-depth-assigns",
         zero_depth_assigns

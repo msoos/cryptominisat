@@ -173,7 +173,7 @@ void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t id) {
             false, //red
             &s,
             true, // attach long
-            nullptr, //finalLits
+            nullptr, //final_lits
             true, //add_frat
             lit_Undef, //frat_first
             false, //sorted
@@ -294,7 +294,7 @@ Clause* Solver::add_clause_int(
     , const bool red
     , const ClauseStats* const cl_stats
     , const bool attach_long
-    , vector<Lit>* finalLits
+    , vector<Lit>* final_lits
     , bool add_frat
     , const Lit frat_first
     , const bool sorted
@@ -309,7 +309,7 @@ Clause* Solver::add_clause_int(
     vector<Lit>& ps = add_clause_int_tmp_cl;
     if (!sort_and_clean_clause(ps, lits, red, sorted)) {
         if (remove_frat) *frat << del << cl_stats->id << lits << fin;
-        if (finalLits) finalLits->clear();
+        if (final_lits) final_lits->clear();
         return nullptr;
     }
 
@@ -369,10 +369,10 @@ Clause* Solver::add_clause_int(
         }
     }
 
-    //Callers pass one vector as both 'lits' and 'finalLits', so this must come
+    //Callers pass one vector as both 'lits' and 'final_lits', so this must come
     //after every read of 'lits' above -- otherwise stripped_units() walks the
     //already-cleaned clause and emits no unit hints at all
-    if (finalLits) *finalLits = ps;
+    if (final_lits) *final_lits = ps;
 
     //Handle special cases
     switch (ps.size()) {
@@ -753,7 +753,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
       *frat << "add_clause_outer\n" << origcl << clstats.id << outer_ps << fin;
     if (red) clstats.which_red_array = 0;
 
-    const size_t origTrailSize = trail.size();
+    const size_t orig_trail_size = trail.size();
 
     if (!add_clause_helper(ps)) {
         *frat << del << clstats.id << ps << fin;
@@ -792,7 +792,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
         else long_red_cls[0].push_back(offset);
     }
 
-    zeroLevAssignsByCNF += trail.size() - origTrailSize;
+    zeroLevAssignsByCNF += trail.size() - orig_trail_size;
 
     return ok;
 }
@@ -3099,10 +3099,10 @@ SatZillaFeatures Solver::calculate_satzilla_features()
 
     if (sum_prop_stats.propagations != 0
         && sum_conflicts != 0
-        && sum_search_stats.numRestarts != 0
+        && sum_search_stats.num_restarts != 0
     ) {
         satzilla_feat.props_per_confl = (double)sum_conflicts / (double)sum_prop_stats.propagations;
-        satzilla_feat.confl_per_restart = (double)sum_conflicts / (double)sum_search_stats.numRestarts;
+        satzilla_feat.confl_per_restart = (double)sum_conflicts / (double)sum_search_stats.num_restarts;
         satzilla_feat.decisions_per_conflict = (double)sum_search_stats.decisions / (double)sum_conflicts;
         satzilla_feat.learnt_bins_per_confl = (double)sum_search_stats.learntBins / (double)sum_conflicts;
     }

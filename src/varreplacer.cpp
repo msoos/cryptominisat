@@ -210,7 +210,7 @@ bool VarReplacer::perform_replace() {
     run_stats.clear();
     run_stats.num_calls = 1;
     const double my_time = cpu_time();
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
 
     if (!solver->clause_cleaner->remove_and_clean_all()) return false;
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
@@ -258,7 +258,7 @@ bool VarReplacer::perform_replace() {
 
     //Update stats
     const double time_used = cpu_time() - my_time;
-    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - orig_trail_size;
     run_stats.cpu_time = time_used;
     global_stats += run_stats;
     if (solver->conf.verbosity) {
@@ -415,8 +415,8 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
 inline void VarReplacer::updateBin(
     Watched* i
     , Watched*& j
-    , const Lit origLit1
-    , const Lit origLit2
+    , const Lit orig_lit1
+    , const Lit orig_lit2
     , Lit lit1
     , Lit lit2
 ) {
@@ -427,12 +427,12 @@ inline void VarReplacer::updateBin(
         //We see this binary from both watchlists. Derive&enqueue the unit only
         //from the same direction that deletes the binary below -- otherwise the
         //2nd derivation's hint would point to an already-deleted clause.
-        if (origLit1 < origLit2) {
+        if (orig_lit1 < orig_lit2) {
             *solver->frat << add << ++solver->clause_id << lit2;
             if (solver->frat->enabled()) {
                 *solver->frat << fratchain;
-                if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
-                if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+                if (lit1 != orig_lit1) *solver->frat << eqbin_for(orig_lit1);
+                if (lit2 != orig_lit2) *solver->frat << eqbin_for(orig_lit2);
                 *solver->frat << i->get_id();
             }
             *solver->frat << fin;
@@ -451,14 +451,14 @@ inline void VarReplacer::updateBin(
         }
 
         //Drat -- Delete only once
-        if (origLit1 < origLit2) {
-            (*solver->frat) << del << i->get_id() << origLit1 << origLit2 << fin;
+        if (orig_lit1 < orig_lit2) {
+            (*solver->frat) << del << i->get_id() << orig_lit1 << orig_lit2 << fin;
         }
 
         return;
     }
 
-    if (lit1 != origLit1 || lit2 != origLit2) {
+    if (lit1 != orig_lit1 || lit2 != orig_lit2) {
         if (!i->red()) {
             solver->mark_elim_cand(lit1);
             solver->mark_elim_cand(lit2);
@@ -466,9 +466,9 @@ inline void VarReplacer::updateBin(
     }
 
     if (//Changed
-        (lit1 != origLit1 || lit2 != origLit2)
+        (lit1 != orig_lit1 || lit2 != orig_lit2)
         //Delete&attach only once
-        && (origLit1 < origLit2)
+        && (orig_lit1 < orig_lit2)
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc
@@ -477,19 +477,19 @@ inline void VarReplacer::updateBin(
         *solver->frat<< add << ID << lit1 << lit2;
         if (solver->frat->enabled()) {
             *solver->frat << fratchain;
-            if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
-            if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+            if (lit1 != orig_lit1) *solver->frat << eqbin_for(orig_lit1);
+            if (lit2 != orig_lit2) *solver->frat << eqbin_for(orig_lit2);
             *solver->frat << orig_ID;
         }
         *solver->frat << fin;
-        *solver->frat<< del << i->get_id() << origLit1 << origLit2 << fin;
-        Watched* i2 = findWatchedOfBinMaybe(solver->watches, origLit2, origLit1, i->red(), orig_ID);
+        *solver->frat<< del << i->get_id() << orig_lit1 << orig_lit2 << fin;
+        Watched* i2 = findWatchedOfBinMaybe(solver->watches, orig_lit2, orig_lit1, i->red(), orig_ID);
         if (i2) i2->set_ID(ID);
-        else findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
+        else findWatchedOfBin(solver->watches, lit2, orig_lit1, i->red(), orig_ID).set_ID(ID);
         i->set_ID(ID);
     }
 
-    if (lit1 != origLit1) {
+    if (lit1 != orig_lit1) {
         solver->watches[lit1].push(*i);
     } else {
         *j++ = *i;
@@ -528,8 +528,8 @@ bool VarReplacer::replaceImplicit()
     }
 
     for(size_t at = 0; at < solver->watches.get_smudged_list().size(); at++) {
-        const Lit origLit1 = solver->watches.get_smudged_list()[at];
-        watch_subarray ws = solver->watches[origLit1];
+        const Lit orig_lit1 = solver->watches.get_smudged_list()[at];
+        watch_subarray ws = solver->watches[orig_lit1];
 
         Watched* i = ws.begin();
         Watched* j = i;
@@ -541,21 +541,21 @@ bool VarReplacer::replaceImplicit()
             }
             run_stats.bogoprops += 1;
 
-            const Lit origLit2 = i->lit2();
-            assert(solver->value(origLit1) == l_Undef);
-            assert(solver->value(origLit2) == l_Undef);
-            assert(origLit1.var() != origLit2.var());
+            const Lit orig_lit2 = i->lit2();
+            assert(solver->value(orig_lit1) == l_Undef);
+            assert(solver->value(orig_lit2) == l_Undef);
+            assert(orig_lit1.var() != orig_lit2.var());
 
             //Update main lit
-            Lit lit1 = origLit1;
+            Lit lit1 = orig_lit1;
             if (get_lit_replaced_with_fast(lit1) != lit1) {
                 lit1 = get_lit_replaced_with_fast(lit1);
                 run_stats.replacedLits++;
-                solver->watches.smudge(origLit2);
+                solver->watches.smudge(orig_lit2);
             }
 
             //Update lit2
-            Lit lit2 = origLit2;
+            Lit lit2 = orig_lit2;
             if (get_lit_replaced_with_fast(lit2) != lit2) {
                 lit2 = get_lit_replaced_with_fast(lit2);
                 i->setLit2(lit2);
@@ -563,7 +563,7 @@ bool VarReplacer::replaceImplicit()
             }
 
             assert(i->isBin());
-            updateBin(i, j, origLit1, origLit2, lit1, lit2);
+            updateBin(i, j, orig_lit1, orig_lit2, lit1, lit2);
         }
         ws.shrink_(i-j);
     }
@@ -652,8 +652,8 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
         bool changed = false;
         (*solver->frat) << deldelay << c << fin;
 
-        const Lit origLit1 = c[0];
-        const Lit origLit2 = c[1];
+        const Lit orig_lit1 = c[0];
+        const Lit orig_lit2 = c[1];
 
         tmp_upd_eqbins.clear();
         for (Lit& l: c) {
@@ -665,7 +665,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
             }
         }
 
-        if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
+        if (changed && handleUpdatedClause(c, orig_lit1, orig_lit2)) {
             run_stats.removedLongClauses++;
             if (!solver->ok) {
                 //if it became UNSAT, then don't delete.
@@ -698,8 +698,8 @@ Lit* my_lit_find(Clause& cl, const Lit lit)
 */
 bool VarReplacer::handleUpdatedClause(
     Clause& c
-    , const Lit origLit1
-    , const Lit origLit2
+    , const Lit orig_lit1
+    , const Lit orig_lit2
 ) {
     assert(!c.get_removed());
     const int32_t orig_id = c.stats.id;
@@ -736,8 +736,8 @@ bool VarReplacer::handleUpdatedClause(
     if (satisfied) {
         (*solver->frat) << findelay;
         c.shrink(c.size()); //needed to make clause cleaner happy
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
+        solver->watches.smudge(orig_lit1);
+        solver->watches.smudge(orig_lit2);
         c.set_removed();
         return true;
     }
@@ -757,26 +757,26 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     case 1 :
         c.set_removed();
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
+        solver->watches.smudge(orig_lit1);
+        solver->watches.smudge(orig_lit2);
         delayedEnqueue.push_back(make_tuple(c[0], c.stats.id));
         run_stats.removedLongLits += origSize;
         return true;
     case 2:
         c.set_removed();
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
+        solver->watches.smudge(orig_lit1);
+        solver->watches.smudge(orig_lit2);
 
         solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.id);
         run_stats.removedLongLits += origSize;
         return true;
 
     default:
-        Lit* at = my_lit_find(c, origLit1);
+        Lit* at = my_lit_find(c, orig_lit1);
         if (at != nullptr) {
             std::swap(c[0], *at);
         }
-        Lit* at2 = my_lit_find(c, origLit2);
+        Lit* at2 = my_lit_find(c, orig_lit2);
         if (at2 != nullptr) {
             std::swap(c[1], *at2);
         }
@@ -789,8 +789,8 @@ bool VarReplacer::handleUpdatedClause(
             }
         } else {
             c.set_removed();
-            solver->watches.smudge(origLit1);
-            solver->watches.smudge(origLit2);
+            solver->watches.smudge(orig_lit1);
+            solver->watches.smudge(orig_lit2);
         }
 
         run_stats.removedLongLits += origSize - c.size();

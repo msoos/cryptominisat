@@ -26,7 +26,7 @@ using namespace CMSat;
 
 SearchStats& SearchStats::operator+=(const SearchStats& other)
 {
-    numRestarts += other.numRestarts;
+    num_restarts += other.num_restarts;
 
     //Decisions
     decisions += other.decisions;
@@ -87,7 +87,7 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
 
 SearchStats& SearchStats::operator-=(const SearchStats& other)
 {
-    numRestarts -= other.numRestarts;
+    num_restarts -= other.num_restarts;
 
     //Decisions
     decisions -= other.decisions;
@@ -155,8 +155,8 @@ SearchStats SearchStats::operator-(const SearchStats& other) const
 void SearchStats::printCommon(uint64_t props, bool do_print_times, const string& prefix) const
 {
     print_stats_line(prefix + "restarts"
-        , numRestarts
-        , float_div(conflicts, numRestarts)
+        , num_restarts
+        , float_div(conflicts, num_restarts)
         , "confls per restart"
 
     );

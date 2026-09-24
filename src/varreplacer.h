@@ -217,14 +217,14 @@ class VarReplacer
         void updateBin(
             Watched* i
             , Watched*& j
-            , const Lit origLit1
-            , const Lit origLit2
+            , const Lit orig_lit1
+            , const Lit orig_lit2
             , Lit lit1
             , Lit lit2
         );
         void updateStatsFromImplStats();
 
-        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
+        bool handleUpdatedClause(Clause& c, const Lit orig_lit1, const Lit orig_lit2);
 
          //While replacing the implicit clauses we cannot enqeue
         vector<std::tuple<Lit, int32_t>> delayedEnqueue;

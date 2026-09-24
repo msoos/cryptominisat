@@ -63,7 +63,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , seen(solver->seen)
     , seen2(solver->seen2)
     , to_clear(solver->to_clear)
-    , velim_order(VarOrderLt(varElimComplexity))
+    , velim_order(VarOrderLt(var_elim_complexity))
 {
     sub_str = new SubsumeStrengthen(this, solver);
 
@@ -1157,7 +1157,7 @@ bool OccSimplifier::eliminate_vars()
     //Set-up
     double my_time = cpu_time();
     size_t vars_elimed = 0;
-    size_t wenThrough = 0;
+    size_t went_through = 0;
     time_spent_on_calc_otf_update = 0;
     num_otf_update_until_now = 0;
     int64_t orig_norm_varelim_time_limit = norm_varelim_time_limit;
@@ -1196,7 +1196,7 @@ bool OccSimplifier::eliminate_vars()
         last_elimed = 0;
         bve_why.clear();
         uint32_t bve_wave = 0;
-        size_t wave_last_through = wenThrough;
+        size_t wave_last_through = went_through;
         int64_t wave_last_elimed = 0;
         limit_to_decrease = &norm_varelim_time_limit;
         order_vars_for_elim();
@@ -1228,7 +1228,7 @@ bool OccSimplifier::eliminate_vars()
 
                 //Stats
                 *limit_to_decrease -= 20;
-                wenThrough++;
+                went_through++;
 
                 if (!can_eliminate_var(var)) continue;
                 if (maybe_eliminate(var)) {
@@ -1268,7 +1268,7 @@ bool OccSimplifier::eliminate_vars()
             for(uint32_t var: removed_cl_with_var.getTouchedList()) {
                 if (!can_eliminate_var(var)) continue;
                 re_added++;
-                varElimComplexity[var] = heuristicCalcVarElimScore(var);
+                var_elim_complexity[var] = heuristicCalcVarElimScore(var);
                 velim_order.update(var);
             }
             //A "wave" is one sweep of the elimination heap. The cascade on a
@@ -1277,12 +1277,12 @@ bool OccSimplifier::eliminate_vars()
             //after few waves never unrolled the definition chain.
             bve_wave++;
             verb_print(1, "[occ-bve-wave] " << bve_wave
-                << " tried " << (wenThrough - wave_last_through)
+                << " tried " << (went_through - wave_last_through)
                 << " elimed " << (last_elimed - wave_last_elimed)
                 << " touched " << removed_cl_with_var.getTouchedList().size()
                 << " re-added " << re_added
                 << " heap " << velim_order.size());
-            wave_last_through = wenThrough;
+            wave_last_through = went_through;
             wave_last_elimed = last_elimed;
 
             verb_print(2, "x n vars       : " << solver->get_num_free_vars());
@@ -1318,7 +1318,7 @@ bool OccSimplifier::eliminate_vars()
 
         bve_round++;
         verb_print(1, "[occ-bve-round] " << bve_round << " grow " << grow
-            << " tried " << print_value_kilo_mega(wenThrough)
+            << " tried " << print_value_kilo_mega(went_through)
             << " elimed " << last_elimed << " (tot " << vars_elimed << ")"
             << " cls " << n_cls_last << "->" << n_cls_now
             << " (init " << n_cls_init << ", d " << (int64_t)n_cls_now-(int64_t)n_cls_last << ")"
@@ -1401,7 +1401,7 @@ end:
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = float_div(*limit_to_decrease, orig_norm_varelim_time_limit);
 
-    verb_print(1, "[occ-bve] tried: " << print_value_kilo_mega(wenThrough)
+    verb_print(1, "[occ-bve] tried: " << print_value_kilo_mega(went_through)
         << " v-elim: " << print_value_kilo_mega(vars_elimed)
         << " free-vars: " << solver->get_num_free_vars()
         << " T: " << std::fixed << std::setprecision(2) << time_used
@@ -1563,7 +1563,7 @@ void OccSimplifier::sort_occurs_and_set_abst()
 vector<OrGate> OccSimplifier::recover_or_gates()
 {
     vector<OrGate> or_gates;
-    auto origTrailSize = solver->trail_size();
+    auto orig_trail_size = solver->trail_size();
     gate_finder = new GateFinder(this, solver);
 
     startup = false;
@@ -1582,7 +1582,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     gate_finder = nullptr;
 
     solver->conf.maxOccurRedMB = backup;
-    finish_up(origTrailSize);
+    finish_up(orig_trail_size);
     return or_gates;
 }
 
@@ -1763,7 +1763,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     assert(solver->prop_at_head());
 
     vector<uint32_t> ret;
-    auto origTrailSize = solver->trail_size();
+    auto orig_trail_size = solver->trail_size();
 
     startup = false;
     double backup = solver->conf.maxOccurRedMB;
@@ -1799,7 +1799,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
                << " 0-occ: " << st.no_occ << " too-many-occ: " << st.too_many_occ);
 
     solver->conf.maxOccurRedMB = backup;
-    finish_up(origTrailSize);
+    finish_up(orig_trail_size);
     return ret;
 }
 
@@ -1808,7 +1808,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
     assert(solver->prop_at_head());
     if (!setup()) return;
 
-    auto origTrailSize = solver->trail_size();
+    auto orig_trail_size = solver->trail_size();
     startup = false;
     const double backup = solver->conf.maxOccurRedMB;
     solver->conf.maxOccurRedMB = 0;
@@ -1850,13 +1850,13 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
     verb_print(1, "[empty] empty_occ: " << empty_occ << solver->conf.print_times(time_used));
 
     solver->conf.maxOccurRedMB = backup;
-    finish_up(origTrailSize);
+    finish_up(orig_trail_size);
 }
 
 vector<ITEGate> OccSimplifier::recover_ite_gates()
 {
     vector<ITEGate> or_gates;
-    auto origTrailSize = solver->trail_size();
+    auto orig_trail_size = solver->trail_size();
 
     startup = false;
     double backup = solver->conf.maxOccurRedMB;
@@ -1917,7 +1917,7 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
     }
 
     solver->conf.maxOccurRedMB = backup;
-    finish_up(origTrailSize);
+    finish_up(orig_trail_size);
     return or_gates;
 }
 
@@ -2376,7 +2376,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
     if (!setup()) return solver->okay();
 
     const size_t origElimedSize = elimed_cls.size();
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
 
     sampling_vars_occsimp.clear();
     if (solver->conf.sampling_vars_set) {
@@ -2435,7 +2435,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
     execute_simplifier_strategy(schedule);
 
     remove_by_frat_recently_elimed_clauses(origElimedSize);
-    finish_up(origTrailSize);
+    finish_up(orig_trail_size);
 
     return solver->okay();
 }
@@ -2869,7 +2869,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     build_elimed_map();
 
     //Uneliminate it in theory
-    bvestats_global.numVarsElimed--;
+    bvestats_global.num_vars_elimed--;
     solver->var_data[var].removed = Removed::none;
     solver->mark_elim_cand(var);
     solver->set_decision_var(var);
@@ -2952,8 +2952,8 @@ void OccSimplifier::build_elimed_map() {
     elimed_map_built = true;
 }
 
-void OccSimplifier::finish_up(size_t origTrailSize) {
-    run_stats.zeroDepthAssings = solver->trail_size() - origTrailSize;
+void OccSimplifier::finish_up(size_t orig_trail_size) {
+    run_stats.zeroDepthAssings = solver->trail_size() - orig_trail_size;
     const double my_time = cpu_time();
     frat_func_start();
 
@@ -3076,7 +3076,7 @@ void OccSimplifier::set_limits()
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
-        && float_div(bvestats_global.numVarsElimed, bvestats_global.testedToElimVars) < 0.1
+        && float_div(bvestats_global.num_vars_elimed, bvestats_global.testedToElimVars) < 0.1
     ) {
         norm_varelim_time_limit /= 2;
     }
@@ -4601,18 +4601,18 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
 }
 
 bool OccSimplifier::add_varelim_resolvent(
-    vector<Lit>& finalLits
+    vector<Lit>& final_lits
     , const ClauseStats& stats
     , const std::pair<int32_t, int32_t>& parents
 ) {
     varelim_hints_tmp.clear();
     varelim_hints_tmp.push_back(parents.first);
     varelim_hints_tmp.push_back(parents.second);
-    return add_varelim_resolvent(finalLits, stats, varelim_hints_tmp);
+    return add_varelim_resolvent(final_lits, stats, varelim_hints_tmp);
 }
 
 bool OccSimplifier::add_varelim_resolvent(
-    vector<Lit>& finalLits
+    vector<Lit>& final_lits
     , const ClauseStats& stats
     , const vector<int32_t>& hints
 ) {
@@ -4624,11 +4624,11 @@ bool OccSimplifier::add_varelim_resolvent(
 
     ClauseStats backup_stats(stats);
     newCl = solver->add_clause_int(
-        finalLits //Literals in new clause
+        final_lits //Literals in new clause
         , false //Is the new clause redundant?
         , &backup_stats//Statistics for this new clause (usage, etc.)
         , false //Should clause be attached if long?
-        , &finalLits //Return final set of literals here
+        , &final_lits //Return final set of literals here
         , true, lit_Undef, false, false
         , &hints
     );
@@ -4648,25 +4648,25 @@ bool OccSimplifier::add_varelim_resolvent(
 
         // 4 = clause itself
         // 8 = watch (=occur) space
-        varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(4+8);
+        varelim_linkin_limit_bytes -= (int64_t)final_lits.size()*(4+8);
         varelim_linkin_limit_bytes -= (int64_t)sizeof(Clause);
-    } else if (finalLits.size() == 2) {
-        n_occurs[finalLits[0].toInt()]++;
-        n_occurs[finalLits[1].toInt()]++;
-        added_irred_bin.push_back({finalLits[0], finalLits[1], solver->clause_id});
+    } else if (final_lits.size() == 2) {
+        n_occurs[final_lits[0].toInt()]++;
+        n_occurs[final_lits[1].toInt()]++;
+        added_irred_bin.push_back({final_lits[0], final_lits[1], solver->clause_id});
 
         // 8 = watch space
-        varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(8);
+        varelim_linkin_limit_bytes -= (int64_t)final_lits.size()*(8);
     }
 
     //Touch every var of the new clause, so we re-estimate
     //elimination complexity for this var
-    for(Lit lit: finalLits) {
+    for(Lit lit: final_lits) {
         #ifdef CHECK_N_OCCUR
         if(n_occurs[lit.toInt()] != calc_data_for_heuristic(lit)) {
             cout << "n_occurs[lit.toInt()]:" << n_occurs[lit.toInt()] << endl;
             cout << "calc_data_for_heuristic(lit): " << calc_data_for_heuristic(lit) << endl;
-            cout << "cl: " << finalLits << endl;
+            cout << "cl: " << final_lits << endl;
             cout << "lit: " << lit << endl;
             assert(false);
         }
@@ -4708,11 +4708,11 @@ void OccSimplifier::update_varelim_complexity_heap()
             continue;
         }
 
-        auto prev = varElimComplexity[var];
-        varElimComplexity[var] = heuristicCalcVarElimScore(var);
+        auto prev = var_elim_complexity[var];
+        var_elim_complexity[var] = heuristicCalcVarElimScore(var);
 
         //If different, PUT IT BACK IN, and update the heap
-        if (prev != varElimComplexity[var]) {
+        if (prev != var_elim_complexity[var]) {
             velim_order.update(var);
         }
     }
@@ -4724,12 +4724,12 @@ void OccSimplifier::update_varelim_complexity_heap()
             continue;
         }
 
-        auto prev = varElimComplexity[var];
-        varElimComplexity[var] = heuristicCalcVarElimScore(var);
-        if (prev != varElimComplexity[var]) {
-            cout << "prev: " << prev << " now: " << varElimComplexity[var] << endl;
+        auto prev = var_elim_complexity[var];
+        var_elim_complexity[var] = heuristicCalcVarElimScore(var);
+        if (prev != var_elim_complexity[var]) {
+            cout << "prev: " << prev << " now: " << var_elim_complexity[var] << endl;
         }
-        assert(prev == varElimComplexity[var]);
+        assert(prev == var_elim_complexity[var]);
     }
     #endif
 }
@@ -4739,7 +4739,7 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var)
     assert(solver->var_data[var].removed == Removed::none);
     solver->var_data[var].removed = Removed::elimed;
 
-    bvestats_global.numVarsElimed++;
+    bvestats_global.num_vars_elimed++;
 }
 
 void OccSimplifier::create_dummy_elimed_clause(Lit lit, bool is_xor)
@@ -5210,8 +5210,8 @@ void OccSimplifier::increase_elim_bound()
 void OccSimplifier::order_vars_for_elim()
 {
     velim_order.clear();
-    varElimComplexity.clear();
-    varElimComplexity.resize(solver->nVars(), 0);
+    var_elim_complexity.clear();
+    var_elim_complexity.resize(solver->nVars(), 0);
     elim_calc_need_update.clear();
 
     //Go through all vars
@@ -5231,7 +5231,7 @@ void OccSimplifier::order_vars_for_elim()
         bve_why.sched_added++;
         *limit_to_decrease -= 50;
         assert(!velim_order.inHeap(var));
-        varElimComplexity[var] = heuristicCalcVarElimScore(var);
+        var_elim_complexity[var] = heuristicCalcVarElimScore(var);
         velim_order.insert(var);
     }
     assert(velim_order.heap_property());
@@ -5256,10 +5256,10 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
             assert(solver->value(i) == l_Undef);
         }
     }
-    if (bvestats_global.numVarsElimed != checkNumElimed) {
+    if (bvestats_global.num_vars_elimed != checkNumElimed) {
         std::cerr
-        << "ERROR: global_stats.numVarsElimed is "<<
-        bvestats_global.numVarsElimed
+        << "ERROR: global_stats.num_vars_elimed is "<<
+        bvestats_global.num_vars_elimed
         << " but checkNumElimed is: " << checkNumElimed
         << endl;
 
@@ -5277,7 +5277,7 @@ size_t OccSimplifier::mem_used() const
     b += elimed_cls_lits.capacity()*sizeof(Lit);
     b += blk_var_to_cls.size()*sizeof(uint32_t);
     b += velim_order.mem_used();
-    b += varElimComplexity.capacity()*sizeof(int)*2;
+    b += var_elim_complexity.capacity()*sizeof(int)*2;
     b += elim_calc_need_update.mem_used();
     b += clauses.capacity()*sizeof(ClOffset);
     b += sampling_vars_occsimp.capacity();
@@ -5340,7 +5340,7 @@ OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
 
 BVEStats& BVEStats::operator+=(const BVEStats& other)
 {
-    numVarsElimed += other.numVarsElimed;
+    num_vars_elimed += other.num_vars_elimed;
     varElimTimeOut += other.varElimTimeOut;
     clauses_elimed_long += other.clauses_elimed_long;
     clauses_elimed_bin += other.clauses_elimed_bin;

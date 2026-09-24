@@ -98,7 +98,7 @@ bool DistillerLitRem::go_through_clauses(
         if ((int64_t)solver->prop_stats.bogo_props-(int64_t)oldBogoProps >= max_num_props
             || solver->must_interrupt_asap()
         ) {
-            run_stats.timeOut++;
+            run_stats.time_out++;
             time_out = true;
         }
 
@@ -153,7 +153,7 @@ bool DistillerLitRem::distill_long_cls_all(
         return solver->okay();
     }
 
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
 
     //Time-limiting
     max_num_props =
@@ -170,7 +170,7 @@ bool DistillerLitRem::distill_long_cls_all(
 
     //stats setup
     oldBogoProps = solver->prop_stats.bogo_props;
-    run_stats.potentialClauses += offs.size();
+    run_stats.potential_clauses += offs.size();
     run_stats.numCalled += 1;
 
     bool time_out = false;
@@ -202,7 +202,7 @@ bool DistillerLitRem::distill_long_cls_all(
 
 
     //Update stats
-    run_stats.zero_depth_assigns += solver->trail_size() - origTrailSize;
+    run_stats.zero_depth_assigns += solver->trail_size() - orig_trail_size;
 
     return solver->okay();
 }
@@ -214,7 +214,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
 ) {
     assert(solver->prop_at_head());
     assert(solver->decision_level() == 0);
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
     run_stats.cls_tried++;
 
     Clause& cl = *solver->cl_alloc.ptr(offset);
@@ -275,8 +275,8 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     //We can remove the literal
     (*solver->frat) << deldelay << cl << fin;
     solver->detachClause(cl, false);
-    run_stats.numLitsRem += orig_size - lits.size();
-    run_stats.numClShorten++;
+    run_stats.num_lits_rem += orig_size - lits.size();
+    run_stats.num_cl_shorten++;
 
     // we have to copy because the re-alloc can invalidate the data
     ClauseStats backup_stats(*stats);
@@ -288,7 +288,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
         true, nullptr, true, lit_Undef, false, false,
         solver->frat->enabled() ? &hints : nullptr);
     (*solver->frat) << findelay;
-    assert(solver->trail_size() == origTrailSize);
+    assert(solver->trail_size() == orig_trail_size);
 
     if (cl2 != nullptr) {
         return solver->cl_alloc.get_offset(cl2);
@@ -304,12 +304,12 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
 DistillerLitRem::Stats& DistillerLitRem::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
-    timeOut += other.timeOut;
+    time_out += other.time_out;
     zero_depth_assigns += other.zero_depth_assigns;
-    numClShorten += other.numClShorten;
-    numLitsRem += other.numLitsRem;
+    num_cl_shorten += other.num_cl_shorten;
+    num_lits_rem += other.num_lits_rem;
     checked_clauses += other.checked_clauses;
-    potentialClauses += other.potentialClauses;
+    potential_clauses += other.potential_clauses;
     numCalled += other.numCalled;
 
     return *this;
@@ -319,11 +319,11 @@ void DistillerLitRem::Stats::print_short(const Solver* _solver) const
 {
     cout
     << "c [distill-litrem]"
-    << " useful: "<< numClShorten
-    << "/" << checked_clauses << "/" << potentialClauses
-    << " lits-rem: " << numLitsRem
+    << " useful: "<< num_cl_shorten
+    << "/" << checked_clauses << "/" << potential_clauses
+    << " lits-rem: " << num_lits_rem
     << " 0-depth-assigns: " << zero_depth_assigns
-    << _solver->conf.print_times(time_used, timeOut)
+    << _solver->conf.print_times(time_used, time_out)
     << endl;
 }
 

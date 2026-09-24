@@ -225,14 +225,14 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
         const ClOffset off = cs[at];
         Clause& cl = *solver->cl_alloc.ptr(off);
 
-        const Lit origLit1 = cl[0];
-        const Lit origLit2 = cl[1];
+        const Lit orig_lit1 = cl[0];
+        const Lit orig_lit2 = cl[1];
         const auto origSize = cl.size();
         const bool red = cl.red();
 
         if (clean_clause(cl)) {
-            solver->watches.smudge(origLit1);
-            solver->watches.smudge(origLit2);
+            solver->watches.smudge(orig_lit1);
+            solver->watches.smudge(orig_lit2);
             cl.set_removed();
             if (red) solver->lit_stats.red_lits -= origSize;
             else solver->lit_stats.irred_lits -= origSize;

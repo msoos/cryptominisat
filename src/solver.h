@@ -328,7 +328,7 @@ class Solver : public Searcher
             , const bool red = false
             , const ClauseStats* const stats = nullptr
             , const bool attach = true
-            , vector<Lit>* finalLits = nullptr
+            , vector<Lit>* final_lits = nullptr
             , bool addFrat = true
             , const Lit frat_first = lit_Undef
             , const bool sorted = false

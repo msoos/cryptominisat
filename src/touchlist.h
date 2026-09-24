@@ -51,12 +51,12 @@ public:
 
     void touch(const uint32_t var)
     {
-        if (touchedBitset.size() <= var)
-            touchedBitset.resize(var+1, 0);
+        if (touched_bitset.size() <= var)
+            touched_bitset.resize(var+1, 0);
 
-        if (touchedBitset[var] == 0) {
+        if (touched_bitset[var] == 0) {
             touched.push_back(var);
-            touchedBitset[var] = 1;
+            touched_bitset[var] = 1;
         }
     }
 
@@ -68,7 +68,7 @@ public:
     void clear()
     {
         for (const uint32_t v: touched) {
-            touchedBitset[v] = 0;
+            touched_bitset[v] = 0;
         }
         touched.clear();
     }
@@ -77,7 +77,7 @@ public:
     {
         uint64_t mem = 0;
         mem += touched.capacity()*sizeof(uint32_t);
-        mem += touchedBitset.capacity()*sizeof(char);
+        mem += touched_bitset.capacity()*sizeof(char);
 
         return mem;
     }
@@ -86,13 +86,13 @@ public:
     {
         touched.clear();
         touched.shrink_to_fit();
-        touchedBitset.clear();
-        touchedBitset.shrink_to_fit();
+        touched_bitset.clear();
+        touched_bitset.shrink_to_fit();
     }
 
 private:
     vector<uint32_t> touched;
-    vector<char> touchedBitset;
+    vector<char> touched_bitset;
 };
 
 
@@ -119,12 +119,12 @@ public:
 
     void touch(const uint32_t var)
     {
-        if (touchedBitset.size() <= var)
-            touchedBitset.resize(var+1, 0);
+        if (touched_bitset.size() <= var)
+            touched_bitset.resize(var+1, 0);
 
-        if (touchedBitset[var] == 0) {
+        if (touched_bitset[var] == 0) {
             touched.push_back(var);
-            touchedBitset[var] = 1;
+            touched_bitset[var] = 1;
         }
     }
 
@@ -136,7 +136,7 @@ public:
     void clear()
     {
         for (const uint32_t v: touched) {
-            touchedBitset[v] = 0;
+            touched_bitset[v] = 0;
         }
         touched.clear();
     }
@@ -145,7 +145,7 @@ public:
     {
         uint64_t mem = 0;
         mem += touched.capacity()*sizeof(uint32_t);
-        mem += touchedBitset.capacity()*sizeof(char);
+        mem += touched_bitset.capacity()*sizeof(char);
 
         return mem;
     }
@@ -154,13 +154,13 @@ public:
     {
         touched.clear();
         touched.shrink_to_fit();
-        touchedBitset.clear();
-        touchedBitset.shrink_to_fit();
+        touched_bitset.clear();
+        touched_bitset.shrink_to_fit();
     }
 
 private:
     vector<uint32_t> touched;
-    vector<char> touchedBitset;
+    vector<char> touched_bitset;
 };
 
 

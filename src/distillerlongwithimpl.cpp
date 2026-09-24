@@ -277,7 +277,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
         && stats->triedCls > 0 //avoid division by zero
         && stats->totalLits > 0 //avoid division by zero
         && float_div(stats->numClSubsumed, stats->triedCls) < 0.05
-        && float_div(stats->numLitsRem, stats->totalLits) < 0.05
+        && float_div(stats->num_lits_rem, stats->totalLits) < 0.05
     ) {
         maxCountTime *= 0.5;
     }
@@ -358,7 +358,7 @@ void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     const bool time_out = timeAvailable < 0;
     const double time_remain = float_div(timeAvailable, orig_time_available);
     tmpStats.numClSubsumed += watch_based_data.get_cl_subsumed();
-    tmpStats.numLitsRem += watch_based_data.get_lits_rem();
+    tmpStats.num_lits_rem += watch_based_data.get_lits_rem();
     tmpStats.cpu_time = time_used;
     if (red) {
         run_stats.redWatchBased += tmpStats;
@@ -448,7 +448,7 @@ void DistillerLongWithImpl::Stats::WatchBased::print_short(
     << " cl tried " << std::setw(8) << triedCls
     << " cl-sh " << std::setw(5) << shrinked
     << " cl-rem " << std::setw(4) << numClSubsumed
-    << " lit-rem " << std::setw(6) << numLitsRem
+    << " lit-rem " << std::setw(6) << num_lits_rem
     << solver->conf.print_times(cpu_time, ranOutOfTime));
 }
 
@@ -473,8 +473,8 @@ void DistillerLongWithImpl::Stats::WatchBased::print() const
     );
 
     print_stats_line("c lits-rem"
-        , numLitsRem
-        , stats_line_percent(numLitsRem, totalLits)
+        , num_lits_rem
+        , stats_line_percent(num_lits_rem, totalLits)
         , "% of lits tried"
     );
 

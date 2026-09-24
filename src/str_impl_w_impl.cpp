@@ -35,7 +35,7 @@ bool StrImplWImpl::str_impl_w_impl()
     DEBUG_IMPLICIT_STATS_DO(solver->check_stats());
     str_impl_data.clear();
 
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
     timeAvailable =
         solver->conf.distill_implicit_with_implicit_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
@@ -79,7 +79,7 @@ end:
 
     if (solver->conf.verbosity) {
         str_impl_data.print(
-            solver->trail_size() - origTrailSize
+            solver->trail_size() - orig_trail_size
             , cpu_time() - my_time
             , timeAvailable
             , orig_time

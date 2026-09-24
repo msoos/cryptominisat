@@ -114,8 +114,8 @@ void DataSyncServer::mpi_recv_from_others()
         uint32_t num = buf[at];
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
-            Lit otherLit = Lit::toLit(buf[at]);
-            get_bin(lit, otherLit);
+            Lit other_lit = Lit::toLit(buf[at]);
+            get_bin(lit, other_lit);
             thisRecvBinData++;
         }
     }

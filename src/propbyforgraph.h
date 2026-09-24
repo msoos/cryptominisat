@@ -40,7 +40,7 @@ class PropByForGraph
 
     public:
         PropByForGraph(PropBy orig
-                    , Lit otherLit
+                    , Lit other_lit
                     , const ClauseAllocator& alloc
         ) :
             type(10)
@@ -48,7 +48,7 @@ class PropByForGraph
             , clause(nullptr)
         {
             if (orig.getType() == binary_t) {
-                lits[0] = otherLit;
+                lits[0] = other_lit;
                 lits[1] = orig.lit2();
                 type = 1;
                 isize = 2;
