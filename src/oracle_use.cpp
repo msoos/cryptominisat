@@ -69,7 +69,7 @@ inline Lit orc_to_lit(int x) {
 vector<vector<int>> Solver::get_irred_cls_for_oracle() const {
     vector<vector<int>> clauses;
     vector<int> tmp;
-    for (const auto& off: longIrredCls) {
+    for (const auto& off: long_irred_cls) {
         const Clause& cl = *cl_alloc.ptr(off);
         tmp.clear();
         for (auto const& l: cl) tmp.push_back(orclit(l));
@@ -254,7 +254,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
         tmp2.clear();
         for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
         Clause* cl2 = add_clause_int(tmp2);
-        if (cl2) longIrredCls.push_back(cl_alloc.get_offset(cl2));
+        if (cl2) long_irred_cls.push_back(cl_alloc.get_offset(cl2));
         if (!okay()) return false;
     }
 
@@ -271,7 +271,7 @@ bool Solver::oracle_vivif(int fast, bool& backbone_found) {
             s.id = ++clauseID;
             s.glue = cl.size();
             Clause* cl2 = add_clause_int(tmp2, true, &s);
-            if (cl2) longRedCls[0].push_back(cl_alloc.get_offset(cl2));
+            if (cl2) long_red_cls[0].push_back(cl_alloc.get_offset(cl2));
             if (!okay()) return false;
         }
     }
@@ -346,7 +346,7 @@ vector<vector<uint16_t>> Solver::compute_edge_weights() const
 {
     vector<vector<uint16_t>> edgew(nVars());
     for (uint32_t i = 0; i < nVars(); i++) edgew[i].resize(nVars(), 0);
-    for (const auto& off: longIrredCls) {
+    for (const auto& off: long_irred_cls) {
         Clause& cl = *cl_alloc.ptr(off);
         for (auto const& l1 : cl) { for (auto const& l2 : cl) {
             uint32_t v1 = l1.var();
@@ -374,7 +374,7 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
     if (nVars() < 35000) { edgew = compute_edge_weights(); edgew_avail = true; }
     vector<OracleDat> cs;
     array<int, ORACLE_DAT_SIZE> ww;
-    for (const auto& off: longIrredCls) {
+    for (const auto& off: long_irred_cls) {
         Clause& cl = *cl_alloc.ptr(off);
         assert(!cl.red());
         ww = {};
@@ -424,7 +424,7 @@ bool Solver::oracle_sparsify(bool fast)
     uint32_t removed = 0;
     uint32_t removed_bin = 0;
     auto cs = order_clauses_for_oracle();
-    const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
+    const uint32_t tot_cls = long_irred_cls.size() + bin_tri.irred_bins;
     assert(cs.size() == tot_cls);
     //dump_cls_oracle("debug.xt", cs);
 
@@ -607,21 +607,21 @@ bool Solver::oracle_sparsify(bool fast)
         }
         ws.shrink(ws.size()-j);
     }
-    binTri.redBins+=bin_red_added/2;
-    binTri.irredBins-=bin_irred_removed/2;
+    bin_tri.red_bins+=bin_red_added/2;
+    bin_tri.irred_bins-=bin_irred_removed/2;
 
     uint32_t j = 0;
-    for(uint32_t i = 0; i < longIrredCls.size(); i++) {
-        ClOffset off = longIrredCls[i];
+    for(uint32_t i = 0; i < long_irred_cls.size(); i++) {
+        ClOffset off = long_irred_cls[i];
         Clause* cl = cl_alloc.ptr(off);
         if (!cl->stats.marked_clause) {
-            longIrredCls[j++] = longIrredCls[i];
+            long_irred_cls[j++] = long_irred_cls[i];
         } else {
-            litStats.irredLits -= cl->size();
+            lit_stats.irred_lits -= cl->size();
             if (conf.oracle_removed_is_learnt) {
                 cl->stats.marked_clause = false;
-                litStats.redLits += cl->size();
-                longRedCls[0].push_back(off);
+                lit_stats.red_lits += cl->size();
+                long_red_cls[0].push_back(off);
                 cl->stats.which_red_array = 0;
                 cl->isRed = true;
             } else {
@@ -629,7 +629,7 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
     }
-    longIrredCls.resize(j);
+    long_irred_cls.resize(j);
 
     //cout << "New cls size: " << clauses.size() << endl;
     //Subsume();

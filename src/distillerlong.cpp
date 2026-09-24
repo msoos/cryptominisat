@@ -207,7 +207,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
         const double r_norem = only_rem_cl ? 0.0 : solver->conf.distill_irred_noremove_ratio;
         const double sum = r_rem + r_norem;
         if (!distill_long_cls_all(
-            solver->longIrredCls,
+            solver->long_irred_cls,
             sum > 0 ? (double)budget * r_rem / sum : 0.0,
             true, //also remove
             only_rem_cl,
@@ -220,7 +220,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
 
         if (!only_rem_cl) {
             if (!distill_long_cls_all(
-                solver->longIrredCls,
+                solver->long_irred_cls,
                 sum > 0 ? (double)budget * r_norem / sum : 0.0,
                 false, //also remove
                 only_rem_cl,
@@ -235,7 +235,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
         //Redundant
         const int64_t budget = effort_ref * (int64_t)solver->conf.distill_red_releff / 1000LL;
         if (!distill_long_cls_all(
-            solver->longRedCls[0],
+            solver->long_red_cls[0],
             budget,
             false, //dont' remove (it's always redundant)
             only_rem_cl,
@@ -277,7 +277,7 @@ bool DistillerLong::distill_long_cls_all(
     orig_maxNumProps = maxNumProps;
 
     //stats setup
-    oldBogoProps = solver->propStats.bogoProps;
+    oldBogoProps = solver->prop_stats.bogoProps;
     run_stats.numCalled += 1;
 
     //Select candidates. prio 0: not checked since their bit was cleared,
@@ -457,7 +457,7 @@ bool DistillerLong::distill_long_cls_all(
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
+        maxNumProps - ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
         const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
@@ -470,12 +470,12 @@ bool DistillerLong::distill_long_cls_all(
         << endl;
         cout << solver->conf.prefix << tag
         << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
-        << " used(M): " << (double)((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps)/1e6
+        << " used(M): " << (double)((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps)/1e6
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "distill long cls"
             , time_used
@@ -508,7 +508,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         Clause& cl = *solver->cl_alloc.ptr(offset);
 
         //if done enough, stop doing it
-        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+        if ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
             run_stats.timeOut++;

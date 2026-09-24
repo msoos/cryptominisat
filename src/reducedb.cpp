@@ -90,8 +90,8 @@ ReduceDB::~ReduceDB()
 void ReduceDB::mark_useless_redundant_clauses_as_garbage()
 {
     vector<ClOffset> stack;
-    stack.reserve(solver->longRedCls[0].size());
-    for (const ClOffset offs: solver->longRedCls[0]) {
+    stack.reserve(solver->long_red_cls[0].size());
+    for (const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
         {
@@ -175,7 +175,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
 //CaDiCaL-style flush: remove ALL redundant clauses not recently used
 void ReduceDB::mark_clauses_to_be_flushed()
 {
-    for (const ClOffset offs: solver->longRedCls[0]) {
+    for (const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (solver->clause_locked(*cl, offs)) continue;
         const uint32_t used = cl->stats.used;
@@ -189,7 +189,7 @@ void ReduceDB::mark_clauses_to_be_flushed()
 
 void ReduceDB::remove_marked_clauses()
 {
-    auto& cls = solver->longRedCls[0];
+    auto& cls = solver->long_red_cls[0];
     size_t j = 0;
     for (const ClOffset offs: cls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -200,7 +200,7 @@ void ReduceDB::remove_marked_clauses()
         cl->stats.marked_clause = false;
         solver->watches.smudge((*cl)[0]);
         solver->watches.smudge((*cl)[1]);
-        solver->litStats.redLits -= cl->size();
+        solver->lit_stats.red_lits -= cl->size();
         *solver->frat << del << *cl << fin;
         cl->set_removed();
         delayed_clause_free.push_back(offs);
@@ -212,7 +212,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
 {
     solver->dump_memory_stats_to_sql();
     const double my_time = cpu_time();
-    const size_t orig_size = solver->longRedCls[0].size();
+    const size_t orig_size = solver->long_red_cls[0].size();
     assert(solver->watches.get_smudged_list().empty());
     assert(delayed_clause_free.empty());
     num_reductions++;
@@ -230,7 +230,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     //Data is gathered and predictions are made exactly where the decision
     //is taken, so training and use see the same clause states
     #ifdef STATS_NEEDED
-    if (solver->sqlStats) dump_sql_cl_data(cur_rst_type);
+    if (solver->sql_stats) dump_sql_cl_data(cur_rst_type);
     #endif
     #ifdef FINAL_PREDICTOR
     if (!flush) predict_all_learnt(cur_rst_type);
@@ -240,7 +240,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     remove_marked_clauses();
     #ifdef FINAL_PREDICTOR
     //per-interval stats restart, as the STATS build does at its dump
-    for(const ClOffset offs: solver->longRedCls[0]) {
+    for(const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         solver->red_stats_extra[cl->stats.extra_pos].reset_rdb_stats(cl->stats);
     }
@@ -266,7 +266,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     verb_print(1, "[reduce] " << num_reductions
     << (flush ? " FLUSHED" : "")
     << " confl: " << solver->sumConflicts
-    << " red: " << orig_size << "->" << solver->longRedCls[0].size()
+    << " red: " << orig_size << "->" << solver->long_red_cls[0].size()
     << " cands: " << rstats.cands
     << " rem: " << rstats.removed
     << " next: +" << delta
@@ -284,8 +284,8 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     << " 30 (used before last reduce): " << rstats.used_hist[3]
     << " 31 (used since): " << rstats.used_hist[4]);
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "dbclean"
             , cpu_time()-my_time
@@ -496,7 +496,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
 void ReduceDB::dump_sql_cl_data(
     const uint32_t cur_rst_type
 ) {
-    assert(solver->sqlStats);
+    assert(solver->sql_stats);
 
     reduceDB_called++;
     double my_time = cpu_time();
@@ -505,8 +505,8 @@ void ReduceDB::dump_sql_cl_data(
     //Set up features
     vector<ClOffset> all_learnt;
     uint32_t num_locked_for_data_gen = 0;
-    for(uint32_t lev = 0; lev < solver->longRedCls.size(); lev++) {
-        auto& cc = solver->longRedCls[lev];
+    for(uint32_t lev = 0; lev < solver->long_red_cls.size(); lev++) {
+        auto& cc = solver->long_red_cls[lev];
         for(const auto& offs: cc) {
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->get_removed());
@@ -537,8 +537,8 @@ void ReduceDB::dump_sql_cl_data(
 
 
     //Dump common features
-    solver->sqlStats->begin_transaction();
-    solver->sqlStats->reduceDB_common(
+    solver->sql_stats->begin_transaction();
+    solver->sql_stats->reduceDB_common(
         solver,
         reduceDB_called,
         all_learnt.size(),
@@ -557,7 +557,7 @@ void ReduceDB::dump_sql_cl_data(
             const bool locked = solver->clause_locked(*cl, offs);
             assert(stats_extra.orig_ID != 0);
             assert(stats_extra.orig_ID <= cl->stats.id);
-            solver->sqlStats->reduceDB(
+            solver->sql_stats->reduceDB(
                 solver
                 , locked
                 , cl
@@ -570,7 +570,7 @@ void ReduceDB::dump_sql_cl_data(
         //and the rankings/averages the tracked ones are dumped with are off
         stats_extra.reset_rdb_stats(cl->stats);
     }
-    solver->sqlStats->end_transaction();
+    solver->sql_stats->end_transaction();
 
     verb_print(1, "[sql] added to DB " << added_to_db
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
@@ -674,7 +674,7 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
 {
     load_predictors();
     const double my_time = cpu_time();
-    vector<ClOffset> all_learnt = solver->longRedCls[0];
+    vector<ClOffset> all_learnt = solver->long_red_cls[0];
     prepare_features(all_learnt); //sorts all_learnt, compacts red_stats_extra
     commdata = ReduceCommonData(
         total_props,
@@ -685,8 +685,8 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
         all_learnt.size(),
         cur_rst_type,
         median_data);
-    update_preds(solver->longRedCls[0]);
-    dump_pred_distrib(solver->longRedCls[0]);
+    update_preds(solver->long_red_cls[0]);
+    dump_pred_distrib(solver->long_red_cls[0]);
     verb_print(2, "[pred] predicted for " << all_learnt.size() << " cls"
         << solver->conf.print_times(cpu_time()-my_time));
 }

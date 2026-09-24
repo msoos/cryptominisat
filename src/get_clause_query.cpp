@@ -169,8 +169,8 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
 
     if (red) {
         for(uint32_t lev = 0; lev < 3; lev++)
-            while(at_lev[lev] < solver->longRedCls[lev].size()) {
-                const ClOffset offs = solver->longRedCls[lev][at_lev[lev]];
+            while(at_lev[lev] < solver->long_red_cls[lev].size()) {
+                const ClOffset offs = solver->long_red_cls[lev][at_lev[lev]];
                 const Clause* cl = solver->cl_alloc.ptr(offs);
                 if (cl->size() <= max_len
                     && cl->stats.glue <= max_glue
@@ -188,8 +188,8 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     }
 
     //Irred long clauses
-    while(!red && at < solver->longIrredCls.size()) {
-        const ClOffset offs = solver->longIrredCls[at];
+    while(!red && at < solver->long_irred_cls.size()) {
+        const ClOffset offs = solver->long_irred_cls[at];
         const Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->size() <= max_len) {
             if (!simplified) out = solver->clause_outer_numbered(*cl);

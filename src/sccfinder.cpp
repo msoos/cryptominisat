@@ -166,8 +166,8 @@ void SCCFinder::Stats::print_short(const Solver* solver) const
     << " BP " << bogoprops/(1000*1000) << "M"
     << solver->conf.print_times(cpu_time));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "scc"
             , cpu_time

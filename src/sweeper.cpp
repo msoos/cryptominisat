@@ -826,8 +826,8 @@ bool Sweeper::sweep()
         << " solves: " << solves
         << " flips: " << flips
         << solver->conf.print_times(time_used, time_out, time_remain));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver, "occ-sweep", time_used, time_out, time_remain);
     }
     frat_func_end();

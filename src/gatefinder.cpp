@@ -83,8 +83,8 @@ void GateFinder::find_or_gates_and_update_stats()
     const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
     run_stats.findGateTime = time_used;
     run_stats.find_gate_timeout = time_out;
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "gate find"
             , time_used

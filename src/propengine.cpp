@@ -629,7 +629,7 @@ bool PropEngine::prop_long_cl(
         *j++ = *i;
         return true;
     }
-    if (inprocess) propStats.bogoProps += 4;
+    if (inprocess) prop_stats.bogoProps += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
@@ -742,8 +742,8 @@ PropBy PropEngine::propagate_core()
         Watched* j = i;
         Watched* end = ws.end();
         //Also in search: effort budgets of inprocessing are relative to it
-        propStats.bogoProps += ws.size()/4 + 1;
-        propStats.propagations++;
+        prop_stats.bogoProps += ws.size()/4 + 1;
+        prop_stats.propagations++;
         simpDB_props--;
         for (; i != end; i++) {
             // propagate binary clause

@@ -57,21 +57,21 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthe
     run_stats.redWatchBased.clear();
     run_stats.irredWatchBased.clear();
 
-    if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, false))
+    if (!sub_str_all_cl_with_watch(solver->long_irred_cls, false, false))
         goto end;
 
-    if (solver->longRedCls[0].size() > 0
-        && !sub_str_all_cl_with_watch(solver->longRedCls[0], true, false)
+    if (solver->long_red_cls[0].size() > 0
+        && !sub_str_all_cl_with_watch(solver->long_red_cls[0], true, false)
     ) {
         goto end;
     }
 
     if (also_strengthen) {
-        if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, true))
+        if (!sub_str_all_cl_with_watch(solver->long_irred_cls, false, true))
             goto end;
 
-        if (solver->longRedCls[0].size() > 0
-            && !sub_str_all_cl_with_watch(solver->longRedCls[0], true, true)
+        if (solver->long_red_cls[0].size() > 0
+            && !sub_str_all_cl_with_watch(solver->long_red_cls[0], true, true)
         ) {
             goto end;
         }
@@ -118,8 +118,8 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
             findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_id()).setRed(false);
-            solver->binTri.redBins--;
-            solver->binTri.irredBins++;
+            solver->bin_tri.red_bins--;
+            solver->bin_tri.irred_bins++;
         }
         watch_based_data.subBin++;
         isSubsumed = true;
@@ -373,14 +373,14 @@ void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
         verb_print(1, "[distill-with-bin-ext]"
                 << solver->conf.print_times(time_used, time_out, time_remain));
     }
-    if (solver->sqlStats) {
+    if (solver->sql_stats) {
         std::stringstream ss;
         ss << "shorten"
         << (also_strengthen ? " and str" : "")
         << (red ? " red" : " irred")
         <<  " cls"
         ;
-        solver->sqlStats->time_passed(
+        solver->sql_stats->time_passed(
             solver
             , ss.str()
             , time_used

@@ -178,7 +178,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         << " matrices recovered from " << num_xors << " xors"
         << solver->conf.print_times(time_used, time_out));
 
-    if (solver->sqlStats) solver->sqlStats->time_passed_min( solver , "matrix find" , time_used);
+    if (solver->sql_stats) solver->sql_stats->time_passed_min( solver , "matrix find" , time_used);
     return solver->okay();
 }
 

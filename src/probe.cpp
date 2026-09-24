@@ -37,7 +37,7 @@ bool Solver::full_probe(const bool bin_only)
 
     const size_t orig_num_free_vars = solver->get_num_free_vars();
     double my_time = cpu_time();
-    int64_t start_bogoprops = solver->propStats.bogoProps;
+    int64_t start_bogoprops = solver->prop_stats.bogoProps;
     int64_t bogoprops_to_use =
         solver->conf.full_probe_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
@@ -52,7 +52,7 @@ bool Solver::full_probe(const bool bin_only)
     std::shuffle(vars.begin(), vars.end(), mtrand);
 
     for(auto const& v: vars) {
-        if ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use)
+        if ((int64_t)solver->prop_stats.bogoProps > start_bogoprops + bogoprops_to_use)
             break;
 
         uint32_t min_props;
@@ -79,8 +79,8 @@ bool Solver::full_probe(const bool bin_only)
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = 1.0-float_div(
-        (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
-    const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
+        (int64_t)solver->prop_stats.bogoProps-start_bogoprops, bogoprops_to_use);
+    const bool time_out = ((int64_t)solver->prop_stats.bogoProps > start_bogoprops + bogoprops_to_use);
 
     verb_print(1,
         "[full-probe]"
@@ -91,8 +91,8 @@ bool Solver::full_probe(const bool bin_only)
         << solver->conf.print_times(time_used, time_out, time_remain));
 
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "full-probe"
             , time_used
@@ -107,7 +107,7 @@ bool Solver::full_probe(const bool bin_only)
 
 template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_props)
 {
-    propStats.bogoProps+=2;
+    prop_stats.bogoProps+=2;
     const bool fr = frat->enabled();
 
     //Probe l

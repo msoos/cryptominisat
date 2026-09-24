@@ -617,11 +617,11 @@ inline void Searcher::rescale_cl_act()
 {
     // For STATS_NEEDED we rescale ALL
     #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)
-    for(ClOffset offs: longRedCls[2]) {
+    for(ClOffset offs: long_red_cls[2]) {
         cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
     }
     #else
-    for(auto& lrcs: longRedCls) {
+    for(auto& lrcs: long_red_cls) {
         for(ClOffset offs: lrcs) {
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }

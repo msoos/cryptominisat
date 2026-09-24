@@ -45,7 +45,7 @@ inline Lit orc_to_lit(int x) {
 static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) {
     cnf.clear();
     num_lits = 0;
-    for(auto const& off: s->longIrredCls) {
+    for(auto const& off: s->long_irred_cls) {
         Clause* cl = s->cl_alloc.ptr(off);
         for(auto const& l1: *cl) {
             num_lits++;
@@ -81,7 +81,7 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
 
     vector<vector<sspp::Lit>> cls;
     vector<sspp::Lit> tmp;
-    for(auto const& off: s->longIrredCls) {
+    for(auto const& off: s->long_irred_cls) {
         tmp.clear();
         Clause* cl = s->cl_alloc.ptr(off);
         for(auto const& l1: *cl) tmp.push_back(orclit(l1));
@@ -134,8 +134,8 @@ static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
             assert(false);
         }
     };
-    check_long(solver->longIrredCls, "irred");
-    for(const auto& tier: solver->longRedCls) check_long(tier, "red");
+    check_long(solver->long_irred_cls, "irred");
+    for(const auto& tier: solver->long_red_cls) check_long(tier, "red");
 
     for(uint32_t i = 0; i < solver->nVars()*2; i++) {
         const Lit l1 = Lit::toLit(i);
@@ -328,7 +328,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
 
 size_t Solver::num_long_irred_cls_anywhere() const
 {
-    size_t n = longIrredCls.size();
+    size_t n = long_irred_cls.size();
     if (occsimplifier != nullptr) n += occsimplifier->num_long_irred_linked_in();
     return n;
 }
@@ -349,9 +349,9 @@ void Solver::detach_and_free_all_irred_cls()
         }
         ws.resize(j);
     }
-    binTri.irredBins = 0;
-    for(auto& c: longIrredCls) free_cl(c);
-    longIrredCls.clear();
-    litStats.irredLits = 0;
+    bin_tri.irred_bins = 0;
+    for(auto& c: long_irred_cls) free_cl(c);
+    long_irred_cls.clear();
+    lit_stats.irred_lits = 0;
     cl_alloc.consolidate(this, true);
 }

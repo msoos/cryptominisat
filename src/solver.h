@@ -188,7 +188,7 @@ class Solver : public Searcher
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
         // Live irred long clauses across solver and (if active) OccSimplifier.
-        // During occ-* steps, OccSimplifier owns them and longIrredCls is empty.
+        // During occ-* steps, OccSimplifier owns them and long_irred_cls is empty.
         size_t get_num_long_irred_cls() const;
 
         // [simp-stats] bef/aft lines bracketing a preprocessing step. depth=0
@@ -200,7 +200,7 @@ class Solver : public Searcher
         vector<SimpStatsSnap> simp_stats_snaps;
         TimeTally time_tally;
         ///Long irred clause count that is right in both phases: during occur
-        ///simplification the clauses live in OccSimplifier, not in longIrredCls
+        ///simplification the clauses live in OccSimplifier, not in long_irred_cls
         size_t num_long_irred_cls_anywhere() const;
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
@@ -248,7 +248,7 @@ class Solver : public Searcher
         //Monotonic, deterministic measure of all propagation work so far
         uint64_t all_bogoprops() const {
             return sum_prop_stats.bogoProps + sum_prop_stats.otfHyperTime
-                + propStats.bogoProps + propStats.otfHyperTime + outside_search_props;
+                + prop_stats.bogoProps + prop_stats.otfHyperTime + outside_search_props;
         }
 
         bool prop_at_head() const;
@@ -305,9 +305,9 @@ class Solver : public Searcher
             , bool allow_change_order = false
         ) {
             if (red) {
-                binTri.redBins--;
+                bin_tri.red_bins--;
             } else {
-                binTri.irredBins--;
+                bin_tri.irred_bins--;
                 mark_elim_cand(lit1);
                 mark_elim_cand(lit2);
             }
@@ -597,7 +597,7 @@ inline const vector<std::pair<string, string> >& Solver::get_sql_tags() const
 
 inline const BinTriStats& Solver::getBinTriStats() const
 {
-    return binTri;
+    return bin_tri;
 }
 
 template<> inline vector<Lit> Solver::clause_outer_numbered(const vector<uint32_t>& cl) const {

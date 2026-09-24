@@ -274,8 +274,8 @@ void ClauseAllocator::consolidate(
         move_one_watchlist(ws, newDataStart, new_ptr);
     }
 
-    update_offsets(solver->longIrredCls, newDataStart, new_ptr);
-    for(auto& lredcls: solver->longRedCls) {
+    update_offsets(solver->long_irred_cls, newDataStart, new_ptr);
+    for(auto& lredcls: solver->long_red_cls) {
         update_offsets(lredcls, newDataStart, new_ptr);
     }
 
@@ -321,8 +321,8 @@ void ClauseAllocator::consolidate(
         cout << solver->conf.print_times(time_used)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "consolidate"
             , time_used

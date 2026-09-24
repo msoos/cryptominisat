@@ -38,7 +38,7 @@ HyperEngine::~HyperEngine() = default;
 Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 {
     timedOutPropagateFull = false;
-    propStats.otfHyperPropCalled++;
+    prop_stats.otfHyperPropCalled++;
 
     PropBy confl;
     assert(uselessBin.empty());
@@ -60,7 +60,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     start:
 
     //Early-abort if too much time was used (from prober)
-    if (propStats.otfHyperTime + propStats.bogoProps > timeout) {
+    if (prop_stats.otfHyperTime + prop_stats.bogoProps > timeout) {
         timedOutPropagateFull = true;
         return lit_Undef;
     }
@@ -69,7 +69,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++].lit;
         watch_subarray_const ws = watches[~p];
-        propStats.bogoProps += 1;
+        prop_stats.bogoProps += 1;
         for(const Watched *k = ws.begin(), *end = ws.end()
             ; k != end
             ; k++
@@ -81,7 +81,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
                 return analyzeFail(confl);
 
         }
-        propStats.bogoProps += ws.size()*4;
+        prop_stats.bogoProps += ws.size()*4;
     }
 
     //Propagate binary redundant
@@ -89,7 +89,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead].lit;
         watch_subarray_const ws = watches[~p];
-        propStats.bogoProps += 1;
+        prop_stats.bogoProps += 1;
         size_t done = 0;
 
         for(const Watched *k = ws.begin(), *end = ws.end(); k != end; k++, done++) {
@@ -102,21 +102,21 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
             if (ret == PROP_FAIL) {
                 return analyzeFail(confl);
             } else if (ret == PROP_SOMETHING) {
-                propStats.bogoProps += done*4;
+                prop_stats.bogoProps += done*4;
                 goto start;
             } else {
                 assert(ret == PROP_NOTHING);
             }
         }
         lBinQHead++;
-        propStats.bogoProps += done*4;
+        prop_stats.bogoProps += done*4;
     }
 
     ret = PROP_NOTHING;
     while (qhead < trail.size()) {
         const Lit p = trail[qhead].lit;
         watch_subarray ws = watches[~p];
-        propStats.bogoProps += 1;
+        prop_stats.bogoProps += 1;
 
         Watched* i = ws.begin();
         Watched* j = ws.begin();
@@ -138,7 +138,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
                 }
             }
         }
-        propStats.bogoProps += ws.size()*4;
+        prop_stats.bogoProps += ws.size()*4;
         while(i != end)
             *j++ = *i++;
         ws.shrink_(end-j);
@@ -146,12 +146,12 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
         if (ret == PROP_FAIL) {
             return analyzeFail(confl);
         } else if (ret == PROP_SOMETHING) {
-            propStats.bogoProps += ws.size()*4;
+            prop_stats.bogoProps += ws.size()*4;
             goto start;
         }
 
         qhead++;
-        propStats.bogoProps += ws.size()*4;
+        prop_stats.bogoProps += ws.size()*4;
     }
 
     return lit_Undef;
@@ -160,7 +160,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 //Add binary clause to deepest common ancestor
 void HyperEngine::add_hyper_bin(const Lit p, const Clause* cl)
 {
-    propStats.otfHyperTime += 2;
+    prop_stats.otfHyperTime += 2;
 
     //FRAT: level-0 units and the ID of the source clause, hinted last
     const auto src_cl_hints = [&]() {
@@ -234,7 +234,7 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     , Lit thisAncestor
     , bool thisStepRed
 ) {
-    propStats.otfHyperTime += 1;
+    prop_stats.otfHyperTime += 1;
     const PropBy& data = var_data[conflict.var()].reason;
 
     bool onlyIrred = !data.isRedStep();
@@ -243,7 +243,7 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
         return lit_Undef;
 
-    propStats.otfHyperTime += 1;
+    prop_stats.otfHyperTime += 1;
     bool second_is_deeper = false;
     bool ambivalent = true;
     if (use_depth_trick) {
@@ -316,7 +316,7 @@ bool HyperEngine::is_ancestor_of(
     , const bool onlyIrred
     , const Lit lookingForAncestor
 ) {
-    propStats.otfHyperTime += 1;
+    prop_stats.otfHyperTime += 1;
 
     //Was propagated at level 0 -- clauseCleaner will remove the clause
     if (lookingForAncestor == lit_Undef)
@@ -354,7 +354,7 @@ bool HyperEngine::is_ancestor_of(
         }
 
         thisAncestor = data.getAncestor();
-        propStats.otfHyperTime += 1;
+        prop_stats.otfHyperTime += 1;
     }
 
 
@@ -430,7 +430,7 @@ Lit HyperEngine::deepest_common_ancestor()
     while(foundLit == lit_Undef) {
         size_t num_lit_undef = 0;
         for (auto it = currAncestors.begin(), end = currAncestors.end(); it != end; ++it) {
-            propStats.otfHyperTime += 1;
+            prop_stats.otfHyperTime += 1;
 
             //We have reached the top of the graph, the other 'threads' that
             //are still stepping back will find which literal is the lowest
@@ -465,7 +465,7 @@ Lit HyperEngine::deepest_common_ancestor()
     assert(foundLit != lit_Undef);
 
     //Clear nodes we have visited
-    propStats.otfHyperTime += toClear.size()/2;
+    prop_stats.otfHyperTime += toClear.size()/2;
     for(const Lit lit: toClear) {
         seen[lit.toInt()] = 0;
     }
@@ -488,10 +488,10 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
     //However, if the hyper-bin was never added because only 1 literal was unbound at level 0 (i.e. through
     //clause cleaning, the clause would have been 2-long), then we don't do anything.
     if (!var_data[lit.var()].reason.getHyperbin()) {
-        propStats.otfHyperTime += 2;
+        prop_stats.otfHyperTime += 2;
         uselessBin.insert(clauseToRemove);
     } else if (!var_data[lit.var()].reason.getHyperbinNotAdded()) {
-        propStats.otfHyperTime += needToAddBinClause.size()/4;
+        prop_stats.otfHyperTime += needToAddBinClause.size()/4;
         std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
 
         //In case this is called after a backtrack to decisionLevel 1
@@ -499,7 +499,7 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
         //'needToAddBinClause'. When called from probing, the IF below
         //must ALWAYS be true
         if (it != needToAddBinClause.end()) {
-            propStats.otfHyperTime += 2;
+            prop_stats.otfHyperTime += 2;
             //FRAT: its add was emitted at creation, delete it
             *frat << del << it->get_id() << it->getLit1() << it->getLit2() << fin;
             needToAddBinClause.erase(it);
@@ -551,7 +551,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             //if (!onlyIrred) return PropBy();
 
         } else if (remove != lit_Undef) {
-            propStats.otfHyperTime += 2;
+            prop_stats.otfHyperTime += 2;
             uselessBin.insert(BinaryClause(~p, lit, k->red(), k->get_id()));
         }
     }
@@ -573,7 +573,7 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     }
 
     //Dereference pointer
-    propStats.bogoProps += 4;
+    prop_stats.bogoProps += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 

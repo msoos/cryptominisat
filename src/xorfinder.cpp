@@ -163,8 +163,8 @@ bool XorFinder::find_xors() {
     if (solver->conf.verbosity) run_stats.print_short(solver, time_remain);
     global_stats += run_stats;
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "xor-find"
             , cpu_time() - my_time

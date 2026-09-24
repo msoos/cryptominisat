@@ -111,7 +111,7 @@ void SatZillaFeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func
 
 void SatZillaFeaturesCalc::fill_vars_cls()
 {
-    satzilla_feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins;
+    satzilla_feat.numClauses = solver->long_irred_cls.size() + solver->bin_tri.irred_bins;
     var_occs.clear();
     var_occs.resize(solver->nVars(), 0);
     auto func_each_cl = [&](unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
@@ -127,13 +127,13 @@ void SatZillaFeaturesCalc::fill_vars_cls()
     if (satzilla_feat.numClauses > 0) {
         satzilla_feat.var_cl_ratio = satzilla_feat.numVars / satzilla_feat.numClauses;
         satzilla_feat.horn /= satzilla_feat.numClauses;
-        satzilla_feat.binary = float_div(solver->binTri.irredBins, satzilla_feat.numClauses);
+        satzilla_feat.binary = float_div(solver->bin_tri.irred_bins, satzilla_feat.numClauses);
     }
 }
 
 void SatZillaFeaturesCalc::calculate_red_distributions()
 {
-    const auto& clauses = solver->longRedCls[0];
+    const auto& clauses = solver->long_red_cls[0];
     if (clauses.empty()) return;
 
     double glue_mean = 0;
@@ -171,8 +171,8 @@ SatZillaFeatures SatZillaFeaturesCalc::extract()
         << solver->conf.print_times(time_used)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "satzilla"
             , time_used

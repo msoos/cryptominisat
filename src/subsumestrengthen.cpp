@@ -222,8 +222,8 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     << stats_line_percent(wenThrough, simplifier->clauses.size())
     << "%)"
     << solver->conf.print_times(time_used, time_out, time_remain));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "occ-backw-sub-long-w-long"
             , time_used
@@ -282,8 +282,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
     << stats_line_percent(wenThrough, simplifier->clauses.size())
     << "%)"
     << solver->conf.print_times(time_used, time_out, time_remain));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "occ-backw-sub-str-long-w-long"
             , time_used
@@ -441,8 +441,8 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
             << " str: " << stat.str
             << " 0-depth-assigns: " << solver->trail_size() - origTrailSize
             << solver->conf.print_times(time_used, time_out, time_remain));
-        if (solver->sqlStats) {
-            solver->sqlStats->time_passed(
+        if (solver->sql_stats) {
+            solver->sql_stats->time_passed(
                 solver
                 , "occ-backw-sub-str-w-added-long"
                 , time_used
@@ -847,8 +847,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         << " 0-depth-assigns: " << solver->trail_size() - origTrailSize
         << solver->conf.print_times(time_used, time_out, time_remain));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "occ-backw-sub-str-long-w-bins"
             , time_used

@@ -231,8 +231,8 @@ bool VarReplacer::perform_replace() {
         if (!replaceImplicit()) return;
         assert(solver->watches.get_smudged_list().empty());
         assert(delayed_attach_or_free.empty());
-        if (!replace_set(solver->longIrredCls)) return;
-        for(auto& lredcls: solver->longRedCls) if (!replace_set(lredcls)) return;
+        if (!replace_set(solver->long_irred_cls)) return;
+        for(auto& lredcls: solver->long_red_cls) if (!replace_set(lredcls)) return;
         replace_bnns();
         solver->clean_occur_from_removed_clauses_only_smudged();
         attach_delayed_attach();
@@ -267,8 +267,8 @@ bool VarReplacer::perform_replace() {
         else
             run_stats.print_short(solver);
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "vrep"
             , time_used
@@ -499,10 +499,10 @@ inline void VarReplacer::updateBin(
 void VarReplacer::updateStatsFromImplStats()
 {
     assert(impl_tmp_stats.removedRedBin % 2 == 0);
-    solver->binTri.redBins -= impl_tmp_stats.removedRedBin/2;
+    solver->bin_tri.red_bins -= impl_tmp_stats.removedRedBin/2;
 
     assert(impl_tmp_stats.removedIrredBin % 2 == 0);
-    solver->binTri.irredBins -= impl_tmp_stats.removedIrredBin/2;
+    solver->bin_tri.irred_bins -= impl_tmp_stats.removedIrredBin/2;
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->check_implicit_stats();
@@ -727,9 +727,9 @@ bool VarReplacer::handleUpdatedClause(
 
     run_stats.bogoprops += 10;
     if (c.red()) {
-        solver->litStats.redLits -= origSize;
+        solver->lit_stats.red_lits -= origSize;
     } else {
-        solver->litStats.irredLits -= origSize;
+        solver->lit_stats.irred_lits -= origSize;
     }
     delayed_attach_or_free.push_back(&c);
 
@@ -783,9 +783,9 @@ bool VarReplacer::handleUpdatedClause(
         if (at != nullptr && at2 != nullptr) {
             delayed_attach_or_free.pop_back();
             if (c.red()) {
-                solver->litStats.redLits += c.size();
+                solver->lit_stats.red_lits += c.size();
             } else {
-                solver->litStats.irredLits += c.size();
+                solver->lit_stats.irred_lits += c.size();
             }
         } else {
             c.set_removed();

@@ -61,9 +61,9 @@ void SubsumeImplicit::try_subsume_bin(
             touched->touch(i->lit2());
         }
         if (i->red()) {
-            solver->binTri.redBins--;
+            solver->bin_tri.red_bins--;
         } else {
-            solver->binTri.irredBins--;
+            solver->bin_tri.irred_bins--;
             solver->mark_elim_cand(lit);
             solver->mark_elim_cand(i->lit2());
         }
@@ -152,8 +152,8 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     if (solver->conf.verbosity) {
         run_stats.print_short(solver, caller.c_str());
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , std::string("subsume implicit")+caller
             , time_used

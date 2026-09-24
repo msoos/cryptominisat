@@ -160,10 +160,10 @@ void CNF::save_on_var_memory()
     watches.consolidate();
     gwatches.resize(nVars());
 
-    for(auto& l: longRedCls) {
+    for(auto& l: long_red_cls) {
         l.shrink_to_fit();
     }
-    longIrredCls.shrink_to_fit();
+    long_irred_cls.shrink_to_fit();
 
     seen.resize(nVars()*2);
     seen.shrink_to_fit();
@@ -240,8 +240,8 @@ uint64_t CNF::mem_used_longclauses() const
 {
     uint64_t mem = 0;
     mem += cl_alloc.mem_used();
-    mem += longIrredCls.capacity()*sizeof(ClOffset);
-    for(auto& l: longRedCls) {
+    mem += long_irred_cls.capacity()*sizeof(ClOffset);
+    for(auto& l: long_red_cls) {
         mem += l.capacity()*sizeof(ClOffset);
     }
     return mem;
@@ -336,7 +336,7 @@ size_t CNF::mem_used() const
 {
     size_t mem = 0;
     mem += sizeof(conf);
-    mem += sizeof(binTri);
+    mem += sizeof(bin_tri);
     mem += seen.capacity()*sizeof(uint16_t);
     mem += seen2.capacity()*sizeof(uint8_t);
     mem += toClear.capacity()*sizeof(Lit);
@@ -345,8 +345,8 @@ size_t CNF::mem_used() const
 }
 
 void CNF::check_all_clause_attached() const {
-    check_all_clause_attached(longIrredCls);
-    for(const vector<ClOffset>& l: longRedCls) check_all_clause_attached(l);
+    check_all_clause_attached(long_irred_cls);
+    for(const vector<ClOffset>& l: long_red_cls) check_all_clause_attached(l);
     check_all_xorclause_attached();
 }
 
@@ -517,13 +517,13 @@ void CNF::find_all_attached(const vector<ClOffset>& cs) const {
 
 bool CNF::find_clause(const ClOffset offset) const
 {
-    for(const auto& off: longIrredCls) if (off == offset) return true;
-    for(const auto& lredcls: longRedCls) for (const auto& off: lredcls) if (off == offset) return true;
+    for(const auto& off: long_irred_cls) if (off == offset) return true;
+    for(const auto& lredcls: long_red_cls) for (const auto& off: lredcls) if (off == offset) return true;
     return false;
 }
 
 void CNF::check_wrong_attach() const {
-    for(const auto& lredcls: longRedCls) {
+    for(const auto& lredcls: long_red_cls) {
         for (const auto& off: lredcls) {
             const Clause& cl = *cl_alloc.ptr(off);
             for (uint32_t i = 0; i < cl.size(); i++) {
@@ -604,7 +604,7 @@ uint64_t CNF::count_lits(
 
 void CNF::print_all_clauses() const
 {
-    for(const auto& off : longIrredCls) {
+    for(const auto& off : long_irred_cls) {
         Clause* cl = cl_alloc.ptr(off);
         cout << "Normal clause offs " << off << " cl: " << *cl << endl;
     }
@@ -626,12 +626,12 @@ void CNF::print_all_clauses() const
 
 bool CNF::no_marked_clauses() const
 {
-    for(ClOffset offset: longIrredCls) {
+    for(ClOffset offset: long_irred_cls) {
         Clause* cl = cl_alloc.ptr(offset);
         assert(!cl->stats.marked_clause);
     }
 
-    for(auto& lredcls: longRedCls) {
+    for(auto& lredcls: long_red_cls) {
         for(ClOffset offset: lredcls) {
             Clause* cl = cl_alloc.ptr(offset);
             assert(!cl->stats.marked_clause);
@@ -646,7 +646,7 @@ void CNF::add_frat(FILE* os) {
     frat = new FratFile<false>(inter_to_outerMain);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sumConflicts);
-    frat->set_sqlstats_ptr(sqlStats);
+    frat->set_sqlstats_ptr(sql_stats);
 }
 
 void CNF::add_xlrup(FILE* os) {
@@ -675,7 +675,7 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
         }
     }
 
-    for(const auto& offs: longIrredCls) {
+    for(const auto& offs: long_irred_cls) {
         Clause* cl = cl_alloc.ptr(offs);
         for(const auto& l: *cl) {
             inc[l.toInt()]++;
@@ -711,7 +711,7 @@ vector<uint32_t> CNF::get_outside_var_incidence()
         }
     }
 
-    for(const auto& offs: longIrredCls) {
+    for(const auto& offs: long_irred_cls) {
         Clause* cl = cl_alloc.ptr(offs);
         for(const auto& l: *cl) {
             inc[l.var()]++;
@@ -742,14 +742,14 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
         }
     }
 
-    for(const auto& offs: longIrredCls) {
+    for(const auto& offs: long_irred_cls) {
         Clause* cl = cl_alloc.ptr(offs);
         for(const auto& l: *cl) {
             inc[l.var()]++;
         }
     }
 
-    for(const auto& reds: longRedCls) {
+    for(const auto& reds: long_red_cls) {
         for(const auto& offs: reds) {
             Clause* cl = cl_alloc.ptr(offs);
             for(const auto& l: *cl) {

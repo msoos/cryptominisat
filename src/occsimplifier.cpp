@@ -307,8 +307,8 @@ void OccSimplifier::unlink_clause(
     }
     cl.set_removed();
 
-    if (cl.red()) solver->litStats.redLits -= cl.size();
-    else solver->litStats.irredLits -= cl.size();
+    if (cl.red()) solver->lit_stats.red_lits -= cl.size();
+    else solver->lit_stats.irred_lits -= cl.size();
 
     if (!only_set_is_removed) solver->free_cl(&cl);
     else cl_to_free_later.push_back(offset);
@@ -358,8 +358,8 @@ bool OccSimplifier::clean_clause(
     cl.recalc_abst_if_needed();
 
     //Update lits stat
-    if (cl.red()) solver->litStats.redLits -= i-j;
-    else solver->litStats.irredLits -= i-j;
+    if (cl.red()) solver->lit_stats.red_lits -= i-j;
+    else solver->lit_stats.irred_lits -= i-j;
 
     if (satisfied) {
         (*solver->frat) << findelay;
@@ -423,8 +423,8 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Remove all lits from stats
     //we will re-attach the clause either way
-    if (cl.red()) solver->litStats.redLits -= cl.size();
-    else solver->litStats.irredLits -= cl.size();
+    if (cl.red()) solver->lit_stats.red_lits -= cl.size();
+    else solver->lit_stats.irred_lits -= cl.size();
 
     Lit *i = cl.begin();
     Lit *j = i;
@@ -642,8 +642,8 @@ void OccSimplifier::add_back_to_solver() {
 
         if (check_varelim_when_adding_back_cl(cl)) {
             //The clause wasn't linked in but needs removal now
-            if (cl->red()) solver->litStats.redLits -= cl->size();
-            else solver->litStats.irredLits -= cl->size();
+            if (cl->red()) solver->lit_stats.red_lits -= cl->size();
+            else solver->lit_stats.irred_lits -= cl->size();
             *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
             continue;
@@ -656,10 +656,10 @@ void OccSimplifier::add_back_to_solver() {
             solver->attachClause(*cl);
             if (cl->red()) {
                 assert(cl->stats.glue > 0);
-                assert(cl->stats.which_red_array < solver->longRedCls.size());
-                solver->longRedCls[cl->stats.which_red_array].push_back(offs);
+                assert(cl->stats.which_red_array < solver->long_red_cls.size());
+                solver->long_red_cls[cl->stats.which_red_array].push_back(offs);
             } else {
-                solver->longIrredCls.push_back(offs);
+                solver->long_irred_cls.push_back(offs);
             }
         } else {
             solver->free_cl(cl);
@@ -799,8 +799,8 @@ void OccSimplifier::eliminate_xor_vars()
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_xor_varelim_time_limit);
     verb_print(1,"[occ-xor-bve] elimed: " << elimed << solver->conf.print_times(time_used, time_out));
-    if (solver->sqlStats)
-        solver->sqlStats->time_passed( solver , "xor-bve" , time_used , time_out , time_remain);
+    if (solver->sql_stats)
+        solver->sql_stats->time_passed( solver , "xor-bve" , time_used , time_out , time_remain);
     limit_to_decrease = old_limit_to_decrease;
     assert(solver->okay());
     SLOW_DEBUG_DO(solver->check_no_removed_or_freed_cl_in_watch());
@@ -847,8 +847,8 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     const double time_remain =  float_div(*limit_to_decrease, orig_empty_varelim_time_limit);
     verb_print(1, "[occ-empty-res] Empty resolvent elimed: " << var_elimed
         << solver->conf.print_times(time_used, time_out));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "empty resolvent"
             , time_used
@@ -958,14 +958,14 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             if (w.isBin()) {
                 removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_id());
                 if (w.red()) {
-                    solver->binTri.redBins--;
+                    solver->bin_tri.red_bins--;
                 } else {
                     n_occurs[l.toInt()]--;
                     n_occurs[w.lit2().toInt()]--;
                     elim_calc_need_update.touch(w.lit2());
                     removed_cl_with_var.touch(w.lit2());
                     solver->mark_elim_cand(w.lit2());
-                    solver->binTri.irredBins--;
+                    solver->bin_tri.irred_bins--;
                 }
                 *(solver->frat) << del << w.get_id() << l << w.lit2() << fin;
                 continue;
@@ -1174,7 +1174,7 @@ bool OccSimplifier::eliminate_vars()
     int64_t last_elimed = 1;
     bool round_complete = false;
     uint32_t bve_round = 0;
-    uint32_t n_cls_last  = sum_irred_cls_longs() + solver->binTri.irredBins;
+    uint32_t n_cls_last  = sum_irred_cls_longs() + solver->bin_tri.irred_bins;
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
 
@@ -1189,7 +1189,7 @@ bool OccSimplifier::eliminate_vars()
         verb_print(2, "x n vars       : " << solver->get_num_free_vars());
         #ifdef DEBUG_VARELIM
         verb_print(2, "x cls long     : " << sum_irred_cls_longs());
-        verb_print(2, "x cls bin      : " << solver->binTri.irredBins);
+        verb_print(2, "x cls bin      : " << solver->bin_tri.irred_bins);
         verb_print(2, "x long cls lits: " << sum_irred_cls_longs_lits());
         #endif
 
@@ -1288,7 +1288,7 @@ bool OccSimplifier::eliminate_vars()
             verb_print(2, "x n vars       : " << solver->get_num_free_vars());
             #ifdef DEBUG_VARELIM
             verb_print(2, "x cls long     : " << sum_irred_cls_longs());
-            verb_print(2, "x cls bin      : " << solver->binTri.irredBins);
+            verb_print(2, "x cls bin      : " << solver->bin_tri.irred_bins);
             verb_print(2, "x long cls lits: " << sum_irred_cls_longs_lits());
             #endif
             verb_print(2, "another run ?");
@@ -1300,7 +1300,7 @@ bool OccSimplifier::eliminate_vars()
         #endif
         solver->clean_occur_from_removed_clauses_only_smudged();
 
-        uint32_t n_cls_now   = sum_irred_cls_longs() + solver->binTri.irredBins;
+        uint32_t n_cls_now   = sum_irred_cls_longs() + solver->bin_tri.irred_bins;
         uint32_t n_vars_now  = solver->get_num_free_vars();
         double cl_inc_rate = 2.0;
         if (n_cls_last != 0) {
@@ -1380,7 +1380,7 @@ bool OccSimplifier::eliminate_vars()
 
     #ifdef DEBUG_VARELIM
     verb_print(1, "x cls long     : " << sum_irred_cls_longs());
-    verb_print(1, "x cls bin      : " << solver->binTri.irredBins);
+    verb_print(1, "x cls bin      : " << solver->bin_tri.irred_bins);
     verb_print(1, "x long cls lits: " << sum_irred_cls_longs_lits());
     #endif
 
@@ -1408,8 +1408,8 @@ end:
         << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << (time_remain*100.0) << "%");
     if (solver->conf.verbosity) run_stats.print_extra_times(solver->conf.prefix.c_str());
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "bve"
             , time_used
@@ -1441,8 +1441,8 @@ void OccSimplifier::promote_red_to_irred(Clause& cl)
     assert(cl.red());
     STATS_DO(solver->stats_del_cl(&cl));
     cl.make_irred();
-    solver->litStats.redLits -= cl.size();
-    solver->litStats.irredLits += cl.size();
+    solver->lit_stats.red_lits -= cl.size();
+    solver->lit_stats.irred_lits += cl.size();
     if (!cl.get_occur_linked()) {
         link_in_clause(cl);
     } else {
@@ -1456,8 +1456,8 @@ void OccSimplifier::promote_red_to_irred(Clause& cl)
 
 void OccSimplifier::promote_red_bin_to_irred(const vector<Lit>& lits, int32_t id)
 {
-    solver->binTri.redBins--;
-    solver->binTri.irredBins++;
+    solver->bin_tri.red_bins--;
+    solver->bin_tri.irred_bins++;
     for (const Lit l : lits) {
         n_occurs[l.toInt()]++;
         elim_calc_need_update.touch(l);
@@ -1475,8 +1475,8 @@ bool OccSimplifier::fill_occur_and_print_stats()
     sanityCheckElimedVars();
     const double linkInTime = cpu_time() - my_time;
     run_stats.linkInTime += linkInTime;
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "occur build"
             , linkInTime
@@ -2042,8 +2042,8 @@ bool OccSimplifier::cl_rem_with_or_gates()
     verb_print(1, "[occ-cl-rem-gates] removed: " << removed << " T: " << cpu_time()-my_time);
 
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "occ-cl-rem-gates"
             , time_used
@@ -2158,7 +2158,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 cl->strengthen(l);
             }
 
-            solver->litStats.irredLits-=gate.lits.size();
+            solver->lit_stats.irred_lits-=gate.lits.size();
             if (!contains_rhs) {
                 cl->enlarge_one();
                 (*cl)[cl->size()-1] = gate.rhs;
@@ -2166,7 +2166,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 solver->watches[gate.rhs].push(Watched(off, cl->abst));
                 n_occurs[gate.rhs.toInt()]++;
                 elim_calc_need_update.touch(gate.rhs);
-                solver->litStats.irredLits++;
+                solver->lit_stats.irred_lits++;
                 std::sort(cl->begin(), cl->end());
             } else {
                 cl->recalc_abstraction();
@@ -2201,8 +2201,8 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     assert(limit_to_decrease == &gate_based_litrem_time_limit);
     limit_to_decrease = old_limit_to_decrease;
 
-    if (solver->sqlStats)
-        solver->sqlStats->time_passed_min( solver , "occ-gate-based-lit-rem" , time_used);
+    if (solver->sql_stats)
+        solver->sql_stats->time_passed_min( solver , "occ-gate-based-lit-rem" , time_used);
 
     return solver->okay();
 }
@@ -2340,7 +2340,7 @@ bool OccSimplifier::setup() {
 
     //If too many clauses, don't do it
     if (solver->get_num_long_cls() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
-        || solver->litStats.irredLits > 100ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
+        || solver->lit_stats.irred_lits > 100ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     ) {
         verb_print(1, "[occ] will not link in occur, CNF has too many clauses/irred lits");
         return false;
@@ -2488,8 +2488,8 @@ bool OccSimplifier::ternary_res()
     << " sub: " << sub1_ret.sub
     << " str: " << sub1_ret.str
     << solver->conf.print_times(time_used, time_out, time_remain));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "ternary res"
             , time_used
@@ -2564,7 +2564,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
             newCl->stats.is_tracked = to_track;
             if (to_track) {
                 stats_extra.orig_ID = newCl->stats.id;
-                if (solver->sqlStats) solver->sqlStats->update_id(newCl->stats.id, newCl->stats.id);
+                if (solver->sql_stats) solver->sql_stats->update_id(newCl->stats.id, newCl->stats.id);
             }
             newCl->stats.locked_for_data_gen = to_track &&
                 (double)rnd_uint(solver->mtrand,100000)/100000.0  < solver->conf.lock_for_data_gen_ratio;
@@ -2790,7 +2790,7 @@ bool OccSimplifier::fill_occur() {
     }
 
     //Add irredundant to occur
-    uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
+    uint64_t memUsage = calc_mem_usage_of_occur(solver->long_irred_cls);
     print_mem_usage_of_occur(memUsage);
     if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
         verb_print(1, "[occ] Memory usage of occur is too high, unlinking and skipping occur");
@@ -2800,14 +2800,14 @@ bool OccSimplifier::fill_occur() {
     }
 
     link_in_data_irred = link_in_clauses(
-        solver->longIrredCls
+        solver->long_irred_cls
         , true //add to occur list
         , numeric_limits<uint32_t>::max()
         , numeric_limits<int64_t>::max()
     );
-    solver->longIrredCls.clear();
-    verb_print(1, "[occ] Linked in IRRED BIN by default: " << solver->binTri.irredBins);
-    verb_print(1, "[occ] Linked in RED   BIN by default: " << solver->binTri.redBins);
+    solver->long_irred_cls.clear();
+    verb_print(1, "[occ] Linked in IRRED BIN by default: " << solver->bin_tri.irred_bins);
+    verb_print(1, "[occ] Linked in RED   BIN by default: " << solver->bin_tri.red_bins);
     print_linkin_data(link_in_data_irred);
 
     //Add redundant to occur. Only the likely-kept ones: linking in the
@@ -2815,7 +2815,7 @@ bool OccSimplifier::fill_occur() {
     if (solver->conf.maxRedLinkInSize > 0) {
         vector<ClOffset> occ_link;
         vector<ClOffset> rest;
-        for(const ClOffset offs: solver->longRedCls[0]) {
+        for(const ClOffset offs: solver->long_red_cls[0]) {
             const Clause* cl = solver->cl_alloc.ptr(offs);
             if (solver->reduceDB->likely_to_be_kept(*cl)) occ_link.push_back(offs);
             else rest.push_back(offs);
@@ -2836,14 +2836,14 @@ bool OccSimplifier::fill_occur() {
             , solver->conf.maxRedLinkInSize
             , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
         );
-        solver->longRedCls[0] = rest;
+        solver->long_red_cls[0] = rest;
     }
 
     //Don't really link in the rest
-    for(auto& lredcls: solver->longRedCls) {
+    for(auto& lredcls: solver->long_red_cls) {
         link_in_clauses(lredcls, false, 0, 0);
     }
-    for(auto& lredcls: solver->longRedCls) {
+    for(auto& lredcls: solver->long_red_cls) {
         lredcls.clear();
     }
 
@@ -2978,8 +2978,8 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
     //Update global stats
     const double time_used = cpu_time() - my_time;
     run_stats.finalCleanupTime += time_used;
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "occur cleanup"
             , time_used
@@ -3003,7 +3003,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
 
     //Let's just clean up ourselves a bit. clauses.clear() must run before
     //the occ-finishup AFTER line: add_back_to_solver() leaves the same
-    //offsets in both OccSimplifier::clauses and solver->longIrredCls, so
+    //offsets in both OccSimplifier::clauses and solver->long_irred_cls, so
     //get_num_long_irred_cls() would double-count until we drop the former.
     clauses.clear();
     solver->simp_stats_after("occ-finishup");
@@ -4840,8 +4840,8 @@ bool OccSimplifier::all_occ_based_lit_rem()
         << solver->conf.print_times(time_used)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "occ based lit rem"
             , time_used
@@ -5468,8 +5468,8 @@ bool OccSimplifier::remove_literal(
     } else {
         removeWCl(solver->watches[toRemoveLit], offset);
     }
-    if (solver->cl_alloc.ptr(offset)->red()) solver->litStats.redLits--;
-    else solver->litStats.irredLits--;
+    if (solver->cl_alloc.ptr(offset)->red()) solver->lit_stats.red_lits--;
+    else solver->lit_stats.irred_lits--;
 
     return clean_clause(offset, only_set_is_removed);
 }

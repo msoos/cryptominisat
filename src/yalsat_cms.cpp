@@ -123,7 +123,7 @@ bool CMS_yalsat::init_problem() {
         }
     }
 
-    for(const ClOffset offs: solver->longIrredCls) {
+    for(const ClOffset offs: solver->long_irred_cls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
         assert(!cl->get_removed());
@@ -193,7 +193,7 @@ int64_t CMS_yalsat::count_unsat(int64_t& cnf, int64_t& xr) const {
             if (!cl_sat(bin)) cnf++;
         }
     }
-    for(const ClOffset offs: solver->longIrredCls)
+    for(const ClOffset offs: solver->long_irred_cls)
         if (!cl_sat(*solver->cl_alloc.ptr(offs))) cnf++;
 
     auto xor_sat = [&](const Xor& x) {

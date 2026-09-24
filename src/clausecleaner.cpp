@@ -234,8 +234,8 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
             solver->watches.smudge(origLit1);
             solver->watches.smudge(origLit2);
             cl.set_removed();
-            if (red) solver->litStats.redLits -= origSize;
-            else solver->litStats.irredLits -= origSize;
+            if (red) solver->lit_stats.red_lits -= origSize;
+            else solver->lit_stats.irred_lits -= origSize;
             delayed_free.push_back(off);
         } else {
             cs[kept++] = off;
@@ -311,9 +311,9 @@ bool ClauseCleaner::clean_clause(Clause& cl)
             return true;
         } else {
             if (cl.red()) {
-                solver->litStats.redLits -= i-j;
+                solver->lit_stats.red_lits -= i-j;
             } else {
-                solver->litStats.irredLits -= i-j;
+                solver->lit_stats.irred_lits -= i-j;
             }
         }
     }
@@ -334,8 +334,8 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 
     assert(remNonLBin % 2 == 0);
     assert(remLBin % 2 == 0);
-    solver->binTri.irredBins -= remNonLBin/2;
-    solver->binTri.redBins -= remLBin/2;
+    solver->bin_tri.irred_bins -= remNonLBin/2;
+    solver->bin_tri.red_bins -= remLBin/2;
 }
 
 void ClauseCleaner::clean_clauses_pre()
@@ -380,8 +380,8 @@ bool ClauseCleaner::remove_and_clean_all() {
         clean_bnns_inter(solver->bnns);
         if (!solver->okay()) break;
 
-        clean_clauses_inter(solver->longIrredCls);
-        for(auto& lredcls: solver->longRedCls) clean_clauses_inter(lredcls);
+        clean_clauses_inter(solver->long_irred_cls);
+        for(auto& lredcls: solver->long_red_cls) clean_clauses_inter(lredcls);
         solver->clean_occur_from_removed_clauses_only_smudged();
         clean_clauses_post();
         clean_bnns_post();

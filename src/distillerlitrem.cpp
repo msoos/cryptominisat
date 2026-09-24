@@ -49,7 +49,7 @@ bool DistillerLitRem::distill_lit_rem()
     if (!solver->remove_and_clean_all()) {
         goto end;
     }
-    if (!distill_long_cls_all(solver->longIrredCls, 1)) {
+    if (!distill_long_cls_all(solver->long_irred_cls, 1)) {
         goto end;
     }
 
@@ -95,7 +95,7 @@ bool DistillerLitRem::go_through_clauses(
         }
 
         //if done enough, stop doing it
-        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+        if ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
             run_stats.timeOut++;
@@ -160,7 +160,7 @@ bool DistillerLitRem::distill_long_cls_all(
         5*1000LL*1000ULL
         *solver->conf.global_timeout_multiplier;
 
-    if (solver->litStats.irredLits + solver->litStats.redLits <
+    if (solver->lit_stats.irred_lits + solver->lit_stats.red_lits <
             (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
     ) {
         maxNumProps *=2;
@@ -169,7 +169,7 @@ bool DistillerLitRem::distill_long_cls_all(
     orig_maxNumProps = maxNumProps;
 
     //stats setup
-    oldBogoProps = solver->propStats.bogoProps;
+    oldBogoProps = solver->prop_stats.bogoProps;
     run_stats.potentialClauses += offs.size();
     run_stats.numCalled += 1;
 
@@ -188,10 +188,10 @@ bool DistillerLitRem::distill_long_cls_all(
     }
 
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
+        maxNumProps - ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "distill-litrem"
             , run_stats.time_used

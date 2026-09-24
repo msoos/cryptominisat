@@ -202,8 +202,8 @@ bool InTree::intree_probe() {
         << " used(M): " << (double)used/1e6
         << solver->conf.print_times(time_used,  time_out, time_remain));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed( solver , "intree" , time_used , time_out , time_remain);
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed( solver , "intree" , time_used , time_out , time_remain);
     }
 
     frat_func_end();
@@ -215,7 +215,7 @@ bool InTree::intree_probe() {
 
 int64_t InTree::used_props() const
 {
-    return solver->propStats.bogoProps + solver->propStats.otfHyperTime;
+    return solver->prop_stats.bogoProps + solver->prop_stats.otfHyperTime;
 }
 
 void InTree::unmark_all_bins()
@@ -316,8 +316,8 @@ bool InTree::handle_lit_popped_from_queue(
             uint64_t max_hyper_time = numeric_limits<uint64_t>::max();
             if (!solver->frat->enabled()) {
                 max_hyper_time =
-                solver->propStats.otfHyperTime
-                + solver->propStats.bogoProps
+                solver->prop_stats.otfHyperTime
+                + solver->prop_stats.bogoProps
                 + 1600ULL*1000ULL*1000ULL;
             }
 

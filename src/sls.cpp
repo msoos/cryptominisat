@@ -35,7 +35,7 @@ int64_t SLS::effort() const
 {
     //sumPropagations was only ever incremented in the removed BRANCH stats
     //builds, so this was always walkmineff
-    const uint64_t props = solver->sum_prop_stats.propagations + solver->propStats.propagations;
+    const uint64_t props = solver->sum_prop_stats.propagations + solver->prop_stats.propagations;
     int64_t limit = (double)props * 1e-3 * solver->conf.walkreleff;
     limit = std::max<int64_t>(limit, solver->conf.walkmineff);
     limit = std::min<int64_t>(limit, solver->conf.walkmaxeff);
@@ -98,7 +98,7 @@ void SLS::run(const int64_t mems)
         assert(check == minimum); (void)check;
         verb_print(2, "[sls] unsat: " << cnf << " CNF cls, " << xr << " XORs");
     }
-    if (solver->sqlStats) solver->sqlStats->time_passed_min(solver, "sls", time_used);
+    if (solver->sql_stats) solver->sql_stats->time_passed_min(solver, "sls", time_used);
 }
 
 vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num)
@@ -135,8 +135,8 @@ bool SLS::enough_mem() const
 uint64_t SLS::approx_mem_needed() const
 {
     const uint32_t numvars = solver->nVars();
-    uint32_t numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
-    uint64_t numliterals = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    uint32_t numclauses = solver->long_irred_cls.size() + solver->bin_tri.irred_bins;
+    uint64_t numliterals = solver->lit_stats.irred_lits + solver->bin_tri.irred_bins*2;
     for(const auto& x: solver->xorclauses) { numclauses++; numliterals += x.size(); }
 
     uint64_t needed = 0;

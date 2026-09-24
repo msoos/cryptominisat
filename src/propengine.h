@@ -202,7 +202,7 @@ public:
     template<bool inprocess> bool propagate_occur(int64_t* limit_to_decrease);
     void reverse_prop(const Lit l);
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
-    PropStats propStats;
+    PropStats prop_stats;
     template<bool inprocess>
     void enqueue(const Lit p, const uint32_t level,
                  const PropBy from = PropBy(), const bool do_unit_frat = true);
@@ -543,7 +543,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     SLOW_DEBUG_DO(assert(var_data[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
-    STATS_DO(if (!inprocess) { if (p.sign()) propStats.varSetNeg++; else propStats.varSetPos++; });
+    STATS_DO(if (!inprocess) { if (p.sign()) prop_stats.varSetNeg++; else prop_stats.varSetPos++; });
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
@@ -555,7 +555,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     if (level == 0 && frat->enabled()) enqueue_level0_frat(p, from, do_unit_frat);
 
     trail.push_back(Trail(p, level));
-    if (inprocess) propStats.bogoProps += 1;
+    if (inprocess) prop_stats.bogoProps += 1;
 }
 
 template<bool bin_only>
@@ -570,7 +570,7 @@ PropBy PropEngine::propagate_light()
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        propStats.bogoProps += ws.size()/4 + 1;
+        prop_stats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
             if (!confl.isnullptr()) break;
 
@@ -588,7 +588,7 @@ PropBy PropEngine::propagate_light()
                     *j++ = *i;
                     continue;
                 }
-                propStats.bogoProps += 4;
+                prop_stats.bogoProps += 4;
                 const ClOffset offset = i->get_offset();
                 Clause& c = *cl_alloc.ptr(offset);
 
@@ -653,7 +653,7 @@ inline void PropEngine::enqueue_light(const Lit p)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     trail.push_back(Trail(p, 1));
-    propStats.bogoProps += 1;
+    prop_stats.bogoProps += 1;
 }
 
 inline void PropEngine::attach_bin_clause(

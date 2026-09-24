@@ -251,7 +251,7 @@ public:
     const Stats& get_stats() const;
     const SubsumeStrengthen* get_sub_str() const;
     ///Long irred clauses parked here while occur lists are linked in. Solver's
-    ///own longIrredCls is empty during that window, so any count of the formula
+    ///own long_irred_cls is empty during that window, so any count of the formula
     ///has to add this in or it reads 0 for the whole occ phase.
     uint32_t num_long_irred_linked_in() const;
 
@@ -292,7 +292,7 @@ public:
     void finish_up(size_t origTrailSize);
 
     // Count live irred long clauses currently held in OccSimplifier::clauses
-    // (during occ-* steps, solver->longIrredCls is empty — they live here)
+    // (during occ-* steps, solver->long_irred_cls is empty — they live here)
     size_t num_irred_long_cls_in_occur() const;
 
     //Ternary resolution. Should be private but testing needs it to be public

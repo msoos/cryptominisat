@@ -529,7 +529,7 @@ void SQLiteStats::restart(
     sqlite3_stmt* stmt = stmtRst;
 
     const SearchHist& searchHist = search->getHistory();
-    const BinTriStats& binTri = solver->getBinTriStats();
+    const BinTriStats& bin_tri = solver->getBinTriStats();
 
     int bindAt = 1;
     sqlite3_bind_int64(stmt, bindAt++, restartID);
@@ -540,13 +540,13 @@ void SQLiteStats::restart(
     sqlite3_bind_double(stmt, bindAt++, cpu_time());
 
 
-    sqlite3_bind_int64(stmt, bindAt++, binTri.irredBins);
+    sqlite3_bind_int64(stmt, bindAt++, bin_tri.irred_bins);
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_irred_cls());
-    sqlite3_bind_int64(stmt, bindAt++, binTri.redBins);
+    sqlite3_bind_int64(stmt, bindAt++, bin_tri.red_bins);
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_red_cls());
 
-    sqlite3_bind_int64(stmt, bindAt++, solver->litStats.irredLits);
-    sqlite3_bind_int64(stmt, bindAt++, solver->litStats.redLits);
+    sqlite3_bind_int64(stmt, bindAt++, solver->lit_stats.irred_lits);
+    sqlite3_bind_int64(stmt, bindAt++, solver->lit_stats.red_lits);
 
     //Conflict stats
     bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),avg)
@@ -649,16 +649,16 @@ void SQLiteStats::reduceDB_common(
 
 
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->nVars());
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->longIrredCls.size());
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->litStats.irredLits);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->long_irred_cls.size());
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->lit_stats.irred_lits);
     uint32_t total_long_red_cls = 0;
-    for(const auto& cls: solver->longRedCls) {
+    for(const auto& cls: solver->long_red_cls) {
         total_long_red_cls += cls.size();
     }
     sqlite3_bind_int(stmtReduceDB_common, bindAt++, total_long_red_cls);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->litStats.redLits);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.irredBins);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.redBins);
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->lit_stats.red_lits);
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->bin_tri.irred_bins);
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->bin_tri.red_bins);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.trailDepthHistLT.avg());
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.backtrackLevelHistLT.avg());

@@ -227,7 +227,7 @@ inline void add_impl_cls(
 inline vector<vector<Lit> > get_irred_cls(const Solver* s)
 {
     vector<vector<Lit> > ret;
-    add_cls(ret, s, s->longIrredCls);
+    add_cls(ret, s, s->long_irred_cls);
     add_impl_cls(ret, s, true, false);
 
     return ret;
@@ -237,9 +237,9 @@ inline vector<vector<Lit> > get_irred_cls(const Solver* s)
 inline vector<vector<Lit> > get_red_cls(const Solver* s)
 {
     vector<vector<Lit> > ret;
-    add_cls(ret, s, s->longRedCls[0]);
-    add_cls(ret, s, s->longRedCls[1]);
-    add_cls(ret, s, s->longRedCls[2]);
+    add_cls(ret, s, s->long_red_cls[0]);
+    add_cls(ret, s, s->long_red_cls[1]);
+    add_cls(ret, s, s->long_red_cls[2]);
     add_impl_cls(ret, s, false, true);
 
     return ret;

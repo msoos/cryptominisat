@@ -268,8 +268,8 @@ bool BreakID::doit()
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "breakid"
             , time_used
@@ -305,8 +305,8 @@ void BreakID::get_outer_permutations()
 
 bool BreakID::check_limits()
 {
-    uint64_t tot_num_cls = solver->longIrredCls.size()+solver->binTri.irredBins;
-    uint64_t tot_num_lits = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    uint64_t tot_num_cls = solver->long_irred_cls.size()+solver->bin_tri.irred_bins;
+    uint64_t tot_num_lits = solver->lit_stats.irred_lits + solver->bin_tri.irred_bins*2;
     if (solver->nVars() > solver->conf.breakid_vars_limit_K*1000ULL) {
         if (solver->conf.verbosity) {
             cout
@@ -344,7 +344,7 @@ void BreakID::remove_duplicates()
     double my_time = cpu_time();
     dedup_cls.clear();
 
-    for(ClOffset offs: solver->longIrredCls) {
+    for(ClOffset offs: solver->long_irred_cls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
         assert(!cl->get_removed());
@@ -381,8 +381,8 @@ void BreakID::remove_duplicates()
         << solver->conf.print_times(time_used)
         <<  endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "breakid-rem-dup"
             , time_used
@@ -428,7 +428,7 @@ void BreakID::break_symms_in_cms()
         );
         if (newcl != nullptr) {
             ClOffset offset = solver->cl_alloc.get_offset(newcl);
-            solver->longIrredCls.push_back(offset);
+            solver->long_irred_cls.push_back(offset);
         }
     }
 }

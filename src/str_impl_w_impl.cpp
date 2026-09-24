@@ -190,8 +190,8 @@ void StrImplWImpl::StrImplicitData::print(
     << " w-visit: " << numWatchesLooked
     << endl;
 
-    if (_solver->sqlStats) {
-        _solver->sqlStats->time_passed(
+    if (_solver->sql_stats) {
+        _solver->sql_stats->time_passed(
             _solver
             , "implicit str"
             , time_used

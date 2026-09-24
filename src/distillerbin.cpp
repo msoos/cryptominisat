@@ -83,7 +83,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
         solver->conf.distill_long_cls_time_limitM*200LL*1000ULL
         *solver->conf.global_timeout_multiplier;
 
-    if (solver->litStats.irredLits + solver->litStats.redLits <
+    if (solver->lit_stats.irred_lits + solver->lit_stats.red_lits <
             (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
     ) {
         maxNumProps *=2;
@@ -94,8 +94,8 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     orig_maxNumProps = maxNumProps;
 
     //stats setup
-    oldBogoProps = solver->propStats.bogoProps;
-    uint32_t potential_size = solver->binTri.irredBins;
+    oldBogoProps = solver->prop_stats.bogoProps;
+    uint32_t potential_size = solver->bin_tri.irred_bins;
     run_stats.potentialClauses += potential_size;
     run_stats.numCalled += 1;
 
@@ -115,12 +115,12 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
+        maxNumProps - ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
         verb_print(2, "[distill-bin] cls" << " tried: "
                 << run_stats.checkedClauses << "/" << potential_size);
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "distill bin cls"
             , time_used
@@ -140,7 +140,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
 bool DistillerBin::out_of_budget()
 {
-    if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+    if ((int64_t)solver->prop_stats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
         || solver->must_interrupt_asap()
     ) {
         verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");

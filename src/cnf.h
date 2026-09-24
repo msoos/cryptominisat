@@ -45,14 +45,14 @@ class ClauseAllocator;
 
 struct BinTriStats
 {
-    uint64_t irredBins = 0;
-    uint64_t redBins = 0;
+    uint64_t irred_bins = 0;
+    uint64_t red_bins = 0;
 };
 
 struct LitStats
 {
-    uint64_t irredLits = 0;
-    uint64_t redLits = 0;
+    uint64_t irred_lits = 0;
+    uint64_t red_lits = 0;
 };
 
 class CNF
@@ -76,7 +76,7 @@ public:
         frat = new Frat;
         assert(_must_interrupt_inter != nullptr);
         must_interrupt_inter = _must_interrupt_inter;
-        longRedCls.resize(3);
+        long_red_cls.resize(3);
         longRedClsSizes.resize(3, 0);
     }
 
@@ -133,14 +133,14 @@ public:
     int32_t next_input_cl_id = 1;
 
     //Clauses
-    vector<ClOffset> longIrredCls;
+    vector<ClOffset> long_irred_cls;
 
     /**
     level 0 = never remove
     level 1 = check rarely
     level 2 = check often
     **/
-    vector<vector<ClOffset> > longRedCls;
+    vector<vector<ClOffset> > long_red_cls;
     vector<uint64_t> longRedClsSizes;
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     vector<ClauseStatsExtra> red_stats_extra;
@@ -162,12 +162,12 @@ public:
     vector<vector<Lit>> bnn_reasons;
     vector<Lit> bnn_confl_reason;
     vector<uint32_t> bnn_reasons_empty_slots;
-    BinTriStats binTri;
-    LitStats litStats;
+    BinTriStats bin_tri;
+    LitStats lit_stats;
     int32_t clauseID = 0;
     int32_t clauseXID = 0;
     int64_t restartID = 1;
-    SQLStats* sqlStats = nullptr;
+    SQLStats* sql_stats = nullptr;
     bool weighted = false;
 
     //Temporaries
@@ -539,11 +539,11 @@ bool CNF::no_duplicate_lits(const T& lits) const
 
 inline void CNF::check_no_duplicate_lits_anywhere() const
 {
-    for(const ClOffset offs: longIrredCls) {
+    for(const ClOffset offs: long_irred_cls) {
         Clause * cl = cl_alloc.ptr(offs);
         assert(no_duplicate_lits((*cl)));
     }
-    for(const auto& l: longRedCls) {
+    for(const auto& l: long_red_cls) {
         for(const ClOffset offs: l) {
             Clause * cl = cl_alloc.ptr(offs);
             assert(no_duplicate_lits((*cl)));
@@ -585,9 +585,9 @@ inline bool CNF::satisfied(const ClOffset& off) const
     return satisfied(*cl);
 }
 
-inline size_t CNF::get_num_long_irred_cls() const { return longIrredCls.size(); }
-inline size_t CNF::get_num_long_red_cls() const { return longRedCls.size(); }
-inline size_t CNF::get_num_long_cls() const { return longIrredCls.size() + longRedCls.size(); }
+inline size_t CNF::get_num_long_irred_cls() const { return long_irred_cls.size(); }
+inline size_t CNF::get_num_long_red_cls() const { return long_red_cls.size(); }
+inline size_t CNF::get_num_long_cls() const { return long_irred_cls.size() + long_red_cls.size(); }
 
 inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     frat_func_start_raw();

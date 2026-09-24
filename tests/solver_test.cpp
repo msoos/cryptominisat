@@ -98,7 +98,7 @@ TEST_F(SolverTest, get_long_lev0)
     s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
     vector<Lit> lits; bool is_xor, rhs;
@@ -124,7 +124,7 @@ TEST_F(SolverTest, get_long_lev1)
     s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[1].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
     vector<Lit> lits; bool is_xor, rhs;
@@ -151,11 +151,11 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
 
     c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[1].push_back(s->cl_alloc.get_offset(c));
 
     c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
     vector<Lit> lits; bool is_xor, rhs;
@@ -186,7 +186,7 @@ TEST_F(SolverTest, get_long_toolarge)
     stats.glue = 5;
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true, false, 2);
     vector<Lit> lits; bool is_xor, rhs;
@@ -206,7 +206,7 @@ TEST_F(SolverTest, get_glue_toolarge)
     s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true, false, 3);
     vector<Lit> lits;
@@ -230,7 +230,7 @@ TEST_F(SolverTest, get_bin_and_long)
     assert(c == nullptr);
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != nullptr);
-    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+    s->long_red_cls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
     vector<Lit> lits;
@@ -261,7 +261,7 @@ TEST_F(SolverTest, get_irred_bin_and_long)
     assert(c == nullptr);
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"));
     assert(c != nullptr);
-    s->longIrredCls.push_back(s->cl_alloc.get_offset(c));
+    s->long_irred_cls.push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(false);
     vector<Lit> lits;

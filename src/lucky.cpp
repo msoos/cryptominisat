@@ -133,7 +133,7 @@ int Lucky::trivially_satisfiable(const bool polar)
         }
     }
 
-    for(const ClOffset off: solver->longIrredCls) {
+    for(const ClOffset off: solver->long_irred_cls) {
         if (terminated()) return -1;
         const Clause* cl = solver->cl_alloc.ptr(off);
         bool sat = false;
@@ -181,7 +181,7 @@ int Lucky::horn_satisfiable(const bool polar)
 {
     assert(solver->decisionLevel() == 0);
 
-    for(const ClOffset off: solver->longIrredCls) {
+    for(const ClOffset off: solver->long_irred_cls) {
         if (terminated()) return unlucky(-1);
         const Clause* cl = solver->cl_alloc.ptr(off);
         Lit pick = lit_Undef;
@@ -253,7 +253,7 @@ lbool Lucky::doit()
     const double time_used = cpu_time() - my_time;
     verb_print(1, "[lucky] " << (res == 10 ? "found a model" : "no luck")
         << solver->conf.print_times(time_used));
-    if (solver->sqlStats) solver->sqlStats->time_passed_min(solver, "lucky", time_used);
+    if (solver->sql_stats) solver->sql_stats->time_passed_min(solver, "lucky", time_used);
 
     return res == 10 ? l_True : l_Undef;
 }

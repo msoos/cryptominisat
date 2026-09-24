@@ -867,8 +867,8 @@ Clause* Searcher::otfs_strengthen(const ClOffset offset, const Lit p)
     const uint32_t removed_num = cl.size() - otfs_tmp_lits.size();
     for (uint32_t i2 = 0; i2 < otfs_tmp_lits.size(); i2++) cl[i2] = otfs_tmp_lits[i2];
     cl.resize(otfs_tmp_lits.size());
-    if (cl.red()) litStats.redLits -= removed_num;
-    else litStats.irredLits -= removed_num;
+    if (cl.red()) lit_stats.red_lits -= removed_num;
+    else lit_stats.irred_lits -= removed_num;
 
     cl.stats.id = ++clauseID;
     if (frat->enabled()) {
@@ -1648,8 +1648,8 @@ lbool Searcher::search()
 
 void Searcher::dump_search_sql(const double my_time)
 {
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "search"
             , cpu_time()-my_time
@@ -1809,7 +1809,7 @@ void Searcher::dump_sql_clause_data(
     , const uint64_t clid
     , const bool is_decision
 ) {
-    solver->sqlStats->clause_stats(
+    solver->sql_stats->clause_stats(
         solver
         , clid
         , restartID
@@ -1930,7 +1930,7 @@ Clause* Searcher::handle_last_confl(
         #ifdef STATS_NEEDED
         cl->stats.is_tracked = to_track;
         if (cl->stats.is_tracked) ext_stats.orig_ID = ID;
-        if (to_track && sqlStats) sqlStats->update_id(ID, ID); // this is how fix_up_frat knows it's tracked
+        if (to_track && sql_stats) sql_stats->update_id(ID, ID); // this is how fix_up_frat knows it's tracked
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
@@ -1945,7 +1945,7 @@ Clause* Searcher::handle_last_confl(
         cl->stats.used = CL_MAX_USED;
 
         cl->stats.which_red_array = 0;
-        solver->longRedCls[0].push_back(offset);
+        solver->long_red_cls[0].push_back(offset);
         if (conf.eager_subsume) {
             eager_subsume_last_learnt(*cl);
             last_learnt[last_learnt_at++ % 4] = LastLearnt{offset, cl->stats.id};
@@ -1953,7 +1953,7 @@ Clause* Searcher::handle_last_confl(
     }
 
     #ifdef STATS_NEEDED
-    if (solver->sqlStats
+    if (solver->sql_stats
         && frat
         && conf.dump_individual_restarts_and_clauses
         && to_track
@@ -2016,7 +2016,7 @@ bool Searcher::handle_conflict(PropBy confl)
     hist.num_conflicts_this_restart++;
     sumConflicts++;
     confl_in_mode[rst.stable]++;
-    for(uint32_t i = 0; i < longRedCls.size(); i++)  longRedClsSizes[i] += longRedCls[i].size();
+    for(uint32_t i = 0; i < long_red_cls.size(); i++)  longRedClsSizes[i] += long_red_cls[i].size();
     params.confl_this_rst++;
 
     ConflictData data = find_conflict_level(confl);
@@ -2164,9 +2164,9 @@ void Searcher::resetStats()
 
     //Rest solving stats
     stats.clear();
-    propStats.clear();
+    prop_stats.clear();
     #ifdef STATS_NEEDED
-    lastSQLPropStats = propStats;
+    lastSQLPropStats = prop_stats;
     lastSQLGlobalStats = stats;
     #endif
 
@@ -2182,8 +2182,8 @@ void Searcher::check_calc_satzilla_features(bool force)
     ) {
         last_satzilla_feature_calc_confl = sumConflicts+1;
         if (nVars() > 2
-            && longIrredCls.size() > 1
-            && (binTri.irredBins + binTri.redBins) > 1
+            && long_irred_cls.size() > 1
+            && (bin_tri.irred_bins + bin_tri.red_bins) > 1
         ) {
             solver->last_solve_satzilla_feature = solver->calculate_satzilla_features();
         }
@@ -2207,7 +2207,7 @@ void Searcher::print_restart_header()
     << " " << std::setw(7) << "l/longC"
     << " " << std::setw(7) << "l/allC";
 
-    for(size_t i = 0; i < longRedCls.size(); i++) {
+    for(size_t i = 0; i < long_red_cls.size(); i++) {
         cout << " " << std::setw(4) << "RedL" << i;
     }
 
@@ -2280,9 +2280,9 @@ struct MyPolarData
 inline void Searcher::dump_restart_sql()
 {
     //Propagation stats
-    PropStats thisPropStats = propStats - lastSQLPropStats;
+    PropStats thisPropStats = prop_stats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
-    solver->sqlStats->restart(
+    solver->sql_stats->restart(
         restartID
         , rst.stable
         , thisPropStats
@@ -2290,7 +2290,7 @@ inline void Searcher::dump_restart_sql()
         , solver
         , this
     );
-    lastSQLPropStats = propStats;
+    lastSQLPropStats = prop_stats;
     lastSQLGlobalStats = stats;
 }
 #endif
@@ -2323,7 +2323,7 @@ void Searcher::reduce_db_if_needed()
     auto& rdb = *solver->reduceDB;
     if (rdb.lim_reduce == 0) rdb.lim_reduce = sumConflicts + conf.reduceint;
     if (conf.reduce
-        && !longRedCls[0].empty()
+        && !long_red_cls[0].empty()
         && sumConflicts >= rdb.lim_reduce
     ) {
         compute_tier_limits();
@@ -2357,7 +2357,7 @@ bool Searcher::clean_clauses_if_needed()
         }
 
         cl_alloc.consolidate(solver);
-        simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
+        simpDB_props = (lit_stats.red_lits + lit_stats.irred_lits)<<5;
     }
 
     return okay();
@@ -2443,7 +2443,7 @@ inline void Searcher::dump_search_loop_stats(double my_time)
         print_restart_stat_line();
     }
     #ifdef STATS_NEEDED
-    if (sqlStats
+    if (sql_stats
         && conf.dump_individual_restarts_and_clauses
     ) {
         dump_restart_sql();
@@ -2725,14 +2725,14 @@ void Searcher::clean_unused_hyper_bins()
         }
         ws.shrink_(ws.end()-j);
     }
-    binTri.redBins -= removed;
+    bin_tri.red_bins -= removed;
     uint64_t total = 0;
     for(const auto& r: hyper_bin_ranges) total += r.end - r.start;
     hyper_bins_cleaned += removed;
     hyper_bins_kept += total - removed;
     hyper_bin_ranges.clear();
     verb_print(1, "[hyper-bin-clean] removed: " << removed << " of: " << total
-        << " red-bins now: " << binTri.redBins
+        << " red-bins now: " << bin_tri.red_bins
         << conf.print_times(cpu_time() - my_time));
 }
 
@@ -3197,11 +3197,11 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 
     if (conf.doTransRed) {
         for(auto const& b: uselessBin) {
-            propStats.otfHyperTime += 2;
+            prop_stats.otfHyperTime += 2;
             verb_print(10, "Removing binary clause: " << b
                 << " except marked: " << except_marked);
-            propStats.otfHyperTime += solver->watches[b.getLit1()].size()/2;
-            propStats.otfHyperTime += solver->watches[b.getLit2()].size()/2;
+            prop_stats.otfHyperTime += solver->watches[b.getLit1()].size()/2;
+            prop_stats.otfHyperTime += solver->watches[b.getLit2()].size()/2;
             bool removed;
             if (except_marked) {
                 bool rem1 = removeWBin_except_marked(
@@ -3219,10 +3219,10 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 
             //Update stats
             if (b.isRed()) {
-                solver->binTri.redBins--;
+                solver->bin_tri.red_bins--;
                 removedRed++;
             } else {
-                solver->binTri.irredBins--;
+                solver->bin_tri.irred_bins--;
                 removedIrred++;
                 mark_elim_cand(b.getLit1());
                 mark_elim_cand(b.getLit2());
@@ -3326,8 +3326,8 @@ void Searcher::consolidate_watches(const bool full)
 
     std::stringstream ss;
     ss << "consolidate " << (full ? "full" : "mini") << " watches";
-    if (sqlStats) {
-        sqlStats->time_passed_min(
+    if (sql_stats) {
+        sql_stats->time_passed_min(
             solver
             , ss.str()
             , time_used

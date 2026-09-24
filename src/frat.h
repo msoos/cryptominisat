@@ -97,7 +97,7 @@ public:
     }
 
     void set_sumconflicts_ptr(uint64_t* _sumConflicts) override { sumConflicts = _sumConflicts; }
-    void set_sqlstats_ptr(SQLStats* _sqlStats) override { sqlStats = _sqlStats; }
+    void set_sqlstats_ptr(SQLStats* _sqlStats) override { sql_stats = _sqlStats; }
     void setFile(FILE* _file) override { drup_file = _file; }
     bool something_delayed() override { return delete_filled; }
     bool enabled() override { return true; }
@@ -191,7 +191,7 @@ public:
                     if (binfrat) buf_add(0);
                     else { buf_add('0'); buf_add('\n');}
                     if (buf_len > 1048576) { frat_flush(); }
-                    if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
+                    if (adding && sql_stats) sql_stats->set_id_confl(cl_id, *sumConflicts);
                 }
                 cl_id = 0;
                 must_delete_next = false;
@@ -421,7 +421,7 @@ private:
     FILE* drup_file = nullptr;
     vector<uint32_t>& inter_to_outerMain;
     uint64_t* sumConflicts = nullptr;
-    SQLStats* sqlStats = nullptr;
+    SQLStats* sql_stats = nullptr;
 };
 
 //Emits the XLRUP format directly, so `cake_xlrup` can check the proof with
