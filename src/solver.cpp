@@ -2045,6 +2045,12 @@ void Solver::print_solve_call_stats() const
         print_stats_line(conf.prefix + "time in solve()/simplify()", s.time_in_solver
             , stats_line_percent(s.time_in_solver, t), "% of process CPU time");
     }
+    print_stats_line(conf.prefix + "clauses added by user", s.cls_added
+        , float_div(s.cl_lits_added, s.cls_added), "avg lits");
+    print_stats_line(conf.prefix + "xors added by user", s.xors_added
+        , float_div(s.xor_lits_added, s.xors_added), "avg vars");
+    if (s.bnns_added) print_stats_line(conf.prefix + "bnns added by user", s.bnns_added);
+    print_stats_line(conf.prefix + "vars created by user", nVarsOuter());
 
     const auto& g = gauss_tot;
     print_stats_line(conf.prefix + "matrix inits", g.inits, g.matrices, "matrices built");
@@ -2933,6 +2939,8 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red, bool restore)
     if (restore && frat->incremental() && !lits.empty())
       *frat << restorecl << lits << fin;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
+    solveStats.cls_added++;
+    solveStats.cl_lits_added += lits.size();
     vector<Lit> tmp(lits);
     return add_clause_outer(tmp, lits, red, restore);
 }
@@ -2943,6 +2951,8 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
     if (rhs == false && lits_out.empty()) return okay();
 
     vector<Lit> lits = lits_out;
+    solveStats.xors_added++;
+    solveStats.xor_lits_added += lits.size();
     const int32_t xid = ++clauseXID;
     if (!lits.empty()) lits[0] ^= !rhs;
     *frat << origclx << xid << lits << fin;
@@ -2962,6 +2972,8 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
     if (rhs == false && vars.empty()) return okay();
 
     vector<Lit> lits = vars_to_lits(vars);
+    solveStats.xors_added++;
+    solveStats.xor_lits_added += lits.size();
     if (!vars.empty()) lits[0] ^= !rhs;
     const int32_t xid = ++clauseXID;
     *frat << origclx << xid << lits << fin;
@@ -2977,6 +2989,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
 
 bool Solver::add_bnn_clause_outside( const vector<Lit>& lits, const int32_t cutoff, Lit out) {
     if (!ok) return false;
+    solveStats.bnns_added++;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     vector<Lit> lits2(lits);

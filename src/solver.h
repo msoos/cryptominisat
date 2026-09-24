@@ -87,6 +87,12 @@ struct SolveStats
     uint64_t max_confl_per_solve = 0;
     uint64_t confl_in_solves_unsat = 0; //conflicts in solve() calls returning UNSAT
     double time_in_solver = 0; //CPU time inside solve() and simplify() calls
+    //what the user added through the API
+    uint64_t cls_added = 0;
+    uint64_t cl_lits_added = 0;
+    uint64_t xors_added = 0;
+    uint64_t xor_lits_added = 0;
+    uint64_t bnns_added = 0;
 };
 
 /// State of the formula at a [simp-stats] bef/aft point, so aft can color
