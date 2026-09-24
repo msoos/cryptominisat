@@ -676,15 +676,15 @@ private:
     bool can_remove_elimed_clauses = false;
 
     ///Stats from this run
-    Stats runStats;
+    Stats run_stats;
 
     ///Stats globally
-    Stats globalStats;
+    Stats global_stats;
 };
 
 inline const OccSimplifier::Stats& OccSimplifier::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const

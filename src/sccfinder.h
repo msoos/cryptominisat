@@ -119,8 +119,8 @@ class SCCFinder {
         std::set<BinaryXor> binxors;
 
         //Stats
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
 };
 
 inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
@@ -142,7 +142,7 @@ inline bool SCCFinder::depth_warning_triggered() const
 
 inline const SCCFinder::Stats& SCCFinder::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const std::set<BinaryXor>& SCCFinder::get_binxors() const

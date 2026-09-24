@@ -259,8 +259,8 @@ class VarReplacer
         //Stats
         uint64_t replacedVars = 0; ///<Num vars replaced during var-replacement
         uint64_t lastReplacedVars = 0;
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
 };
 
 inline size_t VarReplacer::get_num_replaced_vars() const
@@ -315,7 +315,7 @@ inline bool VarReplacer::var_is_replacing(const uint32_t var)
 
 inline const VarReplacer::Stats& VarReplacer::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const SCCFinder* VarReplacer::get_scc_finder() const

@@ -42,8 +42,8 @@ SCCFinder::SCCFinder(Solver* _solver) :
 bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 {
     assert(binxors.empty());
-    runStats.clear();
-    runStats.numCalls = 1;
+    run_stats.clear();
+    run_stats.numCalls = 1;
     depth_warning_issued = false;
     const double my_time = cpu_time();
 
@@ -71,13 +71,13 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     }
 
     //Update & print stats
-    runStats.cpu_time = cpu_time() - my_time;
-    runStats.foundXorsNew = binxors.size();
-    if (solver->conf.verbosity) runStats.print_short(solver);
-    globalStats += runStats;
+    run_stats.cpu_time = cpu_time() - my_time;
+    run_stats.foundXorsNew = binxors.size();
+    if (solver->conf.verbosity) run_stats.print_short(solver);
+    global_stats += run_stats;
 
     if (bogoprops_given) {
-        *bogoprops_given += runStats.bogoprops;
+        *bogoprops_given += run_stats.bogoprops;
     }
 
     return solver->okay();
@@ -99,7 +99,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
         return;
     }
 
-    runStats.bogoprops += 1;
+    run_stats.bogoprops += 1;
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;
@@ -108,7 +108,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
     //Go through the watch
     watch_subarray_const ws = solver->watches[~vertLit];
-    runStats.bogoprops += ws.size()/4;
+    run_stats.bogoprops += ws.size()/4;
     for (const Watched& w: ws) {
         //Only binary clauses matter
         if (!w.isBin())
@@ -133,7 +133,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             tmp.push_back(vprime);
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
-            runStats.bogoprops += 3;
+            run_stats.bogoprops += 3;
             add_bin_xor_in_tmp();
         }
     }
@@ -153,7 +153,7 @@ void SCCFinder::add_bin_xor_in_tmp()
         if (solver->value(binxor.vars[0]) == l_Undef
             && solver->value(binxor.vars[1]) == l_Undef
         ) {
-            runStats.foundXors++;
+            run_stats.foundXors++;
         }
     }
 }

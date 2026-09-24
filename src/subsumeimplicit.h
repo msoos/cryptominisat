@@ -73,8 +73,8 @@ private:
     Watched* lastBin;
     bool lastRed;
     vector<Lit> tmplits;
-    Stats runStats;
-    Stats globalStats;
+    Stats run_stats;
+    Stats global_stats;
 
     void clear()
     {

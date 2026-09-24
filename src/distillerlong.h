@@ -105,8 +105,8 @@ class DistillerLong {
         int64_t orig_maxNumProps;
 
         //Global status
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
         size_t numCalls_red = 0;
         size_t numCalls_irred = 0;
 
@@ -114,7 +114,7 @@ class DistillerLong {
 
 inline const DistillerLong::Stats& DistillerLong::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

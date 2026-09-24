@@ -207,8 +207,8 @@ bool VarReplacer::perform_replace() {
     frat_func_start();
 
     //Set up stats
-    runStats.clear();
-    runStats.numCalls = 1;
+    run_stats.clear();
+    run_stats.numCalls = 1;
     const double my_time = cpu_time();
     const size_t origTrailSize = solver->trail_size();
 
@@ -219,7 +219,7 @@ bool VarReplacer::perform_replace() {
     update_all_vardata();
     check_no_replaced_var_set();
 
-    runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
+    run_stats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
     assert(solver->prop_at_head());
@@ -258,14 +258,14 @@ bool VarReplacer::perform_replace() {
 
     //Update stats
     const double time_used = cpu_time() - my_time;
-    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
-    runStats.cpu_time = time_used;
-    globalStats += runStats;
+    run_stats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.cpu_time = time_used;
+    global_stats += run_stats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
-            runStats.print(solver->nVarsOuter(), solver->conf.prefix);
+            run_stats.print(solver->nVarsOuter(), solver->conf.prefix);
         else
-            runStats.print_short(solver);
+            run_stats.print_short(solver);
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -330,7 +330,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             assert(v < solver->nVars());
             Lit l = Lit(v, false);
             if (get_lit_replaced_with_fast(l) != l) {
-                runStats.replacedLits++;
+                run_stats.replacedLits++;
                 Xor* old_x = nullptr;
                 if (solver->frat->enabled()) old_x = new Xor(x);
                 const Lit l2 = get_lit_replaced_with_fast(l);
@@ -508,7 +508,7 @@ void VarReplacer::updateStatsFromImplStats()
     solver->check_implicit_stats();
     #endif
 
-    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
+    run_stats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
 
     impl_tmp_stats.clear();
 }
@@ -539,7 +539,7 @@ bool VarReplacer::replaceImplicit()
                 *j++ = *i;
                 continue;
             }
-            runStats.bogoprops += 1;
+            run_stats.bogoprops += 1;
 
             const Lit origLit2 = i->lit2();
             assert(solver->value(origLit1) == l_Undef);
@@ -550,7 +550,7 @@ bool VarReplacer::replaceImplicit()
             Lit lit1 = origLit1;
             if (get_lit_replaced_with_fast(lit1) != lit1) {
                 lit1 = get_lit_replaced_with_fast(lit1);
-                runStats.replacedLits++;
+                run_stats.replacedLits++;
                 solver->watches.smudge(origLit2);
             }
 
@@ -559,7 +559,7 @@ bool VarReplacer::replaceImplicit()
             if (get_lit_replaced_with_fast(lit2) != lit2) {
                 lit2 = get_lit_replaced_with_fast(lit2);
                 i->setLit2(lit2);
-                runStats.replacedLits++;
+                run_stats.replacedLits++;
             }
 
             assert(i->isBin());
@@ -588,7 +588,7 @@ void VarReplacer::replace_bnn_lit(Lit& l, uint32_t idx, bool& changed)
     removeWBNN(solver->watches, ~l, idx);
     changed = true;
     l = get_lit_replaced_with_fast(l);
-    runStats.replacedLits++;
+    run_stats.replacedLits++;
 }
 
 bool VarReplacer::replace_bnns() {
@@ -599,7 +599,7 @@ bool VarReplacer::replace_bnns() {
             continue;
         }
         assert(!bnn->isRemoved);
-        runStats.bogoprops += 3;
+        run_stats.bogoprops += 3;
 
         bool changed = false;
 
@@ -636,7 +636,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     auto i = cs.begin();
     auto j = i;
     for (auto end = cs.end(); i != end; ++i) {
-        runStats.bogoprops += 3;
+        run_stats.bogoprops += 3;
         assert(!solver->frat->something_delayed());
 
         //Finish up if UNSAT
@@ -661,12 +661,12 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
                 changed = true;
                 if (solver->frat->enabled()) tmp_upd_eqbins.push_back(eqbin_for(l));
                 l = get_lit_replaced_with_fast(l);
-                runStats.replacedLits++;
+                run_stats.replacedLits++;
             }
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
-            runStats.removedLongClauses++;
+            run_stats.removedLongClauses++;
             if (!solver->ok) {
                 //if it became UNSAT, then don't delete.
                 *j++ = *i;
@@ -725,7 +725,7 @@ bool VarReplacer::handleUpdatedClause(
     c.set_strengthened();
     if (!c.red()) for(const Lit l: c) solver->mark_elim_cand(l);
 
-    runStats.bogoprops += 10;
+    run_stats.bogoprops += 10;
     if (c.red()) {
         solver->litStats.redLits -= origSize;
     } else {
@@ -749,7 +749,7 @@ bool VarReplacer::handleUpdatedClause(
     }
     (*solver->frat) << fin << findelay;
 
-    runStats.bogoprops += 3;
+    run_stats.bogoprops += 3;
     switch(c.size()) {
     case 0:
         set_unsat_cl_id(c.stats.id);
@@ -760,7 +760,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
         delayedEnqueue.push_back(make_tuple(c[0], c.stats.id));
-        runStats.removedLongLits += origSize;
+        run_stats.removedLongLits += origSize;
         return true;
     case 2:
         c.set_removed();
@@ -768,7 +768,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit2);
 
         solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.id);
-        runStats.removedLongLits += origSize;
+        run_stats.removedLongLits += origSize;
         return true;
 
     default:
@@ -793,7 +793,7 @@ bool VarReplacer::handleUpdatedClause(
             solver->watches.smudge(origLit2);
         }
 
-        runStats.removedLongLits += origSize - c.size();
+        run_stats.removedLongLits += origSize - c.size();
         return false;
     }
 
@@ -1175,7 +1175,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
 
     perform_replace();
 end:
-    if (bogoprops_given) *bogoprops_given += runStats.bogoprops;
+    if (bogoprops_given) *bogoprops_given += run_stats.bogoprops;
     scc_finder->clear_binxors();
     solver->fill_assumptions_set();
     SLOW_DEBUG_DO(solver->check_assumptions_sanity());
@@ -1250,8 +1250,8 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
 void VarReplacer::print_some_stats(const double global_cpu_time, const string& prefix) const
 {
     print_stats_line(prefix + "vrep replace time"
-        , globalStats.cpu_time
-        , stats_line_percent(globalStats.cpu_time, global_cpu_time)
+        , global_stats.cpu_time
+        , stats_line_percent(global_stats.cpu_time, global_cpu_time)
         , "% time"
     );
 

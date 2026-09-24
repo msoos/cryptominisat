@@ -188,8 +188,8 @@ private:
     Solver *solver;
 
     //Stats
-    Stats runStats;
-    Stats globalStats;
+    Stats run_stats;
+    Stats global_stats;
 
     //Temporary
     vector<Lit> tmpClause;
@@ -324,7 +324,7 @@ inline bool PossibleXor::bit(const uint32_t a, const uint32_t b) const
 
 inline const XorFinder::Stats& XorFinder::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

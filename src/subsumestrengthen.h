@@ -94,7 +94,7 @@ public:
 
 private:
     Stats globalstats;
-    Stats runStats;
+    Stats run_stats;
 
     OccSimplifier* simplifier;
     Solver* solver;
@@ -147,7 +147,7 @@ private:
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const
 {
-    return runStats;
+    return run_stats;
 }
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::get_stats() const

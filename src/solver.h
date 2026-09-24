@@ -242,12 +242,12 @@ class Solver : public Searcher
         CardFinder*            card_finder = nullptr;
         GetClauseQuery*        get_clause_query = nullptr;
 
-        SearchStats sumSearchStats;
-        PropStats sumPropStats;
+        SearchStats sum_search_stats;
+        PropStats sum_prop_stats;
         uint64_t outside_search_props = 0;
         //Monotonic, deterministic measure of all propagation work so far
         uint64_t all_bogoprops() const {
-            return sumPropStats.bogoProps + sumPropStats.otfHyperTime
+            return sum_prop_stats.bogoProps + sum_prop_stats.otfHyperTime
                 + propStats.bogoProps + propStats.otfHyperTime + outside_search_props;
         }
 
@@ -510,7 +510,7 @@ class Solver : public Searcher
 
         lbool simplify_problem(const bool startup, const string& strategy);
         lbool execute_inprocess_strategy(const bool startup, const string& strategy);
-        SolveStats solveStats;
+        SolveStats solve_stats;
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution(const bool only_indep_solution);
@@ -577,12 +577,12 @@ inline void Solver::set_decision_var(const uint32_t var)
 
 inline const SearchStats& Solver::get_stats() const
 {
-    return sumSearchStats;
+    return sum_search_stats;
 }
 
 inline const SolveStats& Solver::get_solve_stats() const
 {
-    return solveStats;
+    return solve_stats;
 }
 
 inline const SolverConf& Solver::getConf() const

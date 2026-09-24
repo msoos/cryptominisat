@@ -166,15 +166,15 @@ class DistillerLongWithImpl {
         vector<uint8_t>& seen2;
 
         //Global status
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
         size_t numCalls = 0;
 
 };
 
 inline const DistillerLongWithImpl::Stats& DistillerLongWithImpl::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

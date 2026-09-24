@@ -1277,7 +1277,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
     uint64_t props = 0;
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        props += s.sumPropStats.propagations;
+        props += s.sum_prop_stats.propagations;
     }
     return props;
 }
@@ -1286,7 +1286,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_propagations() const
 {
     uint64_t total_propagations = 0;
     for (Solver const* s : data->solvers) {
-        total_propagations += s->sumPropStats.propagations;
+        total_propagations += s->sum_prop_stats.propagations;
     }
     return total_propagations;
 }
@@ -1296,7 +1296,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
     uint64_t dec = 0;
     for (auto & solver : data->solvers) {
         Solver& s = *solver;
-        dec += s.sumSearchStats.decisions;
+        dec += s.sum_search_stats.decisions;
     }
     return dec;
 }
@@ -1305,7 +1305,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions() const
 {
     uint64_t total_decisions = 0;
     for (Solver const* s : data->solvers) {
-        total_decisions += s->sumSearchStats.decisions;
+        total_decisions += s->sum_search_stats.decisions;
     }
     return total_decisions;
 }

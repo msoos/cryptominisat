@@ -125,8 +125,8 @@ bool XorFinder::find_xors() {
     assert(solver->gmatrices.empty());
     const auto orig_num_xors = solver->xorclauses.size();
 
-    runStats.clear();
-    runStats.numCalls = 1;
+    run_stats.clear();
+    run_stats.numCalls = 1;
     grab_mem();
 
     for(auto& gw: solver->gwatches) gw.clear();
@@ -144,7 +144,7 @@ bool XorFinder::find_xors() {
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
-    assert(orig_num_xors + runStats.foundXors == solver->xorclauses.size());
+    assert(orig_num_xors + run_stats.foundXors == solver->xorclauses.size());
     // TODO FRAT
     /* clean_equivalent_xors(solver->xorclauses); */
 
@@ -157,11 +157,11 @@ bool XorFinder::find_xors() {
     //Print stats
     const bool time_out = (xor_find_time_limit < 0);
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
-    runStats.findTime = cpu_time() - my_time;
-    runStats.time_outs += time_out;
+    run_stats.findTime = cpu_time() - my_time;
+    run_stats.time_outs += time_out;
 
-    if (solver->conf.verbosity) runStats.print_short(solver, time_remain);
-    globalStats += runStats;
+    if (solver->conf.verbosity) run_stats.print_short(solver, time_remain);
+    global_stats += run_stats;
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -232,10 +232,10 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     frat_func_start();
     solver->xorclauses.push_back(found_xor);
     Xor& added = solver->xorclauses.back();
-    runStats.foundXors++;
-    runStats.sumSizeXors += found_xor.size();
-    runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
-    runStats.minsize = std::min<uint32_t>(runStats.minsize, found_xor.size());
+    run_stats.foundXors++;
+    run_stats.sumSizeXors += found_xor.size();
+    run_stats.maxsize = std::max<uint32_t>(run_stats.maxsize, found_xor.size());
+    run_stats.minsize = std::min<uint32_t>(run_stats.minsize, found_xor.size());
     solver->xorclauses_updated = true;
     if (solver->frat->enabled()) {
         solver->chain.clear();

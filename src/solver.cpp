@@ -1302,8 +1302,8 @@ lbool Solver::simplify_problem_outside(const string* strategy)
     #endif
 
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
-    solveStats.num_simplify_this_solve_call = 0;
-    solveStats.num_user_simplify_calls++;
+    solve_stats.num_simplify_this_solve_call = 0;
+    solve_stats.num_user_simplify_calls++;
     set_assumptions();
     uneliminate_sampling_set();
 
@@ -1330,7 +1330,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
     unfill_assumptions_set();
     assumptions.clear();
     conf.conf_needed = true;
-    solveStats.time_in_solver += cpu_time() - my_time;
+    solve_stats.time_in_solver += cpu_time() - my_time;
     return status;
 }
 
@@ -1351,14 +1351,14 @@ void Solver::reset_for_solving() {
     }
     #endif
 
-    solveStats.num_solve_calls++;
-    solveStats.sum_assumps += assumptions.size();
-    solveStats.confl_at_solve_start = sumConflicts;
+    solve_stats.num_solve_calls++;
+    solve_stats.sum_assumps += assumptions.size();
+    solve_stats.confl_at_solve_start = sumConflicts;
     check_and_upd_config_parameters();
 
     //Reset parameters
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
-    solveStats.num_simplify_this_solve_call = 0;
+    solve_stats.num_simplify_this_solve_call = 0;
     verb_print(6, __func__ << " called");
 }
 
@@ -1399,7 +1399,7 @@ lbool Solver::solve_with_assumptions(
         && nVars() > 0
         && conf.do_simplify_problem
         && conf.simplify_at_startup
-        && (solveStats.num_simplify == 0 || conf.simplify_at_every_startup)
+        && (solve_stats.num_simplify == 0 || conf.simplify_at_every_startup)
     ) {
         status = simplify_problem(
             !conf.full_simplify_at_startup,
@@ -1421,16 +1421,16 @@ lbool Solver::solve_with_assumptions(
     if (sqlStats) sqlStats->finishup(status);
     handle_found_solution(status, only_sampling_solution);
     {
-        const uint64_t confl = sumConflicts - solveStats.confl_at_solve_start;
-        solveStats.max_confl_per_solve = std::max(solveStats.max_confl_per_solve, confl);
-        solveStats.solve_ret[status == l_True ? 0 : (status == l_False ? 1 : 2)]++;
-        if (status == l_False) solveStats.confl_in_solves_unsat += confl;
+        const uint64_t confl = sumConflicts - solve_stats.confl_at_solve_start;
+        solve_stats.max_confl_per_solve = std::max(solve_stats.max_confl_per_solve, confl);
+        solve_stats.solve_ret[status == l_True ? 0 : (status == l_False ? 1 : 2)]++;
+        if (status == l_False) solve_stats.confl_in_solves_unsat += confl;
         uint32_t b = 0;
         for(uint64_t c = confl; c > 0 && b < 5; c /= 10) b++;
-        solveStats.confl_per_solve_hist[b]++;
+        solve_stats.confl_per_solve_hist[b]++;
         const double t = cpu_time() - my_time;
-        solveStats.time_in_solver += t;
-        verb_print(1, "[solve] " << solveStats.num_solve_calls << " ret: " << status
+        solve_stats.time_in_solver += t;
+        verb_print(1, "[solve] " << solve_stats.num_solve_calls << " ret: " << status
             << " confl: " << confl << " assumps: " << assumptions.size()
             << " T: " << std::fixed << std::setprecision(2) << t);
     }
@@ -1652,8 +1652,8 @@ lbool Solver::iterate_until_solved() {
         check_minimization_effectiveness(status);
 
         //Update stats
-        sumSearchStats += Searcher::get_stats();
-        sumPropStats += propStats;
+        sum_search_stats += Searcher::get_stats();
+        sum_prop_stats += propStats;
         propStats.clear();
         Searcher::resetStats();
 
@@ -1897,8 +1897,8 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "breakid") {
             if (conf.doBreakid
                 && !frat->enabled()
-                && (solveStats.num_simplify == 0 ||
-                   (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
+                && (solve_stats.num_simplify == 0 ||
+                   (solve_stats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
                 #ifdef USE_BREAKID
                 if (!breakid->doit()) return l_False;
@@ -1943,7 +1943,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     DEBUG_MARKED_CLAUSE_DO(assert(no_marked_clauses()));
     SLOW_DEBUG_DO(check_assumptions_sanity());
 
-    if (solveStats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
+    if (solve_stats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
         return l_Undef;
     }
 
@@ -1966,8 +1966,8 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     verb_print(1, "[timeout] global_timeout_multiplier: "
         << std::setprecision(4) << conf.global_timeout_multiplier);
 
-    solveStats.num_simplify++;
-    solveStats.num_simplify_this_solve_call++;
+    solve_stats.num_simplify++;
+    solve_stats.num_simplify_this_solve_call++;
     verb_print(6, __func__ << " finished");
 
     assert(!(ok == false && ret != l_False));
@@ -1996,8 +1996,8 @@ void CMSat::Solver::print_stats(
     verb_print(1, "------- FINAL TOTAL SEARCH STATS ---------");
     if (conf.do_print_times) {
         print_stats_line(conf.prefix + "UIP search time"
-            , sumSearchStats.cpu_time
-            , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
+            , sum_search_stats.cpu_time
+            , stats_line_percent(sum_search_stats.cpu_time, cpu_time)
             , "% time"
         );
     }
@@ -2010,13 +2010,13 @@ void CMSat::Solver::print_stats(
     print_glue_usage();
     print_solve_call_stats();
     //in library use the process also runs the caller, e.g. arjun in approxmc
-    if (conf.do_print_times) time_tally.print(conf.prefix, solveStats.time_in_solver);
+    if (conf.do_print_times) time_tally.print(conf.prefix, solve_stats.time_in_solver);
 }
 
 //How the library was driven: solve()/simplify() calls, assumptions, matrices
 void Solver::print_solve_call_stats() const
 {
-    const auto& s = solveStats;
+    const auto& s = solve_stats;
     verb_print(1, "------- SOLVE CALL STATS ---------");
     print_stats_line(conf.prefix + "solve() calls", s.num_solve_calls);
     print_stats_line(conf.prefix + "solve() SAT/UNSAT/UNDEF"
@@ -2062,7 +2062,7 @@ void Solver::print_solve_call_stats() const
     print_stats_line(conf.prefix + "gauss elim calls", g.elim_calls
         , stats_line_percent(g.elim_prop + g.elim_confl, g.elim_calls), "% prop or confl");
     print_stats_line(conf.prefix + "gauss props", g.props
-        , stats_line_percent(g.props, sumPropStats.propagations), "% of all props");
+        , stats_line_percent(g.props, sum_prop_stats.propagations), "% of all props");
     print_stats_line(conf.prefix + "gauss conflicts", g.confls
         , stats_line_percent(g.confls, sumConflicts), "% of all conflicts");
 }
@@ -2088,9 +2088,9 @@ void Solver::print_norm_stats(
     const double cpu_time_total,
     const double wallclock_time_started) const
 {
-    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times, conf.prefix);
+    sum_search_stats.print_short(sum_prop_stats.propagations, conf.do_print_times, conf.prefix);
     print_stats_line(conf.prefix + "props/decision"
-        , float_div(propStats.propagations, sumSearchStats.decisions)
+        , float_div(propStats.propagations, sum_search_stats.decisions)
     );
     print_stats_line(conf.prefix + "props/conflict"
         , float_div(propStats.propagations, sumConflicts)
@@ -2208,8 +2208,8 @@ void Solver::print_full_stats(
     const double /*wallclock_time_started*/) const
 {
     cout << conf.prefix << "All times are for this thread only except if explicitly specified" << endl;
-    sumSearchStats.print(sumPropStats.propagations, conf.do_print_times, conf.prefix);
-    sumPropStats.print(sumSearchStats.cpu_time, conf.prefix);
+    sum_search_stats.print(sum_prop_stats.propagations, conf.do_print_times, conf.prefix);
+    sum_prop_stats.print(sum_search_stats.cpu_time, conf.prefix);
     //reduceDB->get_total_time().print(cpu_time);
 
     //OccSimplifier stats
@@ -2921,8 +2921,8 @@ void Solver::new_external_vars(size_t n)
 void Solver::add_in_partial_solving_stats()
 {
     Searcher::add_in_partial_solving_stats();
-    sumSearchStats += Searcher::get_stats();
-    sumPropStats += propStats;
+    sum_search_stats += Searcher::get_stats();
+    sum_prop_stats += propStats;
 }
 
 bool Solver::add_clause_outside(const vector<Lit>& lits, bool red, bool restore)
@@ -2936,8 +2936,8 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red, bool restore)
     if (restore && frat->incremental() && !lits.empty())
       *frat << restorecl << lits << fin;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
-    solveStats.cls_added++;
-    solveStats.cl_lits_added += lits.size();
+    solve_stats.cls_added++;
+    solve_stats.cl_lits_added += lits.size();
     vector<Lit> tmp(lits);
     return add_clause_outer(tmp, lits, red, restore);
 }
@@ -2948,8 +2948,8 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
     if (rhs == false && lits_out.empty()) return okay();
 
     vector<Lit> lits = lits_out;
-    solveStats.xors_added++;
-    solveStats.xor_lits_added += lits.size();
+    solve_stats.xors_added++;
+    solve_stats.xor_lits_added += lits.size();
     const int32_t xid = ++clauseXID;
     if (!lits.empty()) lits[0] ^= !rhs;
     *frat << origclx << xid << lits << fin;
@@ -2969,8 +2969,8 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
     if (rhs == false && vars.empty()) return okay();
 
     vector<Lit> lits = vars_to_lits(vars);
-    solveStats.xors_added++;
-    solveStats.xor_lits_added += lits.size();
+    solve_stats.xors_added++;
+    solve_stats.xor_lits_added += lits.size();
     if (!vars.empty()) lits[0] ^= !rhs;
     const int32_t xid = ++clauseXID;
     *frat << origclx << xid << lits << fin;
@@ -2986,7 +2986,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
 
 bool Solver::add_bnn_clause_outside( const vector<Lit>& lits, const int32_t cutoff, Lit out) {
     if (!ok) return false;
-    solveStats.bnns_added++;
+    solve_stats.bnns_added++;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     vector<Lit> lits2(lits);
@@ -3097,14 +3097,14 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     satzilla_feat.avg_branch_depth = hist.branchDepthHist.avg();
     satzilla_feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
 
-    if (sumPropStats.propagations != 0
+    if (sum_prop_stats.propagations != 0
         && sumConflicts != 0
-        && sumSearchStats.numRestarts != 0
+        && sum_search_stats.numRestarts != 0
     ) {
-        satzilla_feat.props_per_confl = (double)sumConflicts / (double)sumPropStats.propagations;
-        satzilla_feat.confl_per_restart = (double)sumConflicts / (double)sumSearchStats.numRestarts;
-        satzilla_feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumConflicts;
-        satzilla_feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
+        satzilla_feat.props_per_confl = (double)sumConflicts / (double)sum_prop_stats.propagations;
+        satzilla_feat.confl_per_restart = (double)sumConflicts / (double)sum_search_stats.numRestarts;
+        satzilla_feat.decisions_per_conflict = (double)sum_search_stats.decisions / (double)sumConflicts;
+        satzilla_feat.learnt_bins_per_confl = (double)sum_search_stats.learntBins / (double)sumConflicts;
     }
 
     if (sqlStats) {

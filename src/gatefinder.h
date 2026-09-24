@@ -128,8 +128,8 @@ private:
     set<ClOffset> clToUnlink;
 
     //Stats
-    Stats runStats;
-    Stats globalStats;
+    Stats run_stats;
+    Stats global_stats;
 
     //Limits
     int64_t  numMaxGateFinder;
@@ -149,7 +149,7 @@ private:
 
 inline const GateFinder::Stats& GateFinder::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const vector<OrGate>& GateFinder::get_gates() const

@@ -53,14 +53,14 @@ void GateFinder::cleanup()
 
 void GateFinder::find_all()
 {
-    runStats.clear();
+    run_stats.clear();
     orGates.clear();
 
     assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
     if (solver->conf.doPrintGateDot) print_graphviz_dot();
 
-    globalStats += runStats;
+    global_stats += run_stats;
 }
 
 void GateFinder::find_or_gates_and_update_stats()
@@ -75,14 +75,14 @@ void GateFinder::find_or_gates_and_update_stats()
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
     find_or_gates();
-    runStats.gatesSize += 2*orGates.size();
-    runStats.num+=orGates.size();
+    run_stats.gatesSize += 2*orGates.size();
+    run_stats.num+=orGates.size();
 
     const double time_used = cpu_time() - my_time;
     const bool time_out = (numMaxGateFinder <= 0);
     const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
-    runStats.findGateTime = time_used;
-    runStats.find_gate_timeout = time_out;
+    run_stats.findGateTime = time_used;
+    run_stats.find_gate_timeout = time_out;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -94,9 +94,9 @@ void GateFinder::find_or_gates_and_update_stats()
     }
 
     verb_print(1, "[occ-gates]"
-        << " found: " << print_value_kilo_mega(runStats.num)
+        << " found: " << print_value_kilo_mega(run_stats.num)
         << " avg-s: " << std::fixed << std::setprecision(1)
-        << float_div(runStats.gatesSize, runStats.num)
+        << float_div(run_stats.gatesSize, run_stats.num)
         /*<< " avg-s: " << std::fixed << std::setprecision(1)
         << float_div(learntGatesSize, numRed)*/
         << solver->conf.print_times(time_used, time_out, time_remain));

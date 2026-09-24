@@ -198,7 +198,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
     assert(solver->ok);
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
-    runStats.clear();
+    run_stats.clear();
     if (effort_ref < 0) effort_ref = calc_effort_ref();
 
     if (!red) {
@@ -215,8 +215,8 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
         {
             goto end;
         }
-        globalStats += runStats;
-        runStats.clear();
+        global_stats += run_stats;
+        run_stats.clear();
 
         if (!only_rem_cl) {
             if (!distill_long_cls_all(
@@ -229,8 +229,8 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
                 goto end;
             }
         }
-        globalStats += runStats;
-        runStats.clear();
+        global_stats += run_stats;
+        run_stats.clear();
     } else {
         //Redundant
         const int64_t budget = effort_ref * (int64_t)solver->conf.distill_red_releff / 1000LL;
@@ -244,8 +244,8 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
         {
             goto end;
         }
-        globalStats += runStats;
-        runStats.clear();
+        global_stats += run_stats;
+        run_stats.clear();
 
     }
 
@@ -278,7 +278,7 @@ bool DistillerLong::distill_long_cls_all(
 
     //stats setup
     oldBogoProps = solver->propStats.bogoProps;
-    runStats.numCalled += 1;
+    run_stats.numCalled += 1;
 
     //Select candidates. prio 0: not checked since their bit was cleared,
     //as CaDiCaL's 'vivify' bit; prio 1: the rest (irred only)
@@ -408,7 +408,7 @@ bool DistillerLong::distill_long_cls_all(
                 }
             }
             if (num_subsumed) {
-                runStats.clRemoved += num_subsumed;
+                run_stats.clRemoved += num_subsumed;
                 uint32_t j = 0;
                 for(uint32_t i = 0; i < todo.size(); i++) {
                     if (removed[i]) continue;
@@ -447,9 +447,9 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     const uint32_t orig_todo_size = todo.size();
-    runStats.potentialClauses += orig_todo_size;
+    run_stats.potentialClauses += orig_todo_size;
 
-    assert(runStats.checkedClauses == 0);
+    assert(run_stats.checkedClauses == 0);
     bool time_out = go_through_clauses(todo, also_remove, only_remove);
 
     //Add back the prioritized clauses
@@ -462,10 +462,10 @@ bool DistillerLong::distill_long_cls_all(
     if (solver->conf.verbosity >= 1) {
         const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
         cout << solver->conf.prefix << tag
-        << " cls tried: " << runStats.checkedClauses << "/" << orig_todo_size
-        << " cl-rem: " << runStats.clRemoved
-        << " cl-sh: " << runStats.numClShorten
-        << " lit-rem: " << runStats.numLitsRem
+        << " cls tried: " << run_stats.checkedClauses << "/" << orig_todo_size
+        << " cl-rem: " << run_stats.clRemoved
+        << " cl-sh: " << run_stats.numClShorten
+        << " lit-rem: " << run_stats.numLitsRem
         << " 0-depth-ass: " << (solver->trail_size() - origTrailSize)
         << endl;
         cout << solver->conf.prefix << tag
@@ -485,8 +485,8 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     //Update stats
-    runStats.time_used += time_used;
-    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.time_used += time_used;
+    run_stats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
     frat_func_end();
     return solver->okay();
@@ -511,7 +511,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
-            runStats.timeOut++;
+            run_stats.timeOut++;
             time_out = true;
         }
 
@@ -520,7 +520,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
 
         if (also_remove) cl.tried_to_remove = 1;
         else cl.distilled = 1;
-        runStats.checkedClauses++;
+        run_stats.checkedClauses++;
         assert(cl.size() > 2);
 
         //Try to distill clause
@@ -562,7 +562,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
         *solver->frat << findelay;
         solver->free_cl(offset);
-        runStats.clRemoved++;
+        run_stats.clRemoved++;
         frat_func_end();
         return CL_OFFSET_MAX;
     };
@@ -796,8 +796,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     solver->cancelUntil<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-    runStats.numLitsRem += orig_size - kept_lits.size();
-    runStats.numClShorten++;
+    run_stats.numLitsRem += orig_size - kept_lits.size();
+    run_stats.numClShorten++;
 
     //Make new clause
     lits.resize(kept_lits.size());

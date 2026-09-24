@@ -52,7 +52,7 @@ void SubsumeImplicit::try_subsume_bin(
         //impossible to have red before irred
         assert(!(i->red() == false && lastRed == true));
 
-        runStats.remBins++;
+        run_stats.remBins++;
         assert(i->lit2().var() != lit.var());
         *timeAvail -= 30;
         *timeAvail -= solver->watches[i->lit2()].size();
@@ -81,7 +81,7 @@ void SubsumeImplicit::try_subsume_bin(
 uint32_t SubsumeImplicit::subsume_at_watch(
         const uint32_t at, int64_t* timeAvail, TouchList* touched)
 {
-    runStats.numWatchesLooked++;
+    run_stats.numWatchesLooked++;
     const Lit lit = Lit::toLit(at);
     watch_subarray ws = solver->watches[lit];
 
@@ -127,7 +127,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
         1000LL*1000LL*solver->conf.subsume_implicit_time_limitM
         *solver->conf.global_timeout_multiplier;
     timeAvailable = orig_timeAvailable;
-    runStats.clear();
+    run_stats.clear();
     frat_func_start();
 
     //For randomization, we must have at least 1
@@ -146,11 +146,11 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     const double time_used = cpu_time() - my_time;
     const bool time_out = (timeAvailable <= 0);
     const double time_remain = float_div(timeAvailable, orig_timeAvailable);
-    runStats.numCalled++;
-    runStats.time_used += time_used;
-    runStats.time_out += time_out;
+    run_stats.numCalled++;
+    run_stats.time_used += time_used;
+    run_stats.time_out += time_out;
     if (solver->conf.verbosity) {
-        runStats.print_short(solver, caller.c_str());
+        run_stats.print_short(solver, caller.c_str());
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -169,7 +169,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
         #endif
     }
 
-    globalStats += runStats;
+    global_stats += run_stats;
 }
 
 SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit::Stats& other)
@@ -214,7 +214,7 @@ void SubsumeImplicit::Stats::print(const char* caller, const string& pre) const
 
 SubsumeImplicit::Stats SubsumeImplicit::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 double SubsumeImplicit::mem_used() const

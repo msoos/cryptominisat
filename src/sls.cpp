@@ -35,7 +35,7 @@ int64_t SLS::effort() const
 {
     //sumPropagations was only ever incremented in the removed BRANCH stats
     //builds, so this was always walkmineff
-    const uint64_t props = solver->sumPropStats.propagations + solver->propStats.propagations;
+    const uint64_t props = solver->sum_prop_stats.propagations + solver->propStats.propagations;
     int64_t limit = (double)props * 1e-3 * solver->conf.walkreleff;
     limit = std::max<int64_t>(limit, solver->conf.walkmineff);
     limit = std::min<int64_t>(limit, solver->conf.walkmaxeff);

@@ -1407,7 +1407,7 @@ end:
         << " T: " << std::fixed << std::setprecision(2) << time_used
         << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << (time_remain*100.0) << "%");
-    if (solver->conf.verbosity) runStats.print_extra_times(solver->conf.prefix.c_str());
+    if (solver->conf.verbosity) run_stats.print_extra_times(solver->conf.prefix.c_str());
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -1474,7 +1474,7 @@ bool OccSimplifier::fill_occur_and_print_stats()
     if (!fill_occur()) return false;
     sanityCheckElimedVars();
     const double linkInTime = cpu_time() - my_time;
-    runStats.linkInTime += linkInTime;
+    run_stats.linkInTime += linkInTime;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
@@ -2277,7 +2277,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 XorFinder finder(this, solver);
                 finder.find_xors(); // beware can set UNSAT flag (ok = false)
                 for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;
-                runStats.xorTime += finder.get_stats().findTime;
+                run_stats.xorTime += finder.get_stats().findTime;
             }
 #endif
         } else if (token == "occ-lit-rem") {
@@ -2353,8 +2353,8 @@ bool OccSimplifier::setup() {
 
     //Setup
     clause_lits_added = 0;
-    runStats.clear();
-    runStats.numCalls++;
+    run_stats.clear();
+    run_stats.numCalls++;
     clauses.clear();
     set_limits();
     limit_to_decrease = &strengthening_time_limit;
@@ -2483,8 +2483,8 @@ bool OccSimplifier::ternary_res()
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_ternary_res_time_limit);
     verb_print(1, "[occ-ternary-res] Ternary"
-    << " res-tri: " << runStats.ternary_added_tri
-    << " res-bin: " << runStats.ternary_added_bin
+    << " res-tri: " << run_stats.ternary_added_tri
+    << " res-bin: " << run_stats.ternary_added_bin
     << " sub: " << sub1_ret.sub
     << " str: " << sub1_ret.str
     << solver->conf.print_times(time_used, time_out, time_remain));
@@ -2497,7 +2497,7 @@ bool OccSimplifier::ternary_res()
             , time_remain
         );
     }
-    runStats.triresolveTime += time_used;
+    run_stats.triresolveTime += time_used;
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
     limit_to_decrease = old_limit_to_decrease;
@@ -2661,10 +2661,10 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
                 assert(newcl.size < 4 && newcl.size > 1);
                 if (newcl.size == 2 || newcl.size == 3) {
                     if (newcl.size == 2) {
-                        runStats.ternary_added_bin++;
+                        run_stats.ternary_added_bin++;
                     } else {
                         assert(newcl.size == 3);
-                        runStats.ternary_added_tri++;
+                        run_stats.ternary_added_tri++;
                     }
                     cl_to_add_ternary.push_back(newcl);
                 }
@@ -2953,7 +2953,7 @@ void OccSimplifier::build_elimed_map() {
 }
 
 void OccSimplifier::finish_up(size_t origTrailSize) {
-    runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
+    run_stats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double my_time = cpu_time();
     frat_func_start();
 
@@ -2977,7 +2977,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
 
     //Update global stats
     const double time_used = cpu_time() - my_time;
-    runStats.finalCleanupTime += time_used;
+    run_stats.finalCleanupTime += time_used;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
@@ -2985,7 +2985,7 @@ void OccSimplifier::finish_up(size_t origTrailSize) {
             , time_used
         );
     }
-    globalStats += runStats;
+    global_stats += run_stats;
     sub_str->finishedRun();
 
     //Sanity checks
@@ -5258,7 +5258,7 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
     }
     if (bvestats_global.numVarsElimed != checkNumElimed) {
         std::cerr
-        << "ERROR: globalStats.numVarsElimed is "<<
+        << "ERROR: global_stats.numVarsElimed is "<<
         bvestats_global.numVarsElimed
         << " but checkNumElimed is: " << checkNumElimed
         << endl;

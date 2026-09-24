@@ -54,8 +54,8 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthe
     if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
     frat_func_start();
 
-    runStats.redWatchBased.clear();
-    runStats.irredWatchBased.clear();
+    run_stats.redWatchBased.clear();
+    run_stats.irredWatchBased.clear();
 
     if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, false))
         goto end;
@@ -78,11 +78,11 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthe
     }
 
 end:
-    globalStats += runStats;
-    if (solver->conf.verbosity) runStats.print_short(solver);
+    global_stats += run_stats;
+    if (solver->conf.verbosity) run_stats.print_short(solver);
     SLOW_DEBUG_DO(solver->check_seen_clean());
     SLOW_DEBUG_DO(solver->check_seen2_clean());
-    runStats.clear();
+    run_stats.clear();
     frat_func_end();
 
     return solver->okay();
@@ -262,9 +262,9 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     //If it hasn't been to successful until now, don't do it so much
     const Stats::WatchBased* stats = nullptr;
     if (red) {
-        stats = &(globalStats.redWatchBased);
+        stats = &(global_stats.redWatchBased);
     } else {
-        stats = &(globalStats.irredWatchBased);
+        stats = &(global_stats.irredWatchBased);
     }
 
     uint64_t maxCountTime =
@@ -361,9 +361,9 @@ void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     tmpStats.numLitsRem += watch_based_data.get_lits_rem();
     tmpStats.cpu_time = time_used;
     if (red) {
-        runStats.redWatchBased += tmpStats;
+        run_stats.redWatchBased += tmpStats;
     } else {
-        runStats.irredWatchBased += tmpStats;
+        run_stats.irredWatchBased += tmpStats;
     }
     if (solver->conf.verbosity >= 10) {
         cout << "red:" << red << " alsostrenghten:" << also_strengthen << endl;

@@ -84,15 +84,15 @@ class DistillerLitRem {
         int64_t orig_maxNumProps;
 
         //Global status
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
         size_t numCalls = 0;
 
 };
 
 inline const DistillerLitRem::Stats& DistillerLitRem::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

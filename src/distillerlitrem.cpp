@@ -43,7 +43,7 @@ bool DistillerLitRem::distill_lit_rem()
 {
     assert(solver->ok);
     numCalls++;
-    runStats.clear();
+    run_stats.clear();
 
 
     if (!solver->remove_and_clean_all()) {
@@ -54,9 +54,9 @@ bool DistillerLitRem::distill_lit_rem()
     }
 
 end:
-    globalStats += runStats;
-    if (solver->conf.verbosity) runStats.print_short(solver);
-    runStats.clear();
+    global_stats += run_stats;
+    if (solver->conf.verbosity) run_stats.print_short(solver);
+    run_stats.clear();
 
     return solver->okay();
 }
@@ -98,7 +98,7 @@ bool DistillerLitRem::go_through_clauses(
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
-            runStats.timeOut++;
+            run_stats.timeOut++;
             time_out = true;
         }
 
@@ -113,7 +113,7 @@ bool DistillerLitRem::go_through_clauses(
 
         //Time to dereference
         maxNumProps -= 5;
-        runStats.checkedClauses++;
+        run_stats.checkedClauses++;
         assert(cl.size() > 2);
 
         //we will detach the clause no matter what
@@ -140,7 +140,7 @@ bool DistillerLitRem::go_through_clauses(
     }
     cls.resize(cls.size()- (i-j));
 
-    runStats.time_used += cpu_time() - my_time;
+    run_stats.time_used += cpu_time() - my_time;
     return time_out;
 }
 
@@ -170,19 +170,19 @@ bool DistillerLitRem::distill_long_cls_all(
 
     //stats setup
     oldBogoProps = solver->propStats.bogoProps;
-    runStats.potentialClauses += offs.size();
-    runStats.numCalled += 1;
+    run_stats.potentialClauses += offs.size();
+    run_stats.numCalled += 1;
 
     bool time_out = false;
     for(uint32_t i = 0; i < 10 && !time_out; i++) {
-        uint32_t prev_cls_tried = runStats.cls_tried;
+        uint32_t prev_cls_tried = run_stats.cls_tried;
         time_out = go_through_clauses(offs, i);
         if (solver->conf.verbosity >= 2) {
-            runStats.print_short(solver);
+            run_stats.print_short(solver);
         }
 
         //Max clause size reached
-        if (runStats.cls_tried == prev_cls_tried) {
+        if (run_stats.cls_tried == prev_cls_tried) {
             break;
         }
     }
@@ -194,7 +194,7 @@ bool DistillerLitRem::distill_long_cls_all(
         solver->sqlStats->time_passed(
             solver
             , "distill-litrem"
-            , runStats.time_used
+            , run_stats.time_used
             , time_out
             , time_remain
         );
@@ -202,7 +202,7 @@ bool DistillerLitRem::distill_long_cls_all(
 
 
     //Update stats
-    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
     return solver->okay();
 }
@@ -215,7 +215,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
     const size_t origTrailSize = solver->trail_size();
-    runStats.cls_tried++;
+    run_stats.cls_tried++;
 
     Clause& cl = *solver->cl_alloc.ptr(offset);
     const bool red = cl.red();
@@ -275,8 +275,8 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     //We can remove the literal
     (*solver->frat) << deldelay << cl << fin;
     solver->detachClause(cl, false);
-    runStats.numLitsRem += orig_size - lits.size();
-    runStats.numClShorten++;
+    run_stats.numLitsRem += orig_size - lits.size();
+    run_stats.numClShorten++;
 
     // we have to copy because the re-alloc can invalidate the data
     ClauseStats backup_stats(*stats);

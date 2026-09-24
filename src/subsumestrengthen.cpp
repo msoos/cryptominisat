@@ -233,8 +233,8 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     }
 
     //Update time used
-    runStats.sub0 += sub0ret;
-    runStats.subsumeTime += cpu_time() - my_time;
+    run_stats.sub0 += sub0ret;
+    run_stats.subsumeTime += cpu_time() - my_time;
 }
 
 bool SubsumeStrengthen::backw_sub_str_long_with_long()
@@ -293,8 +293,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
     }
 
     //Update time used
-    runStats.sub1 += ret;
-    runStats.strengthenTime += cpu_time() - my_time;
+    run_stats.sub1 += ret;
+    run_stats.strengthenTime += cpu_time() - my_time;
 
     return solver->okay();
 }
@@ -744,7 +744,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL) break;
         }
     }
-    runStats.sub1 += ret_sub_str;
+    run_stats.sub1 += ret_sub_str;
     return solver->okay();
 }
 
@@ -779,7 +779,7 @@ void SubsumeStrengthen::backw_sub_with_impl(
         simplifier->unlink_clause(offset2, true, false, true);
         ret_sub_str.sub++;
     }
-    runStats.sub1 += ret_sub_str;
+    run_stats.sub1 += ret_sub_str;
 }
 
 bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
@@ -863,7 +863,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 
 void SubsumeStrengthen::finishedRun()
 {
-    globalstats += runStats;
+    globalstats += run_stats;
 }
 
 void SubsumeStrengthen::Stats::print_short(const Solver* s) const
