@@ -71,9 +71,6 @@ vector<lbool> solve(lbool& solution_val)
     bool done = false;
 
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    cout << "c created solver " << mpiRank << " reading in file..." << endl;
-    #endif
     while(!done) {
         MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
         //cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
@@ -81,10 +78,6 @@ vector<lbool> solve(lbool& solution_val)
         uint32_t i = 0;
         if (num_msgs == 0) {
             solver.new_vars(data[0].var());
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            cout << "c Solver " << mpiRank
-            << " was told by MPI there are " << solver.nVars() << " variables" << endl;
-            #endif
             i++;
         }
         num_msgs++;
@@ -103,12 +96,6 @@ vector<lbool> solve(lbool& solution_val)
             }
         }
     }
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    cout << "c Solver " << mpiRank
-    << " finished getting all of the file."
-    << " nvars: " << solver.nVars()
-    << " num_clauses: " << num_clauses << endl;
-    #endif
 
     solution_val = solver.solve();
     vector<lbool> model;
@@ -196,10 +183,6 @@ int main(int argc, char** argv)
     } else {
         lbool solution_val;
         const vector<lbool> model = solve(solution_val);
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        cout << "c --> MPI Slave Rank " << mpiRank
-        << " Solved " <<  << " with value: " << solution_val << std::endl;
-        #endif
 
         if (solution_val != l_Undef) {
             //Send tag 1 to 0 that indicates we solved
@@ -215,10 +198,6 @@ int main(int argc, char** argv)
 
             err = MPI_Isend(solution_dat.data(), solution_dat.size(), MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &req);
             assert(err == MPI_SUCCESS);
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            cout << "c --> MPI Slave Rank " << mpiRank
-            << " sent tag 1 to master to indicate finished" << std::endl;
-            #endif
 
             //Either we should we get an acknowledgement of receipt, or we get an interrupt
             int flag;
@@ -232,10 +211,6 @@ int main(int argc, char** argv)
                     unsigned buf;
                     err = MPI_Recv(&buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
                     assert(err == MPI_SUCCESS);
-                    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-                    cout << "c --> MPI Slave Rank " << mpiRank
-                    << " got tag 1 from master. Let's cancel our send & exit." << std::endl;
-                    #endif
 
                     err = MPI_Cancel(&req);
                     assert(err == MPI_SUCCESS);
@@ -248,10 +223,6 @@ int main(int argc, char** argv)
 
                 //OK, server got our message, we can exit
                 if (op_completed) {
-                    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-                    cout << "c --> MPI Slave Rank " << mpiRank
-                    << " completed sending solution & tag 1 to master. Let's exit." << std::endl;
-                    #endif
                     break;
                 }
 

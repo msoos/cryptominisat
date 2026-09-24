@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include "solvertypes.h"
 using std::vector;
 
-#define VERBOSE_DEBUG_MPI_SENDRCV
 
 using namespace CMSat;
 
@@ -46,10 +45,6 @@ DataSyncServer::DataSyncServer()
     assert(err == MPI_SUCCESS);
     assert(mpiRank == 0);
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "c -->> MPI Server"
-    << " says -- mpiSize:" << mpiSize << std::endl;
-    #endif
     assert(sizeof(unsigned) == sizeof(uint32_t));
 }
 
@@ -81,10 +76,6 @@ void DataSyncServer::mpi_recv_from_others()
     //Get message size
     err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
     assert(err == MPI_SUCCESS);
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "c -->> MPI Server [from " << source << "]"
-    << " Counted " << count << " uint32_t-s" << std::endl;
-    #endif
 
     //Get message, BLOCKING
     assert(sizeof(unsigned int) == 4);
@@ -95,10 +86,6 @@ void DataSyncServer::mpi_recv_from_others()
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     assert(err == MPI_SUCCESS);
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "c -->> MPI Server [from " << source << "]"
-    << " Received data " << std::endl;
-    #endif
 
     int at = 0;
     assert(num_vars == buf[at]); //the first uint32_t is the number of bytes, always
@@ -134,10 +121,6 @@ void DataSyncServer::mpi_recv_from_others()
     }
     recvBinData += thisRecvBinData;
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "c -->> MPI Server [from " << source << "]"
-    << " Obtained " << thisRecvBinData << " bins" << std::endl;
-    #endif
 
     delete[] buf;
     numGotPacket++;
@@ -171,10 +154,6 @@ void DataSyncServer::finish_data_send()
             numFinished++;
             continue;
         }
-//      #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-//      std::cout << "c -->> MPI Server"
-//      << " Checking if sending finished to " << i << std::endl;
-//      #endif
 
         MPI_Status status;
         int op_completed;
@@ -184,10 +163,6 @@ void DataSyncServer::finish_data_send()
             //NOTE: no need to free, MPI_Test also frees it
             sendRequestsFinished[i] = true;
             numFinished++;
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            std::cout << "c -->> MPI Server [to:" << i << "]"
-            << " Sending finished" << std::endl;
-            #endif
         } else if (interrupt_sent) {
             //If we have finished then we must cancel this otherwise we may hang
             //   waiting for a receive of a thread that itself has already found SAT/UNSAT on its own
@@ -199,17 +174,9 @@ void DataSyncServer::finish_data_send()
             assert(err == MPI_SUCCESS);
             sendRequestsFinished[i] = true;
             numFinished++;
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            std::cout << "c -->> MPI Server [to:" << i << "]"
-            << " cancelling due to interrupt" << std::endl;
-            #endif
         }
     }
     if (numFinished != mpiSize-1) {
-//      #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-//      std::cout << "c -->> MPI Server"
-//      << " sending not all finished, exiting sendDataToAll" << std::endl;
-//      #endif
         return;
     }
     send_requests_finished = true;
@@ -254,12 +221,6 @@ void DataSyncServer::sendDataToAll()
     for (int i = 1; i < mpiSize; i++) {
         err = MPI_Isend(sendData, data.size(), MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &(sendRequests[i]));
         assert(err == MPI_SUCCESS);
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        std::cout << "c -->> MPI Server [to " << i << "]"
-        << " Sent " << data.size() << " uint32_t -s" << std::endl;
-        std::cout << "c -->> MPI Server [to " << i << "]"
-        << " Sent " << thisSentBinData << " bins " << std::endl;
-        #endif
         sendRequestsFinished[i] = false;
     }
     lastSendNumGotPacket = numGotPacket;
@@ -285,19 +246,11 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
     }
     int source = status.MPI_SOURCE;
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "c -->> MPI Server"
-    << " Got interrupt from " << source << std::endl;
-    #endif
 
     int count;
     err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
     assert(err == MPI_SUCCESS);
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "c -->> MPI Server"
-    << " Interrupt from " << source << " has size " << count << std::endl;
-    #endif
 
     //Get the interrupt signal, tagged 1, with the solution. BLOCKING.
     uint32_t* buf = new uint32_t[count];
@@ -319,20 +272,16 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
     }
     delete[] buf;
 
-//     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "c -->> MPI Server"
     << " got solution from " << source << std::endl;
-//     #endif
 
     //Send to all except: the one who sent it (source) and ourselves (0)
     for (int i = 1; i < mpiSize; i++) {
         if (i == source) {
             continue;
         }
-//         #ifdef VERBOSE_DEBUG_MPI_SENDRCV
         std::cout << "c -->> MPI Server"
         << " sending interrupt to " << i << std::endl;
-//         #endif
 
         err = MPI_Isend(
             nullptr, // buf is actually empty that we send

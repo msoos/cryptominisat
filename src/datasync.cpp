@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 
-//#define VERBOSE_DEBUG_MPI_SENDRCV
 
 using namespace CMSat;
 
@@ -433,10 +432,6 @@ void DataSync::set_up_for_mpi()
 //Interrupts are tag 1, coming from master (i.e. rank 0)
 bool DataSync::mpi_get_interrupt()
 {
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " trying to get interrupt" << endl;
-    #endif
 
     int flag;
     MPI_Status status;
@@ -476,20 +471,12 @@ bool DataSync::mpi_recv_from_others()
     int count;
     uint32_t thisMpiRecvUnitData = 0;
     uint32_t thisMpiRecvBinData = 0;
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " syncing from MPI..." << std::endl;
-    #endif
 
 
     //Check if there is data, tagged 0, from source 0 (root)
     err = MPI_Iprobe(0, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
     if (flag == false) {
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-        " No data to receive." << std::endl;
-        #endif
 
         //no data
         return true;
@@ -498,10 +485,6 @@ bool DataSync::mpi_recv_from_others()
     //Get data size
     err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
     assert(err == MPI_SUCCESS);
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Receiving " << count << " uint32_t ..." << std::endl;
-    #endif
 
     //Receive data
     uint32_t* buf = new uint32_t[count];
@@ -515,10 +498,6 @@ bool DataSync::mpi_recv_from_others()
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++, at++) {
         const lbool otherVal = toLbool(buf[at]);
         if (!mpi_get_unit(otherVal, var, thisMpiRecvUnitData)) {
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-            " solver FALSE" << std::endl;
-            #endif
             goto end;
         }
     }
@@ -543,12 +522,6 @@ bool DataSync::mpi_recv_from_others()
     mpiRecvBinData += thisMpiRecvBinData;
 
     end:
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Received " << thisMpiRecvUnitData << " units (total: " << mpiRecvUnitData << ")" << std::endl;
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Received " << thisMpiRecvBinData << " bins (total: " << mpiRecvBinData << ")" << std::endl;
-    #endif
 
     delete[] buf;
     return solver->okay();
@@ -560,10 +533,6 @@ void DataSync::mpi_send_to_others()
 
     //We still are sending data, let's do that first
     if (mpiSendData != nullptr) {
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-        " Still sending data, waiting now." << std::endl;
-        #endif
 
         /*MPI_Status status;
         int op_completed;
@@ -579,10 +548,6 @@ void DataSync::mpi_send_to_others()
         }*/
     }
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Building data to send via MPI..." << std::endl;
-    #endif
 
     //Set up units
     assert(solver->nVarsOutside() == sharedData->value.size());
@@ -616,12 +581,6 @@ void DataSync::mpi_send_to_others()
     }
     mpiSentBinData += thisMpiSentBinData;
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Sending " << data.size() << " uint32_t -s" << std::endl;
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " and " << thisMpiSentBinData << " bins.." << std::endl;
-    #endif
 
     //Send the data
     mpiSendData = new uint32_t[data.size()];
@@ -630,10 +589,6 @@ void DataSync::mpi_send_to_others()
     err = MPI_Send(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
     assert(err == MPI_SUCCESS);
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Sent MPI sync data" << std::endl;
-    #endif
 }
 
 bool DataSync::mpi_get_unit(
