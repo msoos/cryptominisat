@@ -1283,6 +1283,19 @@ void EGaussian::print_matrix() {
     }
 }
 
+void EGaussian::add_to(GaussTotals& t) const
+{
+    t.matrices++;
+    t.rows += num_rows;
+    t.cols += num_cols;
+    t.find_calls += find_truth_called_propgause;
+    t.find_prop += find_truth_ret_prop;
+    t.find_confl += find_truth_ret_confl;
+    t.elim_calls += elim_called_propgause;
+    t.elim_prop += elim_ret_prop;
+    t.elim_confl += elim_ret_confl;
+}
+
 void EGaussian::print_matrix_stats(uint32_t verbosity)
 {
     std::stringstream ss;

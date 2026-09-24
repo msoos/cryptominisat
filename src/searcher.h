@@ -138,6 +138,7 @@ class Searcher : public HyperEngine
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
         bool disable_gauss_matrix(uint32_t i);
+        GaussTotals gauss_tot;
         bool gauss_disable_pending = false;
         uint32_t gauss_disabled_this_solve = 0;
 

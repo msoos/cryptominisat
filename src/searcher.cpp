@@ -3840,6 +3840,13 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     }
 
     if (conf.verbosity) print_matrix_stats();
+    for(uint32_t i = 0; i < gmatrices.size(); i++) {
+        if (!gmatrices[i]) continue;
+        gmatrices[i]->add_to(gauss_tot);
+        gauss_tot.props += gqueuedata[i].num_props;
+        gauss_tot.confls += gqueuedata[i].num_conflicts;
+        gauss_tot.disabled += gqueuedata[i].disabled;
+    }
     if (!destruct && okay()) for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();

@@ -88,6 +88,7 @@ class EGaussian {
     bool full_init(bool& created);
     void update_cols_vals_set(bool force = false);
     void print_matrix_stats(uint32_t verbosity);
+    void add_to(GaussTotals& t) const;
     bool must_disable(GaussQData& gqd);
     void check_invariants();
     void update_matrix_no(uint32_t n);
