@@ -318,7 +318,7 @@ bool HyperEngine::is_ancestor_of(
 ) {
     prop_stats.otfHyperTime += 1;
 
-    //Was propagated at level 0 -- clauseCleaner will remove the clause
+    //Was propagated at level 0 -- clause_cleaner will remove the clause
     if (lookingForAncestor == lit_Undef)
         return false;
 
@@ -494,7 +494,7 @@ void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
         prop_stats.otfHyperTime += needToAddBinClause.size()/4;
         std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
 
-        //In case this is called after a backtrack to decisionLevel 1
+        //In case this is called after a backtrack to decision_level 1
         //then in fact we might have already cleaned the
         //'needToAddBinClause'. When called from probing, the IF below
         //must ALWAYS be true
@@ -609,7 +609,7 @@ void HyperEngine::enqueue_with_acestor_info(
 ) {
     //only called at decision level 1 during solving OR
     //during intree probing
-    enqueue<true>(p, decisionLevel(), PropBy(~ancestor, redStep, false, false, ID));
+    enqueue<true>(p, decision_level(), PropBy(~ancestor, redStep, false, false, ID));
 
     assert(var_data[ancestor.var()].level != 0);
 
@@ -624,7 +624,7 @@ void HyperEngine::enqueue_with_acestor_info(
     << " by " << std::setw(6) << (~ancestor)
     << " ID: " << ID
     << " at depth " << std::setw(4) << depth[p.var()]
-    << " at dec level: " << decisionLevel()
+    << " at dec level: " << decision_level()
     << endl;
     #endif
 }

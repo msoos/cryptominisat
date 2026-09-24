@@ -69,7 +69,7 @@ public:
 
     virtual void set_id_confl(
         const int32_t id
-        , const uint64_t sumConflicts
+        , const uint64_t sum_conflicts
     ) = 0;
 
     #ifdef STATS_NEEDED

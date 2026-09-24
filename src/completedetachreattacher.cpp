@@ -86,7 +86,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst) {
     verb_print(6, "Cleaning and reattaching clauses");
     cleanAndAttachClauses(solver->long_irred_cls, removeStatsFirst);
     for(auto& lredcls: solver->long_red_cls) cleanAndAttachClauses(lredcls, removeStatsFirst);
-    solver->clauseCleaner->clean_implicit_clauses();
+    solver->clause_cleaner->clean_implicit_clauses();
     assert(!solver->frat->something_delayed());
 
     if (solver->okay()) solver->ok = (solver->propagate<true>().isnullptr());

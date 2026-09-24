@@ -284,7 +284,7 @@ void ClauseAllocator::consolidate(
         VarData& vdata = solver->var_data[i];
         if (vdata.reason.isClause()) {
             if (vdata.removed == Removed::none
-                && solver->decisionLevel() >= vdata.level
+                && solver->decision_level() >= vdata.level
                 && vdata.level != 0
                 && solver->value(i) != l_Undef
             ) {

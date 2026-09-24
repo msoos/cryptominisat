@@ -54,7 +54,7 @@ int ClPredictorsPy::get_step_size()
 //Every raw column; ml_module.py computes the features from them
 int ClPredictorsPy::set_up_input(
     const CMSat::Clause* const cl,
-    const uint64_t sumConflicts,
+    const uint64_t sum_conflicts,
     const double   act_ranking_rel,
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
@@ -67,7 +67,7 @@ int ClPredictorsPy::set_up_input(
     float* at)
 {
     const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
-    const predgen::In in {cl, extra_stats, solver, commdata, sumConflicts,
+    const predgen::In in {cl, extra_stats, solver, commdata, sum_conflicts,
         act_ranking_rel, uip1_ranking_rel, prop_ranking_rel,
         sum_uip1_per_time_ranking_rel, sum_props_per_time_ranking_rel};
     predgen::fill_raw(in, missing_val, at);

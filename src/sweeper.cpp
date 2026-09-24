@@ -744,7 +744,7 @@ bool Sweeper::sweep()
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     frat_func_start();
     fr = solver->frat->enabled();
     swept_vars = found_units = found_equivs = 0;

@@ -106,14 +106,14 @@ void DataSync::updateVars(
 bool DataSync::syncData()
 {
     if (!enabled()
-        || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts
+        || lastSyncConf + solver->conf.sync_every_confl >= solver->sum_conflicts
     ) {
         return true;
     }
     numCalls++;
 
     assert(sharedData != nullptr);
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     //SEND data
     bool ok;
@@ -165,7 +165,7 @@ bool DataSync::syncData()
     }
     #endif
 
-    lastSyncConf = solver->sumConflicts;
+    lastSyncConf = solver->sum_conflicts;
 
     return true;
 }
@@ -186,7 +186,7 @@ bool DataSync::shareUnitData()
     }
     for (uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         Lit thisLit = Lit(var, false);
-        thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
+        thisLit = solver->var_replacer->get_lit_replaced_with_outer(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
         const lbool thisVal = solver->value(thisLit);
         const lbool otherVal = shared.value[var];
@@ -255,7 +255,7 @@ bool DataSync::syncBinFromOthers()
         }
 
         Lit lit1 = Lit::toLit(wsLit);
-        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
+        lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->var_data[lit1.var()].removed != Removed::none
             || solver->value(lit1.var()) != l_Undef
@@ -283,7 +283,7 @@ bool DataSync::syncBinFromOthers(
     , uint32_t& finished
     , watch_subarray ws
 ) {
-    assert(solver->varReplacer->get_lit_replaced_with(lit) == lit);
+    assert(solver->var_replacer->get_lit_replaced_with(lit) == lit);
     assert(solver->var_data[lit.var()].removed == Removed::none);
 
     assert(toClear.empty());
@@ -298,7 +298,7 @@ bool DataSync::syncBinFromOthers(
     vector<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
         Lit otherLit = bins[i];
-        otherLit = solver->varReplacer->get_lit_replaced_with_outer(otherLit);
+        otherLit = solver->var_replacer->get_lit_replaced_with_outer(otherLit);
         otherLit = solver->map_outer_to_inter(otherLit);
         if (solver->var_data[otherLit.var()].removed != Removed::none
             || solver->value(otherLit) != l_Undef
@@ -360,7 +360,7 @@ void DataSync::clear_set_binary_values()
 {
     for(size_t i = 0; i < solver->nVarsOuter()*2; i++) {
         Lit lit1 = Lit::toLit(i);
-        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
+        lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->value(lit1) != l_Undef) {
             sharedData->bins[i].clear();
@@ -598,7 +598,7 @@ bool DataSync::mpi_get_unit(
 ) {
     Lit l = Lit(var, false);
     Lit lit1 = solver->map_to_with_bva(l);
-    lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
+    lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
     lit1 = solver->map_outer_to_inter(lit1);
     const lbool thisVal = solver->value(lit1);
 

@@ -55,24 +55,24 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
     //Can't replace vars inside GJ matrices, but the tree needs an acyclic
     //implication graph: skip this round if there are equivalences
     if (!solver->gmatrices.empty()) {
-        if (!solver->clauseCleaner->remove_and_clean_all()) return false;
-        aborted = solver->varReplacer->has_equivalences(&bogoprops);
+        if (!solver->clause_cleaner->remove_and_clean_all()) return false;
+        aborted = solver->var_replacer->has_equivalences(&bogoprops);
         frat_func_end();
         return true;
     }
     uint32_t last_replace = numeric_limits<uint32_t>::max();
-    uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
+    uint32_t this_replace = solver->var_replacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
-        if (!solver->clauseCleaner->remove_and_clean_all()) return false;
-        bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
+        if (!solver->clause_cleaner->remove_and_clean_all()) return false;
+        bool OK = solver->var_replacer->replace_if_enough_is_found(0, &bogoprops);
         if (!OK) return false;
 
-        if (solver->varReplacer->get_scc_depth_warning_triggered()) {
+        if (solver->var_replacer->get_scc_depth_warning_triggered()) {
             aborted = true;
             return solver->okay();
         }
-        this_replace = solver->varReplacer->get_num_replaced_vars();
+        this_replace = solver->var_replacer->get_num_replaced_vars();
 
         if (bogoprops > time_limit) {
             aborted = true;
@@ -249,14 +249,14 @@ void InTree::tree_look()
             timeout = handle_lit_popped_from_queue(
                 elem.propagated, elem.other_lit, elem.red, elem.ID);
         } else {
-            assert(solver->decisionLevel() > 0);
-            solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+            assert(solver->decision_level() > 0);
+            solver->cancel_until<false, true>(solver->decision_level()-1);
 
             depth_failed.pop_back();
             assert(!depth_failed.empty());
 
             if (reset_reason_stack.empty()) {
-                assert(solver->decisionLevel() == 0);
+                assert(solver->decision_level() == 0);
             } else {
                 assert(!reset_reason_stack.empty());
                 ResetReason tmp = reset_reason_stack.back();
@@ -267,14 +267,14 @@ void InTree::tree_look()
             }
         }
 
-        if (solver->decisionLevel() == 0) {
+        if (solver->decision_level() == 0) {
             if (!empty_failed_list()) {
                 return;
             }
         }
     }
 
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
     empty_failed_list();
 }
 
@@ -294,7 +294,7 @@ bool InTree::handle_lit_popped_from_queue(
     ) {
         //l is failed.
         failed.push_back(~lit);
-        verb_print(10,"Failed :" << ~lit << " level: " << solver->decisionLevel());
+        verb_print(10,"Failed :" << ~lit << " level: " << solver->decision_level());
         return false;
     }
 
@@ -353,7 +353,7 @@ bool InTree::handle_lit_popped_from_queue(
 
 bool InTree::empty_failed_list()
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     const bool fr = solver->frat->enabled();
     if (fr && !failed.empty()) {
         //Attach pending hyper-bins and surface any level-0 conflict: with

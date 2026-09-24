@@ -54,7 +54,7 @@ RAW = {
     "rdb0.is_ternary_resolvent": ("in.cl->stats.is_ternary_resolvent", None),
     "rdb0.is_decision": ("in.cl->stats.is_decision", None),
     "rdb0.is_distilled": ("in.cl->distilled", None),
-    "rdb0.last_touched_any_diff": ("(in.sumConflicts - (uint64_t)in.cl->stats.last_touched_any)", None),
+    "rdb0.last_touched_any_diff": ("(in.sum_conflicts - (uint64_t)in.cl->stats.last_touched_any)", None),
     "rdb0.activity_rel": ("((double)in.cl->stats.activity/in.s->get_cla_inc())", None),
     "rdb0.introduced_at_conflict": ("in.e.introduced_at_conflict", None),
     "rdb0.act_ranking": ("in.e.act_ranking", None),
@@ -123,7 +123,7 @@ RAW = {
     "cl.conflSizeHist_avg": ("in.e.conflSizeHist_avg", TERN),
     "cl.glueHist_avg": ("in.e.glueHist_avg", TERN),
     "cl.glueHist_longterm_avg": ("in.e.glueHist_longterm_avg", TERN),
-    "cl.time_inside_solver": ("(in.sumConflicts - (uint64_t)in.e.introduced_at_conflict)", None),
+    "cl.time_inside_solver": ("(in.sum_conflicts - (uint64_t)in.e.introduced_at_conflict)", None),
 }
 
 
@@ -216,7 +216,7 @@ struct In {
     const ClauseStatsExtra& e;
     const Solver* s;
     const ReduceCommonData& c;
-    uint64_t sumConflicts;
+    uint64_t sum_conflicts;
     double act_ranking_rel;
     double uip1_ranking_rel;
     double prop_ranking_rel;

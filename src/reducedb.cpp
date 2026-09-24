@@ -221,7 +221,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
         inc_flush = solver->conf.flushint;
         lim_flush = solver->conf.flushint;
     }
-    const bool flush = solver->conf.flush && solver->sumConflicts >= lim_flush;
+    const bool flush = solver->conf.flush && solver->sum_conflicts >= lim_flush;
     if (flush) num_flushes++;
 
     cl_reduced = 0;
@@ -257,15 +257,15 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     //231, so 'used' lives were never spent and the red DB kept growing
     int64_t delta = (int64_t)((double)solver->conf.reduceint * std::sqrt((double)num_reductions));
     if (delta < 1) delta = 1;
-    lim_reduce = solver->sumConflicts + delta;
+    lim_reduce = solver->sum_conflicts + delta;
     if (flush) {
         inc_flush *= solver->conf.flushfactor;
-        lim_flush = solver->sumConflicts + inc_flush;
+        lim_flush = solver->sum_conflicts + inc_flush;
     }
 
     verb_print(1, "[reduce] " << num_reductions
     << (flush ? " FLUSHED" : "")
-    << " confl: " << solver->sumConflicts
+    << " confl: " << solver->sum_conflicts
     << " red: " << orig_size << "->" << solver->long_red_cls[0].size()
     << " cands: " << rstats.cands
     << " rem: " << rstats.removed
@@ -293,7 +293,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     }
     total_time += cpu_time()-my_time;
 
-    last_reducedb_num_conflicts = solver->sumConflicts;
+    last_reducedb_num_conflicts = solver->sum_conflicts;
 }
 
 //CaDiCaL's likely_to_be_kept_clause under kissat's tier rules
@@ -315,11 +315,11 @@ void ReduceDB::print_reduce_stats() const
     print_stats_line(p + "reductions", num_reductions,
         float_div(r.sum_red_before, num_reductions), "avg red cls at reduce");
     print_stats_line(p + "reduce interval avg",
-        (uint64_t)(num_reductions ? solver->sumConflicts / num_reductions : 0),
-        float_div(solver->sumConflicts, num_reductions) / (double)solver->conf.reduceint,
+        (uint64_t)(num_reductions ? solver->sum_conflicts / num_reductions : 0),
+        float_div(solver->sum_conflicts, num_reductions) / (double)solver->conf.reduceint,
         "x reduceint");
     print_stats_line(p + "learnt cls uses", solver->sum_clause_uses(),
-        stats_line_percent(solver->sum_clause_uses(), solver->sumConflicts), "% of conflicts, as kissat's clauses_used");
+        stats_line_percent(solver->sum_clause_uses(), solver->sum_conflicts), "% of conflicts, as kissat's clauses_used");
     print_stats_line(p + "reduce candidates", r.cands,
         stats_line_percent(r.cands, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
     print_stats_line(p + "reduce removed", r.removed,
@@ -387,8 +387,8 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         total_uip1_used += cl->stats.uip1_used;
         total_sum_uip1_used += stats_extra.sum_uip1_used;
         total_sum_props_used += stats_extra.sum_props_made;
-        assert(solver->sumConflicts >= stats_extra.introduced_at_conflict);
-        total_time_in_solver += solver->sumConflicts - stats_extra.introduced_at_conflict;
+        assert(solver->sum_conflicts >= stats_extra.introduced_at_conflict);
+        total_time_in_solver += solver->sum_conflicts - stats_extra.introduced_at_conflict;
     }
     if (all_learnt.empty()) {
         median_data.median_props = 0;
@@ -417,7 +417,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         Clause* cl = solver->cl_alloc.ptr(offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         dat[i].pos = i;
-        dat[i].val = stats_extra.calc_sum_uip1_per_time(solver->sumConflicts);
+        dat[i].val = stats_extra.calc_sum_uip1_per_time(solver->sum_conflicts);
     }
     std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
         return a.val > b.val;
@@ -433,7 +433,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     } else {
         uint32_t extra_at = get_median_stat_dat(all_learnt, dat).extra_pos;
         const ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
-        median_data.median_sum_uip1_per_time = stats_extra.calc_sum_uip1_per_time(solver->sumConflicts);
+        median_data.median_sum_uip1_per_time = stats_extra.calc_sum_uip1_per_time(solver->sum_conflicts);
     }
 
     // Sum props/time
@@ -442,7 +442,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         Clause* cl = solver->cl_alloc.ptr(offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         dat[i].pos = i;
-        dat[i].val = stats_extra.calc_sum_props_per_time(solver->sumConflicts);
+        dat[i].val = stats_extra.calc_sum_props_per_time(solver->sum_conflicts);
     }
     std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
         return a.val > b.val;
@@ -458,7 +458,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     } else {
         uint32_t extra_at = get_median_stat_dat(all_learnt, dat).extra_pos;
         const ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
-        median_data.median_sum_props_per_time = stats_extra.calc_sum_props_per_time(solver->sumConflicts);
+        median_data.median_sum_props_per_time = stats_extra.calc_sum_props_per_time(solver->sum_conflicts);
     }
 
     //We'll also compact solver->red_stats_extra
@@ -646,7 +646,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         const double sum_props_per_time_ranking_rel = safe_div(stats_extra.sum_props_per_time_ranking, commdata.all_learnt_size);
         const int ret = predictors->set_up_input(
             cl,
-            solver->sumConflicts,
+            solver->sum_conflicts,
             act_ranking_rel,
             uip1_ranking_rel,
             prop_ranking_rel,
@@ -715,7 +715,7 @@ void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs)
         const ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         distrib_file
         << num_reductions << ","
-        << (solver->sumConflicts - stats_extra.introduced_at_conflict) << ","
+        << (solver->sum_conflicts - stats_extra.introduced_at_conflict) << ","
         << cl->stats.glue << "," << cl->stats.used
         << "," << stats_extra.pred_short_use
         << "," << stats_extra.pred_long_use

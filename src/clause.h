@@ -219,9 +219,9 @@ struct ClauseStatsExtra
     double pred_short_use;
     double pred_long_use;
     double pred_forever_use;
-    double calc_sum_uip1_per_time(const uint64_t sumConflicts) const {
-        assert(introduced_at_conflict <= sumConflicts);
-        const uint64_t time = sumConflicts - introduced_at_conflict;
+    double calc_sum_uip1_per_time(const uint64_t sum_conflicts) const {
+        assert(introduced_at_conflict <= sum_conflicts);
+        const uint64_t time = sum_conflicts - introduced_at_conflict;
         if (time == 0) {
             assert(sum_uip1_used <= 1);
             return 0;
@@ -229,9 +229,9 @@ struct ClauseStatsExtra
         return (double)sum_uip1_used/(double)time;
     }
 
-    double calc_sum_props_per_time(const uint64_t sumConflicts) const {
-        assert(introduced_at_conflict <= sumConflicts);
-        const uint64_t time = sumConflicts - introduced_at_conflict;
+    double calc_sum_props_per_time(const uint64_t sum_conflicts) const {
+        assert(introduced_at_conflict <= sum_conflicts);
+        const uint64_t time = sum_conflicts - introduced_at_conflict;
         if (time == 0) {
             return 0;
         }

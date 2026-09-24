@@ -212,7 +212,7 @@ bool VarReplacer::perform_replace() {
     const double my_time = cpu_time();
     const size_t origTrailSize = solver->trail_size();
 
-    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    if (!solver->clause_cleaner->remove_and_clean_all()) return false;
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
 
     if (solver->frat->enabled()) emit_direct_eqbins();
@@ -869,7 +869,7 @@ void VarReplacer::replaceChecks(const uint32_t var1, const uint32_t var2) const
 {
 
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->value(var1) == l_Undef);
     assert(solver->value(var2) == l_Undef);
 

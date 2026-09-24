@@ -48,7 +48,7 @@ bool Lucky::terminated() const { return solver->must_interrupt_asap(); }
 //Common clean up: get back to level 0 after a conflict or a failed check
 int Lucky::unlucky(const int res)
 {
-    if (solver->decisionLevel() > 0) solver->cancelUntil<true, true>(0);
+    if (solver->decision_level() > 0) solver->cancel_until<true, true>(0);
     return res;
 }
 
@@ -118,7 +118,7 @@ bool Lucky::xors_satisfied() const
 //clause holds with all variables set to 'polar', so assign them and propagate
 int Lucky::trivially_satisfiable(const bool polar)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     for(uint32_t i = 0; i < solver->nVars()*2; i++) {
         if (terminated()) return -1;
@@ -153,7 +153,7 @@ int Lucky::trivially_satisfiable(const bool polar)
 //CaDiCaL's 'forward_true_satisfiable'/'forward_false_satisfiable'
 int Lucky::forward_satisfiable(const bool polar)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     if (!assume_rest(polar)) return aborted ? -1 : 0;
     if (!xors_satisfied()) return unlucky(0);
     verb_print(1, "[lucky] satisfied by: forward " << (int)polar);
@@ -163,7 +163,7 @@ int Lucky::forward_satisfiable(const bool polar)
 //CaDiCaL's 'backward_true_satisfiable'/'backward_false_satisfiable'
 int Lucky::backward_satisfiable(const bool polar)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     for(int i = (int)solver->nVars()-1; i >= 0; i--) {
         const uint32_t v = i;
         if (solver->var_data[v].removed != Removed::none) continue;
@@ -179,7 +179,7 @@ int Lucky::backward_satisfiable(const bool polar)
 //clause with its first literal of sign 'polar', then set the rest the other way
 int Lucky::horn_satisfiable(const bool polar)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     for(const ClOffset off: solver->long_irred_cls) {
         if (terminated()) return unlucky(-1);
@@ -228,7 +228,7 @@ int Lucky::horn_satisfiable(const bool polar)
 lbool Lucky::doit()
 {
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->assumptions.empty());
     const double my_time = cpu_time();
 
@@ -244,11 +244,11 @@ lbool Lucky::doit()
 
     if (res == 10) {
         solver->model = solver->assigns;
-        solver->cancelUntil<true, true>(0);
+        solver->cancel_until<true, true>(0);
         const PropBy confl = solver->propagate<true>();
         assert(confl.isnullptr()); (void)confl;
     }
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     const double time_used = cpu_time() - my_time;
     verb_print(1, "[lucky] " << (res == 10 ? "found a model" : "no luck")

@@ -193,7 +193,7 @@ bool DistillerBin::go_through_bins(const Lit lit1)
     if (cands.empty()) return false;
 
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     set_cands_marked(lit1, true);
     to_rem.clear();
     fallback.clear();
@@ -213,12 +213,12 @@ bool DistillerBin::go_through_bins(const Lit lit1)
                 solver->new_decision_level();
                 solver->enqueue<true>(~c.lit2);
                 const bool confl = !solver->propagate<true, false, true>().isnullptr();
-                solver->cancelUntil<false, true>(1);
+                solver->cancel_until<false, true>(1);
                 if (confl) to_rem.push_back(c);
             }
         }
     }
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
     set_cands_marked(lit1, false);
 
     for(const auto& c: to_rem) remove_bin(lit1, c.lit2, c.ID);
@@ -244,7 +244,7 @@ bool DistillerBin::try_distill_bin(
 ) {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     //Try different ordering
     if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);
@@ -277,7 +277,7 @@ bool DistillerBin::try_distill_bin(
                 hints.insert(hints.end(), rsns.begin(), rsns.end());
                 hints.push_back(ID);
             }
-            solver->cancelUntil<false, true>(0);
+            solver->cancel_until<false, true>(0);
             vector<Lit> x = {lit1};
             solver->add_clause_int(x, false, nullptr, true, nullptr, true,
                 lit_Undef, false, false,
@@ -293,7 +293,7 @@ bool DistillerBin::try_distill_bin(
     }
 
     if (!confl.isnullptr()) {
-        solver->cancelUntil<false, true>(0);
+        solver->cancel_until<false, true>(0);
         solver->detach_bin_clause(lit1, lit2, false, ID);
         (*solver->frat) << del << ID << lit1 << lit2 << fin;
         run_stats.clRemoved++;
@@ -301,7 +301,7 @@ bool DistillerBin::try_distill_bin(
     }
 
     //Nothing happened
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
     auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, ID);
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();

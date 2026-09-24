@@ -190,7 +190,7 @@ public:
     [[nodiscard]] uint32_t nAssigns() const;         ///<The current number of assigned literals.
 
     //Get state
-    [[nodiscard]] uint32_t decisionLevel() const;      ///<Returns current decision level
+    [[nodiscard]] uint32_t decision_level() const;      ///<Returns current decision level
     [[nodiscard]] size_t getTrailSize() const; //number of variables set at decision level 0
     [[nodiscard]] size_t trail_size() const {
         return trail.size();
@@ -424,7 +424,7 @@ inline void PropEngine::new_decision_level()
     trail_lim.push_back(trail.size());
 }
 
-inline uint32_t PropEngine::decisionLevel() const
+inline uint32_t PropEngine::decision_level() const
 {
     return trail_lim.size();
 }
@@ -436,7 +436,7 @@ inline uint32_t PropEngine::nAssigns() const
 
 inline size_t PropEngine::getTrailSize() const
 {
-    return decisionLevel() == 0 ? trail.size() : trail_lim[0];
+    return decision_level() == 0 ? trail.size() : trail_lim[0];
 }
 
 template<class T> inline
@@ -530,7 +530,7 @@ inline PropResult PropEngine::handle_long_cl_conflict(
 template<bool inprocess>
 void PropEngine::enqueue(const Lit p)
 {
-    enqueue<inprocess>(p, decisionLevel(), PropBy());
+    enqueue<inprocess>(p, decision_level(), PropBy());
 }
 
 template<bool inprocess>

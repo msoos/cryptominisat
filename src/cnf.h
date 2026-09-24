@@ -105,7 +105,7 @@ public:
     vector<uint32_t> depth; //for ancestors in intree probing
     uint32_t minNumVars = 0;
 
-    uint64_t sumConflicts = 0;
+    uint64_t sum_conflicts = 0;
     uint64_t sumDecisions = 0;
     uint64_t sumAntecedents = 0;
     uint64_t sumConflictClauseLits = 0;

@@ -49,7 +49,7 @@ int ClPredictorsAbst::get_step_size()
 //(scripts/crystal/gen_pred_features.py) so training and solving agree
 int ClPredictorsAbst::set_up_input(
     const CMSat::Clause* const cl,
-    const uint64_t sumConflicts,
+    const uint64_t sum_conflicts,
     const double   act_ranking_rel,
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
@@ -62,9 +62,9 @@ int ClPredictorsAbst::set_up_input(
     float* at)
 {
     const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
-    assert(cl->stats.last_touched_any <= sumConflicts);
-    assert(extra_stats.introduced_at_conflict <= sumConflicts);
-    const predgen::In in {cl, extra_stats, solver, commdata, sumConflicts,
+    assert(cl->stats.last_touched_any <= sum_conflicts);
+    assert(extra_stats.introduced_at_conflict <= sum_conflicts);
+    const predgen::In in {cl, extra_stats, solver, commdata, sum_conflicts,
         act_ranking_rel, uip1_ranking_rel, prop_ranking_rel,
         sum_uip1_per_time_ranking_rel, sum_props_per_time_ranking_rel};
     predgen::fill_features(in, missing_val, at);

@@ -213,7 +213,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     , const uint32_t at
 ) {
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     const size_t origTrailSize = solver->trail_size();
     run_stats.cls_tried++;
 
@@ -249,7 +249,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
         hints.insert(hints.end(), rsns.begin(), rsns.end());
         hints.push_back(cid);
     }
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
 
      //Couldn't remove literal
     if (confl.isnullptr()) {

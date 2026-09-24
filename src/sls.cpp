@@ -55,7 +55,7 @@ void SLS::run_initially()
 
 void SLS::run(const int64_t mems)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     if (!enough_mem()) return;
 

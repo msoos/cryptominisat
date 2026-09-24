@@ -532,7 +532,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
     cls.resize(kept);
 
     //decisions may have been left in place for reuse between candidates
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
 
     frat_func_end();
     return time_out;
@@ -558,7 +558,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (red) assert(!also_remove);
 
     const auto remove_cl = [&]() {
-        solver->cancelUntil<false, true>(0);
+        solver->cancel_until<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
         *solver->frat << findelay;
         solver->free_cl(offset);
@@ -589,26 +589,26 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //If this clause forced one of its literals on the reused trail, it may
     //not be used to prove itself redundant: backtrack below that level
-    if (solver->decisionLevel() > 0 && solver->clause_locked(cl, offset)) {
+    if (solver->decision_level() > 0 && solver->clause_locked(cl, offset)) {
         assert(solver->var_data[cl[0].var()].level > 0);
-        solver->cancelUntil<false, true>(solver->var_data[cl[0].var()].level - 1);
+        solver->cancel_until<false, true>(solver->var_data[cl[0].var()].level - 1);
     }
 
     //Reuse the decisions of the previous candidate as long as they match
     //our sorted literals, as CaDiCaL does (the trie effect)
-    if (solver->decisionLevel() > 0) {
+    if (solver->decision_level() > 0) {
         uint32_t match = 0;
         for (const Lit l: sorted) {
-            if (match >= solver->decisionLevel()) break;
+            if (match >= solver->decision_level()) break;
             const Lit dec = solver->trail_at(solver->trail_begin_of_level(match));
             if (dec == ~l) match++;
             else break;
         }
-        if (match < solver->decisionLevel()) solver->cancelUntil<false, true>(match);
+        if (match < solver->decision_level()) solver->cancel_until<false, true>(match);
     }
 
     const uint32_t seg_start =
-        solver->decisionLevel() > 0 ? solver->trail_begin_of_level(0) : solver->getTrailSize();
+        solver->decision_level() > 0 ? solver->trail_begin_of_level(0) : solver->getTrailSize();
     uint32_t num_dropped = orig_size - sorted.size(); //fixed-false lits
     kept_lits.clear();
     for (const Lit lit: sorted) {
@@ -668,7 +668,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         num_dropped = orig_size - sorted.size();
         if (num_dropped == 0) {
             //Unchanged. The trail is at a conflict, so it cannot be reused
-            solver->cancelUntil<false, true>(0);
+            solver->cancel_until<false, true>(0);
             cl.disabled = false;
             solver->frat->forget_delay();
             frat_func_end();
@@ -711,7 +711,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 clear_seen();
                 cl.disabled = false;
                 solver->frat->forget_delay();
-                solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+                solver->cancel_until<false, true>(solver->decision_level()-1);
                 frat_func_end();
                 return offset;
             }
@@ -731,9 +731,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         const Lit last = sorted.back();
         if (solver->value(last) == l_False
             && solver->var_data[last.var()].reason.isnullptr()
-            && solver->var_data[last.var()].level == solver->decisionLevel()
+            && solver->var_data[last.var()].level == solver->decision_level()
         ) {
-            solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+            solver->cancel_until<false, true>(solver->decision_level()-1);
             solver->new_decision_level();
             solver->enqueue<true>(last);
             maxNumProps -= 5;
@@ -748,7 +748,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 if (solver->frat->enabled()) {
                     vector<int32_t> rsns;
                     const uint32_t inst_start =
-                        solver->trail_begin_of_level(solver->decisionLevel()-1);
+                        solver->trail_begin_of_level(solver->decision_level()-1);
                     solver->collect_trail_seg_hints(
                         seg_start, hint_units, rsns, var_Undef, inst_start);
                     rsns.push_back(stats->id);
@@ -762,7 +762,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 kept_lits.erase(it);
                 have_analysis = true; //kept_lits & hints are set
             } else {
-                solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+                solver->cancel_until<false, true>(solver->decision_level()-1);
             }
         }
     }
@@ -794,7 +794,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         }
     }
 
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
     run_stats.numLitsRem += orig_size - kept_lits.size();
     run_stats.numClShorten++;

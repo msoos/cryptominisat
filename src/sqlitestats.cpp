@@ -404,7 +404,7 @@ void SQLiteStats::mem_used(
     int bindAt = 1;
     //Position
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sum_conflicts);
     sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
     //memory stats
     sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, nullptr);
@@ -423,7 +423,7 @@ void SQLiteStats::time_passed(
 
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sum_conflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpu_time());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
@@ -440,7 +440,7 @@ void SQLiteStats::time_passed_min(
 ) {
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sum_conflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpu_time());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
@@ -472,10 +472,10 @@ void SQLiteStats::dump_id_confl_cache()
 
 void SQLiteStats::set_id_confl(
         const int32_t id
-        , const uint64_t sumConflicts)
+        , const uint64_t sum_conflicts)
 {
     assert(id != 0);
-    id_conf_cache.emplace_back(id, sumConflicts);
+    id_conf_cache.emplace_back(id, sum_conflicts);
     if (id_conf_cache.size() < 1000) return;
     else dump_id_confl_cache();
 }
@@ -489,7 +489,7 @@ void SQLiteStats::satzilla_features(
     int bindAt = 1;
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
-    sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtFeat, bindAt++, solver->sum_conflicts);
     sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_satzilla_feature_calc);
 
     sqlite3_bind_int64(stmtFeat, bindAt++, (uint64_t)satzilla_feat.numVars);
@@ -535,7 +535,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, restartID);
     sqlite3_bind_int64(stmt, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmt, bindAt++, search->sumRestarts());
-    sqlite3_bind_int64(stmt, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmt, bindAt++, solver->sum_conflicts);
     sqlite3_bind_int  (stmt, bindAt++, searchHist.num_conflicts_this_restart);
     sqlite3_bind_double(stmt, bindAt++, cpu_time());
 
@@ -605,7 +605,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varSetPos);
     sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varSetNeg);
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_free_vars());
-    sqlite3_bind_int64(stmt, bindAt++, solver->varReplacer->get_num_replaced_vars());
+    sqlite3_bind_int64(stmt, bindAt++, solver->var_replacer->get_num_replaced_vars());
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_vars_elimed());
     sqlite3_bind_int64(stmt, bindAt++, search->getTrailSize());
 
@@ -631,7 +631,7 @@ void SQLiteStats::reduceDB_common(
 
     sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumRestarts());
-    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sum_conflicts);
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, cur_rst_type);
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, tot_cls_in_db);
 
@@ -686,7 +686,7 @@ void SQLiteStats::reduceDB(
     //       code is complicated in data sampler), even though this data
     //       is available in reduceDB_common
     sqlite3_bind_int(stmtReduceDB, bindAt++, reduceDB_called);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sum_conflicts);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.introduced_at_conflict);
 
     //data
@@ -698,8 +698,8 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_uip1_used);
 
-    assert(cl->stats.last_touched_any <= solver->sumConflicts);
-    int64_t last_touched_any_diff = solver->sumConflicts - cl->stats.last_touched_any;
+    assert(cl->stats.last_touched_any <= solver->sum_conflicts);
+    int64_t last_touched_any_diff = solver->sum_conflicts - cl->stats.last_touched_any;
     sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_any_diff);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
@@ -754,7 +754,7 @@ void SQLiteStats::clause_stats(
     int bindAt = 1;
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, solver->sum_conflicts);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, clid);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, restartID);
 
@@ -802,7 +802,7 @@ void SQLiteStats::cl_last_in_solver(
     assert(clid != 0);
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmt_delete_cl, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmt_delete_cl, bindAt++, solver->sum_conflicts);
     sqlite3_bind_int64(stmt_delete_cl, bindAt++, clid);
 
     run_sqlite_step(stmt_delete_cl, "cl_last_in_solver", bindAt);

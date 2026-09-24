@@ -103,7 +103,7 @@ void ClauseCleaner::clean_implicit_clauses()
 {
     verb_print(15, "cleaning implicit clauses");
 
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     impl_data = ImplicitData();
     const size_t end = solver->watches.size();
     constexpr size_t prefetch_distance = 2;
@@ -184,7 +184,7 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
 
 void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->prop_at_head());
     verb_print(15, "Cleaning BNNs");
 
@@ -212,7 +212,7 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
 
 void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->prop_at_head());
     verb_print(15, "Cleaning clauses in vector<ClOffset>");
 
@@ -365,7 +365,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     double my_time = cpu_time();
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     frat_func_start();
 
     size_t last_trail = numeric_limits<size_t>::max();
@@ -485,7 +485,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
 
 bool ClauseCleaner::clean_all_xor_clauses() {
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {

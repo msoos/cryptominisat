@@ -37,7 +37,7 @@ struct clause_clean_test : public ::testing::Test {
         SolverConf conf;
         s = new Solver(&conf, &must_inter);
         s->new_vars(20);
-        cc = s->clauseCleaner;
+        cc = s->clause_cleaner;
     }
     ~clause_clean_test()
     {

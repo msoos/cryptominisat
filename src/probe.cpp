@@ -30,7 +30,7 @@ using namespace CMSat;
 bool Solver::full_probe(const bool bin_only)
 {
     assert(okay());
-    assert(decisionLevel() == 0);
+    assert(decision_level() == 0);
     SLOW_DEBUG_DO(check_seen_clean());
     SLOW_DEBUG_DO(check_seen2_clean());
     frat_func_start();
@@ -41,7 +41,7 @@ bool Solver::full_probe(const bool bin_only)
     int64_t bogoprops_to_use =
         solver->conf.full_probe_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
-    const auto orig_repl = varReplacer->get_num_replaced_vars();
+    const auto orig_repl = var_replacer->get_num_replaced_vars();
 
     vector<uint32_t> vars;
     for(uint32_t i = 0; i < nVars(); i++) {
@@ -87,7 +87,7 @@ bool Solver::full_probe(const bool bin_only)
         << " bin_only: " << bin_only
         << " set: "
         << (orig_num_free_vars - solver->get_num_free_vars())
-        << " repl: " << (varReplacer->get_num_replaced_vars() - orig_repl)
+        << " repl: " << (var_replacer->get_num_replaced_vars() - orig_repl)
         << solver->conf.print_times(time_used, time_out, time_remain));
 
 
@@ -116,7 +116,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     PropBy p;
     if (fr) {
         enqueue<true>(l);
-        //no gauss: cancelUntil_light cannot cancel it
+        //no gauss: cancel_until_light cannot cancel it
         p = propagate<true, true, true>();
     } else {
         enqueue_light(l);
@@ -134,7 +134,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         seen2[var] |= 1+(int)trail[i].lit.sign();
     }
     if (fr) collect_seg_chain(old_trail_size, p, probe_hints_pos);
-    cancelUntil_light();
+    cancel_until_light();
 
     //Check result
     if (!p.isnullptr()) {
@@ -149,7 +149,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     new_decision_level();
     if (fr) {
         enqueue<true>(~l);
-        //no gauss: cancelUntil_light cannot cancel it
+        //no gauss: cancel_until_light cannot cancel it
         p = propagate<true, true, true>();
     } else {
         enqueue_light(~l);
@@ -174,7 +174,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         }
     }
     if (fr) collect_seg_chain(old_trail_size, p, probe_hints_neg);
-    cancelUntil_light();
+    cancel_until_light();
 
     //Check result
     if (!p.isnullptr()) {
@@ -248,11 +248,11 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
 
 lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 {
-    assert(decisionLevel() == 0);
+    assert(decision_level() == 0);
     assert(l.var() < nVarsOuter());
     if (!ok) return l_False;
 
-    l = varReplacer->get_lit_replaced_with_outer(l);
+    l = var_replacer->get_lit_replaced_with_outer(l);
     l = map_outer_to_inter(l);
     if (var_data[l.var()].removed != Removed::none) {
         //TODO
@@ -272,20 +272,20 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 
 lbool Solver::probe_all_outside(const vector<uint32_t>& vars)
 {
-    assert(decisionLevel() == 0);
+    assert(decision_level() == 0);
     if (!ok) return l_False;
     SLOW_DEBUG_DO(check_seen_clean());
     SLOW_DEBUG_DO(check_seen2_clean());
 
     const double my_time = cpu_time();
     const size_t orig_num_free_vars = get_num_free_vars();
-    const auto orig_repl = varReplacer->get_num_replaced_vars();
+    const auto orig_repl = var_replacer->get_num_replaced_vars();
     uint32_t probed = 0;
     uint32_t skipped = 0;
 
     for(const uint32_t outer_v: vars) {
         assert(outer_v < nVarsOuter());
-        Lit l = varReplacer->get_lit_replaced_with_outer(Lit(outer_v, false));
+        Lit l = var_replacer->get_lit_replaced_with_outer(Lit(outer_v, false));
         l = map_outer_to_inter(l);
         if (var_data[l.var()].removed != Removed::none) continue;
         if (value(l) != l_Undef) continue;
@@ -305,7 +305,7 @@ lbool Solver::probe_all_outside(const vector<uint32_t>& vars)
         << " probed: " << probed
         << " skipped: " << skipped
         << " set: " << (orig_num_free_vars - get_num_free_vars())
-        << " repl: " << (varReplacer->get_num_replaced_vars() - orig_repl)
+        << " repl: " << (var_replacer->get_num_replaced_vars() - orig_repl)
         << conf.print_times(cpu_time() - my_time));
 
     if (!okay()) return l_False;

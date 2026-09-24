@@ -85,7 +85,7 @@ struct ColSorter {
         solver(_solver)
     {
         for(auto p: solver->assumptions) {
-            p = solver->varReplacer->get_lit_replaced_with_outer(p);
+            p = solver->var_replacer->get_lit_replaced_with_outer(p);
             p = solver->map_outer_to_inter(p);
             if (p.var() < solver->nVars()) {
                 assert(solver->seen.size() > p.var());
@@ -96,7 +96,7 @@ struct ColSorter {
 
     void finishup() {
         for(Lit p: solver->assumptions) {
-            p = solver->varReplacer->get_lit_replaced_with_outer(p);
+            p = solver->var_replacer->get_lit_replaced_with_outer(p);
             p = solver->map_outer_to_inter(p);
             if (p.var() < solver->nVars()) solver->seen[p.var()] = 0;
         }
@@ -197,7 +197,7 @@ void EGaussian::fill_matrix() {
     row_to_nonresp_watch_hint.resize(num_rows, 0);
 
     //reset satisfied_xor state
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     satisfied_xors.clear();
     satisfied_xors.resize(num_rows, 0);
 }
@@ -247,7 +247,7 @@ void EGaussian::clear_gwatches(const uint32_t var)
 
 bool EGaussian::full_init(bool& created) {
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->prop_at_head());
     assert(initialized == false);
     frat_func_start();
@@ -256,7 +256,7 @@ bool EGaussian::full_init(bool& created) {
     uint32_t trail_before;
     while (true) {
         trail_before = solver->trail_size();
-        solver->clauseCleaner->clean_xor_clauses(xorclauses, false);
+        solver->clause_cleaner->clean_xor_clauses(xorclauses, false);
         if (!solver->okay()) return false;
 
         fill_matrix();
@@ -280,7 +280,7 @@ bool EGaussian::full_init(bool& created) {
                 return false;
                 break;
             case gret::prop:
-                assert(solver->decisionLevel() == 0);
+                assert(solver->decision_level() == 0);
                 assert(solver->okay());
                 solver->ok = solver->propagate<false>().isnullptr();
                 if (!solver->okay()) {
@@ -550,7 +550,7 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
 }
 
 gret EGaussian::init_adjust_matrix() {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
     delete_reasons(); xor_reasons.resize(num_rows);
@@ -808,7 +808,7 @@ bool EGaussian::find_truths(
             gqd.ret = gauss_res::confl;
 
             // have to get reason if toplevel (reason will never be asked)
-            if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
+            if (solver->decision_level() == 0 && solver->frat->enabled()) {
                 int32_t out_id;
                 vector<Lit>* rcl = get_reason(row_n, out_id);
                 *solver->frat << add << ++solver->clauseID << fratchain;
@@ -960,7 +960,7 @@ void EGaussian::prop_lit(
     const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop)
 {
     uint32_t lev;
-    if (gqd.currLevel == solver->decisionLevel()) lev = gqd.currLevel;
+    if (gqd.currLevel == solver->decision_level()) lev = gqd.currLevel;
     else lev = get_max_level(gqd, row_i);
     if (lev == 0 && solver->frat->enabled()) {
         //we produce the reason, because we need it immediately, since it's toplevel
@@ -1086,7 +1086,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         gqd.ret = gauss_res::confl;
 
                         // have to get reason if toplevel (reason will never be asked)
-                        if (solver->decisionLevel() == 0 && solver->frat->enabled() && !unsat_set) {
+                        if (solver->decision_level() == 0 && solver->frat->enabled() && !unsat_set) {
                             int32_t ID;
                             vector<Lit>* rcl = get_reason(row_i, ID);
                             int32_t fin_ID = ++solver->clauseID;
@@ -1360,7 +1360,7 @@ void EGaussian::check_no_prop_or_unsat_rows()
             cout << "       row: " << row << endl;
             uint32_t var = row_to_var_non_resp[row];
             cout << "       non-resp var: " << var+1 << endl;
-            cout << "       dec level: " << solver->decisionLevel() << endl;
+            cout << "       dec level: " << solver->decision_level() << endl;
         }
         assert(bits_unset > 1 || (bits_unset == 0 && val == 0));
     }

@@ -207,7 +207,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
                 x.prop_confl_watch = !which;
-                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(PLAIN_XOR_SENTINEL, at));
+                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decision_level(), PropBy(PLAIN_XOR_SENTINEL, at));
                 *j++ = *i;
                 goto next;
             }
@@ -347,7 +347,7 @@ lbool PropEngine::bnn_prop(
     if (ts+undefs < bnn->cutoff) {
         // we are under the cutoff no matter what undef+unknowns is
         if (bnn->set) {
-//                 cout << "returning l_False from bnn_prop" <<  "declev: " << decisionLevel() << endl;
+//                 cout << "returning l_False from bnn_prop" <<  "declev: " << decision_level() << endl;
             return l_False;
         }
 
@@ -663,11 +663,11 @@ bool PropEngine::prop_long_cl(
         if (!inprocess) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
-            c.stats.last_touched_any = sumConflicts;
+            c.stats.last_touched_any = sum_conflicts;
             #endif
         }
 
-        if (currLevel == decisionLevel()) {
+        if (currLevel == decision_level()) {
             enqueue<inprocess>(c[0], currLevel, PropBy(offset));
         } else {
             uint32_t nMaxLevel = currLevel;
@@ -833,7 +833,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
     while (qhead < trail.size()) {
         //Only safe above level 0, where the caller backtracks. At level 0 the
         //trail must be fully propagated before we return.
-        if (decisionLevel() > 0 && *limit_to_decrease < 0) break;
+        if (decision_level() > 0 && *limit_to_decrease < 0) break;
         const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
@@ -852,7 +852,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
     }
     assert(gmatrices.empty());
 
-    if (decisionLevel() == 0 && !ret) {
+    if (decision_level() == 0 && !ret) {
         *frat << add << ++clauseID;
         if (frat->enabled()) {
             assert(last_occ_confl_id != 0);
@@ -861,7 +861,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
         *frat << fin;
         set_unsat_cl_id(clauseID);
     }
-    if (decisionLevel() == 0) { last_occ_confl_id = 0; last_occ_confl_units.clear(); }
+    if (decision_level() == 0) { last_occ_confl_id = 0; last_occ_confl_units.clear(); }
 
     return ret;
 }
@@ -886,7 +886,7 @@ inline bool PropEngine::prop_bin_cl_occur(
         return false;
     }
     if (val == l_Undef)
-        enqueue<inprocess>(ws.lit2(), decisionLevel(),
+        enqueue<inprocess>(ws.lit2(), decision_level(),
                            PropBy(~p, ws.red(), false, false, ws.get_id()));
     return true;
 }
@@ -927,7 +927,7 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     }
     if (numUndef > 1) return true;
 
-    enqueue<inprocess>(lastUndef, decisionLevel(), PropBy(offset));
+    enqueue<inprocess>(lastUndef, decision_level(), PropBy(offset));
     return true;
 }
 

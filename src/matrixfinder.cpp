@@ -92,7 +92,7 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x) {
 // Returns SAT/UNSAT
 bool MatrixFinder::find_matrices(bool& matrix_created)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->ok);
     assert(solver->gmatrices.empty());
 
@@ -107,7 +107,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     double my_time = cpu_time();
 
     XorFinder finder(nullptr, solver);
-    solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, false);
+    solver->clause_cleaner->clean_xor_clauses(solver->xorclauses, false);
 
     finder.grab_mem();
     set<uint32_t> clash_vars;
@@ -260,7 +260,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             uint32_t tot_sampling_vars  = 0;
             uint32_t sampling_var_inside_matrix = 0;
             for(uint32_t outer_var: solver->conf.sampling_vars) {
-                outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+                outer_var = solver->var_replacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
                 tot_sampling_vars++;
                 if (solver->value(int_var) != l_Undef) {

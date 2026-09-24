@@ -226,8 +226,8 @@ class Solver : public Searcher
         //Checks
 
         //Systems that are used to accomplish the tasks
-        ClauseCleaner*         clauseCleaner = nullptr;
-        VarReplacer*           varReplacer = nullptr;
+        ClauseCleaner*         clause_cleaner = nullptr;
+        VarReplacer*           var_replacer = nullptr;
         SubsumeImplicit*       subsumeImplicit = nullptr;
         DataSync*              datasync = nullptr;
         ReduceDB*              reduceDB = nullptr;

@@ -662,7 +662,7 @@ private:
     /////////////////////
     //Helpers
     friend class GateFinder;
-    GateFinder *gateFinder = nullptr;
+    GateFinder *gate_finder = nullptr;
 
     /////////////////////
     //Elimed clause elimination

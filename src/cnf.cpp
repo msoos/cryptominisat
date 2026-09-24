@@ -645,7 +645,7 @@ void CNF::add_frat(FILE* os) {
     if (frat) delete frat;
     frat = new FratFile<false>(inter_to_outerMain);
     frat->setFile(os);
-    frat->set_sumconflicts_ptr(&sumConflicts);
+    frat->set_sumconflicts_ptr(&sum_conflicts);
     frat->set_sqlstats_ptr(sql_stats);
 }
 
@@ -770,7 +770,7 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
 
 bool CNF::check_bnn_sane(BNN& bnn)
 {
-    //assert(decisionLevel() == 0);
+    //assert(decision_level() == 0);
 
     int32_t ts = 0;
     int32_t undefs = 0;

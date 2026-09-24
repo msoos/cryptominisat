@@ -70,7 +70,7 @@ public:
     void dump_id_confl_cache();
     virtual void set_id_confl(
         const int32_t id
-        , const uint64_t sumConflicts
+        , const uint64_t sum_conflicts
     ) override;
 
     #ifdef STATS_NEEDED

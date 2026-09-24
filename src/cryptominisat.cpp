@@ -1258,7 +1258,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts()
     uint64_t conlf = 0;
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        conlf += s.sumConflicts;
+        conlf += s.sum_conflicts;
     }
     return conlf;
 }
@@ -1267,7 +1267,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts() const
 {
     uint64_t total_conflicts = 0;
     for (Solver const* s : data->solvers) {
-        total_conflicts += s->sumConflicts;
+        total_conflicts += s->sum_conflicts;
     }
     return total_conflicts;
 }

@@ -195,7 +195,7 @@ bool BreakID::add_clauses()
 bool BreakID::doit()
 {
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(!solver->frat->enabled());
     num_lits_in_graph = 0;
 
@@ -210,7 +210,7 @@ bool BreakID::doit()
     }
 
     if (!check_limits()) return solver->okay();
-    if (!solver->clauseCleaner->remove_and_clean_all()) return solver->okay();
+    if (!solver->clause_cleaner->remove_and_clean_all()) return solver->okay();
 
     // Clean up solver state so it's easier to find symmetries
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
@@ -440,7 +440,7 @@ void BreakID::finished_solving()
 
 void BreakID::start_new_solving()
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->okay());
     if (symm_var == var_Undef) {
         return;
@@ -468,7 +468,7 @@ void BreakID::start_new_solving()
 void BreakID::update_var_after_varreplace()
 {
     if (symm_var != var_Undef) {
-        symm_var = solver->varReplacer->get_var_replaced_with(symm_var);
+        symm_var = solver->var_replacer->get_var_replaced_with(symm_var);
     }
 }
 

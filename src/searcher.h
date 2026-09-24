@@ -124,8 +124,8 @@ class Searcher : public HyperEngine
 
         //ChronoBT
         template<bool do_insert_var_order = true, bool inprocess = false>
-        void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
-        void cancelUntil_light();
+        void cancel_until(uint32_t level); ///<Backtrack until a certain level.
+        void cancel_until_light();
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;

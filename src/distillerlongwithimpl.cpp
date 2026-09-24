@@ -51,7 +51,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool also_strengthe
     SLOW_DEBUG_DO(solver->check_seen2_clean());
     assert(solver->ok);
     numCalls++;
-    if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
+    if (!solver->clause_cleaner->remove_and_clean_all()) goto end;
     frat_func_start();
 
     run_stats.redWatchBased.clear();
