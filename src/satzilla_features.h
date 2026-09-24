@@ -32,7 +32,6 @@ namespace CMSat {
 //`satzilla_features` table every --everypred conflicts in STATS builds
 struct SatZillaFeatures
 {
-    void print_stats(const std::string& prefix) const;
 
     //instance: irredundant clauses only
     double numVars = 0;

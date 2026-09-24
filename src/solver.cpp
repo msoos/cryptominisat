@@ -3107,10 +3107,6 @@ SatZillaFeatures Solver::calculate_satzilla_features()
         satzilla_feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
     }
 
-    if (conf.verbosity > 2) {
-        satzilla_feat.print_stats(conf.prefix);
-    }
-
     if (sqlStats) {
         sqlStats->satzilla_features(this, this, satzilla_feat);
     }

@@ -2461,33 +2461,9 @@ bool Searcher::must_abort(const lbool status) {
         return true;
     }
 
-    if (stats.conflicts >= max_confl_per_search_solve_call) {
-        if (conf.verbosity >= 3) {
-            cout
-            << "c search over max conflicts"
-            << endl;
-        }
-        return true;
-    }
-
-    if (cpu_time() >= conf.maxTime) {
-        if (conf.verbosity >= 3) {
-            cout
-            << "c search over max time"
-            << endl;
-        }
-        return true;
-    }
-
-    if (solver->must_interrupt_asap()) {
-        if (conf.verbosity >= 3) {
-            cout
-            << "c search interrupting as requested"
-            << endl;
-        }
-        return true;
-    }
-
+    if (stats.conflicts >= max_confl_per_search_solve_call) return true;
+    if (cpu_time() >= conf.maxTime) return true;
+    if (solver->must_interrupt_asap()) return true;
     return false;
 }
 
@@ -3054,29 +3030,6 @@ void Searcher::finish_up_solve(const lbool status) {
     }
 
     stats.cpu_time = cpu_time() - startTime;
-    verb_print(4, "Searcher::solve() finished"
-        << " status: " << status
-        << " numConflicts : " << stats.conflicts
-        << " SumConfl: " << sumConflicts
-        << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call);
-
-    print_iteration_solving_stats();
-}
-
-void Searcher::print_iteration_solving_stats()
-{
-    if (conf.verbosity >= 3) {
-        cout << conf.prefix << "------ THIS ITERATION SOLVING STATS -------" << endl;
-        stats.print(propStats.propagations, conf.do_print_times, conf.prefix);
-        propStats.print(stats.cpu_time, conf.prefix);
-        print_stats_line("c props/decision"
-            , float_div(propStats.propagations, stats.decisions)
-        );
-        print_stats_line("c props/conflict"
-            , float_div(propStats.propagations, stats.conflicts)
-        );
-        cout << conf.prefix << "------ THIS ITERATION SOLVING STATS -------" << endl;
-    }
 }
 
 inline Lit Searcher::pickBranchLit() {

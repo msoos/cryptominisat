@@ -94,7 +94,6 @@ class Searcher : public HyperEngine
         char     last_print_rephase = '-';
         string   last_print_branch;
         void     print_restart_stat();
-        void     print_iteration_solving_stats();
         void     print_restart_header();
         void     print_restart_stat_line();
         void     print_restart_stats_base() const;
