@@ -59,7 +59,6 @@ THE SOFTWARE.
 #endif
 
 //#define DEBUG_RESOLV
-//#define VERBOSE_DEBUG
 
 using namespace CMSat;
 using std::cout;
@@ -400,7 +399,6 @@ void Searcher::add_lits_to_learnt(
     , const Lit p
     , uint32_t nDecisionLevel
 ) {
-    VERBOSE_DEBUG_DO(debug_print_resolving_clause(confl));
     sumAntecedents++;
 
     Lit* lits = nullptr;
@@ -1822,7 +1820,6 @@ void Searcher::attach_and_enqueue_learnt_clause(
     Clause* cl, const uint32_t level, const bool enq,
     const uint64_t ID)
 {
-    VERBOSE_DEBUG_DO(print_learning_debug_info(ID));
     switch (learnt_clause.size()) {
         case 0: release_assert(false);
         case 1:
@@ -3071,7 +3068,6 @@ void Searcher::check_need_restart() {
         params.must_stop = true;
     }
 
-    VERBOSE_DEBUG_DO(if (params.must_stop) cout << conf.prefix << "must_stop set" << endl);
 }
 
 void Searcher::print_solution_varreplace_status() const
@@ -3382,11 +3378,6 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             }
             *frat << del << b.get_id() << b.getLit1() << b.getLit2() << fin;
 
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Removed bin: "
-            << b.getLit1() << " , " << b.getLit2()
-            << " , red: " << b.isRed() << endl;
-            #endif
         }
     }
     uselessBin.clear();

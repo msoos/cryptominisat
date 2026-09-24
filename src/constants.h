@@ -44,7 +44,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #endif
 
 /* #define VERBOSE_DEBUG */
-/* #define VERBOSE_DEBUG_FULLPROP */
 /* #define DEBUG_DEPTH */
 /* #define SLOW_DEBUG */
 /* #define DEBUG_ATTACH_FULL */
