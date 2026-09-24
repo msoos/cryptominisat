@@ -74,23 +74,6 @@ using std::endl;
 using std::string;
 using namespace CMSat;
 
-const char* rst_dat_type_to_str(rst_dat_type type) {
-    static const char* const norm ="restart";
-    static const char* const var ="restart_dat_for_var";
-    static const char* const cl ="restart_dat_for_cl";
-    if (type == rst_dat_type::norm) {
-        return norm;
-    } else if (type == rst_dat_type::var) {
-        return var;
-    } else if (type == rst_dat_type::cl) {
-        return cl;
-    } else {
-        assert(false);
-    }
-    assert(false);
-    exit(-1);
-}
-
 SQLiteStats::SQLiteStats(const std::string& _filename) :
         filename(_filename)
 {
@@ -144,8 +127,6 @@ SQLiteStats::~SQLiteStats()
 
     //Free all the prepared statements
     del_prepared_stmt(stmtRst);
-    del_prepared_stmt(stmtVarRst);
-    del_prepared_stmt(stmtClRst);
     del_prepared_stmt(stmtFeat);
     del_prepared_stmt(stmtReduceDB);
     del_prepared_stmt(stmtReduceDB_common);
@@ -156,10 +137,6 @@ SQLiteStats::~SQLiteStats()
     del_prepared_stmt(stmt_update_id);
     del_prepared_stmt(stmt_set_id_confl);
     del_prepared_stmt(stmt_set_id_confl_1000);
-    del_prepared_stmt(stmt_var_data_picktime);
-    del_prepared_stmt(stmt_var_data_fintime);
-    del_prepared_stmt(stmt_dec_var_clid);
-    del_prepared_stmt(stmt_var_dist);
 
     //Close clonnection
     sqlite3_close(db);
@@ -187,19 +164,13 @@ bool SQLiteStats::setup(const Solver* solver)
     init("satzilla_features", &stmtFeat);
     init("clause_stats", &stmt_clause_stats);
     init("restart", &stmtRst);
-    init("restart_dat_for_var", &stmtVarRst);
-    init("restart_dat_for_cl", &stmtClRst);
     init("reduceDB", &stmtReduceDB);
     init("reduceDB_common", &stmtReduceDB_common);
     init("set_id_confl", &stmt_set_id_confl_1000, 1000);
     init("set_id_confl", &stmt_set_id_confl);
     #ifdef STATS_NEEDED
-    init("var_data_fintime", &stmt_var_data_fintime);
-    init("var_data_picktime", &stmt_var_data_picktime);
-    init("dec_var_clid", &stmt_dec_var_clid);
     init("cl_last_in_solver", &stmt_delete_cl);
     init("update_id", &stmt_update_id);
-    init("var_dist", &stmt_var_dist);
     #endif
 
     return true;
@@ -279,7 +250,7 @@ bool SQLiteStats::add_solverrun(const Solver* solver)
     //Inserting element into solverruns to get unique ID
     const int rc = sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr);
     if (rc) {
-        if (solver->getConf().verbosity >= 6) {
+        if (solver->get_conf().verbosity >= 6) {
             cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
             cerr << "c " << sqlite3_errmsg(db) << endl;
         }
@@ -358,12 +329,12 @@ void SQLiteStats::writeQuestionMarks(
 void SQLiteStats::run_sqlite_step(
     sqlite3_stmt* stmt,
     const char* name,
-    const uint32_t bindAt)
+    const uint32_t bind_at)
 {
     if (name != nullptr) {
         assert(query_to_size.find(name) != query_to_size.end());
         //SQLite numbers them from 1, so it's off-by-one
-        assert(query_to_size[name]+1 == bindAt);
+        assert(query_to_size[name]+1 == bind_at);
     }
 
     int rc = sqlite3_step(stmt);
@@ -430,16 +401,16 @@ void SQLiteStats::mem_used(
     , double given_time
     , uint64_t mem_used_mb
 ) {
-    int bindAt = 1;
+    int bind_at = 1;
     //Position
-    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts);
-    sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
+    sqlite3_bind_int64(stmtMemUsed, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmtMemUsed, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_double(stmtMemUsed, bind_at++, given_time);
     //memory stats
-    sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, nullptr);
-    sqlite3_bind_int(stmtMemUsed, bindAt++, mem_used_mb);
+    sqlite3_bind_text(stmtMemUsed, bind_at++, name.c_str(), -1, nullptr);
+    sqlite3_bind_int(stmtMemUsed, bind_at++, mem_used_mb);
 
-    run_sqlite_step(stmtMemUsed, "memused", bindAt);
+    run_sqlite_step(stmtMemUsed, "memused", bind_at);
 }
 
 void SQLiteStats::time_passed(
@@ -450,16 +421,16 @@ void SQLiteStats::time_passed(
     , double percent_time_remain
 ) {
 
-    int bindAt = 1;
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, cpu_time());
-    sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
-    sqlite3_bind_int(stmtTimePassed, bindAt++, time_out);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, percent_time_remain);
+    int bind_at = 1;
+    sqlite3_bind_int64(stmtTimePassed, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmtTimePassed, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_double(stmtTimePassed, bind_at++, cpu_time());
+    sqlite3_bind_text(stmtTimePassed, bind_at++, name.c_str(), -1, nullptr);
+    sqlite3_bind_double(stmtTimePassed, bind_at++, time_passed);
+    sqlite3_bind_int(stmtTimePassed, bind_at++, time_out);
+    sqlite3_bind_double(stmtTimePassed, bind_at++, percent_time_remain);
 
-    run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
+    run_sqlite_step(stmtTimePassed, "timepassed", bind_at);
 }
 
 void SQLiteStats::time_passed_min(
@@ -467,33 +438,33 @@ void SQLiteStats::time_passed_min(
     , const string& name
     , double time_passed
 ) {
-    int bindAt = 1;
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, cpu_time());
-    sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
-    sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
-    sqlite3_bind_null(stmtTimePassed, bindAt++);
-    sqlite3_bind_null(stmtTimePassed, bindAt++);
+    int bind_at = 1;
+    sqlite3_bind_int64(stmtTimePassed, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmtTimePassed, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_double(stmtTimePassed, bind_at++, cpu_time());
+    sqlite3_bind_text(stmtTimePassed, bind_at++, name.c_str(), -1, nullptr);
+    sqlite3_bind_double(stmtTimePassed, bind_at++, time_passed);
+    sqlite3_bind_null(stmtTimePassed, bind_at++);
+    sqlite3_bind_null(stmtTimePassed, bind_at++);
 
-    run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
+    run_sqlite_step(stmtTimePassed, "timepassed", bind_at);
 }
 
 void SQLiteStats::dump_id_confl_cache()
 {
     if (id_conf_cache.size() == 1000) {
-        int bindAt = 1;
+        int bind_at = 1;
         for(auto const& elem: id_conf_cache) {
-            sqlite3_bind_int64(stmt_set_id_confl_1000, bindAt++, elem.first);
-            sqlite3_bind_int64(stmt_set_id_confl_1000, bindAt++, elem.second);
+            sqlite3_bind_int64(stmt_set_id_confl_1000, bind_at++, elem.first);
+            sqlite3_bind_int64(stmt_set_id_confl_1000, bind_at++, elem.second);
         }
         run_sqlite_step(stmt_set_id_confl_1000, nullptr, 0);
     } else {
         for(auto const& elem: id_conf_cache) {
-            int bindAt = 1;
-            sqlite3_bind_int64(stmt_set_id_confl, bindAt++, elem.first);
-            sqlite3_bind_int64(stmt_set_id_confl, bindAt++, elem.second);
-            run_sqlite_step(stmt_set_id_confl, "set_id_confl", bindAt);
+            int bind_at = 1;
+            sqlite3_bind_int64(stmt_set_id_confl, bind_at++, elem.first);
+            sqlite3_bind_int64(stmt_set_id_confl, bind_at++, elem.second);
+            run_sqlite_step(stmt_set_id_confl, "set_id_confl", bind_at);
         }
     }
     id_conf_cache.clear();
@@ -501,10 +472,10 @@ void SQLiteStats::dump_id_confl_cache()
 
 void SQLiteStats::set_id_confl(
         const int32_t id
-        , const uint64_t sumConflicts)
+        , const uint64_t sum_conflicts)
 {
     assert(id != 0);
-    id_conf_cache.emplace_back(id, sumConflicts);
+    id_conf_cache.emplace_back(id, sum_conflicts);
     if (id_conf_cache.size() < 1000) return;
     else dump_id_confl_cache();
 }
@@ -515,205 +486,134 @@ void SQLiteStats::satzilla_features(
     , const Searcher* search
     , const SatZillaFeatures& satzilla_feat
 ) {
-    int bindAt = 1;
-    sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
-    sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_satzilla_feature_calc);
+    int bind_at = 1;
+    sqlite3_bind_int64(stmtFeat, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmtFeat, bind_at++, search->sumRestarts());
+    sqlite3_bind_int64(stmtFeat, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_int(stmtFeat, bind_at++, solver->latest_satzilla_feature_calc);
 
-    sqlite3_bind_int64(stmtFeat, bindAt++, (uint64_t)satzilla_feat.numVars);
-    sqlite3_bind_int64(stmtFeat, bindAt++, (uint64_t)satzilla_feat.numClauses);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.var_cl_ratio);
+    sqlite3_bind_int64(stmtFeat, bind_at++, (uint64_t)satzilla_feat.numVars);
+    sqlite3_bind_int64(stmtFeat, bind_at++, (uint64_t)satzilla_feat.numClauses);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.var_cl_ratio);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.binary);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.horn);
 
-    //Clause distribution
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.binary);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_spread);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.avg_confl_size);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.avg_confl_glue);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.avg_num_resolutions);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.learnt_bins_per_confl);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_spread);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.avg_branch_depth);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.avg_trail_depth_delta);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.avg_branch_depth_delta);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.props_per_confl);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.confl_per_restart);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.decisions_per_conflict);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_spread);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.red_glue_distr_mean);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.red_glue_distr_var);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.red_size_distr_mean);
+    sqlite3_bind_double(stmtFeat, bind_at++, satzilla_feat.red_size_distr_var);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_spread);
-
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_spread);
-
-    //Conflict clauses
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_confl_size);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_size_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_size_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_confl_glue);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_glue_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_glue_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_num_resolutions);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.num_resolutions_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.num_resolutions_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.learnt_bins_per_confl);
-
-    //Search
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_branch_depth);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.branch_depth_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.branch_depth_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_trail_depth_delta);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.trail_depth_delta_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.trail_depth_delta_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_branch_depth_delta);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.props_per_confl);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_per_restart);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.decisions_per_conflict);
-
-    //red stats
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.glue_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.glue_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.size_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.size_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.activity_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.activity_distr_var);
-
-    //irred stats
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.glue_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.glue_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.size_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.size_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_var);
-
-    run_sqlite_step(stmtFeat, "satzilla_features", bindAt);
+    run_sqlite_step(stmtFeat, "satzilla_features", bind_at);
 }
 
 void SQLiteStats::restart(
-    const uint32_t restartID
+    const uint32_t restart_id
     , const uint32_t rest_stable
     , const PropStats& thisPropStats
-    , const SearchStats& thisStats
+    , const SearchStats& this_stats
     , const Solver* solver
     , const Searcher* search
-    , const rst_dat_type type
-    , const int64_t clauseID
 ) {
-    sqlite3_stmt* stmt;
-    if (type == rst_dat_type::norm) {
-        stmt = stmtRst;
-    } else if (type == rst_dat_type::var) {
-        stmt = stmtVarRst;
-    } else if (type == rst_dat_type::cl) {
-        stmt = stmtClRst;
-    } else {
-        assert(false);
-    }
+    sqlite3_stmt* stmt = stmtRst;
 
-    const SearchHist& searchHist = search->getHistory();
-    const BinTriStats& binTri = solver->getBinTriStats();
+    const SearchHist& search_hist = search->getHistory();
+    const BinTriStats& bin_tri = solver->getBinTriStats();
 
-    int bindAt = 1;
-    sqlite3_bind_int64(stmt, bindAt++, restartID);
-    if (clauseID == -1) {
-        sqlite3_bind_null(stmt, bindAt++);
-    } else {
-        sqlite3_bind_int64(stmt, bindAt++, clauseID);
-    }
-    sqlite3_bind_int64(stmt, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmt, bindAt++, search->sumRestarts());
-    sqlite3_bind_int64(stmt, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int  (stmt, bindAt++, searchHist.num_conflicts_this_restart);
-    sqlite3_bind_int  (stmt, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_double(stmt, bindAt++, cpu_time());
+    int bind_at = 1;
+    sqlite3_bind_int64(stmt, bind_at++, restart_id);
+    sqlite3_bind_int64(stmt, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmt, bind_at++, search->sumRestarts());
+    sqlite3_bind_int64(stmt, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_int  (stmt, bind_at++, search_hist.num_conflicts_this_restart);
+    sqlite3_bind_double(stmt, bind_at++, cpu_time());
 
 
-    sqlite3_bind_int64(stmt, bindAt++, binTri.irredBins);
-    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_irred_cls());
-    sqlite3_bind_int64(stmt, bindAt++, binTri.redBins);
-    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_red_cls());
+    sqlite3_bind_int64(stmt, bind_at++, bin_tri.irred_bins);
+    sqlite3_bind_int64(stmt, bind_at++, solver->get_num_long_irred_cls());
+    sqlite3_bind_int64(stmt, bind_at++, bin_tri.red_bins);
+    sqlite3_bind_int64(stmt, bind_at++, solver->get_num_long_red_cls());
 
-    sqlite3_bind_int64(stmt, bindAt++, solver->litStats.irredLits);
-    sqlite3_bind_int64(stmt, bindAt++, solver->litStats.redLits);
+    sqlite3_bind_int64(stmt, bind_at++, solver->lit_stats.irred_lits);
+    sqlite3_bind_int64(stmt, bind_at++, solver->lit_stats.red_lits);
 
     //Conflict stats
-    bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.glueHist.getLongtTerm().var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.glueHist.getLongtTerm(),getMax)
+    bind_null_or_double(stmt, bind_at,   search_hist.glue_hist.get_longterm(),avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.glue_hist.get_longterm().var()));
+    bind_null_or_double(stmt, bind_at,   search_hist.glue_hist.get_longterm(),getMin)
+    bind_null_or_double(stmt, bind_at,   search_hist.glue_hist.get_longterm(),getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.conflSizeHist, avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.conflSizeHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.conflSizeHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.conflSizeHist,getMax)
+    bind_null_or_double(stmt, bind_at,   search_hist.conflSizeHist, avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.conflSizeHist.var()));
+    bind_null_or_double(stmt, bind_at,   search_hist.conflSizeHist,getMin)
+    bind_null_or_double(stmt, bind_at,   search_hist.conflSizeHist,getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.numResolutionsHist, avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.numResolutionsHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.numResolutionsHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.numResolutionsHist,getMax)
+    bind_null_or_double(stmt, bind_at,   search_hist.numResolutionsHist, avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.numResolutionsHist.var()));
+    bind_null_or_double(stmt, bind_at,   search_hist.numResolutionsHist,getMin)
+    bind_null_or_double(stmt, bind_at,   search_hist.numResolutionsHist,getMax)
 
     //Search stats
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthHist,avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.branchDepthHist.var()));
-    bind_null_or_double(stmt, bindAt, searchHist.branchDepthHist,getMin)
-    bind_null_or_double(stmt, bindAt, searchHist.branchDepthHist,getMax)
+    bind_null_or_double(stmt, bind_at,   search_hist.branchDepthHist,avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.branchDepthHist.var()));
+    bind_null_or_double(stmt, bind_at, search_hist.branchDepthHist,getMin)
+    bind_null_or_double(stmt, bind_at, search_hist.branchDepthHist,getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthDeltaHist,avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.branchDepthDeltaHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthDeltaHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.branchDepthDeltaHist,getMax)
+    bind_null_or_double(stmt, bind_at,   search_hist.branchDepthDeltaHist,avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.branchDepthDeltaHist.var()));
+    bind_null_or_double(stmt, bind_at,   search_hist.branchDepthDeltaHist,getMin)
+    bind_null_or_double(stmt, bind_at,   search_hist.branchDepthDeltaHist,getMax)
 
-    bind_null_or_double(stmt, bindAt, searchHist.trailDepthHist.getLongtTerm(),avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.trailDepthHist.getLongtTerm().var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthHist.getLongtTerm(),getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthHist.getLongtTerm(),getMax)
+    bind_null_or_double(stmt, bind_at, search_hist.trail_depth_hist.get_longterm(),avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.trail_depth_hist.get_longterm().var()));
+    bind_null_or_double(stmt, bind_at,   search_hist.trail_depth_hist.get_longterm(),getMin)
+    bind_null_or_double(stmt, bind_at,   search_hist.trail_depth_hist.get_longterm(),getMax)
 
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,avg)
-    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.trailDepthDeltaHist.var()));
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,getMin)
-    bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,getMax)
+    bind_null_or_double(stmt, bind_at,   search_hist.trailDepthDeltaHist,avg)
+    sqlite3_bind_double(stmt, bind_at++, std:: sqrt(search_hist.trailDepthDeltaHist.var()));
+    bind_null_or_double(stmt, bind_at,   search_hist.trailDepthDeltaHist,getMin)
+    bind_null_or_double(stmt, bind_at,   search_hist.trailDepthDeltaHist,getMax)
 
     //Red
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.learntUnits);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.learntBins);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.learntLongs);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.learntUnits);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.learnt_bins);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.learntLongs);
 
     //Resolv stats
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.binIrred);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.binRed);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.longIrred);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.longRed);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.resolvs.bin_irred);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.resolvs.bin_red);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.resolvs.long_irred);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.resolvs.long_red);
 
 
     //Var stats
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propagations);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.decisions);
+    sqlite3_bind_int64(stmt, bind_at++, thisPropStats.propagations);
+    sqlite3_bind_int64(stmt, bind_at++, this_stats.decisions);
 
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varFlipped);
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varSetPos);
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varSetNeg);
-    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_free_vars());
-    sqlite3_bind_int64(stmt, bindAt++, solver->varReplacer->get_num_replaced_vars());
-    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_vars_elimed());
-    sqlite3_bind_int64(stmt, bindAt++, search->getTrailSize());
+    sqlite3_bind_int64(stmt, bind_at++, thisPropStats.varFlipped);
+    sqlite3_bind_int64(stmt, bind_at++, thisPropStats.var_set_pos);
+    sqlite3_bind_int64(stmt, bind_at++, thisPropStats.var_set_neg);
+    sqlite3_bind_int64(stmt, bind_at++, solver->get_num_free_vars());
+    sqlite3_bind_int64(stmt, bind_at++, solver->var_replacer->get_num_replaced_vars());
+    sqlite3_bind_int64(stmt, bind_at++, solver->get_num_vars_elimed());
+    sqlite3_bind_int64(stmt, bind_at++, search->getTrailSize());
 
     //strategy
-    sqlite3_bind_int(stmt, bindAt++, (int)solver->branch_strategy);
-    sqlite3_bind_int(stmt, bindAt++, (int)rest_stable);
+    sqlite3_bind_int(stmt, bind_at++, (int)solver->branch_strategy);
+    sqlite3_bind_int(stmt, bind_at++, (int)rest_stable);
 
-    run_sqlite_step(stmt, rst_dat_type_to_str(type), bindAt);
+    run_sqlite_step(stmt, "restart", bind_at);
 }
 
 
@@ -725,52 +625,50 @@ void SQLiteStats::reduceDB_common(
     const MedianCommonDataRDB& median_data,
     const AverageCommonDataRDB& avg_data)
 {
-    int bindAt = 1;
+    int bind_at = 1;
 
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, reduceDB_called);
+    sqlite3_bind_int(stmtReduceDB_common, bind_at++, reduceDB_called);
 
-    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumRestarts());
-    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, cur_rst_type);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, cpu_time());
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, tot_cls_in_db);
+    sqlite3_bind_int64 (stmtReduceDB_common, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64 (stmtReduceDB_common, bind_at++, solver->sumRestarts());
+    sqlite3_bind_int64 (stmtReduceDB_common, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, cur_rst_type);
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, tot_cls_in_db);
 
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, (double)median_data.median_act);
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_data.median_uip1_used);
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_data.median_props);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_uip1_per_time);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_props_per_time);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, (double)median_data.median_act);
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, median_data.median_uip1_used);
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, median_data.median_props);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, median_data.median_sum_uip1_per_time);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, median_data.median_sum_props_per_time);
 
-    //sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_glue);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_props);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_uip1_used);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_sum_uip1_per_time);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_sum_props_per_time);
+    //sqlite3_bind_double(stmtReduceDB_common, bind_at++, avg_data.avg_glue);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, avg_data.avg_props);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, avg_data.avg_uip1_used);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, avg_data.avg_sum_uip1_per_time);
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, avg_data.avg_sum_props_per_time);
 
 
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->nVars());
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->longIrredCls.size());
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->litStats.irredLits);
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, solver->nVars());
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, solver->long_irred_cls.size());
+    sqlite3_bind_int   (stmtReduceDB_common, bind_at++, solver->lit_stats.irred_lits);
     uint32_t total_long_red_cls = 0;
-    for(const auto& cls: solver->longRedCls) {
+    for(const auto& cls: solver->long_red_cls) {
         total_long_red_cls += cls.size();
     }
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, total_long_red_cls);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->litStats.redLits);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.irredBins);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.redBins);
+    sqlite3_bind_int(stmtReduceDB_common, bind_at++, total_long_red_cls);
+    sqlite3_bind_int(stmtReduceDB_common, bind_at++, solver->lit_stats.red_lits);
+    sqlite3_bind_int(stmtReduceDB_common, bind_at++, solver->bin_tri.irred_bins);
+    sqlite3_bind_int(stmtReduceDB_common, bind_at++, solver->bin_tri.red_bins);
 
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.trailDepthHistLT.avg());
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.backtrackLevelHistLT.avg());
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.conflSizeHistLT.avg());
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.numResolutionsHistLT.avg());
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.glueHistLT.avg());
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.antec_data_sum_sizeHistLT.avg());
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.overlapHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.trailDepthHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.backtrackLevelHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.conflSizeHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.numResolutionsHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.glueHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.antec_data_sum_sizeHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bind_at++, solver->hist.overlapHistLT.avg());
 
-    run_sqlite_step(stmtReduceDB_common, "reduceDB_common", bindAt);
+    run_sqlite_step(stmtReduceDB_common, "reduceDB_common", bind_at);
 }
 
 void SQLiteStats::reduceDB(
@@ -782,65 +680,63 @@ void SQLiteStats::reduceDB(
     const ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
     assert(stats_extra.dump_no != numeric_limits<uint16_t>::max());
 
-    int bindAt = 1;
+    int bind_at = 1;
 
     //Global data ("conflicts" is needed because otherwise
     //       code is complicated in data sampler), even though this data
     //       is available in reduceDB_common
-    sqlite3_bind_int(stmtReduceDB, bindAt++, reduceDB_called);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.introduced_at_conflict);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.which_red_array);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, reduceDB_called);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.introduced_at_conflict);
 
     //data
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.orig_ID);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.dump_no);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.conflicts_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.props_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_props_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_uip1_used);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.orig_ID);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.dump_no);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.conflicts_made);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, cl->stats.props_made);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.sum_props_made);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, cl->stats.uip1_used);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.sum_uip1_used);
 
-    assert(cl->stats.last_touched_any <= solver->sumConflicts);
-    int64_t last_touched_any_diff = solver->sumConflicts - cl->stats.last_touched_any;
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_any_diff);
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
-    sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, false); // used in XOR -- nope
-    if (cl->stats.is_ternary_resolvent) {
-        sqlite3_bind_null(stmtReduceDB, bindAt++);
+    assert(cl->stats.last_touched_any <= solver->sum_conflicts);
+    int64_t last_touched_any_diff = solver->sum_conflicts - cl->stats.last_touched_any;
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, last_touched_any_diff);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)cl->stats.activity/(double)solver->get_cla_inc());
+    sqlite3_bind_int(stmtReduceDB, bind_at++, locked);
+    //eager subsume sets glue to CL_MAX_GLUE as a 'delete next' marker
+    if (cl->stats.is_ternary_resolvent || cl->stats.glue == CL_MAX_GLUE) {
+        sqlite3_bind_null(stmtReduceDB, bind_at++);
     } else {
-        sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.glue);
+        sqlite3_bind_int(stmtReduceDB, bind_at++, cl->stats.glue);
     }
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.ttl_stats);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resolvent);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_decision);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->distilled);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.connects_num_communities);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, cl->size());
+    sqlite3_bind_int(stmtReduceDB, bind_at++, cl->stats.used);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, cl->stats.is_ternary_resolvent);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, cl->stats.is_decision);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, cl->distilled);
 
     //Ranking
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.act_ranking);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.prop_ranking);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.uip1_ranking);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_uip1_per_time_ranking);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_props_per_time_ranking);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, stats_extra.act_ranking);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, stats_extra.prop_ranking);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, stats_extra.uip1_ranking);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, stats_extra.sum_uip1_per_time_ranking);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, stats_extra.sum_props_per_time_ranking);
 
     //Discounted
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_uip1_used);
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_props_made);
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_uip1_used2);
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_props_made2);
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_uip1_used3);
-    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_props_made3);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_uip1_used);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_props_made);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_uip1_used2);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_props_made2);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_uip1_used3);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_props_made3);
 
-    run_sqlite_step(stmtReduceDB, "reduceDB", bindAt);
+    run_sqlite_step(stmtReduceDB, "reduceDB", bind_at);
 }
 
 void SQLiteStats::clause_stats(
     const Solver* solver
     , uint64_t clid
-    , const uint64_t restartID
+    , const uint64_t restart_id
     , uint32_t glue
     , uint32_t glue_before_minim
     , uint32_t size
@@ -849,217 +745,55 @@ void SQLiteStats::clause_stats(
     , AtecedentData<uint16_t> antec_data
     , size_t decision_level
     , size_t trail_depth
-    , uint64_t conflicts_this_restart
     , const uint32_t restart_type
     , const SearchHist& hist
     , const bool is_decision
-    , const uint32_t orig_connects_num_communities
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
-    int bindAt = 1;
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
-    if (solver->sumRestarts() == 0) {
-        sqlite3_bind_int64(stmt_clause_stats, bindAt++, 0);
-    } else {
-        sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts()-1);
-    }
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, clid);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, restartID);
+    int bind_at = 1;
+    sqlite3_bind_int64(stmt_clause_stats, bind_at++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmt_clause_stats, bind_at++, solver->sumRestarts());
+    sqlite3_bind_int64 (stmt_clause_stats, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_int64 (stmt_clause_stats, bind_at++, clid);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, restart_id);
 
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue_before_minim);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, size);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, size_before_minim);
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, conflicts_this_restart);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, num_overlap_literals);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.num());
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.sum_size());
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, is_decision);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, glue);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, glue_before_minim);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, size);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, size_before_minim);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, num_overlap_literals);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, antec_data.num());
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, antec_data.sum_size());
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, is_decision);
 
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, backtrack_level);
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, decision_level);
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.prev(1));
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.prev(2));
-    sqlite3_bind_int64 (stmt_clause_stats, bindAt++, trail_depth);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, restart_type);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, backtrack_level);
+    sqlite3_bind_int64 (stmt_clause_stats, bind_at++, decision_level);
+    sqlite3_bind_int64 (stmt_clause_stats, bind_at++, trail_depth);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, restart_type);
 
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.binIrred);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.binRed);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.longIrred);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.longRed);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, antec_data.bin_irred);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, antec_data.bin_red);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, antec_data.long_irred);
+    sqlite3_bind_int   (stmt_clause_stats, bind_at++, antec_data.long_red);
 
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.decisionLevelHistLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.backtrackLevelHistLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.trailDepthHistLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.conflSizeHistLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHistLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.connects_num_communities_histLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.numResolutionsHistLT,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.trailDepthHistLT,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.conflSizeHistLT,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.glueHistLT,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.numResolutionsHistLT,avg)
 
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.antec_data_sum_sizeHistLT,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.overlapHistLT,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.antec_data_sum_sizeHistLT,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.overlapHistLT,avg)
 
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.branchDepthHistQueue,avg_nocheck)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.trailDepthHist,avg_nocheck)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.trailDepthHistLonger,avg_nocheck)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.numResolutionsHist,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.conflSizeHist,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.trailDepthDeltaHist,avg)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.backtrackLevelHist,avg_nocheck)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHist,avg_nocheck)
-    bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHist.getLongtTerm(),avg)
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_connects_num_communities);
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.branchDepthHistQueue,avg_nocheck)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.trail_depth_hist,avg_nocheck)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.conflSizeHist,avg)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.glue_hist,avg_nocheck)
+    bind_null_or_double(stmt_clause_stats, bind_at, hist.glue_hist.get_longterm(),avg)
 
-    run_sqlite_step(stmt_clause_stats, "clause_stats", bindAt);
+    run_sqlite_step(stmt_clause_stats, "clause_stats", bind_at);
 }
 
-#ifdef STATS_NEEDED_BRANCH
-void SQLiteStats::var_data_fintime(
-    const Solver* solver
-    , const uint32_t var
-    , const VarData& vardata
-    , const double rel_activity
-) {
-    int bindAt = 1;
-    sqlite3_bind_int   (stmt_var_data_fintime, bindAt++, var);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflicts_at_picktime);
-
-    sqlite3_bind_double (stmt_var_data_fintime, bindAt++, rel_activity);
-
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause_antecedents);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause_glue);
-
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumDecisions);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumPropagations);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumAntecedents);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumAntecedentsLits);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumConflictClauseLits);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumDecisionBasedCl);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumClLBD);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumClSize);
-
-    run_sqlite_step(stmt_var_data_fintime, "var_data_fintime");
-}
-
-void SQLiteStats::var_data_picktime(
-    const Solver* solver
-    , const uint32_t var
-    , const VarData& vardata
-    , const double rel_activity
-) {
-    int bindAt = 1;
-    sqlite3_bind_int   (stmt_var_data_picktime, bindAt++, var);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.level);
-    sqlite3_bind_double(stmt_var_data_picktime, bindAt++, rel_activity);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->latest_vardist_feature_calc);
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause_antecedents);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause_glue);
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause_antecedents_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause_glue_during);
-
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.num_decided);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.num_decided_pos);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.num_propagated);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.num_propagated_pos);
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_seen_in_1uip);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_decided_on);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_propagated);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_canceled);
-
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumDecisions);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumPropagations);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumAntecedents);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumAntecedentsLits);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflictClauseLits);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumDecisionBasedCl);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumClLBD);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumClSize);
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumConflicts_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumDecisions_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumPropagations_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumAntecedents_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumAntecedentsLits_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumConflictClauseLits_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumDecisionBasedCl_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClLBD_below_during);
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClSize_below_during);
-
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_flipped);
-
-    run_sqlite_step(stmt_var_data_picktime, "var_data_picktime");
-}
-
-void SQLiteStats::var_dist(
-    const uint32_t var
-    , const VarData2& data
-    , const Solver* solver
-) {
-    int bindAt = 1;
-    sqlite3_bind_int(stmt_var_dist, bindAt++, var);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->latest_vardist_feature_calc);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->sumConflicts);
-
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->longIrredCls.size());
-    uint32_t num = 0;
-    for(auto& x: solver->longRedCls) {
-        num+=x.size();
-    }
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, num);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->binTri.irredBins);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->binTri.redBins);
-
-
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.num_times_in_bin_clause);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.num_times_in_long_clause);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.satisfies_cl);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.falsifies_cl);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.tot_num_lit_of_bin_it_appears_in);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.tot_num_lit_of_long_cls_it_appears_in);
-    sqlite3_bind_double(stmt_var_dist, bindAt++, data.red.sum_var_act_of_cls);
-
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.num_times_in_bin_clause);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.num_times_in_long_clause);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.satisfies_cl);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.falsifies_cl);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.tot_num_lit_of_bin_it_appears_in);
-    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.tot_num_lit_of_long_cls_it_appears_in);
-    sqlite3_bind_double(stmt_var_dist, bindAt++, data.irred.sum_var_act_of_cls);
-
-    sqlite3_bind_double(stmt_var_dist, bindAt++, data.tot_act_long_red_cls);
-
-    run_sqlite_step(stmt_var_dist, "var_dist");
-}
-
-void SQLiteStats::dec_var_clid(
-    const uint32_t var
-    , const uint64_t sumConflicts_at_picktime
-    , const uint64_t clid
-) {
-    assert(clid != 0);
-
-    int bindAt = 1;
-    sqlite3_bind_int(stmt_dec_var_clid, bindAt++, var);
-    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, sumConflicts_at_picktime);
-    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, clid);
-
-    run_sqlite_step(stmt_dec_var_clid, "dec_var_clid");
-}
-#endif
 
 void SQLiteStats::cl_last_in_solver(
     const Solver* solver
@@ -1067,11 +801,11 @@ void SQLiteStats::cl_last_in_solver(
 {
     assert(clid != 0);
 
-    int bindAt = 1;
-    sqlite3_bind_int64(stmt_delete_cl, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int64(stmt_delete_cl, bindAt++, clid);
+    int bind_at = 1;
+    sqlite3_bind_int64(stmt_delete_cl, bind_at++, solver->sum_conflicts);
+    sqlite3_bind_int64(stmt_delete_cl, bind_at++, clid);
 
-    run_sqlite_step(stmt_delete_cl, "cl_last_in_solver", bindAt);
+    run_sqlite_step(stmt_delete_cl, "cl_last_in_solver", bind_at);
 }
 
 void SQLiteStats::update_id(
@@ -1082,11 +816,11 @@ void SQLiteStats::update_id(
     assert(new_id != 0);
     assert((new_id == old_id || new_id > old_id) && "not neccessary, but I think we have this always");
 
-    int bindAt = 1;
-    sqlite3_bind_int64(stmt_update_id, bindAt++, old_id);
-    sqlite3_bind_int64(stmt_update_id, bindAt++, new_id);
+    int bind_at = 1;
+    sqlite3_bind_int64(stmt_update_id, bind_at++, old_id);
+    sqlite3_bind_int64(stmt_update_id, bind_at++, new_id);
 
-    run_sqlite_step(stmt_update_id, "update_id", bindAt);
+    run_sqlite_step(stmt_update_id, "update_id", bind_at);
 }
 
 

@@ -300,10 +300,10 @@ class Tester:
         sched_opts += "distill-litrem, distill-bins, clean-cls,"
 
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
-        sched_opts += "occ-bve-empty, occ-ternary-res,"
+        sched_opts += "occ-bve-empty, occ-ternary-res, occ-sweep,"
         sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
-        sched_opts += "renumber, must-renumber, louvain-comms,"
+        sched_opts += "renumber, must-renumber,"
         sched_opts += "card-find, breakid, cl-consolidate,"
         sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
 
@@ -379,7 +379,6 @@ class Tester:
         cmd += "--bumpreasondepth %d " % random.choice([0, 1, 1, 2])
         cmd += "--shrink %d " % random.choice([0, 1, 1, 1])
         cmd += "--otfs %d " % random.choice([0, 1, 1, 1])
-        cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         # VERY short runs -- solver stops with INDETERMINATE, no checks possible
         if self.limited_run:
@@ -389,7 +388,7 @@ class Tester:
                 cmd += "--maxtime %d " % random.choice([0, 1, 2, 5])
 
         # restarts & branching
-        cmd += "--random %d " % random.choice([0, 1, random.randint(0, 1000000)])
+        cmd += "--seed %d " % random.choice([0, 1, random.randint(0, 1000000)])
         cmd += "--branchstr %s " % random.choice(
             ["vmtf", "vsids", "vmtf+vsids", "vsids+vmtf",
              "vmtf+vsids+rand", "rand+vsids", "vmtf+rand"])
@@ -415,6 +414,9 @@ class Tester:
         cmd += "--fullwatchconseveryn %d " % random.choice([100, 4000000])
         cmd += "--transred %d " % random.choice([0, 1])
         cmd += "--intreemaxm %d " % random.choice([0, 1, 400])
+        cmd += "--intreeeff %s " % random.choice([0, 0.01, 0.3, 5])
+        cmd += "--fullprobe %d " % random.choice([0, 1, 1])
+        cmd += "--fullprobemaxm %d " % random.choice([0, 1, 20])
         cmd += "--cardfind %d " % random.choice([0, 0, 1])
 
         # SLS details
@@ -428,6 +430,7 @@ class Tester:
 
         # distill details
         cmd += "--distillbin %d " % random.choice([0, 1])
+        cmd += "--distillbineff %s " % random.choice([0, 0.02, 1])
         cmd += "--distillmaxm %d " % random.choice([0, 1, 200])
         cmd += "--distillincconf %s " % random.choice([0, 0.1, 10])
         cmd += "--distillminconf %d " % random.choice([1, 10000])
@@ -445,9 +448,6 @@ class Tester:
 
         # occ / varelim / bva limits
         cmd += "--bva %d " % random.choice([0, 0, 1])
-        cmd += "--bvalim %d " % random.choice([0, 5, 250000])
-        cmd += "--bva2lit %d " % random.choice([0, 1])
-        cmd += "--bvato %d " % random.choice([0, 2, 50])
         cmd += "--emptyelim %d " % random.choice([0, 1])
         cmd += "--eratio %s " % random.choice([0, 0.3, 1.6, 10])
         cmd += "--varelimto %d " % random.choice([0, 10, 750])

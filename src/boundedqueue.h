@@ -114,7 +114,7 @@ public:
     }
 
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    const AvgCalc<T,T2>& getLongtTerm() const
+    const AvgCalc<T,T2>& get_longterm() const
     {
         return longTermAvg;
     }

@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "propengine.h"
 #include "searcher.h"
+#include "timetally.h"
 #include "searchstats.h"
 #ifdef CMS_TESTING_ENABLED
 #include "gtest/gtest_prod.h"
@@ -79,6 +80,20 @@ struct SolveStats
     uint32_t num_simplify = 0;
     uint32_t num_simplify_this_solve_call = 0;
     uint32_t num_solve_calls = 0;
+    uint32_t num_user_simplify_calls = 0;
+    uint32_t solve_ret[3] = {0, 0, 0}; //l_True, l_False, l_Undef
+    uint64_t sum_assumps = 0;
+    uint64_t confl_at_solve_start = 0;
+    uint64_t max_confl_per_solve = 0;
+    uint64_t confl_in_solves_unsat = 0; //conflicts in solve() calls returning UNSAT
+    uint32_t confl_per_solve_hist[6] = {}; //0, <10, <100, <1K, <10K, 10K+
+    double time_in_solver = 0; //CPU time inside solve() and simplify() calls
+    //what the user added through the API
+    uint64_t cls_added = 0;
+    uint64_t cl_lits_added = 0;
+    uint64_t xors_added = 0;
+    uint64_t xor_lits_added = 0;
+    uint64_t bnns_added = 0;
 };
 
 /// State of the formula at a [simp-stats] bef/aft point, so aft can color
@@ -173,7 +188,7 @@ class Solver : public Searcher
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
         // Live irred long clauses across solver and (if active) OccSimplifier.
-        // During occ-* steps, OccSimplifier owns them and longIrredCls is empty.
+        // During occ-* steps, OccSimplifier owns them and long_irred_cls is empty.
         size_t get_num_long_irred_cls() const;
 
         // [simp-stats] bef/aft lines bracketing a preprocessing step. depth=0
@@ -183,10 +198,11 @@ class Solver : public Searcher
         void simp_stats_after(const std::string& tok);
         SimpStatsSnap simp_stats_snap() const;
         vector<SimpStatsSnap> simp_stats_snaps;
+        TimeTally time_tally;
         ///Long irred clause count that is right in both phases: during occur
-        ///simplification the clauses live in OccSimplifier, not in longIrredCls
+        ///simplification the clauses live in OccSimplifier, not in long_irred_cls
         size_t num_long_irred_cls_anywhere() const;
-        const SolverConf& getConf() const;
+        const SolverConf& get_conf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;
         size_t get_num_vars_elimed() const;
@@ -210,8 +226,8 @@ class Solver : public Searcher
         //Checks
 
         //Systems that are used to accomplish the tasks
-        ClauseCleaner*         clauseCleaner = nullptr;
-        VarReplacer*           varReplacer = nullptr;
+        ClauseCleaner*         clause_cleaner = nullptr;
+        VarReplacer*           var_replacer = nullptr;
         SubsumeImplicit*       subsumeImplicit = nullptr;
         DataSync*              datasync = nullptr;
         ReduceDB*              reduceDB = nullptr;
@@ -226,8 +242,14 @@ class Solver : public Searcher
         CardFinder*            card_finder = nullptr;
         GetClauseQuery*        get_clause_query = nullptr;
 
-        SearchStats sumSearchStats;
-        PropStats sumPropStats;
+        SearchStats sum_search_stats;
+        PropStats sum_prop_stats;
+        uint64_t outside_search_props = 0;
+        //Monotonic, deterministic measure of all propagation work so far
+        uint64_t all_bogoprops() const {
+            return sum_prop_stats.bogo_props + sum_prop_stats.otf_hyper_time
+                + prop_stats.bogo_props + prop_stats.otf_hyper_time + outside_search_props;
+        }
 
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
@@ -258,7 +280,7 @@ class Solver : public Searcher
         void new_vars(const size_t n) override;
 
         //Attaching-detaching clauses
-        void attachClause(
+        void attach_clause(
             const Clause& c
             #ifdef DEBUG_ATTACH
             , const bool checkAttach = true
@@ -283,21 +305,21 @@ class Solver : public Searcher
             , bool allow_change_order = false
         ) {
             if (red) {
-                binTri.redBins--;
+                bin_tri.red_bins--;
             } else {
-                binTri.irredBins--;
+                bin_tri.irred_bins--;
                 mark_elim_cand(lit1);
                 mark_elim_cand(lit2);
             }
 
             PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
-        void detachClause(const Clause& c, const bool remove_frat = true);
-        void detachClause(const ClOffset offset, const bool remove_frat = true);
+        void detach_clause(const Clause& c, const bool remove_frat = true);
+        void detach_clause(const ClOffset offset, const bool remove_frat = true);
         void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
-            , const uint32_t origSize
+            , const uint32_t orig_size
             , const Clause* address
         );
         void add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID);
@@ -306,7 +328,7 @@ class Solver : public Searcher
             , const bool red = false
             , const ClauseStats* const stats = nullptr
             , const bool attach = true
-            , vector<Lit>* finalLits = nullptr
+            , vector<Lit>* final_lits = nullptr
             , bool addFrat = true
             , const Lit frat_first = lit_Undef
             , const bool sorted = false
@@ -458,7 +480,7 @@ class Solver : public Searcher
 
         bool sort_and_clean_clause(
             vector<Lit>& ps
-            , const vector<Lit>& origCl
+            , const vector<Lit>& orig_cl
             , const bool red
             , const bool sorted = false
         );
@@ -476,6 +498,7 @@ class Solver : public Searcher
         lbool simplify_problem_outside(const string* strategy = nullptr);
 
         //Stats printing
+        void print_solve_call_stats() const;
         void print_norm_stats(
             const double cpu_time,
             const double cpu_time_total,
@@ -487,14 +510,14 @@ class Solver : public Searcher
 
         lbool simplify_problem(const bool startup, const string& strategy);
         lbool execute_inprocess_strategy(const bool startup, const string& strategy);
-        SolveStats solveStats;
+        SolveStats solve_stats;
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution(const bool only_indep_solution);
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
-        mutable std::vector<Lit> tmpCl;
+        mutable std::vector<Lit> tmp_cl;
         mutable std::vector<uint32_t> tmpXor;
 
         /////////////////////////////
@@ -554,15 +577,15 @@ inline void Solver::set_decision_var(const uint32_t var)
 
 inline const SearchStats& Solver::get_stats() const
 {
-    return sumSearchStats;
+    return sum_search_stats;
 }
 
 inline const SolveStats& Solver::get_solve_stats() const
 {
-    return solveStats;
+    return solve_stats;
 }
 
-inline const SolverConf& Solver::getConf() const
+inline const SolverConf& Solver::get_conf() const
 {
     return conf;
 }
@@ -574,21 +597,21 @@ inline const vector<std::pair<string, string> >& Solver::get_sql_tags() const
 
 inline const BinTriStats& Solver::getBinTriStats() const
 {
-    return binTri;
+    return bin_tri;
 }
 
 template<> inline vector<Lit> Solver::clause_outer_numbered(const vector<uint32_t>& cl) const {
-    tmpCl.clear();
-    for(const auto& l: cl) tmpCl.push_back(Lit(map_inter_to_outer(l), false));
+    tmp_cl.clear();
+    for(const auto& l: cl) tmp_cl.push_back(Lit(map_inter_to_outer(l), false));
 
-    return tmpCl;
+    return tmp_cl;
 }
 
 template<class T> inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const {
-    tmpCl.clear();
-    for(const auto& l: cl) tmpCl.push_back(map_inter_to_outer(l));
+    tmp_cl.clear();
+    for(const auto& l: cl) tmp_cl.push_back(map_inter_to_outer(l));
 
-    return tmpCl;
+    return tmp_cl;
 }
 
 template<class T>

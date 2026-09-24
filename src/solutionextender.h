@@ -29,9 +29,6 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_DEBUG_RECONSTRUCT
-#endif
 
 class Solver;
 class OccSimplifier;

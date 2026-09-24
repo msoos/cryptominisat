@@ -36,13 +36,8 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_SUBSUME_NONEXIST
-#endif
 
-//#define VERBOSE_DEBUG
 
-//#define VERBOSE_SUBSUME_NONEXIST
 
 //CaDiCaL's vivify_more_noccs: literal order for the trie effect. Higher
 //Jeroslow-Wang-style score first; ties broken as in CaDiCaL.
@@ -72,7 +67,7 @@ DistillerLong::DistillerLong(Solver* _solver) :
 void DistillerLong::analyze_visit(const Lit l, bool& only_bin)
 {
     (void)only_bin;
-    const auto& vd = solver->varData[l.var()];
+    const auto& vd = solver->var_data[l.var()];
     if (vd.level == 0) return;
     auto& s = solver->seen[l.var()*2];
     if (s) return;
@@ -91,7 +86,7 @@ bool DistillerLong::analyze_seen_reasons(const PropBy start, bool& only_bin)
     while (!reason_stack.empty()) {
         const PropBy r = reason_stack.back();
         reason_stack.pop_back();
-        switch (r.getType()) {
+        switch (r.get_type()) {
             case binary_t:
                 analyze_visit(r.lit2(), only_bin);
                 break;
@@ -123,7 +118,7 @@ bool DistillerLong::post_process_analysis(const Clause& cl, const Lit subsume_li
     for (const Lit l: cl) {
         if (l == subsume_lit) continue;
         if (solver->value(l) != l_False) { all_dec = false; break; }
-        const auto& vd = solver->varData[l.var()];
+        const auto& vd = solver->var_data[l.var()];
         if (vd.level == 0) continue;
         if (!vd.reason.isnullptr()) { all_dec = false; break; }
         if (!solver->seen[l.var()*2]) { all_dec = false; break; }
@@ -134,7 +129,7 @@ bool DistillerLong::post_process_analysis(const Clause& cl, const Lit subsume_li
     for (const Lit l: cl) {
         if (l == subsume_lit) { kept_lits.push_back(l); continue; }
         if (solver->value(l) != l_False) continue;          //true/unassigned: flush
-        const auto& vd = solver->varData[l.var()];
+        const auto& vd = solver->var_data[l.var()];
         if (vd.level == 0) continue;                        //fixed false: drop
         if (!vd.reason.isnullptr()) continue;               //implied false: flush
         if (solver->seen[l.var()*2]) kept_lits.push_back(l); //used decision: keep
@@ -152,19 +147,19 @@ void DistillerLong::analysis_hints(const Lit subsume_lit, const PropBy confl)
     props_tmp.clear();
     for (const uint32_t v: analyzed_vars) {
         if (subsume_lit != lit_Undef && v == subsume_lit.var()) continue;
-        if (!solver->varData[v].reason.isnullptr()) props_tmp.push_back(v);
+        if (!solver->var_data[v].reason.isnullptr()) props_tmp.push_back(v);
     }
     std::sort(props_tmp.begin(), props_tmp.end(),
         [this](const uint32_t a, const uint32_t b) {
-            return solver->varData[a].sublevel < solver->varData[b].sublevel;
+            return solver->var_data[a].sublevel < solver->var_data[b].sublevel;
         });
     vector<int32_t> rsns;
     for (const uint32_t v: props_tmp)
-        rsns.push_back(solver->get_reason_id(solver->varData[v].reason, hint_units));
+        rsns.push_back(solver->get_reason_id(solver->var_data[v].reason, hint_units));
     int32_t final_id;
     if (subsume_lit != lit_Undef)
         final_id = solver->get_reason_id(
-            solver->varData[subsume_lit.var()].reason, hint_units);
+            solver->var_data[subsume_lit.var()].reason, hint_units);
     else
         final_id = solver->get_confl_id(confl, hint_units);
     hints = hint_units;
@@ -180,31 +175,53 @@ void DistillerLong::clear_seen()
     reason_stack.clear(); //non-empty after a BNN bail-out
 }
 
-bool DistillerLong::distill(const bool red, bool only_rem_cl)
+//Effort reference, as kissat's SET_EFFORT_LIMIT: all propagation work since
+//the last call, floored at 'mineffort'
+int64_t DistillerLong::calc_effort_ref()
+{
+    int64_t ref = (int64_t)(solver->all_bogoprops() - last_all_props);
+    last_all_props = solver->all_bogoprops();
+    return std::max<int64_t>(ref, solver->conf.distill_min_effortM*1000LL*1000LL);
+}
+
+//Kissat's vivify: red tiers and irred in one go, sharing one effort reference
+bool DistillerLong::distill_red_and_irred()
+{
+    const int64_t ref = calc_effort_ref();
+    if (!distill(true, false, ref)) return false;
+    return distill(false, false, ref);
+}
+
+bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref)
 {
     frat_func_start();
     assert(solver->ok);
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
-    runStats.clear();
+    run_stats.clear();
+    if (effort_ref < 0) effort_ref = calc_effort_ref();
 
     if (!red) {
+        const int64_t budget = effort_ref * (int64_t)solver->conf.distill_irred_releff / 1000LL;
+        const double r_rem = solver->conf.distill_irred_alsoremove_ratio;
+        const double r_norem = only_rem_cl ? 0.0 : solver->conf.distill_irred_noremove_ratio;
+        const double sum = r_rem + r_norem;
         if (!distill_long_cls_all(
-            solver->longIrredCls,
-            solver->conf.distill_irred_alsoremove_ratio,
+            solver->long_irred_cls,
+            sum > 0 ? (double)budget * r_rem / sum : 0.0,
             true, //also remove
             only_rem_cl,
             red))
         {
             goto end;
         }
-        globalStats += runStats;
-        runStats.clear();
+        global_stats += run_stats;
+        run_stats.clear();
 
         if (!only_rem_cl) {
             if (!distill_long_cls_all(
-                solver->longIrredCls,
-                solver->conf.distill_irred_noremove_ratio,
+                solver->long_irred_cls,
+                sum > 0 ? (double)budget * r_norem / sum : 0.0,
                 false, //also remove
                 only_rem_cl,
                 red))
@@ -212,13 +229,14 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
                 goto end;
             }
         }
-        globalStats += runStats;
-        runStats.clear();
+        global_stats += run_stats;
+        run_stats.clear();
     } else {
         //Redundant
+        const int64_t budget = effort_ref * (int64_t)solver->conf.distill_red_releff / 1000LL;
         if (!distill_long_cls_all(
-            solver->longRedCls[0],
-            1.0,
+            solver->long_red_cls[0],
+            budget,
             false, //dont' remove (it's always redundant)
             only_rem_cl,
             red,
@@ -226,23 +244,9 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
         {
             goto end;
         }
-        globalStats += runStats;
-        runStats.clear();
+        global_stats += run_stats;
+        run_stats.clear();
 
-        #ifdef FINAL_PREDICTOR //only predictor builds populate longRedCls[1]
-        if (!distill_long_cls_all(
-            solver->longRedCls[1],
-            1.0,
-            false, //dont' remove (it's always redundant)
-            only_rem_cl,
-            red,
-            1))  // //red lev (only to print)
-        {
-            goto end;
-        }
-        globalStats += runStats;
-        runStats.clear();
-        #endif
     }
 
 end:
@@ -255,48 +259,26 @@ end:
 
 bool DistillerLong::distill_long_cls_all(
     vector<ClOffset>& offs
-    , double time_mult
+    , double budget
     , bool also_remove
     , bool only_remove
     , bool red
     , uint32_t red_lev
 ) {
     assert(solver->ok);
-    if (time_mult == 0.0) return solver->okay();
+    if (budget <= 0.0) return solver->okay();
     verb_print(6, "c Doing distillation branch for long clauses");
     frat_func_start();
 
     double my_time = cpu_time();
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
 
-    //Time-limiting
-    if (red) {
-        //CaDiCaL's vivify budget for redundant rounds: relative to the
-        //propagations done since the last round, clamped, then the
-        //'vivifyredeff' 75-per-mille share
-        int64_t lim = (int64_t)(solver->propStats.propagations - last_red_props);
-        last_red_props = solver->propStats.propagations;
-        lim *= 1e-3 * (double)solver->conf.distill_red_releff;
-        lim = std::max<int64_t>(lim, 60LL*1000LL);
-        lim = std::min<int64_t>(lim, 60LL*1000LL*1000LL);
-        maxNumProps = lim * 75LL / 1000LL;
-    } else {
-        maxNumProps =
-            solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
-            *solver->conf.global_timeout_multiplier;
-
-        if (solver->litStats.irredLits + solver->litStats.redLits <
-                (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
-        ) {
-            maxNumProps *=2;
-        }
-        maxNumProps *= time_mult;
-    }
-    orig_maxNumProps = maxNumProps;
+    max_num_props = (int64_t)budget;
+    orig_maxNumProps = max_num_props;
 
     //stats setup
-    oldBogoProps = solver->propStats.bogoProps;
-    runStats.numCalled += 1;
+    old_bogo_props = solver->prop_stats.bogo_props;
+    run_stats.num_called += 1;
 
     //Select candidates. prio 0: not checked since their bit was cleared,
     //as CaDiCaL's 'vivify' bit; prio 1: the rest (irred only)
@@ -307,7 +289,6 @@ bool DistillerLong::distill_long_cls_all(
         uint32_t j = 0;
         for(uint32_t i = 0; i < offs.size(); i ++) {
             Clause* cl = solver->cl_alloc.ptr(offs[i]);
-            VERBOSE_PRINT("Clause at " << i << " is:  " << *cl);
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
                 && (!red || solver->reduceDB->likely_to_be_kept(*cl))
@@ -327,13 +308,41 @@ bool DistillerLong::distill_long_cls_all(
             if (ok) {
                 todo.push_back(offs[i]);
                 todo_prio.push_back(prio);
-                VERBOSE_PRINT("Adding this one to TODO");
             } else {
                 offs[j++] = offs[i];
                 continue;
             }
         }
         offs.resize(j);
+    }
+
+    //Cap the schedule, as CaDiCaL's vivifyschedmax: sorting and the
+    //per-candidate literal copies below must not dominate a small budget.
+    //Keep the best by (prio, glue, size), hand the rest back untouched
+    //A candidate costs ~1K bogoprops at least, so a small budget must not
+    //pay for sorting thousands of candidates it will never reach
+    const uint32_t sched_max = std::min<uint64_t>(solver->conf.distill_sched_max,
+        std::max<uint64_t>(100, max_num_props / 1000));
+    if (todo.size() > sched_max) {
+        vector<uint32_t> idx(todo.size());
+        for(uint32_t i = 0; i < todo.size(); i++) idx[i] = i;
+        std::nth_element(idx.begin(), idx.begin() + sched_max, idx.end(),
+            [&](const uint32_t a, const uint32_t b) {
+                if (todo_prio[a] != todo_prio[b]) return todo_prio[a] < todo_prio[b];
+                const Clause& c = *solver->cl_alloc.ptr(todo[a]);
+                const Clause& d = *solver->cl_alloc.ptr(todo[b]);
+                if (red && c.stats.glue != d.stats.glue) return c.stats.glue < d.stats.glue;
+                return c.size() < d.size();
+            });
+        vector<ClOffset> todo2; todo2.reserve(sched_max);
+        vector<uint32_t> todo_prio2; todo_prio2.reserve(sched_max);
+        for(uint32_t i = 0; i < sched_max; i++) {
+            todo2.push_back(todo[idx[i]]);
+            todo_prio2.push_back(todo_prio[idx[i]]);
+        }
+        for(uint32_t i = sched_max; i < idx.size(); i++) offs.push_back(todo[idx[i]]);
+        todo = std::move(todo2);
+        todo_prio = std::move(todo_prio2);
     }
 
     //CaDiCaL's noccs: capped Jeroslow-Wang score of each literal over the
@@ -390,7 +399,7 @@ bool DistillerLong::distill_long_cls_all(
                 }
                 if (is_prefix) {
                     Clause* cl = solver->cl_alloc.ptr(todo[at]);
-                    solver->detachClause(*cl);
+                    solver->detach_clause(*cl);
                     solver->free_cl(todo[at]);
                     removed[at] = 1;
                     num_subsumed++;
@@ -399,7 +408,7 @@ bool DistillerLong::distill_long_cls_all(
                 }
             }
             if (num_subsumed) {
-                runStats.clRemoved += num_subsumed;
+                run_stats.cl_removed += num_subsumed;
                 uint32_t j = 0;
                 for(uint32_t i = 0; i < todo.size(); i++) {
                     if (removed[i]) continue;
@@ -438,9 +447,9 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     const uint32_t orig_todo_size = todo.size();
-    runStats.potentialClauses += orig_todo_size;
+    run_stats.potential_clauses += orig_todo_size;
 
-    assert(runStats.checkedClauses == 0);
+    assert(run_stats.checked_clauses == 0);
     bool time_out = go_through_clauses(todo, also_remove, only_remove);
 
     //Add back the prioritized clauses
@@ -448,27 +457,25 @@ bool DistillerLong::distill_long_cls_all(
 
     const double time_used = cpu_time() - my_time;
     const double time_remain = float_div(
-        maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
+        max_num_props - ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
-        cout << solver->conf.prefix << "[distill-long";
-        if (red) {
-            cout << "-red" << red_lev << "]";
-        } else {
-            cout << "-irred]";
-        }
-        cout
-        << " cls"
-        << " tried: " << runStats.checkedClauses << "/" << orig_todo_size
-        << " cl-rem: " << runStats.clRemoved
-        << " cl-sh: " << runStats.numClShorten
-        << " lit-rem: " << runStats.numLitsRem
-        << " 0-depth-ass: " << (solver->trail_size() - origTrailSize)
+        const std::string tag = red ? "[distill-long-red" + std::to_string(red_lev) + "]" : "[distill-long-irred]";
+        cout << solver->conf.prefix << tag
+        << " cls tried: " << run_stats.checked_clauses << "/" << orig_todo_size
+        << " cl-rem: " << run_stats.cl_removed
+        << " cl-sh: " << run_stats.num_cl_shorten
+        << " lit-rem: " << run_stats.num_lits_rem
+        << " 0-depth-ass: " << (solver->trail_size() - orig_trail_size)
+        << endl;
+        cout << solver->conf.prefix << tag
+        << " budget(M): " << std::setprecision(2) << std::fixed << (double)orig_maxNumProps/1e6
+        << " used(M): " << (double)((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props)/1e6
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "distill long cls"
             , time_used
@@ -478,8 +485,8 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     //Update stats
-    runStats.time_used += time_used;
-    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
+    run_stats.time_used += time_used;
+    run_stats.zero_depth_assigns += solver->trail_size() - orig_trail_size;
 
     frat_func_end();
     return solver->okay();
@@ -491,7 +498,6 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
     size_t kept = 0;
     for (size_t at = 0; at < cls.size(); at++) {
         const ClOffset offset = cls[at];
-        VERBOSE_PRINT("At offset: " << offset);
 
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
@@ -502,24 +508,19 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         Clause& cl = *solver->cl_alloc.ptr(offset);
 
         //if done enough, stop doing it
-        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+        if ((int64_t)solver->prop_stats.bogo_props-(int64_t)old_bogo_props >= max_num_props
             || solver->must_interrupt_asap()
         ) {
-            if (solver->conf.verbosity >= 3) {
-                cout
-                << "c Need to finish distillation -- ran out of prop (=allocated time)"
-                << endl;
-            }
-            runStats.timeOut++;
+            run_stats.time_out++;
             time_out = true;
         }
 
         //Time to dereference
-        maxNumProps -= 5;
+        max_num_props -= 5;
 
         if (also_remove) cl.tried_to_remove = 1;
         else cl.distilled = 1;
-        runStats.checkedClauses++;
+        run_stats.checked_clauses++;
         assert(cl.size() > 2);
 
         //Try to distill clause
@@ -531,7 +532,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
     cls.resize(kept);
 
     //decisions may have been left in place for reuse between candidates
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
 
     frat_func_end();
     return time_out;
@@ -555,14 +556,13 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     *solver->frat << deldelay << cl << fin;
     const bool red = cl.red();
     if (red) assert(!also_remove);
-    VERBOSE_PRINT("Trying to distill clause:" << cl);
 
     const auto remove_cl = [&]() {
-        solver->cancelUntil<false, true>(0);
+        solver->cancel_until<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
         *solver->frat << findelay;
         solver->free_cl(offset);
-        runStats.clRemoved++;
+        run_stats.cl_removed++;
         frat_func_end();
         return CL_OFFSET_MAX;
     };
@@ -573,7 +573,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     sorted.clear();
     for (const Lit l: cl) {
         const lbool val = solver->value(l);
-        if (val != l_Undef && solver->varData[l.var()].level == 0) {
+        if (val != l_Undef && solver->var_data[l.var()].level == 0) {
             if (val == l_True) return remove_cl();
             if (solver->frat->enabled())
                 hint_units.push_back(solver->unit_cl_IDs[l.var()]);
@@ -589,26 +589,26 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //If this clause forced one of its literals on the reused trail, it may
     //not be used to prove itself redundant: backtrack below that level
-    if (solver->decisionLevel() > 0 && solver->clause_locked(cl, offset)) {
-        assert(solver->varData[cl[0].var()].level > 0);
-        solver->cancelUntil<false, true>(solver->varData[cl[0].var()].level - 1);
+    if (solver->decision_level() > 0 && solver->clause_locked(cl, offset)) {
+        assert(solver->var_data[cl[0].var()].level > 0);
+        solver->cancel_until<false, true>(solver->var_data[cl[0].var()].level - 1);
     }
 
     //Reuse the decisions of the previous candidate as long as they match
     //our sorted literals, as CaDiCaL does (the trie effect)
-    if (solver->decisionLevel() > 0) {
+    if (solver->decision_level() > 0) {
         uint32_t match = 0;
         for (const Lit l: sorted) {
-            if (match >= solver->decisionLevel()) break;
+            if (match >= solver->decision_level()) break;
             const Lit dec = solver->trail_at(solver->trail_begin_of_level(match));
             if (dec == ~l) match++;
             else break;
         }
-        if (match < solver->decisionLevel()) solver->cancelUntil<false, true>(match);
+        if (match < solver->decision_level()) solver->cancel_until<false, true>(match);
     }
 
     const uint32_t seg_start =
-        solver->decisionLevel() > 0 ? solver->trail_begin_of_level(0) : solver->getTrailSize();
+        solver->decision_level() > 0 ? solver->trail_begin_of_level(0) : solver->getTrailSize();
     uint32_t num_dropped = orig_size - sorted.size(); //fixed-false lits
     kept_lits.clear();
     for (const Lit lit: sorted) {
@@ -618,7 +618,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             solver->enqueue<true>(~lit);
             kept_lits.push_back(lit);
 
-            maxNumProps -= 5;
+            max_num_props -= 5;
             if (!red && also_remove) {
                 //ONLY propagate on irred
                 confl = solver->propagate<true, false, true>();
@@ -628,7 +628,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             }
             if (!confl.isnullptr()) break;
         } else if (val == l_False) {
-            if (solver->varData[lit.var()].reason.isnullptr()) {
+            if (solver->var_data[lit.var()].reason.isnullptr()) {
                 //one of our own (possibly reused) decisions
                 kept_lits.push_back(lit);
             } else if (only_remove) {
@@ -641,16 +641,12 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             assert(val == l_True);
             kept_lits.push_back(lit);
             True_confl = true;
-            confl = solver->varData[lit.var()].reason;
+            confl = solver->var_data[lit.var()].reason;
             break;
         }
     }
     assert(solver->ok);
 
-    VERBOSE_PRINT("also_remove: " << also_remove
-        << "red: " << red
-        << "True_confl: " << True_confl
-        << "confl.isnullptr(): " << confl.isnullptr());
 
     //Subsumed via propagation: a conflict ('@6') or a literal positively
     //implied ('@5'), as in CaDiCaL's vivify_clause
@@ -662,7 +658,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (subsumed && !red && also_remove) {
         const int lev = solver->conf.distill_rem_level;
         if (lev >= 2 || (lev == 1 && !True_confl)) {
-            VERBOSE_PRINT("CL Removed.");
             return remove_cl();
         }
         //Keeping it. The loop broke at the conflict, so kept_lits is only a
@@ -673,7 +668,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         num_dropped = orig_size - sorted.size();
         if (num_dropped == 0) {
             //Unchanged. The trail is at a conflict, so it cannot be reused
-            solver->cancelUntil<false, true>(0);
+            solver->cancel_until<false, true>(0);
             cl.disabled = false;
             solver->frat->forget_delay();
             frat_func_end();
@@ -699,9 +694,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             solver->seen[subsume_lit.var()*2] = 1;
             analyzed_vars.push_back(subsume_lit.var());
             analyzed_ok = analyze_seen_reasons(
-                solver->varData[subsume_lit.var()].reason, only_bin);
+                solver->var_data[subsume_lit.var()].reason, only_bin);
         } else {
-            if (confl.getType() == binary_t)
+            if (confl.get_type() == binary_t)
                 analyze_visit(solver->get_fail_bin_lit(), only_bin);
             analyzed_ok = analyze_seen_reasons(confl, only_bin);
         }
@@ -716,7 +711,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 clear_seen();
                 cl.disabled = false;
                 solver->frat->forget_delay();
-                solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+                solver->cancel_until<false, true>(solver->decision_level()-1);
                 frat_func_end();
                 return offset;
             }
@@ -735,13 +730,13 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (!subsumed && !only_remove && solver->conf.distill_instantiate) {
         const Lit last = sorted.back();
         if (solver->value(last) == l_False
-            && solver->varData[last.var()].reason.isnullptr()
-            && solver->varData[last.var()].level == solver->decisionLevel()
+            && solver->var_data[last.var()].reason.isnullptr()
+            && solver->var_data[last.var()].level == solver->decision_level()
         ) {
-            solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+            solver->cancel_until<false, true>(solver->decision_level()-1);
             solver->new_decision_level();
             solver->enqueue<true>(last);
-            maxNumProps -= 5;
+            max_num_props -= 5;
             PropBy confl2;
             if (!red && also_remove) confl2 = solver->propagate<true, false, true>();
             else confl2 = solver->propagate<true, true, true>();
@@ -753,7 +748,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 if (solver->frat->enabled()) {
                     vector<int32_t> rsns;
                     const uint32_t inst_start =
-                        solver->trail_begin_of_level(solver->decisionLevel()-1);
+                        solver->trail_begin_of_level(solver->decision_level()-1);
                     solver->collect_trail_seg_hints(
                         seg_start, hint_units, rsns, var_Undef, inst_start);
                     rsns.push_back(stats->id);
@@ -767,7 +762,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 kept_lits.erase(it);
                 have_analysis = true; //kept_lits & hints are set
             } else {
-                solver->cancelUntil<false, true>(solver->decisionLevel()-1);
+                solver->cancel_until<false, true>(solver->decision_level()-1);
             }
         }
     }
@@ -776,7 +771,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (!subsumed && !have_analysis
         && num_dropped == 0 && kept_lits.size() == orig_size
     ) {
-        VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
         solver->frat->forget_delay();
         frat_func_end();
@@ -800,10 +794,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         }
     }
 
-    solver->cancelUntil<false, true>(0);
+    solver->cancel_until<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-    runStats.numLitsRem += orig_size - kept_lits.size();
-    runStats.numClShorten++;
+    run_stats.num_lits_rem += orig_size - kept_lits.size();
+    run_stats.num_cl_shorten++;
 
     //Make new clause
     lits.resize(kept_lits.size());
@@ -843,14 +837,14 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
-    timeOut += other.timeOut;
-    zeroDepthAssigns += other.zeroDepthAssigns;
-    numClShorten += other.numClShorten;
-    numLitsRem += other.numLitsRem;
-    checkedClauses += other.checkedClauses;
-    potentialClauses += other.potentialClauses;
-    numCalled += other.numCalled;
-    clRemoved += other.clRemoved;
+    time_out += other.time_out;
+    zero_depth_assigns += other.zero_depth_assigns;
+    num_cl_shorten += other.num_cl_shorten;
+    num_lits_rem += other.num_lits_rem;
+    checked_clauses += other.checked_clauses;
+    potential_clauses += other.potential_clauses;
+    num_called += other.num_called;
+    cl_removed += other.cl_removed;
 
     return *this;
 }
@@ -860,28 +854,28 @@ void DistillerLong::Stats::print(const size_t nVars, const string& pre) const
     cout << pre << "-------- DISTILL-LONG STATS --------" << endl;
     print_stats_line("c time"
         , time_used
-        , ratio_for_stat(time_used, numCalled)
+        , ratio_for_stat(time_used, num_called)
         , "per call"
     );
 
     print_stats_line("c timed out"
-        , timeOut
-        , stats_line_percent(timeOut, numCalled)
+        , time_out
+        , stats_line_percent(time_out, num_called)
         , "% of calls"
     );
 
     print_stats_line("c distill/checked/potential"
-        , numClShorten
-        , checkedClauses
-        , potentialClauses
+        , num_cl_shorten
+        , checked_clauses
+        , potential_clauses
     );
 
     print_stats_line("c lits-rem",
-        numLitsRem
+        num_lits_rem
     );
     print_stats_line("c 0-depth-assigns",
-        zeroDepthAssigns
-        , stats_line_percent(zeroDepthAssigns, nVars)
+        zero_depth_assigns
+        , stats_line_percent(zero_depth_assigns, nVars)
         , "% of vars"
     );
     cout << pre << "-------- DISTILL STATS END --------" << endl;

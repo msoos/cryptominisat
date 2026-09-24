@@ -39,7 +39,7 @@ BreakID::BreakID(Solver* _solver):
 {
 }
 
-void BreakID::updateVars(
+void BreakID::update_vars(
     const vector<uint32_t>& outer_to_inter
     , const vector<uint32_t>& /*inter_to_outer*/)
 {
@@ -56,7 +56,7 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
     brkid_lits.clear();
     for(size_t i3 = 0; i3 < cl.size(); i3++) {
         Lit lit = cl[i3];
-        assert(solver->varData[lit.var()].removed == Removed::none);
+        assert(solver->var_data[lit.var()].removed == Removed::none);
         lbool val = l_Undef;
         if (solver->value(lit) != l_Undef) {
             val = solver->value(lit);
@@ -111,8 +111,8 @@ struct EqCls {
 
         //same hash, same size
         for(uint32_t i = 0; i < cl1->size(); i++) {
-            if (cl1->getData()[i] != cl2->getData()[i]) {
-                return (cl1->getData()[i] < cl2->getData()[i]);
+            if (cl1->get_data()[i] != cl2->get_data()[i]) {
+                return (cl1->get_data()[i] < cl2->get_data()[i]);
             }
         }
 
@@ -133,7 +133,7 @@ static bool equiv(Clause* cl1, Clause* cl2) {
     }
 
     for(uint32_t i = 0; i < cl1->size(); i++) {
-        if (cl1->getData()[i] != cl2->getData()[i]) {
+        if (cl1->get_data()[i] != cl2->get_data()[i]) {
             return false;
         }
     }
@@ -166,7 +166,7 @@ bool BreakID::add_clauses()
     for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
         Lit lit = Lit::toLit(i2);
         for(const Watched& w: solver->watches[lit]) {
-            if (w.isBin() && !w.red() && lit < w.lit2()) {
+            if (w.is_bin() && !w.red() && lit < w.lit2()) {
                 this_clause.clear();
                 this_clause.push_back(lit);
                 this_clause.push_back(w.lit2());
@@ -195,11 +195,11 @@ bool BreakID::add_clauses()
 bool BreakID::doit()
 {
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(!solver->frat->enabled());
     num_lits_in_graph = 0;
 
-    if (!solver->conf.doStrSubImplicit) {
+    if (!solver->conf.do_str_sub_implicit) {
         verb_print(1, "[breakid] cannot run BreakID without implicit submsumption, it would find too many (bad) symmetries");
         return solver->okay();
     }
@@ -210,7 +210,7 @@ bool BreakID::doit()
     }
 
     if (!check_limits()) return solver->okay();
-    if (!solver->clauseCleaner->remove_and_clean_all()) return solver->okay();
+    if (!solver->clause_cleaner->remove_and_clean_all()) return solver->okay();
 
     // Clean up solver state so it's easier to find symmetries
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
@@ -268,8 +268,8 @@ bool BreakID::doit()
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "breakid"
             , time_used
@@ -305,8 +305,8 @@ void BreakID::get_outer_permutations()
 
 bool BreakID::check_limits()
 {
-    uint64_t tot_num_cls = solver->longIrredCls.size()+solver->binTri.irredBins;
-    uint64_t tot_num_lits = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    uint64_t tot_num_cls = solver->long_irred_cls.size()+solver->bin_tri.irred_bins;
+    uint64_t tot_num_lits = solver->lit_stats.irred_lits + solver->bin_tri.irred_bins*2;
     if (solver->nVars() > solver->conf.breakid_vars_limit_K*1000ULL) {
         if (solver->conf.verbosity) {
             cout
@@ -344,13 +344,13 @@ void BreakID::remove_duplicates()
     double my_time = cpu_time();
     dedup_cls.clear();
 
-    for(ClOffset offs: solver->longIrredCls) {
+    for(ClOffset offs: solver->long_irred_cls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
         assert(!cl->get_removed());
         assert(!cl->red());
         std::sort(cl->begin(), cl->end());
-        cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
+        cl->stats.hash_val = hash_clause(cl->get_data(), cl->size());
         dedup_cls.push_back(offs);
     }
 
@@ -381,8 +381,8 @@ void BreakID::remove_duplicates()
         << solver->conf.print_times(time_used)
         <<  endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "breakid-rem-dup"
             , time_used
@@ -403,7 +403,7 @@ void BreakID::break_symms_in_cms()
             symm_var = solver->nVars()-1;
             solver->add_assumption(Lit(symm_var, true));
         }
-        assert(solver->varData[symm_var].removed == Removed::none);
+        assert(solver->var_data[symm_var].removed == Removed::none);
     }
 
     auto brk = breakid->get_brk_cls();
@@ -428,7 +428,7 @@ void BreakID::break_symms_in_cms()
         );
         if (newcl != nullptr) {
             ClOffset offset = solver->cl_alloc.get_offset(newcl);
-            solver->longIrredCls.push_back(offset);
+            solver->long_irred_cls.push_back(offset);
         }
     }
 }
@@ -440,13 +440,13 @@ void BreakID::finished_solving()
 
 void BreakID::start_new_solving()
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->okay());
     if (symm_var == var_Undef) {
         return;
     }
 
-    assert(solver->varData[symm_var].removed == Removed::none);
+    assert(solver->var_data[symm_var].removed == Removed::none);
     assert(solver->value(symm_var) != l_False
         && "The symm var can never be foreced to FALSE, logic error");
 
@@ -468,7 +468,7 @@ void BreakID::start_new_solving()
 void BreakID::update_var_after_varreplace()
 {
     if (symm_var != var_Undef) {
-        symm_var = solver->varReplacer->get_var_replaced_with(symm_var);
+        symm_var = solver->var_replacer->get_var_replaced_with(symm_var);
     }
 }
 

@@ -57,14 +57,14 @@ class DistillerLongWithImpl {
             struct WatchBased
             {
                 double cpu_time = 0.0;
-                uint64_t numLitsRem = 0;
+                uint64_t num_lits_rem = 0;
                 uint64_t numClSubsumed = 0;
                 uint64_t triedCls = 0;
                 uint64_t shrinked = 0;
                 uint64_t totalCls = 0;
                 uint64_t totalLits = 0;
                 uint64_t ranOutOfTime = 0;
-                uint64_t numCalled = 0;
+                uint64_t num_called = 0;
 
                 void clear()
                 {
@@ -78,21 +78,21 @@ class DistillerLongWithImpl {
                 WatchBased& operator+=(const WatchBased& other)
                 {
                     cpu_time += other.cpu_time;
-                    numLitsRem += other.numLitsRem;
+                    num_lits_rem += other.num_lits_rem;
                     numClSubsumed += other.numClSubsumed;
                     triedCls += other.triedCls;
                     shrinked += other.shrinked;
                     totalCls += other.totalCls;
                     totalLits += other.totalLits;
                     ranOutOfTime += other.ranOutOfTime;
-                    numCalled += other.numCalled;
+                    num_called += other.num_called;
 
                     return  *this;
                 }
             };
 
-            WatchBased irredWatchBased;
-            WatchBased redWatchBased;
+            WatchBased irred_watch_based;
+            WatchBased red_watch_based;
         };
 
         const Stats& get_stats() const;
@@ -139,7 +139,7 @@ class DistillerLongWithImpl {
             , Watched* wit
             , const Clause& cl
         );
-        Stats::WatchBased tmpStats;
+        Stats::WatchBased tmp_stats;
         //bool needToFinish;
         bool sub_str_cl_with_watch(
             ClOffset& offset
@@ -156,7 +156,7 @@ class DistillerLongWithImpl {
             , bool red
             , bool also_strengthen
         );
-        int64_t timeAvailable;
+        int64_t time_available;
 
         //Working set
         Solver* solver;
@@ -166,15 +166,15 @@ class DistillerLongWithImpl {
         vector<uint8_t>& seen2;
 
         //Global status
-        Stats runStats;
-        Stats globalStats;
-        size_t numCalls = 0;
+        Stats run_stats;
+        Stats global_stats;
+        size_t num_calls = 0;
 
 };
 
 inline const DistillerLongWithImpl::Stats& DistillerLongWithImpl::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

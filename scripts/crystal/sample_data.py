@@ -128,11 +128,6 @@ class QueryDatRem(helper.QueryHelper):
         create index `idxclid32` on `reduceDB` (`clauseID`);
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
         create index `idxclid34` on `used_clauses` (`clauseID`);
-        create index `idxclid44` on `restart_dat_for_cl` (`clauseID`);
-        create index `idxclid35` on `var_data_fintime` (`var`, `sumConflicts_at_picktime`);
-        create index `idxclid36` on `var_data_picktime` (`var`, `sumConflicts_at_picktime`);
-        create index `idxclid37` on `dec_var_clid` (`var`, `sumConflicts_at_picktime`);
-        create index `idxclid40` on `restart_dat_for_var` (`conflicts`);
         """
 
         for q in queries.split("\n"):
@@ -158,108 +153,6 @@ class QueryDatRem(helper.QueryHelper):
         """
         self.c.execute(q)
 
-    def remove_too_many_vardata(self):
-        t = time.time()
-        q = """
-        select count()
-        from var_data_picktime
-        """
-        ret = self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        num_vardata = rows[0][0]
-        print("Current number of elements in var_data: %d" % num_vardata)
-
-        if num_vardata < options.goal_vardata:
-            print("Not too many in var_data, skipping removal.")
-            return
-
-        q = """
-        DROP TABLE IF EXISTS `used_vardat`;
-        """
-        self.c.execute(q)
-
-        q = """
-        CREATE TABLE `used_vardat` (
-          `var` bigint(20) NOT NULL
-          , `sumConflicts_at_picktime` bigint(20) NOT NULL
-        );
-        """
-        self.c.execute(q)
-
-        q = """
-        create index `idxclidxx` on `used_vardat`
-        (`var`, `sumConflicts_at_picktime`);
-        """
-        self.c.execute(q)
-
-        q = """
-        insert into `used_vardat`
-        SELECT
-        var, sumConflicts_at_picktime
-        FROM var_data_picktime
-        order by random()
-        limit {limit}
-        """.format(limit=options.goal_vardata)
-        self.c.execute(q)
-        print("Added {limit} to `used_vardat`".format(limit=options.goal_vardata))
-        print("--> T: %-3.2f s"% (time.time() - t))
-
-        t = time.time()
-        del_from = ["var_data_picktime", "var_data_fintime", "dec_var_clid"]
-        for table in del_from:
-
-            q = """
-            DROP TABLE IF EXISTS `myrows`;
-            """
-            self.c.execute(q)
-
-            q = """
-            CREATE TABLE `myrows` (
-              `myrowid` bigint(20) NOT NULL
-            );
-            """
-            self.c.execute(q)
-
-            q = """
-            INSERT INTO `myrows`
-            SELECT `rowid`
-            FROM `{table}` WHERE (`var`, `sumConflicts_at_picktime`)
-            in (SELECT `var`, `sumConflicts_at_picktime` from `used_vardat`);
-            """
-            self.c.execute(q.format(table=table))
-
-            q = """
-            create index `myidx111` on `myrows` (`myrowid`);
-            """
-
-            q = """
-            DELETE FROM `{table}` WHERE (rowid) NOT IN
-            (SELECT `myrowid` from `myrows` );"""
-            self.c.execute(q.format(table=table))
-            print("Deleted unused data from %s" % table)
-
-        # cleanup
-        q = """
-        DROP TABLE IF EXISTS `myrows`;
-        """
-        self.c.execute(q)
-
-        # sample restart_dat_for_var
-        q = """
-        DELETE FROM restart_dat_for_var WHERE `conflicts` NOT IN
-        (SELECT `sumConflicts_at_picktime` from `used_vardat` group by sumConflicts_at_picktime);"""
-        self.c.execute(q)
-        print("Deleted unused data from restart_dat_for_var")
-
-        # cleanup
-        q = """
-        DROP TABLE IF EXISTS `used_vardat`;
-        """
-        self.c.execute(q)
-        print("Cleaned up var_data_x & restart_dat_for_var tables T: %-3.2f s"
-              % (time.time() - t))
-
     def insert_into_used_cls_ids_from_clstats(self, min_used, limit, table):
         min_used = int(min_used)
 
@@ -271,7 +164,7 @@ class QueryDatRem(helper.QueryHelper):
         clauseID from {table}
         where
         num_used >= {min_used}
-        order by random() limit {limit}
+        order by ((clauseID + {min_used}) * 2654435761) % 4294967296 limit {limit}
         """.format(
             min_used=min_used,
             limit=int(limit),
@@ -340,20 +233,18 @@ class QueryDatRem(helper.QueryHelper):
                 print("-> index:", row)
 
     def create_used_clauses_red(self):
-        t = time.time()
-        q = """
-        CREATE TABLE used_clauses_red AS
-        SELECT * FROM used_clauses WHERE clauseID IN (SELECT clauseID from used_cl_ids );
-        """
-
-        self.c.execute(q)
-        print("Filtered into used_clauses_red T: %-3.2f s" % (time.time() - t))
+        for table in ["used_clauses", "used_clauses_anc"]:
+            t = time.time()
+            q = """
+            CREATE TABLE {table}_red AS
+            SELECT * FROM {table} WHERE clauseID IN (SELECT clauseID from used_cl_ids );
+            """.format(table=table)
+            self.c.execute(q)
+            print("Filtered into %s_red T: %-3.2f s" % (table, time.time() - t))
 
     def drop_used_clauses_red(self):
-        q = """
-        drop TABLE if exists used_clauses_red;
-        """
-        self.c.execute(q)
+        for table in ["used_clauses", "used_clauses_anc"]:
+            self.c.execute("drop TABLE if exists %s_red;" % table)
 
     def filter_tables_of_ids(self):
 
@@ -367,7 +258,7 @@ class QueryDatRem(helper.QueryHelper):
         self.print_idxs()
 
         tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses_anc",
-                  "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
+                  "used_clauses", "cl_last_in_solver"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from used_cl_ids );"""
@@ -482,7 +373,7 @@ class QueryDatRem(helper.QueryHelper):
         {table}_{tier}.clauseID=rdb0.clauseID
         and {table}_{tier}.rdb0conflicts=rdb0.conflicts
         and {table}_{tier}.used_later >= {min_used_later}
-        order by random()
+        order by ((rdb0.rowid + {min_used_later} * 7919) * 2654435761) % 4294967296
         limit {limit}""".format(min_used_later=min_used_later, limit=limit,
                                 tier=tier, table=table)
         self.c.execute(q)
@@ -593,8 +484,6 @@ if __name__ == "__main__":
                       dest="limit", help="Number of clauses to limit ourselves to")
     parser.add_option("--goalrdb", default=200000, type=int,
                       dest="goal_rdb", help="Number of RDB neeeded")
-    parser.add_option("--goalvardata", default=50000, type=int,
-                      dest="goal_vardata", help="Number of varData points neeeded")
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
     parser.add_option("--noidx", action="store_true", default=False,
@@ -627,28 +516,6 @@ if __name__ == "__main__":
         helper.dangerous(q.c)
         helper.drop_idxs(q.c)
         q.create_indexes1()
-        q.remove_too_many_vardata()
-
-    # this is the SLOW way of doing it -- without pre-sampling it
-    if False:
-        print("This is good for verifying that the fast ones are close")
-        # slower percentiles
-        t = time.time()
-        with helper.QueryFill(args[0]) as q:
-            helper.dangerous(q.c)
-            q.delete_and_create_used_laters()
-            q.create_indexes(verbose=options.verbose)
-            for tier in ["short", "long", "forever"]:
-                q.fill_used_later_X(tier, getattr(options, tier))
-        with QueryDatRem(args[0]) as q:
-            helper.dangerous(q.c)
-            q.create_percentiles_table()
-            for tier in ["short", "long", "forever"]:
-                q.get_all_percentile_X(tier)
-            q.print_percentiles()
-        with helper.QueryFill(args[0]) as q:
-            q.delete_and_create_used_laters()
-        print("SLOWER percentiles:", time.time()-t)
 
     # Percentile generation
     t = time.time()
@@ -666,11 +533,11 @@ if __name__ == "__main__":
     with helper.QueryFill(args[0]) as q:
         helper.dangerous(q.c)
         q.delete_and_create_used_laters()
-        q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
+        q.create_indexes(verbose=options.verbose, used_clauses_suffix="_red")
         for table in ["used_later", "used_later_anc"]:
             for tier in ["short", "long", "forever"]:
                 q.fill_used_later_X(tier, duration=getattr(options, tier),
-                                    used_clauses="used_clauses_red",
+                                    used_clauses_suffix="_red",
                                     table=table)
 
     # now we calculate the distributions and save them

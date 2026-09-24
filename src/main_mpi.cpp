@@ -38,23 +38,23 @@ int num_threads = 2;
 
 vector<lbool> solve(lbool& solution_val)
 {
-    int err, mpiRank, mpiSize;
-    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    int err, mpi_rank, mpi_size;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     assert(err == MPI_SUCCESS);
-    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     assert(err == MPI_SUCCESS);
     CMSat::SolverConf conf;
-    conf.verbosity = 0; //(mpiRank == 1);
+    conf.verbosity = 0; //(mpi_rank == 1);
     conf.is_mpi = true;
     conf.do_bva = false;
 
-    if (mpiSize > 1 && mpiRank > 1) {
-        conf.origSeed = mpiRank*2000; //this will be added T that is the thread number within the MPI
-        if (mpiRank % 6 == 3) {
+    if (mpi_size > 1 && mpi_rank > 1) {
+        conf.orig_seed = mpi_rank*2000; //this will be added T that is the thread number within the MPI
+        if (mpi_rank % 6 == 3) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             conf.restartmargin = 25;
         }
-        if (mpiRank % 6 == 4) {
+        if (mpi_rank % 6 == 4) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
             conf.do_stabilize = 0;
         }
@@ -71,20 +71,12 @@ vector<lbool> solve(lbool& solution_val)
     bool done = false;
 
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    cout << "c created solver " << mpiRank << " reading in file..." << endl;
-    #endif
     while(!done) {
         MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-        //cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
 
         uint32_t i = 0;
         if (num_msgs == 0) {
             solver.new_vars(data[0].var());
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            cout << "c Solver " << mpiRank
-            << " was told by MPI there are " << solver.nVars() << " variables" << endl;
-            #endif
             i++;
         }
         num_msgs++;
@@ -103,12 +95,6 @@ vector<lbool> solve(lbool& solution_val)
             }
         }
     }
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    cout << "c Solver " << mpiRank
-    << " finished getting all of the file."
-    << " nvars: " << solver.nVars()
-    << " num_clauses: " << num_clauses << endl;
-    #endif
 
     solution_val = solver.solve();
     vector<lbool> model;
@@ -125,14 +111,14 @@ int main(int argc, char** argv)
     err = MPI_Init(&argc, &argv);
     assert(err == MPI_SUCCESS);
 
-    int mpiRank, mpiSize;
-    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    int mpi_rank, mpi_size;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     assert(err == MPI_SUCCESS);
 
-    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     assert(err == MPI_SUCCESS);
 
-    if (mpiSize <= 1) {
+    if (mpi_size <= 1) {
         cout << "ERROR: you must run on at least 2 MPI nodes" << endl;
         cout << "NOTE: If using mpirun, use: mpirun -c NUM_PROCESSES ./cryptominisat5_mpi FILENAME NUM_THREADS" << endl;
         exit(-1);
@@ -157,7 +143,7 @@ int main(int argc, char** argv)
     }
 
 
-    if (mpiRank == 0) {
+    if (mpi_rank == 0) {
         std::string filename(argv[1]);
         cout << "c Filename is: " << filename << endl;
         cout << "c num threads used: " << num_threads << endl;
@@ -196,10 +182,6 @@ int main(int argc, char** argv)
     } else {
         lbool solution_val;
         const vector<lbool> model = solve(solution_val);
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        cout << "c --> MPI Slave Rank " << mpiRank
-        << " Solved " <<  << " with value: " << solution_val << std::endl;
-        #endif
 
         if (solution_val != l_Undef) {
             //Send tag 1 to 0 that indicates we solved
@@ -215,10 +197,6 @@ int main(int argc, char** argv)
 
             err = MPI_Isend(solution_dat.data(), solution_dat.size(), MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &req);
             assert(err == MPI_SUCCESS);
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            cout << "c --> MPI Slave Rank " << mpiRank
-            << " sent tag 1 to master to indicate finished" << std::endl;
-            #endif
 
             //Either we should we get an acknowledgement of receipt, or we get an interrupt
             int flag;
@@ -232,10 +210,6 @@ int main(int argc, char** argv)
                     unsigned buf;
                     err = MPI_Recv(&buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
                     assert(err == MPI_SUCCESS);
-                    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-                    cout << "c --> MPI Slave Rank " << mpiRank
-                    << " got tag 1 from master. Let's cancel our send & exit." << std::endl;
-                    #endif
 
                     err = MPI_Cancel(&req);
                     assert(err == MPI_SUCCESS);
@@ -248,10 +222,6 @@ int main(int argc, char** argv)
 
                 //OK, server got our message, we can exit
                 if (op_completed) {
-                    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-                    cout << "c --> MPI Slave Rank " << mpiRank
-                    << " completed sending solution & tag 1 to master. Let's exit." << std::endl;
-                    #endif
                     break;
                 }
 

@@ -47,17 +47,17 @@ class SCCFinder {
                 *this = _tmp;
             }
 
-            uint64_t numCalls = 0;
+            uint64_t num_calls = 0;
             double cpu_time = 0.0;
-            uint64_t foundXors = 0;
+            uint64_t found_xors = 0;
             uint64_t foundXorsNew = 0;
             uint64_t bogoprops = 0;
 
             Stats& operator+=(const Stats& other)
             {
-                numCalls += other.numCalls;
+                num_calls += other.num_calls;
                 cpu_time += other.cpu_time;
-                foundXors += other.foundXors;
+                found_xors += other.found_xors;
                 foundXorsNew += other.foundXorsNew;
                 bogoprops += other.bogoprops;
 
@@ -69,19 +69,19 @@ class SCCFinder {
                 cout << pre << "----- SCC STATS --------" << endl;
                 print_stats_line("c time"
                     , cpu_time
-                    , float_div(cpu_time, numCalls)
+                    , float_div(cpu_time, num_calls)
                     , "per call"
                 );
 
                 print_stats_line("c called"
-                    , numCalls
-                    , float_div(foundXorsNew, numCalls)
+                    , num_calls
+                    , float_div(foundXorsNew, num_calls)
                     , "new found per call"
                 );
 
                 print_stats_line("c found"
                     , foundXorsNew
-                    , stats_line_percent(foundXorsNew, foundXors)
+                    , stats_line_percent(foundXorsNew, found_xors)
                     , "% of all found"
                 );
 
@@ -119,8 +119,8 @@ class SCCFinder {
         std::set<BinaryXor> binxors;
 
         //Stats
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
 };
 
 inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
@@ -142,7 +142,7 @@ inline bool SCCFinder::depth_warning_triggered() const
 
 inline const SCCFinder::Stats& SCCFinder::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const std::set<BinaryXor>& SCCFinder::get_binxors() const

@@ -62,18 +62,18 @@ class CompleteDetachReatacher
         class ClausesStay {
             public:
                 ClausesStay() :
-                    redBins(0)
-                    , irredBins(0)
+                    red_bins(0)
+                    , irred_bins(0)
                 {}
 
                 ClausesStay& operator+=(const ClausesStay& other) {
-                    redBins += other.redBins;
-                    irredBins += other.irredBins;
+                    red_bins += other.red_bins;
+                    irred_bins += other.irred_bins;
                     return *this;
                 }
 
-                uint64_t redBins;
-                uint64_t irredBins;
+                uint64_t red_bins;
+                uint64_t irred_bins;
         };
         ClausesStay clearWatchNotBinNotTri(watch_subarray ws);
 

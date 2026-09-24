@@ -53,7 +53,7 @@ class DataSyncServer {
         bool check_interrupt_and_forward_to_all();
         void finish_data_send();
 
-        std::vector<uint32_t> syncMPIFinish;
+        std::vector<uint32_t> sync_mpi_finish;
         std::vector<std::vector<Lit>> bins;
         std::vector<lbool> value;
         std::vector<Lit> clauses_array;
@@ -69,7 +69,7 @@ class DataSyncServer {
         lbool solution_val = l_Undef;
         bool interrupt_sent = false;
 
-        int mpiSize;
+        int mpi_size;
         uint32_t num_vars = 0;
         uint32_t recvBinData = 0;
         uint32_t sentBinData = 0;

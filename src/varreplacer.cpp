@@ -43,17 +43,11 @@ using std::cout;
 using std::endl;
 using std::make_tuple;
 
-#ifdef VERBOSE_DEBUG
-#define REPLACE_STATISTICS
-#define VERBOSE_DEBUG_BIN_REPLACER
-#endif
 
 using namespace CMSat;
 
-//#define VERBOSE_DEBUG
 //#define REPLACE_STATISTICS
 //#define DEBUG_BIN_REPLACER
-//#define VERBOSE_DEBUG_BIN_REPLACER
 
 VarReplacer::VarReplacer(Solver* _solver) :
     solver(_solver)
@@ -78,11 +72,11 @@ void VarReplacer::check_no_replaced_var_set() const
 {
     for(uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         if (solver->value(var) != l_Undef) {
-            if (solver->varData[var].removed != Removed::none) {
+            if (solver->var_data[var].removed != Removed::none) {
                 cout << "ERROR: var " << var + 1 << " has removed: "
-                << removed_type_to_string(solver->varData[var].removed)
+                << removed_type_to_string(solver->var_data[var].removed)
                 << " but is set to " << solver->value(var) << endl;
-                assert(solver->varData[var].removed == Removed::none);
+                assert(solver->var_data[var].removed == Removed::none);
                 exit(-1);
             }
         }
@@ -102,20 +96,12 @@ void VarReplacer::save_on_var_memory()
 {
 }
 
-void VarReplacer::updateVars(
+void VarReplacer::update_vars(
     const std::vector< uint32_t >& /*outer_to_inter*/
     , const std::vector< uint32_t >& /*inter_to_outer*/
 ) {
     //Nothing to do, we keep OUTER in all these data structures
     //hence, it needs no update
-}
-
-void VarReplacer::printReplaceStats() const
-{
-    for (uint32_t i = 0; i < table.size(); i++) {
-        if (table[i].var() == i) continue;
-        cout << "Replacing var " << i+1 << " with Lit " << table[i] << endl;
-    }
 }
 
 void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
@@ -124,18 +110,18 @@ void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
 
     //Not replaced_with, or not replaceable, so skip
     if (orig_var == replaced_with_var
-        || solver->varData[replaced_with_var].removed == Removed::elimed
+        || solver->var_data[replaced_with_var].removed == Removed::elimed
     ) {
         return;
     }
 
     //Has already been handled previously, just skip
-    if (solver->varData[orig_var].removed == Removed::replaced) return;
+    if (solver->var_data[orig_var].removed == Removed::replaced) return;
 
     //Okay, so unset decision, and set the other one decision
     assert(orig_var != replaced_with_var);
-    solver->varData[orig_var].removed = Removed::replaced;
-    assert(solver->varData[replaced_with_var].removed == Removed::none);
+    solver->var_data[orig_var].removed = Removed::replaced;
+    assert(solver->var_data[replaced_with_var].removed == Removed::none);
     assert(solver->value(replaced_with_var) == l_Undef);
     assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
 }
@@ -156,7 +142,7 @@ bool VarReplacer::enqueueDelayedEnqueue() {
             if (fr) {
                 if (lit != lit0) {
                     //re-derive the unit under the replacement
-                    const auto nid = ++solver->clauseID;
+                    const auto nid = ++solver->clause_id;
                     *solver->frat << add << nid << lit
                         << fratchain << eqbin << id << fin;
                     solver->enqueue_registered_unit<false>(lit, nid);
@@ -169,7 +155,7 @@ bool VarReplacer::enqueueDelayedEnqueue() {
                 solver->enqueue<false>(lit);
             }
         } else if (solver->value(lit) == l_False) {
-            *solver->frat << add << ++solver->clauseID;
+            *solver->frat << add << ++solver->clause_id;
             if (fr) {
                 assert(solver->unit_cl_IDs[lit.var()] != 0);
                 *solver->frat << fratchain << solver->unit_cl_IDs[lit.var()];
@@ -178,7 +164,7 @@ bool VarReplacer::enqueueDelayedEnqueue() {
             }
             *solver->frat << fin;
             *solver->frat << del << id << lit0 << fin;
-            set_unsat_cl_id(solver->clauseID);
+            set_unsat_cl_id(solver->clause_id);
             solver->ok = false;
         } else {
             //it's already set, delete
@@ -197,7 +183,7 @@ void VarReplacer::attach_delayed_attach() {
         if (c->size() <= 2) solver->free_cl(c);
         else {
             c->unset_removed();
-            solver->attachClause(*c);
+            solver->attach_clause(*c);
         }
     }
     delayed_attach_or_free.clear();
@@ -221,20 +207,19 @@ bool VarReplacer::perform_replace() {
     frat_func_start();
 
     //Set up stats
-    runStats.clear();
-    runStats.numCalls = 1;
+    run_stats.clear();
+    run_stats.num_calls = 1;
     const double my_time = cpu_time();
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
 
-    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    if (!solver->clause_cleaner->remove_and_clean_all()) return false;
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
-    if (solver->conf.verbosity >= 5) printReplaceStats();
 
     if (solver->frat->enabled()) emit_direct_eqbins();
     update_all_vardata();
     check_no_replaced_var_set();
 
-    runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
+    run_stats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
     assert(solver->prop_at_head());
@@ -246,8 +231,8 @@ bool VarReplacer::perform_replace() {
         if (!replaceImplicit()) return;
         assert(solver->watches.get_smudged_list().empty());
         assert(delayed_attach_or_free.empty());
-        if (!replace_set(solver->longIrredCls)) return;
-        for(auto& lredcls: solver->longRedCls) if (!replace_set(lredcls)) return;
+        if (!replace_set(solver->long_irred_cls)) return;
+        for(auto& lredcls: solver->long_red_cls) if (!replace_set(lredcls)) return;
         replace_bnns();
         solver->clean_occur_from_removed_clauses_only_smudged();
         attach_delayed_attach();
@@ -273,17 +258,17 @@ bool VarReplacer::perform_replace() {
 
     //Update stats
     const double time_used = cpu_time() - my_time;
-    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
-    runStats.cpu_time = time_used;
-    globalStats += runStats;
+    run_stats.zero_depth_assigns += solver->trail_size() - orig_trail_size;
+    run_stats.cpu_time = time_used;
+    global_stats += run_stats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
-            runStats.print(solver->nVarsOuter(), solver->conf.prefix);
+            run_stats.print(solver->nVarsOuter(), solver->conf.prefix);
         else
-            runStats.print_short(solver);
+            run_stats.print_short(solver);
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "vrep"
             , time_used
@@ -308,13 +293,13 @@ void VarReplacer::emit_direct_eqbins()
 {
     eqbin_ids.assign(solver->nVars(), {0, 0});
     for(uint32_t v = 0; v < solver->nVars(); v++) {
-        if (solver->varData[v].removed != Removed::none) continue;
+        if (solver->var_data[v].removed != Removed::none) continue;
         const Lit l(v, false);
         const Lit r = get_lit_replaced_with(l);
         if (r == l) continue;
-        const int32_t id_a = ++solver->clauseID;
+        const int32_t id_a = ++solver->clause_id;
         solver->emit_bin_by_prop(id_a, ~l, r);
-        const int32_t id_b = ++solver->clauseID;
+        const int32_t id_b = ++solver->clause_id;
         solver->emit_bin_by_prop(id_b, l, ~r);
         eqbin_ids[v] = {id_a, id_b};
         bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id_a, ~l, r});
@@ -345,7 +330,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             assert(v < solver->nVars());
             Lit l = Lit(v, false);
             if (get_lit_replaced_with_fast(l) != l) {
-                runStats.replacedLits++;
+                run_stats.replaced_lits++;
                 Xor* old_x = nullptr;
                 if (solver->frat->enabled()) old_x = new Xor(x);
                 const Lit l2 = get_lit_replaced_with_fast(l);
@@ -360,10 +345,10 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     //      and so is this binary XOR reconstruction
                     vector<Lit> bin(2);
                     bin[0] = Lit(origv, false); bin[1] = l2 ^ true;
-                    const auto id1 = ++solver->clauseID;
+                    const auto id1 = ++solver->clause_id;
                     *solver->frat << add << id1 << bin
                         << fratchain << eqbin_ids[origv].second << fin;
-                    const auto id2 = ++solver->clauseID;
+                    const auto id2 = ++solver->clause_id;
                     bin[0] ^= true; bin[1] ^= true;
                     *solver->frat << add << id2 << bin
                         << fratchain << eqbin_ids[origv].first << fin;
@@ -390,8 +375,8 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
     switch (x.size()) {
         case 0:
             if (x.rhs == true && solver->okay()) {
-                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.xid << fin;
-                set_unsat_cl_id(solver->clauseID);
+                *solver->frat << implyclfromx << ++solver->clause_id << fratchain << x.xid << fin;
+                set_unsat_cl_id(solver->clause_id);
                 solver->ok = false;
             }
             frat_func_end_with("zero-len");
@@ -399,7 +384,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             break;
         case 1: {
             Lit l(x[0], !x.rhs);
-            const auto ID = ++solver->clauseID;
+            const auto ID = ++solver->clause_id;
             *solver->frat << implyclfromx << ID << l << fratchain << x.xid << fin;
             delayedEnqueue.push_back(make_tuple(l, ID));
             frat_func_end_with("1-len");
@@ -430,8 +415,8 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
 inline void VarReplacer::updateBin(
     Watched* i
     , Watched*& j
-    , const Lit origLit1
-    , const Lit origLit2
+    , const Lit orig_lit1
+    , const Lit orig_lit2
     , Lit lit1
     , Lit lit2
 ) {
@@ -442,16 +427,16 @@ inline void VarReplacer::updateBin(
         //We see this binary from both watchlists. Derive&enqueue the unit only
         //from the same direction that deletes the binary below -- otherwise the
         //2nd derivation's hint would point to an already-deleted clause.
-        if (origLit1 < origLit2) {
-            *solver->frat << add << ++solver->clauseID << lit2;
+        if (orig_lit1 < orig_lit2) {
+            *solver->frat << add << ++solver->clause_id << lit2;
             if (solver->frat->enabled()) {
                 *solver->frat << fratchain;
-                if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
-                if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+                if (lit1 != orig_lit1) *solver->frat << eqbin_for(orig_lit1);
+                if (lit2 != orig_lit2) *solver->frat << eqbin_for(orig_lit2);
                 *solver->frat << i->get_id();
             }
             *solver->frat << fin;
-            delayedEnqueue.emplace_back(lit2, solver->clauseID);
+            delayedEnqueue.emplace_back(lit2, solver->clause_id);
         }
         remove = true;
     }
@@ -466,14 +451,14 @@ inline void VarReplacer::updateBin(
         }
 
         //Drat -- Delete only once
-        if (origLit1 < origLit2) {
-            (*solver->frat) << del << i->get_id() << origLit1 << origLit2 << fin;
+        if (orig_lit1 < orig_lit2) {
+            (*solver->frat) << del << i->get_id() << orig_lit1 << orig_lit2 << fin;
         }
 
         return;
     }
 
-    if (lit1 != origLit1 || lit2 != origLit2) {
+    if (lit1 != orig_lit1 || lit2 != orig_lit2) {
         if (!i->red()) {
             solver->mark_elim_cand(lit1);
             solver->mark_elim_cand(lit2);
@@ -481,30 +466,30 @@ inline void VarReplacer::updateBin(
     }
 
     if (//Changed
-        (lit1 != origLit1 || lit2 != origLit2)
+        (lit1 != orig_lit1 || lit2 != orig_lit2)
         //Delete&attach only once
-        && (origLit1 < origLit2)
+        && (orig_lit1 < orig_lit2)
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc
         const int32_t orig_ID = i->get_id();
-        const int32_t ID = ++solver->clauseID;
+        const int32_t ID = ++solver->clause_id;
         *solver->frat<< add << ID << lit1 << lit2;
         if (solver->frat->enabled()) {
             *solver->frat << fratchain;
-            if (lit1 != origLit1) *solver->frat << eqbin_for(origLit1);
-            if (lit2 != origLit2) *solver->frat << eqbin_for(origLit2);
+            if (lit1 != orig_lit1) *solver->frat << eqbin_for(orig_lit1);
+            if (lit2 != orig_lit2) *solver->frat << eqbin_for(orig_lit2);
             *solver->frat << orig_ID;
         }
         *solver->frat << fin;
-        *solver->frat<< del << i->get_id() << origLit1 << origLit2 << fin;
-        Watched* i2 = findWatchedOfBinMaybe(solver->watches, origLit2, origLit1, i->red(), orig_ID);
+        *solver->frat<< del << i->get_id() << orig_lit1 << orig_lit2 << fin;
+        Watched* i2 = findWatchedOfBinMaybe(solver->watches, orig_lit2, orig_lit1, i->red(), orig_ID);
         if (i2) i2->set_ID(ID);
-        else findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
+        else find_watched_of_bin(solver->watches, lit2, orig_lit1, i->red(), orig_ID).set_ID(ID);
         i->set_ID(ID);
     }
 
-    if (lit1 != origLit1) {
+    if (lit1 != orig_lit1) {
         solver->watches[lit1].push(*i);
     } else {
         *j++ = *i;
@@ -513,17 +498,17 @@ inline void VarReplacer::updateBin(
 
 void VarReplacer::updateStatsFromImplStats()
 {
-    assert(impl_tmp_stats.removedRedBin % 2 == 0);
-    solver->binTri.redBins -= impl_tmp_stats.removedRedBin/2;
+    assert(impl_tmp_stats.removed_red_bin % 2 == 0);
+    solver->bin_tri.red_bins -= impl_tmp_stats.removed_red_bin/2;
 
-    assert(impl_tmp_stats.removedIrredBin % 2 == 0);
-    solver->binTri.irredBins -= impl_tmp_stats.removedIrredBin/2;
+    assert(impl_tmp_stats.removed_irred_bin % 2 == 0);
+    solver->bin_tri.irred_bins -= impl_tmp_stats.removed_irred_bin/2;
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->check_implicit_stats();
     #endif
 
-    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
+    run_stats.removedBinClauses += impl_tmp_stats.removed_red_bin/2 + impl_tmp_stats.removed_irred_bin/2;
 
     impl_tmp_stats.clear();
 }
@@ -543,56 +528,52 @@ bool VarReplacer::replaceImplicit()
     }
 
     for(size_t at = 0; at < solver->watches.get_smudged_list().size(); at++) {
-        const Lit origLit1 = solver->watches.get_smudged_list()[at];
-        watch_subarray ws = solver->watches[origLit1];
+        const Lit orig_lit1 = solver->watches.get_smudged_list()[at];
+        watch_subarray ws = solver->watches[orig_lit1];
 
         Watched* i = ws.begin();
         Watched* j = i;
         for (Watched *end2 = ws.end(); i != end2; i++) {
             //Don't bother non-bin
-            if (!i->isBin()) {
+            if (!i->is_bin()) {
                 *j++ = *i;
                 continue;
             }
-            runStats.bogoprops += 1;
+            run_stats.bogoprops += 1;
 
-            const Lit origLit2 = i->lit2();
-            assert(solver->value(origLit1) == l_Undef);
-            assert(solver->value(origLit2) == l_Undef);
-            assert(origLit1.var() != origLit2.var());
+            const Lit orig_lit2 = i->lit2();
+            assert(solver->value(orig_lit1) == l_Undef);
+            assert(solver->value(orig_lit2) == l_Undef);
+            assert(orig_lit1.var() != orig_lit2.var());
 
             //Update main lit
-            Lit lit1 = origLit1;
+            Lit lit1 = orig_lit1;
             if (get_lit_replaced_with_fast(lit1) != lit1) {
                 lit1 = get_lit_replaced_with_fast(lit1);
-                runStats.replacedLits++;
-                solver->watches.smudge(origLit2);
+                run_stats.replaced_lits++;
+                solver->watches.smudge(orig_lit2);
             }
 
             //Update lit2
-            Lit lit2 = origLit2;
+            Lit lit2 = orig_lit2;
             if (get_lit_replaced_with_fast(lit2) != lit2) {
                 lit2 = get_lit_replaced_with_fast(lit2);
                 i->setLit2(lit2);
-                runStats.replacedLits++;
+                run_stats.replaced_lits++;
             }
 
-            assert(i->isBin());
-            updateBin(i, j, origLit1, origLit2, lit1, lit2);
+            assert(i->is_bin());
+            updateBin(i, j, orig_lit1, orig_lit2, lit1, lit2);
         }
         ws.shrink_(i-j);
     }
 
     for(const BinaryClause& bincl : delayed_attach_bin) {
         solver->attach_bin_clause(
-            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.get_id());
+            bincl.get_lit1(), bincl.get_lit2(), bincl.is_red(), bincl.get_id());
     }
     delayed_attach_bin.clear();
 
-    #ifdef VERBOSE_DEBUG_BIN_REPLACER
-    cout << "c debug bin replacer start" << endl;
-    cout << "c debug bin replacer end" << endl;
-    #endif
 
     updateStatsFromImplStats();
     solver->watches.clear_smudged();
@@ -607,7 +588,7 @@ void VarReplacer::replace_bnn_lit(Lit& l, uint32_t idx, bool& changed)
     removeWBNN(solver->watches, ~l, idx);
     changed = true;
     l = get_lit_replaced_with_fast(l);
-    runStats.replacedLits++;
+    run_stats.replaced_lits++;
 }
 
 bool VarReplacer::replace_bnns() {
@@ -618,7 +599,7 @@ bool VarReplacer::replace_bnns() {
             continue;
         }
         assert(!bnn->isRemoved);
-        runStats.bogoprops += 3;
+        run_stats.bogoprops += 3;
 
         bool changed = false;
 
@@ -655,7 +636,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     auto i = cs.begin();
     auto j = i;
     for (auto end = cs.end(); i != end; ++i) {
-        runStats.bogoprops += 3;
+        run_stats.bogoprops += 3;
         assert(!solver->frat->something_delayed());
 
         //Finish up if UNSAT
@@ -671,8 +652,8 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
         bool changed = false;
         (*solver->frat) << deldelay << c << fin;
 
-        const Lit origLit1 = c[0];
-        const Lit origLit2 = c[1];
+        const Lit orig_lit1 = c[0];
+        const Lit orig_lit2 = c[1];
 
         tmp_upd_eqbins.clear();
         for (Lit& l: c) {
@@ -680,12 +661,12 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
                 changed = true;
                 if (solver->frat->enabled()) tmp_upd_eqbins.push_back(eqbin_for(l));
                 l = get_lit_replaced_with_fast(l);
-                runStats.replacedLits++;
+                run_stats.replaced_lits++;
             }
         }
 
-        if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
-            runStats.removedLongClauses++;
+        if (changed && handleUpdatedClause(c, orig_lit1, orig_lit2)) {
+            run_stats.removedLongClauses++;
             if (!solver->ok) {
                 //if it became UNSAT, then don't delete.
                 *j++ = *i;
@@ -717,8 +698,8 @@ Lit* my_lit_find(Clause& cl, const Lit lit)
 */
 bool VarReplacer::handleUpdatedClause(
     Clause& c
-    , const Lit origLit1
-    , const Lit origLit2
+    , const Lit orig_lit1
+    , const Lit orig_lit2
 ) {
     assert(!c.get_removed());
     const int32_t orig_id = c.stats.id;
@@ -727,9 +708,9 @@ bool VarReplacer::handleUpdatedClause(
     std::sort(c.begin(), c.end());
     Lit p;
     uint32_t i, j;
-    const uint32_t origSize = c.size();
-    for (i = j = 0, p = lit_Undef; i != origSize; i++) {
-        assert(solver->varData[c[i].var()].removed == Removed::none);
+    const uint32_t orig_size = c.size();
+    for (i = j = 0, p = lit_Undef; i != orig_size; i++) {
+        assert(solver->var_data[c[i].var()].removed == Removed::none);
         if (solver->value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
             break;
@@ -744,20 +725,19 @@ bool VarReplacer::handleUpdatedClause(
     c.set_strengthened();
     if (!c.red()) for(const Lit l: c) solver->mark_elim_cand(l);
 
-    runStats.bogoprops += 10;
+    run_stats.bogoprops += 10;
     if (c.red()) {
-        solver->litStats.redLits -= origSize;
+        solver->lit_stats.red_lits -= orig_size;
     } else {
-        solver->litStats.irredLits -= origSize;
+        solver->lit_stats.irred_lits -= orig_size;
     }
     delayed_attach_or_free.push_back(&c);
-    VERBOSE_PRINT("clause after var-replacement: " << c);
 
     if (satisfied) {
         (*solver->frat) << findelay;
         c.shrink(c.size()); //needed to make clause cleaner happy
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
+        solver->watches.smudge(orig_lit1);
+        solver->watches.smudge(orig_lit2);
         c.set_removed();
         return true;
     }
@@ -769,7 +749,7 @@ bool VarReplacer::handleUpdatedClause(
     }
     (*solver->frat) << fin << findelay;
 
-    runStats.bogoprops += 3;
+    run_stats.bogoprops += 3;
     switch(c.size()) {
     case 0:
         set_unsat_cl_id(c.stats.id);
@@ -777,43 +757,43 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     case 1 :
         c.set_removed();
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
+        solver->watches.smudge(orig_lit1);
+        solver->watches.smudge(orig_lit2);
         delayedEnqueue.push_back(make_tuple(c[0], c.stats.id));
-        runStats.removedLongLits += origSize;
+        run_stats.removedLongLits += orig_size;
         return true;
     case 2:
         c.set_removed();
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
+        solver->watches.smudge(orig_lit1);
+        solver->watches.smudge(orig_lit2);
 
         solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.id);
-        runStats.removedLongLits += origSize;
+        run_stats.removedLongLits += orig_size;
         return true;
 
     default:
-        Lit* at = my_lit_find(c, origLit1);
+        Lit* at = my_lit_find(c, orig_lit1);
         if (at != nullptr) {
             std::swap(c[0], *at);
         }
-        Lit* at2 = my_lit_find(c, origLit2);
+        Lit* at2 = my_lit_find(c, orig_lit2);
         if (at2 != nullptr) {
             std::swap(c[1], *at2);
         }
         if (at != nullptr && at2 != nullptr) {
             delayed_attach_or_free.pop_back();
             if (c.red()) {
-                solver->litStats.redLits += c.size();
+                solver->lit_stats.red_lits += c.size();
             } else {
-                solver->litStats.irredLits += c.size();
+                solver->lit_stats.irred_lits += c.size();
             }
         } else {
             c.set_removed();
-            solver->watches.smudge(origLit1);
-            solver->watches.smudge(origLit2);
+            solver->watches.smudge(orig_lit1);
+            solver->watches.smudge(orig_lit2);
         }
 
-        runStats.removedLongLits += origSize - c.size();
+        run_stats.removedLongLits += orig_size - c.size();
         return false;
     }
 
@@ -826,12 +806,7 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     assert(solver->model.size() > var);
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
-    assert(solver->varData[sub_var_inter].removed == Removed::replaced);
-    #ifdef VERBOSE_DEBUG
-    if (solver->model_value(sub_var) != l_Undef) {
-        cout << "ERROR: var " << sub_var +1 << " is set but it's replaced!" << endl;
-    }
-    #endif
+    assert(solver->var_data[sub_var_inter].removed == Removed::replaced);
     assert(solver->model_value(sub_var) == l_Undef);
 
     if (solver->conf.verbosity > 10) {
@@ -845,8 +820,8 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
 void VarReplacer::extend_model(const uint32_t var)
 {
     assert(solver->model[var] != l_Undef);
-    auto it = reverseTable.find(var);
-    if (it == reverseTable.end()) return;
+    auto it = reverse_table.find(var);
+    if (it == reverse_table.end()) return;
 
     assert(it->first == var);
     for(const uint32_t sub_var: it->second)
@@ -857,7 +832,7 @@ void VarReplacer::extend_pop_queue(vector<Lit>& pop)
 {
     vector<Lit> extra;
     for (Lit p: pop) {
-        const auto& repl = reverseTable[p.var()];
+        const auto& repl = reverse_table[p.var()];
         for(uint32_t x: repl) {
             extra.push_back(Lit(x, table[x].sign() ^ p.sign()));
         }
@@ -871,7 +846,7 @@ void VarReplacer::extend_pop_queue(vector<Lit>& pop)
 void VarReplacer::extend_model_already_set()
 {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (auto& it : reverseTable) {
+    for (auto& it : reverse_table) {
         if (solver->model_value(it.first) == l_Undef) continue;
         for(const uint32_t sub_var: it.second)
             set_sub_var_during_solution_extension(it.first, sub_var);
@@ -880,7 +855,7 @@ void VarReplacer::extend_model_already_set()
 
 void VarReplacer::extend_model_all() {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (const auto& m: reverseTable) {
+    for (const auto& m: reverse_table) {
         if (solver->model_value(m.first) == l_Undef) {
             solver->model[m.first] = l_False;
             verb_print(10, "Forced " << m.first << " to some value (false, but could be anything)");
@@ -894,12 +869,12 @@ void VarReplacer::replaceChecks(const uint32_t var1, const uint32_t var2) const
 {
 
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->value(var1) == l_Undef);
     assert(solver->value(var2) == l_Undef);
 
-    assert(solver->varData[var1].removed == Removed::none);
-    assert(solver->varData[var2].removed == Removed::none);
+    assert(solver->var_data[var1].removed == Removed::none);
+    assert(solver->var_data[var2].removed == Removed::none);
 }
 
 bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
@@ -907,21 +882,21 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
         //lit2 == ~lit1, so these two 'bins' are one-literal clauses
-        const int32_t b1 = ++solver->clauseID;
-        const int32_t b2 = ++solver->clauseID;
+        const int32_t b1 = ++solver->clause_id;
+        const int32_t b2 = ++solver->clause_id;
         if (solver->frat->enabled()) {
             solver->emit_bin_by_prop(b1, ~lit1, lit2);
             solver->emit_bin_by_prop(b2, lit1, ~lit2);
         }
-        const int32_t u1 = ++solver->clauseID;
+        const int32_t u1 = ++solver->clause_id;
         *solver->frat << add << u1 << lit1;
         if (solver->frat->enabled()) *solver->frat << fratchain << b2;
         *solver->frat << fin;
-        const int32_t u2 = ++solver->clauseID;
+        const int32_t u2 = ++solver->clause_id;
         *solver->frat << add << u2 << ~lit1;
         if (solver->frat->enabled()) *solver->frat << fratchain << b1;
         *solver->frat << fin;
-        *solver->frat << add << ++solver->clauseID;
+        *solver->frat << add << ++solver->clause_id;
         if (solver->frat->enabled()) *solver->frat << fratchain << u1 << u2;
         *solver->frat << fin;
         (*solver->frat)
@@ -930,7 +905,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
         << del << b2 << lit1 << ~lit2 << fin
         << del << b1 << ~lit1 << lit2 << fin;
         // the UNSAT one does not need to be deleted, it's automatic
-        set_unsat_cl_id(solver->clauseID);
+        set_unsat_cl_id(solver->clause_id);
         solver->ok = false;
         return false;
     }
@@ -950,7 +925,7 @@ bool VarReplacer::replace_vars_already_set(
     if (val1 != val2) {
         //contradictory: units for both lits exist, the equivalence bins from
         //replace() close the loop
-        const int32_t u1 = ++solver->clauseID;
+        const int32_t u1 = ++solver->clause_id;
         *solver->frat << add << u1 << ~lit1;
         if (solver->frat->enabled()) {
             *solver->frat << fratchain;
@@ -962,7 +937,7 @@ bool VarReplacer::replace_vars_already_set(
             }
             *solver->frat << fin;
         } else *solver->frat << fin;
-        const int32_t u2 = ++solver->clauseID;
+        const int32_t u2 = ++solver->clause_id;
         *solver->frat << add << u2 << lit1;
         if (solver->frat->enabled()) {
             *solver->frat << fratchain;
@@ -974,13 +949,13 @@ bool VarReplacer::replace_vars_already_set(
             }
             *solver->frat << fin;
         } else *solver->frat << fin;
-        *solver->frat << add << ++solver->clauseID;
+        *solver->frat << add << ++solver->clause_id;
         if (solver->frat->enabled()) *solver->frat << fratchain << u1 << u2;
         *solver->frat << fin;
         (*solver->frat)
         << del << u2 << lit1 << fin
         << del << u1 << ~lit1 << fin;
-        set_unsat_cl_id(solver->clauseID);
+        set_unsat_cl_id(solver->clause_id);
         solver->ok = false;
     }
 
@@ -1012,7 +987,7 @@ bool VarReplacer::handleOneSet(
             hint_unit = solver->unit_cl_IDs[lit2.var()];
         }
         if (solver->frat->enabled()) {
-            const auto id = ++solver->clauseID;
+            const auto id = ++solver->clause_id;
             *solver->frat << add << id << toEnqueue
                 << fratchain << hint_bin << hint_unit << fin;
             solver->enqueue_registered_unit<false>(toEnqueue, id);
@@ -1025,12 +1000,6 @@ bool VarReplacer::handleOneSet(
 }
 
 bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_true) {
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "replace() called with var " <<  Lit(var1, false)
-    << " and var " << Lit(var2, false)
-    << " with xor_is_true " << xor_is_true << endl;
-    #endif
 
     replaceChecks(var1, var2);
 
@@ -1043,8 +1012,8 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
         return handleAlreadyReplaced(lit1, lit2);
     }
 
-    int32_t ID = ++solver->clauseID;
-    int32_t id2 = ++solver->clauseID;
+    int32_t ID = ++solver->clause_id;
+    int32_t id2 = ++solver->clause_id;
     if (solver->frat->enabled()) {
         solver->emit_bin_by_prop(ID, ~lit1, lit2);
         solver->emit_bin_by_prop(id2, lit1, ~lit2);
@@ -1053,8 +1022,8 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{id2, lit1, ~lit2});
 
     //None should be removed, only maybe queued for replacement
-    assert(solver->varData[lit1.var()].removed == Removed::none);
-    assert(solver->varData[lit2.var()].removed == Removed::none);
+    assert(solver->var_data[lit1.var()].removed == Removed::none);
+    assert(solver->var_data[lit2.var()].removed == Removed::none);
 
     const lbool val1 = solver->value(lit1);
     const lbool val2 = solver->value(lit2);
@@ -1080,15 +1049,15 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
 
 bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
 {
-    if (reverseTable.find(lit1.var()) == reverseTable.end()) {
-        reverseTable[lit2.var()].push_back(lit1.var());
+    if (reverse_table.find(lit1.var()) == reverse_table.end()) {
+        reverse_table[lit2.var()].push_back(lit1.var());
         table[lit1.var()] = lit2 ^ lit1.sign();
         replacedVars++;
         return true;
     }
 
-    if (reverseTable.find(lit2.var()) == reverseTable.end()) {
-        reverseTable[lit1.var()].push_back(lit2.var());
+    if (reverse_table.find(lit2.var()) == reverse_table.end()) {
+        reverse_table[lit1.var()].push_back(lit2.var());
         table[lit2.var()] = lit1 ^ lit2.sign();
         replacedVars++;
         return true;
@@ -1105,19 +1074,19 @@ bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
 */
 void VarReplacer::setAllThatPointsHereTo(const uint32_t var, const Lit lit)
 {
-    auto it = reverseTable.find(var);
-    if (it != reverseTable.end()) {
+    auto it = reverse_table.find(var);
+    if (it != reverse_table.end()) {
         for(const uint32_t var2: it->second) {
             assert(table[var2].var() == var);
             if (lit.var() != var2) {
                 table[var2] = lit ^ table[var2].sign();
-                reverseTable[lit.var()].push_back(var2);
+                reverse_table[lit.var()].push_back(var2);
             }
         }
-        reverseTable.erase(it);
+        reverse_table.erase(it);
     }
     table[var] = lit;
-    reverseTable[lit.var()].push_back(var);
+    reverse_table[lit.var()].push_back(var);
 }
 
 void VarReplacer::checkUnsetSanity()
@@ -1126,8 +1095,8 @@ void VarReplacer::checkUnsetSanity()
         const Lit repLit = get_lit_replaced_with(Lit(i, false));
         const uint32_t repVar = get_var_replaced_with(i);
 
-        if (solver->varData[i].removed == Removed::none
-            && solver->varData[repVar].removed == Removed::none
+        if (solver->var_data[i].removed == Removed::none
+            && solver->var_data[repVar].removed == Removed::none
             && solver->value(i) != solver->value(repLit)
         ) {
             cout
@@ -1172,6 +1141,13 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
     return true;
 }
 
+bool VarReplacer::has_equivalences(uint64_t* bogoprops_given) {
+    scc_finder->performSCC(bogoprops_given);
+    const bool found = scc_finder->get_num_binxors_found() > 0;
+    scc_finder->clear_binxors();
+    return found;
+}
+
 bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given, bool *replaced) {
     if (replaced) *replaced = false;
 
@@ -1199,7 +1175,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
 
     perform_replace();
 end:
-    if (bogoprops_given) *bogoprops_given += runStats.bogoprops;
+    if (bogoprops_given) *bogoprops_given += run_stats.bogoprops;
     scc_finder->clear_binxors();
     solver->fill_assumptions_set();
     SLOW_DEBUG_DO(solver->check_assumptions_sanity());
@@ -1213,18 +1189,18 @@ size_t VarReplacer::mem_used() const
     b += scc_finder->mem_used();
     b += delayedEnqueue.capacity()*2*sizeof(Lit);
     b += table.capacity()*sizeof(Lit);
-    for(const auto& it : reverseTable) {
+    for(const auto& it : reverse_table) {
         b += it.second.capacity()*sizeof(Lit);
     }
     //TODO under-counting
-    b += reverseTable.size()*(sizeof(uint32_t) + sizeof(vector<uint32_t>));
+    b += reverse_table.size()*(sizeof(uint32_t) + sizeof(vector<uint32_t>));
     return b;
 }
 
 uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostream *os) const
 {
     uint32_t num = 0;
-    vector<Lit> tmpCl;
+    vector<Lit> tmp_cl;
     for (uint32_t var = 0; var < table.size(); var++) {
         const Lit lit = table[var];
         if (lit.var() == var)
@@ -1248,22 +1224,22 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
         }
 
         if (os) {
-            tmpCl.clear();
-            tmpCl.push_back(~lit1);
-            tmpCl.push_back(lit2);
-            std::sort(tmpCl.begin(), tmpCl.end());
+            tmp_cl.clear();
+            tmp_cl.push_back(~lit1);
+            tmp_cl.push_back(lit2);
+            std::sort(tmp_cl.begin(), tmp_cl.end());
 
             *os
-            << tmpCl[0] << " "
-            << tmpCl[1]
+            << tmp_cl[0] << " "
+            << tmp_cl[1]
             << " 0\n";
 
-            tmpCl[0] ^= true;
-            tmpCl[1] ^= true;
+            tmp_cl[0] ^= true;
+            tmp_cl[1] ^= true;
 
             *os
-            << tmpCl[0] << " "
-            << tmpCl[1]
+            << tmp_cl[0] << " "
+            << tmp_cl[1]
             << " 0\n";
         }
         num++;
@@ -1274,8 +1250,8 @@ uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostre
 void VarReplacer::print_some_stats(const double global_cpu_time, const string& prefix) const
 {
     print_stats_line(prefix + "vrep replace time"
-        , globalStats.cpu_time
-        , stats_line_percent(globalStats.cpu_time, global_cpu_time)
+        , global_stats.cpu_time
+        , stats_line_percent(global_stats.cpu_time, global_cpu_time)
         , "% time"
     );
 
@@ -1295,7 +1271,7 @@ void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
         cout << prefix << "--------- VAR REPLACE STATS ----------" << endl;
         print_stats_line(prefix + "time"
             , cpu_time
-            , float_div(cpu_time, numCalls)
+            , float_div(cpu_time, num_calls)
             , "per call"
         );
 
@@ -1306,13 +1282,13 @@ void VarReplacer::Stats::print(const size_t nVars, const string& prefix) const
         );
 
         print_stats_line(prefix + "0-depth assigns"
-            , zeroDepthAssigns
-            , stats_line_percent(zeroDepthAssigns, nVars)
+            , zero_depth_assigns
+            , stats_line_percent(zero_depth_assigns, nVars)
             , "% vars"
         );
 
         print_stats_line(prefix + "lits replaced"
-            , replacedLits
+            , replaced_lits
         );
 
         print_stats_line(prefix + "bin cls removed"
@@ -1337,7 +1313,7 @@ void VarReplacer::Stats::print_short(const Solver* solver) const
 {
     verb_print(1, "[vrep]"
     << " vars " << actuallyReplacedVars
-    << " lits " << replacedLits
+    << " lits " << replaced_lits
     << " rem-bin-cls " << removedBinClauses
     << " rem-long-cls " << removedLongClauses
     << " BP " << bogoprops/(1000*1000) << "M"
@@ -1346,10 +1322,10 @@ void VarReplacer::Stats::print_short(const Solver* solver) const
 
 VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
 {
-    numCalls += other.numCalls;
+    num_calls += other.num_calls;
     cpu_time += other.cpu_time;
-    replacedLits += other.replacedLits;
-    zeroDepthAssigns += other.zeroDepthAssigns;
+    replaced_lits += other.replaced_lits;
+    zero_depth_assigns += other.zero_depth_assigns;
     actuallyReplacedVars += other.actuallyReplacedVars;
     removedBinClauses += other.removedBinClauses;
     removedLongClauses += other.removedLongClauses;
@@ -1393,8 +1369,8 @@ vector<uint32_t> VarReplacer::get_vars_replacing(uint32_t var) const
 {
     vector<uint32_t> ret;
     var = solver->map_inter_to_outer(var);
-    auto it = reverseTable.find(var);
-    if (it != reverseTable.end()) {
+    auto it = reverse_table.find(var);
+    if (it != reverse_table.end()) {
         for(uint32_t v: it->second) {
             ret.push_back(solver->map_outer_to_inter(v));
         }

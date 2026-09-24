@@ -35,11 +35,11 @@ bool StrImplWImpl::str_impl_w_impl()
     DEBUG_IMPLICIT_STATS_DO(solver->check_stats());
     str_impl_data.clear();
 
-    const size_t origTrailSize = solver->trail_size();
-    timeAvailable =
+    const size_t orig_trail_size = solver->trail_size();
+    time_available =
         solver->conf.distill_implicit_with_implicit_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
-    const int64_t orig_time = timeAvailable;
+    const int64_t orig_time = time_available;
     double my_time = cpu_time();
 
     //Cannot handle empty
@@ -49,7 +49,7 @@ bool StrImplWImpl::str_impl_w_impl()
     //Randomize starting point
     size_t upI = rnd_uint(solver->mtrand, solver->watches.size()-1);
     size_t numDone = 0;
-    for (; numDone < solver->watches.size() && timeAvailable > 0
+    for (; numDone < solver->watches.size() && time_available > 0
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
@@ -67,10 +67,10 @@ bool StrImplWImpl::str_impl_w_impl()
     //Add delayed binary clauses
     for(const BinaryClause& bin: str_impl_data.binsToAdd) {
         lits.clear();
-        lits.push_back(bin.getLit1());
-        lits.push_back(bin.getLit2());
-        timeAvailable -= 5;
-        solver->add_clause_int(lits, bin.isRed());
+        lits.push_back(bin.get_lit1());
+        lits.push_back(bin.get_lit2());
+        time_available -= 5;
+        solver->add_clause_int(lits, bin.is_red());
         if (!solver->okay())
             goto end;
     }
@@ -79,9 +79,9 @@ end:
 
     if (solver->conf.verbosity) {
         str_impl_data.print(
-            solver->trail_size() - origTrailSize
+            solver->trail_size() - orig_trail_size
             , cpu_time() - my_time
-            , timeAvailable
+            , time_available
             , orig_time
             , solver
         );
@@ -103,20 +103,20 @@ void StrImplWImpl::distill_implicit_with_implicit_lit(const Lit lit)
         ; i != end
         ; i++
     ) {
-        timeAvailable -= 2;
-        if (timeAvailable < 0) {
+        time_available -= 2;
+        if (time_available < 0) {
             *j++ = *i;
             continue;
         }
 
-        switch(i->getType()) {
+        switch(i->get_type()) {
             case WatchType::watch_clause_t:
             case WatchType::watch_bnn_t:
                 *j++ = *i;
                 break;
 
             case WatchType::watch_binary_t:
-                timeAvailable -= 20;
+                time_available -= 20;
                 strengthen_bin_with_bin(lit, i, j, end);
                 break;
 
@@ -151,10 +151,10 @@ void StrImplWImpl::strengthen_bin_with_bin(
     bool rem = false;
     const Watched* i2 = i;
     while(i2 != end
-        && i2->isBin()
+        && i2->is_bin()
         && i->lit2().var() == i2->lit2().var()
     ) {
-        timeAvailable -= 2;
+        time_available -= 2;
         //Yay, we have found what we needed!
         if (i2->lit2() == ~i->lit2()) {
             rem = true;
@@ -175,12 +175,12 @@ void StrImplWImpl::strengthen_bin_with_bin(
 void StrImplWImpl::StrImplicitData::print(
     const size_t trail_diff
     , const double time_used
-    , const int64_t timeAvailable
+    , const int64_t time_available
     , const int64_t orig_time
     , Solver* _solver
 ) const {
-    bool time_out = timeAvailable <= 0;
-    const double time_remain = float_div(timeAvailable, orig_time);
+    bool time_out = time_available <= 0;
+    const double time_remain = float_div(time_available, orig_time);
 
     cout
     << "c [impl-str]"
@@ -190,8 +190,8 @@ void StrImplWImpl::StrImplicitData::print(
     << " w-visit: " << numWatchesLooked
     << endl;
 
-    if (_solver->sqlStats) {
-        _solver->sqlStats->time_passed(
+    if (_solver->sql_stats) {
+        _solver->sql_stats->time_passed(
             _solver
             , "implicit str"
             , time_used

@@ -200,14 +200,14 @@ void ClauseAllocator::clauseFree(ClOffset offset)
 }
 
 ClOffset ClauseAllocator::move_cl(
-    ClOffset* newDataStart
+    ClOffset* new_data_start
     , ClOffset*& new_ptr
     , Clause* old
 ) {
     const uint64_t sizeNeeded = clause_storage_elems(old->size());
     memcpy(new_ptr, old, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
-    ClOffset new_offset = new_ptr-newDataStart;
+    ClOffset new_offset = new_ptr-new_data_start;
     (*old)[0] = Lit::toLit(new_offset & 0xFFFFFFFF);
     #ifdef LARGE_OFFSETS
     (*old)[1] = Lit::toLit((new_offset>>32) & 0xFFFFFFFF);
@@ -220,16 +220,16 @@ ClOffset ClauseAllocator::move_cl(
 }
 
 void ClauseAllocator::move_one_watchlist(
-    watch_subarray& ws, ClOffset* newDataStart, ClOffset*& new_ptr)
+    watch_subarray& ws, ClOffset* new_data_start, ClOffset*& new_ptr)
 {
     for(Watched& w: ws) {
-        if (w.isClause()) {
+        if (w.is_clause()) {
             Clause* old = ptr(w.get_offset());
             assert(!old->freed());
-            const Lit blocked = w.getBlockedLit();
+            const Lit blocked = w.get_blocked_lit();
             const ClOffset new_offset = old->reloced
                 ? read_reloced_offset(old)
-                : move_cl(newDataStart, new_ptr, old);
+                : move_cl(new_data_start, new_ptr, old);
             w = Watched(new_offset, blocked);
         }
     }
@@ -248,6 +248,8 @@ void ClauseAllocator::consolidate(
     , const bool force
     , bool lower_verb
 ) {
+    solver->clear_last_learnt(); //offsets move
+
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
     //1) There is too much memory allocated. Re-allocation will save space
@@ -256,34 +258,33 @@ void ClauseAllocator::consolidate(
     if (!force
         && (float_div(currentlyUsedSize, size) > 0.8 || currentlyUsedSize < (100ULL*1000ULL))
     ) {
-        if (solver->conf.verbosity >= 3 || lower_verb)
-            verb_print(1, "[mem] not consolidating");
+        if (lower_verb) verb_print(1, "[mem] not consolidating");
         return;
     }
     const double my_time = cpu_time();
     new_sz_while_moving = 0;
 
     //Pointers that will be moved along
-    BASE_DATA_TYPE * const newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
-    BASE_DATA_TYPE * new_ptr = newDataStart;
+    BASE_DATA_TYPE * const new_data_start = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
+    BASE_DATA_TYPE * new_ptr = new_data_start;
 
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
 
     for(auto& ws: solver->watches) {
-        move_one_watchlist(ws, newDataStart, new_ptr);
+        move_one_watchlist(ws, new_data_start, new_ptr);
     }
 
-    update_offsets(solver->longIrredCls, newDataStart, new_ptr);
-    for(auto& lredcls: solver->longRedCls) {
-        update_offsets(lredcls, newDataStart, new_ptr);
+    update_offsets(solver->long_irred_cls, new_data_start, new_ptr);
+    for(auto& lredcls: solver->long_red_cls) {
+        update_offsets(lredcls, new_data_start, new_ptr);
     }
 
     //Fix up propBy
     for (size_t i = 0; i < solver->nVars(); i++) {
-        VarData& vdata = solver->varData[i];
-        if (vdata.reason.isClause()) {
+        VarData& vdata = solver->var_data[i];
+        if (vdata.reason.is_clause()) {
             if (vdata.removed == Removed::none
-                && solver->decisionLevel() >= vdata.level
+                && solver->decision_level() >= vdata.level
                 && vdata.level != 0
                 && solver->value(i) != l_Undef
             ) {
@@ -298,11 +299,11 @@ void ClauseAllocator::consolidate(
 
     //Update sizes
     const uint64_t old_size = size;
-    size = new_ptr-newDataStart;
+    size = new_ptr-new_data_start;
     capacity = currentlyUsedSize;
     currentlyUsedSize = new_sz_while_moving;
     free(dataStart);
-    dataStart = newDataStart;
+    dataStart = new_data_start;
 
     const double time_used = cpu_time() - my_time;
     if (solver->conf.verbosity >= 2
@@ -320,8 +321,8 @@ void ClauseAllocator::consolidate(
         cout << solver->conf.print_times(time_used)
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "consolidate"
             , time_used
@@ -331,7 +332,7 @@ void ClauseAllocator::consolidate(
 
 void ClauseAllocator::update_offsets(
     vector<ClOffset>& offsets,
-    ClOffset* newDataStart,
+    ClOffset* new_data_start,
     ClOffset*& new_ptr
 ) {
 
@@ -339,7 +340,7 @@ void ClauseAllocator::update_offsets(
         Clause* old = ptr(offs);
         offs = old->reloced
             ? read_reloced_offset(old)
-            : move_cl(newDataStart, new_ptr, old);
+            : move_cl(new_data_start, new_ptr, old);
     }
 }
 

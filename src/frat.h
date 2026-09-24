@@ -96,17 +96,17 @@ public:
         delete[] del_buf;
     }
 
-    void set_sumconflicts_ptr(uint64_t* _sumConflicts) override { sumConflicts = _sumConflicts; }
-    void set_sqlstats_ptr(SQLStats* _sqlStats) override { sqlStats = _sqlStats; }
+    void set_sumconflicts_ptr(uint64_t* _sumConflicts) override { sum_conflicts = _sumConflicts; }
+    void set_sqlstats_ptr(SQLStats* _sqlStats) override { sql_stats = _sqlStats; }
     void setFile(FILE* _file) override { drup_file = _file; }
     bool something_delayed() override { return delete_filled; }
     bool enabled() override { return true; }
 
-    Frat& operator<<(const int32_t clauseID) override
+    Frat& operator<<(const int32_t clause_id) override
     {
-        assert(clauseID != 0);
-        if (must_delete_next) byteDRUPdID(clauseID);
-        else byteDRUPaID(clauseID);
+        assert(clause_id != 0);
+        if (must_delete_next) byteDRUPdID(clause_id);
+        else byteDRUPaID(clause_id);
         return *this;
     }
 
@@ -191,7 +191,7 @@ public:
                     if (binfrat) buf_add(0);
                     else { buf_add('0'); buf_add('\n');}
                     if (buf_len > 1048576) { frat_flush(); }
-                    if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
+                    if (adding && sql_stats) sql_stats->set_id_confl(cl_id, *sum_conflicts);
                 }
                 cl_id = 0;
                 must_delete_next = false;
@@ -420,8 +420,8 @@ private:
     int32_t cl_id = 0;
     FILE* drup_file = nullptr;
     vector<uint32_t>& inter_to_outerMain;
-    uint64_t* sumConflicts = nullptr;
-    SQLStats* sqlStats = nullptr;
+    uint64_t* sum_conflicts = nullptr;
+    SQLStats* sql_stats = nullptr;
 };
 
 //Emits the XLRUP format directly, so `cake_xlrup` can check the proof with

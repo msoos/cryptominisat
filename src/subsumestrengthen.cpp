@@ -32,7 +32,6 @@ THE SOFTWARE.
 #include <algorithm>
 #include <array>
 
-//#define VERBOSE_DEBUG
 
 using namespace CMSat;
 
@@ -50,7 +49,6 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.get_removed());
     assert(!cl.freed());
-    VERBOSE_PRINT("subsume-ing with clause: " << cl);
 
     Sub0Ret ret = subsume_and_unlink( offset , cl , cl.abst);
 
@@ -60,11 +58,11 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     }
 
     //Update stats
-    cl.stats = ClauseStats::combineStats(cl.stats, ret.stats);
+    cl.stats = ClauseStats::combine_stats(cl.stats, ret.stats);
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     if (cl.red()) {
         auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
-        extra_stats = ClauseStatsExtra::combineStats(extra_stats, ret.stats_extra);
+        extra_stats = ClauseStatsExtra::combine_stats(extra_stats, ret.stats_extra);
     }
     #endif
 
@@ -92,7 +90,7 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
 
     //Go through each clause that can be subsumed
     for (const auto& occ_cl: subs) {
-        if (!occ_cl.ws.isClause()) {
+        if (!occ_cl.ws.is_clause()) {
             continue;
         }
         ClOffset off = occ_cl.ws.get_offset();
@@ -101,15 +99,14 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         //-> ID kept will be 1st parameter
         //Stats will be merged together here then merged into the
         //subsuming clause's stats
-        ret.stats = ClauseStats::combineStats(tmpcl->stats, ret.stats);
+        ret.stats = ClauseStats::combine_stats(tmpcl->stats, ret.stats);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         if (tmpcl->red()) {
-            ret.stats_extra = ClauseStatsExtra::combineStats(
+            ret.stats_extra = ClauseStatsExtra::combine_stats(
                 solver->red_stats_extra[tmpcl->stats.extra_pos],
                 ret.stats_extra);
         }
         #endif
-        VERBOSE_PRINT("-> subsume removing:" << *tmpcl);
 
         ret.subsumedIrred |= !tmpcl->red();
         simplifier->unlink_clause(off, true, false, true);
@@ -128,22 +125,18 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
     Sub1Ret& ret_sub_str)
 {
     subs.clear();
-    subsLits.clear();
+    subs_lits.clear();
     {
         const Clause& cl = *solver->cl_alloc.ptr(offset);
         assert(!cl.get_removed());
         assert(!cl.freed());
-
-        if (solver->conf.verbosity >= 6)
-            cout << "backw_sub_str_with_long-ing with clause:" << cl
-                << " offset: " << offset << endl;
 
         find_subsumed_and_strengthened(
             offset
             , cl
             , cl.abst
             , subs
-            , subsLits
+            , subs_lits
         );
     }
 
@@ -151,13 +144,12 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         ; j < subs.size() && solver->okay() && *simplifier->limit_to_decrease > -20LL*1000LL*1000LL
         ; j++
     ) {
-        assert(subs[j].ws.isClause());
+        assert(subs[j].ws.is_clause());
         //remove_literal() may move the arena
         Clause& cl = *solver->cl_alloc.ptr(offset);
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        if (subsLits[j] == lit_Undef) {  //Subsume
-            VERBOSE_PRINT("subsumed clause " << cl2);
+        if (subs_lits[j] == lit_Undef) {  //Subsume
 
             //If subsumes a irred, and is redundant, make it irred
             if (cl.red() && !cl2.red()) {
@@ -165,12 +157,12 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             }
 
             //Update stats
-            cl.stats = ClauseStats::combineStats(cl.stats, cl2.stats);
+            cl.stats = ClauseStats::combine_stats(cl.stats, cl2.stats);
             #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
             if (cl.red() && cl2.red()) {
                 auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
                 auto& extra_stats2 = solver->red_stats_extra[cl2.stats.extra_pos];
-                extra_stats = ClauseStatsExtra::combineStats(extra_stats, extra_stats2);
+                extra_stats = ClauseStatsExtra::combine_stats(extra_stats, extra_stats2);
             }
             #endif
 
@@ -178,9 +170,8 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
         } else { //Strengthen
-            VERBOSE_PRINT("strenghtened clause " << cl2);
             const vector<int32_t> h = {cl.stats.id, cl2.stats.id};
-            if (!simplifier->remove_literal(offset2, subsLits[j], true,
+            if (!simplifier->remove_literal(offset2, subs_lits[j], true,
                     solver->frat->enabled() ? &h : nullptr)) {
                 return false;
             }
@@ -198,7 +189,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
         return;
 
     double my_time = cpu_time();
-    size_t wenThrough = 0;
+    size_t went_through = 0;
     Sub0Ret sub0ret;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
     std::shuffle(simplifier->clauses.begin(), simplifier->clauses.end(), solver->mtrand);
@@ -206,14 +197,12 @@ void SubsumeStrengthen::backw_sub_long_with_long()
         solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size();
 
     while (*simplifier->limit_to_decrease > 0
-        && wenThrough < max_go_through
+        && went_through < max_go_through
     ) {
         *simplifier->limit_to_decrease -= 3;
-        wenThrough++;
-        if (solver->conf.verbosity >= 5 && wenThrough % 10000 == 0)
-            cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
+        went_through++;
 
-        const size_t at = wenThrough % simplifier->clauses.size();
+        const size_t at = went_through % simplifier->clauses.size();
         const ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
@@ -228,13 +217,13 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     const bool time_out = (*simplifier->limit_to_decrease <= 0);
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
     verb_print(1, "[occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
-    << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+    << " tried: " << went_through << "/" << simplifier->clauses.size()
     << " (" << std::setprecision(1) << std::fixed
-    << stats_line_percent(wenThrough, simplifier->clauses.size())
+    << stats_line_percent(went_through, simplifier->clauses.size())
     << "%)"
     << solver->conf.print_times(time_used, time_out, time_remain));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "occ-backw-sub-long-w-long"
             , time_used
@@ -244,8 +233,8 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     }
 
     //Update time used
-    runStats.sub0 += sub0ret;
-    runStats.subsumeTime += cpu_time() - my_time;
+    run_stats.sub0 += sub0ret;
+    run_stats.subsumeTime += cpu_time() - my_time;
 }
 
 bool SubsumeStrengthen::backw_sub_str_long_with_long()
@@ -253,26 +242,21 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
     assert(solver->ok);
 
     double my_time = cpu_time();
-    size_t wenThrough = 0;
+    size_t went_through = 0;
     const int64_t orig_limit = *simplifier->limit_to_decrease;
     Sub1Ret ret;
 
     std::shuffle(simplifier->clauses.begin(), simplifier->clauses.end(), solver->mtrand);
     while(*simplifier->limit_to_decrease > 0
-        && wenThrough < 1.5*(double)2*simplifier->clauses.size()
+        && went_through < 1.5*(double)2*simplifier->clauses.size()
         && solver->okay()
     ) {
         *simplifier->limit_to_decrease -= 10;
-        wenThrough++;
+        went_through++;
 
         //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
-        }
 
-        const size_t at = wenThrough % simplifier->clauses.size();
+        const size_t at = went_through % simplifier->clauses.size();
         ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
@@ -293,13 +277,13 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
     verb_print(1, "[occ-backw-sub-str-long-w-long]"
     << " sub: " << ret.sub
     << " str: " << ret.str
-    << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+    << " tried: " << went_through << "/" << simplifier->clauses.size()
     << " (" << std::setprecision(1) << std::fixed
-    << stats_line_percent(wenThrough, simplifier->clauses.size())
+    << stats_line_percent(went_through, simplifier->clauses.size())
     << "%)"
     << solver->conf.print_times(time_used, time_out, time_remain));
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "occ-backw-sub-str-long-w-long"
             , time_used
@@ -309,8 +293,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_long()
     }
 
     //Update time used
-    runStats.sub1 += ret;
-    runStats.strengthenTime += cpu_time() - my_time;
+    run_stats.sub1 += ret;
+    run_stats.strengthenTime += cpu_time() - my_time;
 
     return solver->okay();
 }
@@ -342,7 +326,7 @@ void inline SubsumeStrengthen::fill_sub_str(
 
     *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
     for (const auto& w: cs) {
-        if (w.isBin()) {
+        if (w.is_bin()) {
             if (cl.size() > 2) continue;
             if (w.red()) continue;
             if (w.lit2() != bin_other_lit) continue;
@@ -360,8 +344,8 @@ void inline SubsumeStrengthen::fill_sub_str(
             continue;
         }
 
-        assert(w.isClause());
-        if (w.get_offset() == offset || !subsetAbst(abs, w.getAbst())) continue;
+        assert(w.is_clause());
+        if (w.get_offset() == offset || !subsetAbst(abs, w.get_abst())) continue;
 
         ClOffset offset2 = w.get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
@@ -373,14 +357,6 @@ void inline SubsumeStrengthen::fill_sub_str(
             out_subsumed.push_back(OccurClause(lit, w));
             out_lits.push_back(litSub);
 
-            #ifdef VERBOSE_DEBUG
-            if (litSub == lit_Undef) cout << "subsume-d: ";
-            else cout << "backw_sub_str_with_long-ed (lit: "
-                << litSub
-                << ") clause offset: "
-                << w.get_offset()
-                << endl;
-            #endif
         }
     }
 }
@@ -407,7 +383,6 @@ void SubsumeStrengthen::find_subsumed_and_strengthened(
     , vector<Lit>& out_lits
 )
 {
-    VERBOSE_PRINT("find_subsumed_and_strengthened: " << cl);
     Lit minLit = lit_Undef;
     uint32_t bestSize = numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < cl.size(); i++){
@@ -430,7 +405,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
     assert(solver->prop_at_head());
 
     int64_t orig_limit = *simplifier->limit_to_decrease;
-    size_t origTrailSize = solver->trail_size();
+    size_t orig_trail_size = solver->trail_size();
     const double start_time = cpu_time();
     Sub1Ret stat;
 
@@ -464,10 +439,10 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
             "[occ-backw-sub-str-w-added-long]"
             << " sub: " << stat.sub
             << " str: " << stat.str
-            << " 0-depth-assigns: " << solver->trail_size() - origTrailSize
+            << " 0-depth-assigns: " << solver->trail_size() - orig_trail_size
             << solver->conf.print_times(time_used, time_out, time_remain));
-        if (solver->sqlStats) {
-            solver->sqlStats->time_passed(
+        if (solver->sql_stats) {
+            solver->sql_stats->time_passed(
                 solver
                 , "occ-backw-sub-str-w-added-long"
                 , time_used
@@ -587,13 +562,6 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     , vector<OccurClause>& out_subsumed //List of clauses
     , bool only_irred
 ) {
-    #ifdef VERBOSE_DEBUG
-    cout << "find_subsumed: ";
-    for (const Lit lit: ps) {
-        cout << lit << " , ";
-    }
-    cout << endl;
-    #endif
 
     const uint32_t smallest = find_smallest_watchlist_for_clause(ps);
     const Lit lit = ps[smallest];
@@ -603,16 +571,16 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
     for (const auto& w: occ) {
-        if (w.isBin()) {
+        if (w.is_bin()) {
             if (ps.size() == 2 && ps[!smallest] == w.lit2() && !w.red()) {
                 out_subsumed.push_back(OccurClause(lit, w));
             }
             continue;
         }
-        if (!w.isClause()) continue;
+        if (!w.is_clause()) continue;
 
         *simplifier->limit_to_decrease -= 15;
-        if (w.get_offset() == offset || !subsetAbst(abs, w.getAbst())) continue;
+        if (w.get_offset() == offset || !subsetAbst(abs, w.get_abst())) continue;
 
         const ClOffset offset2 = w.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
@@ -621,7 +589,6 @@ template<class T> void SubsumeStrengthen::find_subsumed(
         *simplifier->limit_to_decrease -= 50;
         if (subset(ps, cl2)) {
             out_subsumed.push_back(OccurClause(lit, w));
-            VERBOSE_PRINT("subsumed cl offset: " << offset2);
         }
     }
 }
@@ -644,7 +611,7 @@ size_t SubsumeStrengthen::mem_used() const
 {
     size_t b = 0;
     b += subs.capacity()*sizeof(ClOffset);
-    b += subsLits.capacity()*sizeof(Lit);
+    b += subs_lits.capacity()*sizeof(Lit);
 
     return b;
 }
@@ -670,7 +637,7 @@ bool SubsumeStrengthen::impl_bin_alive(const vector<Lit>& lits, const int32_t im
 {
     if (lits.size() != 2) return true;
     for (const auto& w: solver->watches[lits[0]]) {
-        if (w.isBin() && w.get_id() == impl_id) return true;
+        if (w.is_bin() && w.get_id() == impl_id) return true;
     }
     return false;
 }
@@ -686,50 +653,50 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
         return solver->okay();
 
     subs.clear();
-    subsLits.clear();
+    subs_lits.clear();
 
     find_subsumed_and_strengthened(
         CL_OFFSET_MAX
         , lits
         , calcAbstraction(lits)
         , subs
-        , subsLits
+        , subs_lits
     );
 
     for (size_t j = 0
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
-        if (subs[j].ws.isBin()) {
-            if (subsLits[j] == lit_Undef) { //subsume
+        if (subs[j].ws.is_bin()) {
+            if (subs_lits[j] == lit_Undef) { //subsume
                 //a duplicate bin may BE our impl -- keep it, later hints use impl_id
                 if (subs[j].ws.get_id() == impl_id) continue;
                 remove_binary_cl(subs[j]);
-            } else { //strengthen: the resolvent is the unit subsLits[j]
-                lbool val = solver->value(subsLits[j]);
-                const int32_t ID = ++solver->clauseID;
+            } else { //strengthen: the resolvent is the unit subs_lits[j]
+                lbool val = solver->value(subs_lits[j]);
+                const int32_t ID = ++solver->clause_id;
                 if (val == l_False) {
-                    (*solver->frat) << add << ID << subsLits[j];
+                    (*solver->frat) << add << ID << subs_lits[j];
                     if (solver->frat->enabled() && impl_id != 0)
                         (*solver->frat) << fratchain << impl_id << subs[j].ws.get_id();
                     (*solver->frat) << fin;
-                    (*solver->frat) << add << ++solver->clauseID;
+                    (*solver->frat) << add << ++solver->clause_id;
                     if (solver->frat->enabled())
                         (*solver->frat) << fratchain
-                            << solver->unit_cl_IDs[subsLits[j].var()] << ID;
+                            << solver->unit_cl_IDs[subs_lits[j].var()] << ID;
                     (*solver->frat) << fin;
-                    set_unsat_cl_id(solver->clauseID);
+                    set_unsat_cl_id(solver->clause_id);
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
                     if (solver->frat->enabled()) {
-                        (*solver->frat) << add << ID << subsLits[j];
+                        (*solver->frat) << add << ID << subs_lits[j];
                         if (impl_id != 0)
                             (*solver->frat) << fratchain << impl_id << subs[j].ws.get_id();
                         (*solver->frat) << fin;
-                        solver->enqueue_registered_unit<false>(subsLits[j], ID);
+                        solver->enqueue_registered_unit<false>(subs_lits[j], ID);
                     } else {
-                        solver->enqueue<false>(subsLits[j]);
+                        solver->enqueue<false>(subs_lits[j]);
                     }
                     solver->ok = solver->propagate_occur<false>(simplifier->limit_to_decrease);
                     if (!solver->okay()) return false;
@@ -755,26 +722,17 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             continue;
         }
 
-        assert(subs[j].ws.isClause());
+        assert(subs[j].ws.is_clause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        if (subsLits[j] == lit_Undef) {  //Subsume
-            #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 6)
-                cout << "subsumed clause " << cl2 << endl;
-            #endif
+        if (subs_lits[j] == lit_Undef) {  //Subsume
             if (!cl2.red()) ret_sub_str.subsumedIrred = true;
 
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
         } else { //Strengthen
-            #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 6) {
-                cout << "strenghtened clause " << cl2 << endl;
-            }
-            #endif
             const vector<int32_t> h = {impl_id, cl2.stats.id};
-            if (!simplifier->remove_literal(offset2, subsLits[j], true,
+            if (!simplifier->remove_literal(offset2, subs_lits[j], true,
                     solver->frat->enabled() && impl_id != 0 ? &h : nullptr)) return false;
             ret_sub_str.str++;
 
@@ -786,7 +744,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL) break;
         }
     }
-    runStats.sub1 += ret_sub_str;
+    run_stats.sub1 += ret_sub_str;
     return solver->okay();
 }
 
@@ -809,19 +767,19 @@ void SubsumeStrengthen::backw_sub_with_impl(
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
-        if (subs[j].ws.isBin()) {
+        if (subs[j].ws.is_bin()) {
             remove_binary_cl(subs[j]);
             continue;
         }
 
-        assert(subs[j].ws.isClause());
+        assert(subs[j].ws.is_clause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (!cl2.red()) ret_sub_str.subsumedIrred = true;
         simplifier->unlink_clause(offset2, true, false, true);
         ret_sub_str.sub++;
     }
-    runStats.sub1 += ret_sub_str;
+    run_stats.sub1 += ret_sub_str;
 }
 
 bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
@@ -836,7 +794,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
         ; i++
     ) {
         //Each BIN only once
-        if (!tmp[i].isBin() || (!both_bins && !(lit < tmp[i].lit2()))) continue;
+        if (!tmp[i].is_bin() || (!both_bins && !(lit < tmp[i].lit2()))) continue;
 
         const bool red = tmp[i].red();
         tried_bin_tri++;
@@ -859,7 +817,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 {
     //Stats
     int64_t orig_time_limit = *simplifier->limit_to_decrease;
-    const size_t origTrailSize = solver->trail_size();
+    const size_t orig_trail_size = solver->trail_size();
     double my_time = cpu_time();
     subsumedBin = 0;
     strBin = 0;
@@ -886,11 +844,11 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         << " subs: " << subsumedBin
         << " str: " << strBin
         << " tried: " << tried_bin_tri
-        << " 0-depth-assigns: " << solver->trail_size() - origTrailSize
+        << " 0-depth-assigns: " << solver->trail_size() - orig_trail_size
         << solver->conf.print_times(time_used, time_out, time_remain));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "occ-backw-sub-str-long-w-bins"
             , time_used
@@ -905,7 +863,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 
 void SubsumeStrengthen::finishedRun()
 {
-    globalstats += runStats;
+    globalstats += run_stats;
 }
 
 void SubsumeStrengthen::Stats::print_short(const Solver* s) const

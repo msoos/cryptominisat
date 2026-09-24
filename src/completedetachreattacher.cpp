@@ -47,14 +47,14 @@ void CompleteDetachReatacher::detach_nonbins()
         stay += clearWatchNotBinNotTri(*it);
     }
 
-    solver->litStats.redLits = 0;
-    solver->litStats.irredLits = 0;
+    solver->lit_stats.red_lits = 0;
+    solver->lit_stats.irred_lits = 0;
 
-    assert(stay.redBins % 2 == 0);
-    solver->binTri.redBins = stay.redBins/2;
+    assert(stay.red_bins % 2 == 0);
+    solver->bin_tri.red_bins = stay.red_bins/2;
 
-    assert(stay.irredBins % 2 == 0);
-    solver->binTri.irredBins = stay.irredBins/2;
+    assert(stay.irred_bins % 2 == 0);
+    solver->bin_tri.irred_bins = stay.irred_bins/2;
 }
 
 /**
@@ -68,11 +68,11 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     Watched* i = ws.begin();
     Watched* j = i;
     for (Watched* end = ws.end(); i != end; i++) {
-        if (i->isBin()) {
+        if (i->is_bin()) {
             if (i->red())
-                stay.redBins++;
+                stay.red_bins++;
             else
-                stay.irredBins++;
+                stay.irred_bins++;
 
             *j++ = *i;
         }
@@ -84,9 +84,9 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 
 bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst) {
     verb_print(6, "Cleaning and reattaching clauses");
-    cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
-    for(auto& lredcls: solver->longRedCls) cleanAndAttachClauses(lredcls, removeStatsFirst);
-    solver->clauseCleaner->clean_implicit_clauses();
+    cleanAndAttachClauses(solver->long_irred_cls, removeStatsFirst);
+    for(auto& lredcls: solver->long_red_cls) cleanAndAttachClauses(lredcls, removeStatsFirst);
+    solver->clause_cleaner->clean_implicit_clauses();
     assert(!solver->frat->something_delayed());
 
     if (solver->okay()) solver->ok = (solver->propagate<true>().isnullptr());
@@ -103,7 +103,7 @@ void CompleteDetachReatacher::attachClauses( vector<ClOffset>& cs) {
             assert(solver->value((*cl)[0]) == l_Undef);
             assert(solver->value((*cl)[1]) == l_Undef);
         }
-        solver->attachClause(*cl, false);
+        solver->attach_clause(*cl, false);
     }
 }
 
@@ -125,14 +125,14 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
         //Handle stat removal if need be
         if (removeStatsFirst) {
             if (cl->red()) {
-                solver->litStats.redLits -= cl->size();
+                solver->lit_stats.red_lits -= cl->size();
             } else {
-                solver->litStats.irredLits -= cl->size();
+                solver->lit_stats.irred_lits -= cl->size();
             }
         }
 
         if (clean_clause(cl)) {
-            solver->attachClause(*cl);
+            solver->attach_clause(*cl);
             *j++ = *i;
         } else {
             solver->free_cl(*i);

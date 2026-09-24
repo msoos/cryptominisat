@@ -41,7 +41,9 @@ class Clause;
 class DistillerLong {
     public:
         explicit DistillerLong(Solver* solver);
-        bool distill(const bool red, bool only_rem_cl = false);
+        bool distill(const bool red, bool only_rem_cl = false, int64_t effort_ref = -1);
+        bool distill_red_and_irred();
+        int64_t calc_effort_ref();
 
         struct Stats
         {
@@ -55,14 +57,14 @@ class DistillerLong {
             void print(const size_t nVars, const string& pre) const;
 
             double time_used = 0.0;
-            uint64_t timeOut = 0;
-            uint64_t zeroDepthAssigns = 0;
-            uint64_t numClShorten = 0;
-            uint64_t numLitsRem = 0;
-            uint64_t checkedClauses = 0;
-            uint64_t potentialClauses = 0;
-            uint64_t numCalled = 0;
-            uint64_t clRemoved = 0;
+            uint64_t time_out = 0;
+            uint64_t zero_depth_assigns = 0;
+            uint64_t num_cl_shorten = 0;
+            uint64_t num_lits_rem = 0;
+            uint64_t checked_clauses = 0;
+            uint64_t potential_clauses = 0;
+            uint64_t num_called = 0;
+            uint64_t cl_removed = 0;
         };
 
         const Stats& get_stats() const;
@@ -77,7 +79,7 @@ class DistillerLong {
         vector<int32_t> hint_units;
         vector<int32_t> hints;
         bool distill_long_cls_all(
-            vector<ClOffset>& offs, double time_mult,
+            vector<ClOffset>& offs, double budget,
             bool also_remove,
             bool only_remove,
             bool red, uint32_t red_lev = numeric_limits<uint32_t>::max());
@@ -88,7 +90,7 @@ class DistillerLong {
         void analysis_hints(const Lit subsume_lit, const PropBy confl);
         void clear_seen();
         Solver* solver;
-        uint64_t last_red_props = 0;
+        uint64_t last_all_props = 0;
         vector<PropBy> reason_stack;
         vector<uint32_t> analyzed_vars;
         vector<uint32_t> props_tmp;
@@ -98,13 +100,13 @@ class DistillerLong {
         vector<Lit> sorted;          ///<Candidate's lits in global literal order
         vector<Lit> kept_lits;
         vector<Lit> lits;
-        uint64_t oldBogoProps;
-        int64_t maxNumProps;
+        uint64_t old_bogo_props;
+        int64_t max_num_props;
         int64_t orig_maxNumProps;
 
         //Global status
-        Stats runStats;
-        Stats globalStats;
+        Stats run_stats;
+        Stats global_stats;
         size_t numCalls_red = 0;
         size_t numCalls_irred = 0;
 
@@ -112,7 +114,7 @@ class DistillerLong {
 
 inline const DistillerLong::Stats& DistillerLong::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

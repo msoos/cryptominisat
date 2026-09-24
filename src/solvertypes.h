@@ -110,17 +110,17 @@ class BinaryClause {
                     && red == other.red);
         }
 
-        const Lit getLit1() const
+        const Lit get_lit1() const
         {
             return lit1;
         }
 
-        const Lit getLit2() const
+        const Lit get_lit2() const
         {
             return lit2;
         }
 
-        bool isRed() const
+        bool is_red() const
         {
             return red;
         }
@@ -139,8 +139,8 @@ class BinaryClause {
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
-    os << val.getLit1() << " , " << val.getLit2()
-    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha
+    os << val.get_lit1() << " , " << val.get_lit2()
+    << " red: " << std::boolalpha << val.is_red() << std::noboolalpha
     << " ID: " << val.get_id();
     return os;
 }
@@ -322,12 +322,12 @@ struct PropStats
     PropStats& operator+=(const PropStats& other)
     {
         propagations += other.propagations;
-        bogoProps += other.bogoProps;
-        otfHyperTime += other.otfHyperTime;
+        bogo_props += other.bogo_props;
+        otf_hyper_time += other.otf_hyper_time;
         otfHyperPropCalled += other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        varSetPos += other.varSetPos;
-        varSetNeg += other.varSetNeg;
+        var_set_pos += other.var_set_pos;
+        var_set_neg += other.var_set_neg;
         varFlipped += other.varFlipped;
         #endif
 
@@ -337,12 +337,12 @@ struct PropStats
     PropStats& operator-=(const PropStats& other)
     {
         propagations -= other.propagations;
-        bogoProps -= other.bogoProps;
-        otfHyperTime -= other.otfHyperTime;
+        bogo_props -= other.bogo_props;
+        otf_hyper_time -= other.otf_hyper_time;
         otfHyperPropCalled -= other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        varSetPos -= other.varSetPos;
-        varSetNeg -= other.varSetNeg;
+        var_set_pos -= other.var_set_pos;
+        var_set_neg -= other.var_set_neg;
         varFlipped -= other.varFlipped;
         #endif
 
@@ -366,13 +366,13 @@ struct PropStats
     void print(const double cpu_time, const string& pre) const
     {
         cout << pre << "PROP stats" << endl;
-        print_stats_line("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
-            , ratio_for_stat(bogoProps, cpu_time*1000.0*1000.0)
+        print_stats_line("c Mbogo-props", (double)bogo_props/(1000.0*1000.0)
+            , ratio_for_stat(bogo_props, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
-        print_stats_line("c MHyper-props", (double)otfHyperTime/(1000.0*1000.0)
-            , ratio_for_stat(otfHyperTime, cpu_time*1000.0*1000.0)
+        print_stats_line("c MHyper-props", (double)otf_hyper_time/(1000.0*1000.0)
+            , ratio_for_stat(otf_hyper_time, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
@@ -382,13 +382,13 @@ struct PropStats
         );
 
         #ifdef STATS_NEEDED
-        print_stats_line("c varSetPos", varSetPos
-            , stats_line_percent(varSetPos, propagations)
+        print_stats_line("c varSetPos", var_set_pos
+            , stats_line_percent(var_set_pos, propagations)
             , "% of propagations"
         );
 
-        print_stats_line("c varSetNeg", varSetNeg
-            , stats_line_percent(varSetNeg, propagations)
+        print_stats_line("c varSetNeg", var_set_neg
+            , stats_line_percent(var_set_neg, propagations)
             , "% of propagations"
         );
 
@@ -401,13 +401,13 @@ struct PropStats
     }
 
     uint64_t propagations = 0; ///<Number of propagations made
-    uint64_t bogoProps = 0;    ///<An approximation of time
-    uint64_t otfHyperTime = 0;
+    uint64_t bogo_props = 0;    ///<An approximation of time
+    uint64_t otf_hyper_time = 0;
     uint32_t otfHyperPropCalled = 0;
 
     #ifdef STATS_NEEDED
-    uint64_t varSetPos = 0;
-    uint64_t varSetNeg = 0;
+    uint64_t var_set_pos = 0;
+    uint64_t var_set_neg = 0;
     uint64_t varFlipped = 0;
     #endif
 };

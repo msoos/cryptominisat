@@ -43,9 +43,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define DEBUG_ENQUEUE_LEVEL0
-//#define VERBOSE_DEBUG_POLARITIES
-//#define DEBUG_DYNAMIC_RESTART
 
 /**
 @brief Sets a sane default config and allocates handler classes
@@ -101,7 +98,7 @@ void PropEngine::save_on_var_memory()
  Handles 2, 3 and >3 clause sizes differently and specially
  */
 
-void PropEngine::attachClause(
+void PropEngine::attach_clause(
     const Clause& c
     , const bool checkAttach
 ) {
@@ -115,7 +112,7 @@ void PropEngine::attachClause(
 
     #ifdef DEBUG_ATTACH
     for (uint32_t i = 0; i < c.size(); i++) {
-        assert(varData[c[i].var()].removed == Removed::none);
+        assert(var_data[c[i].var()].removed == Removed::none);
     }
     #endif //DEBUG_ATTACH
 
@@ -127,7 +124,7 @@ void PropEngine::attachClause(
 void PropEngine::attach_xor_clause(uint32_t at) {
     Xor& x = xorclauses[at];
     assert(x.size() > 2);
-    DEBUG_ATTACH_MORE_DO(for (const auto& v: x) assert(varData[v].removed == Removed::none));
+    DEBUG_ATTACH_MORE_DO(for (const auto& v: x) assert(var_data[v].removed == Removed::none));
 
     assert(value(x[0]) == l_Undef);
     assert(value(x[1]) == l_Undef);
@@ -151,17 +148,14 @@ void PropEngine::detach_modified_clause(
     , const Clause* address
 ) {
     ClOffset offset = cl_alloc.get_offset(address);
-    removeWCl(watches[lit1], offset);
-    removeWCl(watches[lit2], offset);
+    remove_w_cl(watches[lit1], offset);
+    remove_w_cl(watches[lit2], offset);
 }
 
-PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
+PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t curr_level)
 {
-    VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
-        << decisionLevel() << " lit to prop: " << p);
     const uint32_t pv = p.var();
-
-    if (gmatrices.empty() && xorclauses.empty()) return PropBy();
+    assert(!gmatrices.empty() || !xorclauses.empty()); //the hot caller checks
 
     // Matrices are reset only when first consulted through gwatches[pv] in this
     // call. The cols_vals/cols_unset caches refresh themselves in find_truths()
@@ -202,7 +196,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                         // watch to this
                         gwatches[x[i2]].push(GaussWatched::plain_xor(at));
                         x.watched[which] = i2;
-                        /* cout << "found new watch for xor: " << x << endl; */
                         goto next;
                     }
                 } else rhs ^= solver->value(x[i2]) == l_True;
@@ -210,23 +203,20 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             assert(unknown < 2);
             if (unknown == 1) {
                 // this is the OTHER watch for sure
-                /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
                 x.prop_confl_watch = !which;
-                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(PLAIN_XOR_SENTINEL, at));
+                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decision_level(), PropBy(PLAIN_XOR_SENTINEL, at));
                 *j++ = *i;
                 goto next;
             }
             assert(unknown == 0);
             if (rhs != x.rhs) {
-                /* cout << "conflict because of xor: " << x << endl; */
                 x.prop_confl_watch = 2 + which;
                 confl = PropBy(PLAIN_XOR_SENTINEL, at);
                 *j++ = *i;
                 i++;
                 break;
             } else {
-                /* cout << "satisfied xor: " << x << endl; */
                 *j++ = *i;
             }
         } else {
@@ -246,7 +236,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             gqd.new_resp_var = numeric_limits<uint32_t>::max();
             gqd.new_resp_row = numeric_limits<uint32_t>::max();
             gqd.do_eliminate = false;
-            gqd.currLevel = currLevel;
+            gqd.curr_level = curr_level;
 
             if (gmatrices[matnum]->find_truths(i, j, pv, i->row_n, gqd)) {
                 continue;
@@ -353,7 +343,6 @@ lbool PropEngine::bnn_prop(
     if (ts+undefs < bnn->cutoff) {
         // we are under the cutoff no matter what undef+unknowns is
         if (bnn->set) {
-//                 cout << "returning l_False from bnn_prop" <<  "declev: " << decisionLevel() << endl;
             return l_False;
         }
 
@@ -364,7 +353,6 @@ lbool PropEngine::bnn_prop(
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
-//         cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
         return l_True;
     }
 
@@ -382,7 +370,6 @@ lbool PropEngine::bnn_prop(
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
-        //         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;        }
         return l_True;
     }
 
@@ -419,28 +406,13 @@ lbool PropEngine::bnn_prop(
 
 vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
 {
-//     cout << "Getting BNN reason, lit: " << lit << " bnn: " << *bnn << endl;
-//     cout << "values: ";
-//     for(const auto& l: bnn->in) {
-//         cout << l << " val: " << value(l) << " , ";
-//     }
-//     if (!bnn->set) {
-//         cout << " -- out : " << value(bnn->out);
-//     }
-//     cout << endl;
-
     if (lit == lit_Undef) {
         get_bnn_confl_reason(bnn, &bnn_confl_reason);
         return &bnn_confl_reason;
     }
 
-    auto& reason = varData[lit.var()].reason;
-//     cout
-//     << " reason lev: " << varData[lit.var()].level
-//     << " sublev: " << varData[lit.var()].sublevel
-//     << " reason type: " << varData[lit.var()].reason.getType()
-//     << endl;
-    assert(reason.isBNN());
+    auto& reason = var_data[lit.var()].reason;
+    assert(reason.is_bnn());
     if (reason.bnn_reason_set()) {
         return &bnn_reasons[reason.get_bnn_reason()];
     }
@@ -460,12 +432,6 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
     reason.set_bnn_reason(empty_slot);
 
     get_bnn_prop_reason(bnn, lit, ret);
-//     cout << "get_bnn_reason (" << lit << ") returning: ";
-//     for(const auto& l: *ret) {
-//         cout << l << " val(" << value(l) << ") ";
-//     }
-//     cout << "0" << endl;
-
     return ret;
 }
 
@@ -512,8 +478,8 @@ void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
     uint32_t at = 0;
     for(uint32_t i = 0; i < ret->size(); i ++) {
         Lit l = (*ret)[i];
-        if (varData[l.var()].sublevel >= maxsublevel) {
-            maxsublevel = varData[l.var()].sublevel;
+        if (var_data[l.var()].sublevel >= maxsublevel) {
+            maxsublevel = var_data[l.var()].sublevel;
             at = i;
         }
     }
@@ -537,7 +503,7 @@ void PropEngine::get_bnn_prop_reason(
             //Caused it to meet cutoff
             int32_t need = bnn->cutoff;
             for(const auto& l: *bnn) {
-                if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
+                if (var_data[l.var()].sublevel <= var_data[lit.var()].sublevel
                     && value(l) == l_True)
                 {
                     need--;
@@ -555,7 +521,7 @@ void PropEngine::get_bnn_prop_reason(
             //Caused it to meet cutoff
             int32_t need = bnn->size()-bnn->cutoff+1;
             for(const auto& l: *bnn) {
-                if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
+                if (var_data[l.var()].sublevel <= var_data[lit.var()].sublevel
                     && value(l) == l_False)
                 {
                     need--;
@@ -574,7 +540,7 @@ void PropEngine::get_bnn_prop_reason(
             ret->push_back(bnn->out ^ (value(bnn->out) == l_True));
         }
         for(const auto& l: *bnn) {
-            if (varData[l.var()].sublevel < varData[lit.var()].sublevel) {
+            if (var_data[l.var()].sublevel < var_data[lit.var()].sublevel) {
                 if (bnn->set ||
                     (!bnn->set && value(bnn->out) == l_True))
                 {
@@ -600,21 +566,21 @@ void PropEngine::get_bnn_prop_reason(
 
 Need to be somewhat tricky if the clause indicates that current assignment
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
-sets failBinLit
+sets fail_bin_lit
 */
 template<bool inprocess>
 inline bool PropEngine::prop_bin_cl(
     const Watched* i
     , const Lit p
     , PropBy& confl
-    , uint32_t currLevel
+    , uint32_t curr_level
 ) {
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
-        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_id()));
+        enqueue<inprocess>(i->lit2(), curr_level, PropBy(~p, i->red(), i->get_id()));
     } else if (val == l_False) {
         confl = PropBy(~p, i->red(), i->get_id());
-        failBinLit = i->lit2();
+        fail_bin_lit = i->lit2();
         qhead = trail.size();
         return false;
     }
@@ -622,27 +588,27 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-template<bool inprocess, bool red_also, bool use_disable>
-bool PropEngine::prop_long_cl_any_order(
+template<bool inprocess, bool red_also, bool distill_use>
+bool PropEngine::prop_long_cl(
     Watched* i
     , Watched*& j
     , const Lit p
     , PropBy& confl
-    , uint32_t currLevel
+    , uint32_t curr_level
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()) == l_True) {
+    if (value(i->get_blocked_lit()) == l_True) {
         *j++ = *i;
         return true;
     }
-    if (inprocess) propStats.bogoProps += 4;
+    if (inprocess) prop_stats.bogo_props += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
     #ifdef SLOW_DEBUG
     assert(!c.get_removed());
     assert(!c.freed());
-    if (!use_disable) {
+    if (!distill_use) {
         assert(!c.disabled);
     }
     #endif
@@ -652,37 +618,37 @@ bool PropEngine::prop_long_cl_any_order(
         return true;
     }
 
-    if (use_disable && c.disabled) {
+    if (distill_use && c.disabled) {
         *j++ = *i;
         return true;
     }
 
-    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING)
+    if (find_new_watch<inprocess>(c, offset, j, p) == PROP_NOTHING)
         return true;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        handle_normal_prop_fail<inprocess>(c, offset, confl);
+        handle_long_cl_conflict<inprocess>(c, offset, confl);
         return false;
     } else {
         if (!inprocess) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
-            c.stats.last_touched_any = sumConflicts;
+            c.stats.last_touched_any = sum_conflicts;
             #endif
         }
 
-        if (currLevel == decisionLevel()) {
-            enqueue<inprocess>(c[0], currLevel, PropBy(offset));
+        if (curr_level == decision_level()) {
+            enqueue<inprocess>(c[0], curr_level, PropBy(offset));
         } else {
-            uint32_t nMaxLevel = currLevel;
+            uint32_t nMaxLevel = curr_level;
             uint32_t nMaxInd = 1;
             // pass over all the literals in the clause and find the one with the biggest level
             for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
-                uint32_t nLevel = varData[c[nInd].var()].level;
-                if (nLevel > nMaxLevel) {
-                    nMaxLevel = nLevel;
+                uint32_t n_level = var_data[c[nInd].var()].level;
+                if (n_level > nMaxLevel) {
+                    nMaxLevel = n_level;
                     nMaxInd = nInd;
                 }
             }
@@ -714,11 +680,6 @@ void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
         case bnn_out_t:
             break;
     }
-    VERBOSE_PRINT("reverse bnn idx: " << idx
-        << " bnn->undefs: " << bnn->undefs
-        << " bnn->ts: " << bnn->ts
-        << " bnn->sz: " << bnn->size()
-        << " BNN: " << *bnn);
 
     SLOW_DEBUG_DO(assert(bnn->ts >= 0));
     SLOW_DEBUG_DO(assert(bnn->undefs >= 0));
@@ -728,66 +689,70 @@ void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
 
 void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
 {
-    if (!varData[l.var()].propagated) return;
+    if (!var_data[l.var()].propagated) return;
     watch_subarray ws = watches[~l];
     for (const auto& i: ws) {
-        if (i.isBNN()) {
+        if (i.is_bnn()) {
             reverse_one_bnn(i.get_bnn(), i.get_bnn_prop_t());
         }
     }
-    varData[l.var()].propagated = false;
+    var_data[l.var()].propagated = false;
 }
 
 template<bool inprocess, bool red_also, bool distill_use>
-PropBy PropEngine::propagate_any_order()
+PropBy PropEngine::propagate_core()
 {
     PropBy confl;
-    VERBOSE_PRINT("propagate_any_order started");
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
-        varData[p.var()].propagated = true;
+        if (!bnns.empty()) var_data[p.var()].propagated = true; //only reverse_prop() reads it
         watch_subarray ws = watches[~p];
-        uint32_t currLevel = trail[qhead].lev;
+        uint32_t curr_level = trail[qhead].lev;
 
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        if (inprocess) {
-            propStats.bogoProps += ws.size()/4 + 1;
-        }
-        propStats.propagations++;
+        //Also in search: effort budgets of inprocessing are relative to it
+        prop_stats.bogo_props += ws.size()/4 + 1;
+        prop_stats.propagations++;
         simpDB_props--;
         for (; i != end; i++) {
             // propagate binary clause
-            if (likely(i->isBin())) {
+            if (i->is_bin()) [[likely]] {
                 *j++ = *i;
                 if (!red_also && i->red()) continue;
                 if (distill_use && i->bin_cl_marked()) continue;
-                prop_bin_cl<inprocess>(i, p, confl, currLevel);
+                prop_bin_cl<inprocess>(i, p, confl, curr_level);
                 continue;
             }
 
             // propagate BNN constraint
-            if (i->isBNN()) {
+            if (i->is_bnn()) {
                 *j++ = *i;
-                const lbool val = bnn_prop(i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
+                const lbool val = bnn_prop(i->get_bnn(), curr_level, p, i->get_bnn_prop_t());
                 if (val == l_False) confl = PropBy(i->get_bnn(), nullptr);
                 continue;
             }
 
             //propagate normal clause
-            assert(i->isClause());
-            prop_long_cl_any_order<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
+            assert(i->is_clause());
+            prop_long_cl<inprocess, red_also, distill_use>(i, j, p, confl, curr_level);
         }
         while (i != end) {
             *j++ = *i++;
         }
         ws.shrink_(end-j);
-        VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (!distill_use && confl.isnullptr()) confl = gauss_jordan_elim(p, currLevel);
+        //Skip the call when there is nothing to do: it showed at 6% in perf,
+        //and at 10% on approxmc when called with an empty gwatches list
+        if (!distill_use && confl.isnullptr()
+            && (!gmatrices.empty() || !xorclauses.empty())
+            && !gwatches[p.var()].empty()
+        ) {
+            confl = gauss_jordan_elim(p, curr_level);
+        }
 
         qhead++;
     }
@@ -802,59 +767,16 @@ PropBy PropEngine::propagate_any_order()
     }
     #endif
 
-// For BNN debugging
-//     if (confl.isnullptr()) {
-//         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-//             auto& bnn = bnns[idx];
-//             if (!bnn) continue;
-//             int32_t undefs = 0;
-//             int32_t ts = 0;
-//             for(const auto& l: *bnn) {
-//                 if (value(l) == l_True) {
-//                     ts++;
-//                 }
-//                 if (value(l) == l_Undef) {
-//                     undefs++;
-//                 }
-//             }
-//             cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
-//             cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
-//             << " sz :" << bnn->size() << endl;
-//             assert(undefs == bnn->undefs);
-//             assert(ts == bnn->ts);
-//         }
-//         cout << "ALL BNNS CHECKED========" << endl;
-//     }
-
-
-    VERBOSE_PRINT("Propagation (propagate_any_order) ended.");
 
     return confl;
 }
-template PropBy PropEngine::propagate_any_order<false>();
-template PropBy PropEngine::propagate_any_order<true>();
-template PropBy PropEngine::propagate_any_order<true, false, true>();
-template PropBy PropEngine::propagate_any_order<true, true,  true>();
+template PropBy PropEngine::propagate_core<false>();
+template PropBy PropEngine::propagate_core<true>();
+template PropBy PropEngine::propagate_core<true, false, true>();
+template PropBy PropEngine::propagate_core<true, true,  true>();
 
 
-void PropEngine::printWatchList(const Lit lit) const
-{
-    watch_subarray_const ws = watches[lit];
-    for (const Watched *it2 = ws.begin(), *end2 = ws.end()
-        ; it2 != end2
-        ; it2++
-    ) {
-        if (it2->isBin()) {
-            cout << "bin: " << lit << " , " << it2->lit2() << " red : " <<  (it2->red()) << endl;
-        } else if (it2->isClause()) {
-            cout << "cla:" << it2->get_offset() << endl;
-        } else {
-            assert(false);
-        }
-    }
-}
-
-void PropEngine::updateVars(
+void PropEngine::update_vars(
     [[maybe_unused]] const vector<uint32_t>& outer_to_inter,
     [[maybe_unused]] const vector<uint32_t>& inter_to_outer
 ) {
@@ -865,11 +787,11 @@ void PropEngine::updateVars(
 void PropEngine::print_trail()
 {
     for(size_t i = trail_lim[0]; i < trail.size(); i++) {
-        assert(varData[trail[i].lit.var()].level == trail[i].lev);
+        assert(var_data[trail[i].lit.var()].level == trail[i].lev);
         cout
         << "trail " << i << ":" << trail[i].lit
         << " lev: " << trail[i].lev
-        << " reason: " << varData[trail[i].lit.var()].reason
+        << " reason: " << var_data[trail[i].lit.var()].reason
         << endl;
     }
 }
@@ -883,7 +805,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
     while (qhead < trail.size()) {
         //Only safe above level 0, where the caller backtracks. At level 0 the
         //trail must be fully propagated before we return.
-        if (decisionLevel() > 0 && *limit_to_decrease < 0) break;
+        if (decision_level() > 0 && *limit_to_decrease < 0) break;
         const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
@@ -891,27 +813,27 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
         //Go through each occur
         *limit_to_decrease -= 1;
         for (const auto& w: ws) {
-            if (w.isClause()) {
+            if (w.is_clause()) {
                 //prop_long_cl_occur walks the whole clause, so charge its length
                 *limit_to_decrease -= (int64_t)cl_alloc.ptr(w.get_offset())->size();
                 if (!prop_long_cl_occur<inprocess>(w.get_offset())) ret = false;
             }
-            if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w, p)) ret = false;
-            assert(!w.isBNN());
+            if (w.is_bin()) if (!prop_bin_cl_occur<inprocess>(w, p)) ret = false;
+            assert(!w.is_bnn());
         }
     }
     assert(gmatrices.empty());
 
-    if (decisionLevel() == 0 && !ret) {
-        *frat << add << ++clauseID;
+    if (decision_level() == 0 && !ret) {
+        *frat << add << ++clause_id;
         if (frat->enabled()) {
             assert(last_occ_confl_id != 0);
             *frat << fratchain << last_occ_confl_units << last_occ_confl_id;
         }
         *frat << fin;
-        set_unsat_cl_id(clauseID);
+        set_unsat_cl_id(clause_id);
     }
-    if (decisionLevel() == 0) { last_occ_confl_id = 0; last_occ_confl_units.clear(); }
+    if (decision_level() == 0) { last_occ_confl_id = 0; last_occ_confl_units.clear(); }
 
     return ret;
 }
@@ -928,15 +850,15 @@ inline bool PropEngine::prop_bin_cl_occur(
         if (frat->enabled() && last_occ_confl_id == 0) {
             last_occ_confl_id = ws.get_id();
             last_occ_confl_units.clear();
-            if (varData[p.var()].level == 0)
+            if (var_data[p.var()].level == 0)
                 last_occ_confl_units.push_back(unit_cl_IDs[p.var()]);
-            if (varData[ws.lit2().var()].level == 0)
+            if (var_data[ws.lit2().var()].level == 0)
                 last_occ_confl_units.push_back(unit_cl_IDs[ws.lit2().var()]);
         }
         return false;
     }
     if (val == l_Undef)
-        enqueue<inprocess>(ws.lit2(), decisionLevel(),
+        enqueue<inprocess>(ws.lit2(), decision_level(),
                            PropBy(~p, ws.red(), false, false, ws.get_id()));
     return true;
 }
@@ -969,7 +891,7 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
             last_occ_confl_id = cl.stats.id;
             last_occ_confl_units.clear();
             for (const Lit lit: cl) {
-                if (varData[lit.var()].level == 0)
+                if (var_data[lit.var()].level == 0)
                     last_occ_confl_units.push_back(unit_cl_IDs[lit.var()]);
             }
         }
@@ -977,56 +899,59 @@ inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     }
     if (numUndef > 1) return true;
 
-    enqueue<inprocess>(lastUndef, decisionLevel(), PropBy(offset));
+    enqueue<inprocess>(lastUndef, decision_level(), PropBy(offset));
     return true;
 }
 
-#ifdef STATS_NEEDED_BRANCH
-void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
+//A level-0 assignment is a unit clause in the proof: emit it with hints
+//(unit IDs of the reason's other lits first, reason ID last)
+void PropEngine::enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat)
 {
-    if (!solver->sqlStats)
+    const uint32_t v = p.var();
+    if (!do_unit_frat) {
+        assert(unit_cl_IDs[v] != 0);
+        assert(unit_cl_XIDs[v] != 0);
         return;
-
-    bool dump = false;
-    double rnd_num = solver->mtrand.randDblExc();
-    if (rnd_num <= conf.dump_individual_cldata_ratio*0.1) {
-        dump = true;
     }
-    varData[v].dump = dump;
-    if (!dump)
-        return;
+    int32_t reason_id = 0;
+    tmp_unit_hints.clear();
+    switch (from.get_type()) {
+        case PropByType::binary_t:
+            reason_id = from.get_id();
+            tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
+            break;
+        case PropByType::clause_t: {
+            Clause* cl = cl_alloc.ptr(from.get_offset());
+            reason_id = cl->stats.id;
+            for(auto const& l: *cl)
+                if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        case PropByType::xor_t: {
+            auto cl = get_xor_reason(from, reason_id);
+            for(auto const& l: *cl)
+                if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
+            break;
+        }
+        default: break; //null/BNN: no hints
+    }
 
-    solver->dump_restart_sql(rst_dat_type::var);
+    const auto id = ++clause_id;
+    const auto xid = ++clauseXID;
+    *frat << add << id << p;
+    if (reason_id != 0) {
+        *frat << fratchain << tmp_unit_hints << reason_id;
+    }
+    *frat << fin;
+    if (frat && !frat->incremental())
+      *frat << implyxfromcls << xid << p << fratchain << id << fin;
 
-    uint64_t outer_var = map_inter_to_outer(v);
-
-    varData[v].sumDecisions_at_picktime = sumDecisions;
-    varData[v].sumConflicts_at_picktime = sumConflicts;
-    varData[v].sumAntecedents_at_picktime = sumAntecedents;
-    varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
-    varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
-    varData[v].sumPropagations_at_picktime = sumPropagations;
-    varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
-    varData[v].sumClLBD_at_picktime = sumClLBD;
-    varData[v].sumClSize_at_picktime = sumClSize;
-    double rel_activity_at_picktime =
-        std::log2(var_act_vsids[v]+10e-300)/std::log2(max_vsids_act+10e-300);
-
-    varData[v].last_time_set_was_dec = (from == PropBy());
-
-    //inside data
-    varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
-    varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
-    varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
-
-    solver->sqlStats->var_data_picktime(
-        solver
-        , outer_var
-        , varData[v]
-        , rel_activity_at_picktime
-    );
+    assert(unit_cl_IDs[v] == 0);
+    assert(unit_cl_XIDs[v] == 0);
+    unit_cl_IDs[v] = id;
+    unit_cl_XIDs[v] = xid;
 }
-#endif
+
 
 ///// VMTF ////
 
@@ -1037,7 +962,7 @@ void PropEngine::vmtf_check_unassigned()
     while (at  != numeric_limits<uint32_t>::max()) {
         at = vmtf_links[at].next;
         if (at != numeric_limits<uint32_t>::max()) {
-            if (value(at) == l_Undef && varData[at].removed == Removed::none) {
+            if (value(at) == l_Undef && var_data[at].removed == Removed::none) {
                 cout << "vmtf OOPS, var " << at+1 << " would have been unassigned. btab[var]: " << vmtf_btab[at] << endl;
                 unassigned++;
             }
@@ -1053,7 +978,6 @@ uint32_t PropEngine::vmtf_pick_var()
 {
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
-    VERBOSE_PRINT("vmtf start unassigned: " << res);
 
     SLOW_DEBUG_DO(vmtf_check_unassigned());
     while (res != numeric_limits<uint32_t>::max()
@@ -1068,7 +992,6 @@ uint32_t PropEngine::vmtf_pick_var()
         return var_Undef;
     }
     if (searched) vmtf_update_queue_unassigned(res);
-    VERBOSE_PRINT("vmtf next queue decision variable " << res << " btab value: " << vmtf_btab[res]);
     return res;
 }
 
@@ -1078,8 +1001,6 @@ uint32_t PropEngine::vmtf_pick_var()
 void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
     assert(var != numeric_limits<uint32_t>::max());
     assert(var < nVars());
-    VERBOSE_PRINT("vmtf_queue.unassigned set to: " << var+1
-        << " vmtf_queue.vmtf_bumped set to: " << vmtf_btab[var]);
     vmtf_queue.unassigned = var;
     vmtf_queue.vmtf_bumped = vmtf_btab[var];
 }
@@ -1132,7 +1053,6 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 
     assert (stats_bumped != numeric_limits<uint64_t>::max());
     vmtf_btab[var] = ++stats_bumped;
-    VERBOSE_PRINT("vmtf moved to last element in queue the variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
 }
 
@@ -1147,13 +1067,13 @@ void PropEngine::collect_trail_seg_hints(
     const uint32_t end = std::min<uint32_t>(end_at, trail.size());
     for(uint32_t i = start; i < end; i++) {
         if (trail[i].lit.var() == skip_var) continue;
-        const PropBy r = varData[trail[i].lit.var()].reason;
+        const PropBy r = var_data[trail[i].lit.var()].reason;
         if (r.isnullptr()) continue;
         int32_t id;
-        switch (r.getType()) {
+        switch (r.get_type()) {
             case binary_t:
                 id = r.get_id();
-                if (varData[r.lit2().var()].level == 0) {
+                if (var_data[r.lit2().var()].level == 0) {
                     assert(unit_cl_IDs[r.lit2().var()] != 0);
                     units.push_back(unit_cl_IDs[r.lit2().var()]);
                 }
@@ -1162,7 +1082,7 @@ void PropEngine::collect_trail_seg_hints(
                 Clause* cl = cl_alloc.ptr(r.get_offset());
                 id = cl->stats.id;
                 for (const Lit x: *cl) {
-                    if (varData[x.var()].level == 0) {
+                    if (var_data[x.var()].level == 0) {
                         assert(unit_cl_IDs[x.var()] != 0);
                         units.push_back(unit_cl_IDs[x.var()]);
                     }
@@ -1172,7 +1092,7 @@ void PropEngine::collect_trail_seg_hints(
             case xor_t: {
                 auto cl = get_xor_reason(r, id);
                 for (const Lit x: *cl) {
-                    if (varData[x.var()].level == 0) {
+                    if (var_data[x.var()].level == 0) {
                         assert(unit_cl_IDs[x.var()] != 0);
                         units.push_back(unit_cl_IDs[x.var()]);
                     }
@@ -1191,12 +1111,12 @@ int32_t PropEngine::get_reason_id(const PropBy r, vector<int32_t>& units)
     assert(frat->enabled());
     int32_t id;
     const auto unit_of = [&](const Lit x) {
-        if (value(x) != l_Undef && varData[x.var()].level == 0) {
+        if (value(x) != l_Undef && var_data[x.var()].level == 0) {
             assert(unit_cl_IDs[x.var()] != 0);
             units.push_back(unit_cl_IDs[x.var()]);
         }
     };
-    switch (r.getType()) {
+    switch (r.get_type()) {
         case binary_t:
             id = r.get_id();
             unit_of(r.lit2());
@@ -1223,15 +1143,15 @@ int32_t PropEngine::get_confl_id(const PropBy confl, vector<int32_t>& units)
     assert(frat->enabled());
     int32_t id;
     const auto unit_of = [&](const Lit x) {
-        if (varData[x.var()].level == 0) {
+        if (var_data[x.var()].level == 0) {
             assert(unit_cl_IDs[x.var()] != 0);
             units.push_back(unit_cl_IDs[x.var()]);
         }
     };
-    switch (confl.getType()) {
+    switch (confl.get_type()) {
         case binary_t:
             id = confl.get_id();
-            unit_of(failBinLit);
+            unit_of(fail_bin_lit);
             unit_of(confl.lit2());
             break;
         case clause_t: {
@@ -1283,17 +1203,6 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             assert(value(lit) == l_False);
             tmp_xor_reason.push_back(lit);
         }
-#ifdef VERBOSE_DEBUG
-        cout << "XOR Reason: " << tmp_xor_reason << endl;
-        for(const auto& l: tmp_xor_reason) {
-            cout
-            << "l: " << l
-            << " value: " << value(l)
-            << " level:" << varData[l.var()].level
-            << " type: " << removed_type_to_string(varData[l.var()].removed)
-            << endl;
-        }
-#endif
 
         // Some sanity checks
         if (x.prop_confl_watch < 2) assert(rhs == x.rhs && "It's a prop, so rhs must match");
@@ -1307,7 +1216,7 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             if (x.reason_cl_ID == 0 || x.reason_cl != tmp_xor_reason) {
                 if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
                 x.reason_cl = tmp_xor_reason;
-                x.reason_cl_ID = ++clauseID;
+                x.reason_cl_ID = ++clause_id;
                 *frat << implyclfromx << x.reason_cl_ID << x.reason_cl
                     << FratFlag::fratchain << x.xid << fin;
             }

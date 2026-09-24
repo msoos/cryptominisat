@@ -70,7 +70,7 @@ public:
     void dump_id_confl_cache();
     virtual void set_id_confl(
         const int32_t id
-        , const uint64_t sumConflicts
+        , const uint64_t sum_conflicts
     ) override;
 
     #ifdef STATS_NEEDED
@@ -81,14 +81,12 @@ public:
     ) override;
 
     virtual void restart(
-        const uint32_t restartID
+        const uint32_t restart_id
         , const uint32_t rest_stable
         , const PropStats& thisPropStats
-        , const SearchStats& thisStats
+        , const SearchStats& this_stats
         , const Solver* solver
         , const Searcher* searcher
-        , const rst_dat_type type
-        , const int64_t clauseID
     ) override;
 
     virtual void reduceDB_common(
@@ -120,7 +118,7 @@ public:
     void clause_stats(
         const Solver* solver
         , uint64_t clid
-        , const uint64_t restartID
+        , const uint64_t restart_id
         , uint32_t glue
         , uint32_t glue_before_minim
         , uint32_t size
@@ -129,40 +127,11 @@ public:
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t trail_depth
-        , uint64_t conflicts_this_restart
         , const uint32_t rest_type
         , const SearchHist& hist
         , const bool is_decision
-        , const uint32_t orig_connects_num_communities
     ) override;
 
-    #ifdef STATS_NEEDED_BRANCH
-    void var_data_picktime(
-        const Solver* solver
-        , const uint32_t var
-        , const VarData& vardata
-        , const double rel_activity
-    ) override;
-
-    void var_data_fintime(
-        const Solver* solver
-        , const uint32_t var
-        , const VarData& vardata
-        , const double rel_activity
-    ) override;
-
-    void dec_var_clid(
-        const uint32_t var
-        , const uint64_t sumConflicts_at_picktime
-        , const uint64_t clid
-    ) override;
-
-    void var_dist(
-        const uint32_t var
-        , const VarData2& data
-        , const Solver* solver
-    ) override;
-    #endif
     #endif
 
     bool setup(const Solver* solver) override;
@@ -183,13 +152,10 @@ private:
     void init_cl_last_in_solver_STMT();
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
-    void init_var_data_picktime_STMT();
-    void init_var_data_fintime_STMT();
-    void init_dec_var_clid_STMT();
     void run_sqlite_step(
         sqlite3_stmt* stmt,
         const char* name,
-        const uint32_t bindAt);
+        const uint32_t bind_at);
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
@@ -199,18 +165,12 @@ private:
     sqlite3_stmt *stmtReduceDB = nullptr;
     sqlite3_stmt *stmtReduceDB_common = nullptr;
     sqlite3_stmt *stmtRst = nullptr;
-    sqlite3_stmt *stmtVarRst = nullptr;
-    sqlite3_stmt *stmtClRst = nullptr;
     sqlite3_stmt *stmtFeat = nullptr;
     sqlite3_stmt *stmt_clause_stats = nullptr;
     sqlite3_stmt *stmt_delete_cl = nullptr;
     sqlite3_stmt *stmt_update_id = nullptr;
     sqlite3_stmt *stmt_set_id_confl = nullptr;
     sqlite3_stmt *stmt_set_id_confl_1000 = nullptr;
-    sqlite3_stmt *stmt_var_data_fintime = nullptr;
-    sqlite3_stmt *stmt_var_data_picktime = nullptr;
-    sqlite3_stmt *stmt_dec_var_clid = nullptr;
-    sqlite3_stmt *stmt_var_dist = nullptr;
 
     std::map<string, uint32_t> query_to_size;
 

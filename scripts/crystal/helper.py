@@ -22,7 +22,6 @@
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import sklearn
 import sklearn.metrics
 import re
@@ -33,21 +32,6 @@ import os.path
 import sqlite3
 import functools
 from ccg import *
-
-try:
-    from termcolor import cprint
-except ImportError:
-    termcolor_avail = False
-else:
-    termcolor_avail = True
-
-from pprint import pprint
-try:
-    import mlflow
-except ImportError:
-    mlflow_avail = False
-else:
-    mlflow_avail = True
 
 
 class QueryHelper:
@@ -68,14 +52,15 @@ class QueryHelper:
 
 
 class QueryFill (QueryHelper):
-    def create_indexes(self, verbose=False, used_clauses="used_clauses"):
+    def create_indexes(self, verbose=False, used_clauses_suffix=""):
         t = time.time()
         print("Recreating indexes...")
         queries = """
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
-        create index `idxclidUCLS-2` on `{used_clauses}` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-2` on `used_clauses{suffix}` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-3` on `used_clauses_anc{suffix}` ( `clauseID`, `used_at`);
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
-        """.format(used_clauses=used_clauses)
+        """.format(suffix=used_clauses_suffix)
         for l in queries.split('\n'):
             t2 = time.time()
 
@@ -125,8 +110,12 @@ class QueryFill (QueryHelper):
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
     # The most expesive operation of all, when called with "forever"
-    def fill_used_later_X(self, tier, duration, used_clauses="used_clauses",
-                          table="used_later"):
+    # used_later_X is summed from used_clauses, used_later_anc_X from
+    # used_clauses_anc (uses of the clause AND of its descendants)
+    def fill_used_later_X(self, tier, duration, table="used_later",
+                          used_clauses_suffix=""):
+        used_clauses = ("used_clauses" if table == "used_later" else "used_clauses_anc") \
+            + used_clauses_suffix
 
         min_del_distance = duration
         if min_del_distance > 2*1000*1000:
@@ -212,45 +201,6 @@ class QueryFill (QueryHelper):
 
 
 
-def write_mit_header(f):
-    f.write("""/******************************************
-Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-***********************************************/\n\n""")
-
-def parse_configs(confs):
-    match = re.match(r"^([0-9]*)-([0-9]*)$", confs)
-    if not match:
-        print("ERROR: we cannot parse your config options: '%s'" % confs)
-        exit(-1)
-
-    conf_from = int(match.group(1))
-    conf_to = int(match.group(2))+1
-    if conf_to <= conf_from:
-        print("ERROR: Conf range is not increasing")
-        exit(-1)
-
-    print("Running configs:", range(conf_from, conf_to))
-    return conf_from, conf_to
-
-
 def get_features(fname):
     best_features = []
     check_file_exists(fname)
@@ -268,29 +218,44 @@ def get_features(fname):
     return best_features
 
 
+# Thousands of computed columns inserted one by one fragment the frame
+# and make every access crawl: while _pending is a dict, new columns are
+# collected there and concatenated to the frame in one go at the end
+_pending = None
+
+def _col(df, name):
+    if _pending is not None and name in _pending:
+        return _pending[name]
+    return df[name]
+
+def _set(df, name, val):
+    if _pending is not None:
+        _pending[name] = val
+    else:
+        df[name] = val
+
+def _flush_pending(df):
+    global _pending
+    if not _pending:
+        _pending = None
+        return df
+    df = pd.concat([df, pd.DataFrame(_pending, index=df.index)], axis=1)
+    _pending = None
+    return df
+
 def helper_divide(dividend, divisor, df, features, verb, name=None):
     """
     to be used like:
     import functools
     divide = functools.partial(helper.divide, df=df, features=features, verb=options.verbose)
     """
-
-    # dividend feature not present
-    #if dividend not in features:
-        #return None
-
-    # divisorfeature not present
-    #if divisor not in features:
-        #return None
-
-    # divide
     if verb:
         print("Dividing. dividend: '%s' divisor: '%s' " % (dividend, divisor))
 
     if name is None:
         name = "(%s/%s)" % (dividend, divisor)
 
-    df[name] = df[dividend].div(df[divisor])
+    _set(df, name, _col(df, dividend).div(_col(df, divisor)))
     return name
 
 def helper_larger_than(lhs, rhs, df, features, verb):
@@ -305,7 +270,7 @@ def helper_larger_than(lhs, rhs, df, features, verb):
         print("Calulating '%s' >: '%s' " % (lhs, rhs))
 
     name = "(" + lhs + ">" + rhs + ")"
-    df[name] = (df[lhs] > df[rhs]).astype(int)
+    _set(df, name, (_col(df, lhs) > _col(df, rhs)).astype(int))
     return name
 
 def helper_add(toadd, df, features, verb):
@@ -383,14 +348,6 @@ def query_fragment(tablename, not_cols, short_name, verbose, conn):
     return ret
 
 
-def not_inside(not_these, inside_here):
-    for not_this in not_these:
-        if not_this in inside_here:
-            return False
-
-    return True
-
-
 # to check for too large or NaN values:
 def check_too_large_or_nan_values(df, features=None):
     print("Checking for too large or NaN values...")
@@ -412,23 +369,6 @@ def check_too_large_or_nan_values(df, features=None):
         index += 1
 
     print("Checking finished.")
-
-
-def print_confusion_matrix(cm,
-                           normalize=False,
-                           title='Confusion matrix'):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
-    print(title)
-    if mlflow_avail:
-        mlflow.log_metric(title, cm[0][0])
-    np.set_printoptions(precision=2)
-    print(cm)
 
 
 def calc_min_split_point(df, min_samples_split):
@@ -501,81 +441,6 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
     return main_error
 
 
-def conf_matrixes(data, features, to_predict, clf, toprint,
-                  average="binary", highlight=False):
-    # get data
-    X_data = data[features]
-    y_data = data[to_predict]
-    print("Number of elements:", X_data.shape)
-    if data.shape[0] <= 1:
-        print("Cannot calculate confusion matrix, too few elements")
-        return None, None, None, None
-
-    # Preform prediction
-    def f(x):
-        if x > 0.5:
-            return 1
-        else:
-            return 0
-
-    y_pred = clf.predict(X_data)
-    #print("type(y_pred[0]): ",  type(y_pred[0]))
-    if type(y_pred[0]) == np.float32:
-        y_pred = np.array([f(x) for x in y_pred])
-
-    # calc acc, precision, recall
-    accuracy = sklearn.metrics.accuracy_score(
-        y_data, y_pred)
-
-    precision = sklearn.metrics.precision_score(
-        y_data, y_pred, pos_label=1, average=average)
-
-
-    recall = sklearn.metrics.recall_score(
-        y_data, y_pred, pos_label=1, average=average)
-
-    # ROC AUC
-    predsi = np.array(y_pred)
-    y_testi = pd.DataFrame(y_data)["x.class"].squeeze()
-    try:
-        roc_auc = sklearn.metrics.roc_auc_score(y_testi, predsi)
-    except:
-        print("NOTE: ROC AUC is set to 0 because of completely one-sided OK/BAD")
-        roc_auc = 0
-
-    # record to mlflow
-    if mlflow_avail:
-        mlflow.log_metric(toprint + " -- accuracy", accuracy)
-        mlflow.log_metric(toprint + " -- precision", precision)
-        mlflow.log_metric(toprint + " -- recall", recall)
-        mlflow.log_metric(toprint + " -- roc_auc", roc_auc)
-
-    color = "white"
-    bckgrnd = "on_grey"
-    if highlight:
-        color="green"
-        bckgrnd = "on_grey"
-
-    txt = "%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
-    vals = (toprint, precision, recall, accuracy, roc_auc)
-    if termcolor_avail:
-        cprint(txt % vals , color, bckgrnd)
-    else:
-        cprint(txt % vals)
-
-    # Plot confusion matrix
-    cnf_matrix = sklearn.metrics.confusion_matrix(
-        y_true=y_data, y_pred=y_pred)
-    print_confusion_matrix(
-        cnf_matrix,
-        title='Confusion matrix without normalization -- %s' % toprint)
-    print_confusion_matrix(
-        cnf_matrix, normalize=True,
-        title='Normalized confusion matrix -- %s' % toprint)
-
-    return roc_auc
-
-
 def check_file_exists(fname):
     try:
         f = open(fname)
@@ -606,41 +471,6 @@ def output_to_classical_dot(clf, features, fname):
     print("Run dot:")
     print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
     print("gwenview {fname}.png".format(fname=fname))
-
-
-def print_feature_ranking(clf, X_train, top_num_features, features, plot=False):
-    best_features = []
-    importances = clf.feature_importances_
-    std = np.std(
-        [tree.feature_importances_ for tree in clf.estimators_], axis=0)
-    indices = np.argsort(importances)[::-1]
-    indices = indices[:top_num_features]
-    myrange = min(X_train.shape[1], top_num_features)
-
-    # Print the feature ranking
-    print("Feature ranking:")
-
-    for f in range(myrange):
-        print("%-3d  %-55s -- %8.4f" %
-              (f + 1, features[indices[f]], importances[indices[f]]))
-        best_features.append(features[indices[f]])
-
-    # Plot the feature importances of the clf
-    if plot:
-        plot_feature_importances(importances, indices, myrange, std, features)
-
-    return best_features
-
-
-def plot_feature_importances(importances, indices, myrange, std, features):
-        plt.figure()
-        plt.title("Feature importances")
-        plt.bar(range(myrange), importances[indices],
-                color="r", align="center",
-                yerr=std[indices])
-        plt.xticks(range(myrange), [features[x]
-                                    for x in indices], rotation=45)
-        plt.xlim([-1, myrange])
 
 
 def add_features_from_fname(df, features_fname, verbose=False):
@@ -697,8 +527,11 @@ def cldata_add_minimum_computed_features(df, verbose):
 
 
 def cldata_add_computed_features(df, verbose):
+    """returns the new frame"""
+    global _pending
     print("Adding computed features...")
     cldata_add_minimum_computed_features(df, verbose)
+    _pending = {}
 
     del df["cl.conflicts"]
     del df["cl.restartID"]
@@ -727,7 +560,6 @@ def cldata_add_computed_features(df, verbose):
     # divide by avg and median
     divide("rdb0.uip1_used", "rdb0_common.avg_uip1_used")
     divide("rdb0.props_made", "rdb0_common.avg_props")
-    divide("rdb0.glue", "rdb0_common.avg_glue")
 
     divide("rdb0.uip1_used", "rdb0_common.median_uip1_used")
     divide("rdb0.props_made", "rdb0_common.median_props")
@@ -742,7 +574,7 @@ def cldata_add_computed_features(df, verbose):
     #del df[time_in_solver]
 
     divisors = [
-        "cl.conflSizeHistlt_avg"
+        "cl.conflSizeHistLT_avg"
         , "cl.glueHistLT_avg"
         , "rdb0.glue"
         , "rdb0.size"
@@ -802,7 +634,7 @@ def cldata_add_computed_features(df, verbose):
         divisors.extend(toadd)
 
     # relative data
-    cols = list(df)
+    cols = list(df) + list(_pending.keys())
     for col in cols:
         if ("rdb" in col or "cl." in col) and "restart_type" not in col and "tot_cls_in" not in col:
             for divisor in divisors:
@@ -831,6 +663,10 @@ def cldata_add_computed_features(df, verbose):
         #print("columns: ", (old - new))
         #assert(False)
         #exit(-1)
+
+    df = _flush_pending(df)
+    print("Computed features added, now %d columns" % df.shape[1])
+    return df
 
 def print_datatypes(df):
     pd.set_option('display.max_rows', len(df.dtypes))

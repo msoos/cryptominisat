@@ -37,7 +37,7 @@ struct varreplace : public ::testing::Test {
         SolverConf conf;
         s = new Solver(&conf, &must_inter);
         s->new_vars(20);
-        repl = s->varReplacer;
+        repl = s->var_replacer;
     }
     ~varreplace() { delete s; }
     Solver* s = NULL;

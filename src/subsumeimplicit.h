@@ -57,7 +57,7 @@ public:
         void print(const char* caller, const string& pre) const;
 
         double time_used = 0.0;
-        uint64_t numCalled = 0;
+        uint64_t num_called = 0;
         uint64_t time_out = 0;
         uint64_t remBins = 0;
         uint64_t numWatchesLooked = 0;
@@ -67,14 +67,14 @@ public:
 
 private:
     Solver* solver;
-    int64_t timeAvailable;
+    int64_t time_available;
 
     Lit lastLit2;
     Watched* lastBin;
     bool lastRed;
     vector<Lit> tmplits;
-    Stats runStats;
-    Stats globalStats;
+    Stats run_stats;
+    Stats global_stats;
 
     void clear()
     {

@@ -26,7 +26,7 @@ using namespace CMSat;
 
 SearchStats& SearchStats::operator+=(const SearchStats& other)
 {
-    numRestarts += other.numRestarts;
+    num_restarts += other.num_restarts;
 
     //Decisions
     decisions += other.decisions;
@@ -35,10 +35,10 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     decisionFlippedPolar += other.decisionFlippedPolar;
 
     //Conflict minimisation stats
-    litsRedNonMin += other.litsRedNonMin;
+    lits_red_non_min += other.lits_red_non_min;
     litsRedFinal += other.litsRedFinal;
     recMinCl += other.recMinCl;
-    recMinLitRem += other.recMinLitRem;
+    rec_min_lit_rem += other.rec_min_lit_rem;
     shrinkCl += other.shrinkCl;
     shrinkLitRem += other.shrinkLitRem;
     otfsStr += other.otfsStr;
@@ -60,7 +60,7 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
 
     //Red stats
     learntUnits += other.learntUnits;
-    learntBins += other.learntBins;
+    learnt_bins += other.learnt_bins;
     learntLongs += other.learntLongs;
     otfSubsumed += other.otfSubsumed;
     otfSubsumedImplicit += other.otfSubsumedImplicit;
@@ -74,9 +74,6 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     transReduRemIrred += other.transReduRemIrred;
     transReduRemRed += other.transReduRemRed;
 
-    //SatZillaFeatures
-    num_xors_found_last += other.num_xors_found_last;
-    num_gates_found_last += other.num_gates_found_last;
 
     //Stat structs
     resolvs += other.resolvs;
@@ -90,7 +87,7 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
 
 SearchStats& SearchStats::operator-=(const SearchStats& other)
 {
-    numRestarts -= other.numRestarts;
+    num_restarts -= other.num_restarts;
 
     //Decisions
     decisions -= other.decisions;
@@ -99,10 +96,10 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     decisionFlippedPolar -= other.decisionFlippedPolar;
 
     //Conflict minimisation stats
-    litsRedNonMin -= other.litsRedNonMin;
+    lits_red_non_min -= other.lits_red_non_min;
     litsRedFinal -= other.litsRedFinal;
     recMinCl -= other.recMinCl;
-    recMinLitRem -= other.recMinLitRem;
+    rec_min_lit_rem -= other.rec_min_lit_rem;
     shrinkCl -= other.shrinkCl;
     shrinkLitRem -= other.shrinkLitRem;
     otfsStr -= other.otfsStr;
@@ -123,7 +120,7 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
 
     //Red stats
     learntUnits -= other.learntUnits;
-    learntBins -= other.learntBins;
+    learnt_bins -= other.learnt_bins;
     learntLongs -= other.learntLongs;
     otfSubsumed -= other.otfSubsumed;
     otfSubsumedImplicit -= other.otfSubsumedImplicit;
@@ -137,9 +134,6 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     transReduRemIrred -= other.transReduRemIrred;
     transReduRemRed -= other.transReduRemRed;
 
-    //SatZillaFeatures
-    num_xors_found_last -= other.num_xors_found_last;
-    num_gates_found_last -= other.num_gates_found_last;
 
     //Stat structs
     resolvs -= other.resolvs;
@@ -161,8 +155,8 @@ SearchStats SearchStats::operator-(const SearchStats& other) const
 void SearchStats::printCommon(uint64_t props, bool do_print_times, const string& prefix) const
 {
     print_stats_line(prefix + "restarts"
-        , numRestarts
-        , float_div(conflicts, numRestarts)
+        , num_restarts
+        , float_div(conflicts, num_restarts)
         , "confls per restart"
 
     );
@@ -189,8 +183,8 @@ void SearchStats::print_short(uint64_t props, bool do_print_times, const string&
     printCommon(props, do_print_times, prefix);
     print_stats_line(prefix + "conflicts", conflicts);
     print_stats_line(prefix + "conf lits non-minim"
-        , litsRedNonMin
-        , float_div(litsRedNonMin, conflicts)
+        , lits_red_non_min
+        , float_div(lits_red_non_min, conflicts)
         , "lit/confl"
     );
 
@@ -215,8 +209,8 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
         , "% of conflicts");
 
     print_stats_line(prefix + "bins learnt"
-        , learntBins
-        , stats_line_percent(learntBins, conflicts)
+        , learnt_bins
+        , stats_line_percent(learnt_bins, conflicts)
         , "% of conflicts");
 
     print_stats_line(prefix + "long learnt"
@@ -248,8 +242,8 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
 
     cout << prefix << "CONFL LITS stats" << endl;
     print_stats_line(prefix + "orig "
-        , litsRedNonMin
-        , ratio_for_stat(litsRedNonMin, conflicts)
+        , lits_red_non_min
+        , ratio_for_stat(lits_red_non_min, conflicts)
         , "lit/confl"
     );
 
@@ -260,8 +254,8 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
     );
 
     print_stats_line(prefix + "recurs-min lits"
-        , recMinLitRem
-        , stats_line_percent(recMinLitRem, litsRedNonMin)
+        , rec_min_lit_rem
+        , stats_line_percent(rec_min_lit_rem, lits_red_non_min)
         , "% less overall"
     );
 
@@ -273,7 +267,7 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
 
     print_stats_line(prefix + "shrink lits"
         , shrinkLitRem
-        , stats_line_percent(shrinkLitRem, litsRedNonMin)
+        , stats_line_percent(shrinkLitRem, lits_red_non_min)
         , "% less overall"
     );
 
@@ -304,7 +298,7 @@ void SearchStats::print(uint64_t props, bool do_print_times, const string& prefi
 
     print_stats_line(prefix + "bintri-min lits"
         , binTriShrinkedClause
-        , stats_line_percent(binTriShrinkedClause, litsRedNonMin)
+        , stats_line_percent(binTriShrinkedClause, lits_red_non_min)
         , "% less overall"
     );
 

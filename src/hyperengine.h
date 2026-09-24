@@ -49,7 +49,7 @@ public:
     Lit propagate_bfs(
         const uint64_t earlyAborTOut = numeric_limits<uint64_t>::max()
     );
-    set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
+    set<BinaryClause> need_to_add_bin_clause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
 
     ///Add hyper-binary clause given this bin clause
@@ -68,21 +68,21 @@ public:
     }
 
     void  enqueue_with_acestor_info(
-        const Lit p, const Lit ancestor, const bool redStep, const int32_t ID);
+        const Lit p, const Lit ancestor, const bool red_step, const int32_t ID);
 
 private:
     Lit   analyzeFail(PropBy propBy);
-    Lit   remove_which_bin_due_to_trans_red(Lit conflict, Lit thisAncestor, const bool thisStepRed);
+    Lit   remove_which_bin_due_to_trans_red(Lit conflict, Lit this_ancestor, const bool thisStepRed);
     void  remove_bin_clause(Lit lit, const int32_t ID);
     bool  is_ancestor_of(
         const Lit conflict
-        , Lit thisAncestor
+        , Lit this_ancestor
         , const bool thisStepRed
         , const bool onlyIrred
-        , const Lit lookingForAncestor
+        , const Lit looking_for_ancestor
     );
 
-    //Find lowest common ancestor, once 'currAncestors' has been filled
+    //Find lowest common ancestor, once 'curr_ancestors' has been filled
     Lit deepest_common_ancestor();
 
     PropResult prop_bin_with_ancestor_info(
@@ -98,7 +98,7 @@ private:
         , PropBy& confl
     );
 
-    vector<Lit> currAncestors;
+    vector<Lit> curr_ancestors;
     vector<Lit> tmp_orig_ancestors;   ///< FRAT: saved before deepest_common_ancestor() destroys them
     vector<int32_t> tmp_anc_chain;
 };

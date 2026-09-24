@@ -38,8 +38,6 @@ cmake.args = [
     "-DSTATIC_BINARY=OFF",
     "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
     "-DIPASIR=OFF",
-    "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
-    "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
 ]
 wheel.packages = []          # pure-Python packages to include (none; extension only)
 install.components = ["python"]  # only install the pycryptosat.so, not the full CMS install
@@ -50,6 +48,8 @@ skip = "pp* *-musllinux* *i686"
 build-frontend = "build"
 test-requires = "pytest"
 test-command = "cd /tmp && pytest {project}/python/tests"
+# Set here, not in cmake.args, so a plain `pip install .` does not need ccache.
+environment = { CMAKE_C_COMPILER_LAUNCHER = "ccache", CMAKE_CXX_COMPILER_LAUNCHER = "ccache" }
 
 [tool.cibuildwheel.linux]
 # manylinux_2_34 = AlmaLinux 9; gmp-devel/mpfr-devel ship .pc files so pkg-config works.
@@ -57,7 +57,7 @@ manylinux-x86_64-image = "manylinux_2_34"
 manylinux-aarch64-image = "manylinux_2_34"
 before-all = "yum install -y epel-release && yum install -y ccache gmp-devel"
 # CCACHE_DIR must be under /project so the host-side actions/cache step can reach it.
-environment = { CCACHE_DIR = "/project/.ccache" }
+environment = { CCACHE_DIR = "/project/.ccache", CMAKE_C_COMPILER_LAUNCHER = "ccache", CMAKE_CXX_COMPILER_LAUNCHER = "ccache" }
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]

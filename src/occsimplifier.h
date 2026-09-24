@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "watched.h"
 #include "watcharray.h"
 struct PicoSAT;
+struct kitten;
 
 namespace CMSat {
 
@@ -50,6 +51,7 @@ class SolutionExtender;
 class Solver;
 class SubsumeStrengthen;
 class GateFinder;
+class Sweeper;
 
 struct ElimedClauses {
     uint64_t start = 0;
@@ -72,10 +74,10 @@ struct ElimedClauses {
 
 struct BVEStats
 {
-    uint64_t numCalls = 0;
+    uint64_t num_calls = 0;
     double timeUsed = 0.0;
 
-    int64_t numVarsElimed = 0;
+    int64_t num_vars_elimed = 0;
     uint64_t varElimTimeOut = 0;
     uint64_t clauses_elimed_long = 0;
     uint64_t clauses_elimed_bin = 0;
@@ -87,33 +89,14 @@ struct BVEStats
     uint64_t irreg_gate_found = 0;
     uint64_t irreg_gate_tried = 0;
     uint64_t irreg_gate_entered = 0;
-    uint64_t picolits_added = 0;
-    uint64_t pico_conflicts = 0;
+    uint64_t kitlits_added = 0;
+    uint64_t kit_ticks = 0;
     uint64_t irreg_gate_units = 0;
     uint64_t irreg_gate_units_no_chain = 0;
     bool turned_off_irreg_gate = false;
 
     BVEStats& operator+=(const BVEStats& other);
 
-    void print_short(const string& pre) const {
-        cout << pre << "[occ-bve] elimed: " << numVarsElimed
-            << " gatefind timeout: " << gatefind_timeouts << endl;
-        cout << pre << "[occ-bve] cl-new: " << newClauses << " tried: " << triedToElimVars
-            << " tested: " << testedToElimVars << endl;
-    }
-
-    void print(const string& prefix) const {
-        print_stats_line(prefix + "timeouted" , stats_line_percent(varElimTimeOut, numCalls) , "% called");
-        print_stats_line(prefix + "v-elimed" , numVarsElimed , "% vars");
-        print_stats_line(prefix + "cl-new" , newClauses);
-        print_stats_line(prefix + "tried to elim" , triedToElimVars);
-        print_stats_line(prefix + "cl-elim-bin" , clauses_elimed_bin);
-        print_stats_line(prefix + "cl-elim-long" , clauses_elimed_long);
-        print_stats_line(prefix + "cl-elim-avg-s",
-                safe_div(clauses_elimed_sumsize,clauses_elimed_bin + clauses_elimed_long));
-        cout << prefix << "irreg-gate-found / tried / entered: " << irreg_gate_found << " / " << irreg_gate_tried << "/ " << irreg_gate_entered << endl;
-        cout << prefix << "irreg-gate-units / no-chain: " << irreg_gate_units << " / " << irreg_gate_units_no_chain << endl;
-    }
     void clear() {
         *this = BVEStats{};
     }
@@ -200,7 +183,7 @@ public:
     vector<uint32_t> extend_definable_by_irreg_gate(const vector<uint32_t>& vars);
     void clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
-    uint32_t add_cls_to_picosat_definable(const Lit wsLit);
+    uint32_t add_cls_to_kitten_definable(const Lit ws_lit);
     struct DefinableStats {
         uint32_t ran = 0;
         uint32_t definable = 0;
@@ -208,11 +191,12 @@ public:
         uint32_t too_many_occ = 0;
         uint32_t no_cls_match = 0;
     };
-    lbool definable_by_picosat(uint32_t v, DefinableStats& st);
-    PicoSAT* picosat = nullptr;
-    int lit_to_picolit(const Lit l);
-    vector<int> var_to_picovar;
-    vector<uint32_t> picovars_used;
+    lbool definable_by_kitten(uint32_t v, DefinableStats& st);
+    kitten* kit = nullptr; ///< embedded sub-solver for gate/definition detection
+    //kitten trace/core traversal callbacks, public for the extern "C" trampolines
+    void gate_core_id_cb(unsigned id);
+    void gate_trace_cb(unsigned cid, unsigned id, bool learned, size_t sz,
+                       const unsigned* lits, size_t chsz, const unsigned* chain);
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
@@ -234,7 +218,7 @@ public:
     void extend_model(SolutionExtender* extender);
     uint32_t get_num_elimed_vars() const
     {
-        return bvestats_global.numVarsElimed;
+        return bvestats_global.num_vars_elimed;
     }
 
     struct Stats
@@ -245,12 +229,12 @@ public:
         void clear();
         double total_time(OccSimplifier* occs) const;
 
-        uint64_t numCalls = 0;
+        uint64_t num_calls = 0;
         uint64_t ternary_added_tri = 0;
         uint64_t ternary_added_bin = 0;
 
         //Time stats
-        double linkInTime = 0;
+        double link_in_time = 0;
         double varElimTime = 0;
         double xorTime = 0;
         double triresolveTime = 0;
@@ -267,7 +251,7 @@ public:
     const Stats& get_stats() const;
     const SubsumeStrengthen* get_sub_str() const;
     ///Long irred clauses parked here while occur lists are linked in. Solver's
-    ///own longIrredCls is empty during that window, so any count of the formula
+    ///own long_irred_cls is empty during that window, so any count of the formula
     ///has to add this in or it reads 0 for the whole occ phase.
     uint32_t num_long_irred_linked_in() const;
 
@@ -305,10 +289,10 @@ public:
 
     //Setup and teardown. Should be private, but testing needs it to be public
     bool setup();
-    void finish_up(size_t origTrailSize);
+    void finish_up(size_t orig_trail_size);
 
     // Count live irred long clauses currently held in OccSimplifier::clauses
-    // (during occ-* steps, solver->longIrredCls is empty — they live here)
+    // (during occ-* steps, solver->long_irred_cls is empty — they live here)
     size_t num_irred_long_cls_in_occur() const;
 
     //Ternary resolution. Should be private but testing needs it to be public
@@ -323,7 +307,10 @@ public:
 
 private:
     friend class SubsumeStrengthen;
+    friend class Sweeper;
     SubsumeStrengthen* sub_str;
+    Sweeper* sweeper = nullptr;
+    bool sweep();
     void check_cls_sanity();
 
     bool startup = false;
@@ -353,7 +340,7 @@ private:
     Solver*  solver;              ///<The solver this simplifier is connected to
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
-    vector<Lit>& toClear;
+    vector<Lit>& to_clear;
     vector<bool> sampling_vars_occsimp;
     vector<bool> xorclauses_vars;
 
@@ -375,6 +362,8 @@ private:
     int64_t  ternary_res_cls_limit;
     int64_t  occ_based_lit_rem_time_limit;
     int64_t  weaken_time_limit;
+    int64_t  sweep_time_limit;
+    uint64_t sweep_last_all_props = 0;
     int64_t* limit_to_decrease;
 
     //Memory limits
@@ -398,7 +387,7 @@ private:
     LinkInData link_in_data_irred;
     LinkInData link_in_data_red;
     uint64_t calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const;
-    void     print_mem_usage_of_occur(uint64_t memUsage) const;
+    void     print_mem_usage_of_occur(uint64_t mem_usage) const;
     void     print_linkin_data(const LinkInData& link_in_data) const;
     OccSimplifier::LinkInData link_in_clauses(
         const vector<ClOffset>& toAdd
@@ -423,7 +412,7 @@ private:
     uint32_t    sum_irred_cls_longs_lits() const;
     Clause *    full_add_clause(
         const vector<Lit>& tmp_cl,
-        vector<Lit>& finalLits,
+        vector<Lit>& final_lits,
         ClauseStats* cl_stats,
         bool red,
         const vector<int32_t>* hints = nullptr
@@ -440,17 +429,17 @@ private:
     /// CaDiCaL's lim.elimbound: persists across eliminate_vars() calls and only
     /// doubles once a full pass at the current bound finished.
     uint32_t grow = 0;
-    vector<int64_t> varElimComplexity;
+    vector<int64_t> var_elim_complexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
         explicit VarOrderLt(const vector<int64_t>& _varElimComplexity) :
-            varElimComplexity(_varElimComplexity) {}
+            var_elim_complexity(_varElimComplexity) {}
 
         bool operator()(uint32_t x, uint32_t y) const {
-            return varElimComplexity[x] < varElimComplexity[y];
+            return var_elim_complexity[x] < var_elim_complexity[y];
         }
 
-        const vector<int64_t>& varElimComplexity;
+        const vector<int64_t>& var_elim_complexity;
     };
     void        order_vars_for_elim();
     void        increase_elim_bound();
@@ -533,9 +522,19 @@ private:
         vec<Watched>& out_a,
         vec<Watched>& out_b
     );
-    void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, unordered_map<int, Watched>& picosat_cl_to_cms_cl);
-    void pre_register_picosat_vars(const vec<Watched>& ws, const Lit elim_lit);
-    void register_lit_to_picovar(const Lit l);
+    void add_kitten_cls(const vec<Watched>& ws, const Lit elim_lit);
+    vector<Watched> kit_id_to_watch; ///< kitten clause id -> the CMS clause
+    vector<unsigned> kit_cl_tmp;
+    vector<uint8_t> kit_core_marks;
+    ///One clause of kitten's core trace, as handed to gate_trace_cb
+    struct KitTraceCl {
+        unsigned kid;           ///< kitten's internal clause id
+        bool learned;
+        uint32_t orig_id;       ///< original only: index into kit_id_to_watch
+        vector<Lit> lits;       ///< learned only
+        vector<unsigned> chain; ///< learned only, in derivation order
+    };
+    vector<KitTraceCl> kit_trace;
     bool resolve_gate;
     bool gate_gave_unit; ///< find_irreg_gate derived a unit instead of a gate
     bool find_irreg_gate(
@@ -544,19 +543,16 @@ private:
         watch_subarray_const b,
         vec<Watched>& out_a,
         vec<Watched>& out_b);
-    ///One step of picosat's resolution trace, replayed as a FRAT lemma. The
+    ///One step of kitten's resolution trace, replayed as a FRAT lemma. The
     ///last one is the derived unit itself and is added through add_clause_int,
     ///so it has no pre-allocated ID.
-    struct PicoLemma {
-        vector<Lit> lits;      ///< picosat clause plus the implied pivot
+    struct GateLemma {
+        vector<Lit> lits;      ///< kitten clause plus the implied pivot
         vector<int32_t> hints; ///< CMS clause IDs, in propagation order
         int32_t id = 0;
     };
-    vector<PicoLemma> pico_lemmas;
-    bool build_core_unit_chain(
-        Lit unit_lit,
-        const vector<uint32_t>& picovar_to_var,
-        const unordered_map<int, Watched>& core_map);
+    vector<GateLemma> gate_lemmas;
+    bool build_core_unit_chain(Lit unit_lit);
     bool find_equivalence_gate(
         Lit lit
         , watch_subarray_const a
@@ -580,15 +576,14 @@ private:
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
+    bool        add_varelim_resolvent(vector<Lit>& final_lits, const ClauseStats& stats,
                                       const vector<int32_t>& hints);
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats,
+    bool        add_varelim_resolvent(vector<Lit>& final_lits, const ClauseStats& stats,
                                       const std::pair<int32_t, int32_t>& parents);
     vector<int32_t> varelim_hints_tmp;
     int32_t     watch_cl_id(const Watched& w) const;
     uint32_t    watch_cl_size(const Watched& w) const;
     void        update_varelim_complexity_heap();
-    void        print_var_elim_complexity_stats(const uint32_t var) const;
 
     //OccSimp
     bool        try_remove_lit_via_occurrence_simpl(const OccurClause& occ_cl);
@@ -653,11 +648,11 @@ private:
     );
     void add_pos_lits_to_dummy_and_seen(
         const Watched& ps
-        , const Lit& posLit
+        , const Lit& pos_lit
     );
     bool add_neg_lits_to_dummy_and_seen(
         const Watched& qs
-        , const Lit& posLit
+        , const Lit& pos_lit
     );
     bool eliminate_vars();
     void eliminate_empty_resolvent_vars();
@@ -667,7 +662,7 @@ private:
     /////////////////////
     //Helpers
     friend class GateFinder;
-    GateFinder *gateFinder = nullptr;
+    GateFinder *gate_finder = nullptr;
 
     /////////////////////
     //Elimed clause elimination
@@ -681,15 +676,15 @@ private:
     bool can_remove_elimed_clauses = false;
 
     ///Stats from this run
-    Stats runStats;
+    Stats run_stats;
 
     ///Stats globally
-    Stats globalStats;
+    Stats global_stats;
 };
 
 inline const OccSimplifier::Stats& OccSimplifier::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const

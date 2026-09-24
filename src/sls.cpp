@@ -33,7 +33,10 @@ SLS::SLS(Solver* _solver) : solver(_solver) {}
 //CaDiCaL's 'walk': effort relative to the search propagations done so far
 int64_t SLS::effort() const
 {
-    int64_t limit = (double)solver->sumPropagations * 1e-3 * solver->conf.walkreleff;
+    //sumPropagations was only ever incremented in the removed BRANCH stats
+    //builds, so this was always walkmineff
+    const uint64_t props = solver->sum_prop_stats.propagations + solver->prop_stats.propagations;
+    int64_t limit = (double)props * 1e-3 * solver->conf.walkreleff;
     limit = std::max<int64_t>(limit, solver->conf.walkmineff);
     limit = std::min<int64_t>(limit, solver->conf.walkmaxeff);
     return limit;
@@ -52,7 +55,7 @@ void SLS::run_initially()
 
 void SLS::run(const int64_t mems)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     if (!enough_mem()) return;
 
@@ -74,14 +77,14 @@ void SLS::run(const int64_t mems)
         for(uint32_t v = 0; v < solver->nVars(); v++)
             if (sls.has_value(v)) sls.set_phase(v, solver->decide_phase(v, true));
 
-    const int64_t minimum = sls.run(mems, solver->conf.origSeed + solver->num_sls_called);
+    const int64_t minimum = sls.run(mems, solver->conf.orig_seed + solver->num_sls_called);
     solver->num_sls_called++;
 
     const bool improved = minimum >= 0 && minimum < solver->sls_minimum;
     if (improved) {
         solver->sls_minimum = minimum;
         for(uint32_t v = 0; v < solver->nVars(); v++)
-            if (sls.has_value(v)) solver->varData[v].saved_polarity = sls.value(v);
+            if (sls.has_value(v)) solver->var_data[v].saved_polarity = sls.value(v);
     }
 
     const double time_used = cpu_time()-my_time;
@@ -95,7 +98,7 @@ void SLS::run(const int64_t mems)
         assert(check == minimum); (void)check;
         verb_print(2, "[sls] unsat: " << cnf << " CNF cls, " << xr << " XORs");
     }
-    if (solver->sqlStats) solver->sqlStats->time_passed_min(solver, "sls", time_used);
+    if (solver->sql_stats) solver->sql_stats->time_passed_min(solver, "sls", time_used);
 }
 
 vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num)
@@ -104,7 +107,7 @@ vector<vector<uint8_t>> SLS::run_alter(const int64_t mems, uint32_t num)
     for(uint32_t i = 0; i < num; i++) {
         CMS_yalsat sls(solver);
         if (!sls.init_problem() || sls.get_num_cls() == 0) break;
-        if (sls.run(mems, solver->conf.origSeed + i) != 0) continue;
+        if (sls.run(mems, solver->conf.orig_seed + i) != 0) continue;
 
         vector<uint8_t> sol(solver->nVars(), 0);
         for(uint32_t v = 0; v < solver->nVars(); v++) {
@@ -132,8 +135,8 @@ bool SLS::enough_mem() const
 uint64_t SLS::approx_mem_needed() const
 {
     const uint32_t numvars = solver->nVars();
-    uint32_t numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
-    uint64_t numliterals = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    uint32_t numclauses = solver->long_irred_cls.size() + solver->bin_tri.irred_bins;
+    uint64_t numliterals = solver->lit_stats.irred_lits + solver->bin_tri.irred_bins*2;
     for(const auto& x: solver->xorclauses) { numclauses++; numliterals += x.size(); }
 
     uint64_t needed = 0;

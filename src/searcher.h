@@ -55,7 +55,7 @@ struct VariableVariance
 };
 
 struct ConflictData {
-    uint32_t nHighestLevel;
+    uint32_t n_highest_level;
 };
 
 class Searcher : public HyperEngine
@@ -73,9 +73,6 @@ class Searcher : public HyperEngine
         bool clean_clauses_if_needed();
         #ifdef STATS_NEEDED
         void check_calc_satzilla_features(bool force = false);
-        #endif
-        #ifdef STATS_NEEDED_BRANCH
-        void check_calc_vardist_features(bool force = false);
         #endif
         void dump_search_loop_stats(double my_time);
         bool must_abort(lbool status);
@@ -97,7 +94,6 @@ class Searcher : public HyperEngine
         char     last_print_rephase = '-';
         string   last_print_branch;
         void     print_restart_stat();
-        void     print_iteration_solving_stats();
         void     print_restart_header();
         void     print_restart_stat_line();
         void     print_restart_stats_base() const;
@@ -111,25 +107,25 @@ class Searcher : public HyperEngine
         ///Returns l_Undef if not inside, l_True/l_False otherwise
         lbool var_inside_assumptions(const uint32_t var) const {
             SLOW_DEBUG_DO(assert(var < nVars()));
-            return varData[var].assumption;
+            return var_data[var].assumption;
         }
         lbool lit_inside_assumptions(const Lit lit) const
         {
             #ifdef SLOW_DEBUG
             assert(lit.var() < nVars());
             #endif
-            if (varData[lit.var()].assumption == l_Undef) {
+            if (var_data[lit.var()].assumption == l_Undef) {
                 return l_Undef;
             } else {
-                lbool val = varData[lit.var()].assumption;
+                lbool val = var_data[lit.var()].assumption;
                 return val ^ lit.sign();
             }
         }
 
         //ChronoBT
         template<bool do_insert_var_order = true, bool inprocess = false>
-        void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
-        void cancelUntil_light();
+        void cancel_until(uint32_t level); ///<Backtrack until a certain level.
+        void cancel_until_light();
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
@@ -141,7 +137,9 @@ class Searcher : public HyperEngine
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
         bool disable_gauss_matrix(uint32_t i);
+        GaussTotals gauss_tot;
         bool gauss_disable_pending = false;
+        uint32_t gauss_disabled_this_solve = 0;
 
         double get_cla_inc() const
         {
@@ -164,10 +162,7 @@ class Searcher : public HyperEngine
         template<class T> void print_clause(const string& str, const T& cl) const;
 
         #ifdef STATS_NEEDED
-        void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
-        uint64_t last_dumped_conflict_rst_data_for_var = numeric_limits<uint64_t>::max();
-        template<class T>
-        uint32_t calc_connects_num_communities(const T& cl);
+        void dump_restart_sql();
         #endif
 
         /////////////////////
@@ -254,6 +249,29 @@ class Searcher : public HyperEngine
         uint64_t lim_rephase = 0;
         uint64_t num_rephased = 0;
         uint64_t num_rephased_in[2] = {0, 0}; //indexed by rst.stable
+        uint64_t glue_used_hist[2][65] = {}; //[rst.stable][min(glue,64)] at bump, as kissat
+        uint64_t sum_clause_uses() const {
+            uint64_t t = 0;
+            for(int m = 0; m < 2; m++) for(int g = 0; g < 65; g++) t += glue_used_hist[m][g];
+            return t;
+        }
+        //Kissat's eagersubsume: the last few learnt clauses, checked for
+        //subsumption by each new one. Offsets validated by ID, cleared on consolidate
+        struct LastLearnt { ClOffset off = CL_OFFSET_MAX; int32_t id = 0; };
+        LastLearnt last_learnt[4];
+        uint32_t last_learnt_at = 0;
+        uint64_t eagerly_subsumed = 0;
+        void eager_subsume_last_learnt(const Clause& newcl);
+        void clear_last_learnt() { for(auto& l: last_learnt) l = LastLearnt(); }
+        uint64_t confl_in_mode[2] = {0, 0};   //[rst.stable], as kissat's focused/stable stats
+        uint64_t restarts_in_mode[2] = {0, 0};
+        uint64_t mode_switches = 0;
+        void print_mode_stats() const;
+        void print_glue_usage() const;
+        //Kissat's dynamic tiers: glue covering 50%/90% of uses in this mode
+        uint32_t tier1_glue = 2;
+        uint32_t tier2_glue = 6;
+        void compute_tier_limits();
         uint64_t last_rephase_conflicts = 0;
         char   rephased = 0;
         char   last_rephase = '-'; //for reporting only
@@ -292,6 +310,18 @@ class Searcher : public HyperEngine
         uint64_t next_intree = 0;
         bool intree_if_needed();
 
+        //Intree's hyper-bins: kept only until the next cleanup unless used
+        //as a reason in conflict analysis, as CaDiCaL's 'hyper' flag
+        struct HyperBinRange { int32_t start; int32_t end; vector<uint8_t> used; };
+        vector<HyperBinRange> hyper_bin_ranges;
+        uint64_t next_hyper_bin_clean = 0;
+        uint64_t hyper_bins_cleaned = 0;
+        uint64_t hyper_bins_kept = 0;
+        void mark_hyper_bin_used(const int32_t id);
+        void add_hyper_bin_range(const int32_t start, const int32_t end);
+        void clean_unused_hyper_bins();
+        bool clean_hyper_bins_if_needed();
+
         // Fast backward for Arjun
         lbool new_decision_fast_backw();
         void create_new_fast_backw_assumption();
@@ -306,7 +336,7 @@ class Searcher : public HyperEngine
         ) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
-        void updateVars(
+        void update_vars(
             const vector<uint32_t>& outer_to_inter
             , const vector<uint32_t>& inter_to_outer
         );
@@ -333,20 +363,17 @@ class Searcher : public HyperEngine
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(
             size_t backtrack_level,
-            uint32_t glue,
-            uint32_t connects_num_communities);
+            uint32_t glue);
         template<bool inprocess>
         void  attach_and_enqueue_learnt_clause(
             Clause* cl,
             const uint32_t level,
             const bool enqueue,
             const uint64_t ID);
-        void  print_learning_debug_info(const int32_t ID) const;
         template<bool inprocess>
         void add_lits_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
         template<bool inprocess>
         void create_learnt_clause(PropBy confl);
-        void debug_print_resolving_clause(const PropBy confl) const;
         template<bool inprocess>
         void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
@@ -357,7 +384,6 @@ class Searcher : public HyperEngine
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
-        void print_debug_resolution_data(const PropBy confl);
         int pathC;
         uint64_t more_red_minim_limit_binary_actual;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -369,7 +395,6 @@ class Searcher : public HyperEngine
             , const uint32_t glue_before_minim
             , const uint32_t size_before_minim
             , const bool is_decision
-            , const uint32_t connects_num_communities
             , int32_t& ID
         );
 
@@ -385,7 +410,6 @@ class Searcher : public HyperEngine
         // Clause database reduction
         /////////////////////
         void reduce_db_if_needed();
-        uint64_t next_pred_reduce;
 
         ///////////////
         // Restart parameters
@@ -460,6 +484,7 @@ class Searcher : public HyperEngine
         friend class Gaussian;
         friend class Lucky;
         friend class DistillerLong;
+        friend class InTree;
         #ifdef CMS_TESTING_ENABLED
         FRIEND_TEST(SearcherTest, pickpolar_rnd);
         FRIEND_TEST(SearcherTest, pickpolar_pos);
@@ -477,9 +502,11 @@ class Searcher : public HyperEngine
         void dump_search_sql(const double my_time);
         void set_clause_data(
             Clause* cl
-            , const uint32_t glue
+            , const uint32_t orig_glue
             , const uint32_t glue_before_minim
-            , const uint32_t old_decision_level);
+            , const uint32_t size_before_minim
+            , const uint32_t old_decision_level
+        );
         #ifdef STATS_NEEDED
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
@@ -490,20 +517,11 @@ class Searcher : public HyperEngine
             const uint32_t size_before_minim,
             const uint32_t old_decision_level,
             const uint64_t clid,
-            const bool decision_cl,
-            const uint32_t connects_num_communities
+            const bool decision_cl
         );
         int dump_this_many_cldata_in_stream = 0;
-        void dump_var_for_learnt_cl(const uint32_t v,
-                                    const uint64_t clid,
-                                    const bool is_decision);
         #endif
 
-        #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-        vector<uint32_t> level_used_for_cl;
-        vector<uint32_t> vars_used_for_cl;
-        vector<unsigned char> level_used_for_cl_arr;
-        #endif
 
         //Other
         void print_solution_type(const lbool status) const;
@@ -514,7 +532,7 @@ class Searcher : public HyperEngine
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
 {
-    return ((uint32_t)1) << (varData[x].level & 31);
+    return ((uint32_t)1) << (var_data[x].level & 31);
 }
 
 inline const SearchStats& Searcher::get_stats() const
@@ -539,26 +557,23 @@ inline void Searcher::insert_var_order(const uint32_t x)
 
 inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 {
-    SLOW_DEBUG_DO(assert(varData[var].removed == Removed::none
+    SLOW_DEBUG_DO(assert(var_data[var].removed == Removed::none
         && "All variables should be decision vars unless removed"));
 
     switch(type) {
         case branch::vsids:
-            if (!order_heap_vsids.inHeap(var)) order_heap_vsids.insert(var);
+            if (!order_heap_vsids.in_heap(var)) order_heap_vsids.insert(var);
             break;
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
             // variables sits after the variable to which 'queue.unassigned' currently
             // points.  See our SAT'15 paper for more details on this aspect.
             //
-            VERBOSE_PRINT("vmtf Inserting back: " << var
-                << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped
-                << " vmtf_btab[var]: " << vmtf_btab[var]);
 
             if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) vmtf_update_queue_unassigned(var);
             break;
         case branch::rand:
-            if (!order_heap_rand.inHeap(var)) order_heap_rand.insert(var);
+            if (!order_heap_rand.in_heap(var)) order_heap_rand.insert(var);
             break;
         default:
             assert(false);
@@ -570,12 +585,12 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 
 inline void Searcher::insert_var_order_all(const uint32_t x)
 {
-    assert(!order_heap_vsids.inHeap(x));
-    SLOW_DEBUG_DO(assert(varData[x].removed == Removed::none &&
+    assert(!order_heap_vsids.in_heap(x));
+    SLOW_DEBUG_DO(assert(var_data[x].removed == Removed::none &&
         "All variables should be decision vars unless removed"));
     order_heap_vsids.insert(x);
 
-    assert(!order_heap_rand.inHeap(x));
+    assert(!order_heap_rand.in_heap(x));
     order_heap_rand.insert(x);
 
     vmtf_init_enqueue(x);
@@ -602,11 +617,11 @@ inline void Searcher::rescale_cl_act()
 {
     // For STATS_NEEDED we rescale ALL
     #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)
-    for(ClOffset offs: longRedCls[2]) {
+    for(ClOffset offs: long_red_cls[2]) {
         cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
     }
     #else
-    for(auto& lrcs: longRedCls) {
+    for(auto& lrcs: long_red_cls) {
         for(ClOffset offs: lrcs) {
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
@@ -630,8 +645,8 @@ inline void Searcher::decayClauseAct()
 //CaDiCaL's 'decide_phase'
 inline bool Searcher::decide_phase(const uint32_t var, const bool target) const
 {
-    if (target && varData[var].target_polarity_set) return varData[var].target_polarity;
-    return varData[var].saved_polarity;
+    if (target && var_data[var].target_polarity_set) return var_data[var].target_polarity;
+    return var_data[var].saved_polarity;
 }
 
 inline bool Searcher::pick_polarity(const uint32_t var)
@@ -648,7 +663,7 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 
         case PolarityMode::polarmode_weighted: {
             float rnd = std::uniform_real_distribution<float>(0,1)(mtrand);
-            return rnd < varData[var].weight;
+            return rnd < var_data[var].weight;
         }
 
         case PolarityMode::polarmode_automatic:
@@ -680,7 +695,7 @@ inline void Searcher::vsids_bump_var_act(const uint32_t var)
     }
 
     // Update order_heap with respect to new activity
-    if (order_heap_vsids.inHeap(var)) {
+    if (order_heap_vsids.in_heap(var)) {
         order_heap_vsids.decrease(var);
     }
 

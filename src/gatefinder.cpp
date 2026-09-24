@@ -40,7 +40,7 @@ GateFinder::GateFinder(OccSimplifier *_simplifier, Solver *_solver) :
     , solver(_solver)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
-    , toClear(solver->toClear)
+    , to_clear(solver->to_clear)
 {
 //     sizeSortedOcc.resize(solver->conf.maxGateBasedClReduceSize+1);
 }
@@ -48,22 +48,19 @@ GateFinder::GateFinder(OccSimplifier *_simplifier, Solver *_solver) :
 void GateFinder::cleanup()
 {
     solver->clean_occur_from_idx_types_only_smudged();
-    orGates.clear();
+    or_gates.clear();
 }
 
 void GateFinder::find_all()
 {
-    runStats.clear();
-    orGates.clear();
+    run_stats.clear();
+    or_gates.clear();
 
     assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
-    if (solver->conf.doPrintGateDot) print_graphviz_dot();
-    VERBOSE_DEBUG_DO(for(auto g: orGates) cout << "found: OR gate" << g << endl;);
+    if (solver->conf.do_print_gate_dot) print_graphviz_dot();
 
-    if (solver->conf.verbosity >= 3) runStats.print(solver->nVars(), solver->conf.prefix);
-    globalStats += runStats;
-    solver->sumSearchStats.num_gates_found_last = orGates.size();
+    global_stats += run_stats;
 }
 
 void GateFinder::find_or_gates_and_update_stats()
@@ -78,16 +75,16 @@ void GateFinder::find_or_gates_and_update_stats()
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
     find_or_gates();
-    runStats.gatesSize += 2*orGates.size();
-    runStats.num+=orGates.size();
+    run_stats.gatesSize += 2*or_gates.size();
+    run_stats.num+=or_gates.size();
 
     const double time_used = cpu_time() - my_time;
     const bool time_out = (numMaxGateFinder <= 0);
     const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
-    runStats.findGateTime = time_used;
-    runStats.find_gate_timeout = time_out;
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    run_stats.findGateTime = time_used;
+    run_stats.find_gate_timeout = time_out;
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "gate find"
             , time_used
@@ -97,9 +94,9 @@ void GateFinder::find_or_gates_and_update_stats()
     }
 
     verb_print(1, "[occ-gates]"
-        << " found: " << print_value_kilo_mega(runStats.num)
+        << " found: " << print_value_kilo_mega(run_stats.num)
         << " avg-s: " << std::fixed << std::setprecision(1)
-        << float_div(runStats.gatesSize, runStats.num)
+        << float_div(run_stats.gatesSize, run_stats.num)
         /*<< " avg-s: " << std::fixed << std::setprecision(1)
         << float_div(learntGatesSize, numRed)*/
         << solver->conf.print_times(time_used, time_out, time_remain));
@@ -139,7 +136,7 @@ void GateFinder::find_or_gates()
 
 void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 {
-    assert(toClear.empty());
+    assert(to_clear.empty());
 
     //From the clauses
     //a V -b
@@ -148,9 +145,9 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     watch_subarray_const ws = solver->watches[lit];
     *simplifier->limit_to_decrease -= ws.size();
     for(const Watched w: ws) {
-        if (w.isBin() && !w.red()) {
+        if (w.is_bin() && !w.red()) {
             seen[(~w.lit2()).toInt()] = 1;
-            toClear.push_back(~w.lit2());
+            to_clear.push_back(~w.lit2());
         }
     }
     //avoid loops
@@ -163,7 +160,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     *simplifier->limit_to_decrease -= ws2.size();
     for(const Watched w: ws2) {
         //Looking for tri or longer
-        if (!w.isClause()) continue;
+        if (!w.is_clause()) continue;
         ClOffset offset = w.get_offset();
         const Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.red() || cl.get_removed() || cl.size() > 5) continue;
@@ -182,9 +179,9 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
         add_gate_if_not_already_inside(lit, tmp_lhs, cl.stats.id);
     }
 
-    *simplifier->limit_to_decrease -= toClear.size();
-    for(const Lit toclear: toClear) seen[toclear.toInt()] = 0;
-    toClear.clear();
+    *simplifier->limit_to_decrease -= to_clear.size();
+    for(const Lit toclear: to_clear) seen[toclear.toInt()] = 0;
+    to_clear.clear();
 }
 
 
@@ -193,8 +190,8 @@ void GateFinder::add_gate_if_not_already_inside(
 {
     OrGate gate(rhs, lhs, ID);
     for (Watched ws: solver->watches[gate.rhs]) {
-        if (ws.isIdx()
-            && orGates[ws.get_idx()] == gate
+        if (ws.is_idx()
+            && or_gates[ws.get_idx()] == gate
         ) {
             return;
         }
@@ -204,8 +201,8 @@ void GateFinder::add_gate_if_not_already_inside(
 
 void GateFinder::link_in_gate(const OrGate& gate)
 {
-    const size_t at = orGates.size();
-    orGates.push_back(gate);
+    const size_t at = or_gates.size();
+    or_gates.push_back(gate);
     solver->watches[gate.rhs].push(Watched(at, WatchType::watch_idx_t));
     solver->watches.smudge(gate.rhs);
 }
@@ -220,12 +217,12 @@ void GateFinder::print_graphviz_dot()
     std::ofstream file(filenename.c_str(), std::ios::out);
     file << "digraph G {" << endl;
     vector<bool> gateUsed;
-    gateUsed.resize(orGates.size(), false);
+    gateUsed.resize(or_gates.size(), false);
     size_t index = 0;
-    for (const OrGate& orGate: orGates) {
+    for (const OrGate& orGate: or_gates) {
         for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {
-                if (!ws.isIdx()) {
+                if (!ws.is_idx()) {
                     continue;
                 }
                 uint32_t at = ws.get_idx();
@@ -261,7 +258,7 @@ void GateFinder::print_graphviz_dot()
         index++;
     }
 
-    for (index = 0; index < orGates.size(); index++) {
+    for (index = 0; index < or_gates.size(); index++) {
         if (gateUsed[index]) {
             file << "Gate" << index << " [ shape=\"point\"";
             file << ", size = 0.8";
@@ -306,69 +303,5 @@ GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
     num += other.num;
 
     return *this;
-}
-
-void GateFinder::Stats::print(const size_t nVars, const string& pre) const
-{
-    cout << pre << "-------- GATE FINDING ----------" << endl;
-    print_stats_line("c time"
-        , total_time()
-    );
-
-    print_stats_line("c find gate time"
-        , findGateTime
-        , stats_line_percent(findGateTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gate-based cl-sh time"
-        , orBasedTime
-        , stats_line_percent(orBasedTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gate-based cl-rem time"
-        , andBasedTime
-        , stats_line_percent(andBasedTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gate-based varrep time"
-        , varReplaceTime
-        , stats_line_percent(varReplaceTime, total_time())
-        , "% time"
-    );
-
-    print_stats_line("c gatefinder cl-short"
-        , orGateUseful
-        , stats_line_percent(orGateUseful, numLongCls)
-        , "% long cls"
-    );
-
-    print_stats_line("c gatefinder lits-rem"
-        , litsRem
-        , stats_line_percent(litsRem, numLongClsLits)
-        , "% long cls lits"
-    );
-
-    print_stats_line("c gatefinder cl-rem"
-        , andGateUseful
-        , stats_line_percent(andGateUseful, numLongCls)
-        , "% long cls"
-    );
-
-    print_stats_line("c gatefinder cl-rem's lits"
-        , clauseSizeRem
-        , stats_line_percent(clauseSizeRem, numLongClsLits)
-        , "% long cls lits"
-    );
-
-    print_stats_line("c gatefinder var-rep"
-        , varReplaced
-        , stats_line_percent(varReplaced, nVars)
-        , "% vars"
-    );
-
-    cout << pre << "-------- GATE FINDING END ----------" << endl;
 }
 

@@ -43,8 +43,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define LARGE_OFFSETS
 #endif
 
-/* #define VERBOSE_DEBUG */
-/* #define VERBOSE_DEBUG_FULLPROP */
 /* #define DEBUG_DEPTH */
 /* #define SLOW_DEBUG */
 /* #define DEBUG_ATTACH_FULL */
@@ -111,13 +109,13 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define STATS_DO(x) do {x;} while (0)
 #define INC_ID(cl) \
     do { \
-        auto prev_id = (cl).stats.ID; \
-        (cl).stats.ID = ++solver->clauseID; \
-        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.ID); \
+        auto prev_id = (cl).stats.id; \
+        (cl).stats.id = ++solver->clause_id; \
+        if (solver->sql_stats && (cl).stats.is_tracked) solver->sql_stats->update_id(prev_id, (cl).stats.id); \
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
-#define INC_ID(cl) do { (cl).stats.id = ++solver->clauseID; } while (0)
+#define INC_ID(cl) do { (cl).stats.id = ++solver->clause_id; } while (0)
 #endif
 // NOTE: xid's are not tracked during stats -- we must have XOR finding etc disabled
 #define INC_XID(x) do { (x).xid = ++solver->clauseXID; } while (0)
@@ -153,14 +151,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define frat_func_end() do { } while (0)
 #define frat_func_end_with(x) do { } while (0)
 #define frat_func_end_raw() do { } while (0)
-#endif
-
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_PRINT(x) do { std::cout << x << std::endl; } while (0)
-#define VERBOSE_DEBUG_DO(x) do { x; } while (0)
-#else
-#define VERBOSE_PRINT(x) do { } while (0)
-#define VERBOSE_DEBUG_DO(x) do { } while (0)
 #endif
 
 #ifdef USE_BREAKID
@@ -213,21 +203,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #endif
 
 
-#ifdef VERBOSE_DEBUG
-#define FAST_DEBUG
-#define DEBUG_ATTACH_FULL
-#define VERBOSE_DEBUG_XOR
-#define VERBOSE_DEBUG_RECONSTRUCT
-#endif
-
-#ifdef __GNUC__
-    #define likely(x) __builtin_expect((x), 1)
-    #define unlikely(x) __builtin_expect((x), 0)
-#else
-    #define likely(x) x
-    #define unlikely(x) x
-#endif
-
 #ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)
 #else
@@ -243,7 +218,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
     *solver->frat << "UNSAT SET HERE" <<  __PRETTY_FUNCTION__ << "\n"; \
     assert(solver->unsat_cl_ID == 0);\
     solver->unsat_cl_ID = (x);\
-    /*cout << "set unsat CL ID here to " << (x) << endl;*/\
     /*assert(false);*/\
     } while (0)
 

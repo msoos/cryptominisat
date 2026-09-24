@@ -33,7 +33,6 @@ THE SOFTWARE.
 using namespace CMSat;
 
 //#define DEBUG_CLEAN
-//#define VERBOSE_DEBUG
 
 ClauseCleaner::ClauseCleaner(Solver* _solver) :
     solver(_solver)
@@ -42,7 +41,7 @@ ClauseCleaner::ClauseCleaner(Solver* _solver) :
 
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
-    assert(watched.isBin());
+    assert(watched.is_bin());
     return solver->value(lit) == l_True
         || solver->value(watched.lit2()) == l_True;
 }
@@ -87,12 +86,12 @@ void ClauseCleaner::clean_implicit_watchlist(
     Watched* i = watch_list.begin();
     Watched* j = i;
     for (Watched* end2 = watch_list.end(); i != end2; i++) {
-        if (i->isClause() || i->isBNN()) {
+        if (i->is_clause() || i->is_bnn()) {
             *j++ = *i;
             continue;
         }
 
-        if (i->isBin()) {
+        if (i->is_bin()) {
             clean_binary_implicit(i, j, lit);
             continue;
         }
@@ -104,21 +103,21 @@ void ClauseCleaner::clean_implicit_clauses()
 {
     verb_print(15, "cleaning implicit clauses");
 
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     impl_data = ImplicitData();
     const size_t end = solver->watches.size();
     constexpr size_t prefetch_distance = 2;
-    for (size_t wsLit = 0; wsLit < end; wsLit++) {
+    for (size_t ws_lit = 0; ws_lit < end; ws_lit++) {
         // Prefetch a few watchlists ahead to hide memory latency.
-        const size_t prefetch_at = wsLit + prefetch_distance;
+        const size_t prefetch_at = ws_lit + prefetch_distance;
         if (prefetch_at < end && !solver->watches[Lit::toLit(prefetch_at)].empty()) {
             solver->watches.prefetch(prefetch_at);
         }
 
-        watch_subarray ws = solver->watches[Lit::toLit(wsLit)];
+        watch_subarray ws = solver->watches[Lit::toLit(ws_lit)];
         if (ws.empty()) continue;
 
-        clean_implicit_watchlist(ws, Lit::toLit(wsLit));
+        clean_implicit_watchlist(ws, Lit::toLit(ws_lit));
     }
     impl_data.update_solver_stats(solver);
 
@@ -185,7 +184,7 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
 
 void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->prop_at_head());
     verb_print(15, "Cleaning BNNs");
 
@@ -204,7 +203,6 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
                 solver->watches.smudge(~bnn->out);
             }
             bnn->isRemoved = true;
-//             cout << "Removed BNN" << endl;
         }
         bnn->undefs = bnn->size();
         bnn->ts = 0;
@@ -213,7 +211,7 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
 
 void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 {
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     assert(solver->prop_at_head());
     verb_print(15, "Cleaning clauses in vector<ClOffset>");
 
@@ -226,17 +224,17 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
         const ClOffset off = cs[at];
         Clause& cl = *solver->cl_alloc.ptr(off);
 
-        const Lit origLit1 = cl[0];
-        const Lit origLit2 = cl[1];
-        const auto origSize = cl.size();
+        const Lit orig_lit1 = cl[0];
+        const Lit orig_lit2 = cl[1];
+        const auto orig_size = cl.size();
         const bool red = cl.red();
 
         if (clean_clause(cl)) {
-            solver->watches.smudge(origLit1);
-            solver->watches.smudge(origLit2);
+            solver->watches.smudge(orig_lit1);
+            solver->watches.smudge(orig_lit2);
             cl.set_removed();
-            if (red) solver->litStats.redLits -= origSize;
-            else solver->litStats.irredLits -= origSize;
+            if (red) solver->lit_stats.red_lits -= orig_size;
+            else solver->lit_stats.irred_lits -= orig_size;
             delayed_free.push_back(off);
         } else {
             cs[kept++] = off;
@@ -312,9 +310,9 @@ bool ClauseCleaner::clean_clause(Clause& cl)
             return true;
         } else {
             if (cl.red()) {
-                solver->litStats.redLits -= i-j;
+                solver->lit_stats.red_lits -= i-j;
             } else {
-                solver->litStats.irredLits -= i-j;
+                solver->lit_stats.irred_lits -= i-j;
             }
         }
     }
@@ -325,18 +323,18 @@ bool ClauseCleaner::clean_clause(Clause& cl)
 void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 {
     for(const BinaryClause& bincl: toAttach) {
-        assert(solver->value(bincl.getLit1()) == l_Undef);
-        assert(solver->value(bincl.getLit2()) == l_Undef);
-        solver->attach_bin_clause(bincl.getLit1(),
-                                  bincl.getLit2(),
-                                  bincl.isRed(),
+        assert(solver->value(bincl.get_lit1()) == l_Undef);
+        assert(solver->value(bincl.get_lit2()) == l_Undef);
+        solver->attach_bin_clause(bincl.get_lit1(),
+                                  bincl.get_lit2(),
+                                  bincl.is_red(),
                                   bincl.get_id());
     }
 
     assert(remNonLBin % 2 == 0);
     assert(remLBin % 2 == 0);
-    solver->binTri.irredBins -= remNonLBin/2;
-    solver->binTri.redBins -= remLBin/2;
+    solver->bin_tri.irred_bins -= remNonLBin/2;
+    solver->bin_tri.red_bins -= remLBin/2;
 }
 
 void ClauseCleaner::clean_clauses_pre()
@@ -366,7 +364,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     double my_time = cpu_time();
     assert(solver->okay());
     assert(solver->prop_at_head());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
     frat_func_start();
 
     size_t last_trail = numeric_limits<size_t>::max();
@@ -381,8 +379,8 @@ bool ClauseCleaner::remove_and_clean_all() {
         clean_bnns_inter(solver->bnns);
         if (!solver->okay()) break;
 
-        clean_clauses_inter(solver->longIrredCls);
-        for(auto& lredcls: solver->longRedCls) clean_clauses_inter(lredcls);
+        clean_clauses_inter(solver->long_irred_cls);
+        for(auto& lredcls: solver->long_red_cls) clean_clauses_inter(lredcls);
         solver->clean_occur_from_removed_clauses_only_smudged();
         clean_clauses_post();
         clean_bnns_post();
@@ -392,8 +390,8 @@ bool ClauseCleaner::remove_and_clean_all() {
     if (solver->okay()) {
         //Once we have cleaned the watchlists
         //no watchlist whose lit is set may be non-empty
-        for (size_t wsLit = 0; wsLit < solver->watches.size(); wsLit++) {
-            const Lit lit = Lit::toLit(wsLit);
+        for (size_t ws_lit = 0; ws_lit < solver->watches.size(); ws_lit++) {
+            const Lit lit = Lit::toLit(ws_lit);
             if (solver->value(lit) != l_Undef) {
                 const auto& wl = solver->watches[lit];
                 if (!wl.empty()) {
@@ -424,7 +422,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     size_t i = 0;
     size_t j = 0;
     uint32_t orig[2] = {x[x.watched[0]], x[x.watched[1]]};
-    VERBOSE_PRINT("Trying to clean XOR: " << x);
 
     i = 0;
     j = 0;
@@ -467,8 +464,8 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         case 0:
             if (x.rhs == true) {
                 solver->ok = false;
-                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.xid << fin;
-                set_unsat_cl_id(solver->clauseID);
+                *solver->frat << implyclfromx << ++solver->clause_id << fratchain << x.xid << fin;
+                set_unsat_cl_id(solver->clause_id);
             }
             frat_func_end();
             return false;
@@ -487,7 +484,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
 
 bool ClauseCleaner::clean_all_xor_clauses() {
     assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
+    assert(solver->decision_level() == 0);
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
@@ -501,7 +498,6 @@ bool ClauseCleaner::clean_all_xor_clauses() {
 // Returns okay(), it can lead to UNSAT
 bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
     assert(solver->ok);
-    VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "Cleaning XOR: " << x << endl);
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
@@ -528,7 +524,6 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
         }
         xors.resize(j);
     }
-    VERBOSE_PRINT(__PRETTY_FUNCTION__ << " finished");
     return solver-> okay();
 }
 

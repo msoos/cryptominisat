@@ -45,7 +45,7 @@ public:
     bool doit();
     void finished_solving();
     void start_new_solving();
-    void updateVars(
+    void update_vars(
     const vector<uint32_t>& outer_to_inter
     , const vector<uint32_t>& inter_to_outer);
     void update_var_after_varreplace();

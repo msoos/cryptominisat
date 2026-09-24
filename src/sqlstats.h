@@ -69,7 +69,7 @@ public:
 
     virtual void set_id_confl(
         const int32_t id
-        , const uint64_t sumConflicts
+        , const uint64_t sum_conflicts
     ) = 0;
 
     #ifdef STATS_NEEDED
@@ -80,14 +80,12 @@ public:
     ) = 0;
 
     virtual void restart(
-        const uint32_t restartID
+        const uint32_t restart_id
         , const uint32_t rest_stable
         , const PropStats& thisPropStats
-        , const SearchStats& thisStats
+        , const SearchStats& this_stats
         , const Solver* solver
         , const Searcher* searcher
-        , const rst_dat_type type
-        , const int64_t clauseID = -1
     ) = 0;
 
     virtual void reduceDB(
@@ -106,33 +104,6 @@ public:
         const AverageCommonDataRDB& avg_data
     ) = 0;
 
-    #ifdef STATS_NEEDED_BRANCH
-    virtual void var_data_picktime(
-        const Solver* solver
-        , const uint32_t var
-        , const VarData& vardata
-        , const double rel_activity
-    ) = 0;
-
-    virtual void var_data_fintime(
-        const Solver* solver
-        , const uint32_t var
-        , const VarData& vardata
-        , const double rel_activity
-    ) = 0;
-
-    virtual void dec_var_clid(
-        const uint32_t var
-        , const uint64_t sumConflicts_at_picktime
-        , const uint64_t clid
-    ) = 0;
-
-    virtual void var_dist(
-        const uint32_t var
-        , const VarData2& data
-        , const Solver* solver
-    ) = 0;
-    #endif
 
     virtual void cl_last_in_solver(
         const Solver* solver
@@ -147,7 +118,7 @@ public:
     virtual void clause_stats(
         const Solver* solver
         , uint64_t clid
-        , uint64_t restartID
+        , uint64_t restart_id
         , uint32_t glue
         , uint32_t glue_before_minim
         , uint32_t size
@@ -156,11 +127,9 @@ public:
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t trail_depth
-        , uint64_t conflicts_this_restart
         , const uint32_t restart_type
         , const SearchHist& hist
         , const bool is_decision
-        , const uint32_t orig_connects_num_communities
     ) = 0;
     #endif
 

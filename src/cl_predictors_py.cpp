@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "cl_predictors_py.h"
 #include "clause.h"
 #include "solver.h"
+#include "predict_features_gen.h"
 #include <cmath>
 
 static wchar_t* charToWChar(const char* text)
@@ -45,81 +46,33 @@ extern unsigned int predictor_forever_json_len;
 
 using namespace CMSat;
 
+int ClPredictorsPy::get_step_size()
+{
+    return predgen::NUM_RAW;
+}
+
+//Every raw column; ml_module.py computes the features from them
 int ClPredictorsPy::set_up_input(
     const CMSat::Clause* const cl,
-    const uint64_t sumConflicts,
+    const uint64_t sum_conflicts,
     const double   act_ranking_rel,
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
-    const double   sum_uip1_per_time_ranking,
-    const double   sum_props_per_time_ranking,
+    const double   /*sum_uip1_per_time_ranking*/,
+    const double   /*sum_props_per_time_ranking*/,
     const double   sum_uip1_per_time_ranking_rel,
     const double   sum_props_per_time_ranking_rel,
     const ReduceCommonData& commdata,
     const Solver* solver,
     float* at)
 {
-    int x = 0;
-
     const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
-    uint32_t last_touched_any_diff = sumConflicts - (uint64_t)cl->stats.last_touched_any;
-    double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
-
-    at[x++] = cl->stats.is_ternary_resolvent;
-    at[x++] = cl->stats.which_red_array;
-    at[x++] = cl->stats.last_touched_any;
-    at[x++] = act_ranking_rel;
-    at[x++] = uip1_ranking_rel;
-    at[x++] = prop_ranking_rel;
-    at[x++] = last_touched_any_diff;
-    at[x++] = time_inside_solver;
-    at[x++] = cl->stats.props_made;
-    at[x++] = commdata.avg_props;
-    at[x++] = commdata.avg_uip;
-    at[x++] = solver->hist.conflSizeHistLT.avg();
-    at[x++] = solver->hist.glueHistLT.avg();
-    at[x++] = extra_stats.sum_props_made;
-    at[x++] = extra_stats.discounted_props_made;
-    at[x++] = extra_stats.discounted_props_made2;
-    at[x++] = extra_stats.discounted_props_made3;
-    at[x++] = extra_stats.discounted_uip1_used;
-    at[x++] = extra_stats.discounted_uip1_used2;
-    at[x++] = extra_stats.discounted_uip1_used3;
-    at[x++] = extra_stats.sum_uip1_used;
-    at[x++] = cl->stats.uip1_used;
-    at[x++] = cl->size();
-    at[x++] = sum_uip1_per_time_ranking;
-    at[x++] = sum_props_per_time_ranking;
-    at[x++] = sum_uip1_per_time_ranking_rel;
-    at[x++] = sum_props_per_time_ranking_rel;
-    at[x++] = cl->distilled;
-
-    //Ternary resolvents lack glue and antecedent data
-    if (cl->stats.is_ternary_resolvent) {
-        for(int i = 0; i < 14; i++) {
-            at[x++] = missing_val;
-        }
-    } else {
-        at[x++] = extra_stats.glueHist_avg;
-        at[x++] = extra_stats.antecedents_binIrred;
-        at[x++] = extra_stats.glueHistLT_avg;
-        at[x++] = extra_stats.glueHist_longterm_avg;
-        at[x++] = extra_stats.num_antecedents;
-        at[x++] = extra_stats.overlapHistLT_avg;
-        at[x++] = extra_stats.conflSizeHist_avg;
-        at[x++] = extra_stats.antecedents_binred;
-        at[x++] = extra_stats.num_total_lits_antecedents;
-        at[x++] = extra_stats.numResolutionsHistLT_avg;
-        at[x++] = cl->stats.glue;
-        at[x++] = extra_stats.orig_glue;
-        at[x++] = extra_stats.glue_before_minim;
-        at[x++] = extra_stats.trail_depth_level;
-    }
-    assert(x == NUM_RAW_FEATS);
-
-    return NUM_RAW_FEATS;
+    const predgen::In in {cl, extra_stats, solver, commdata, sum_conflicts,
+        act_ranking_rel, uip1_ranking_rel, prop_ranking_rel,
+        sum_uip1_per_time_ranking_rel, sum_props_per_time_ranking_rel};
+    predgen::fill_raw(in, missing_val, at);
+    return predgen::NUM_RAW;
 }
-
 
 ClPredictorsPy::ClPredictorsPy()
 {
@@ -147,6 +100,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
                                 const std::string& forever_fname,
                                 const std::string& best_feats_fname)
 {
+    NoFPTraps no_traps;
     Py_Initialize();
     import_array();
     wchar_t *tmp = charToWChar(best_feats_fname.c_str());
@@ -171,33 +125,38 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
 
     // Set up features
     PyObject *set_up_features = PyDict_GetItemString(pDict, "set_up_features");
-    pArgs = PyTuple_New(1);
-    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
-    PyObject* ret = PyObject_CallObject(set_up_features, pArgs);
+    PyObject* raw_names = PyList_New(predgen::NUM_RAW);
+    for(int i = 0; i < predgen::NUM_RAW; i++) {
+        PyList_SetItem(raw_names, i, PyUnicode_FromString(predgen::raw_names[i]));
+    }
+    p_args = PyTuple_New(2);
+    PyTuple_SetItem(p_args, 0, PyUnicode_FromString(best_feats_fname.c_str()));
+    PyTuple_SetItem(p_args, 1, raw_names);
+    PyObject* ret = PyObject_CallObject(set_up_features, p_args);
     if (ret == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to set up features!" << endl;
         exit(-1);
     }
     //Py_DECREF(set_up_features);
-    Py_DECREF(pArgs);
+    Py_DECREF(p_args);
     Py_DECREF(ret);
 
 
     //Load models
     PyObject* load_models = PyDict_GetItemString(pDict, "load_models");
-    pArgs = PyTuple_New(3);
-    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(short_fname.c_str()));
-    PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
-    PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
-    ret = PyObject_CallObject(load_models, pArgs);
+    p_args = PyTuple_New(3);
+    PyTuple_SetItem(p_args, 0, PyUnicode_FromString(short_fname.c_str()));
+    PyTuple_SetItem(p_args, 1, PyUnicode_FromString(long_fname.c_str()));
+    PyTuple_SetItem(p_args, 2, PyUnicode_FromString(forever_fname.c_str()));
+    ret = PyObject_CallObject(load_models, p_args);
     if (ret == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to load models !" << endl;
         exit(-1);
     }
     //Py_DECREF(load_models);
-    Py_DECREF(pArgs);
+    Py_DECREF(p_args);
     Py_DECREF(ret);
     //Py_DECREF(pModule);
     //Py_DECREF(pDict);
@@ -218,21 +177,22 @@ void ClPredictorsPy::predict_all(
     if (num == 0) {
         return;
     }
+    NoFPTraps no_traps;
 
     // Create NumPy 2D array with data
     npy_intp dims[2];
     dims[0] = num;
-    dims[1] = NUM_RAW_FEATS;
+    dims[1] = predgen::NUM_RAW;
     pArray = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, data);
     assert(pArray != nullptr);
 
     // Tuple to hold the arguments to the method
-    pArgs = PyTuple_New(1);
-    PyTuple_SetItem(pArgs, 0, pArray);
+    p_args = PyTuple_New(1);
+    PyTuple_SetItem(p_args, 0, pArray);
 
     // Call the function with the arguments
-    PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
-    Py_DECREF(pArgs);
+    PyObject* pResult = PyObject_CallObject(pFunc, p_args);
+    Py_DECREF(p_args);
     if(pResult == nullptr) {
         PyErr_Print();
         cout << "Calling the add method failed" << endl;

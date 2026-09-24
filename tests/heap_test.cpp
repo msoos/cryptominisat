@@ -90,8 +90,8 @@ TEST(heap_minim, inserted_inside)
     Heap<Comp> heap(cmp);
     heap.insert(10);
     heap.insert(20);
-    EXPECT_EQ(heap.inHeap(10), true);
-    EXPECT_EQ(heap.inHeap(20), true);
+    EXPECT_EQ(heap.in_heap(10), true);
+    EXPECT_EQ(heap.in_heap(20), true);
 }
 
 int main(int argc, char **argv) {

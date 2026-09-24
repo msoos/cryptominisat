@@ -51,7 +51,7 @@ public:
     float predict(
         predict_type pred_type,
         const CMSat::Clause* cl,
-        const uint64_t sumConflicts,
+        const uint64_t sum_conflicts,
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,

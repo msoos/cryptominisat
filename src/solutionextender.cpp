@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include "occsimplifier.h"
 #include "gaussian.h"
 
-//#define VERBOSE_DEBUG_SOLUTIONEXTENDER
 
 using namespace CMSat;
 
@@ -42,16 +41,16 @@ void SolutionExtender::extend() {
     verb_print(10, "Exteding solution -- SolutionExtender::extend()");
 
     #ifdef SLOW_DEBUG
-    for(uint32_t i = 0; i < solver->varData.size(); i++) {
+    for(uint32_t i = 0; i < solver->var_data.size(); i++) {
         uint32_t v_inter = solver->map_outer_to_inter(i);
         if (
             //decomposed's solution has beed added already, it SHOULD be set
             //but everything else is NOT OK
-            solver->varData[v_inter].removed != Removed::none
+            solver->var_data[v_inter].removed != Removed::none
         ) {
             if (solver->model[i] != l_Undef)
                 cout << "ERROR: variable " << i + 1 << " set even though it's removed: "
-                << removed_type_to_string(solver->varData[v_inter].removed) << endl;
+                << removed_type_to_string(solver->var_data[v_inter].removed) << endl;
             assert(solver->model[i] == l_Undef);
         }
     }
@@ -67,7 +66,7 @@ void SolutionExtender::extend() {
     }
 
     //Extend variables already set
-    solver->varReplacer->extend_model_already_set();
+    solver->var_replacer->extend_model_already_set();
     if (simplifier) simplifier->extend_model(this);
 
     //clause has been added with "lit, ~lit" so var must be set
@@ -76,7 +75,7 @@ void SolutionExtender::extend() {
             solver->model[i] = l_False;
         }
     }
-    solver->varReplacer->extend_model_all();
+    solver->var_replacer->extend_model_all();
 }
 
 inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const {
@@ -93,13 +92,10 @@ inline bool SolutionExtender::xor_satisfied(const vector< Lit >& lits) const {
 //called with _outer_ variable in "elimed_on"
 void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
 {
-    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout << "dummy elimed lit (outer) " << elimed_on + 1 << endl;
-    #endif
 
     #ifdef SLOW_DEBUG
     const uint32_t elimedOn_inter = solver->map_outer_to_inter(elimed_on);
-    assert(solver->varData[elimedOn_inter].removed == Removed::elimed);
+    assert(solver->var_data[elimedOn_inter].removed == Removed::elimed);
     #endif
 
     //Elimed clauses set its value already
@@ -108,31 +104,18 @@ void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
     solver->model[elimed_on] = l_False;
 
     //If var is replacing something else, it MUST be set.
-    if (solver->varReplacer->var_is_replacing(elimed_on)) {
-        solver->varReplacer->extend_model(elimed_on);
+    if (solver->var_replacer->var_is_replacing(elimed_on)) {
+        solver->var_replacer->extend_model(elimed_on);
     }
 }
 
 void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t elimed_on) {
-    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout << "outer clause: " << lits << endl;
-    #endif
 
     #ifdef SLOW_DEBUG
     const uint32_t elimed_on_inter = solver->map_outer_to_inter(elimed_on);
-    assert(solver->varData[elimed_on_inter].removed == Removed::elimed);
+    assert(solver->var_data[elimed_on_inter].removed == Removed::elimed);
     assert(contains_var(lits, elimed_on));
     #endif
-
-    if (solver->conf.verbosity >= 10) {
-        for(Lit lit: lits) {
-            Lit lit_inter = solver->map_outer_to_inter(lit);
-            cout << lit << ": " << solver->model_value(lit)
-            << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
-            << ", ";
-        }
-        cout << "elimed on: " <<  elimed_on+1 << endl;
-    }
 
     if (solver->model_value(elimed_on) != l_Undef) {
         cout << "ERROR: Model value for var " << elimed_on+1 << " is "
@@ -144,7 +127,7 @@ void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t el
         for(Lit l: lits) {
             uint32_t v_inter = solver->map_outer_to_inter(l.var());
             cout << "Value of " << l << " : " << solver-> model_value(l)
-            << " removed: " << removed_type_to_string(solver->varData[v_inter].removed)
+            << " removed: " << removed_type_to_string(solver->var_data[v_inter].removed)
             << endl;
         }
     }
@@ -169,7 +152,7 @@ bool SolutionExtender::add_xor_cl(const vector<Lit>& lits, const uint32_t elimed
 
     verb_print(10,"Extending VELIM cls (xor). -- setting model for var "
         << elimed_on + 1 << " to " << solver->model[elimed_on]);
-    solver->varReplacer->extend_model(elimed_on);
+    solver->var_replacer->extend_model(elimed_on);
 
     assert(xor_satisfied(lits));
     return true;
@@ -190,7 +173,7 @@ bool SolutionExtender::add_cl(const vector<Lit>& lits, const uint32_t elimed_on)
 
     verb_print(10,"Extending VELIM cls (norm cl). -- setting model for var "
         << elimed_on + 1 << " to " << solver->model[elimed_on]);
-    solver->varReplacer->extend_model(elimed_on);
+    solver->var_replacer->extend_model(elimed_on);
 
     assert(satisfied(lits));
     return true;

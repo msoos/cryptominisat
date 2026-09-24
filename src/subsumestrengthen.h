@@ -94,7 +94,7 @@ public:
 
 private:
     Stats globalstats;
-    Stats runStats;
+    Stats run_stats;
 
     OccSimplifier* simplifier;
     Solver* solver;
@@ -138,7 +138,7 @@ private:
 
     vector<OccurClause> subs;
     vec<Watched> tmp;
-    vector<Lit> subsLits;
+    vector<Lit> subs_lits;
     vector<Lit> tmpLits;
     size_t tried_bin_tri = 0;
     uint64_t subsumedBin = 0;
@@ -147,7 +147,7 @@ private:
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const
 {
-    return runStats;
+    return run_stats;
 }
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::get_stats() const
