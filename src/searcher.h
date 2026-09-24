@@ -571,9 +571,6 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
             // variables sits after the variable to which 'queue.unassigned' currently
             // points.  See our SAT'15 paper for more details on this aspect.
             //
-            VERBOSE_PRINT("vmtf Inserting back: " << var
-                << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped
-                << " vmtf_btab[var]: " << vmtf_btab[var]);
 
             if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) vmtf_update_queue_unassigned(var);
             break;

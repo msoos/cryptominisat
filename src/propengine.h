@@ -422,7 +422,6 @@ private:
 inline void PropEngine::new_decision_level()
 {
     trail_lim.push_back(trail.size());
-    VERBOSE_PRINT("New decision level: " << trail_lim.size());
 }
 
 inline uint32_t PropEngine::decisionLevel() const
@@ -521,7 +520,6 @@ inline PropResult PropEngine::handle_long_cl_conflict(
     , PropBy& confl
 ) {
     confl = PropBy(offset);
-    VERBOSE_PRINT("Conflict from cl: " << *cl_alloc.ptr(offset));
 
     STATS_DO(if (!inprocess && c.red()) red_stats_extra[c.stats.extra_pos].conflicts_made++);
 
@@ -538,8 +536,6 @@ void PropEngine::enqueue(const Lit p)
 template<bool inprocess>
 void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, bool do_unit_frat)
 {
-    VERBOSE_PRINT("enqueue " << p << " level: " << level << " declevel: " << decisionLevel()
-        << " sublevel: " << trail.size() << " by: " << from);
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
@@ -566,7 +562,6 @@ template<bool bin_only>
 PropBy PropEngine::propagate_light()
 {
     PropBy confl;
-    VERBOSE_PRINT("propagate_light started");
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;
@@ -643,10 +638,8 @@ PropBy PropEngine::propagate_light()
             ws.shrink_(end-j);
         }
 
-        VERBOSE_PRINT("propagate_light went through watchlist of " << p);
         qhead++;
     }
-    VERBOSE_PRINT("propagate_light ended.");
     return confl;
 }
 

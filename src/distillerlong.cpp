@@ -289,7 +289,6 @@ bool DistillerLong::distill_long_cls_all(
         uint32_t j = 0;
         for(uint32_t i = 0; i < offs.size(); i ++) {
             Clause* cl = solver->cl_alloc.ptr(offs[i]);
-            VERBOSE_PRINT("Clause at " << i << " is:  " << *cl);
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
                 && (!red || solver->reduceDB->likely_to_be_kept(*cl))
@@ -309,7 +308,6 @@ bool DistillerLong::distill_long_cls_all(
             if (ok) {
                 todo.push_back(offs[i]);
                 todo_prio.push_back(prio);
-                VERBOSE_PRINT("Adding this one to TODO");
             } else {
                 offs[j++] = offs[i];
                 continue;
@@ -500,7 +498,6 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
     size_t kept = 0;
     for (size_t at = 0; at < cls.size(); at++) {
         const ClOffset offset = cls[at];
-        VERBOSE_PRINT("At offset: " << offset);
 
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
@@ -564,7 +561,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     *solver->frat << deldelay << cl << fin;
     const bool red = cl.red();
     if (red) assert(!also_remove);
-    VERBOSE_PRINT("Trying to distill clause:" << cl);
 
     const auto remove_cl = [&]() {
         solver->cancelUntil<false, true>(0);
@@ -656,10 +652,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
     assert(solver->ok);
 
-    VERBOSE_PRINT("also_remove: " << also_remove
-        << "red: " << red
-        << "True_confl: " << True_confl
-        << "confl.isnullptr(): " << confl.isnullptr());
 
     //Subsumed via propagation: a conflict ('@6') or a literal positively
     //implied ('@5'), as in CaDiCaL's vivify_clause
@@ -671,7 +663,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (subsumed && !red && also_remove) {
         const int lev = solver->conf.distill_rem_level;
         if (lev >= 2 || (lev == 1 && !True_confl)) {
-            VERBOSE_PRINT("CL Removed.");
             return remove_cl();
         }
         //Keeping it. The loop broke at the conflict, so kept_lits is only a
@@ -785,7 +776,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (!subsumed && !have_analysis
         && num_dropped == 0 && kept_lits.size() == orig_size
     ) {
-        VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
         solver->frat->forget_delay();
         frat_func_end();

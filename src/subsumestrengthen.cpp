@@ -49,7 +49,6 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.get_removed());
     assert(!cl.freed());
-    VERBOSE_PRINT("subsume-ing with clause: " << cl);
 
     Sub0Ret ret = subsume_and_unlink( offset , cl , cl.abst);
 
@@ -108,7 +107,6 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
                 ret.stats_extra);
         }
         #endif
-        VERBOSE_PRINT("-> subsume removing:" << *tmpcl);
 
         ret.subsumedIrred |= !tmpcl->red();
         simplifier->unlink_clause(off, true, false, true);
@@ -156,7 +154,6 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
-            VERBOSE_PRINT("subsumed clause " << cl2);
 
             //If subsumes a irred, and is redundant, make it irred
             if (cl.red() && !cl2.red()) {
@@ -177,7 +174,6 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
         } else { //Strengthen
-            VERBOSE_PRINT("strenghtened clause " << cl2);
             const vector<int32_t> h = {cl.stats.id, cl2.stats.id};
             if (!simplifier->remove_literal(offset2, subsLits[j], true,
                     solver->frat->enabled() ? &h : nullptr)) {
@@ -398,7 +394,6 @@ void SubsumeStrengthen::find_subsumed_and_strengthened(
     , vector<Lit>& out_lits
 )
 {
-    VERBOSE_PRINT("find_subsumed_and_strengthened: " << cl);
     Lit minLit = lit_Undef;
     uint32_t bestSize = numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < cl.size(); i++){
@@ -605,7 +600,6 @@ template<class T> void SubsumeStrengthen::find_subsumed(
         *simplifier->limit_to_decrease -= 50;
         if (subset(ps, cl2)) {
             out_subsumed.push_back(OccurClause(lit, w));
-            VERBOSE_PRINT("subsumed cl offset: " << offset2);
         }
     }
 }

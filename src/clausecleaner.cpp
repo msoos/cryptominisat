@@ -423,7 +423,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     size_t i = 0;
     size_t j = 0;
     uint32_t orig[2] = {x[x.watched[0]], x[x.watched[1]]};
-    VERBOSE_PRINT("Trying to clean XOR: " << x);
 
     i = 0;
     j = 0;
@@ -526,7 +525,6 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
         }
         xors.resize(j);
     }
-    VERBOSE_PRINT(__PRETTY_FUNCTION__ << " finished");
     return solver-> okay();
 }
 

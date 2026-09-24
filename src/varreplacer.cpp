@@ -741,7 +741,6 @@ bool VarReplacer::handleUpdatedClause(
         solver->litStats.irredLits -= origSize;
     }
     delayed_attach_or_free.push_back(&c);
-    VERBOSE_PRINT("clause after var-replacement: " << c);
 
     if (satisfied) {
         (*solver->frat) << findelay;

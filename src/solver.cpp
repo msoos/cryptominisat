@@ -191,7 +191,6 @@ bool Solver::add_xor_clause_inter(
     , const int32_t xid
 ) {
     frat_func_start_raw();
-    VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
     assert(okay());
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
@@ -308,7 +307,6 @@ Clause* Solver::add_clause_int(
     assert(okay());
     assert(decisionLevel() == 0);
     assert(!attach_long || qhead == trail.size());
-    VERBOSE_PRINT("add_clause_int clause " << lits);
 
     add_clause_int_tmp_cl = lits;
     vector<Lit>& ps = add_clause_int_tmp_cl;
@@ -317,7 +315,6 @@ Clause* Solver::add_clause_int(
         if (finalLits) finalLits->clear();
         return nullptr;
     }
-    VERBOSE_PRINT("add_clause_int final clause: " << ps);
 
     //unit IDs falsifying the lits that sort_and_clean_clause stripped;
     //they must come before any caller-supplied hints
@@ -763,7 +760,6 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
       *frat << "add_clause_outer\n" << origcl << clstats.id << outer_ps << fin;
     if (red) clstats.which_red_array = 0;
 
-    VERBOSE_PRINT("Adding clause " << ps);
     const size_t origTrailSize = trail.size();
 
     if (!add_clause_helper(ps)) {

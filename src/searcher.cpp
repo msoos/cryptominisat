@@ -375,7 +375,6 @@ void Searcher::add_lits_to_learnt(
         case binary_t : {
             id = confl.get_id();
             sumAntecedentsLits += 2;
-            VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << id);
 
             if (confl.isRedStep()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -399,7 +398,6 @@ void Searcher::add_lits_to_learnt(
             lits = cl->begin();
             size = cl->size();
             sumAntecedentsLits += cl->size();
-            VERBOSE_PRINT("resolving with cl:" << *cl);
 
             if (cl->red()) {
                 stats.resolvs.longRed++;
@@ -433,7 +431,6 @@ void Searcher::add_lits_to_learnt(
             lits = cl->data();
             size = cl->size();
             sumAntecedentsLits += size;
-            VERBOSE_PRINT("resolving with cl:" << *cl << " -- ID: " << id);
             break;
         }
 
@@ -779,7 +776,6 @@ void Searcher::create_learnt_clause(PropBy confl)
     // 1st UIP clause generation
     learnt_clause.push_back(lit_Undef); //make space for ~p
     for (;;) {
-        VERBOSE_PRINT("p is: " << p);
         otfs_antec_nonzero = (p == lit_Undef) ? 0 : 1;
         add_lits_to_learnt<inprocess>(confl, p, nDecisionLevel);
 
@@ -1448,7 +1444,6 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
         if (!varData[inter_assumptions[at_assump].second.var()].is_bva) {
             //Update to correct outside lit
             out_conflict[j++] = ~inter_assumptions[at_assump].first;
-            VERBOSE_PRINT("settled on lit for conflict: " << ~inter_assumptions[at_assump].first);
         }
     }
     out_conflict.resize(j);
@@ -2408,13 +2403,10 @@ void Searcher::rebuildOrderHeap() {
         else vs.push_back(v);
     }
 
-    VERBOSE_PRINT("c [branch] Rebuilding VSDIS order heap");
     order_heap_vsids.build(vs);
 
-    VERBOSE_PRINT("c [branch] Rebuilding RAND order heap");
     order_heap_rand.build(vs);
 
-    VERBOSE_PRINT("c [branch] Rebuilding VMTF order heap");
     rebuildOrderHeapVMTF(vs);
 }
 
@@ -3129,7 +3121,6 @@ void Searcher::print_iteration_solving_stats()
 }
 
 inline Lit Searcher::pickBranchLit() {
-    VERBOSE_PRINT("picking decision variable, dec. level: " << decisionLevel());
 
     uint32_t v = var_Undef;
     while(true) {
@@ -3169,7 +3160,6 @@ inline Lit Searcher::pickBranchLit() {
     }
 
     SLOW_DEBUG_DO(assert(next == lit_Undef || solver->varData[next.var()].removed == Removed::none));
-    VERBOSE_PRINT("Picked decision var: " << next);
 
     return next;
 }
@@ -3494,7 +3484,6 @@ void Searcher::cancelUntil(uint32_t blevel)
         uint32_t i = trail_lim[blevel];
         uint32_t j = i;
         for (; i < trail.size() ; i++) {
-            VERBOSE_PRINT("Canceling lit " << trail[i].lit << " sublevel: " << i);
 
             const uint32_t var = trail[i].lit.var();
             assert(value(var) != l_Undef);
@@ -3533,7 +3522,6 @@ void Searcher::cancelUntil_light()
     for (; i < trail.size()
         ; i++
     ) {
-        VERBOSE_PRINT("Canceling lit " << trail[i].lit << " sublevel: " << i);
         const uint32_t var = trail[i].lit.var();
         assert(value(var) != l_Undef);
         assigns[var] = l_Undef;

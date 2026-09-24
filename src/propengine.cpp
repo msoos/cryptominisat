@@ -154,8 +154,6 @@ void PropEngine::detach_modified_clause(
 
 PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
-    VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
-        << decisionLevel() << " lit to prop: " << p);
     const uint32_t pv = p.var();
     assert(!gmatrices.empty() || !xorclauses.empty()); //the hot caller checks
 
@@ -710,11 +708,6 @@ void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
         case bnn_out_t:
             break;
     }
-    VERBOSE_PRINT("reverse bnn idx: " << idx
-        << " bnn->undefs: " << bnn->undefs
-        << " bnn->ts: " << bnn->ts
-        << " bnn->sz: " << bnn->size()
-        << " BNN: " << *bnn);
 
     SLOW_DEBUG_DO(assert(bnn->ts >= 0));
     SLOW_DEBUG_DO(assert(bnn->undefs >= 0));
@@ -738,7 +731,6 @@ template<bool inprocess, bool red_also, bool distill_use>
 PropBy PropEngine::propagate_core()
 {
     PropBy confl;
-    VERBOSE_PRINT("propagate_core started");
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
@@ -779,7 +771,6 @@ PropBy PropEngine::propagate_core()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
-        VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
         //Skip the call when there is nothing to do: it showed at 6% in perf,
@@ -804,7 +795,6 @@ PropBy PropEngine::propagate_core()
     }
     #endif
 
-    VERBOSE_PRINT("Propagation (propagate_core) ended.");
 
     return confl;
 }
@@ -1016,7 +1006,6 @@ uint32_t PropEngine::vmtf_pick_var()
 {
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
-    VERBOSE_PRINT("vmtf start unassigned: " << res);
 
     SLOW_DEBUG_DO(vmtf_check_unassigned());
     while (res != numeric_limits<uint32_t>::max()
@@ -1031,7 +1020,6 @@ uint32_t PropEngine::vmtf_pick_var()
         return var_Undef;
     }
     if (searched) vmtf_update_queue_unassigned(res);
-    VERBOSE_PRINT("vmtf next queue decision variable " << res << " btab value: " << vmtf_btab[res]);
     return res;
 }
 
@@ -1041,8 +1029,6 @@ uint32_t PropEngine::vmtf_pick_var()
 void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
     assert(var != numeric_limits<uint32_t>::max());
     assert(var < nVars());
-    VERBOSE_PRINT("vmtf_queue.unassigned set to: " << var+1
-        << " vmtf_queue.vmtf_bumped set to: " << vmtf_btab[var]);
     vmtf_queue.unassigned = var;
     vmtf_queue.vmtf_bumped = vmtf_btab[var];
 }
@@ -1095,7 +1081,6 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 
     assert (stats_bumped != numeric_limits<uint64_t>::max());
     vmtf_btab[var] = ++stats_bumped;
-    VERBOSE_PRINT("vmtf moved to last element in queue the variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
 }
 

@@ -2107,7 +2107,6 @@ bool OccSimplifier::lit_rem_with_or_gates() {
         }
         solver->watches[smallest].copyTo(poss);
 
-        VERBOSE_PRINT("Checking to shorten with gate: " << gate);
         for(const auto& w: poss) {
             if (!solver->okay()) break;
             if (w.isBin() || w. isBNN()) continue;
@@ -2133,10 +2132,8 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             }
             if (found < gate.lits.size()) continue;
             assert(found == gate.lits.size());
-            VERBOSE_PRINT("Gate LHS matches clause: " << *cl << " gate: " << gate);
 
             if (contains_inv_rhs) {
-                VERBOSE_PRINT("Removing cl: " << *cl);
                 unlink_clause(off, true, false, true);
                 removed++;
                 continue;
@@ -3457,9 +3454,7 @@ bool OccSimplifier::find_irreg_gate(
         return false;
     }
     bvestats.irreg_gate_found += found;
-
-    if (found)
-        verb_print(3, "[occ] Found irregular gate for " << elim_lit << " with " << out_a.size() << " cls in A and " << out_b.size() << " cls in B");
+    if (found) verb_print(3, "[occ] Found irregular gate for " << elim_lit << " with " << out_a.size() << " cls in A and " << out_b.size() << " cls in B");
 
     return found;
 }
@@ -3776,7 +3771,6 @@ bool OccSimplifier::find_equivalence_gate(
     for(const auto& l: toClear) seen[l.toInt()] = 0;
     toClear.clear();
 
-    if (found) VERBOSE_PRINT("EQ gate");
     return found;
 }
 
@@ -3940,7 +3934,6 @@ bool OccSimplifier::find_xor_gate(
     }
 
     if (limit < 0) {
-        VERBOSE_PRINT("XOR Gate find limit reached");
         bvestats.gatefind_timeouts++;
     }
 
@@ -3959,7 +3952,6 @@ bool OccSimplifier::find_xor_gate(
 
 
     if (found) {
-        VERBOSE_PRINT("XOR gate");
         assert(out_a.size() == tofind/2);
         assert(out_b.size() == tofind/2);
         std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
@@ -4157,7 +4149,6 @@ bool OccSimplifier::generate_resolvents_weakened(
 
             tautological = resolve_clauses(tmp_poss2[pos_at], tmp_negs2[negs_at], lit);
             if (tautological) continue;
-            VERBOSE_PRINT("Adding new varelim resolvent clause: " << dummy);
 
             if (dummy.size() == 1) {
                 elim_unit_resolvents.push_back({dummy[0],
@@ -5489,7 +5480,6 @@ bool OccSimplifier::remove_literal(
     const vector<int32_t>* hints)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    VERBOSE_PRINT("-> Strenghtening clause :" << cl << " with lit: " << toRemoveLit);
 
     *limit_to_decrease -= 5;
 

@@ -43,7 +43,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define LARGE_OFFSETS
 #endif
 
-/* #define VERBOSE_DEBUG */
 /* #define DEBUG_DEPTH */
 /* #define SLOW_DEBUG */
 /* #define DEBUG_ATTACH_FULL */
@@ -152,12 +151,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define frat_func_end() do { } while (0)
 #define frat_func_end_with(x) do { } while (0)
 #define frat_func_end_raw() do { } while (0)
-#endif
-
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_PRINT(x) do { std::cout << x << std::endl; } while (0)
-#else
-#define VERBOSE_PRINT(x) do { } while (0)
 #endif
 
 #ifdef USE_BREAKID

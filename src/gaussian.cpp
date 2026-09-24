@@ -507,7 +507,6 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_id) {
         assert(tofill.size() == reason.size());
         *solver->frat << implyclfromx << out_id << tofill << fratchain << reason.xid << fin;
         *solver->frat << delx << reason << fin;
-        VERBOSE_PRINT("ID of asserted get_reason ID: " << out_id);
     }
 
     xor_reasons[row].must_recalc = false;
@@ -545,7 +544,6 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
         }
     }
     *solver->frat << fin;
-    VERBOSE_PRINT("reason XOR: " << reason);
 
     frat_func_end();
     return reason;
@@ -557,7 +555,6 @@ gret EGaussian::init_adjust_matrix() {
     assert(satisfied_xors.size() >= num_rows);
     delete_reasons(); xor_reasons.resize(num_rows);
     frat_func_start();
-    VERBOSE_PRINT("mat[" << matrix_no << "] init adjusting matrix");
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
     PackedMatrix::iterator rowI = mat.begin(); //row index iterator
@@ -573,7 +570,6 @@ gret EGaussian::init_adjust_matrix() {
 
             //Conflict or satisfied
             case 0:
-                VERBOSE_PRINT("Empty XOR during init_adjust_matrix, rhs: " << (*rowI).rhs());
                 adjust_zero++;
 
                 // conflict
@@ -587,19 +583,14 @@ gret EGaussian::init_adjust_matrix() {
                         set_unsat_cl_id(ID);
                     }
                     solver->ok = false;
-                    VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
-                    VERBOSE_PRINT("-> conflict on row: " << row_i);
                     return gret::confl;
                 }
-                VERBOSE_PRINT("-> empty on row: " << row_i);
-                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
                 satisfied_xors[row_i] = 1;
                 break;
 
             //Unit (i.e. toplevel unit)
             case 1:
             {
-                VERBOSE_PRINT("Unit XOR during init_adjust_matrix, vars: " << tmp_clause);
                 tmp_clause[0] = Lit(tmp_clause[0].var(), !mat[row_i].rhs());
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 if (solver->frat->enabled()) {
@@ -616,8 +607,6 @@ gret EGaussian::init_adjust_matrix() {
                     solver->enqueue<false>(tmp_clause[0]);
                 }
 
-                VERBOSE_PRINT("-> UNIT during adjust: " << tmp_clause[0]);
-                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
                 satisfied_xors[row_i] = 1;
                 SLOW_DEBUG_DO(assert(check_row_satisfied(row_i)));
 
@@ -630,7 +619,6 @@ gret EGaussian::init_adjust_matrix() {
 
             //Binary XOR (i.e. toplevel binary XOR)
             case 2: {
-                VERBOSE_PRINT("Binary XOR during init_adjust_matrix, vars: " << tmp_clause);
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
                 // TODO FRAT -- clean this up, no need for duplication
@@ -643,13 +631,11 @@ gret EGaussian::init_adjust_matrix() {
                     int32_t id = ++solver->clauseID;
                     *solver->frat << implyclfromx << id << out << fratchain << reason.xid << fin;
                     solver->attach_bin_clause(out[0], out[1], false, id);
-                    VERBOSE_PRINT("ID of bin XOR found (part 1): " << id);
 
                     out[0] = out[0]^true; out[1] = out[1]^true;
                     int32_t id2 = ++solver->clauseID;
                     *solver->frat << implyclfromx << id2 << out << fratchain << reason.xid << fin;
                     solver->attach_bin_clause(out[0], out[1], false, id2);
-                    VERBOSE_PRINT("ID of bin XOR found (part 2): " << id2);
 
                     *solver->frat << delx << reason << fin;
                     *solver->frat << "binary XOR from init_adjust matrix end\n";
@@ -663,7 +649,6 @@ gret EGaussian::init_adjust_matrix() {
                     int32_t id2 = ++solver->clauseID;
                     solver->attach_bin_clause(out[0], out[1], false, id2);
                 }
-                VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_i << " cl2: " << tmp_clause);
 
                 // reset this row all zero, no need for this row
                 (*rowI).rhs() = 0;
@@ -679,8 +664,6 @@ gret EGaussian::init_adjust_matrix() {
                 assert(non_resp_var != numeric_limits<uint32_t>::max());
 
                 // insert watch list
-                VERBOSE_PRINT("-> watch 1: resp var " << tmp_clause[0].var()+1 << " for row " << row_i);
-                VERBOSE_PRINT("-> watch 2: non-resp var " << non_resp_var+1 << " for row " << row_i);
                 solver->gwatches[tmp_clause[0].var()].push(
                     GaussWatched(row_i, matrix_no)); // insert basic variable
                 row_to_nonresp_watch_hint[row_i] = solver->gwatches[non_resp_var].size();
@@ -778,17 +761,11 @@ bool EGaussian::find_truths(
     #endif
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
-    VERBOSE_PRINT(
-        "mat[" << matrix_no << "] find_truths" << endl
-        << "-> row: " << row_n << endl
-        << "-> var: " << var+1 << endl
-        << "-> dec lev:" << solver->decisionLevel());
     SLOW_DEBUG_DO(assert(row_n < num_rows));
     SLOW_DEBUG_DO(assert(satisfied_xors.size() > row_n));
 
     // this XOR is already satisfied
     if (satisfied_xors[row_n]) {
-        VERBOSE_PRINT("-> xor satisfied as per satisfied_xors[row_n]");
         SLOW_DEBUG_DO(assert(check_row_satisfied(row_n)));
         *j++ = *i;
         find_truth_ret_satisfied_precheck++;
@@ -829,11 +806,9 @@ bool EGaussian::find_truths(
             xor_reasons[row_n].propagated = lit_Undef;
             gqd.confl = PropBy(matrix_no, row_n);
             gqd.ret = gauss_res::confl;
-            VERBOSE_PRINT("--> conflict");
 
             // have to get reason if toplevel (reason will never be asked)
             if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
-                VERBOSE_PRINT("-> conflict at toplevel during find_truths");
                 int32_t out_id;
                 vector<Lit>* rcl = get_reason(row_n, out_id);
                 *solver->frat << add << ++solver->clauseID << fratchain;
@@ -854,7 +829,6 @@ bool EGaussian::find_truths(
 
         case gret::prop: {
             find_truth_ret_prop++;
-            VERBOSE_PRINT("--> propagation");
             *j++ = *i;
 
             xor_reasons[row_n].must_recalc = true;
@@ -870,7 +844,6 @@ bool EGaussian::find_truths(
                 var_has_resp_row[var] = 1;
             }
 
-            VERBOSE_PRINT("--> Satisfied XORs set for row: " << row_n);
             satisfied_xors[row_n] = 1;
             SLOW_DEBUG_DO(assert(check_row_satisfied(row_n)));
             return true;
@@ -878,7 +851,6 @@ bool EGaussian::find_truths(
 
         // find new watch list
         case gret::nothing_fnewwatch:
-            VERBOSE_PRINT("--> found new watch: " << new_resp_var+1);
 
             find_truth_ret_fnewwatch++;
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
@@ -888,8 +860,6 @@ bool EGaussian::find_truths(
                 /// clear watchlist, because only one responsible value in watchlist
                 assert(new_resp_var != var);
                 clear_gwatches(new_resp_var);
-                VERBOSE_PRINT("Cleared watchlist for new resp var: " << new_resp_var+1);
-                VERBOSE_PRINT("After clear...");
             }
             assert(new_resp_var != var);
             SLOW_DEBUG_DO(check_row_not_in_watch(new_resp_var, row_n));
@@ -918,7 +888,6 @@ bool EGaussian::find_truths(
 
         // this row already true
         case gret::nothing_satisfied:
-            VERBOSE_PRINT("--> satisfied");
 
             find_truth_ret_satisfied++;
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
@@ -928,7 +897,6 @@ bool EGaussian::find_truths(
                 var_has_resp_row[var] = 1;
             }
 
-            VERBOSE_PRINT("--> Satisfied XORs set for row: " << row_n);
             satisfied_xors[row_n] = 1;
             SLOW_DEBUG_DO(assert(check_row_satisfied(row_n)));
             return true;
@@ -997,11 +965,9 @@ void EGaussian::prop_lit(
     if (lev == 0 && solver->frat->enabled()) {
         //we produce the reason, because we need it immediately, since it's toplevel
         int32_t out_id;
-        VERBOSE_PRINT("--> BDD reason needed in prop due to lev 0 enqueue");
         [[maybe_unused]] auto const x = get_reason(row_i, out_id);
 
         #ifdef SLOW_DEBUG
-        VERBOSE_PRINT("--> reason clause: " << *x);
         uint32_t num_unset = 0;
         for(auto const& a: *x) {
             assert(solver->value(a) != l_True);
@@ -1063,9 +1029,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
             const bool watched_elim_var = (orig_non_resp_var == elim_var);
             SLOW_DEBUG_DO(assert(watched_elim_var ||
                 (*rowI)[var_to_dcol[orig_non_resp_var]]));
-            VERBOSE_PRINT("--> This row " << row_i
-                << " is being watched on var: " << orig_non_resp_var + 1
-                << " i.e. it must contain '1' for this var's column");
 
             SLOW_DEBUG_DO(assert(satisfied_xors[row_i] == 0));
             (*rowI).xor_in(*tmp_row);
@@ -1081,9 +1044,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
             //      exactly when it was ELIM_VAR or when its own bit got cleared.
             if (watched_elim_var || !(*rowI)[var_to_dcol[orig_non_resp_var]]) {
 
-                VERBOSE_PRINT("--> This row " << row_i
-                    << " can no longer be watched (non-responsible), it has no"
-                    << " '1' for var " << orig_non_resp_var+1 << " fixing up...");
 
                 // Delete original non-responsible var from watch list
                 if (!watched_elim_var) {
@@ -1117,7 +1077,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                 switch (ret) {
                     case gret::confl: {
                         elim_ret_confl++;
-                        VERBOSE_PRINT("---> conflict during eliminate_col's fixup");
                         // update in this row non-basic variable
                         watch_nonresp(row_i, p);
 
@@ -1128,7 +1087,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
                         // have to get reason if toplevel (reason will never be asked)
                         if (solver->decisionLevel() == 0 && solver->frat->enabled() && !unsat_set) {
-                            VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
                             int32_t ID;
                             vector<Lit>* rcl = get_reason(row_i, ID);
                             int32_t fin_ID = ++solver->clauseID;
@@ -1146,7 +1104,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                     }
                     case gret::prop: {
                         elim_ret_prop++;
-                        VERBOSE_PRINT("---> propagation during eliminate_col's fixup");
 
                         // if conflicted already, just update non-basic variable
                         if (gqd.ret == gauss_res::confl) {
@@ -1165,7 +1122,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         update_cols_vals_set(ret_lit_prop);
                         gqd.ret = gauss_res::prop;
 
-                        VERBOSE_PRINT("---> Satisfied XORs set for row: " << row_i);
                         satisfied_xors[row_i] = 1;
                         SLOW_DEBUG_DO(assert(check_row_satisfied(row_i)));
                         break;
@@ -1181,16 +1137,12 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                     // this row already satisfied
                     case gret::nothing_satisfied:
                         elim_ret_satisfied++;
-                        VERBOSE_PRINT("---> Nothing to do, already satisfied , pushing in "
-                        << p+1 << " as non-responsible var ( "
-                        << row_i << " row) ");
 
                         // printf("%d:This row is nothing( maybe already true) in eliminate col
                         // n",num_row);
 
                         watch_nonresp(row_i, p);
 
-                        VERBOSE_PRINT("---> Satisfied XORs set for row: " << row_i);
                         satisfied_xors[row_i] = 1;
                         SLOW_DEBUG_DO(assert(check_row_satisfied(row_i)));
                         break;
@@ -1200,7 +1152,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         break;
                 }
             } else {
-                VERBOSE_PRINT("--> OK, this row " << row_i << " still contains '1', can still be responsible");
             }
         }
         ++rowI;
@@ -1373,7 +1324,6 @@ void EGaussian::check_row_not_in_watch(const uint32_t v, const uint32_t row_num)
 
 void EGaussian::check_no_prop_or_unsat_rows()
 {
-    VERBOSE_PRINT("mat[" << matrix_no << "] checking invariants...");
 
     assert(compact);
     for(uint32_t row = 0; row < num_rows; row++) {
@@ -1457,8 +1407,6 @@ void CMSat::EGaussian::check_invariants()
     if (!initialized) return;
     check_tracked_cols_only_one_set();
     check_no_prop_or_unsat_rows();
-    VERBOSE_PRINT("mat[" << matrix_no << "] "
-    << "Checked invariants. Dec level: " << solver->decisionLevel());
 }
 
 bool EGaussian::check_row_satisfied(const uint32_t row)
