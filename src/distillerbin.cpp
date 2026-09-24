@@ -245,11 +245,6 @@ bool DistillerBin::try_distill_bin(
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    #ifdef FRAT_DEBUG
-    if (solver->conf.verbosity >= 6) {
-        cout << "Trying to distill clause:" << lits << endl;
-    }
-    #endif
 
     //Try different ordering
     if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);

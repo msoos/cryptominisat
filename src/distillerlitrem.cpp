@@ -153,12 +153,6 @@ bool DistillerLitRem::distill_long_cls_all(
         return solver->okay();
     }
 
-    if (solver->conf.verbosity >= 6) {
-        cout
-        << "c Doing distillation branch for long clauses"
-        << endl;
-    }
-
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
@@ -229,9 +223,6 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     uint32_t orig_size = cl.size();
     assert(cl.size() > at);
     Lit torem = cl[at];
-    //if (solver->conf.verbosity >= 6) {
-    //    cout << "Trying to rem lit: " << torem << " from clause:" << cl << endl;
-    //}
 
     solver->new_decision_level();
     for (const auto& l: cl) {
