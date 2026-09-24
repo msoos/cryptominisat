@@ -385,7 +385,6 @@ class Searcher : public HyperEngine
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
-        void print_debug_resolution_data(const PropBy confl);
         int pathC;
         uint64_t more_red_minim_limit_binary_actual;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)

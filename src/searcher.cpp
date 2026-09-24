@@ -58,7 +58,6 @@ THE SOFTWARE.
 #include "valgrind/memcheck.h"
 #endif
 
-//#define DEBUG_RESOLV
 
 using namespace CMSat;
 using std::cout;
@@ -999,19 +998,6 @@ void Searcher::simple_create_learnt_clause(
         out_learnt.resize(until);
 }
 
-void Searcher::print_debug_resolution_data(const PropBy confl)
-{
-#ifndef DEBUG_RESOLV
-    //Avoid unused parameter warning
-    (void) confl;
-#else
-    cout << "Before resolution, trail is: " << endl;
-    print_trail();
-    cout << "Conflicting clause: " << confl << endl;
-    cout << "Fail bin lit: " << failBinLit << endl;
-#endif
-}
-
 struct vmtf_bump_sort {
     vmtf_bump_sort (const vector<uint64_t>& _vmtf_btab):
         vmtf_btab(_vmtf_btab)
@@ -1107,7 +1093,6 @@ void Searcher::analyze_conflict(
     implied_by_learnts.clear();
     assert(decisionLevel() > 0);
 
-    print_debug_resolution_data(confl);
     create_learnt_clause<inprocess>(confl);
     if (otfs_driving) {
         //no clause was learnt, the strengthened clause drives
