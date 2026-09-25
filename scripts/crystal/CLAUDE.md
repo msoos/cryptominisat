@@ -1,6 +1,6 @@
 # CrystalBall: how to run it (current status)
 
-Everything below is the state as of 2026-09-25. `README.md` says what it
+Everything below is the state as of 2026-09-26. `README.md` says what it
 is; this says how to build, run and evaluate it, and what came out so far.
 
 ## Builds
@@ -20,11 +20,8 @@ cd build_stats && ../scripts/build_scripts/build_stats.sh
 cd build_pred  && ../scripts/build_scripts/build_final_predictor.sh
 ```
 
-Both need `../cadical/build` and `../cadiback/build` next to the repo.
-Commit e1916b322 (2026-09-24) needs cadiback 0d92b68 (`CadiBack::doit`
-takes the output prefix), which is not on GitHub yet; until `../cadiback`
-has it, HEAD does not compile here and the three binaries on this box are
-from 5644e4189, which has the same crystalball code and option names.
+Both need `../cadical/build` and `../cadiback/build` next to the repo
+(cadiback at 0d92b68 or later).
 Dependencies on this box are under `../deps` (no sudo here):
 
 ```
