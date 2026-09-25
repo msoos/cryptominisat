@@ -92,6 +92,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     const int64_t rel = solver->conf.distill_bin_effort*(double)(solver->all_bogoprops() - last_all_props);
     if (!solver->conf.abs_inproc_budgets)
         max_num_props = std::min<int64_t>(max_num_props, std::max<int64_t>(rel, 1000LL*1000LL));
+    else max_num_props = (double)max_num_props*solver->conf.abs_inproc_budget_mult;
     orig_maxNumProps = max_num_props;
 
     //stats setup

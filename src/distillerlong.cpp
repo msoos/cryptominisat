@@ -212,6 +212,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
                 *solver->conf.global_timeout_multiplier;
             if (solver->lit_stats.irred_lits + solver->lit_stats.red_lits <
                     (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)) base *= 2;
+            base *= solver->conf.abs_inproc_budget_mult;
             budget_rem = base*r_rem;
             budget_norem = base*r_norem;
         } else if (sum > 0) {

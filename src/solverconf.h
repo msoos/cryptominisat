@@ -249,6 +249,7 @@ class DLL_PUBLIC SolverConf
         //Absolute intree/distill budgets, not relative to search effort: for
         //simplify()-only use (e.g. Arjun), where no search runs between calls
         bool abs_inproc_budgets = false;
+        double abs_inproc_budget_mult = 1.0;
         bool distill_bin_single = false;
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
