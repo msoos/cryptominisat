@@ -140,6 +140,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--fullprobemaxm", "Time in mega-bogoprops to perform full probing"}, conf.full_probe_time_limitM);
     f({"--intreemaxm", "Time in mega-bogoprops to perform intree probing"}, conf.intree_time_limitM);
     f({"--intreeeff", "Intree probing budget as a fraction of all propagations since its last call"}, conf.intree_effort);
+    f({"--absbudget", "Intree, distill-bin and irred distill-long budgets are absolute, not relative to search effort", true}, conf.abs_inproc_budgets);
     f({"--otfhyper", "Perform hyper-binary resolution during probing"}, conf.do_hyperbin_and_transred);
     f({"--hyperkeepconfl", "Conflicts an unused intree hyper-bin is kept for before being dropped"}, conf.hyperbin_keep_confl);
     f({"--schedsimp", "Perform simplification rounds. If 0, we never perform any.", true}, conf.do_simplify_problem);
@@ -215,6 +216,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--restartprint", "Print restart status lines at least every N conflicts"}, conf.print_restart_line_every_n_confl);
     f({"--distill", "Regularly execute clause distillation", true}, conf.do_distill_clauses);
     f({"--distillbin", "Regularly execute binary clause distillation"}, conf.do_distill_bin_clauses);
+    f({"--distillbinsingle", "Distill each binary clause with its own propagation: slower, finds more units", true}, conf.distill_bin_single);
     f({"--distillbineff", "Binary clause distillation budget as a fraction of all propagations since its last call"}, conf.distill_bin_effort);
     f({"--distillmaxm", "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating"}, conf.distill_long_cls_time_limitM);
     f({"--distillincconf", "Multiplier for current number of conflicts OTF distill"}, conf.distill_increase_conf_ratio);

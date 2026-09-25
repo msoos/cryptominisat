@@ -90,7 +90,8 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     }
     max_num_props *= time_mult;
     const int64_t rel = solver->conf.distill_bin_effort*(double)(solver->all_bogoprops() - last_all_props);
-    max_num_props = std::min<int64_t>(max_num_props, std::max<int64_t>(rel, 1000LL*1000LL));
+    if (!solver->conf.abs_inproc_budgets)
+        max_num_props = std::min<int64_t>(max_num_props, std::max<int64_t>(rel, 1000LL*1000LL));
     orig_maxNumProps = max_num_props;
 
     //stats setup
@@ -109,7 +110,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     done.clear();
     done.resize(solver->nVars()*2, 0);
     for(const Lit lit: todo) {
-        time_out = go_through_bins(lit);
+        time_out = solver->conf.distill_bin_single ? go_through_bins_single(lit) : go_through_bins(lit);
         if (time_out || !solver->okay()) break;
     }
 
@@ -164,6 +165,30 @@ void DistillerBin::remove_bin(const Lit lit1, const Lit lit2, const int32_t ID)
 {
     solver->detach_bin_clause(lit1, lit2, false, ID);
     (*solver->frat) << del << ID << lit1 << lit2 << fin;
+}
+
+// One propagation per bin: slower, but try_distill_bin's random order also
+// finds units on either side
+bool DistillerBin::go_through_bins_single(const Lit lit1)
+{
+    solver->watches[lit1].copyTo(tmp);
+    for (const auto& w: tmp) {
+        if (!w.is_bin() || lit1 > w.lit2() || w.red()) continue;
+        if (out_of_budget()) return true;
+
+        const Lit lit2 = w.lit2();
+        run_stats.checked_clauses++;
+        max_num_props -= solver->watches[lit1].size();
+        max_num_props -= solver->watches[lit2].size();
+        max_num_props -= 2;
+        if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
+            remove_bin(lit1, lit2, w.get_id());
+            run_stats.cl_removed++;
+            continue;
+        }
+        if (!try_distill_bin(lit1, lit2, w.get_id())) return false;
+    }
+    return false;
 }
 
 // Tests all irred bins (lit1, x) with a single propagation of ~lit1, with all

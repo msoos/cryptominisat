@@ -202,13 +202,26 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
     if (effort_ref < 0) effort_ref = calc_effort_ref();
 
     if (!red) {
-        const int64_t budget = effort_ref * (int64_t)solver->conf.distill_irred_releff / 1000LL;
         const double r_rem = solver->conf.distill_irred_alsoremove_ratio;
         const double r_norem = only_rem_cl ? 0.0 : solver->conf.distill_irred_noremove_ratio;
         const double sum = r_rem + r_norem;
+        double budget_rem = 0;
+        double budget_norem = 0;
+        if (solver->conf.abs_inproc_budgets) {
+            double base = (double)solver->conf.distill_long_cls_time_limitM*1000LL*1000LL
+                *solver->conf.global_timeout_multiplier;
+            if (solver->lit_stats.irred_lits + solver->lit_stats.red_lits <
+                    (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)) base *= 2;
+            budget_rem = base*r_rem;
+            budget_norem = base*r_norem;
+        } else if (sum > 0) {
+            const int64_t budget = effort_ref * (int64_t)solver->conf.distill_irred_releff / 1000LL;
+            budget_rem = (double)budget * r_rem / sum;
+            budget_norem = (double)budget * r_norem / sum;
+        }
         if (!distill_long_cls_all(
             solver->long_irred_cls,
-            sum > 0 ? (double)budget * r_rem / sum : 0.0,
+            budget_rem,
             true, //also remove
             only_rem_cl,
             red))
@@ -221,7 +234,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl, int64_t effort_ref
         if (!only_rem_cl) {
             if (!distill_long_cls_all(
                 solver->long_irred_cls,
-                sum > 0 ? (double)budget * r_norem / sum : 0.0,
+                budget_norem,
                 false, //also remove
                 only_rem_cl,
                 red))
@@ -323,7 +336,7 @@ bool DistillerLong::distill_long_cls_all(
     //pay for sorting thousands of candidates it will never reach
     const uint32_t sched_max = std::min<uint64_t>(solver->conf.distill_sched_max,
         std::max<uint64_t>(100, max_num_props / 1000));
-    if (todo.size() > sched_max) {
+    if (!solver->conf.abs_inproc_budgets && todo.size() > sched_max) {
         vector<uint32_t> idx(todo.size());
         for(uint32_t i = 0; i < todo.size(); i++) idx[i] = i;
         std::nth_element(idx.begin(), idx.begin() + sched_max, idx.end(),

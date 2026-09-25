@@ -246,6 +246,10 @@ class DLL_PUBLIC SolverConf
         unsigned long long   full_probe_time_limitM;
         unsigned long long   intree_time_limitM;
         double intree_effort = 0.8; //fraction of all bogoprops since last call
+        //Absolute intree/distill budgets, not relative to search effort: for
+        //simplify()-only use (e.g. Arjun), where no search runs between calls
+        bool abs_inproc_budgets = false;
+        bool distill_bin_single = false;
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
         double    hyperbin_keep_confl = 15000; ///<Unused hyper-bins are dropped after this many conflicts

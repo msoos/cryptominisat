@@ -80,6 +80,7 @@ class DistillerBin {
         bool try_distill_bin(Lit lit1, Lit lit2, const int32_t ID);
         bool distill_bin_cls_all(double time_mult);
         bool go_through_bins(const Lit lit);
+        bool go_through_bins_single(const Lit lit);
         bool out_of_budget();
         void set_cands_marked(const Lit lit1, const bool mark);
         void remove_bin(const Lit lit1, const Lit lit2, const int32_t ID);
