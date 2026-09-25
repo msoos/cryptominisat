@@ -258,7 +258,12 @@ bool DimacsParser<C, S>::parse_header(C& in)
     in.parseString(str);
     if (str == "cnf") {
         if (header_found && strict_header) {
-            std::cerr << "ERROR: CNF header ('p cnf vars cls') found twice in file! Exiting." << endl;
+            // Some benchmarks repeat the exact same header; only reject a conflicting one
+            int vars2 = 0;
+            int cls2 = 0;
+            if (!in.parseInt(vars2, lineNum) || !in.parseInt(cls2, lineNum)) return false;
+            if (vars2 + offset_vars == num_header_vars && cls2 == num_header_cls) return true;
+            std::cerr << "ERROR: CNF header ('p cnf vars cls') found twice in file with different values! Exiting." << endl;
             exit(-1);
         }
         header_found = true;
