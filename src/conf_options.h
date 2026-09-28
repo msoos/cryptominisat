@@ -235,6 +235,9 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--oraclegetlearnts", "Keep the clauses the oracle learnt during vivification as redundant clauses"}, conf.oracle_get_learnts);
     f({"--oracleremovedislearnt", "Clauses removed by the oracle are re-added as redundant instead of being deleted"}, conf.oracle_removed_is_learnt);
     f({"--oraclefindbins", "[0..] Effort spent looking for binary clauses during oracle vivification. 0 = off"}, conf.oracle_find_bins);
+    f({"--congruence", "Congruence closure over AND/XOR gates (the 'congruence' schedule token)", true}, conf.do_congruence);
+    f({"--congruenceandsz", "Max clause size of AND gates for congruence closure", true}, conf.congruence_and_max_size);
+    f({"--congruencexorsz", "Max clause size of XOR gates for congruence closure", true}, conf.congruence_xor_max_size);
     f({"--sweep", "Perform SAT sweeping with kitten (occ-sweep)", true}, conf.do_sweep);
     f({"--sweeptimelimM", "Tick limit cap for one occ-sweep run, in millions"}, conf.sweep_time_limitM);
     f({"--sweepeff", "occ-sweep budget as a fraction of all bogoprops since its last call"}, conf.sweep_effort);

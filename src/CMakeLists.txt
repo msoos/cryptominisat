@@ -125,6 +125,7 @@ set(cryptoms_lib_files
     datasync.cpp
     reducedb.cpp
     intree.cpp
+    congruence.cpp
     searchstats.cpp
     xorfinder.cpp
     cardfinder.cpp

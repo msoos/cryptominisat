@@ -72,6 +72,7 @@ class DataSync;
 class SharedData;
 class ReduceDB;
 class InTree;
+class Congruence;
 class GetClauseQuery;
 
 struct SolveStats
@@ -231,6 +232,7 @@ class Solver : public Searcher
         DataSync*              datasync = nullptr;
         ReduceDB*              reduceDB = nullptr;
         InTree*                intree = nullptr;
+        Congruence*            congruence = nullptr;
         OccSimplifier*         occsimplifier = nullptr;
         DistillerLong*         distill_long_cls = nullptr;
         DistillerBin*          distill_bin_cls = nullptr;

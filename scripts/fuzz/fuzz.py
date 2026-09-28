@@ -308,7 +308,8 @@ class Tester:
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
         sched_opts += "renumber, must-renumber,"
         sched_opts += "card-find, cl-consolidate,"
-        sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
+        sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates,"
+        sched_opts += "congruence, congruence"
 
         # type of schedule
         cmd = ""
@@ -948,6 +949,8 @@ fuzzers_noxor = [
 ]
 
 fuzzers_xor = [
+    ["../../utils/cnf-utils/mitergen.py"],
+    ["../../utils/cnf-utils/mitergen.py --mutate"],
     ["../../utils/cnf-utils/xortester.py --varsmin 40", "--seed"],
     ["../../utils/cnf-utils/xortester.py --varsmin 60", "--seed"],
     ["../../utils/cnf-utils/xortester.py --varsmin 80", "--seed"],

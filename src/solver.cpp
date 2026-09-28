@@ -55,6 +55,7 @@ THE SOFTWARE.
 #include "reducedb.h"
 #include "sccfinder.h"
 #include "intree.h"
+#include "congruence.h"
 #include "satzilla_features_calc.h"
 #include "GitSHA1.h"
 #include "trim.h"
@@ -91,6 +92,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
 {
     sql_stats = nullptr;
     intree = new InTree(this);
+    congruence = new Congruence(this);
 
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
@@ -123,6 +125,7 @@ Solver::~Solver()
 {
     delete sql_stats;
     delete intree;
+    delete congruence;
     delete occsimplifier;
     delete distill_long_cls;
     delete distill_lit_rem;
@@ -1783,6 +1786,8 @@ lbool Solver::execute_inprocess_strategy(
             /*     SLS sls(this); */
             /*     sls.run(0); */
             /* } */
+        } else if (token == "congruence") {
+            if (conf.do_congruence && !congruence->run()) return l_False;
         } else if (token == "intree-probe") {
             if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
             if (conf.do_intree_probe && conf.do_find_and_replace_eq_lits) intree->intree_probe();
