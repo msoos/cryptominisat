@@ -220,6 +220,7 @@ class Tester:
         self.only_sampling = False
         self.assumps_from_model = False
         self.limited_run = False
+        self.miter = False
         self.sampling_vars = []
         self.this_gauss_on = False
         self.num_threads = 1
@@ -345,7 +346,13 @@ class Tester:
         #if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
             #cmd += "--gauss 0 "
 
-        cmd += "--presimp %d " % random.choice([1]*10+[0])
+        # miters: sometimes run the chain that lets congruence find and merge their gates
+        miter_sched = self.miter and random.randint(0, 1) == 0
+        if miter_sched:
+            sched = "scc-vrepl,congruence,sub-impl,occ-bve,congruence,distill-cls,must-scc-vrepl,congruence"
+            cmd += "--presimp 1 --preschedule %s --schedule %s " % (sched, sched)
+        else:
+            cmd += "--presimp %d " % random.choice([1]*10+[0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
         cmd += "--reduce %d " % random.choice([0, 1, 1, 1])
@@ -548,7 +555,7 @@ class Tester:
                 cmd += "--%s %d " % (opt, random.choice([0, 1, 1, 1, 1]))
 
         # fuzz schedules independently of the option block above
-        if random.choice([True, True, False]):
+        if not miter_sched and random.choice([True, True, False]):
             cmd += self.rnd_schedule_all()
 
         return cmd
@@ -813,6 +820,7 @@ class Tester:
         fuzzers = list(fuzzers_noxor)
         fuzzers.extend(fuzzers_xor)
         fuzzer = random.choice(fuzzers)
+        self.miter = "mitergen" in fuzzer[0]
 
         if options.force_threads is not None:
             self.num_threads = options.force_threads
@@ -950,6 +958,8 @@ fuzzers_noxor = [
 
 fuzzers_xor = [
     ["../../utils/cnf-utils/mitergen.py"],
+    ["../../utils/cnf-utils/mitergen.py"],
+    ["../../utils/cnf-utils/mitergen.py --mutate"],
     ["../../utils/cnf-utils/mitergen.py --mutate"],
     ["../../utils/cnf-utils/xortester.py --varsmin 40", "--seed"],
     ["../../utils/cnf-utils/xortester.py --varsmin 60", "--seed"],
