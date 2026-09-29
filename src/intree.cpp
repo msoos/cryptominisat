@@ -162,7 +162,6 @@ bool InTree::intree_probe() {
     const int64_t rel = solver->conf.intree_effort*(double)(solver->all_bogoprops() - last_all_props);
     if (!solver->conf.abs_inproc_budgets)
         bogoprops_to_use = std::min<int64_t>(bogoprops_to_use, std::max<int64_t>(rel, 5LL*1000LL*1000LL));
-    else bogoprops_to_use = (double)bogoprops_to_use*solver->conf.abs_inproc_budget_mult;
     start_bogoprops = used_props();
     solver->clean_unused_hyper_bins();
     const int32_t first_hyper_id = solver->clause_id + 1;

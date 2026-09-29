@@ -216,8 +216,6 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--restartprint", "Print restart status lines at least every N conflicts"}, conf.print_restart_line_every_n_confl);
     f({"--distill", "Regularly execute clause distillation", true}, conf.do_distill_clauses);
     f({"--distillbin", "Regularly execute binary clause distillation"}, conf.do_distill_bin_clauses);
-    f({"--absbudgetmult", "With --absbudget: multiply the absolute intree/distill budgets by this", true}, conf.abs_inproc_budget_mult);
-    f({"--distillbinsingle", "Distill each binary clause with its own propagation: slower, finds more units", true}, conf.distill_bin_single);
     f({"--distillbineff", "Binary clause distillation budget as a fraction of all propagations since its last call"}, conf.distill_bin_effort);
     f({"--distillmaxm", "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating"}, conf.distill_long_cls_time_limitM);
     f({"--distillincconf", "Multiplier for current number of conflicts OTF distill"}, conf.distill_increase_conf_ratio);
