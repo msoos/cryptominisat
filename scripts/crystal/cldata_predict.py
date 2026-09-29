@@ -74,6 +74,27 @@ class Learner:
 
         return impdf
 
+    def ranking_quality(self, data, features, to_predict, clf, name):
+        """Share of the future use that is kept when only the best-ranked
+        part of the clauses is kept: by the model, by glue then size (what
+        the normal build does), and by the truth. Reduce ranks, so this
+        says more than the squared error"""
+        if data.shape[0] < 10 or data[to_predict].sum() <= 0:
+            return
+        data = data.reset_index(drop=True)
+        truth = data[to_predict].to_numpy(dtype=float)
+        orders = {
+            "model": np.argsort(-clf.predict(data[features]), kind="stable"),
+            "glue/size": np.lexsort((data["rdb0.size"].to_numpy(), data["rdb0.glue"].to_numpy())),
+            "oracle": np.argsort(-truth, kind="stable"),
+        }
+        for keep in [0.25, 0.5]:
+            n = int(keep * len(truth))
+            out = "ranking %s, keep %d%%:" % (name, 100*keep)
+            for what, order in orders.items():
+                out += "  %s %.1f%%" % (what, 100.0*truth[order[:n]].sum()/truth.sum())
+            print(out)
+
     def one_regressor(self, features, to_predict):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
@@ -82,7 +103,7 @@ class Learner:
         # these are needed for prediction/later checks, so let's add them in
         #       if they are not already in the features
         extra_feats = [to_predict]
-        for missing_needed in ["rdb0.glue", "rdb0.dump_no"]:
+        for missing_needed in ["rdb0.glue", "rdb0.dump_no", "rdb0.size", "rdb0.used"]:
             if missing_needed not in features:
                 extra_feats.append(missing_needed)
         df = self.df[features+extra_feats].copy()
@@ -178,6 +199,11 @@ class Learner:
 
         if options.regressor == "xgb":
             self.importance_XGB(clf, features=features)
+
+        self.ranking_quality(test, features, to_predict, clf, "test all")
+        # used < 30: not used since the reduce before, what reduce picks from
+        self.ranking_quality(test[test["rdb0.used"] < 30], features, to_predict, clf, "test cands")
+        self.ranking_quality(train, features, to_predict, clf, "train all")
 
         # print distribution of error
         print("--------------------------")

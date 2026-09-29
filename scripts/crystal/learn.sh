@@ -60,6 +60,7 @@ for tier in short long forever; do
             --basedir "$OUT" --bestfeatfile "$bestf" \
             > "$OUT/out-${table}-${tier}" 2>&1
         grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}-${tier}" | head -3
+        grep -E "^ranking test" "$OUT/out-${table}-${tier}"
     done
 done
 echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predtype xgb --predloc $OUT file.cnf"
