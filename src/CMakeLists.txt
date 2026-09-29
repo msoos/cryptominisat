@@ -196,10 +196,6 @@ if(STATS_NEEDED)
     )
 endif()
 
-if(MPI_FOUND)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
-endif()
-
 if(STATS)
     set(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
@@ -226,7 +222,6 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${MPI_INCLUDE_PATH}
     $<INSTALL_INTERFACE:include>
 )
 set(CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES
@@ -470,13 +465,6 @@ target_include_directories(assump_fuzz_oracle PRIVATE
 target_link_libraries(assump_fuzz_oracle PRIVATE oracle cadiback cadical)
 target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
 
-if(MPI_FOUND)
-    add_executable(cryptominisat5_mpi-bin
-        main_mpi.cpp
-        datasyncserver.cpp
-    )
-endif()
-
 target_link_libraries(cryptominisat5-bin
     PRIVATE
         cryptominisat5
@@ -495,22 +483,6 @@ endif()
 ##########################
 ### Deal with binaries
 ##########################
-if(MPI_FOUND)
-    set_target_properties(cryptominisat5_mpi-bin PROPERTIES
-        OUTPUT_NAME cryptominisat5_mpi
-        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-        INSTALL_RPATH_USE_LINK_PATH TRUE
-    )
-    target_link_libraries(cryptominisat5_mpi-bin
-        cryptominisat5
-        ${MPI_C_LIBRARIES}
-    )
-    install(TARGETS cryptominisat5_mpi-bin
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-    set(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     set_target_properties(cryptominisat5-bin PROPERTIES
         OUTPUT_NAME cryptominisat5

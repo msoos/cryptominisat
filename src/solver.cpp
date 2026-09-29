@@ -1407,7 +1407,6 @@ lbool Solver::solve_with_assumptions(
     assumptions.clear();
     conf.max_confl = numeric_limits<uint64_t>::max();
     conf.max_time = numeric_limits<double>::max();
-    datasync->finish_up_mpi();
     conf.conf_needed = true;
     set_must_interrupt_asap();
     assert(decision_level()== 0);

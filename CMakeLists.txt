@@ -481,20 +481,6 @@ endif()
 # -----------------------------------------------------------------------------
 option(MIT "Build with only MIT licensed components" OFF)
 
-# -----------------------------------------------------------------------------
-# MPI
-# -----------------------------------------------------------------------------
-option(NOMPI "Disable MPI" ON)
-if(NOT NOMPI)
-    find_package(MPI)
-    if(MPI_FOUND)
-        add_compile_definitions(USE_MPI)
-        #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
-    else()
-         message(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
-    endif()
-endif()
-
 find_package(PkgConfig REQUIRED)
 if(APPLE)
     execute_process(COMMAND brew --prefix OUTPUT_VARIABLE _homebrew_prefix OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)

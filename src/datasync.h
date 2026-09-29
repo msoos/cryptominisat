@@ -27,9 +27,6 @@ THE SOFTWARE.
 #include "watched.h"
 #include "propby.h"
 #include "watcharray.h"
-#ifdef USE_MPI
-#include "mpi.h"
-#endif //USE_MPI
 
 namespace CMSat {
 
@@ -40,7 +37,6 @@ class DataSync
 {
     public:
         DataSync(Solver* solver, SharedData* shared_data);
-        void finish_up_mpi();
         bool enabled();
         void set_shared_data(SharedData* shared_data);
         void new_var(const bool bva);
@@ -86,29 +82,7 @@ class DataSync
         Solver* solver = nullptr;
         SharedData* shared_data = nullptr;
 
-        #ifdef USE_MPI
-        void set_up_for_mpi();
-        bool mpi_recv_from_others();
-        void mpi_send_to_others();
-        bool mpi_get_interrupt();
-        bool mpi_get_unit(
-            const lbool other_val,
-            const uint32_t var,
-            uint32_t& thisGotUnitData
-        );
-        vector<uint32_t> sync_mpi_finish;
-        MPI_Request   sendReq;
-        uint32_t*     mpi_send_data = nullptr;
-
-        int           mpi_rank = 0;
-        int           mpi_size = 0;
-        uint32_t      mpiRecvUnitData = 0;
-        uint32_t      mpiRecvBinData = 0;
-        uint32_t      mpiSentBinData = 0;
-        #endif
-
         //misc
-        uint32_t num_calls = 0;
         vector<uint32_t>& seen;
         vector<Lit>& to_clear;
 };

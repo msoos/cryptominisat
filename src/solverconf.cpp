@@ -337,11 +337,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_and_mem_out_mult(1.0)
         , oracle_mult(1.0)
 
-        //Multi-thread, MPI
+        //Multi-thread
         , sync_every_confl(7000) //THREAD syncing
-        , every_n_mpi_sync(3) //every N thread sync, we do an MPI sync
         , thread_num(0)
-        , is_mpi(false)
 
         // Oracle
         , oracle_get_learnts(false) // get oracle learnt clauses
