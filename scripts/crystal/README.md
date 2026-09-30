@@ -2,10 +2,11 @@
 
 At every clause-database reduce the solver throws away the least useful
 learnt clauses. Normally "least useful" means highest glue, then longest.
-CrystalBall replaces that with a prediction: xgboost models, trained on
-the solver's own runs, estimate how much each clause will still be used
-over the next 10k / 30k / 120k conflicts, and reduce removes the clauses
-with the lowest predicted use.
+CrystalBall replaces that with a prediction: an xgboost model, trained on
+the solver's own UNSAT runs, ranks each clause by how much it will still
+be used (every future use counted, discounted by how far away it is), and
+reduce removes the clauses ranked lowest. With `--predkeep` the rank also
+decides which clauses are protected as tier1/tier2, instead of glue.
 
 Three builds of the solver take part:
 
