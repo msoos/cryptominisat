@@ -355,13 +355,28 @@ build relative to the normal build:
 | course0.2 (SAT) | 55% / 42% | 15% / 19% |
 | sgp_5-6-8 (SAT) | 310% / 210% | 2340% / 1650% |
 
-So across unseen families the general model is neutral on conflicts and
-10% faster on UNSAT instances; `--predcands 0` stays the default. The
-defaults now ARE this general model: `best_features.txt` is the general
-list (the old corpus-picked one is `best_features-mixed.txt`),
-`src/predict/*.json` are `models/rel-gen-all/` (trained on all 26
-instances) and `TARGET=rel` is the default. The bivium and mixed-corpus
-tables above were made with the old list and the count target.
+That model was trained with the 12 SAT instances in, which is now
+forbidden. Trained on the 8 UNSAT training instances only
+(`models/rel-unsat`), same held-out UNSAT instances, `--predcands 0`:
+
+| held-out instance | UNSAT-only model | (mixed model) |
+|---|---|---|
+| hid-uns-enc | 98% / 84% | 97% / 82% |
+| jkkk-one-one | 94% / 76% | 99% / 80% |
+| post-cbmc-aes | 104% / 111% | 98% / 106% |
+| schup-l2s | 85% / 72% | 131% / 95% |
+| Steiner-45 | 108% / 135% | 101% / 121% |
+| sv-comp19 | 104% / 85% | 109% / 91% |
+| the six together | 97% / 81% | 102% / 90% |
+
+Offline the UNSAT-only model looks weaker (73.6% vs 85.2% of the future
+use kept at 25%, short horizon: 8 training instances instead of 20), in
+the solver it is better. `--predcands 0` stays the default. The defaults
+now ARE this model: `best_features.txt` is the general list (the old
+corpus-picked one is `best_features-mixed.txt`), `src/predict/*.json`
+are `models/rel-unsat-all/` (trained on all 14 UNSAT instances) and
+`TARGET=rel` is the default. The bivium and mixed-corpus tables above
+were made with the old list and the count target.
 
 
 ## Open
@@ -373,8 +388,8 @@ tables above were made with the old list and the count target.
   (`build_stats_pred/`, `STATS_OPTS`) is set up but not run.
 - SAT instances cannot be A/B tested one run at a time: the path to a
   model changes with every clause kept. Several seeds, or UNSAT only.
-- 26 instances from 26 families is thin; the survey found 30 solvable
-  in 300 s on this box out of 370. More families need more time or a
+- 14 UNSAT instances from 14 families is thin; the survey found 30
+  solvable in 300 s on this box out of 370, and only UNSAT ones count. More families need more time or a
   bigger machine (the proof is ~2 GB per million conflicts).
 - The ancestor-weighted labels generalise worse than the plain ones;
   `--predtables 000` is the default for a reason.
