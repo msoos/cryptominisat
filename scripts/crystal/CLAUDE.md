@@ -58,14 +58,23 @@ after the CNF is taken as the proof file name, and the solver errors out):
   `DIR/predictor-<table>-<tier>-xgb.json`, empty = the embedded ones),
   `--predtables 000|111` (per short/long/forever: 0 = `used_later`, 1 =
   `used_later_anc` models), `--predsortby 0..3` (which horizon reduce
-  ranks by, 3 = sum of all three, the default), `--dumppreddistrib 1`
-  (predictions of all clauses at every reduce to `pred_distrib.csv`).
+  ranks by, 3 = sum of all three, the default), `--predcands 0|1|2`
+  (what it ranks: 0 = the normal build's candidates, 1 = also the clauses
+  the normal rules keep for being used, 2 = also the tier1-keep ones; the
+  number removed stays the normal build's), `--predthresh T` (remove the
+  candidates predicted below T instead of the fixed number, bounded to
+  0.5x-2x of it), `--dumppreddistrib 1` (predictions of all clauses at
+  every reduce to `pred_distrib.csv`).
 - stats build: `--sql 2 --sqlitedb F --sqlitedboverwrite 1 --clid
   --cldatadumpratio R --cllockdatagen R --everypred N`, all set by
   `ballofcrystal.sh`.
 
-Only WHICH candidates a reduce removes differs between the builds (same
-reduce schedule, same number removed), so a conflict-count A/B is clean.
+With `--predcands 0` only WHICH candidates a reduce removes differs
+between the builds (same reduce schedule, same number removed), so a
+conflict-count A/B is clean. With `--predcands 1` the predictor may also
+drop clauses the normal build protects, and the DB gets smaller (25% on
+bivium): compare against the normal build with `--reducekeepused 0` too,
+which also shrinks the DB (on bivium: 102% conflicts, 78% time).
 The solver is deterministic: the same binary, options and CNF give the
 same conflict count, so one run per configuration is enough.
 
@@ -103,8 +112,18 @@ learnt clauses tracked, 0.1), `CLLOCK` (fraction of tracked clauses never
 deleted, 0.3, so the labels see what a kept clause does), `EVERYPRED`,
 `SHORT LONG FOREVER` (10k/30k/120k conflicts), `FIXED` (rows per strata,
 3000), `cut1 cut2`, `bestf` (feature file), `XGB_EST XGB_DEPTH
-XGB_MINCHILD` (40 trees, depth 5, min child 10). `CAKE_XLRUP=""` skips the
-optional proof check (`../frat-xor` + cake_xlrup, pointless on big proofs).
+XGB_MINCHILD` (40 trees, depth 5, min child 10), `XGB_OBJ` (training
+objective: `squarederror`, `log` = squared error of log(1+use), `poisson`).
+`CAKE_XLRUP=""` skips the optional proof check (`../frat-xor` +
+cake_xlrup, pointless on big proofs).
+
+The learn output reports, next to the squared error, the **ranking
+quality**: the share of the future use kept when keeping the best 25% /
+50% of the test clauses by the model, by glue then size (the normal
+build's order) and by the truth. "cands" restricts it to clauses not used
+since the reduce before, which is what reduce picks from. Reduce only
+ranks, so this is the number to watch; it is on the strata-balanced
+sample, so only the comparison between the orders means something.
 
 ### Many instances
 
@@ -117,19 +136,25 @@ One instance is not enough: the models memorise it. Use a corpus:
 ```
 
 `eval_corpus.sh` writes the solver outputs to `<preddir>/eval/` and takes
-`PRED_OPTS` for extra predictor options. A hold-out test = `learn.sh` on
-all dirs but one, `eval_corpus.sh` on the one left out.
+`PRED_OPTS` (extra predictor options), `EVAL_OPTS` (options for all runs,
+e.g. `--xor 0`), `EVAL_TABLES` (default `000 111`) and
+`EVAL_NORMAL_CACHE` (a dir where the normal build's runs are kept and
+reused). A hold-out test = `learn.sh` on all dirs but one,
+`eval_corpus.sh` on the one left out.
 
 ### Choosing features
 
 ```
-ONLY=0.1 ./gen_best_feats.sh <preddir>/comb- <outdir>     # importance rankings, 12 runs
+ONLY=0.2 ./gen_best_feats.sh <preddir>/comb- <outdir>     # importance rankings, 12 runs
 ./pick_features.py -n 30 --no-context -o best_features.txt <outdir>
 ```
 
 `gen_best_feats.sh` trains on all raw columns and on all raw plus
-computed relative features (thousands of columns, ~5 GB at 10% of the
-rows; earlyoom kills anything much bigger on this box). It skips runs it
+computed relative features (thousands of columns). xgboost's memory is
+features x tree nodes, so it uses the models' depth (`XGB_DEPTH`, 5):
+about 5 GB at 30% of the rows, and earlyoom kills anything much bigger
+on this box. `COMPUTED=no` does only the quick raw runs, `TABLES=used_later`
+only the plain label tables, `XGB_OBJ` the objective. It skips runs it
 already has, so it can be restarted. `pick_features.py` sums the
 importances over the runs, drops features the solver cannot compute (the
 raw column table is in `gen_pred_features.py`, `--list-raw` prints it)
@@ -188,6 +213,36 @@ Rankings for the current `best_features.txt`: `cb_test/feats-corpus/`.
 With the previous hand-written 22-feature list the hold-out was 102%, so
 the gain on unseen instances comes from the corpus-picked features.
 
+## Bivium (2026-09-30)
+
+The two SAT Competition 2020 Bivium CNFs (`~/media/satcomp2020/bivium-*`)
+have their guessed state bits propagated into the clauses, so
+`bivium_variants.py base.cnf.gz -n 6 --seed S` makes UNSAT variants by
+guessing N more state bits at random; every bit halves the work (n=6:
+0.2-2M conflicts, n=8: 300k). Everything is in `cb_test/bivium/`:
+`pool/` the measured candidates, `train/` 10 instances (5 per base CNF,
+n=5/6, 220k-2.1M conflicts, gathered with `DUMPRATIO` 0.06 or 0.03 for
+the >1M ones, `FIXED=10000`), `test/` 4 others (1.3-1.8M), `models/<name>/`
+the models and `results-*.out` the A/B tables, all `--xor 0` (the stats
+run has no XOR reasoning). `exp.sh <name>` learns and evaluates one
+configuration. Conflicts and time of the predictor build relative to the
+normal build on the 4 test instances (time under load, indicative only):
+
+| models | `--predcands 0` | `--predcands 1` |
+|---|---|---|
+| squared error (the old default) | 90% / 90% | 82% / 65% |
+| log objective | 75% / 71% | 74% / 65% |
+| poisson | 88% / 117% | 85% / 72% |
+| log, features picked on bivium | 84% / 78% | (see results) |
+
+Offline, glue/size is already a strong order on bivium (93.5% of the
+future use kept at 25% for the short horizon, vs 75% on the old corpus),
+and `rdb0.size` carries most of the importance. The log objective is the
+biggest single win; features picked on bivium itself rank better offline
+but do not help in the solver. A normal build with `--reducekeepused 0`
+gets 102% / 78%, so about half of the time gain of `--predcands 1` is the
+smaller DB, the conflict gain is the ranking.
+
 ## Open
 
 - The ancestor-weighted labels generalise worse than the plain ones (109%
@@ -197,6 +252,15 @@ the gain on unseen instances comes from the corpus-picked features.
   in `cb_test/corpus/` are untried).
 - Tree count/depth and `FIXED` were not tuned; `--predsortby` 0/1/2 vs 3
   was not compared on the corpus.
+- The offline ranking quality is only loosely predictive of the solver
+  result (bivium-picked features: better offline, worse in the solver).
+  Four test instances are noisy: differences under ~10% mean little.
+- Gathering: rows of unlocked clauses exist only when the glue/size
+  policy kept the clause through the horizon, so the sample favours what
+  that policy likes. `CLLOCK=1` (all tracked clauses locked) would remove
+  the bias at the cost of a slightly different stats run; untested. A
+  second gather round under the learnt policy (STATS + predictor in one
+  build) is the DAgger-style fix; not implemented.
 - `src/predict/*.json` are not tracked, so a fresh checkout cannot build
   the predictor. Tracking them (320 KB of JSON) with the feature list they
   belong to would fix that.
