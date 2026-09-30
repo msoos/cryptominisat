@@ -61,6 +61,10 @@ class QueryDatRem(helper.QueryHelper):
         for table in ["used_later", "used_later_anc"]:
             print("Calculating percentiles now for table {table} and tier {tier} ...".format(
                 tier=tier, table=table))
+            self.c.execute("select count(*) from {table}_{tier}".format(tier=tier, table=table))
+            if self.c.fetchone()[0] == 0:
+                print("   -> empty (run shorter than the horizon), no percentiles")
+                continue
 
             q2 = """
             insert into {table}_percentiles (type_of_dat, percentile_descr, percentile, val)
