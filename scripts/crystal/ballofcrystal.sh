@@ -146,6 +146,10 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
         --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} \
         | tee cldata_gen_pandas.out-stage
+    if ! ls data-min.db-cldata-*.dat > /dev/null 2>&1; then
+        echo "ERROR: no frames at all: no tracked clause was ever used within a horizon"
+        exit 255
+    fi
     stage "check_frames"
     "$SCRIPTDIR/check_frames.py" -f "$bestf" data-min.db-cldata-*.dat | tee check_frames.out-stage | grep -E "FAIL|failed"
     if [[ $GATHER_ONLY -eq 1 ]]; then

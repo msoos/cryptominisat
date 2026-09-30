@@ -230,6 +230,9 @@ class QueryCls (helper.QueryHelper):
             print("WARNING: {table}_{tier} is empty (run shorter than the horizon)".format(tier=tier, table=table))
             return pd.DataFrame()
         perc = self.get_used_later_percentiles(tier, table)
+        if "top_non_zero_0.0_perc" not in perc:
+            print("WARNING: no clause is ever used in {table}_{tier}, no frame".format(tier=tier, table=table))
+            return pd.DataFrame()
         self.myformat["del_at_least"] = getattr(options, tier)
 
         # when del_at_least is over 2 million, then we need to make this smaller

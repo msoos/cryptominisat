@@ -142,7 +142,13 @@ def check_frame(fname, df, feats):
     # used. Off-by-one-reduce bugs break this
     recent = y[df["rdb0.used"] == CL_MAX_USED].mean()
     never = y[df["rdb0.used"] == 0].mean()
-    check(recent > never, "%s: mean use of recently used clauses (%.2f) not above never used (%.2f)" % (name, recent, never))
+    msg = "%s: mean use of recently used clauses (%.2f) not above never used (%.2f)" % (name, recent, never)
+    if "_anc" in table:
+        # descendants' uses do not need the clause itself to be used
+        if not recent > never:
+            warn(msg)
+    else:
+        check(recent > never, msg)
     if (df["rdb0.used"] == 0).sum() < 100 or (df["rdb0.used"] == CL_MAX_USED).sum() < 100:
         warn("%s: few rows to check used-vs-label on" % name)
 
