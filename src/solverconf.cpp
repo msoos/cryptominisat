@@ -82,6 +82,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_sort_by(3)
         , every_pred_reduce(10000)
         , dump_pred_distrib(0)
+        , pred_cands(0)
         , clause_decay(0.999)
 
         //Learnt clause DB reduction, as in CaDiCaL

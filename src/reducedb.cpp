@@ -91,6 +91,13 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
 {
     vector<ClOffset> stack;
     stack.reserve(solver->long_red_cls[0].size());
+    //predcands: the predictor also ranks what the rules below would keep
+    #ifdef FINAL_PREDICTOR
+    const int pred_cands = solver->conf.pred_cands;
+    #else
+    const int pred_cands = 0;
+    #endif
+    size_t normal_cands = 0;
     for (const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
@@ -107,18 +114,28 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             if (used < CL_MAX_USED) cl->stats.marked_clause = true;
             continue;
         }
-        if (cl->stats.keep) { rstats.kept_keep++; continue; }
+        if (cl->stats.keep) {
+            rstats.kept_keep++;
+            if (pred_cands >= 2) stack.push_back(offs);
+            continue;
+        }
         if (cl->stats.locked_for_data_gen) continue;
         //Kissat's collect_reducibles: tier1 lives while 'used' lasts, tier2
         //only if used since the last reduce. Kissat always reduces tier3,
         //CaDiCaL keeps it if used: see reducekeepused
         const uint32_t glue = cl->stats.glue;
-        if (glue <= solver->tier1_glue && used) { rstats.kept_used++; continue; }
-        if ((glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
-            && used >= CL_MAX_USED-1) { rstats.kept_used++; continue; }
+        if ((glue <= solver->tier1_glue && used)
+            || ((glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
+                && used >= CL_MAX_USED-1)
+        ) {
+            rstats.kept_used++;
+            if (pred_cands >= 1) stack.push_back(offs);
+            continue;
+        }
         stack.push_back(offs);
+        normal_cands++;
     }
-    rstats.cands = stack.size();
+    rstats.cands = normal_cands;
     #ifdef FINAL_PREDICTOR
     //worst first: least predicted future use, then glue/size as below
     const auto& ext = solver->red_stats_extra;
@@ -152,7 +169,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         const double low = solver->conf.reducelow * 0.1;
         percent = high - (high - low) / std::log10((double)num_reductions + 9.0);
     }
-    size_t target = 1e-2 * percent * (double)stack.size();
+    size_t target = 1e-2 * percent * (double)normal_cands;
     if (target > stack.size()) target = stack.size();
     cl_reduced = target;
     for (size_t i = 0; i < target; i++) {

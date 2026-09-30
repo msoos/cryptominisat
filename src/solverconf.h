@@ -94,6 +94,7 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_sort_by; //reduce candidates sorted by predicted use: 0 short, 1 long, 2 forever, 3 sum
         unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
+        int      pred_cands; //0: reduce candidates as the normal build, 1: + the 'used' ones, 2: + tier1-keep
         double    clause_decay;
 
         //Learnt clause DB reduction, as in CaDiCaL

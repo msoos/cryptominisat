@@ -88,6 +88,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--predtables", "Per short/long/forever: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all"}, conf.pred_tables);
     f({"--predbestfeats", "Best features file, only for --predtype py"}, conf.predict_best_feat_fname);
     f({"--predsortby", "Reduce removes the candidates with the lowest predicted use over the next: 0 = short, 1 = long, 2 = forever horizon, 3 = sum of the three (near-term counts 3x, long-term still counts)"}, conf.pred_sort_by);
+    f({"--predcands", "What the predictor ranks at reduce. 0 = the candidates of the normal build, 1 = also the clauses the normal build keeps for being used, 2 = also the ones it keeps forever. The number removed is that of the normal build"}, conf.pred_cands);
     f({"--dumppreddistrib", "Dump predictions of all clauses at every reduce to pred_distrib.csv"}, conf.dump_pred_distrib);
     #endif
     f({"--restart", "Enable restarts", true}, conf.do_restart);
