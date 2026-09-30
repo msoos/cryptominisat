@@ -80,9 +80,11 @@ struct ReduceCommonData
         cur_rst_type = _cur_rst_type;
         avg_props = safe_div(total_props, size);
         avg_uip = safe_div(total_uip1_used, size);
+        //as the STATS build dumps it: uses per conflict of life over all
+        //learnt clauses (it was also divided by size, ~1e-8, on this side too)
         if (total_time_in_solver > 0) {
-            avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)(size*total_time_in_solver);
-            avg_sum_props_per_time = (double)total_sum_props_used/(double)(size*total_time_in_solver);
+            avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)total_time_in_solver;
+            avg_sum_props_per_time = (double)total_sum_props_used/(double)total_time_in_solver;
         }
     }
 };
