@@ -29,8 +29,6 @@
 #   --skip-learn  reuse the predictors from an earlier run, only run step 5
 #   --gather-only stop after step 3, the frames are for learn.sh
 # KEEP_FRAT=1 keeps data.frat (it is deleted once used, GBs on big CNFs)
-# ALLOW_SAT=1 accepts SAT instances: no proof to trim, so a use is 'took
-#   part in learning a clause' (noisier than 'took part in the proof')
 # STATS_OPTS: more options for the stats run. With a STATS=ON
 #   FINAL_PREDICTOR=ON build as STATS_BIN, "--predtype xgb --predloc DIR"
 #   gathers under the learnt policy (a second round, DAgger-style)
@@ -91,13 +89,10 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
         --everypred "$EVERYPRED" --clid --sql 2 --sqlitedb data.db-raw \
         --xlrup 0 $STATS_OPTS --zero-exit-status "$FNAME" data.frat | tee cms-stats-run.out
     grep -m1 "^c conflicts" cms-stats-run.out
+    # the labels are uses in the trimmed UNSAT proof: a SAT run has none
     if ! grep -q "^s UNSATISFIABLE" cms-stats-run.out; then
-        if [[ "$ALLOW_SAT" == "1" ]] && grep -q "^s SATISFIABLE" cms-stats-run.out; then
-            echo "SAT: no proof to trim, every derivation will count as a use"
-        else
-            echo "ERROR: not UNSAT, crystalball needs an UNSAT instance (ALLOW_SAT=1 for SAT ones)"
-            exit 255
-        fi
+        echo "ERROR: not UNSAT, crystalball only learns from UNSAT instances"
+        exit 255
     fi
 
     # the solver's FRAT has full hint chains, no elaboration needed.
@@ -125,8 +120,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
 
     stage "fix_up_frat: which clause was used when"
     cp data.db-raw data.db
-    ALL_STEPS=""; grep -q "^s SATISFIABLE" cms-stats-run.out && ALL_STEPS="--all-steps"
-    "$SCRIPTDIR/fix_up_frat.py" $ALL_STEPS data.frat data.db | tee fix_up_frat.out-stage
+    "$SCRIPTDIR/fix_up_frat.py" data.frat data.db | tee fix_up_frat.out-stage
     # the proof is GBs on big instances and not needed any more
     [[ "$KEEP_FRAT" == "1" ]] || rm -f data.frat
 

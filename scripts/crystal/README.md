@@ -11,7 +11,9 @@ Three builds of the solver take part:
 
 - **normal**: reduce sorts by glue, then size (the baseline)
 - **stats** (`-DSTATS=ON`): dumps the state of tracked clauses to SQLite
-  at every reduce and writes a proof, from which the training labels come
+  at every reduce and writes a proof, from which the training labels come.
+  Only UNSAT instances: a label is "took part in the UNSAT proof", and a
+  SAT run has no proof
 - **predictor** (`-DFINAL_PREDICTOR=ON`): sorts by the predicted use
 
 The scripts here run the whole loop: gather data, label it from the

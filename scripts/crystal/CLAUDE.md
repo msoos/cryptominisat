@@ -84,7 +84,7 @@ same conflict count, so one run per configuration is enough.
 `<file.cnf>-dir/`:
 
 1. **gather**: stats build with `--xor 0` (plain resolution proof), writes
-   `data.db-raw` and `data.frat`. Must be UNSAT.
+   `data.db-raw` and `data.frat`. Must be UNSAT (see below).
 2. **label** (`fix_up_frat.py`): trims the proof to the steps reachable
    from the empty clause and fills `used_clauses` (tracked clause X was in
    the hint chain of a kept step at conflict C) and `used_clauses_anc`
@@ -107,10 +107,11 @@ same conflict count, so one run per configuration is enough.
 Flags: `--gather-only` stops after 4 (for corpus learning), `--skip-solve`
 redoes 2-6 from the existing `data.db-raw` (needs the proof, so
 `KEEP_FRAT=1` on the first run), `--skip-learn` only reruns 6.
-`ALLOW_SAT=1` accepts SAT instances: with no empty clause there is no
-proof to trim, so a use is "took part in learning a clause" instead of
-"took part in the proof". Noisier, but most competition instances that
-solve in minutes are SAT.
+**Only UNSAT instances, ever.** A label is "took part in the trimmed
+UNSAT proof"; a SAT run has no empty clause, so no proof and no labels.
+"Took part in learning some clause" is a different, noisier quantity
+(most learnt clauses lead nowhere) and mixing the two in one training
+set is wrong. The pipeline refuses SAT runs and there is no switch.
 
 Labels: `x.<table>_<tier>` is the use count over the horizon;
 `x.<table>_<tier>_rel` (`TARGET=rel` learns it) is the share of the
@@ -316,9 +317,11 @@ conflict gain (old corpus: 87% conflicts, 93% time).
 found 7 solvable; `survey2.sh`: the smallest file of each of 91
 families at 300 s found 30 solvable with 30k-2.5M conflicts, half of
 them SAT). `gather_all.sh` gathered them into `cnf/<file>-dir`
-(`ALLOW_SAT=1`, `FIXED=6000`, `DUMPRATIO` 0.1/0.05/0.03 by conflicts),
-26 usable: 4 have no rows in any horizon or no used clause at all, 1
-filled the disk. `families.py` names the family, `run_general.sh <name>`
+(`FIXED=6000`, `DUMPRATIO` 0.1/0.05/0.03 by conflicts), 26 usable: 4
+have no rows in any horizon or no used clause at all, 1 filled the disk.
+12 of the 26 were SAT, gathered by a since-removed switch that counted
+every derivation as a use; they are parked in `cnf-sat/` and are not to
+be learnt from. `families.py` names the family, `run_general.sh <name>`
 learns on all families but `HOLDOUT` and evaluates on those (the normal
 build's runs come from the survey via `normal-cache/`).
 

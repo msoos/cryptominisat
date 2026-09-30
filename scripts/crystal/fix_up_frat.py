@@ -144,7 +144,7 @@ class FratFile:
         else:
             self.index_ascii()
         print("Indexed %d add steps T: %-3.2f s" % (len(self.offsets), time.time() - t))
-        if self.empty_cl is None and not opts.all_steps:
+        if self.empty_cl is None:
             print("ERROR: no empty clause in the proof. Was the instance UNSAT?")
             exit(-1)
         # ID -> position in offsets/ids (IDs are assigned increasingly)
@@ -171,16 +171,9 @@ class FratFile:
             return ret[:-1]
 
     def mark_proof(self):
-        """Backward pass: which add steps derive the empty clause. Without
-        one (a SAT run, --all-steps) every add step counts: a use is then
-        'took part in learning a clause', not 'took part in the proof'."""
+        """Backward pass: which add steps derive the empty clause."""
         t = time.time()
         marked = bytearray(len(self.offsets))
-        if self.empty_cl is None:
-            for i in range(len(marked)):
-                marked[i] = 1
-            print("No empty clause: all %d add steps count" % len(marked))
-            return marked
         todo = [self.pos_of_id[self.empty_cl]]
         marked[todo[0]] = 1
         while todo:
@@ -349,8 +342,6 @@ Adds used_clauses and used_clauses_anc to the SQLite database"""
     parser.add_argument("fratfile", type=str, metavar='FRAT',
                         help="FRAT proof written by the solver (--xlrup 0), ascii or binary")
     parser.add_argument("sqlitedb", type=str, metavar='SQLITEDB')
-    parser.add_argument("--all-steps", action="store_true", default=False,
-                        help="no proof trimming: every derivation counts (SAT runs)")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
