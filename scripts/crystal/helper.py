@@ -230,7 +230,9 @@ def _col(df, name):
 
 def _set(df, name, val):
     if _pending is not None:
-        _pending[name] = val
+        # float32 as in the solver, and half the memory
+        with np.errstate(over="ignore"):
+            _pending[name] = val.astype(np.float32)
     else:
         df[name] = val
 
