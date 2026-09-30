@@ -187,6 +187,24 @@ def cross_check(frames):
             bad = (m[la] > m[lb]).sum()
             check(bad == 0, "%s: %d rows where the %s use exceeds the %s use" % (table, bad, a, b))
             print("   %s: %s <= %s holds on %d shared rows" % (table, a, b, len(m)))
+        # the discounted use weighs every use by at most 1 over two
+        # half-lives (60k), so it is at most the 120k count, and a clause
+        # used in the next 10k has a discounted use of at least 0.79 per use
+        if "disc" in tiers and "forever" in tiers:
+            key = ["fname", "sum_cl_use.clauseID", "rdb0_common.conflicts"]
+            ld, lf = "x.%s_disc" % table, "x.%s_forever" % table
+            m = tiers["disc"][key + [ld]].merge(tiers["forever"][key + [lf]], on=key)
+            if len(m) >= 50:
+                bad = (m[ld] > m[lf] + 1e-6).sum()
+                check(bad == 0, "%s: %d rows where the discounted use exceeds the forever count" % (table, bad))
+                print("   %s: disc <= forever holds on %d shared rows" % (table, len(m)))
+        if "disc" in tiers and "short" in tiers:
+            key = ["fname", "sum_cl_use.clauseID", "rdb0_common.conflicts"]
+            ld, ls = "x.%s_disc" % table, "x.%s_short" % table
+            m = tiers["disc"][key + [ld]].merge(tiers["short"][key + [ls]], on=key)
+            if len(m) >= 50:
+                bad = (m[ld] < 0.79 * m[ls] - 1e-6).sum()
+                check(bad == 0, "%s: %d rows where the discounted use is below 0.79 x the short count" % (table, bad))
 
 
 if __name__ == "__main__":
