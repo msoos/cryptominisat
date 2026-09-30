@@ -45,7 +45,7 @@ for f in "$@"; do
     printf "%-28s " "$(basename "$f")"
     run normal "$NORMAL_BIN" $EVAL_OPTS "$f"
     for t in $EVAL_TABLES; do
-        run "pred$t" "$PRED_BIN" --predtype xgb --predloc "$PRED" --predtables "$t" $EVAL_OPTS $PRED_OPTS "$f"
+        run "pred$t" "$PRED_BIN" --predtype xgb --predloc "$PRED" --predtiers "${TIERS// /,}" --predtables "$t" $EVAL_OPTS $PRED_OPTS "$f"
     done
     echo
     for t in normal $(for t in $EVAL_TABLES; do echo "pred$t"; done); do

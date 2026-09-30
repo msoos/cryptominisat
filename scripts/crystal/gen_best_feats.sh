@@ -30,7 +30,7 @@ cd - > /dev/null
 mkdir -p "$OUT"
 git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
 
-for tier in short long forever; do
+for tier in ${TIERS:-disc}; do
     for table in ${TABLES:-used_later used_later_anc}; do
         for computed in ${COMPUTED:-no all}; do
             f=$(ls ${PREFIX}${table}-${tier}-cut1-*.dat | head -1)

@@ -253,7 +253,7 @@ class Learner:
             # remove features that would be "cheating" or useless
             torem = []
             for table in ["used_later", "used_later_anc"]:
-                for tier in ["short", "long", "forever"]:
+                for tier in helper.ALL_TIERS:
                     torem. append("x.{table}_{tier}".format(tier=tier, table=table))
 
             torem.extend([

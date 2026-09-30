@@ -233,7 +233,7 @@ class QueryCls (helper.QueryHelper):
         if "top_non_zero_0.0_perc" not in perc:
             print("WARNING: no clause is ever used in {table}_{tier}, no frame".format(tier=tier, table=table))
             return pd.DataFrame()
-        self.myformat["del_at_least"] = getattr(options, tier)
+        self.myformat["del_at_least"] = helper.tier_duration(options, tier)
 
         # when del_at_least is over 2 million, then we need to make this smaller
         #    or we will delete all data
@@ -353,13 +353,14 @@ def one_database(dbfname):
 
     with helper.QueryFill(dbfname) as q:
         q.delete_and_create_used_laters()
-        for tier in ["short", "long", "forever"]:
+        for tier in options.tiers.split(","):
             for table in ["used_later", "used_later_anc"]:
-                q.fill_used_later_X(tier, duration=getattr(options, tier), table=table)
+                q.fill_used_later_X(tier, duration=helper.tier_duration(options, tier), table=table,
+                                    halflife=options.halflife)
                 q.fill_used_later_X_perc_fit(tier, table=table)
 
     print("Using sqlite3 DB file %s" % dbfname)
-    for tier in ["short", "long", "forever"]:
+    for tier in options.tiers.split(","):
         for table in ["used_later", "used_later_anc"]:
             print("------> Doing tier {tier} table {table}".format(
                 tier=tier,table=table))
@@ -424,6 +425,7 @@ if __name__ == "__main__":
                       help="Don't recreate indexes")
 
     # lengths of short/long
+    helper.add_tier_options(parser)
     parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
     parser.add_option("--long", default=30*1000, type=int,

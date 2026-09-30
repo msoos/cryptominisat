@@ -409,10 +409,13 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute(q)
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
-        mygoal = options.goal_rdb/13
+        # the later tiers get 3x the rows of the one before: 8%, 23%, 70% for
+        # the three count horizons, everything for a single tier
+        tiers = options.tiers.split(",")
+        mygoal = options.goal_rdb / sum(3**i for i in range(len(tiers)))
         table="used_later" # we could iterate with "used_later_anc", but not doing that
-        for tier in ["short", "long", "forever"]:
-            mygoal*=3 # this gives 8%, 23%, 70% distribution (total 100% if not rounded)
+        for tier in tiers:
+            mygoal*=3
             if not options.fair:
                 self.insert_into_only_keep_rdb(100000, mygoal/20, tier=tier, table=table)
                 self.insert_into_only_keep_rdb(10000, mygoal/20, tier=tier, table=table)
@@ -496,6 +499,7 @@ if __name__ == "__main__":
                       dest="fair", help="Fair sampling. NOT DEFAULT.")
 
     # lengths of short/long
+    helper.add_tier_options(parser)
     parser.add_option("--short", default=10*1000, type=int,
                       dest="short", help="Short duration. Default: %default")
     parser.add_option("--long", default=30*1000, type=int,
@@ -539,16 +543,16 @@ if __name__ == "__main__":
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose, used_clauses_suffix="_red")
         for table in ["used_later", "used_later_anc"]:
-            for tier in ["short", "long", "forever"]:
-                q.fill_used_later_X(tier, duration=getattr(options, tier),
+            for tier in options.tiers.split(","):
+                q.fill_used_later_X(tier, duration=helper.tier_duration(options, tier),
                                     used_clauses_suffix="_red",
-                                    table=table)
+                                    table=table, halflife=options.halflife)
 
     # now we calculate the distributions and save them
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
-        for tier in ["short", "long", "forever"]:
+        for tier in options.tiers.split(","):
                 q.get_all_percentile_X(tier)
         q.print_percentiles()
         q.drop_used_clauses_red()
@@ -578,8 +582,9 @@ if __name__ == "__main__":
 
         # this is is needed for RDB row deletion below (since it's not fair)
         table = "used_later" # we could also do used_later_anc (for RDB)
-        for tier in ["short", "long", "forever"]:
-            q.fill_used_later_X(tier=tier, table=table, duration=getattr(options, tier))
+        for tier in options.tiers.split(","):
+            q.fill_used_later_X(tier=tier, table=table, duration=helper.tier_duration(options, tier),
+                                halflife=options.halflife)
 
     with QueryDatRem(args[0]) as q:
         print("-------------")

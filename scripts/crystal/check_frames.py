@@ -59,7 +59,7 @@ def check(cond, msg):
 
 
 def tier_of(fname):
-    m = re.search(r"cldata-(used_later(?:_anc)?)-(short|long|forever)-", fname)
+    m = re.search(r"cldata-(used_later(?:_anc)?)-(short|long|forever|disc)-", fname)
     return (m.group(1), m.group(2)) if m else (None, None)
 
 
@@ -90,7 +90,7 @@ def check_frame(fname, df, feats):
     y = df[label]
     check(y.notna().all(), "%s: NaN labels: %d" % (name, y.isna().sum()))
     check((y >= 0).all(), "%s: negative labels" % name)
-    if "_anc" not in table:
+    if "_anc" not in table and tier != "disc":
         check((y == y.round()).all(), "%s: non-integer use counts" % name)
     check(y.sum() > 0, "%s: all labels zero" % name)
     frac_pos = (y > 0).mean()

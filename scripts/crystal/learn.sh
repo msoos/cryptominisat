@@ -48,7 +48,7 @@ for d in "$@"; do
         || { echo "FAILED: $d, see $OUT/check_frames-$(basename "$d").out"; grep FAIL "$OUT/check_frames-$(basename "$d").out"; exit 1; }
 done
 
-for tier in short long forever; do
+for tier in $TIERS; do
     for table in used_later used_later_anc; do
         name="${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}"
         dats=()
@@ -71,4 +71,4 @@ for tier in short long forever; do
         grep -E "^ranking test" "$OUT/out-${table}-${tier}"
     done
 done
-echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predtype xgb --predloc $OUT file.cnf"
+echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predtype xgb --predloc $OUT --predtiers ${TIERS// /,} file.cnf"

@@ -72,8 +72,8 @@ class QueryFill (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def delete_and_create_used_laters(self):
-        tiers = ["short", "long", "forever"]
+    def delete_and_create_used_laters(self, tiers=None):
+        tiers = tiers or ALL_TIERS
         tables = ["used_later", "used_later_anc"]
         for tier in tiers:
             for table in tables:
@@ -116,13 +116,21 @@ class QueryFill (QueryHelper):
     # used_later_X is summed from used_clauses, used_later_anc_X from
     # used_clauses_anc (uses of the clause AND of its descendants)
     def fill_used_later_X(self, tier, duration, table="used_later",
-                          used_clauses_suffix=""):
+                          used_clauses_suffix="", halflife=None):
         used_clauses = ("used_clauses" if table == "used_later" else "used_clauses_anc") \
             + used_clauses_suffix
 
         min_del_distance = duration
         if min_del_distance > 2*1000*1000:
             min_del_distance = 100*1000
+
+        # 'disc': the use is discounted by how far away it is, halving every
+        # HALFLIFE conflicts. One horizon-free label instead of three
+        if tier == "disc":
+            assert halflife
+            use = "sum(ucl.weight * pow(0.5, (ucl.used_at - rdb0.conflicts)/%d.0))" % halflife
+        else:
+            use = "sum(ucl.weight)"
 
         # Note: "weight" below is because a child has less weight than a parent
         #       discount is 0.5 (as per fix_up_frat), so a child is 0.5, a grand-child
@@ -137,7 +145,7 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , sum(ucl.weight) as `used_later`
+        , {use} as `used_later`
 
         FROM
         reduceDB as rdb0
@@ -159,7 +167,7 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = q_fill.format(
-            tier=tier, used_clauses=used_clauses,
+            tier=tier, used_clauses=used_clauses, use=use,
             duration=duration,
             table=table,
             min_del_distance=min_del_distance)
@@ -257,6 +265,27 @@ def _flush_pending(df):
     df = pd.concat([df, pd.DataFrame(_pending, index=df.index)], axis=1)
     _pending = None
     return df
+
+# the labels: uses in the next SHORT/LONG/FOREVER conflicts, or 'disc',
+# the discounted sum of all future uses (see fill_used_later_X)
+ALL_TIERS = ["short", "long", "forever", "disc"]
+COUNT_TIERS = ["short", "long", "forever"]
+
+
+def tier_duration(options, tier):
+    """how long a clause must stay in the solver after the row for the
+    row to count: the horizon, or two half-lives for disc"""
+    if tier == "disc":
+        return 2 * options.halflife
+    return getattr(options, tier)
+
+
+def add_tier_options(parser):
+    parser.add_option("--tiers", default="disc", type=str, dest="tiers",
+                      help="comma separated: short,long,forever,disc. Default: %default")
+    parser.add_option("--halflife", default=30*1000, type=int, dest="halflife",
+                      help="disc: a use this many conflicts away counts half. Default: %default")
+
 
 def helper_divide(dividend, divisor, df, features, verb, name=None):
     """

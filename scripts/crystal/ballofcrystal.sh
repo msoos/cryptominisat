@@ -65,7 +65,7 @@ echo "--> work dir:                 $DIR"
 echo "--> stats binary:             $STATS_BIN"
 echo "--> predictor binary:         $PRED_BIN"
 echo "--> dump ratio / lock ratio:  $DUMPRATIO / $CLLOCK"
-echo "--> tiers short/long/forever: $SHORT / $LONG / $FOREVER"
+echo "--> tiers:                    $TIERS (halflife $HALFLIFE, horizons $SHORT / $LONG / $FOREVER)"
 echo "--> rows per strata:          $FIXED"
 
 for f in "$STATS_BIN" "$PRED_BIN" "$bestf"; do
@@ -133,11 +133,13 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     stage "sample_data"
     cp data.db data-min.db
     "$SCRIPTDIR/sample_data.py" --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
+        --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
         data-min.db | tee sample_data.out-stage
 
     stage "cldata_gen_pandas"
     "$SCRIPTDIR/cldata_gen_pandas.py" data-min.db \
         --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
+        --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} \
         | tee cldata_gen_pandas.out-stage
     if ! ls data-min.db-cldata-*.dat > /dev/null 2>&1; then
@@ -152,7 +154,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     fi
 
     stage "cldata_predict"
-    for tier in short long forever; do
+    for tier in $TIERS; do
         for table in used_later used_later_anc; do
             f="data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat"
             if [[ ! -f "$f" ]]; then echo "no frame for $table $tier (run shorter than the horizon), no model"; continue; fi
@@ -183,7 +185,7 @@ function summary() {
 }
 for TODO in 000 111; do
     $NOBUF "$PRED_BIN" --predtype xgb --predloc . --predbestfeats "$bestf" \
-        --predtables $TODO --zero-exit-status "$FNAME" \
+        --predtiers "${TIERS// /,}" --predtables $TODO --zero-exit-status "$FNAME" \
         > "cms-pred-run.out-${TODO}" 2>&1 || true
 done
 if [[ -x "$NORMAL_BIN" ]]; then

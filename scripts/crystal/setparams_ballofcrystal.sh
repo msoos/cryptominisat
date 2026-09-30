@@ -17,7 +17,11 @@ export DUMPRATIO="${DUMPRATIO:-0.1}"   # fraction of learnt clauses tracked
 export CLLOCK="${CLLOCK:-0.3}"         # fraction of tracked clauses never deleted
 export EVERYPRED="${EVERYPRED:-10000}" # conflicts between data dumps
 
-# Labels: 'used_later' is counted over the next SHORT/LONG/FOREVER conflicts
+# Labels, one model per tier. 'disc' = every future use discounted, halving
+# every HALFLIFE conflicts (one horizon-free label); short/long/forever =
+# use counts over the next SHORT/LONG/FOREVER conflicts
+export TIERS="${TIERS:-disc}"          # space separated, e.g. "short long forever"
+export HALFLIFE="${HALFLIFE:-30000}"
 export SHORT="${SHORT:-10000}"
 export LONG="${LONG:-30000}"
 export FOREVER="${FOREVER:-120000}"
