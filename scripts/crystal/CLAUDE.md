@@ -97,6 +97,8 @@ same conflict count, so one run per configuration is enough.
 4. **frames** (`cldata_gen_pandas.py`): denormalises into six pandas
    frames `data-min.db-cldata-<table>-<tier>-cut1-..-cut2-..-limit-N.dat`,
    table in {used_later, used_later_anc}, tier in {short, long, forever}.
+   Then `check_frames.py` tests them (see below); a failed test stops
+   the pipeline, and `learn.sh` runs it on every input dir too.
 5. **learn** (`cldata_predict.py`): one xgboost regressor per frame,
    `predictor-<table>-<tier>-xgb.json`.
 6. **evaluate**: predictor build with `--predtables 000` and `111`, the
@@ -105,6 +107,35 @@ same conflict count, so one run per configuration is enough.
 Flags: `--gather-only` stops after 4 (for corpus learning), `--skip-solve`
 redoes 2-6 from the existing `data.db-raw` (needs the proof, so
 `KEEP_FRAT=1` on the first run), `--skip-learn` only reruns 6.
+`ALLOW_SAT=1` accepts SAT instances: with no empty clause there is no
+proof to trim, so a use is "took part in learning a clause" instead of
+"took part in the proof". Noisier, but most competition instances that
+solve in minutes are SAT.
+
+Labels: `x.<table>_<tier>` is the use count over the horizon;
+`x.<table>_<tier>_rel` (`TARGET=rel` learns it) is the share of the
+clauses at the same reduce that are used less, 0..1, never-used = 0.
+Reduce only orders the clauses present at one reduce and use counts
+differ 100-fold between families, so `rel` is the instance-invariant
+target for a general model. The ranking quality report is always on
+the counts, whichever is learnt.
+
+### The data tests (`check_frames.py`)
+
+Run before any learning. Fails on: missing columns, other tiers' labels
+in a frame, inf, NaN/negative/non-integer labels, all-zero labels, size
+< 3, `used` outside 0..31, negative ages, ternary resolvents with
+learning-time data or learnt clauses without it, a clause larger than
+when learnt, per-reduce (`rdb0_common.*`) values that differ within one
+reduce, rate columns that are always ~0, features that look into the
+future or need a column that is not there, duplicate (clause, reduce)
+rows, and labels not lined up with the `used` counter (a clause used
+since the last reduce must be used more later than a never-used one:
+the off-by-one-reduce bugs break this). With the three tiers given
+together, short <= long <= forever per clause and reduce. Warns on
+constant columns, glue > size (glue is not refreshed when a clause
+shrinks) and glue above orig_glue. It found the `avg_sum_*_per_time`
+bug (divided by the clause count twice, always ~1e-8).
 
 Knobs are in `setparams_ballofcrystal.sh`, all overridable from the
 environment: `STATS_BIN PRED_BIN NORMAL_BIN`, `DUMPRATIO` (fraction of
