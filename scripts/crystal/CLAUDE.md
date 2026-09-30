@@ -387,12 +387,29 @@ forbidden. Trained on the 8 UNSAT training instances only
 
 Offline the UNSAT-only model looks weaker (73.6% vs 85.2% of the future
 use kept at 25%, short horizon: 8 training instances instead of 20), in
-the solver it is better. `--predcands 0` stays the default. The defaults
-now ARE this model: `best_features.txt` is the general list (the old
-corpus-picked one is `best_features-mixed.txt`), `src/predict/*.json`
-are `models/rel-unsat-all/` (trained on all 14 UNSAT instances) and
-`TARGET=rel` is the default. The bivium and mixed-corpus tables above
-were made with the old list and the count target.
+the solver it is better. `--predcands 0` stays the default.
+
+**One discounted model, score-driven tiers (2026-10-01).** The 14 UNSAT
+instances regathered with all four tiers (`TIERS="disc short long
+forever"`), models trained on the 8 training families, same 6 held-out
+UNSAT families, `--xor 0`, conflicts / time relative to the normal build:
+
+| models | `--predkeep 0` | `--predkeep 1` (25% / 47%) | `--predkeep 1` (15% / 40%) |
+|---|---|---|---|
+| one `disc` model | 100% / 82% | 98% / 73% | 129% / 102% |
+| three horizons, same data | 108% / 81% | | |
+
+Per instance with `--predkeep 1`: time 68-75% on hid, jkkk, schup and
+sv, 106% on post-cbmc-aes, 130% on Steiner (6 s runs). Offline the disc
+label does not look better than the short one (the offline metric keeps
+disagreeing with the solver on anything but the target scale), in the
+solver one model does what three did at a third of the prediction cost.
+So the defaults are: `TIERS=disc`, `TARGET=rel`, `--predtiers disc`,
+`--predkeep 1`, `best_features.txt` = the general list (the old
+corpus-picked one is `best_features-mixed.txt`), `src/predict/predictor_disc.json`
+= `models/disc-all/` (all 14 UNSAT instances). The bivium and
+mixed-corpus tables above were made with the old list, the count target
+and three models.
 
 
 ## Open
