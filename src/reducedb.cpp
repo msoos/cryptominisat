@@ -99,6 +99,33 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     const int pred_cands = 0;
     #endif
     size_t normal_cands = 0;
+    //predkeep: the score's rank replaces glue in the tier rules below
+    double keep_t1 = 0, keep_t2 = 0;
+    bool pred_keep = false;
+    #ifdef FINAL_PREDICTOR
+    pred_keep = solver->conf.pred_keep != 0;
+    if (pred_keep) {
+        update_preds(solver->long_red_cls[0]);
+        vector<double> scores;
+        scores.reserve(solver->long_red_cls[0].size());
+        for (const ClOffset offs: solver->long_red_cls[0]) {
+            const Clause* cl = solver->cl_alloc.ptr(offs);
+            scores.push_back(pred_score(solver->red_stats_extra[cl->stats.extra_pos]));
+        }
+        if (!scores.empty()) {
+            //the score above which a clause is in the best t1% / t2%
+            const size_t n = scores.size();
+            size_t at1 = (size_t)((double)n * (1.0 - solver->conf.pred_keep_t1/100.0));
+            size_t at2 = (size_t)((double)n * (1.0 - solver->conf.pred_keep_t2/100.0));
+            at1 = std::min(at1, n-1); at2 = std::min(at2, n-1);
+            vector<double> tmp(scores);
+            std::nth_element(tmp.begin(), tmp.begin()+at1, tmp.end());
+            keep_t1 = tmp[at1];
+            std::nth_element(tmp.begin(), tmp.begin()+at2, tmp.end());
+            keep_t2 = tmp[at2];
+        }
+    }
+    #endif
     for (const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
@@ -125,8 +152,17 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         //only if used since the last reduce. Kissat always reduces tier3,
         //CaDiCaL keeps it if used: see reducekeepused
         const uint32_t glue = cl->stats.glue;
-        if ((glue <= solver->tier1_glue && used)
-            || ((glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
+        bool tier1 = glue <= solver->tier1_glue;
+        bool tier2 = glue <= solver->tier2_glue;
+        #ifdef FINAL_PREDICTOR
+        if (pred_keep) {
+            const double sc = pred_score(solver->red_stats_extra[cl->stats.extra_pos]);
+            tier1 = sc >= keep_t1;
+            tier2 = sc >= keep_t2;
+        }
+        #endif
+        if ((tier1 && used)
+            || ((tier2 || solver->conf.reduce_keep_used)
                 && used >= CL_MAX_USED-1)
         ) {
             rstats.kept_used++;
@@ -140,7 +176,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     #ifdef FINAL_PREDICTOR
     //only what is ranked gets predicted: a third of the DB on a normal run.
     //The features must be what the STATS build dumped: before the decrement
-    if (!solver->conf.dump_pred_distrib) {
+    if (!solver->conf.dump_pred_distrib && !pred_keep) {
         const double my_time = cpu_time();
         update_preds(stack);
         verb_print(2, "[pred] predicted for " << stack.size() << " cands"
