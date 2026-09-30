@@ -225,23 +225,50 @@ n=5/6, 220k-2.1M conflicts, gathered with `DUMPRATIO` 0.06 or 0.03 for
 the >1M ones, `FIXED=10000`), `test/` 4 others (1.3-1.8M), `models/<name>/`
 the models and `results-*.out` the A/B tables, all `--xor 0` (the stats
 run has no XOR reasoning). `exp.sh <name>` learns and evaluates one
-configuration. Conflicts and time of the predictor build relative to the
-normal build on the 4 test instances (time under load, indicative only):
+configuration, `chain*.sh` are the runs made. Conflicts / time of the
+predictor build relative to the normal build on the 4 held-out test
+instances (time is under load unless marked quiet, so indicative):
 
 | models | `--predcands 0` | `--predcands 1` |
 |---|---|---|
-| squared error (the old default) | 90% / 90% | 82% / 65% |
-| log objective | 75% / 71% | 74% / 65% |
+| squared error (the default) | 90% / 90% | 82% / 65% |
+| log objective | 75% / 71% | 74% / 65% (quiet: 262 s vs 400 s) |
 | poisson | 88% / 117% | 85% / 72% |
-| log, features picked on bivium | 84% / 78% | (see results) |
+| log, features picked on bivium | 84% / 78% | 87% / 70% |
+| log, `--predthresh 1` | | 71% / 77% |
+| poisson, `--predthresh 3` | | 72% / 75% |
+| log, `--predcands 1`, default options (XOR reasoning on) | | 77% / 80% |
 
-Offline, glue/size is already a strong order on bivium (93.5% of the
-future use kept at 25% for the short horizon, vs 75% on the old corpus),
-and `rdb0.size` carries most of the importance. The log objective is the
-biggest single win; features picked on bivium itself rank better offline
-but do not help in the solver. A normal build with `--reducekeepused 0`
-gets 102% / 78%, so about half of the time gain of `--predcands 1` is the
-smaller DB, the conflict gain is the ranking.
+In-sample on the 10 training instances: log + predcands 1 gives 70% /
+70%, squared error 83% / 88%. Offline, glue/size is already a strong order
+on bivium (93.5% of the future use kept at 25% for the short horizon, vs
+75% on the mixed corpus) and `rdb0.size` carries most of the importance.
+A normal build with `--reducekeepused 0` gets 102% / 78%, so about half
+of the time gain of `--predcands 1` is the smaller DB (25% smaller), the
+conflict gain is the ranking.
+
+**But not on the mixed corpus.** Same comparisons on the 10-instance
+corpus of `cb_test/corpus/` + UTI, with the solver of 2026-09-30
+(`cb_test/eval-all-*.out`, models `learn-all-log`, `learn-all-newfeats` =
+squared error, same frames):
+
+| models | in-sample, `--predcands 0` | in-sample, `--predcands 1` | UTI held out, 0 | UTI held out, 1 |
+|---|---|---|---|---|
+| squared error | 87% / 93% | 95% / 104% | | |
+| log | 91% / 113% | 88% / 103% | 98% / 107% | 160% / 154% |
+
+So the objective and the candidate set are family-dependent: the
+defaults stay squared error and `--predcands 0`, and `XGB_OBJ=log` with
+`--predcands 1` is what to use for a bivium-like family. Features picked
+on bivium rank better offline but do not help in the solver, so
+`best_features.txt` stays the shared list (`best_features-bivium.txt` is
+kept for reference).
+
+Prediction cost: the predictor build now predicts only for the clauses
+reduce ranks (a third of the DB with `--predcands 0`); before, on php10,
+predicting for every learnt clause at every reduce was 3 s of 11. On
+short runs with many reduces the remaining overhead still eats the
+conflict gain (old corpus: 87% conflicts, 93% time).
 
 ## Open
 
