@@ -574,9 +574,11 @@ void ReduceDB::dump_sql_cl_data(
 //     avgdata.avg_glue = (double)total_glue/(double)all_learnt.size();
     avgdata.avg_props = (double)total_props/(double)all_learnt.size();
     avgdata.avg_uip1_used = (double)total_uip1_used/(double)all_learnt.size();
+    //uses per conflict of life, over all learnt clauses (it was also
+    //divided by the clause count, which left values around 1e-8)
     if (total_time_in_solver > 0) {
-        avgdata.avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)(all_learnt.size()*total_time_in_solver);
-        avgdata.avg_sum_props_per_time = (double)total_sum_props_used/(double)(all_learnt.size()*total_time_in_solver);
+        avgdata.avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)total_time_in_solver;
+        avgdata.avg_sum_props_per_time = (double)total_sum_props_used/(double)total_time_in_solver;
     }
 
 

@@ -42,6 +42,12 @@ mkdir -p "$OUT"
 git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
 echo "$@" >> "$OUT/out_git"
 
+echo "=== checking the frames"
+for d in "$@"; do
+    "$SCRIPTDIR/check_frames.py" -f "$bestf" "$d"/data-min.db-cldata-*.dat > "$OUT/check_frames-$(basename "$d").out" 2>&1 \
+        || { echo "FAILED: $d, see $OUT/check_frames-$(basename "$d").out"; grep FAIL "$OUT/check_frames-$(basename "$d").out"; exit 1; }
+done
+
 for tier in short long forever; do
     for table in used_later used_later_anc; do
         name="${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}"
