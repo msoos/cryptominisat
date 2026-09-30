@@ -52,6 +52,12 @@ public:
     //CaDiCaL's lim.keptglue/keptsize: largest glue/size kept at last reduce
     uint32_t lim_keptglue = 0;
     uint32_t lim_keptsize = 0;
+    //--predkeep: the score above which a clause counts as tier1 / tier2
+    //at the last reduce, and the score below which nothing was kept
+    double keep_t1 = 0;
+    double keep_t2 = 0;
+    double lim_keptscore = 0;
+    bool keep_by_score = false;
     //CaDiCaL's likely_to_be_kept_clause: would this red cl survive the next reduce?
     bool likely_to_be_kept(const Clause& cl) const;
     void dump_sql_cl_data(const uint32_t cur_rst_type);
