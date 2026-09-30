@@ -30,6 +30,7 @@ export bestf="${bestf:-$(pwd)/best_features.txt}"
 export XGB_EST="${XGB_EST:-40}"
 export XGB_DEPTH="${XGB_DEPTH:-5}"
 export XGB_MINCHILD="${XGB_MINCHILD:-10}"
+export XGB_OBJ="${XGB_OBJ:-squarederror}" # squarederror, log, poisson
 export EXTRA_GEN_PANDAS_OPTS="${EXTRA_GEN_PANDAS_OPTS:-}"
 
 export NOBUF="stdbuf -oL -eL "

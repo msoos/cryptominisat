@@ -137,6 +137,13 @@ class Learner:
             groups.iloc[train_idx].nunique(), groups.iloc[test_idx].nunique()))
         X_train = train[features]
         y_train = train[to_predict]
+        objective = "reg:squarederror"
+        if options.objective == "log":
+            # reduce only ranks: the few heavily used clauses need not
+            # dominate the loss
+            y_train = np.log1p(y_train)
+        elif options.objective == "poisson":
+            objective = "count:poisson"
 
         t = time.time()
         clf = None
@@ -150,7 +157,7 @@ class Learner:
         elif options.regressor == "xgb":
             print("Using xgboost no. estimators:", options.n_estimators_xgboost)
             clf = xgb.XGBRegressor(
-                objective='reg:squarederror',
+                objective=objective,
                 min_child_weight=options.min_child_weight_xgboost, # from doc: "In linear regression task, this simply corresponds to minimum number of instances needed to be in each node."
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
@@ -159,7 +166,7 @@ class Learner:
                 # more trees, so the importance ranking is less noisy
                 print("--topfeats: 100 estimators, only for the feature ranking")
                 clf = xgb.XGBRegressor(
-                    objective='reg:squarederror',
+                    objective=objective,
                     min_child_weight=options.min_child_weight_xgboost,
                     max_depth=options.xboost_max_depth,
                     n_estimators=100)
@@ -305,6 +312,8 @@ if __name__ == "__main__":
                         dest="gen_topfeats", help="Train with 100 estimators for a feature importance ranking")
 
     # type of regressor
+    parser.add_argument("--objective", type=str, default="squarederror",
+                        help="squarederror, log (squared error of log(1+use)), or poisson")
     parser.add_argument("--regressor", type=str, default="xgb",
                         dest="regressor", help="xgb (default) or tree (a single tree, for --dot)")
     parser.add_argument("--xgboostestimators", default=10, type=int,

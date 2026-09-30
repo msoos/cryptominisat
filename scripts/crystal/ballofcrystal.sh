@@ -148,7 +148,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
                 "data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat" \
                 --tier "$tier" --table "$table" --features best_only --regressor xgb \
                 --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
-                --xgboostminchild "$XGB_MINCHILD" \
+                --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" \
                 --basedir . --bestfeatfile "$bestf" \
                 > "cldata_predict_${tier}-${table}.out-stage" 2>&1
             grep -E "Mean squared error|==> Saved" "cldata_predict_${tier}-${table}.out-stage" | head -2
