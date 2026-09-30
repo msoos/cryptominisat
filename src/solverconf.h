@@ -95,6 +95,7 @@ class DLL_PUBLIC SolverConf
         unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
         int      pred_cands; //0: reduce candidates as the normal build, 1: + the 'used' ones, 2: + tier1-keep
+        double   pred_thresh; //>0: remove the candidates predicted below this, within 0.5x-2x of the normal count
         double    clause_decay;
 
         //Learnt clause DB reduction, as in CaDiCaL

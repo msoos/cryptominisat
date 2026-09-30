@@ -83,6 +83,7 @@ private:
         uint64_t kept_used = 0; //protected because used since last reduce
         uint64_t kept_keep = 0; //tier1 'keep' flag
         uint64_t locked = 0;    //reasons
+        uint64_t pred_below_thresh = 0; //candidates under --predthresh
         uint64_t removed = 0;
         uint64_t removed_tier[3] = {0, 0, 0};
         uint64_t live_tier[3] = {0, 0, 0}; //red cls per tier seen at reduce
@@ -91,6 +92,7 @@ private:
         ReduceStats& operator+=(const ReduceStats& o) {
             cands += o.cands; kept_used += o.kept_used; kept_keep += o.kept_keep;
             locked += o.locked; removed += o.removed;
+            pred_below_thresh += o.pred_below_thresh;
             for(int i = 0; i < 3; i++) removed_tier[i] += o.removed_tier[i];
             for(int i = 0; i < 3; i++) live_tier[i] += o.live_tier[i];
             for(int i = 0; i < 5; i++) used_hist[i] += o.used_hist[i];
