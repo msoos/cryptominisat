@@ -44,7 +44,9 @@ The predictor build generates two things at build time:
   the C++ that computes every feature. The feature file is the single
   source of truth for training and solving. Another list:
   `cmake -DPRED_FEATURES_FILE=/path/to/list.txt`.
-- the embedded default models from `src/predict/predictor_{short,long,forever}.json`.
+- the embedded default models from `src/predict/predictor_<tier>.json`, one
+  per tier of cmake's `PRED_TIERS` (default `disc`; `embed_models.py`
+  writes the table the solver looks them up in by tier name).
   `src/predict/` is its own git repo (github.com/msoos/cryptominisat-predictors),
   ignored by the solver's repo: clone it there before building. After
   retraining, copy the new models in and commit there (never push, the
@@ -55,11 +57,17 @@ Solver options that matter (all must come BEFORE the CNF file name; anything
 after the CNF is taken as the proof file name, and the solver errors out):
 
 - predictor build: `--predtype xgb` (or `py`, the Python path through
-  `ml_module.py`, slow, for debugging), `--predloc DIR` (models
-  `DIR/predictor-<table>-<tier>-xgb.json`, empty = the embedded ones),
-  `--predtables 000|111` (per short/long/forever: 0 = `used_later`, 1 =
-  `used_later_anc` models), `--predsortby 0..3` (which horizon reduce
-  ranks by, 3 = sum of all three, the default), `--predcands 0|1|2`
+  `ml_module.py`, slow, for debugging), `--predtiers disc` (the models,
+  comma separated, at most three: `disc` = one model of the discounted
+  future use, the default; `short,long,forever` = the three use-count
+  horizons), `--predloc DIR` (models `DIR/predictor-<table>-<tier>-xgb.json`,
+  empty = the embedded ones), `--predtables 000|111` (per model: 0 =
+  `used_later`, 1 = `used_later_anc`), `--predsortby 0..3` (one model's
+  score, or 3 = their sum, the default), `--predkeep 1` (the score
+  decides the tiers instead of glue: the `--predkeept1` % best-scored
+  learnt clauses are kept while used, up to `--predkeept2` % if used
+  since the last reduce; predicts for every learnt clause at every
+  reduce), `--predcands 0|1|2`
   (what it ranks: 0 = the normal build's candidates, 1 = also the clauses
   the normal rules keep for being used, 2 = also the tier1-keep ones; the
   number removed stays the normal build's), `--predthresh T` (remove the
@@ -114,13 +122,19 @@ UNSAT proof"; a SAT run has no empty clause, so no proof and no labels.
 (most learnt clauses lead nowhere) and mixing the two in one training
 set is wrong. The pipeline refuses SAT runs and there is no switch.
 
-Labels: `x.<table>_<tier>` is the use count over the horizon;
-`x.<table>_<tier>_rel` (`TARGET=rel` learns it) is the share of the
-clauses at the same reduce that are used less, 0..1, never-used = 0.
+Labels: one model per tier in `TIERS`. The default tier is `disc`: every
+future use of the clause, discounted by its distance, halving every
+`HALFLIFE` (30k) conflicts, one horizon-free label. The old tiers
+`short`, `long`, `forever` are use counts over the next `SHORT`/`LONG`/
+`FOREVER` conflicts (10k/30k/120k), three models whose sum the solver
+ranked by. A row counts only if the clause stayed in the solver for the
+horizon (two half-lives for `disc`). `x.<table>_<tier>` is the label
+itself; `x.<table>_<tier>_rel` (`TARGET=rel`, the default) is the share
+of the clauses at the same reduce that score less, 0..1, never-used = 0.
 Reduce only orders the clauses present at one reduce and use counts
 differ 100-fold between families, so `rel` is the instance-invariant
 target for a general model. The ranking quality report is always on
-the counts, whichever is learnt.
+the label itself, whichever is learnt.
 
 ### The data tests (`check_frames.py`)
 
@@ -305,11 +319,12 @@ on bivium rank better offline but do not help in the solver, so
 `best_features.txt` stays the shared list (`best_features-bivium.txt` is
 kept for reference).
 
-Prediction cost: the predictor build now predicts only for the clauses
-reduce ranks (a third of the DB with `--predcands 0`); before, on php10,
-predicting for every learnt clause at every reduce was 3 s of 11. On
-short runs with many reduces the remaining overhead still eats the
-conflict gain (old corpus: 87% conflicts, 93% time).
+Prediction cost: the predictor build predicts only for the clauses
+reduce ranks (a third of the DB with `--predcands 0`; `--predkeep 1`
+needs all of them), with one model instead of three since `disc`, and
+sorts the learnt DB at reduce only for the ranking features the list
+uses (the generated header says which; two of five for the general
+list). On php10 the overhead went from 3 s of 11 to about 1.4 s of 9.8.
 
 ## A general model from satcomp2020 (2026-09-30)
 
