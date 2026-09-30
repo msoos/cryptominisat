@@ -193,6 +193,20 @@ def generate(fname, out):
         else:
             raw_funcs.append("static inline double %s(const In& in, bool& miss) { if (%s) { miss = true; return 0; } return (double)(%s); }"
                              % (cname(name), misscond, expr))
+    # what the per-reduce bookkeeping must compute for these features: each
+    # ranking is a sort of the whole learnt DB at every reduce
+    needs = {
+        "NEED_ACT_RANKING": ["rdb0.act_ranking", "rdb0.act_ranking_rel", "rdb0_common.median_act"],
+        "NEED_UIP1_RANKING": ["rdb0.uip1_ranking", "rdb0.uip1_ranking_rel", "rdb0_common.median_uip1_used"],
+        "NEED_PROP_RANKING": ["rdb0.prop_ranking", "rdb0.prop_ranking_rel", "rdb0_common.median_props"],
+        "NEED_SUM_UIP1_PER_TIME_RANKING": ["rdb0.sum_uip1_per_time_ranking", "rdb0.sum_uip1_per_time_ranking_rel",
+                                          "rdb0_common.median_sum_uip1_per_time"],
+        "NEED_SUM_PROPS_PER_TIME_RANKING": ["rdb0.sum_props_per_time_ranking", "rdb0.sum_props_per_time_ranking_rel",
+                                           "rdb0_common.median_sum_props_per_time"],
+    }
+    need_lines = ["static constexpr bool %s = %s;" % (k, "true" if any(c in used for c in cols) else "false")
+                  for k, cols in needs.items()]
+
     raw_fill = []
     for i, name in enumerate(RAW):
         raw_fill.append("    { bool miss = false; const double v = %s(in, miss); at[%d] = to_float(v, miss, missing_val); }"
@@ -236,6 +250,9 @@ static inline float to_float(double v, bool miss, float missing_val)
 
 %s
 
+//the per-reduce rankings these features need (the rest are skipped)
+%s
+
 //every raw column, in this order, for the Python predictor (ml_module.py)
 static const int NUM_RAW = %d;
 static const char* const raw_names[] = {
@@ -254,7 +271,7 @@ static inline void fill_features(const In& in, const float missing_val, float* a
 }
 
 }} //namespace
-""" % (fname, len(feats), "\n".join(raw_funcs), len(RAW),
+""" % (fname, len(feats), "\n".join(raw_funcs), "\n".join(need_lines), len(RAW),
        "\n".join('    "%s",' % n for n in RAW), "\n".join(raw_fill),
        fname, "\n".join(body)))
     return feats, used

@@ -29,6 +29,15 @@ THE SOFTWARE.
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
 #include "cl_predictors_py.h"
+
+//a predictor-only build ranks the learnt DB at every reduce only by what
+//its features use (see gen_pred_features.py); the STATS build dumps all
+#if defined(FINAL_PREDICTOR) && !defined(STATS_NEEDED)
+#include "predict_features_gen.h"
+#define RANK_NEEDED(x) (predgen::x)
+#else
+#define RANK_NEEDED(x) true
+#endif
 #endif
 
 
@@ -448,7 +457,9 @@ ReduceDB::get_median_stat_dat(const vector<ClOffset>& all_learnt, const vector<v
 void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
 {
     //Prop and also save total_* data for stats
-    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
+    if (RANK_NEEDED(NEED_PROP_RANKING)) {
+        std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
+    }
     //total_glue = 0;
     total_props = 0;
     total_uip1_used = 0;
@@ -478,21 +489,24 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     }
 
     //UIP1
-    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
-    for(size_t i = 0; i < all_learnt.size(); i++) {
-        ClOffset offs = all_learnt[i];
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.uip1_ranking = i+1;
-    }
-    if (all_learnt.empty()) {
-        median_data.median_uip1_used = 0;
-    } else {
-        median_data.median_uip1_used = get_median_stat(all_learnt).uip1_used;
+    if (RANK_NEEDED(NEED_UIP1_RANKING)) {
+        std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
+        for(size_t i = 0; i < all_learnt.size(); i++) {
+            ClOffset offs = all_learnt[i];
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+            stats_extra.uip1_ranking = i+1;
+        }
+        if (all_learnt.empty()) {
+            median_data.median_uip1_used = 0;
+        } else {
+            median_data.median_uip1_used = get_median_stat(all_learnt).uip1_used;
+        }
     }
 
     // Sum UIP1 use/time
     vector<val_and_pos> dat(all_learnt.size());
+    if (RANK_NEEDED(NEED_SUM_UIP1_PER_TIME_RANKING))
     for(uint32_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -500,24 +514,27 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         dat[i].pos = i;
         dat[i].val = stats_extra.calc_sum_uip1_per_time(solver->sum_conflicts);
     }
-    std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
-        return a.val > b.val;
-    });
-    for(size_t i = 0; i < dat.size(); i++) {
-        ClOffset offs = all_learnt[dat[i].pos];
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.sum_uip1_per_time_ranking = i+1;
-    }
-    if (all_learnt.empty()) {
-        median_data.median_sum_uip1_per_time = 0;
-    } else {
-        uint32_t extra_at = get_median_stat_dat(all_learnt, dat).extra_pos;
-        const ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
-        median_data.median_sum_uip1_per_time = stats_extra.calc_sum_uip1_per_time(solver->sum_conflicts);
+    if (RANK_NEEDED(NEED_SUM_UIP1_PER_TIME_RANKING)) {
+        std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
+            return a.val > b.val;
+        });
+        for(size_t i = 0; i < dat.size(); i++) {
+            ClOffset offs = all_learnt[dat[i].pos];
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+            stats_extra.sum_uip1_per_time_ranking = i+1;
+        }
+        if (all_learnt.empty()) {
+            median_data.median_sum_uip1_per_time = 0;
+        } else {
+            uint32_t extra_at = get_median_stat_dat(all_learnt, dat).extra_pos;
+            const ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
+            median_data.median_sum_uip1_per_time = stats_extra.calc_sum_uip1_per_time(solver->sum_conflicts);
+        }
     }
 
     // Sum props/time
+    if (RANK_NEEDED(NEED_SUM_PROPS_PER_TIME_RANKING))
     for(uint32_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -525,21 +542,23 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         dat[i].pos = i;
         dat[i].val = stats_extra.calc_sum_props_per_time(solver->sum_conflicts);
     }
-    std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
-        return a.val > b.val;
-    });
-    for(size_t i = 0; i < all_learnt.size(); i++) {
-        ClOffset offs = all_learnt[dat[i].pos];
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.sum_props_per_time_ranking = i+1;
-    }
-    if (all_learnt.empty()) {
-        median_data.median_sum_props_per_time = 0;
-    } else {
-        uint32_t extra_at = get_median_stat_dat(all_learnt, dat).extra_pos;
-        const ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
-        median_data.median_sum_props_per_time = stats_extra.calc_sum_props_per_time(solver->sum_conflicts);
+    if (RANK_NEEDED(NEED_SUM_PROPS_PER_TIME_RANKING)) {
+        std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
+            return a.val > b.val;
+        });
+        for(size_t i = 0; i < all_learnt.size(); i++) {
+            ClOffset offs = all_learnt[dat[i].pos];
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+            stats_extra.sum_props_per_time_ranking = i+1;
+        }
+        if (all_learnt.empty()) {
+            median_data.median_sum_props_per_time = 0;
+        } else {
+            uint32_t extra_at = get_median_stat_dat(all_learnt, dat).extra_pos;
+            const ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
+            median_data.median_sum_props_per_time = stats_extra.calc_sum_props_per_time(solver->sum_conflicts);
+        }
     }
 
     //We'll also compact solver->red_stats_extra
@@ -551,9 +570,12 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         dat[i].pos = i;
         dat[i].val = cl->stats.activity;
     }
-    std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
-        return a.val > b.val;
-    });
+    //the loop below also compacts red_stats_extra, so it runs regardless
+    if (RANK_NEEDED(NEED_ACT_RANKING)) {
+        std::sort(dat.begin(), dat.end(), [](const val_and_pos& a, const val_and_pos& b) {
+            return a.val > b.val;
+        });
+    }
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[dat[i].pos];
         Clause* cl = solver->cl_alloc.ptr(offs);
