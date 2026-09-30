@@ -188,9 +188,8 @@ class QueryFill (QueryHelper):
             num = row[0]
 
         if table == "used_later" and num == 0:
-            print("ERROR: number of rows in {table}_{tier} is 0!".format(tier=tier, table=table))
-            print("Query was: %s" % q)
-            exit(-1)
+            print("WARNING: number of rows in {table}_{tier} is 0: the run is shorter than "
+                  "the horizon, this tier will have no frame".format(tier=tier, table=table))
 
 
         print("%s_%s filled T: %-3.2f s -- num rows: %d" %

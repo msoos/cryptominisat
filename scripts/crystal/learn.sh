@@ -54,9 +54,11 @@ for tier in short long forever; do
         dats=()
         for d in "$@"; do
             f="$d/data-min.db-cldata-${name}.dat"
-            if [[ ! -f "$f" ]]; then echo "ERROR: $f missing"; exit 255; fi
+            # a run shorter than the horizon has no frame for that tier
+            if [[ ! -f "$f" ]]; then echo "WARNING: $f missing, skipped"; continue; fi
             dats+=("$f")
         done
+        if [[ ${#dats[@]} -eq 0 ]]; then echo "ERROR: no frames for $table $tier"; exit 255; fi
         echo "=== $table $tier: ${#dats[@]} frames"
         "$SCRIPTDIR/concat_pandas.py" -o "$OUT/comb-${name}.dat" "${dats[@]}" | tail -1
         $NOBUF "$SCRIPTDIR/cldata_predict.py" "$OUT/comb-${name}.dat" \

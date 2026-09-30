@@ -359,6 +359,10 @@ def one_database(dbfname):
 
             with QueryCls(dbfname, tier, table) as q:
                 df = q.get_one_data(tier, table)
+            if df.shape[0] < 100:
+                print("WARNING: only %d rows for tier %s table %s (run shorter than the "
+                      "horizon?), no frame written" % (df.shape[0], tier, table))
+                continue
 
             if options.verbose:
                 print("Describing----")

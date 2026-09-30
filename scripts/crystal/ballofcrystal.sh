@@ -156,8 +156,9 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     stage "cldata_predict"
     for tier in short long forever; do
         for table in used_later used_later_anc; do
-            $NOBUF "$SCRIPTDIR/cldata_predict.py" \
-                "data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat" \
+            f="data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat"
+            if [[ ! -f "$f" ]]; then echo "no frame for $table $tier (run shorter than the horizon), no model"; continue; fi
+            $NOBUF "$SCRIPTDIR/cldata_predict.py" "$f" \
                 --tier "$tier" --table "$table" --features best_only --regressor xgb \
                 --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
                 --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" \
