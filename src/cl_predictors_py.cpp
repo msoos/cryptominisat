@@ -76,7 +76,7 @@ int ClPredictorsPy::set_up_input(
 
 ClPredictorsPy::ClPredictorsPy()
 {
-    for(uint32_t i=0; i < 3; i++) {
+    for(uint32_t i=0; i < PRED_MAX_MODELS; i++) {
         ret_data[i] = nullptr;
     }
 }
@@ -85,7 +85,7 @@ ClPredictorsPy::~ClPredictorsPy()
 {
     //Free if we didn't already
     if (ret_data[0]) {
-        for(uint32_t i=0; i < 3; i++) {
+        for(uint32_t i=0; i < num_models; i++) {
             assert(ret_data[i]);
             Py_DECREF(ret_data[i]);
         }
@@ -95,9 +95,7 @@ ClPredictorsPy::~ClPredictorsPy()
     Py_Finalize();
 }
 
-int ClPredictorsPy::load_models(const std::string& short_fname,
-                                const std::string& long_fname,
-                                const std::string& forever_fname,
+int ClPredictorsPy::load_models(const vector<std::string>& fnames,
                                 const std::string& best_feats_fname)
 {
     NoFPTraps no_traps;
@@ -145,10 +143,13 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
 
     //Load models
     PyObject* load_models = PyDict_GetItemString(pDict, "load_models");
-    p_args = PyTuple_New(3);
-    PyTuple_SetItem(p_args, 0, PyUnicode_FromString(short_fname.c_str()));
-    PyTuple_SetItem(p_args, 1, PyUnicode_FromString(long_fname.c_str()));
-    PyTuple_SetItem(p_args, 2, PyUnicode_FromString(forever_fname.c_str()));
+    num_models = fnames.size();
+    PyObject* p_list = PyList_New(fnames.size());
+    for(size_t i = 0; i < fnames.size(); i++) {
+        PyList_SetItem(p_list, i, PyUnicode_FromString(fnames[i].c_str()));
+    }
+    p_args = PyTuple_New(1);
+    PyTuple_SetItem(p_args, 0, p_list);
     ret = PyObject_CallObject(load_models, p_args);
     if (ret == nullptr) {
         PyErr_Print();
@@ -163,7 +164,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     return 1;
 }
 
-int ClPredictorsPy::load_models_from_buffers()
+int ClPredictorsPy::load_models_from_buffers(const vector<std::string>&)
 {
     cout << "ERROR: it is not possible to load models from buffer in Python mode" << endl;
     exit(-1);
@@ -206,8 +207,8 @@ void ClPredictorsPy::predict_all(
 
     // See: https://numpy.org/devdocs/user/c-info.beyond-basics.html#basic-iteration
     uint32_t num_elems = PyList_Size(pResult);
-    assert(num_elems == 3);
-    for(uint32_t i = 0; i < 3; i++) {
+    assert(num_elems == num_models);
+    for(uint32_t i = 0; i < num_models; i++) {
         pRet[i] = PyList_GetItem(pResult, i);
         ret_data[i] = (PyArrayObject *)PyArray_ContiguousFromObject(pRet[i], NPY_DOUBLE, 1, 1);
 
@@ -225,16 +226,16 @@ void ClPredictorsPy::predict_all(
 
 void ClPredictorsPy::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
-    extdata.pred_short_use   = out_result[0][at];
-    extdata.pred_long_use    = out_result[1][at];
-    extdata.pred_forever_use = out_result[2][at];
+    for(uint32_t i = 0; i < PRED_MAX_MODELS; i++) {
+        extdata.pred_use[i] = i < num_models ? out_result[i][at] : 0;
+    }
 }
 
 void CMSat::ClPredictorsPy::finish_all_predict()
 {
     //Free previous result
     if (ret_data[0] != nullptr) {
-        for(uint32_t i=0; i < 3; i++) {
+        for(uint32_t i=0; i < num_models; i++) {
 //             assert(pRet[i]);
 //             Py_DECREF(pRet[i]);
 //             pRet[i] = nullptr;

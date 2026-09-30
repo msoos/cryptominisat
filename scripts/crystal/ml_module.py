@@ -79,9 +79,9 @@ def set_up_features(features_fname, raw_names):
     #print(feat_gen_funcs)
 
 
-def load_models(short_fname, long_fname, forever_fname):
+def load_models(fnames):
     global models
-    for fname in [short_fname, long_fname, forever_fname]:
+    for fname in fnames:
         clf_xgboost = xgb.XGBRegressor(n_jobs=1)
         new_fname = fname.replace("-py.", "-xgb.")
         if not os.path.exists(new_fname):
@@ -91,7 +91,7 @@ def load_models(short_fname, long_fname, forever_fname):
 
 
 # called from cl_predictors_py.cpp with one row of raw_data per clause,
-# returns [short, long, forever] predictions
+# returns one prediction array per model, in --predtiers order
 def predict(data):
     df = pd.DataFrame(data, columns=raw_data)
     transformed_data = np.empty((df.shape[0], len(best_features)), dtype=float)
@@ -100,6 +100,6 @@ def predict(data):
     df_final.replace([np.inf, -np.inf], MISSING, inplace=True)
 
     ret = []
-    for i in range(3):
-        ret.append(models[i].get_booster().inplace_predict(df_final))
+    for m in models:
+        ret.append(m.get_booster().inplace_predict(df_final))
     return ret

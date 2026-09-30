@@ -36,7 +36,18 @@ using std::vector;
 
 namespace CMSat {
 
-enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
+//at most this many models (--predtiers), one prediction slot each
+#define PRED_MAX_MODELS 3
+
+//a model compiled in, see embed_models.py
+struct EmbeddedModel {
+    const char* tier;
+    const unsigned char* data;
+    unsigned int len;
+    const char* hash;
+};
+extern const EmbeddedModel embedded_models[];
+extern const unsigned embedded_models_num;
 
 class Clause;
 class Solver;
@@ -89,11 +100,11 @@ class ClPredictorsAbst
 public:
     ClPredictorsAbst() {missing_val = nanf("");}
     virtual ~ClPredictorsAbst() {}
-    virtual int load_models(const std::string& short_fname,
-                     const std::string& long_fname,
-                     const std::string& forever_fname,
+    //one model per file/tier, in --predtiers order
+    virtual int load_models(const vector<std::string>& fnames,
                      const std::string& best_feats_fname) = 0;
-    virtual int load_models_from_buffers() = 0;
+    virtual int load_models_from_buffers(const vector<std::string>& tiers) = 0;
+    uint32_t num_models = 0;
     vector<std::string> get_hashes() const;
 
     virtual void predict_all(

@@ -376,6 +376,8 @@ if(FINAL_PREDICTOR)
         IMPORTED_LOCATION "${XGBOOST_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${XGBOOST_INCLUDE_DIR}")
     add_compile_definitions(FINAL_PREDICTOR)
+    set(PRED_TIERS "disc" CACHE STRING "the embedded models, comma separated tiers: src/predict/predictor_<tier>.json")
+    message(STATUS "embedded predictor models: ${PRED_TIERS}")
     set(PRED_FEATURES_FILE "${CMAKE_SOURCE_DIR}/scripts/crystal/best_features.txt" CACHE FILEPATH
         "The predictor's feature list; its C++ is generated from it")
     message(STATUS "predictor features: ${PRED_FEATURES_FILE}")

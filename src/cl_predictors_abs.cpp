@@ -26,17 +26,13 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-extern const char* predictor_short_json_hash;
-extern const char* predictor_long_json_hash;
-extern const char* predictor_forever_json_hash;
-
+//tier and sha1 of every compiled-in model
 vector<std::string> ClPredictorsAbst::get_hashes() const
 {
     vector<std::string> ret;
-    ret.push_back(string(predictor_short_json_hash));
-    ret.push_back(string(predictor_long_json_hash));
-    ret.push_back(string(predictor_forever_json_hash));
-
+    for(unsigned i = 0; i < embedded_models_num; i++) {
+        ret.push_back(string(embedded_models[i].tier) + ":" + embedded_models[i].hash);
+    }
     return ret;
 }
 

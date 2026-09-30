@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "reducedb.h"
+#include <sstream>
 #include "constants.h"
 #include "solver.h"
 #include "solverconf.h"
@@ -642,8 +643,22 @@ void ReduceDB::load_predictors()
         exit(-1);
     }
 
+    vector<string> tiers;
+    {
+        std::stringstream ss(solver->conf.pred_tiers);
+        string t;
+        while (std::getline(ss, t, ',')) if (!t.empty()) tiers.push_back(t);
+    }
+    if (tiers.empty() || tiers.size() > PRED_MAX_MODELS) {
+        cout << "ERROR: --predtiers needs 1 to " << PRED_MAX_MODELS << " tiers" << endl;
+        exit(-1);
+    }
+    if (solver->conf.pred_tables.size() < tiers.size()) {
+        cout << "ERROR: --predtables needs one digit per tier of --predtiers" << endl;
+        exit(-1);
+    }
     if (solver->conf.pred_conf_location.empty()) {
-        if (predictors->load_models_from_buffers() != 0) {
+        if (predictors->load_models_from_buffers(tiers) != 0) {
             cout << "ERROR: cannot load models from buffers" << endl;
             exit(-1);
         }
@@ -654,15 +669,12 @@ void ReduceDB::load_predictors()
         }
     } else {
         vector<string> locations;
-        const vector<string> tiers = {"short", "long", "forever"};
-        for (uint32_t i = 0; i < 3; i ++) {
+        for (uint32_t i = 0; i < tiers.size(); i ++) {
             locations.push_back(solver->conf.pred_conf_location + "/predictor-"
                 + (solver->conf.pred_tables[i] == '0' ? "used_later" : "used_later_anc")
                 + "-" + tiers[i] + "-" + solver->conf.predictor_type + ".json");
         }
-        const int ret = predictors->load_models(
-            locations[0], locations[1], locations[2],
-            solver->conf.predict_best_feat_fname);
+        const int ret = predictors->load_models(locations, solver->conf.predict_best_feat_fname);
         if (ret == 0) {
             cout << "ERROR loading the predictors" << endl;
             exit(-1);
@@ -743,10 +755,10 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
 double ReduceDB::pred_score(const ClauseStatsExtra& e) const
 {
     switch (solver->conf.pred_sort_by) {
-        case 0: return e.pred_short_use;
-        case 1: return e.pred_long_use;
-        case 2: return e.pred_forever_use;
-        default: return e.pred_short_use + e.pred_long_use + e.pred_forever_use;
+        case 0: return e.pred_use[0];
+        case 1: return e.pred_use[1];
+        case 2: return e.pred_use[2];
+        default: return e.pred_use[0] + e.pred_use[1] + e.pred_use[2];
     }
 }
 
@@ -756,7 +768,7 @@ void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs)
     const bool first = num_reductions == 1;
     std::ofstream distrib_file("pred_distrib.csv", first ? std::ios::out : std::ios::app);
     if (first) {
-        distrib_file << "reduction,age,glue,used,pred_short_use,pred_long_use,pred_forever_use" << endl;
+        distrib_file << "reduction,age,glue,used,pred_use0,pred_use1,pred_use2" << endl;
     }
     for(const ClOffset off: offs) {
         const Clause* cl = solver->cl_alloc.ptr(off);
@@ -765,9 +777,9 @@ void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs)
         << num_reductions << ","
         << (solver->sum_conflicts - stats_extra.introduced_at_conflict) << ","
         << cl->stats.glue << "," << cl->stats.used
-        << "," << stats_extra.pred_short_use
-        << "," << stats_extra.pred_long_use
-        << "," << stats_extra.pred_forever_use
+        << "," << stats_extra.pred_use[0]
+        << "," << stats_extra.pred_use[1]
+        << "," << stats_extra.pred_use[2]
         << endl;
     }
 }

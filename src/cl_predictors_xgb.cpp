@@ -21,20 +21,13 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "cl_predictors_xgb.h"
+#include <iostream>
 #include "clause.h"
 #include "solver.h"
 #include "predict_features_gen.h"
 #include <cmath>
 #include <sstream>
 #include <fstream>
-extern char predictor_short_json[];
-extern unsigned int predictor_short_json_len;
-
-extern char predictor_long_json[];
-extern unsigned int predictor_long_json_len;
-
-extern char predictor_forever_json[];
-extern unsigned int predictor_forever_json_len;
 
 #define safe_xgboost(call) {  \
   int err = (call); \
@@ -48,15 +41,14 @@ using namespace CMSat;
 
 ClPredictorsXGB::ClPredictorsXGB()
 {
-    handles.resize(3);
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::short_pred])))
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::long_pred])))
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::forever_pred])))
+}
 
-    for(int i = 0; i < 3; i++) {
-        safe_xgboost(XGBoosterSetParam(handles[i], "nthread", "1"))
-        //safe_xgboost(XGBoosterSetParam(handles[i], "verbosity", "3"))
-    }
+void ClPredictorsXGB::new_handle()
+{
+    assert(handles.size() < PRED_MAX_MODELS);
+    handles.push_back(nullptr);
+    safe_xgboost(XGBoosterCreate(0, 0, &handles.back()))
+    safe_xgboost(XGBoosterSetParam(handles.back(), "nthread", "1"))
 }
 
 ClPredictorsXGB::~ClPredictorsXGB()
@@ -66,27 +58,36 @@ ClPredictorsXGB::~ClPredictorsXGB()
     }
 }
 
-int ClPredictorsXGB::load_models(const std::string& short_fname,
-                               const std::string& long_fname,
-                               const std::string& forever_fname,
-                               const std::string& best_feats_fname)
+int ClPredictorsXGB::load_models(const vector<std::string>& fnames,
+                               const std::string& /*best_feats_fname*/)
 {
     NoFPTraps no_traps;
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
+    for(const auto& f: fnames) {
+        new_handle();
+        safe_xgboost(XGBoosterLoadModel(handles.back(), f.c_str()))
+    }
+    num_models = handles.size();
     return 1;
 }
 
-int ClPredictorsXGB::load_models_from_buffers()
+int ClPredictorsXGB::load_models_from_buffers(const vector<std::string>& tiers)
 {
     NoFPTraps no_traps;
-    safe_xgboost(XGBoosterLoadModelFromBuffer(
-        handles[predict_type::short_pred], predictor_short_json, predictor_short_json_len));
-    safe_xgboost(XGBoosterLoadModelFromBuffer(
-        handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
-    safe_xgboost(XGBoosterLoadModelFromBuffer(
-        handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
+    for(const auto& t: tiers) {
+        const EmbeddedModel* m = nullptr;
+        for(unsigned i = 0; i < embedded_models_num; i++) {
+            if (t == embedded_models[i].tier) m = &embedded_models[i];
+        }
+        if (m == nullptr) {
+            std::cerr << "ERROR: no model for tier '" << t << "' is compiled in, only:";
+            for(unsigned i = 0; i < embedded_models_num; i++) std::cerr << " " << embedded_models[i].tier;
+            std::cerr << std::endl;
+            return 1;
+        }
+        new_handle();
+        safe_xgboost(XGBoosterLoadModelFromBuffer(handles.back(), m->data, m->len));
+    }
+    num_models = handles.size();
     return 0;
 }
 
@@ -123,45 +124,25 @@ void ClPredictorsXGB::predict_all(
 #endif
 
     bst_ulong out_len;
-    safe_xgboost(XGBoosterPredict(
-        handles[short_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_result_short
-    ))
-    assert(out_len == num);
-
-    safe_xgboost(XGBoosterPredict(
-        handles[long_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_result_long
-    ))
-    assert(out_len == num);
-
-    safe_xgboost(XGBoosterPredict(
-        handles[forever_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_result_forever
-    ))
-    assert(out_len == num);
+    for(uint32_t i = 0; i < num_models; i++) {
+        safe_xgboost(XGBoosterPredict(
+            handles[i],
+            dmat,
+            0,  //0: normal prediction
+            0,  //use all trees
+            0,  //do not use for training
+            &out_len,
+            &out_result[i]
+        ))
+        assert(out_len == num);
+    }
 }
 
 void ClPredictorsXGB::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
-    extdata.pred_short_use = (double)out_result_short[at];
-    extdata.pred_long_use = (double)out_result_long[at];
-    extdata.pred_forever_use = (double)out_result_forever[at];
+    for(uint32_t i = 0; i < PRED_MAX_MODELS; i++) {
+        extdata.pred_use[i] = i < num_models ? (double)out_result[i][at] : 0;
+    }
 }
 
 void CMSat::ClPredictorsXGB::finish_all_predict()

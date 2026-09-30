@@ -42,21 +42,9 @@ class ClPredictorsXGB : public ClPredictorsAbst
 public:
     ClPredictorsXGB();
     virtual ~ClPredictorsXGB();
-    virtual int load_models(const std::string& short_fname,
-                     const std::string& long_fname,
-                     const std::string& forever_fname,
+    virtual int load_models(const vector<std::string>& fnames,
                      const std::string& best_feats_fname) override;
-    virtual int load_models_from_buffers() override;
-
-    float predict(
-        predict_type pred_type,
-        const CMSat::Clause* cl,
-        const uint64_t sum_conflicts,
-        const double   act_ranking_rel,
-        const double   uip1_ranking_rel,
-        const double   prop_ranking_rel,
-        const ReduceCommonData& commdata
-    );
+    virtual int load_models_from_buffers(const vector<std::string>& tiers) override;
 
     virtual void predict_all(
         float* const data,
@@ -69,9 +57,8 @@ private:
     vector<BoosterHandle> handles;
     DMatrixHandle dmat;
 
-    const float *out_result_short;
-    const float *out_result_long;
-    const float *out_result_forever;
+    const float* out_result[PRED_MAX_MODELS];
+    void new_handle();
 
     //debugging
     int num_dumps = 0;

@@ -46,12 +46,9 @@ class ClPredictorsPy : public ClPredictorsAbst
 public:
     ClPredictorsPy();
     virtual ~ClPredictorsPy();
-    virtual int load_models(
-        const std::string& short_fname,
-        const std::string& long_fname,
-        const std::string& forever_fname,
-        const std::string& best_feats_fname) override;
-    virtual int load_models_from_buffers() override;
+    virtual int load_models(const vector<std::string>& fnames,
+                            const std::string& best_feats_fname) override;
+    virtual int load_models_from_buffers(const vector<std::string>& tiers) override;
 
     virtual int set_up_input(
         const CMSat::Clause* const cl,
@@ -69,15 +66,6 @@ public:
 
     virtual int get_step_size() override;
 
-    float predict(
-        predict_type pred_type,
-        const CMSat::Clause* cl,
-        const uint64_t sum_conflicts,
-        const double   act_ranking_rel,
-        const double   uip1_ranking_rel,
-        const double   prop_ranking_rel,
-        const ReduceCommonData& commdata
-    );
 
     virtual void predict_all(
         float* const data,
@@ -87,13 +75,13 @@ public:
     virtual void finish_all_predict() override;
 
 private:
-    double* out_result[3];
+    double* out_result[PRED_MAX_MODELS];
     PyObject *pDict = nullptr;
     PyObject *pFunc = nullptr;
-    PyObject *pRet[3];
+    PyObject *pRet[PRED_MAX_MODELS];
     PyObject *pArray = nullptr;
     PyObject *p_args = nullptr;
-    PyArrayObject* ret_data[3];
+    PyArrayObject* ret_data[PRED_MAX_MODELS];
     PyObject* pModule;
 };
 

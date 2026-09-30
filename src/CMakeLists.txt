@@ -69,29 +69,25 @@ if(FINAL_PREDICTOR)
     )
     add_custom_target(pred_features ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h)
 
+    # the embedded models, one per tier of PRED_TIERS
+    string(REPLACE "," ";" PRED_TIERS_LIST "${PRED_TIERS}")
+    set(PRED_MODEL_FILES "")
+    foreach(tier ${PRED_TIERS_LIST})
+        add_custom_command(
+            OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_${tier}.cpp
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_${tier}.json ${CMAKE_CURRENT_BINARY_DIR}/pred_${tier}.cpp
+            DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_${tier}.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+        )
+        list(APPEND PRED_MODEL_FILES ${CMAKE_CURRENT_BINARY_DIR}/pred_${tier}.cpp)
+    endforeach()
     add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_embedded_gen.cpp
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/embed_models.py -o ${CMAKE_CURRENT_BINARY_DIR}/pred_embedded_gen.cpp ${PRED_TIERS_LIST}
+        DEPENDS ${CRYPTOMS_SCRIPTS_DIR}/crystal/embed_models.py
     )
-    add_custom_target(pred_short ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp)
-
-    add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
-    )
-    add_custom_target(pred_long ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp)
-
-    add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
-    )
-    add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
+    list(APPEND PRED_MODEL_FILES ${CMAKE_CURRENT_BINARY_DIR}/pred_embedded_gen.cpp)
+    add_custom_target(pred_models ALL DEPENDS ${PRED_MODEL_FILES})
 endif()
 
 # Needed for PicoSAT trace generation
@@ -205,11 +201,7 @@ if(STATS)
 endif()
 
 if(FINAL_PREDICTOR)
-    set(cryptoms_lib_files ${cryptoms_lib_files}
-        ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-    )
+    set(cryptoms_lib_files ${cryptoms_lib_files} ${PRED_MODEL_FILES})
 endif()
 
 add_library(cryptominisat5
@@ -266,9 +258,7 @@ endif()
 if(FINAL_PREDICTOR)
     add_dependencies(cryptominisat5
         pred_features
-        pred_short
-        pred_long
-        pred_forever
+        pred_models
     )
 endif()
 
