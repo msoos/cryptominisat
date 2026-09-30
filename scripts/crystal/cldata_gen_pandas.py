@@ -225,6 +225,10 @@ class QueryCls (helper.QueryHelper):
         return lookup
 
     def get_one_data(self, tier, table):
+        self.c.execute("select count(*) from {table}_{tier}".format(tier=tier, table=table))
+        if self.c.fetchone()[0] == 0:
+            print("WARNING: {table}_{tier} is empty (run shorter than the horizon)".format(tier=tier, table=table))
+            return pd.DataFrame()
         perc = self.get_used_later_percentiles(tier, table)
         self.myformat["del_at_least"] = getattr(options, tier)
 

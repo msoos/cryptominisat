@@ -14,6 +14,7 @@
 #   COMPUTED="no" does only the raw feature runs, which are quick
 #   XGB_OBJ: the training objective, as in setparams_ballofcrystal.sh
 #   TABLES="used_later" does only the plain label tables
+#   TARGET=rel ranks for the per-reduce rank label
 
 set -e
 
@@ -41,6 +42,7 @@ for tier in short long forever; do
             "$SCRIPTDIR/cldata_predict.py" "$f" --tier "$tier" --table "$table" \
                 --regressor xgb --topfeats --features "${computed}_computed" --only "${ONLY:-1.0}" \
                 --objective "${XGB_OBJ:-squarederror}" --xboostmaxdepth "${XGB_DEPTH:-5}" \
+                --target "${TARGET:-count}" \
                 > "$OUT/output_${table}_${tier}_${computed}computed" 2>&1
             grep -A 40 "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" | head -42
         done

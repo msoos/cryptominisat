@@ -346,7 +346,13 @@ void SQLiteStats::run_sqlite_step(
         cout << "Error from sqlite: "
         << sqlite3_errmsg(db)
         << endl;
-        cout << "Error code from sqlite: " << rc << endl;
+        cout << "Error code from sqlite: " << rc
+        << " extended: " << sqlite3_extended_errcode(db) << endl;
+        char* sql = sqlite3_expanded_sql(stmt);
+        if (sql) {
+            cout << "Statement: " << sql << endl;
+            sqlite3_free(sql);
+        }
         std::exit(-1);
     }
 
