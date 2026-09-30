@@ -1,6 +1,6 @@
 # CrystalBall: how to run it (current status)
 
-Everything below is the state as of 2026-09-26. `README.md` says what it
+Everything below is the state as of 2026-09-30. `README.md` says what it
 is; this says how to build, run and evaluate it, and what came out so far.
 
 ## Builds
@@ -212,7 +212,15 @@ after touching any script, the stats/predictor code, or the schema.
   2000/6000/20000).
 - `DUMPRATIO=0.02` for instances of 1-2M conflicts, else the SQLite DB
   and the proof get out of hand (UTI: 0.01, 4.9 GB proof, ~1 h). A corpus
-  dir is 0.2-1.2 GB after the proof is deleted.
+  dir is 0.2-1.2 GB after the proof is deleted. The proof is about 2 GB
+  per million conflicts: with the disk full the stats run dies with an
+  SQLite "SQL logic error" on an insert (schur-triples, 3.7M conflicts).
+- Never edit a script while a run uses it: bash reads scripts
+  incrementally and a truncated file gives a syntax error mid-run. Write
+  a temp file and rename it over the old one.
+- Gathering a mixed corpus: `STATS_BIN` with `STATS_OPTS="--predtype
+  xgb --predloc DIR"` and the `build_stats_pred/` build (STATS=ON and
+  FINAL_PREDICTOR=ON together) gathers under the learnt policy.
 - Features are float32 on both sides: ratios beyond float32 are "missing"
   in training and in the solver (no FE_OVERFLOW trap). The solver's FP
   traps are off while xgboost runs (`NoFPTraps`).
@@ -301,24 +309,73 @@ predicting for every learnt clause at every reduce was 3 s of 11. On
 short runs with many reduces the remaining overhead still eats the
 conflict gain (old corpus: 87% conflicts, 93% time).
 
+## A general model from satcomp2020 (2026-09-30)
+
+`cb_test/general/`: `survey.txt` is the normal build on
+`~/media/satcomp2020` with `--xor 0` (`survey.sh`: 30 s on 100 files
+found 7 solvable; `survey2.sh`: the smallest file of each of 91
+families at 300 s found 30 solvable with 30k-2.5M conflicts, half of
+them SAT). `gather_all.sh` gathered them into `cnf/<file>-dir`
+(`ALLOW_SAT=1`, `FIXED=6000`, `DUMPRATIO` 0.1/0.05/0.03 by conflicts),
+26 usable: 4 have no rows in any horizon or no used clause at all, 1
+filled the disk. `families.py` names the family, `run_general.sh <name>`
+learns on all families but `HOLDOUT` and evaluates on those (the normal
+build's runs come from the survey via `normal-cache/`).
+
+Offline (`holdout_eval.py`, 14 training and 6 held-out families, short
+horizon, share of the future use kept when keeping 25% of the reduce
+candidates): glue/size 81.3%; count target, shared list: 79.5%; rank
+target (`TARGET=rel`), shared list plus glue/used: 88.3%; rank target,
+`best_features-general.txt`: 90.1%. The count target is below glue/size
+across families, the rank target above it on 5 of the 6, sometimes by a
+lot (course: 92% vs 64%, post-cbmc-aes: 76% vs 67%).
+
+In the solver, on the same held-out families (`results-rel-*.out`): see
+the table below. SAT instances swing wildly either way (sgp: 20x more
+conflicts with the model, course: 60% of the time), so only the UNSAT
+ones say something.
+
+Models trained on 17 families (`models/rel-gen`), rank target,
+`best_features-general.txt`, `--xor 0`, conflicts / time of the predictor
+build relative to the normal build:
+
+| held-out instance | `--predcands 0` | `--predcands 1` |
+|---|---|---|
+| hid-uns-enc (UNSAT) | 97% / 82% | 100% / 91% |
+| jkkk-one-one (UNSAT) | 99% / 80% | 117% / 97% |
+| post-cbmc-aes (UNSAT) | 98% / 106% | 101% / 111% |
+| schup-l2s (UNSAT) | 131% / 95% | 97% / 76% |
+| Steiner-45 (UNSAT) | 101% / 121% | 120% / 178% |
+| sv-comp19 (UNSAT) | 109% / 91% | 125% / 97% |
+| the six UNSAT together | 102% / 90% | 105% / 90% |
+| combined-crypto (SAT) | 403% / 466% | 143% / 115% |
+| course0.2 (SAT) | 55% / 42% | 15% / 19% |
+| sgp_5-6-8 (SAT) | 310% / 210% | 2340% / 1650% |
+
+So across unseen families the general model is neutral on conflicts and
+10% faster on UNSAT instances; `--predcands 0` stays the default. The
+defaults now ARE this general model: `best_features.txt` is the general
+list (the old corpus-picked one is `best_features-mixed.txt`),
+`src/predict/*.json` are `models/rel-gen-all/` (trained on all 26
+instances) and `TARGET=rel` is the default. The bivium and mixed-corpus
+tables above were made with the old list and the count target.
+
+
 ## Open
 
-- The ancestor-weighted labels generalise worse than the plain ones (109%
-  hold-out); `--predtables 000` is the default for a reason.
-- One hold-out instance is thin evidence. More families in the corpus
-  (cnfgen kcolor/tseitin were trivial or XOR-heavy; matching, ec, cliqcol
-  in `cb_test/corpus/` are untried).
-- Tree count/depth and `FIXED` were not tuned; `--predsortby` 0/1/2 vs 3
-  was not compared on the corpus.
-- The offline ranking quality is only loosely predictive of the solver
-  result (bivium-picked features: better offline, worse in the solver).
-  Four test instances are noisy: differences under ~10% mean little.
-- Gathering: rows of unlocked clauses exist only when the glue/size
-  policy kept the clause through the horizon, so the sample favours what
-  that policy likes. `CLLOCK=1` (all tracked clauses locked) would remove
-  the bias at the cost of a slightly different stats run; untested. A
-  second gather round under the learnt policy (STATS + predictor in one
-  build) is the DAgger-style fix; not implemented.
+- The general model's offline gain (90% vs 81% of the future use kept)
+  does not show up as fewer conflicts in the solver. Which candidates
+  reduce drops seems to matter less than what the deletions do to the
+  later search; a second gathering round under the learnt policy
+  (`build_stats_pred/`, `STATS_OPTS`) is set up but not run.
+- SAT instances cannot be A/B tested one run at a time: the path to a
+  model changes with every clause kept. Several seeds, or UNSAT only.
+- 26 instances from 26 families is thin; the survey found 30 solvable
+  in 300 s on this box out of 370. More families need more time or a
+  bigger machine (the proof is ~2 GB per million conflicts).
+- The ancestor-weighted labels generalise worse than the plain ones;
+  `--predtables 000` is the default for a reason.
+- `--predsortby` 0/1/2 vs 3 and tree count/depth were not tuned.
 - `src/predict/*.json` are not tracked, so a fresh checkout cannot build
   the predictor. Tracking them (320 KB of JSON) with the feature list they
   belong to would fix that.
