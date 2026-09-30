@@ -88,9 +88,12 @@ class QueryFill (QueryHelper):
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later` float,
-            `percentile_fit` float DEFAULT NULL
+            `percentile_fit` float DEFAULT NULL,
+            `rel` float DEFAULT NULL
         );"""
         # NOTE: "percentile_fit" is the top percentile this use belongs to. Filled in later.
+        # "rel": the share of the clauses at the same reduce that are used
+        # less, 0..1. What reduce ranks by, and the same scale on every instance
 
         for tier in tiers:
             for table in tables:
@@ -165,6 +168,17 @@ class QueryFill (QueryHelper):
         q_fix_null = "update {table}_{tier} set used_later = 0 where used_later is NULL".format(
             tier=tier, table=table)
         self.c.execute(q_fix_null)
+
+        # percent_rank: ties all get the rank of their first row, so the
+        # never-used clauses of a reduce are all 0
+        q_rel = """
+        with ranked as (
+            select rowid as rid,
+            percent_rank() over (partition by rdb0conflicts order by used_later) as r
+            from {table}_{tier})
+        update {table}_{tier} set rel = (select r from ranked where ranked.rid = {table}_{tier}.rowid);
+        """.format(tier=tier, table=table)
+        self.c.execute(q_rel)
 
 
         q_num = "select count(*) from {table}_{tier}".format(tier=tier, table=table)

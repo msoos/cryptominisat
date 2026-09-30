@@ -102,9 +102,11 @@ class Learner:
 
         # these are needed for prediction/later checks, so let's add them in
         #       if they are not already in the features
+        # the ranking quality is always on the use counts, whatever is learnt
+        count_label = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
         extra_feats = [to_predict]
-        for missing_needed in ["rdb0.glue", "rdb0.dump_no", "rdb0.size", "rdb0.used"]:
-            if missing_needed not in features:
+        for missing_needed in ["rdb0.glue", "rdb0.dump_no", "rdb0.size", "rdb0.used", count_label]:
+            if missing_needed not in features and missing_needed not in extra_feats:
                 extra_feats.append(missing_needed)
         df = self.df[features+extra_feats].copy()
         # xgboost and the solver work in float32: ratios beyond its range
@@ -207,10 +209,10 @@ class Learner:
         if options.regressor == "xgb":
             self.importance_XGB(clf, features=features)
 
-        self.ranking_quality(test, features, to_predict, clf, "test all")
+        self.ranking_quality(test, features, count_label, clf, "test all")
         # used < 30: not used since the reduce before, what reduce picks from
-        self.ranking_quality(test[test["rdb0.used"] < 30], features, to_predict, clf, "test cands")
-        self.ranking_quality(train, features, to_predict, clf, "train all")
+        self.ranking_quality(test[test["rdb0.used"] < 30], features, count_label, clf, "test cands")
+        self.ranking_quality(train, features, count_label, clf, "train all")
 
         # print distribution of error
         print("--------------------------")
@@ -274,6 +276,8 @@ class Learner:
             features = helper.get_features(options.best_features_fname)
 
         to_predict = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
+        if options.target == "rel":
+            to_predict += "_rel"
         self.one_regressor(features, to_predict)
 
 
@@ -318,6 +322,8 @@ if __name__ == "__main__":
                         dest="gen_topfeats", help="Train with 100 estimators for a feature importance ranking")
 
     # type of regressor
+    parser.add_argument("--target", type=str, default="count",
+                        help="count: the use count over the horizon, rel: the share of the clauses at the same reduce used less (0..1)")
     parser.add_argument("--objective", type=str, default="squarederror",
                         help="squarederror, log (squared error of log(1+use)), or poisson")
     parser.add_argument("--regressor", type=str, default="xgb",

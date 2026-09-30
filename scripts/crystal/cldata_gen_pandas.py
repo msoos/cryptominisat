@@ -137,6 +137,7 @@ class QueryCls (helper.QueryHelper):
         q_columns_base="""
             , {table}_{tier}.used_later as `x.{table}_{tier}`
             , {table}_{tier}.percentile_fit as `x.{table}_{tier}_topperc`
+            , {table}_{tier}.rel as `x.{table}_{tier}_rel`
             """
 
         q_time = q_time_base.format(tier=tier, table=table)
