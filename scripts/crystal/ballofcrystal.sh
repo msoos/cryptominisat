@@ -31,6 +31,9 @@
 # KEEP_FRAT=1 keeps data.frat (it is deleted once used, GBs on big CNFs)
 # ALLOW_SAT=1 accepts SAT instances: no proof to trim, so a use is 'took
 #   part in learning a clause' (noisier than 'took part in the proof')
+# STATS_OPTS: more options for the stats run. With a STATS=ON
+#   FINAL_PREDICTOR=ON build as STATS_BIN, "--predtype xgb --predloc DIR"
+#   gathers under the learnt policy (a second round, DAgger-style)
 
 set -e
 set -o pipefail  # needed so " | tee xyz " doesn't swallow the last command's error
@@ -86,7 +89,7 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
     $NOBUF "$STATS_BIN" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
         --cldatadumpratio "$DUMPRATIO" --cllockdatagen "$CLLOCK" \
         --everypred "$EVERYPRED" --clid --sql 2 --sqlitedb data.db-raw \
-        --xlrup 0 --zero-exit-status "$FNAME" data.frat | tee cms-stats-run.out
+        --xlrup 0 $STATS_OPTS --zero-exit-status "$FNAME" data.frat | tee cms-stats-run.out
     grep -m1 "^c conflicts" cms-stats-run.out
     if ! grep -q "^s UNSATISFIABLE" cms-stats-run.out; then
         if [[ "$ALLOW_SAT" == "1" ]] && grep -q "^s SATISFIABLE" cms-stats-run.out; then

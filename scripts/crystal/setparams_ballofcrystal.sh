@@ -34,4 +34,6 @@ export XGB_OBJ="${XGB_OBJ:-squarederror}" # squarederror, log, poisson
 export TARGET="${TARGET:-count}"           # count, or rel: rank among the clauses of the reduce
 export EXTRA_GEN_PANDAS_OPTS="${EXTRA_GEN_PANDAS_OPTS:-}"
 
+export STATS_OPTS="${STATS_OPTS:-}"       # e.g. "--predtype xgb --predloc DIR" with a stats+predictor build
+
 export NOBUF="stdbuf -oL -eL "

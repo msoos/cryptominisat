@@ -383,9 +383,7 @@ endif()
 
 option(STATS "Don't use statistics at all" OFF)
 if(STATS)
-    if(FINAL_PREDICTOR)
-        message(FATAL_ERROR "Cannot have stats and final predictor on both")
-    endif()
+    #both: gathers data while the predictor decides the reduce, see scripts/crystal
     find_package(SQLITE3 REQUIRED)
     message(STATUS "OK, Found SQLITE3!")
     add_compile_definitions(USE_SQLITE3)
