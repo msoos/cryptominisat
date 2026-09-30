@@ -258,9 +258,15 @@ class Learner:
                 "x.class",
                 "x.a_lifetime",
                 "fname",
-                "sum_cl_use.num_used",
+                "sum_cl_use.",  # the future
                 "x.sum_cl_use",
                 "rdb0.dump_no",
+                # IDs and absolute times only tell instances apart
+                "clauseID",
+                "restartID",
+                "rdb0_common.conflicts",
+                "cl.conflicts",
+                "rdb0.introduced_at_conflict",
                 "fname"])
             features = self.rem_features(features, torem)
         else:
