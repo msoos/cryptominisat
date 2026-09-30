@@ -108,7 +108,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         if (solver->clause_locked(*cl, offs)) { rstats.locked++; continue; } //reasons are kept, as in CaDiCaL
         const uint32_t used = cl->stats.used;
         rstats.used_hist[used == 0 ? 0 : (used <= 10 ? 1 : (used < CL_MAX_USED-1 ? 2 : (used == CL_MAX_USED-1 ? 3 : 4)))]++;
-        if (used) cl->stats.used = used - 1;
+        //'used' is decremented below, after the predictor has seen it
         if (cl->stats.is_ternary_resolvent) {
             //like CaDiCaL's hyper resolvents: kept one round unless used
             if (used < CL_MAX_USED) cl->stats.marked_clause = true;
@@ -137,6 +137,14 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     }
     rstats.cands = normal_cands;
     #ifdef FINAL_PREDICTOR
+    //only what is ranked gets predicted: a third of the DB on a normal run.
+    //The features must be what the STATS build dumped: before the decrement
+    if (!solver->conf.dump_pred_distrib) {
+        const double my_time = cpu_time();
+        update_preds(stack);
+        verb_print(2, "[pred] predicted for " << stack.size() << " cands"
+            << solver->conf.print_times(cpu_time()-my_time));
+    }
     //worst first: least predicted future use, then glue/size as below
     const auto& ext = solver->red_stats_extra;
     auto pred_of = [&](const Clause* c) { return pred_score(ext[c->stats.extra_pos]); };
@@ -160,6 +168,12 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             return c->size() > d->size();
         });
     #endif
+
+    for (const ClOffset offs: solver->long_red_cls[0]) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (solver->clause_locked(*cl, offs)) continue;
+        if (cl->stats.used) cl->stats.used--;
+    }
 
     //Kissat's mark_less_useful_clauses_as_garbage: the removed fraction
     //rises from reducelow towards reducehigh with log10 of the reductions
@@ -715,9 +729,11 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
         all_learnt.size(),
         cur_rst_type,
         median_data);
-    update_preds(solver->long_red_cls[0]);
-    dump_pred_distrib(solver->long_red_cls[0]);
-    verb_print(2, "[pred] predicted for " << all_learnt.size() << " cls"
+    if (solver->conf.dump_pred_distrib) {
+        update_preds(solver->long_red_cls[0]);
+        dump_pred_distrib(solver->long_red_cls[0]);
+    }
+    verb_print(2, "[pred] features for " << all_learnt.size() << " cls"
         << solver->conf.print_times(cpu_time()-my_time));
 }
 
