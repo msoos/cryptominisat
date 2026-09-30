@@ -45,10 +45,11 @@ The predictor build generates two things at build time:
   source of truth for training and solving. Another list:
   `cmake -DPRED_FEATURES_FILE=/path/to/list.txt`.
 - the embedded default models from `src/predict/predictor_{short,long,forever}.json`.
-  These are NOT in git (`.gitignore` has `src/predict`); copy them there
-  from a training run before building, and re-copy after retraining. The
-  models must be trained on the same feature list the binary was built
-  with: the feature count and order must agree.
+  `src/predict/` is its own git repo (github.com/msoos/cryptominisat-predictors),
+  ignored by the solver's repo: clone it there before building. After
+  retraining, copy the new models in and commit there (never push, the
+  owner pushes). The models must be trained on the same feature list
+  the binary was built with: the feature count and order must agree.
 
 Solver options that matter (all must come BEFORE the CNF file name; anything
 after the CNF is taken as the proof file name, and the solver errors out):
@@ -394,6 +395,3 @@ were made with the old list and the count target.
 - The ancestor-weighted labels generalise worse than the plain ones;
   `--predtables 000` is the default for a reason.
 - `--predsortby` 0/1/2 vs 3 and tree count/depth were not tuned.
-- `src/predict/*.json` are not tracked, so a fresh checkout cannot build
-  the predictor. Tracking them (320 KB of JSON) with the feature list they
-  belong to would fix that.
