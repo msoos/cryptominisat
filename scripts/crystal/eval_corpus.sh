@@ -7,6 +7,8 @@
 #   PRED_OPTS: extra options for the predictor runs, e.g. "--predsortby 0"
 #   EVAL_OPTS: extra options for all runs, e.g. "--xor 0"
 #   EVAL_TABLES: which --predtables to run, default "000 111"
+#   EVAL_NORMAL_CACHE: dir to keep the normal build's outputs in, reused
+#     by later calls with the same EVAL_OPTS
 
 set -e
 PRED="$(realpath "$1")"; shift
@@ -19,8 +21,18 @@ function run() { # name, binary, opts..., cnf
     local name="$1"; shift
     local cnf="${@: -1}"
     local out="$PRED/eval/$(basename "$cnf").$name"
-    # options must come before the CNF: anything after it is a proof file name
-    "${@:1:$#-1}" --zero-exit-status "$cnf" > "$out" 2>&1 || true
+    local cached=""
+    if [[ "$name" == "normal" && -n "$EVAL_NORMAL_CACHE" ]]; then
+        mkdir -p "$EVAL_NORMAL_CACHE"
+        cached="$EVAL_NORMAL_CACHE/$(basename "$cnf").normal-$(echo "$EVAL_OPTS" | md5sum | cut -c1-8)"
+    fi
+    if [[ -n "$cached" ]] && grep -q "^s " "$cached" 2>/dev/null; then
+        cp "$cached" "$out"
+    else
+        # options must come before the CNF: anything after it is a proof file name
+        "${@:1:$#-1}" --zero-exit-status "$cnf" > "$out" 2>&1 || true
+        [[ -n "$cached" ]] && cp "$out" "$cached"
+    fi
     printf "%-9s confl %9s  %7s s   " "$name" \
         "$(grep -m1 '^c conflicts' "$out" | awk '{print $4}')" \
         "$(grep -m1 'Total time (this thread)' "$out" | awk '{print $7}')"
