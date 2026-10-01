@@ -328,8 +328,9 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     if (flush) mark_clauses_to_be_flushed();
     else mark_useless_redundant_clauses_as_garbage();
     remove_marked_clauses();
-    #ifdef FINAL_PREDICTOR
-    //per-interval stats restart, as the STATS build does at its dump
+    #if defined(FINAL_PREDICTOR) && !defined(STATS_NEEDED)
+    //per-interval stats restart, as the STATS build does at its dump (a
+    //build with both resets once, at the dump: twice would skip dump_no 1)
     for(const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         solver->red_stats_extra[cl->stats.extra_pos].reset_rdb_stats(cl->stats);
