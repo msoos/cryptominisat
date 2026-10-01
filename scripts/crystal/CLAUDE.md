@@ -404,6 +404,13 @@ sv, 106% on post-cbmc-aes, 130% on Steiner (6 s runs). Offline the disc
 label does not look better than the short one (the offline metric keeps
 disagreeing with the solver on anything but the target scale), in the
 solver one model does what three did at a third of the prediction cost.
+A second gathering round under the learnt policy (`chain_r2.sh`: the
+STATS+predictor build with the round-1 disc model and `--predkeep 1`,
+then training on both rounds' frames, 16 dirs) was a loss: 123% / 86%.
+The clauses the learnt policy keeps are a different population and
+mixing both rounds' rows confuses the ranks. Not adopted; `cnf-r2/`
+holds the data.
+
 So the defaults are: `TIERS=disc`, `TARGET=rel`, `--predtiers disc`,
 `--predkeep 1`, `best_features.txt` = the general list (the old
 corpus-picked one is `best_features-mixed.txt`), `src/predict/predictor_disc.json`
@@ -414,11 +421,18 @@ and three models.
 
 ## Open
 
-- The general model's offline gain (90% vs 81% of the future use kept)
-  does not show up as fewer conflicts in the solver. Which candidates
-  reduce drops seems to matter less than what the deletions do to the
-  later search; a second gathering round under the learnt policy
-  (`build_stats_pred/`, `STATS_OPTS`) is set up but not run.
+- The offline ranking quality and the solver disagree on everything but
+  the target scale (rank beats count both ways). Which candidates reduce
+  drops matters less than what the deletions do to the later search:
+  `--predkeep 1`, which moves the model to the keep decision, is where
+  the time went from 82% to 73%.
+- A second gathering round under the learnt policy made the model worse
+  (above). Training on round 2 alone, or weighting the rounds, is
+  untried.
+- The runtime bookkeeping is still ~30 fields per learnt clause plus
+  the learning-time snapshot; only the per-reduce sorts are trimmed.
+  Compiling out the fields the feature list does not use would break
+  the Python predictor path, which needs every raw column.
 - SAT instances cannot be A/B tested one run at a time: the path to a
   model changes with every clause kept. Several seeds, or UNSAT only.
 - 14 UNSAT instances from 14 families is thin; the survey found 30
