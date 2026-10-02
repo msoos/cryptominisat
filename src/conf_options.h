@@ -92,6 +92,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--predcands", "What the predictor ranks at reduce. 0 = the candidates of the normal build, 1 = also the clauses the normal build keeps for being used, 2 = also the ones it keeps forever. The number removed is that of the normal build"}, conf.pred_cands);
     f({"--predthresh", "If > 0, reduce removes the candidates whose predicted use (see --predsortby) is below this, but at least half and at most twice the number the normal build would remove. 0: the number of the normal build"}, conf.pred_thresh);
     f({"--predkeep", "1: the predicted score decides the tiers at reduce instead of glue: the --predkeept1 % best-scored learnt clauses are kept while 'used' lasts (tier1), the next ones up to --predkeept2 % only if used since the last reduce (tier2), the rest are candidates. Predicts for every learnt clause at every reduce. 0: kissat's glue tiers. Default 1"}, conf.pred_keep);
+    f({"--predkeepviv", "With --predkeep 1: the score also decides which learnt clauses vivification and BVE touch (likely_to_be_kept). 0: glue decides that, as in the normal build"}, conf.pred_keep_viv);
     f({"--predkeept1", "See --predkeep"}, conf.pred_keep_t1);
     f({"--predkeept2", "See --predkeep"}, conf.pred_keep_t2);
     f({"--dumppreddistrib", "Dump predictions of all clauses at every reduce to pred_distrib.csv"}, conf.dump_pred_distrib);

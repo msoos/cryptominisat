@@ -112,7 +112,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     bool pred_keep = false;
     #ifdef FINAL_PREDICTOR
     pred_keep = solver->conf.pred_keep != 0;
-    keep_by_score = pred_keep;
+    keep_by_score = pred_keep && solver->conf.pred_keep_viv != 0;
     if (pred_keep) {
         update_preds(solver->long_red_cls[0]);
         vector<double> scores;
