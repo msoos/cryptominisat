@@ -25,6 +25,12 @@ for seed in $(seq 1 "$N"); do
     "$SCRIPTDIR/eval_corpus.sh" "$OUT/models-seed$seed" "${TEST_CNFS[@]}" > "$OUT/eval-seed$seed.out" 2>&1
     echo "seed $seed: $(grep '^total' "$OUT/eval-seed$seed.out" | sed 's/total: normal confl [0-9]* *[0-9]* s *| *//')"
 done
-echo "--- per instance, conflicts of each seed's model:"
-paste <(grep -v "^instance\|^total" "$OUT/eval-seed1.out" | awk '{print substr($1,1,30)}') \
-      <(for seed in $(seq 1 "$N"); do grep -v "^instance\|^total" "$OUT/eval-seed$seed.out" | awk '{print $9}'; done | paste $(for i in $(seq 1 "$N"); do echo -n "- "; done)) | column -t
+echo "--- per instance, conflicts: normal, then each seed's model:"
+cols=("$OUT/cols-normal")
+grep -v "^instance\|^total" "$OUT/eval-seed1.out" | awk '{print substr($1,1,30), $4}' > "$OUT/cols-normal"
+for seed in $(seq 1 "$N"); do
+    grep -v "^instance\|^total" "$OUT/eval-seed$seed.out" | awk '{print $9}' > "$OUT/cols-seed$seed"
+    cols+=("$OUT/cols-seed$seed")
+done
+paste "${cols[@]}" | column -t
+rm -f "$OUT"/cols-*
