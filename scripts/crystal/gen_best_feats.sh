@@ -11,7 +11,9 @@
 #   ONLY=0.3 uses 30% of the rows
 #   XGB_DEPTH: tree depth, 5. xgboost's memory is features x tree nodes:
 #     depth 10 over the 4700 all_computed columns needs over 6GB
-#   COMPUTED="no" does only the raw feature runs, which are quick
+#   COMPUTED="no ratio" picks the runs: no (raw columns only, quick),
+#     ratio (the clause against its reduce, ~800 columns), all (every
+#     pair, 4700 columns, slow). Default "no ratio all"
 #   XGB_OBJ: the training objective, as in setparams_ballofcrystal.sh
 #   TABLES="used_later" does only the plain label tables
 #   TARGET=rel ranks for the per-reduce rank label
@@ -32,7 +34,7 @@ git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
 
 for tier in ${TIERS:-disc}; do
     for table in ${TABLES:-used_later used_later_anc}; do
-        for computed in ${COMPUTED:-no all}; do
+        for computed in ${COMPUTED:-no ratio all}; do
             f=$(ls ${PREFIX}${table}-${tier}-cut1-*.dat | head -1)
             if grep -q "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" 2>/dev/null; then
                 echo "Have $table $tier ${computed}_computed already"

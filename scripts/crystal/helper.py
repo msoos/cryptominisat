@@ -570,6 +570,66 @@ def cldata_add_minimum_computed_features(df, verbose):
     divide("rdb0_common.num_long_irred_cls", "rdb0_common.num_vars")
 
 
+# the per-reduce aggregates a clause's own numbers are compared against
+RATIO_COMMON = [
+    "rdb0_common.avg_props", "rdb0_common.avg_uip1_used",
+    "rdb0_common.avg_sum_uip1_per_time", "rdb0_common.avg_sum_props_per_time",
+    "rdb0_common.median_act", "rdb0_common.median_uip1_used", "rdb0_common.median_props",
+    "rdb0_common.median_sum_uip1_per_time", "rdb0_common.median_sum_props_per_time",
+    "rdb0_common.num_vars", "rdb0_common.num_long_irred_cls", "rdb0_common.num_long_irred_cls_lits",
+    "rdb0_common.num_long_red_cls", "rdb0_common.num_long_red_cls_lits",
+    "rdb0_common.trailDepthHistLT_avg", "rdb0_common.backtrackLevelHistLT_avg",
+    "rdb0_common.conflSizeHistLT_avg", "rdb0_common.numResolutionsHistLT_avg",
+    "rdb0_common.glueHistLT_avg", "rdb0_common.antec_data_sum_sizeHistLT_avg",
+    "rdb0_common.overlapHistLT_avg",
+]
+# clause columns that are IDs, flags or ranks: no ratios of those
+RATIO_SKIP = ("clauseID", "dump_no", "is_", "_ranking", "introduced_at", "restartID",
+              "conflicts", "cur_restart_type", "is_decision")
+
+
+def cldata_add_ratio_features(df, verbose):
+    """The clause against its reduce: every clause-level column over
+    every DB-wide aggregate, the learning-time history over the same
+    history now, and benefit over cost. ~800 columns instead of
+    all_computed's 4700 pairs, and all of them mean the same thing on
+    every instance. Returns the new frame"""
+    global _pending
+    print("Adding ratio features...")
+    cldata_add_minimum_computed_features(df, verbose)
+    _pending = {}
+    divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
+    cols = list(df)
+    clause_cols = [c for c in cols if (c.startswith("rdb0.") or c.startswith("cl."))
+                   and not any(s in c for s in RATIO_SKIP)
+                   and pd.api.types.is_numeric_dtype(df[c])]
+    common = [c for c in RATIO_COMMON if c in cols]
+    for a in clause_cols:
+        for b in common:
+            divide(a, b)
+    # the history when the clause was learnt against the history now
+    for c in cols:
+        if c.startswith("cl.") and c.endswith("HistLT_avg") and ("rdb0_common." + c[3:]) in cols:
+            divide(c, "rdb0_common." + c[3:])
+    # benefit over cost, and cost per literal
+    if "rdb0.visited" in cols:
+        for a in ["rdb0.props_made", "rdb0.uip1_used"]:
+            divide(a, "rdb0.visited")
+        for a in ["rdb0.sum_props_made", "rdb0.sum_uip1_used"]:
+            divide(a, "rdb0.sum_visited")
+        for a in ["rdb0.discounted_props_made", "rdb0.discounted_uip1_used"]:
+            divide(a, "rdb0.discounted_visited")
+        divide("rdb0.visited", "rdb0.size")
+        divide("rdb0.visited", "cl.time_inside_solver")
+    # trend: the fast discount over the slow one
+    for base in ["discounted_uip1_used", "discounted_props_made"]:
+        divide("rdb0.%s2" % base, "rdb0.%s" % base)
+        divide("rdb0.%s" % base, "rdb0.%s3" % base)
+    df = _flush_pending(df)
+    print("Ratio features added, now %d columns" % df.shape[1])
+    return df
+
+
 def cldata_add_computed_features(df, verbose):
     """returns the new frame"""
     global _pending

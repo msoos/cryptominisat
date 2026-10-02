@@ -293,7 +293,7 @@ if __name__ == "__main__":
     parser.add_argument("--printfeat", action="store_true", default=False,
                         dest="print_features", help="Print features")
     parser.add_argument("--features", default="best_only", type=str, dest="features",
-                        help="What features to use: all_computed, best_only, best_also, no_computed ")
+                        help="What features to use: all_computed (every pair), ratio_computed (the clause against its reduce), best_only, best_also, no_computed")
     parser.add_argument("--bestfeatfile", type=str, default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_features.txt"),
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
     parser.add_argument("--dat", type=str, default=None,
@@ -411,6 +411,8 @@ if __name__ == "__main__":
     # feature manipulation
     if options.features =="all_computed":
         df = helper.cldata_add_computed_features(df, options.verbose)
+    elif options.features == "ratio_computed":
+        df = helper.cldata_add_ratio_features(df, options.verbose)
     elif options.features == "best_only" or options.features == "best_also":
         helper.add_features_from_fname(df, options.best_features_fname)
     elif options.features == "no_computed":
