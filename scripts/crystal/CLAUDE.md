@@ -285,7 +285,9 @@ yet 120% / 98% here. Three causes were separated:
 - the solver: between the two days, 84e5e3191 made the score steer
   vivification and BVE candidates under `--predkeep` and was never
   tested alone. Same models, same instances: 116% / 86% with it, 106% /
-  80% without. It is `--predkeepviv`, off by default now.
+  80% without. Removed: under `--predkeep` the score decides the reduce
+  tiers and nothing else, vivification and BVE go by glue as in the
+  normal build.
 
 So every table of this section was measured with that handicap; the
 comparisons within a table hold, the levels are ~10 points too high.
@@ -514,6 +516,25 @@ corpus-picked one is `best_features-mixed.txt`), `src/predict/predictor_disc.jso
 mixed-corpus tables above were made with the old list, the count target
 and three models.
 
+
+## Decisions not to revisit
+
+- **Only UNSAT instances are learnt from.** The label is a use in the
+  trimmed UNSAT proof; a SAT run has no proof. See above.
+- **The score decides the reduce tiers and nothing else.** Under
+  `--predkeep` the model's score replaces glue in deciding which learnt
+  clauses are tier1/tier2 at reduce. It must NOT also replace glue in
+  `likely_to_be_kept()`, which vivification (`distillerlong.cpp`,
+  `distillerlongwithimpl.cpp`) and BVE (`occsimplifier.cpp`) use to pick
+  the learnt clauses worth working on. That coupling was added in
+  84e5e3191 as "one policy for everything", never measured on its own,
+  and when measured (same models, the six held-out UNSAT instances) it
+  cost 10 points: 116% / 86% of the normal build's conflicts / time with
+  it, 106% / 80% without. The likely reason: those routines want clauses
+  that stay in the DB for a long time, which the glue thresholds encode;
+  the score is a rank at one reduce, not a survival prediction. The code
+  was deleted (7b43312ff made it switchable, the commit after removed it);
+  do not add it back without an A/B that beats 106% / 80%.
 
 ## Open
 

@@ -112,7 +112,6 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     bool pred_keep = false;
     #ifdef FINAL_PREDICTOR
     pred_keep = solver->conf.pred_keep != 0;
-    keep_by_score = pred_keep && solver->conf.pred_keep_viv != 0;
     if (pred_keep) {
         update_preds(solver->long_red_cls[0]);
         vector<double> scores;
@@ -251,14 +250,10 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
 
     //CaDiCaL's lim.keptglue/keptsize, used to pick vivification candidates
     lim_keptglue = lim_keptsize = 0;
-    lim_keptscore = std::numeric_limits<double>::max();
     for (size_t i = target; i < stack.size(); i++) {
         const Clause* cl = solver->cl_alloc.ptr(stack[i]);
         lim_keptglue = std::max(lim_keptglue, cl->stats.glue);
         lim_keptsize = std::max<uint32_t>(lim_keptsize, cl->size());
-        #ifdef FINAL_PREDICTOR
-        if (pred_keep) lim_keptscore = std::min(lim_keptscore, pred_of(cl));
-        #endif
     }
 }
 
@@ -391,15 +386,8 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
 bool ReduceDB::likely_to_be_kept(const Clause& cl) const
 {
     if (cl.stats.keep) return true;
-    #ifdef FINAL_PREDICTOR
-    //--predkeep: the score of the last reduce plays the part of glue
-    if (keep_by_score) {
-        const double sc = pred_score(solver->red_stats_extra[cl.stats.extra_pos]);
-        if (sc >= keep_t1 && cl.stats.used) return true;
-        if ((sc >= keep_t2 || solver->conf.reduce_keep_used) && cl.stats.used >= CL_MAX_USED-1) return true;
-        return sc >= lim_keptscore;
-    }
-    #endif
+    //glue, also under --predkeep: the score steering this cost 10 points
+    //(116% vs 106% of the normal build's conflicts on the held-out set)
     if (cl.stats.glue <= solver->tier1_glue && cl.stats.used) return true;
     if ((cl.stats.glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
         && cl.stats.used >= CL_MAX_USED-1) return true;
