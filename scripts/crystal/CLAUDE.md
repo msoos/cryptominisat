@@ -136,6 +136,22 @@ differ 100-fold between families, so `rel` is the instance-invariant
 target for a general model. The ranking quality report is always on
 the label itself, whichever is learnt.
 
+### The gates, in pipeline order
+
+- `check_rawdb.py` on the stats DB before the proof is processed:
+  tables, rows, one row per (clause, reduce), dump_no 0/1/2 present, the
+  cost columns' invariants, tracked share vs dump ratio, proof present.
+- `check_data_quality.py --slow` after the labels are filled.
+- `check_frames.py` on the frames, below.
+- `concat_pandas.py` refuses frames with different columns; `learn.sh`
+  records which solver gathered each dir (`gathered_by`) and warns when
+  they differ.
+- The solver refuses a model whose feature count or feature names do not
+  match the list it was built from.
+- `test_small.sh` runs it all end to end and checks that the C++ feature
+  code and pandas compute the same features (`--predtype xgb` vs `py`
+  give the same run).
+
 ### The data tests (`check_frames.py`)
 
 Run before any learning. Fails on: missing columns, other tiers' labels
@@ -220,6 +236,57 @@ Runs the whole pipeline, checks the plain and ancestor models differ and
 that a second learning pass reproduces the models bit for bit. Run it
 after touching any script, the stats/predictor code, or the schema.
 
+## Measurements, feature families, and what the ablation says (2026-10-02)
+
+New per-clause measurements (solver commit 0616917e9, STATS build dumps
+them, predictor build computes them, `check_rawdb.py`/`check_frames.py`
+test their invariants): `visited` (propagation looked at the clause and
+its blocker failed: the cost of keeping it; per interval, lifetime,
+discounted), `lit_act_rel` / `lit_vmtf_rel` (mean VSIDS activity / VMTF
+bump stamp of its variables as a share of the largest: are its variables
+where the search is), `num_assigned`, `num_false_lev0`. Feature families
+for the rankings: `--features ratio_computed` (the clause over its
+reduce's aggregates, benefit over cost, the fast discount over the slow
+one; ~800 columns) next to `all_computed` (every pair, 4700).
+
+Group ablation in the solver (`ablate_groups.sh`, `feature_groups.py`;
+the current list plus the four cost features, 8 training families, the
+6 held-out UNSAT instances, `--predkeep 1`):
+
+| list | conflicts / time |
+|---|---|
+| full (34 features) | 116% / 84% |
+| without age | 114% / 89% |
+| without context ratios | 118% / 94% |
+| without the cost features (= the current list) | 120% / 98% |
+| without rankings | 125% / 95% |
+| without size/glue | 131% / 108% |
+| without the recency counters | 157% / 107% |
+| without the learning-time snapshot | 167% / 114% |
+
+So the recency counters, the learning-time snapshot and size/glue carry
+the model; rankings, context ratios, age and the cost features are
+inside the noise (see below). `visited` is not in any importance ranking's
+top 30 either: the cost of a clause does not predict its proof use, the
+label is benefit only. The list picked from the new rankings
+(`best_features-v2.txt`, ratio-heavy) was 121% / 98% as "full": the
+third time an importance pick lost to the list it was meant to replace.
+`best_features.txt` stays.
+
+**The noise floor.** "Without the cost features" is the current list on
+the same instances that gave 98% / 73% the day before. The only
+difference: the regather's strata sampling drew 1% different rows
+(53,361 vs 53,860), and the model trained on them turns jkkk from 649k
+conflicts into 1.10M and schup from 551k into 803k. Single A/B runs of
+this size cannot see effects under ~20%. `model_variance.sh` (N seeds,
+`XGB_SUBSAMPLE 0.8`) measures the part that is the trees' own: three
+seeds on the regathered data gave 120%, 121%, 127% (per instance within
+10% except schup: 529k to 1.17M). So the seed accounts for a few points
+and the rest of the 98% vs 120% is which rows the sample holds: the
+training set (8 instances, 6000 rows per strata) is too small for a
+stable model. A regather with `FIXED=20000` is the first thing to try;
+until then, differences under ~20% in these tables are not results.
+
 ## The scripts, one line each
 
 Pipeline, in order: `ballofcrystal.sh` (all of it for one CNF; knobs in
@@ -232,8 +299,9 @@ model), `concat_pandas.py` + `learn.sh` (models from many dirs),
 Features: `best_features*.txt` (the lists), `gen_pred_features.py` (the
 C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
 (importance rankings and a list from them), `feature_groups.py` +
-`ablate_groups.sh` (group ablation in the solver), `holdout_eval.py`
-(offline leave-instances-out), `helper.py` (shared SQL and feature code),
+`ablate_groups.sh` (group ablation in the solver), `model_variance.sh`
+(the A/B's noise floor), `holdout_eval.py` (offline
+leave-instances-out), `helper.py` (shared SQL and feature code),
 `ccg.py` (Python AST to source). Models: `embed_models.py` (the table of
 compiled-in models), `ml_module.py` (the `--predtype py` path). Tests:
 `test_small.sh` (end to end on a random UNSAT instance, with the C++ vs
