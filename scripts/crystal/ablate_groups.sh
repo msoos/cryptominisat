@@ -8,7 +8,8 @@
 #
 # usage: ablate_groups.sh <outdir> <features.txt> <train-dirs.txt> <test-cnfs.txt>
 #   train-dirs.txt / test-cnfs.txt: one path per line
-#   GROUPS="recency snapshot ..." limits the groups (default: all)
+#   ABLATE_GROUPS="recency snapshot ..." limits the groups (default: all;
+#     not GROUPS, which is bash's own list of the user's group IDs)
 #   knobs of setparams_ballofcrystal.sh (TIERS, TARGET, FIXED ...) and of
 #   eval_corpus.sh (EVAL_OPTS, EVAL_NORMAL_CACHE ...) apply
 # Needs build_pred/ configured: the xgboost paths are taken from its cache.
@@ -49,7 +50,7 @@ function one() { # name, feature file
 }
 
 one full "$FEATS"
-for g in ${GROUPS:-$("$SCRIPTDIR/feature_groups.py" "$FEATS" | awk '$2+0 > 0 {print $1}')}; do
+for g in ${ABLATE_GROUPS:-$("$SCRIPTDIR/feature_groups.py" "$FEATS" | awk '$2+0 > 0 {print $1}')}; do
     "$SCRIPTDIR/feature_groups.py" "$FEATS" --without "$g" -o "$OUT/without-$g.txt"
     one "without-$g" "$OUT/without-$g.txt"
 done
