@@ -95,6 +95,9 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
         exit 255
     fi
 
+    stage "check_rawdb"
+    "$SCRIPTDIR/check_rawdb.py" data.db-raw --horizon "$FOREVER" --dumpratio "$DUMPRATIO" --proof data.frat | tee check_rawdb.out-stage
+
     # the solver's FRAT has full hint chains, no elaboration needed.
     # Optionally check the proof anyway.
     if [[ -x "$FRAT_XOR" && -x "$CAKE_XLRUP" ]]; then
