@@ -736,6 +736,17 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_uip1_used3);
     sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_props_made3);
 
+    //cost and where-the-search-is, see Searcher::cl_lit_act_rel & co
+    //every propagation or conflict the clause caused was a visit first
+    assert(cl->stats.visited >= cl->stats.props_made + stats_extra.conflicts_made);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, cl->stats.visited);
+    sqlite3_bind_int64(stmtReduceDB, bind_at++, stats_extra.sum_visited);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, (double)stats_extra.discounted_visited);
+    sqlite3_bind_double(stmtReduceDB, bind_at++, solver->cl_lit_act_rel(*cl));
+    sqlite3_bind_double(stmtReduceDB, bind_at++, solver->cl_lit_vmtf_rel(*cl));
+    sqlite3_bind_int(stmtReduceDB, bind_at++, solver->cl_num_assigned(*cl));
+    sqlite3_bind_int(stmtReduceDB, bind_at++, solver->cl_num_false_lev0(*cl));
+
     run_sqlite_step(stmtReduceDB, "reduceDB", bind_at);
 }
 

@@ -146,6 +146,42 @@ class Searcher : public HyperEngine
             return cla_inc;
         }
 
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        //Clause measurements for the predictor, taken at reduce: are the
+        //clause's variables where the search is now?
+        //mean VSIDS activity of its variables, as a share of the largest
+        double cl_lit_act_rel(const Clause& cl) const
+        {
+            if (max_vsids_act <= 0) return 0;
+            double sum = 0;
+            for(const Lit l: cl) sum += var_act_vsids[l.var()];
+            return sum / ((double)cl.size() * max_vsids_act);
+        }
+        //mean VMTF bump stamp of its variables, as a share of the latest
+        double cl_lit_vmtf_rel(const Clause& cl) const
+        {
+            if (stats_bumped == 0) return 0;
+            double sum = 0;
+            for(const Lit l: cl) sum += (double)vmtf_btab[l.var()];
+            return sum / ((double)cl.size() * (double)stats_bumped);
+        }
+        //literals assigned right now (reduce runs between a conflict and
+        //the next decision, the trail is whatever it is then)
+        uint32_t cl_num_assigned(const Clause& cl) const
+        {
+            uint32_t n = 0;
+            for(const Lit l: cl) n += value(l) != l_Undef;
+            return n;
+        }
+        //literals false at level 0: the clause is effectively shorter
+        uint32_t cl_num_false_lev0(const Clause& cl) const
+        {
+            uint32_t n = 0;
+            for(const Lit l: cl) n += value(l) == l_False && var_data[l.var()].level == 0;
+            return n;
+        }
+        #endif
+
         //assumptions
         void check_assumptions_sanity();
         void unfill_assumptions_set();

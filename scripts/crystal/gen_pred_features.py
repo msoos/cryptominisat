@@ -67,6 +67,15 @@ RAW = {
     "rdb0.uip1_ranking_rel": ("in.uip1_ranking_rel", None),
     "rdb0.sum_uip1_per_time_ranking_rel": ("in.sum_uip1_per_time_ranking_rel", None),
     "rdb0.sum_props_per_time_ranking_rel": ("in.sum_props_per_time_ranking_rel", None),
+    # the cost of keeping the clause, and whether its variables are where
+    # the search is (see Searcher::cl_lit_act_rel & co)
+    "rdb0.visited": ("in.cl->stats.visited", None),
+    "rdb0.sum_visited": ("in.e.sum_visited", None),
+    "rdb0.discounted_visited": ("in.e.discounted_visited", None),
+    "rdb0.lit_act_rel": ("in.s->cl_lit_act_rel(*in.cl)", None),
+    "rdb0.lit_vmtf_rel": ("in.s->cl_lit_vmtf_rel(*in.cl)", None),
+    "rdb0.num_assigned": ("in.s->cl_num_assigned(*in.cl)", None),
+    "rdb0.num_false_lev0": ("in.s->cl_num_false_lev0(*in.cl)", None),
 
     # reduceDB_common: the whole learnt DB at this reduce
     "rdb0_common.tot_cls_in_db": ("in.c.all_learnt_size", None),

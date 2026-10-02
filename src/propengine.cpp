@@ -604,6 +604,10 @@ bool PropEngine::prop_long_cl(
     if (inprocess) prop_stats.bogo_props += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    //the clause's memory is touched from here on: that is its cost
+    if (!inprocess) c.stats.visited++;
+    #endif
 
     #ifdef SLOW_DEBUG
     assert(!c.get_removed());

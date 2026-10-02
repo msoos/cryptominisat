@@ -29,6 +29,7 @@ THE SOFTWARE.
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
 #include "cl_predictors_py.h"
+#endif
 
 //a predictor-only build ranks the learnt DB at every reduce only by what
 //its features use (see gen_pred_features.py); the STATS build dumps all
@@ -37,7 +38,6 @@ THE SOFTWARE.
 #define RANK_NEEDED(x) (predgen::x)
 #else
 #define RANK_NEEDED(x) true
-#endif
 #endif
 
 

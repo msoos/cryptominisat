@@ -117,7 +117,20 @@ CREATE TABLE `reduceDB` (
   `discounted_uip1_used2` float(20) NOT NULL,
   `discounted_props_made2` float(20) NOT NULL,
   `discounted_uip1_used3` float(20) NOT NULL,
-  `discounted_props_made3` float(20) NOT NULL
+  `discounted_props_made3` float(20) NOT NULL,
+
+  -- the cost of keeping the clause: propagation looked at it (blocker
+  -- failed), this interval / for all time / discounted
+  `visited` bigint(20) NOT NULL,
+  `sum_visited` bigint(20) NOT NULL,
+  `discounted_visited` float(20) NOT NULL,
+  -- are its variables where the search is: mean VSIDS activity and mean
+  -- VMTF bump stamp of its variables, as a share of the largest, 0..1
+  `lit_act_rel` float(20) NOT NULL,
+  `lit_vmtf_rel` float(20) NOT NULL,
+  -- its literals assigned at the reduce, and false at level 0
+  `num_assigned` int(20) NOT NULL,
+  `num_false_lev0` int(20) NOT NULL
 );
 
 

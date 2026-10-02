@@ -153,6 +153,7 @@ struct ClauseStats
     uint32_t extra_pos = numeric_limits<uint32_t>::max();
     uint32_t uip1_used = 0; ///N.o. times clause was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
+    uint32_t visited = 0; ///<Propagation looked at the clause (blocker failed): the cost of keeping it
     #endif
 
     static ClauseStats combine_stats(const ClauseStats& first, const ClauseStats& second)
@@ -173,6 +174,7 @@ struct ClauseStats
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.uip1_used = first.uip1_used + second.uip1_used;
+        ret.visited = first.visited + second.visited;
         ret.props_made = first.props_made + second.props_made;
         #endif
 
@@ -196,6 +198,7 @@ struct ClauseStats
     {
         uip1_used = 0;
         props_made = 0;
+        visited = 0;
     }
     #endif
 };
@@ -269,6 +272,8 @@ struct ClauseStatsExtra
     float discounted_uip1_used = 0;
     uint32_t sum_uip1_used = 0; ///N.o. times clause was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
+    uint32_t sum_visited = 0; ///<see ClauseStats::visited
+    float discounted_visited = 0;
     float discounted_uip1_used3 = 0;
     float discounted_uip1_used2 = 0;
     float discounted_props_made2 = 0;
@@ -294,6 +299,8 @@ struct ClauseStatsExtra
     {
         sum_uip1_used += stats.uip1_used;
         sum_props_made += stats.props_made;
+        sum_visited += stats.visited;
+        discounted_visited = discount(0.8, discounted_visited, stats.visited);
 
         discounted_props_made = discount(0.8, discounted_props_made, stats.props_made);
         discounted_uip1_used =  discount(0.8, discounted_uip1_used, stats.uip1_used);
