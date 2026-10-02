@@ -1,0 +1,25 @@
+# best_features.txt without the context and age groups (2026-10-02)
+rdb0.discounted_props_made3
+(rdb0.discounted_props_made3/cl.branchDepthHistQueue_avg)
+rdb0.discounted_uip1_used3
+(rdb0.discounted_props_made3/rdb0.act_ranking_rel)
+rdb0.discounted_props_made
+(rdb0.discounted_uip1_used3/rdb0.glue)
+rdb0.glue
+rdb0.props_made
+(rdb0.glue/rdb0.discounted_props_made3)
+cl.num_antecedents
+rdb0.used
+rdb0.discounted_uip1_used
+rdb0.size
+(rdb0.discounted_uip1_used3/cl.num_antecedents)
+cl.numResolutionsHistLT_avg
+(rdb0.discounted_props_made3/cl.numResolutionsHistLT_avg)
+(rdb0.discounted_uip1_used3/rdb0.sum_props_per_time_ranking_rel)
+rdb0.act_ranking_rel
+rdb0.sum_props_per_time_ranking_rel
+cl.antecedents_longIrred
+(rdb0.discounted_props_made/cl.num_overlap_literals)
+cl.glueHistLT_avg
+cl.num_total_lits_antecedents
+rdb0.last_touched_any_diff

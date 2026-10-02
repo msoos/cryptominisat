@@ -289,6 +289,15 @@ yet 120% / 98% here. Three causes were separated:
   tiers and nothing else, vivification and BVE go by glue as in the
   normal build.
 
+**Dropping context and age** (`best_features-trim.txt`, 24 features;
+the coupling above already removed, 20000-row data, seed 0 plus three
+seeds with `XGB_SUBSAMPLE 0.8`): full list 106, 125, 111, 113% of the
+conflicts (mean 114%) and 80, 101, 96, 90% of the time; trimmed 118,
+129, 115, 121% (mean 121%) and 90, 96, 88, 92%. A wash: the gap is the
+seed spread, and two instances (schup, jkkk) swing both lists by 40%.
+The default stays the 30; the 24 are there for a leaner binary if one
+is wanted, at no measured cost or gain.
+
 So every table of this section was measured with that handicap; the
 comparisons within a table hold, the levels are ~10 points too high.
 What remains above the noise: the recency counters, the learning-time
