@@ -123,6 +123,26 @@ def check_frame(fname, df, feats):
     if up:
         warn("%s: glue above orig_glue on %d rows" % (name, up))
 
+    # the cost and where-the-search-is columns (solver commit 0616917e9)
+    if "rdb0.visited" in df.columns:
+        v = df["rdb0.visited"]
+        # every propagation or conflict the clause caused was a visit first
+        check((v >= df["rdb0.props_made"] + df["rdb0.conflicts_made"]).all(),
+              "%s: visited below props_made + conflicts_made" % name)
+        check((df["rdb0.sum_visited"] >= v).all(), "%s: sum_visited below this interval's visited" % name)
+        check((df["rdb0.discounted_visited"] >= 0).all(), "%s: negative discounted_visited" % name)
+        if v.sum() == 0:
+            warn("%s: no clause was ever visited" % name)
+        for c in ["rdb0.lit_act_rel", "rdb0.lit_vmtf_rel"]:
+            check(df[c].between(0, 1).all(), "%s: %s outside 0..1" % (name, c))
+        if df["rdb0.lit_act_rel"].max() == 0 and df["rdb0.lit_vmtf_rel"].max() == 0:
+            fail("%s: no variable activity of any kind" % name)
+        check((df["rdb0.num_assigned"] <= df["rdb0.size"]).all(), "%s: more literals assigned than the clause has" % name)
+        check((df["rdb0.num_false_lev0"] <= df["rdb0.num_assigned"]).all(),
+              "%s: more literals false at level 0 than assigned" % name)
+    else:
+        warn("%s: no rdb0.visited: gathered before the cost columns existed" % name)
+
     # one reduce = one set of rdb0_common values (rdb0.dump_no is per
     # clause, the reduce is identified by its conflict count)
     common = [c for c in df.columns if c.startswith("rdb0_common.")]
