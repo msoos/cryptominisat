@@ -273,19 +273,28 @@ label is benefit only. The list picked from the new rankings
 third time an importance pick lost to the list it was meant to replace.
 `best_features.txt` stays.
 
-**The noise floor.** "Without the cost features" is the current list on
-the same instances that gave 98% / 73% the day before. The only
-difference: the regather's strata sampling drew 1% different rows
-(53,361 vs 53,860), and the model trained on them turns jkkk from 649k
-conflicts into 1.10M and schup from 551k into 803k. Single A/B runs of
-this size cannot see effects under ~20%. `model_variance.sh` (N seeds,
-`XGB_SUBSAMPLE 0.8`) measures the part that is the trees' own: three
-seeds on the regathered data gave 120%, 121%, 127% (per instance within
-10% except schup: 529k to 1.17M). So the seed accounts for a few points
-and the rest of the 98% vs 120% is which rows the sample holds: the
-training set (8 instances, 6000 rows per strata) is too small for a
-stable model. A regather with `FIXED=20000` is the first thing to try;
-until then, differences under ~20% in these tables are not results.
+**The noise floor, and a culprit.** "Without the cost features" is the
+current list on the same instances that gave 98% / 73% the day before,
+yet 120% / 98% here. Three causes were separated:
+- the trees' own seed (`model_variance.sh`, N seeds, `XGB_SUBSAMPLE 0.8`):
+  120%, 121%, 127% on the same data, per instance within 10% except
+  schup (529k to 1.17M conflicts). A few points.
+- the rows the sample holds: a regather with `FIXED=20000` (3x the rows,
+  `cnf/`; the 6000-row data is `cnf-f6k/`) gave 116% / 85%, so the
+  sample size was not it either.
+- the solver: between the two days, 84e5e3191 made the score steer
+  vivification and BVE candidates under `--predkeep` and was never
+  tested alone. Same models, same instances: 116% / 86% with it, 106% /
+  80% without. It is `--predkeepviv`, off by default now.
+
+So every table of this section was measured with that handicap; the
+comparisons within a table hold, the levels are ~10 points too high.
+What remains above the noise: the recency counters, the learning-time
+snapshot and size/glue carry the model; rankings, context, age and the
+cost features do not measurably help; importance-picked lists lose.
+Differences under ~10% between single runs are not results. The
+embedded model is now `models/disc-all-f20/` (all 14 UNSAT instances,
+20000 rows per stratum).
 
 ## The scripts, one line each
 
