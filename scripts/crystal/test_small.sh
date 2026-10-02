@@ -37,4 +37,22 @@ SHORT=2000 LONG=6000 FOREVER=20000 HALFLIFE=5000 FIXED=3000 CAKE_XLRUP="" \
 for f in "$CNF-dir"/predictor-*.json; do
     cmp -s "$f" "$f.first" || { echo "FAILED: $f differs between two runs"; exit 1; }
 done
+# the C++ feature code (generated from best_features.txt) must compute
+# exactly what pandas computes from the same expressions: the Python
+# predictor path and the xgboost C path must give the same run
+SCRIPTDIR="$(pwd)"
+PRED="${PRED_BIN:-$SCRIPTDIR/../../build_pred/cryptominisat5}"
+run_pred() { # type
+    (cd "$CNF-dir" && "$PRED" --predtype "$1" --predloc . --predbestfeats "$SCRIPTDIR/best_features.txt" \
+        --zero-exit-status "$CNF" 2>&1 | grep -m1 "^c conflicts" | awk '{print $4}')
+}
+confl_xgb=$(run_pred xgb)
+confl_py=$(run_pred py)
+if [[ -z "$confl_py" ]]; then
+    echo "note: the Python predictor is not built in, feature consistency not checked"
+elif [[ "$confl_xgb" != "$confl_py" ]]; then
+    echo "FAILED: the C++ features and the Python features give different runs: xgb $confl_xgb py $confl_py"; exit 1
+else
+    echo "OK: C++ and Python feature computation agree ($confl_xgb conflicts)"
+fi
 echo "OK: pipeline ran, predictors differ per table and are reproducible. Output in $DIR"
