@@ -18,6 +18,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+# Trains one xgboost model on one frame and saves it as
+# predictor-<table>-<tier>-xgb.json; prints the squared error, the ranking
+# quality against glue/size and the oracle, and (--topfeats) the feature
+# importance ranking that gen_best_feats.sh/pick_features.py use.
+#
+# usage: cldata_predict.py frame.dat --tier disc --table used_later --features best_only
+#            --bestfeatfile best_features.txt --target rel --objective squarederror
+#            --xgboostestimators 40 --xboostmaxdepth 5 --basedir <where the model goes>
 # pylint: disable=invalid-name,line-too-long,too-many-locals,consider-using-sys-exit
 
 import time

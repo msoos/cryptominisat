@@ -18,6 +18,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+# Makes the training frames from the sampled DB (data-min.db): one
+# pandas pickle per (label table, tier), rows = (clause, reduce) with the
+# clause's state at the reduce, the DB-wide numbers of that reduce, what
+# was known when the clause was learnt, and the labels (count, rank).
+# Rows are sampled per use strata (--cut1/--cut2) up to --limit each.
+#
+# usage: cldata_gen_pandas.py --tiers disc --halflife 30000 [--short N --long N --forever N]
+#            --cut1 3.0 --cut2 25.0 --limit 6000 data-min.db
 from __future__ import print_function
 import optparse
 import time

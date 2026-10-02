@@ -220,6 +220,25 @@ Runs the whole pipeline, checks the plain and ancestor models differ and
 that a second learning pass reproduces the models bit for bit. Run it
 after touching any script, the stats/predictor code, or the schema.
 
+## The scripts, one line each
+
+Pipeline, in order: `ballofcrystal.sh` (all of it for one CNF; knobs in
+`setparams_ballofcrystal.sh`), `check_rawdb.py` (pre-flight on the stats
+DB), `fix_up_frat.py` (labels from the proof), `clean_update_data.py`,
+`check_data_quality.py`, `sample_data.py`, `cldata_gen_pandas.py`
+(frames), `check_frames.py` (the data tests), `cldata_predict.py` (one
+model), `concat_pandas.py` + `learn.sh` (models from many dirs),
+`eval_corpus.sh` (the A/B), `run_corpus.sh` (gather + learn + A/B).
+Features: `best_features*.txt` (the lists), `gen_pred_features.py` (the
+C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
+(importance rankings and a list from them), `feature_groups.py` +
+`ablate_groups.sh` (group ablation in the solver), `holdout_eval.py`
+(offline leave-instances-out), `helper.py` (shared SQL and feature code),
+`ccg.py` (Python AST to source). Models: `embed_models.py` (the table of
+compiled-in models), `ml_module.py` (the `--predtype py` path). Tests:
+`test_small.sh` (end to end on a random UNSAT instance, with the C++ vs
+Python feature check). Instances: `bivium_variants.py`.
+
 ## Practicalities
 
 - Options before the CNF, always (see above).

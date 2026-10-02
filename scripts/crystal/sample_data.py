@@ -18,6 +18,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+# Fills the used_later_<tier> label tables from used_clauses, computes
+# their percentiles (the strata cldata_gen_pandas.py samples by) and
+# shrinks the DB to the rows that will be sampled, so the frame queries
+# are fast.
+#
+# usage: sample_data.py --tiers disc --halflife 30000 [--short N --long N --forever N] data-min.db
 from __future__ import print_function
 import sqlite3
 import optparse

@@ -18,6 +18,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+# Sanity checks on the SQLite DB after clean_update_data.py: every
+# tracked clause has exactly one cl_last_in_solver row, enough clauses
+# with a glue, no negative rankings, and so on. --slow runs the expensive
+# ones. Exit 1 on failure. check_rawdb.py runs before the proof,
+# check_frames.py on the pandas frames after sampling.
+#
+# usage: check_data_quality.py [--slow] data.db
 from __future__ import print_function
 import optparse
 import time
