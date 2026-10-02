@@ -51,6 +51,33 @@ void ClPredictorsXGB::new_handle()
     safe_xgboost(XGBoosterSetParam(handles.back(), "nthread", "1"))
 }
 
+//a model trained on another feature list would silently predict garbage:
+//the count must match, and the names when the model carries them
+void ClPredictorsXGB::check_num_features(const std::string& what)
+{
+    bst_ulong n = 0;
+    safe_xgboost(XGBoosterGetNumFeature(handles.back(), &n))
+    if (n != (bst_ulong)PRED_COLS) {
+        std::cerr << "ERROR: the model " << what << " has " << n
+            << " features, this binary computes " << PRED_COLS
+            << " (its best_features.txt). Retrain, or rebuild with the list the model was trained on" << std::endl;
+        exit(-1);
+    }
+    bst_ulong len = 0;
+    const char** names = nullptr;
+    safe_xgboost(XGBoosterGetStrFeatureInfo(handles.back(), "feature_name", &len, &names))
+    if (len == 0) return; //trained without names, the count is all there is
+    for(bst_ulong i = 0; i < len && i < (bst_ulong)PRED_COLS; i++) {
+        if (std::string(names[i]) != predgen::feature_names[i]) {
+            std::cerr << "ERROR: the model " << what << " was trained on feature " << i
+                << " = '" << names[i] << "', this binary computes '" << predgen::feature_names[i]
+                << "' there (its best_features.txt). Retrain, or rebuild with the list the model was trained on"
+                << std::endl;
+            exit(-1);
+        }
+    }
+}
+
 ClPredictorsXGB::~ClPredictorsXGB()
 {
     for(auto& h: handles) {
@@ -65,6 +92,7 @@ int ClPredictorsXGB::load_models(const vector<std::string>& fnames,
     for(const auto& f: fnames) {
         new_handle();
         safe_xgboost(XGBoosterLoadModel(handles.back(), f.c_str()))
+        check_num_features(f);
     }
     num_models = handles.size();
     return 1;
@@ -86,6 +114,7 @@ int ClPredictorsXGB::load_models_from_buffers(const vector<std::string>& tiers)
         }
         new_handle();
         safe_xgboost(XGBoosterLoadModelFromBuffer(handles.back(), m->data, m->len));
+        check_num_features("compiled in for tier " + t);
     }
     num_models = handles.size();
     return 0;

@@ -273,7 +273,11 @@ static inline void fill_raw(const In& in, const float missing_val, float* at)
 %s
 }
 
-//the features of %s, in file order
+//the features of %s, in file order: the names a model must have been
+//trained on (checked at load), and the code that computes them
+static const char* const feature_names[] = {
+%s
+};
 static inline void fill_features(const In& in, const float missing_val, float* at)
 {
 %s
@@ -282,7 +286,7 @@ static inline void fill_features(const In& in, const float missing_val, float* a
 }} //namespace
 """ % (fname, len(feats), "\n".join(raw_funcs), "\n".join(need_lines), len(RAW),
        "\n".join('    "%s",' % n for n in RAW), "\n".join(raw_fill),
-       fname, "\n".join(body)))
+       fname, "\n".join('    "%s",' % f.replace('"', '\\"') for f in feats), "\n".join(body)))
     return feats, used
 
 
