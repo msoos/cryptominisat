@@ -171,6 +171,7 @@ class Learner:
                 min_child_weight=options.min_child_weight_xgboost, # from doc: "In linear regression task, this simply corresponds to minimum number of instances needed to be in each node."
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
+                random_state=options.seed,
                 n_estimators=options.n_estimators_xgboost)
             if options.gen_topfeats:
                 # more trees, so the importance ranking is less noisy

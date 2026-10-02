@@ -76,7 +76,7 @@ for tier in $TIERS; do
         $NOBUF "$SCRIPTDIR/cldata_predict.py" "$OUT/comb-${name}.dat" \
             --tier "$tier" --table "$table" --features best_only --regressor xgb \
             --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
-            --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" \
+            --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
             --basedir "$OUT" --bestfeatfile "$bestf" \
             > "$OUT/out-${table}-${tier}" 2>&1
         grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}-${tier}" | head -3

@@ -164,7 +164,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
             $NOBUF "$SCRIPTDIR/cldata_predict.py" "$f" \
                 --tier "$tier" --table "$table" --features best_only --regressor xgb \
                 --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
-                --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" \
+                --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
                 --basedir . --bestfeatfile "$bestf" \
                 > "cldata_predict_${tier}-${table}.out-stage" 2>&1
             grep -E "Mean squared error|==> Saved" "cldata_predict_${tier}-${table}.out-stage" | head -2
