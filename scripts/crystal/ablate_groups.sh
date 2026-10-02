@@ -55,4 +55,4 @@ for g in ${ABLATE_GROUPS:-$("$SCRIPTDIR/feature_groups.py" "$FEATS" | awk '$2+0 
     one "without-$g" "$OUT/without-$g.txt"
 done
 echo "--- summary (conflicts / time of the predictor build vs the normal build):"
-grep -h "^total" "$OUT"/eval-*.out | sed 's/total: normal confl [0-9]* *[0-9]* s *| *//' | paste -d' ' <(ls "$OUT"/eval-*.out | xargs -n1 basename | sed 's/eval-//; s/.out//') - | column -t
+grep -h "^total" "$OUT"/eval-*.out | sed 's/total: normal confl [0-9]* *[0-9]* s *| *//' | paste -d' ' <(ls "$OUT"/eval-*.out | xargs -n1 basename | sed 's/^eval-//; s/\.out$//') - | column -t
