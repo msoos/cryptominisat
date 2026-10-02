@@ -42,6 +42,18 @@ mkdir -p "$OUT"
 git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
 echo "$@" >> "$OUT/out_git"
 
+# provenance: which solver gathered each dir (frames of different
+# schemas are refused by concat_pandas.py, this says why)
+: > "$OUT/gathered_by"
+for d in "$@"; do
+    sha=$(grep -m1 "^c CMS SHA1:" "$d/cms-stats-run.out" 2>/dev/null | awk '{print $4}')
+    echo "${sha:-unknown} $d" >> "$OUT/gathered_by"
+done
+if [[ $(awk '{print $1}' "$OUT/gathered_by" | sort -u | wc -l) -gt 1 ]]; then
+    echo "WARNING: the dirs were gathered by different solver versions, see $OUT/gathered_by"
+    awk '{print $1}' "$OUT/gathered_by" | sort | uniq -c
+fi
+
 echo "=== checking the frames"
 for d in "$@"; do
     "$SCRIPTDIR/check_frames.py" -f "$bestf" "$d"/data-min.db-cldata-*.dat > "$OUT/check_frames-$(basename "$d").out" 2>&1 \
