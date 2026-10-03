@@ -149,6 +149,58 @@ def flatten_name(node):
     raise ValueError("not a column: %s" % ast.dump(node))
 
 
+# Raw columns whose scale is the run's length or the instance's size. A
+# tree model clamps every value beyond its training range, and the solver
+# will run a hundred times longer than any training run and on bigger
+# instances, so such a column may only appear divided by another of the
+# same scale (a share of the clause's life, a rate per conflict, ...)
+SCALE = {
+    "run": ["cl.time_inside_solver", "rdb0.last_touched_any_diff", "rdb0.introduced_at_conflict",
+            "rdb0.sum_props_made", "rdb0.sum_uip1_used", "rdb0.sum_visited", "rdb0.dump_no",
+            "rdb0.act_ranking", "rdb0.prop_ranking", "rdb0.uip1_ranking",
+            "rdb0.sum_uip1_per_time_ranking", "rdb0.sum_props_per_time_ranking"],
+    "size": ["rdb0_common.num_vars", "rdb0_common.num_long_irred_cls", "rdb0_common.num_long_irred_cls_lits",
+             "rdb0_common.num_long_red_cls", "rdb0_common.num_long_red_cls_lits",
+             "rdb0_common.num_bin_irred_cls", "rdb0_common.num_bin_red_cls", "rdb0_common.tot_cls_in_db"],
+}
+
+
+def scale_degree(node):
+    """{scale class: exponent} of an expression: a column of class c is
+    c^1, a/b subtracts, a*b adds, a+b and a-b must agree"""
+    if isinstance(node, ast.Expression):
+        return scale_degree(node.body)
+    if isinstance(node, (ast.Name, ast.Attribute)):
+        name = flatten_name(node)
+        for cls, cols in SCALE.items():
+            if name in cols:
+                return {cls: 1}
+        return {}
+    if isinstance(node, ast.Constant):
+        return {}
+    if isinstance(node, ast.UnaryOp):
+        return scale_degree(node.operand)
+    if isinstance(node, ast.BinOp):
+        l, r = scale_degree(node.left), scale_degree(node.right)
+        if isinstance(node.op, ast.Div):
+            return {c: l.get(c, 0) - r.get(c, 0) for c in set(l) | set(r)}
+        if isinstance(node.op, ast.Mult):
+            return {c: l.get(c, 0) + r.get(c, 0) for c in set(l) | set(r)}
+        if l != r:
+            raise ValueError("adding things of different scale: %s" % ast.dump(node))
+        return l
+    raise ValueError("unsupported expression: %s" % ast.dump(node))
+
+
+def check_scale_free(feat):
+    deg = {c: d for c, d in scale_degree(ast.parse(feat, mode="eval")).items() if d != 0}
+    if deg:
+        raise ValueError("'%s' scales with the %s (%s): a tree model clamps it beyond the training "
+                         "runs. Divide it by another column of that scale, or --allow-absolute"
+                         % (feat, " and ".join("%s %s" % (("run length" if c == "run" else "instance size"), "^%d" % d)
+                                               for c, d in deg.items()), ", ".join(deg)))
+
+
 def to_cpp(node, used):
     if isinstance(node, ast.Expression):
         return to_cpp(node.body, used)
@@ -184,11 +236,13 @@ def read_features(fname):
     return feats
 
 
-def generate(fname, out):
+def generate(fname, out, allow_absolute=False):
     feats = read_features(fname)
     used = set()
     body = []
     for i, feat in enumerate(feats):
+        if not allow_absolute:
+            check_scale_free(feat)
         expr = to_cpp(ast.parse(feat, mode="eval"), used)
         body.append("    //%d: %s" % (i, feat))
         body.append("    { bool miss = false; const double v = %s;" % expr)
@@ -295,6 +349,8 @@ if __name__ == "__main__":
     parser.add_argument("features", nargs="?", help="best_features file")
     parser.add_argument("-o", "--out", default=None, help="output header, default stdout")
     parser.add_argument("--list-raw", action="store_true", help="print the raw columns the solver can compute")
+    parser.add_argument("--allow-absolute", action="store_true",
+                        help="accept features that scale with the run length or the instance size (see SCALE)")
     opts = parser.parse_args()
 
     if opts.list_raw:
@@ -305,8 +361,8 @@ if __name__ == "__main__":
         parser.error("need a best_features file")
     if opts.out:
         with open(opts.out, "w") as f:
-            feats, used = generate(opts.features, f)
+            feats, used = generate(opts.features, f, opts.allow_absolute)
     else:
-        feats, used = generate(opts.features, sys.stdout)
+        feats, used = generate(opts.features, sys.stdout, opts.allow_absolute)
     print("%d features over %d raw columns -> %s" % (len(feats), len(used), opts.out or "stdout"),
           file=sys.stderr)
