@@ -34,8 +34,13 @@ done
 SHORT=2000 LONG=6000 FOREVER=20000 HALFLIFE=5000 FIXED=3000 CAKE_XLRUP="" \
     ./ballofcrystal.sh --skip-solve "$CNF" > "$DIR/run3.out" 2>&1 || {
     echo "FAILED, see $DIR/run3.out"; tail -3 "$DIR/run3.out"; exit 1; }
+# (the model's train_date attribute may differ across midnight)
 for f in "$CNF-dir"/predictor-*.json; do
-    cmp -s "$f" "$f.first" || { echo "FAILED: $f differs between two runs"; exit 1; }
+    python3 -c "
+import json, sys
+a, b = [json.load(open(x)) for x in sys.argv[1:]]
+for m in (a, b): m['learner']['attributes'].pop('train_date', None)
+sys.exit(a != b)" "$f" "$f.first" || { echo "FAILED: $f differs between two runs"; exit 1; }
 done
 # the C++ feature code (generated from best_features.txt) must compute
 # exactly what pandas computes from the same expressions: the Python

@@ -78,15 +78,10 @@ for tier in $TIERS; do
             --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
             --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
             --basedir "$OUT" --bestfeatfile "$bestf" \
+            --gatheredby "$(awk '{print $1}' "$OUT/gathered_by" | sort -u | tr '\n' ' ' | sed 's/ $//')" \
             > "$OUT/out-${table}-${tier}" 2>&1
         grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}-${tier}" | head -3
         grep -E "^ranking test" "$OUT/out-${table}-${tier}"
     done
 done
-# the training range of every feature, for the solver's out-of-range count
-first=$(ls "$OUT"/comb-used_later-*.dat 2>/dev/null | head -1)
-if [[ -n "$first" ]]; then
-    "$SCRIPTDIR/feature_ranges.py" -f "$bestf" -o "$OUT/feature_ranges.txt" "$first" > "$OUT/feature_ranges.out" 2>&1 \
-        && echo "Training ranges in $OUT/feature_ranges.txt: copy next to the feature list as <list>.ranges before building"
-fi
 echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predtype xgb --predloc $OUT --predtiers ${TIERS// /,} file.cnf"

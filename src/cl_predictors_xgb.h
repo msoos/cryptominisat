@@ -60,6 +60,7 @@ private:
     const float* out_result[PRED_MAX_MODELS];
     void new_handle();
     void check_num_features(const std::string& what);
+    void read_attrs();
 
     //debugging
     int num_dumps = 0;

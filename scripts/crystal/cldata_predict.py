@@ -209,6 +209,7 @@ class Learner:
                 tier=options.tier, table=options.table, regr=options.regressor)
             if options.regressor == "xgb":
                 booster = clf.get_booster()
+                self.set_provenance(booster, df, features)
                 booster.save_model(fname_pred_out)
                 print("==> Saved XGB model to: ", fname_pred_out)
         else:
@@ -241,6 +242,29 @@ class Learner:
         print("--------------------------")
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train data")
+
+    # The training range of every feature (1st and 99th percentile) and
+    # where the data came from, stored in the model: the solver counts the
+    # values it computes outside the range and says so at the end, since
+    # a run the model never saw the like of is one it knows nothing about
+    def set_provenance(self, booster, df, features):
+        lo = []
+        hi = []
+        for feat in features:
+            v = df[feat].astype(float).replace([np.inf, -np.inf], np.nan).dropna()
+            if len(v) == 0:
+                lo.append("nan")
+                hi.append("nan")
+            else:
+                lo.append(repr(float(np.percentile(v, 1))))
+                hi.append(repr(float(np.percentile(v, 99))))
+        booster.set_attr(feature_lo=" ".join(lo), feature_hi=" ".join(hi),
+                         train_rows=str(len(df)),
+                         train_frame=os.path.basename(options.fname),
+                         train_date=time.strftime("%Y-%m-%d"),
+                         gathered_by=options.gathered_by)
+        print("Stored the training ranges of %d features over %d rows in the model" % (
+            len(features), len(df)))
 
     def rem_features(self, feat, to_remove):
         print("To remove: " , to_remove)
@@ -351,6 +375,8 @@ if __name__ == "__main__":
                         dest="tier", help="Tier to do")
     parser.add_argument("--table", default="used_later", type=str,
                         dest="table", help="Table to do")
+    parser.add_argument("--gatheredby", default="unknown", type=str,
+                        dest="gathered_by", help="solver commit(s) that gathered the data, stored in the model")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)

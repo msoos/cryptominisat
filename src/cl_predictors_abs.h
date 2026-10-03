@@ -108,6 +108,12 @@ public:
     virtual int load_models_from_buffers(const vector<std::string>& tiers) = 0;
     uint32_t num_models = 0;
     vector<std::string> get_hashes() const;
+    //from the first model, if it carries them (cldata_predict.py stores
+    //them): the 1st/99th percentile of every feature in its training data,
+    //and where that data came from
+    vector<double> feature_lo;
+    vector<double> feature_hi;
+    std::string provenance;
 
     virtual void predict_all(
         float* const data,

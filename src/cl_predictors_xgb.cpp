@@ -78,6 +78,36 @@ void ClPredictorsXGB::check_num_features(const std::string& what)
     }
 }
 
+//the training ranges and provenance the model carries as attributes, if any
+void ClPredictorsXGB::read_attrs()
+{
+    if (!feature_lo.empty() || !provenance.empty()) return; //the first model's
+    auto attr = [&](const char* name) -> std::string {
+        const char* out = nullptr;
+        int ok = 0;
+        safe_xgboost(XGBoosterGetAttr(handles.back(), name, &out, &ok))
+        return ok ? std::string(out) : std::string();
+    };
+    auto nums = [](const std::string& str) {
+        vector<double> ret;
+        std::stringstream ss(str);
+        std::string tok;
+        while (ss >> tok) ret.push_back(tok == "nan" ? NAN : std::stod(tok));
+        return ret;
+    };
+    feature_lo = nums(attr("feature_lo"));
+    feature_hi = nums(attr("feature_hi"));
+    if (feature_lo.size() != (size_t)PRED_COLS || feature_hi.size() != (size_t)PRED_COLS) {
+        feature_lo.clear();
+        feature_hi.clear();
+    }
+    const std::string frame = attr("train_frame");
+    if (!frame.empty()) {
+        provenance = attr("train_rows") + " rows of " + frame + ", " + attr("train_date")
+            + ", gathered by " + attr("gathered_by");
+    }
+}
+
 ClPredictorsXGB::~ClPredictorsXGB()
 {
     for(auto& h: handles) {
@@ -93,6 +123,7 @@ int ClPredictorsXGB::load_models(const vector<std::string>& fnames,
         new_handle();
         safe_xgboost(XGBoosterLoadModel(handles.back(), f.c_str()))
         check_num_features(f);
+        read_attrs();
     }
     num_models = handles.size();
     return 1;
@@ -115,6 +146,7 @@ int ClPredictorsXGB::load_models_from_buffers(const vector<std::string>& tiers)
         new_handle();
         safe_xgboost(XGBoosterLoadModelFromBuffer(handles.back(), m->data, m->len));
         check_num_features("compiled in for tier " + t);
+        read_attrs();
     }
     num_models = handles.size();
     return 0;

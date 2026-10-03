@@ -46,9 +46,6 @@ The predictor build generates two things at build time:
   `cmake -DPRED_FEATURES_FILE=/path/to/list.txt`. The generator refuses a
   feature that scales with the run length or the instance size (below);
   `-DPRED_ALLOW_ABSOLUTE=ON` lets one through, for experiments only.
-  Next to the list, `<list>.ranges` (from `feature_ranges.py`) gives the
-  1st/99th percentile of each feature in the training data; the solver
-  counts the values it computes outside that and says so at the end.
 - the embedded default models from `src/predict/predictor_<tier>.json`, one
   per tier of cmake's `PRED_TIERS` (default `disc`; `embed_models.py`
   writes the table the solver looks them up in by tier name).
@@ -155,11 +152,13 @@ the label itself, whichever is learnt.
   match the list it was built from.
 - `gen_pred_features.py` (so the build) refuses a feature that scales
   with the run length or the instance size, see "Scale-free features".
-- The solver prints `pred feats outside training range` at the end: the
-  share of feature values outside the 1st..99th percentile of the
-  training data (`<list>.ranges`) and the three worst features. 1-2% is
-  what in-distribution instances give; much more means the model is
-  extrapolating.
+- The model carries the 1st..99th percentile of every feature in its
+  training data and where that data came from (xgboost attributes, set
+  by `cldata_predict.py`). The solver prints `[pred] model trained on
+  ...` at load and `pred feats outside training range` at the end: the
+  share of feature values outside the range and the three worst
+  features. 1-2% is what in-distribution instances give; much more means
+  the model is extrapolating. A model without the attributes says so.
 - `test_small.sh` runs it all end to end and checks that the C++ feature
   code and pandas compute the same features (`--predtype xgb` vs `py`
   give the same run).
@@ -261,13 +260,15 @@ the raw idle time replaced by idle time / life, 24 features (the old
 0-3): 139, 108, 126, 124% of the normal build's conflicts, the 30-list
 measured the same way 106, 125, 111, 113%: within the seed spread.
 
-The runtime check: `feature_ranges.py -f list -o list.ranges comb.dat`
-writes the 1st/99th percentile of every feature in the training frame
-(`learn.sh` writes it to `$OUT/feature_ranges.txt`; copy it next to the
-list before building). The solver counts the values outside the range
-and prints the share and the three worst features at the end
-(`pred feats outside training range`). In-distribution runs give
-0.1-0.4% for the 24 and ~1% for the 30, whose worst feature is
+The runtime check: `cldata_predict.py` stores in the model (xgboost
+attributes `feature_lo`/`feature_hi`, plus `train_rows`, `train_frame`,
+`train_date`, `gathered_by`) the 1st/99th percentile of every feature
+over the training frame. They travel with the model, embedded or
+`--predloc`, so they always describe the model actually loaded; a
+feature list has no ranges of its own. The solver counts the values
+outside the range and prints the share and the three worst features at
+the end (`pred feats outside training range`). In-distribution runs
+give 0.1-0.4% for the 24 and ~1% for the 30, whose worst feature is
 `num_vars / props per conflict`, an instance identifier.
 
 The check on a long run (`cb_test/general/longrun/`, homer17, 30 min,
@@ -374,8 +375,7 @@ is the old 30 for comparison builds, the other lists this file names
 are in git history), `gen_pred_features.py` (the
 C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
 (importance rankings and a list from them), `feature_groups.py` +
-`ablate_groups.sh` (group ablation in the solver), `feature_ranges.py`
-(the training percentiles for the runtime check), `model_variance.sh`
+`ablate_groups.sh` (group ablation in the solver), `model_variance.sh`
 (the A/B's noise floor), `holdout_eval.py` (offline
 leave-instances-out), `helper.py` (shared SQL and feature code),
 `ccg.py` (Python AST to source). Models: `embed_models.py` (the table of

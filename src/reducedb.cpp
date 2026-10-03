@@ -746,6 +746,9 @@ void ReduceDB::load_predictors()
             cout << endl;
         }
     }
+    if (solver->conf.verbosity && !predictors->provenance.empty()) {
+        cout << solver->conf.prefix << "[pred] model trained on " << predictors->provenance << endl;
+    }
 }
 
 //Fills pred_short/long/forever_use of every clause in offs
@@ -813,13 +816,15 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
         << solver->conf.print_times(cpu_time()-my_time));
 }
 
-//Every feature value outside its training range. 1% of the training rows
-//are outside by construction (the 1st and 99th percentiles), so a few
-//percent is normal; a run far longer or bigger than the training runs
-//drives the age-like and size-like features out, and the model's verdict
-//on it means little. Printed with the stats at the end
+//Every feature value outside the range the model was trained on (the
+//model carries its 1st/99th percentiles). 1% of the training rows are
+//outside by construction, so a few percent is normal; a run far longer
+//or bigger than the training runs drives the age-like and size-like
+//features out, and the model's verdict on it means little. Printed with
+//the stats at the end
 void ReduceDB::count_out_of_range(const float* data, const uint32_t rows)
 {
+    if (predictors->feature_lo.empty()) return; //the model carries no ranges
     if (feat_out_of_range.empty()) feat_out_of_range.resize(PRED_COLS, 0);
     for(uint32_t r = 0; r < rows; r++) {
         const float* at = data + (size_t)r * PRED_COLS;
@@ -827,8 +832,8 @@ void ReduceDB::count_out_of_range(const float* data, const uint32_t rows)
             const float v = at[c];
             if (std::isnan(v)) continue; //missing
             feat_values_seen++;
-            const double lo = predgen::feature_lo[c];
-            const double hi = predgen::feature_hi[c];
+            const double lo = predictors->feature_lo[c];
+            const double hi = predictors->feature_hi[c];
             if (std::isnan(lo)) continue; //no training range known
             if (v < lo || v > hi) feat_out_of_range[c]++;
         }
@@ -837,10 +842,15 @@ void ReduceDB::count_out_of_range(const float* data, const uint32_t rows)
 
 void ReduceDB::print_out_of_range() const
 {
+    if (predictors == nullptr) return;
+    const string p = solver->conf.prefix;
+    if (predictors->feature_lo.empty()) {
+        cout << p << "pred feats outside training range: unknown, the model carries no ranges" << endl;
+        return;
+    }
     if (feat_values_seen == 0 || feat_out_of_range.empty()) return;
     uint64_t tot = 0;
     for(const auto& n: feat_out_of_range) tot += n;
-    const string p = solver->conf.prefix;
     print_stats_line(p, "pred feats outside training range", tot,
         stats_line_percent(tot, feat_values_seen), "% of values (1-2% is normal, see CLAUDE.md)");
     //the three worst
