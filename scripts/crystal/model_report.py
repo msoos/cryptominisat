@@ -71,6 +71,10 @@ def fig_to_html(fig, width=900):
 
 
 def table(df, floatfmt="%.4g"):
+    df = df.copy()
+    for c in df.columns:  # percentages print as such
+        if str(c).endswith("%"):
+            df[c] = df[c].map(lambda x: "%.2f %%" % x)
     return df.to_html(float_format=lambda x: floatfmt % x, border=0, classes="t")
 
 
@@ -137,7 +141,8 @@ if "feature_lo" in attrs:
                      "outside %": 100.0 * ((v < lo[i]) | (v > hi[i])).mean(),
                      "missing %": 100.0 * X_all[f].isna().mean()})
     sections.append(("Training ranges", "<p>The 1st/99th percentile stored in the model, "
-        "and the frame given here (the same frame gives ~2% outside by construction).</p>"
+        "and the frame given here. On the training frame itself ~1% is above p99 and ~1% below "
+        "p1 by construction, so ~2% outside is the floor, ~1% where p1 is also the minimum.</p>"
         + table(pd.DataFrame(rows).set_index("feature"))))
 
 # ---- what is in the trees: xgboost's own statistics
