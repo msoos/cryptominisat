@@ -231,19 +231,29 @@ sections.append(("Strongest pairwise interactions",
     "<p>Exact SHAP interaction values on %d rows: how much of a feature's effect depends on "
     "another feature's value (the off-diagonal of the interaction matrix).</p>" % n_int + table(ptab)))
 
-# ---- the trees themselves
-trees_html = []
+# ---- the first trees, a sanity check only: one tree is 1/40th of the
+# model, the SHAP sections above say what the model does. Features are
+# aliased f0..fN to keep the trees narrow; no per-node stats, the gains
+# are in the importance table
+legend = pd.DataFrame({"feature": features}, index=["f%d" % i for i in range(len(features))])
+aliased = xgb.Booster()
+aliased.load_model(opts.model)
+aliased.feature_names = list(legend.index)
+trees_html = ["<p><b>Sanity check only</b> (does the first split look sane?): the first %d of %d "
+              "trees, each a small step of the ensemble. Feature aliases:</p>" % (
+                  min(opts.trees, n_trees), n_trees) + table(legend)]
 try:
     import graphviz  # noqa
     for t in range(min(opts.trees, n_trees)):
-        g = xgb.to_graphviz(booster, tree_idx=t)
+        g = xgb.to_graphviz(aliased, tree_idx=t, rankdir="LR")  # depth left to right, leaves stacked
         trees_html.append("<h3>tree %d</h3>" % t + g.pipe(format="svg").decode())
 except Exception as e:  # no dot binary: the text dump
-    dumps = booster.get_dump(with_stats=True)
+    dumps = aliased.get_dump(with_stats=False)
     for t in range(min(opts.trees, n_trees)):
         trees_html.append("<h3>tree %d</h3><pre>%s</pre>" % (t, html.escape(dumps[t])))
-    trees_html.append("<p>(drawn with graphviz when the dot binary is installed; %s)</p>" % html.escape(str(e)))
-sections.append(("The first trees", "\n".join(trees_html)))
+    trees_html.append("<p>(drawn left to right with graphviz when the dot binary is installed; %s)</p>"
+                      % html.escape(str(e)))
+sections.append(("The first trees (sanity check)", "\n".join(trees_html)))
 
 # ---- fit on the frame, if the label is there
 if label is not None:
