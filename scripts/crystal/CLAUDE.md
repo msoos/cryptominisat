@@ -43,7 +43,12 @@ The predictor build generates two things at build time:
 - `predict_features_gen.h` from `best_features.txt` (`gen_pred_features.py`):
   the C++ that computes every feature. The feature file is the single
   source of truth for training and solving. Another list:
-  `cmake -DPRED_FEATURES_FILE=/path/to/list.txt`.
+  `cmake -DPRED_FEATURES_FILE=/path/to/list.txt`. The generator refuses a
+  feature that scales with the run length or the instance size (below);
+  `-DPRED_ALLOW_ABSOLUTE=ON` lets one through, for experiments only.
+  Next to the list, `<list>.ranges` (from `feature_ranges.py`) gives the
+  1st/99th percentile of each feature in the training data; the solver
+  counts the values it computes outside that and says so at the end.
 - the embedded default models from `src/predict/predictor_<tier>.json`, one
   per tier of cmake's `PRED_TIERS` (default `disc`; `embed_models.py`
   writes the table the solver looks them up in by tier name).
@@ -148,6 +153,13 @@ the label itself, whichever is learnt.
   they differ.
 - The solver refuses a model whose feature count or feature names do not
   match the list it was built from.
+- `gen_pred_features.py` (so the build) refuses a feature that scales
+  with the run length or the instance size, see "Scale-free features".
+- The solver prints `pred feats outside training range` at the end: the
+  share of feature values outside the 1st..99th percentile of the
+  training data (`<list>.ranges`) and the three worst features. 1-2% is
+  what in-distribution instances give; much more means the model is
+  extrapolating.
 - `test_small.sh` runs it all end to end and checks that the C++ feature
   code and pandas compute the same features (`--predtype xgb` vs `py`
   give the same run).
@@ -226,6 +238,38 @@ which are the same for every clause at a reduce and only identify the
 instance. After changing the list: rebuild `build_pred`, retrain, copy the
 models to `src/predict/`, rebuild again for the embedded defaults.
 
+### Scale-free features
+
+The training runs are at most ~2.4M conflicts on instances that solve
+in 300 s; the model will run for a day on bigger ones. A raw column
+that grows with the run (`cl.time_inside_solver`,
+`rdb0.last_touched_any_diff`, `rdb0.introduced_at_conflict`,
+`rdb0.sum_props_made`, `rdb0.sum_uip1_used`, `rdb0.sum_visited`,
+`rdb0.dump_no`, the raw rankings) or with the instance (`num_vars`, the
+clause and literal counts) takes values in a long run the model never
+saw, and a tree model clamps at its last split: it extrapolates
+silently. So `gen_pred_features.py` classes those columns (`SCALE` in
+it) and refuses any feature where a class's exponent is not zero: a
+column of a class may only appear divided by another of the same class
+(a share of the clause's life, a rate per conflict, a rank over the
+reduce). `--allow-absolute` / cmake `PRED_ALLOW_ABSOLUTE` overrides,
+for comparison builds only.
+
+`best_features.txt` is scale-free since 2026-10-03: the trim list with
+the raw idle time replaced by idle time / life, 24 features (the old
+30 is `best_features-general30.txt`). Hold-out A/B (the six instances, seeds
+0-3): 139, 108, 126, 124% of the normal build's conflicts, the 30-list
+measured the same way 106, 125, 111, 113%: within the seed spread.
+
+The runtime check: `feature_ranges.py -f list -o list.ranges comb.dat`
+writes the 1st/99th percentile of every feature in the training frame
+(`learn.sh` writes it to `$OUT/feature_ranges.txt`; copy it next to the
+list before building). The solver counts the values outside the range
+and prints the share and the three worst features at the end
+(`pred feats outside training range`). In-distribution runs give
+0.1-0.4% for the 24 and ~1% for the 30, whose worst feature is
+`num_vars / props per conflict`, an instance identifier.
+
 ### Smoke test
 
 ```
@@ -295,8 +339,8 @@ seeds with `XGB_SUBSAMPLE 0.8`): full list 106, 125, 111, 113% of the
 conflicts (mean 114%) and 80, 101, 96, 90% of the time; trimmed 118,
 129, 115, 121% (mean 121%) and 90, 96, 88, 92%. A wash: the gap is the
 seed spread, and two instances (schup, jkkk) swing both lists by 40%.
-The default stays the 30; the 24 are there for a leaner binary if one
-is wanted, at no measured cost or gain.
+The default became the 24 the next day, scale-free (above): no measured
+cost, and nothing in it the model has not seen the range of.
 
 So every table of this section was measured with that handicap; the
 comparisons within a table hold, the levels are ~10 points too high.
@@ -304,8 +348,8 @@ What remains above the noise: the recency counters, the learning-time
 snapshot and size/glue carry the model; rankings, context, age and the
 cost features do not measurably help; importance-picked lists lose.
 Differences under ~10% between single runs are not results. The
-embedded model is now `models/disc-all-f20/` (all 14 UNSAT instances,
-20000 rows per stratum).
+embedded model is `cb_test/general/models/sf-all/` (the scale-free 24,
+all 14 UNSAT instances, 20000 rows per stratum).
 
 ## The scripts, one line each
 
@@ -319,7 +363,8 @@ model), `concat_pandas.py` + `learn.sh` (models from many dirs),
 Features: `best_features*.txt` (the lists), `gen_pred_features.py` (the
 C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
 (importance rankings and a list from them), `feature_groups.py` +
-`ablate_groups.sh` (group ablation in the solver), `model_variance.sh`
+`ablate_groups.sh` (group ablation in the solver), `feature_ranges.py`
+(the training percentiles for the runtime check), `model_variance.sh`
 (the A/B's noise floor), `holdout_eval.py` (offline
 leave-instances-out), `helper.py` (shared SQL and feature code),
 `ccg.py` (Python AST to source). Models: `embed_models.py` (the table of
