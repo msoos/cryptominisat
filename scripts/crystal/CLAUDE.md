@@ -369,7 +369,9 @@ DB), `fix_up_frat.py` (labels from the proof), `clean_update_data.py`,
 (frames), `check_frames.py` (the data tests), `cldata_predict.py` (one
 model), `concat_pandas.py` + `learn.sh` (models from many dirs),
 `eval_corpus.sh` (the A/B), `run_corpus.sh` (gather + learn + A/B).
-Features: `best_features*.txt` (the lists), `gen_pred_features.py` (the
+Features: `best_features.txt` (the list; `best_features-general30.txt`
+is the old 30 for comparison builds, the other lists this file names
+are in git history), `gen_pred_features.py` (the
 C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
 (importance rankings and a list from them), `feature_groups.py` +
 `ablate_groups.sh` (group ablation in the solver), `feature_ranges.py`
@@ -478,7 +480,7 @@ defaults stay squared error and `--predcands 0`, and `XGB_OBJ=log` with
 `--predcands 1` is what to use for a bivium-like family. Features picked
 on bivium rank better offline but do not help in the solver, so
 `best_features.txt` stays the shared list (`best_features-bivium.txt` is
-kept for reference).
+in git history).
 
 Prediction cost: the predictor build predicts only for the clauses
 reduce ranks (a third of the DB with `--predcands 0`; `--predkeep 1`
@@ -574,7 +576,7 @@ holds the data.
 
 So the defaults are: `TIERS=disc`, `TARGET=rel`, `--predtiers disc`,
 `--predkeep 1`, `best_features.txt` = the general list (the old
-corpus-picked one is `best_features-mixed.txt`), `src/predict/predictor_disc.json`
+corpus-picked `best_features-mixed.txt` is in git history), `src/predict/predictor_disc.json`
 = `models/disc-all/` (all 14 UNSAT instances). The bivium and
 mixed-corpus tables above were made with the old list, the count target
 and three models.

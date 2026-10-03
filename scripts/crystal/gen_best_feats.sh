@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Feature importance runs, to pick the features for best_features-*.txt:
+# Feature importance runs, to pick the features for a best_features list:
 # trains on ALL raw features ("no_computed") and on all raw + computed
 # relative features ("all_computed", many hundreds, slow) and prints the
 # xgboost importance ranking (grep "impdf:" -A 60 in the outputs).
