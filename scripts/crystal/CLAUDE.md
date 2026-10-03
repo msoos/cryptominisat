@@ -627,6 +627,22 @@ and three models.
 
 - **Only UNSAT instances are learnt from.** The label is a use in the
   trimmed UNSAT proof; a SAT run has no proof. See above.
+- **The label is a use in the trimmed UNSAT proof, nothing else.** Tried
+  on 2026-10-03 (branch develop-crystal-actlabel, deleted): `act` = the
+  solver's own conflict-analysis uses (`reduceDB.uip1_used` per reduce
+  interval, no proof, i.e. untrimmed participation) and `mix` = act plus
+  the proof uses, each normalised by its mean at the reduce. Same six
+  held-out instances, conflicts / time of the normal build: proof label
+  139% / 105% (seeds 108, 126, 124%), act 138% / 104%, mix 122% / 98%
+  (seeds 134, 131, 138%). Indistinguishable, per instance too; the
+  labels are not what limits the predictor. One thing learnt on the
+  way: in ps_200_301_70's DB 99% of the proof uses fall in the last 10%
+  of the run while the solver's own uses are spread over it, so at an
+  early reduce the proof label mostly says which clauses survive to the
+  endgame. The trimmed proof is kept because it is the quantity that
+  makes sense for UNSAT (a use that the final derivation needed), and
+  nothing measured argues against it. The code (activity_label.py,
+  relabel.sh, the tiers) was removed; this paragraph is what remains.
 - **The score decides the reduce tiers and nothing else.** Under
   `--predkeep` the model's score replaces glue in deciding which learnt
   clauses are tier1/tier2 at reduce. It must NOT also replace glue in
@@ -662,7 +678,8 @@ and three models.
   solvable in 300 s on this box out of 370, and only UNSAT ones count. More families need more time or a
   bigger machine (the proof is ~2 GB per million conflicts).
 - Plain vs ancestor label: within the seed noise of each other on the
-  six hold-out instances (above); deleting one would simplify every
-  script, the frames and the solver's `--predtables`, but the data does
-  not say which. A big test should run both.
+  six hold-out instances (above), as every label tried is; deleting one
+  would simplify every script, the frames and the solver's
+  `--predtables`, but the data does not say which. A big test should
+  run both.
 - `--predsortby` 0/1/2 vs 3 and tree count/depth were not tuned.
