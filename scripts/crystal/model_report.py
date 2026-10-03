@@ -189,7 +189,7 @@ order = list(mean_abs.index)
 
 fig = plt.figure(figsize=(10, 0.35 * len(features) + 1))
 shap.summary_plot(sv, X, feature_names=features, show=False, max_display=len(features))
-beeswarm = fig_to_html(plt.gcf())
+beeswarm = fig_to_html(plt.gcf(), width=500)
 
 corr = pd.Series({f: np.corrcoef(X[f].fillna(X[f].median()), sv[:, i])[0, 1]
                   if X[f].nunique() > 1 else 0.0 for i, f in enumerate(features)})
@@ -246,11 +246,11 @@ try:
     import graphviz  # noqa
     for t in range(min(opts.trees, n_trees)):
         g = xgb.to_graphviz(aliased, tree_idx=t, rankdir="LR")  # depth left to right, leaves stacked
-        trees_html.append("<h3>tree %d</h3>" % t + g.pipe(format="svg").decode())
+        trees_html.append('<h3>tree %d</h3><div class="half">%s</div>' % (t, g.pipe(format="svg").decode()))
 except Exception as e:  # no dot binary: the text dump
     dumps = aliased.get_dump(with_stats=False)
     for t in range(min(opts.trees, n_trees)):
-        trees_html.append("<h3>tree %d</h3><pre>%s</pre>" % (t, html.escape(dumps[t])))
+        trees_html.append('<h3>tree %d</h3><pre class="half">%s</pre>' % (t, html.escape(dumps[t])))
     trees_html.append("<p>(drawn left to right with graphviz when the dot binary is installed; %s)</p>"
                       % html.escape(str(e)))
 sections.append(("The first trees (sanity check)", "\n".join(trees_html)))
@@ -276,7 +276,8 @@ with open(opts.out, "w") as f:
     f.write("""<!doctype html><html><head><meta charset="utf-8"><title>%s</title>
 <style>body{font-family:sans-serif;max-width:1000px;margin:auto;padding:1em}
 .t{border-collapse:collapse;font-size:90%%}.t td,.t th{padding:2px 8px;text-align:right;border-bottom:1px solid #ddd}
-.t th{text-align:left}pre{background:#f4f4f4;padding:.5em;overflow-x:auto}</style></head>
+.t th{text-align:left}pre{background:#f4f4f4;padding:.5em;overflow-x:auto}
+.half{zoom:0.5}.half svg{max-width:100%%;height:auto}</style></head>
 <body><h1>Predictor model report</h1><p>%s on %s</p>%s</body></html>""" % (
         html.escape(os.path.basename(opts.model)), html.escape(opts.model), html.escape(opts.frame), body))
 print("wrote", opts.out)
