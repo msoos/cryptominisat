@@ -407,12 +407,17 @@ Python feature check). Instances: `bivium_variants.py`.
   frames give the same models.
 - Fuzz the normal build after touching `clause.h`, `searcher.cpp`,
   `reducedb.cpp` or the stats dumping: `cd scripts/fuzz && ./fuzz.py --fuzzlim 30`.
-- `cb_test/` and `UTI-20-10p0.cnf.gz-dir/` in the repo root hold the runs
-  below; neither is in git.
+- `cb_test/` in the repo root (not in git) holds the current runs:
+  `general/cnf/` (the training data), `general/models/sf-all/` (the
+  embedded model) and `sf/` (its hold-out), `general/ablate-cost/
+  models-without-cost/` (the 30-list baseline), `general/normal-cache/`,
+  `general/longrun/`, the survey and gather scripts, and the
+  `rand3-230-*.cnf` smoke instances. The run directories of the older
+  sections below were deleted on 2026-10-03; their numbers are here.
 
 ## Results so far
 
-Corpus of 10 UNSAT instances in `cb_test/corpus/` (count14, php10,
+Corpus of 10 UNSAT instances (was `cb_test/corpus/`; count14, php10,
 subsetcard20, six random 3-SAT of 460k-2.2M conflicts) plus UTI-20-10p0;
 130k training rows, 40 trees of depth 5, `FIXED=10000`. Conflicts of the
 predictor build relative to the normal build:
@@ -424,9 +429,8 @@ predictor build relative to the normal build:
 
 UTI hold-out in numbers: normal 1,508,855 conflicts / 261 s, predictor
 1,416,778 / 244 s. Per-instance in-sample results range from 53% (php10)
-to 107% (r3-270-2). Models: `cb_test/learn-all-newfeats/` (all 10, these
-are the embedded defaults), `cb_test/learn-noUTI-newfeats/` (hold-out).
-Rankings for the current `best_features.txt`: `cb_test/feats-corpus/`.
+to 107% (r3-270-2). (Models `learn-all-newfeats`, `learn-noUTI-newfeats`,
+rankings `feats-corpus`: deleted.)
 
 With the previous hand-written 22-feature list the hold-out was 102%, so
 the gain on unseen instances comes from the corpus-picked features.
@@ -437,7 +441,7 @@ The two SAT Competition 2020 Bivium CNFs (`~/media/satcomp2020/bivium-*`)
 have their guessed state bits propagated into the clauses, so
 `bivium_variants.py base.cnf.gz -n 6 --seed S` makes UNSAT variants by
 guessing N more state bits at random; every bit halves the work (n=6:
-0.2-2M conflicts, n=8: 300k). Everything is in `cb_test/bivium/`:
+0.2-2M conflicts, n=8: 300k). Everything was in `cb_test/bivium/` (deleted):
 `pool/` the measured candidates, `train/` 10 instances (5 per base CNF,
 n=5/6, 220k-2.1M conflicts, gathered with `DUMPRATIO` 0.06 or 0.03 for
 the >1M ones, `FIXED=10000`), `test/` 4 others (1.3-1.8M), `models/<name>/`
@@ -466,8 +470,8 @@ of the time gain of `--predcands 1` is the smaller DB (25% smaller), the
 conflict gain is the ranking.
 
 **But not on the mixed corpus.** Same comparisons on the 10-instance
-corpus of `cb_test/corpus/` + UTI, with the solver of 2026-09-30
-(`cb_test/eval-all-*.out`, models `learn-all-log`, `learn-all-newfeats` =
+corpus + UTI, with the solver of 2026-09-30
+(models `learn-all-log`, `learn-all-newfeats` =
 squared error, same frames):
 
 | models | in-sample, `--predcands 0` | in-sample, `--predcands 1` | UTI held out, 0 | UTI held out, 1 |
