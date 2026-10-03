@@ -292,6 +292,7 @@ class Learner:
             torem.extend([
                 "x.class",
                 "x.a_lifetime",
+                "x.last_in_solver",
                 "fname",
                 "sum_cl_use.",  # the future
                 "x.sum_cl_use",
@@ -305,8 +306,16 @@ class Learner:
                 "fname"])
             features = self.rem_features(features, torem)
         else:
-            del df["fname"]
             features = helper.get_features(options.best_features_fname)
+        if options.only_survivors:
+            # the run's end, per instance: the last reduce it dumped
+            end = self.df.groupby("fname")["rdb0_common.conflicts"].transform("max")
+            keep = self.df["x.last_in_solver"] >= end
+            print("--onlysurvivors: keeping %d of %d rows (clauses alive at the end of their run)" % (
+                keep.sum(), len(self.df)))
+            self.df = self.df[keep].copy()
+        if "fname" in self.df:
+            del self.df["fname"]
 
         to_predict = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
         if options.target == "rel":
@@ -375,6 +384,11 @@ if __name__ == "__main__":
                         dest="tier", help="Tier to do")
     parser.add_argument("--table", default="used_later", type=str,
                         dest="table", help="Table to do")
+    parser.add_argument("--onlysurvivors", action="store_true", default=False,
+                        dest="only_survivors",
+                        help="train only on rows of clauses that were still in the solver at the end of "
+                        "the run: the ones the data-gen lock made immortal (CLLOCK) plus the few the "
+                        "glue policy kept, i.e. rows whose future the glue policy did not cut short")
     parser.add_argument("--gatheredby", default="unknown", type=str,
                         dest="gathered_by", help="solver commit(s) that gathered the data, stored in the model")
 

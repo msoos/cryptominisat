@@ -125,6 +125,19 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             const size_t n = scores.size();
             size_t at1 = (size_t)((double)n * (1.0 - solver->conf.pred_keep_t1/100.0));
             size_t at2 = (size_t)((double)n * (1.0 - solver->conf.pred_keep_t2/100.0));
+            if (solver->conf.pred_keep == 2) {
+                //as many tier1/tier2 clauses as glue would make: the score
+                //decides which, the glue rule how many, per instance
+                size_t n1 = 0, n2 = 0;
+                for (const ClOffset offs: solver->long_red_cls[0]) {
+                    const uint32_t g = solver->cl_alloc.ptr(offs)->stats.glue;
+                    n1 += g <= solver->tier1_glue;
+                    n2 += g <= solver->tier2_glue;
+                }
+                at1 = n - n1;
+                at2 = n - n2;
+                verb_print(2, "[pred] keep as glue would: tier1 " << n1 << " tier2 " << n2 << " of " << n);
+            }
             at1 = std::min(at1, n-1); at2 = std::min(at2, n-1);
             vector<double> tmp(scores);
             std::nth_element(tmp.begin(), tmp.begin()+at1, tmp.end());

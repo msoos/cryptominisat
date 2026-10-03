@@ -161,6 +161,7 @@ class QueryCls (helper.QueryHelper):
         {sum_cl_use}
         , (rdb0.conflicts - rdb0.introduced_at_conflict) as `cl.time_inside_solver`
         , (sum_cl_use.last_confl_used - rdb0.introduced_at_conflict) as `x.a_lifetime`
+        , cl_last_in_solver.conflicts as `x.last_in_solver`
         {q_columns}
         , sum_cl_use.num_used as `x.sum_cl_use`
 
