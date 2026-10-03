@@ -210,7 +210,7 @@ deps = []
 for f in order[:8]:
     fig = plt.figure(figsize=(7, 4))
     shap.dependence_plot(f, sv, X, feature_names=features, show=False, alpha=0.4)
-    deps.append(fig_to_html(plt.gcf(), width=600))
+    deps.append(fig_to_html(plt.gcf(), width=450))
 sections.append(("Dependence of the top features",
     "<p>SHAP value against the feature's value; the colour is the feature SHAP picks as "
     "interacting most with it (vertical spread at one x = that interaction).</p>"
