@@ -381,6 +381,11 @@ if(FINAL_PREDICTOR)
     set(PRED_FEATURES_FILE "${CMAKE_SOURCE_DIR}/scripts/crystal/best_features.txt" CACHE FILEPATH
         "The predictor's feature list; its C++ is generated from it")
     message(STATUS "predictor features: ${PRED_FEATURES_FILE}")
+    option(PRED_ALLOW_ABSOLUTE "Accept features that scale with the run length or the instance size (for experiments)" OFF)
+    set(PRED_GEN_OPTS "")
+    if(PRED_ALLOW_ABSOLUTE)
+        set(PRED_GEN_OPTS "--allow-absolute")
+    endif()
 endif()
 
 option(STATS "Don't use statistics at all" OFF)
