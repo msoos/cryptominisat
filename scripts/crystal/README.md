@@ -35,34 +35,20 @@ elsewhere (`src/predict/`) give that frame as the second argument.
 
 The report is regenerated, not committed.
 
-## Two feature lists to compare in the big test
+## Open questions for a big test
 
-The embedded model uses `best_features.txt`: 24 features, none of which
-grows with the run length or the instance size (clause age, time since
-last touch, variable count...). The reason is that the training runs are
-minutes long and the real ones a day: a tree model asked about a value it
-never saw clamps silently. The old list, `best_features-general30.txt`,
-has those age-related features. On the short hold-out instances the two
-are within the noise of each other; which is better on day-long runs is
-not known, so **the big test must run both**. Everything to do so is
-still here: the stats build dumps every raw column whatever the list,
-only the predictor build's generator refuses the age features and needs
-an override.
+Two choices could not be settled on the short hold-out instances here
+(both are within the seed noise); a day-long test should run both sides:
 
-    # train (the data needs no regathering)
-    bestf=$(realpath best_features-general30.txt) FIXED=20000 ./learn.sh <out-age> <gathered dirs>
-    bestf=$(realpath best_features.txt)           FIXED=20000 ./learn.sh <out-sf>  <gathered dirs>
+- **Age features or not.** The default `best_features.txt` (24) has
+  nothing that grows with the run length or the instance size;
+  `best_features-general30.txt` has the age features. Train each with
+  `bestf=$(realpath <list>) ./learn.sh <out> <dirs>` on the same gathered
+  data, build a predictor per list (the age list needs
+  `-DPRED_FEATURES_FILE=<list> -DPRED_ALLOW_ABSOLUTE=ON`), and compare
+  the `pred feats outside training range` line at the end of the runs.
+- **Plain or ancestor label.** `learn.sh` trains both; `--predtables 0`
+  (default) uses the plain one, `--predtables 1` the ancestor one, from
+  the same `--predloc`. Delete the loser from the pipeline afterwards.
 
-    # a predictor build per list (the age list needs PRED_ALLOW_ABSOLUTE)
-    cmake -DFINAL_PREDICTOR=ON -DPRED_FEATURES_FILE=$PWD/best_features-general30.txt -DPRED_ALLOW_ABSOLUTE=ON ../build_pred_age
-    cmake -DFINAL_PREDICTOR=ON ../build_pred
-
-    # run each with its own models
-    build_pred_age/cryptominisat5 --predtype xgb --predloc <out-age> file.cnf
-    build_pred/cryptominisat5     --predtype xgb --predloc <out-sf>  file.cnf
-
-Each model carries the training range of its features; at the end of a
-run the solver prints the share of values it saw outside that range
-(`pred feats outside training range`). On a day-long run that line is the
-first thing to compare: the age list's `cl.time_inside_solver` is the
-feature that drifts. Details in `CLAUDE.md`, "Scale-free features".
+Details and the numbers so far: `CLAUDE.md`.
