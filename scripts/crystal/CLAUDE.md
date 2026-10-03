@@ -280,6 +280,24 @@ the 24 give 0.24% outside, the same as in distribution, worst
 because most clauses at a reduce are young whatever the run length,
 and more the longer the run. Both ran 46.0M conflicts in the 1800 s.
 
+### A report on a model
+
+```
+pip install --user shap graphviz      # once; dot (system graphviz) draws the trees, else they are text
+./model_report.py src/predict/predictor_disc.json <learn dir>/comb-used_later-disc-*.dat -o report.html
+```
+
+One HTML page, ~2 min, 1.6 GB on the 358k-row frame (`--rows` is the
+SHAP sample, 3000): the model's attributes, the training ranges against
+the frame, xgboost's tree statistics and importances (gain, splits,
+cover, root splits, never-used features), SHAP mean |value| and direction
+per feature, the beeswarm, dependence plots of the top 8 with the
+strongest interacting feature, the exact interaction matrix's top pairs,
+the first trees, and the fit on the frame. Everything is xgboost's or
+shap's own; nothing is computed by hand. The depth is measured from the
+trees: the model file keeps no training parameters, `save_config()` on a
+loaded model returns defaults. Not committed, regenerated when wanted.
+
 ### Smoke test
 
 ```
@@ -377,7 +395,8 @@ C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
 (importance rankings and a list from them), `feature_groups.py` +
 `ablate_groups.sh` (group ablation in the solver), `model_variance.sh`
 (the A/B's noise floor), `holdout_eval.py` (offline
-leave-instances-out), `helper.py` (shared SQL and feature code),
+leave-instances-out), `model_report.py` (HTML report on a model: SHAP,
+importances, trees), `helper.py` (shared SQL and feature code),
 `ccg.py` (Python AST to source). Models: `embed_models.py` (the table of
 compiled-in models), `ml_module.py` (the `--predtype py` path). Tests:
 `test_small.sh` (end to end on a random UNSAT instance, with the C++ vs

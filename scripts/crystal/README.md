@@ -20,3 +20,13 @@ Three builds of the solver take part:
 The scripts here run the whole loop: gather data, label it from the
 proof, train, embed the models in the solver, compare. See `CLAUDE.md`
 for how to run it.
+
+To see what a trained model does, `model_report.py` writes one HTML page
+about it (its provenance, xgboost's tree statistics and importances, and
+SHAP values: the direction and size of every feature's effect, dependence
+plots, interactions, the first trees drawn):
+
+    pip install --user shap graphviz    # once; the dot binary for drawn trees
+    ./model_report.py ../../src/predict/predictor_disc.json <learn dir>/comb-used_later-disc-*.dat -o report.html
+
+The report is regenerated, not committed.
