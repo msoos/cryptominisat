@@ -52,3 +52,9 @@ html/cryptominisat5.wasm
 /build*
 xnf-tests/
 /scripts/fuzz/fuzzrun
+# crystalball runs: training data, models, A/B outputs (scripts/crystal/CLAUDE.md)
+/cb_test/
+# ballofcrystal.sh output next to a CNF
+*.cnf-dir/
+*.cnf.gz-dir/
+/*.cnf.gz
