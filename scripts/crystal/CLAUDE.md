@@ -270,6 +270,15 @@ and prints the share and the three worst features at the end
 0.1-0.4% for the 24 and ~1% for the 30, whose worst feature is
 `num_vars / props per conflict`, an instance identifier.
 
+The check on a long run (`cb_test/general/longrun/`, homer17, 30 min,
+46M conflicts, 20x the longest training run, not a training instance):
+the 24 give 0.24% outside, the same as in distribution, worst
+`glue / discounted props` at 1.7%; the 30 give 0.37% with
+`cl.time_inside_solver` at 2.8% and `num_vars / props per conflict` at
+3.0%: the absolute features are the ones that drift, modestly here
+because most clauses at a reduce are young whatever the run length,
+and more the longer the run. Both ran 46.0M conflicts in the 1800 s.
+
 ### Smoke test
 
 ```
