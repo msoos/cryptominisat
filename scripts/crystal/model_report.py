@@ -24,9 +24,12 @@
 # of every feature's effect, dependence and interactions, exact for tree
 # models). Nothing here is computed by hand: xgboost and shap do it all.
 #
-# usage: model_report.py model.json frame.dat -o report.html [--rows 3000]
-#   model.json: a predictor-*.json or src/predict/predictor_*.json
-#   frame.dat:  the comb-*.dat it was trained on (learn.sh's output dir)
+# usage: model_report.py model.json [frame.dat] -o report.html [--rows 3000]
+#   model.json: a predictor-*.json in learn.sh's output dir, or
+#               src/predict/predictor_*.json
+#   frame.dat:  the comb-*.dat it was trained on, in learn.sh's output
+#               dir; if left out, the model's train_frame attribute is
+#               looked for next to the model
 #
 # needs: pip install --user shap   (and graphviz + the dot binary for the
 # tree drawings; without dot the trees are given as text)
@@ -51,7 +54,7 @@ import helper
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model")
-parser.add_argument("frame")
+parser.add_argument("frame", nargs="?", default=None)
 parser.add_argument("-o", "--out", required=True)
 parser.add_argument("--rows", type=int, default=3000, help="rows for SHAP, default 3000")
 parser.add_argument("--seed", type=int, default=0)
@@ -76,6 +79,13 @@ booster = xgb.Booster()
 booster.load_model(opts.model)
 features = booster.feature_names
 attrs = booster.attributes()
+if opts.frame is None:
+    if "train_frame" not in attrs:
+        sys.exit("ERROR: the model does not say what frame it was trained on, give it")
+    opts.frame = os.path.join(os.path.dirname(os.path.abspath(opts.model)), attrs["train_frame"])
+    if not os.path.exists(opts.frame):
+        sys.exit("ERROR: the model was trained on %s, not next to it; give the frame "
+                 "(it is in learn.sh's output dir)" % attrs["train_frame"])
 cfg = json.loads(booster.save_config())
 learner = cfg["learner"]
 n_trees = int(learner["gradient_booster"]["gbtree_model_param"]["num_trees"])

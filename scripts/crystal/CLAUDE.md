@@ -284,9 +284,14 @@ and more the longer the run. Both ran 46.0M conflicts in the 1800 s.
 
 ```
 pip install --user shap graphviz      # once; dot (system graphviz) draws the trees, else they are text
+./model_report.py <learn dir>/predictor-used_later-disc-xgb.json -o report.html
 ./model_report.py src/predict/predictor_disc.json <learn dir>/comb-used_later-disc-*.dat -o report.html
 ```
 
+`<learn dir>` = the first argument of `learn.sh`, where the model and
+its training frame (`comb-*.dat`, not in git) sit side by side; the
+embedded model's is `cb_test/general/models/sf-all/`. Without the frame
+argument the model's `train_frame` attribute is looked for next to it.
 One HTML page, ~2 min, 1.6 GB on the 358k-row frame (`--rows` is the
 SHAP sample, 3000): the model's attributes, the training ranges against
 the frame, xgboost's tree statistics and importances (gain, splits,

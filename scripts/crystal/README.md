@@ -27,6 +27,10 @@ SHAP values: the direction and size of every feature's effect, dependence
 plots, interactions, the first trees drawn):
 
     pip install --user shap graphviz    # once; the dot binary for drawn trees
-    ./model_report.py ../../src/predict/predictor_disc.json <learn dir>/comb-used_later-disc-*.dat -o report.html
+    ./model_report.py <learn dir>/predictor-used_later-disc-xgb.json -o report.html
+
+`<learn dir>` is the output directory of `learn.sh`, which holds the
+model next to the training frame (`comb-*.dat`) SHAP needs; for a model
+elsewhere (`src/predict/`) give that frame as the second argument.
 
 The report is regenerated, not committed.
