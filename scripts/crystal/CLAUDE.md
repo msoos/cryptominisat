@@ -260,6 +260,19 @@ the raw idle time replaced by idle time / life, 24 features (the old
 0-3): 139, 108, 126, 124% of the normal build's conflicts, the 30-list
 measured the same way 106, 125, 111, 113%: within the seed spread.
 
+**Plain vs ancestor label, same models (2026-10-03).** The `_anc` models
+`learn.sh` trains alongside (`--predtables 111`) were run for the first
+time since September on the same six hold-out instances: seed 0 gave
+101% / 76%, which against the plain table's 139% / 105% looked like a
+38-point win, every instance better. Seeds 1-3 (`variance-sf-anc/`):
+124, 124, 124% conflicts, 83, 101, 92% time; the plain seeds 108, 126,
+124%. So the two labels are within the seed noise of each other (means
+118% vs 124%), seed 0 was the outlier, and the old note "ancestor
+generalises worse" (one UTI run, 109% vs 93%) was equally one run.
+Neither label is established as better; the plain one stays the default
+only because it is. Per instance the swing is the usual: schup 585k to
+1.17M conflicts across three ancestor seeds.
+
 The runtime check: `cldata_predict.py` stores in the model (xgboost
 attributes `feature_lo`/`feature_hi`, plus `train_rows`, `train_frame`,
 `train_date`, `gathered_by`) the 1st/99th percentile of every feature
@@ -648,6 +661,8 @@ and three models.
 - 14 UNSAT instances from 14 families is thin; the survey found 30
   solvable in 300 s on this box out of 370, and only UNSAT ones count. More families need more time or a
   bigger machine (the proof is ~2 GB per million conflicts).
-- The ancestor-weighted labels generalise worse than the plain ones;
-  `--predtables 000` is the default for a reason.
+- Plain vs ancestor label: within the seed noise of each other on the
+  six hold-out instances (above); deleting one would simplify every
+  script, the frames and the solver's `--predtables`, but the data does
+  not say which. A big test should run both.
 - `--predsortby` 0/1/2 vs 3 and tree count/depth were not tuned.
