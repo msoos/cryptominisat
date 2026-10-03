@@ -29,12 +29,12 @@ THE SOFTWARE.
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
 #include "cl_predictors_py.h"
+#include "predict_features_gen.h"
 #endif
 
 //a predictor-only build ranks the learnt DB at every reduce only by what
 //its features use (see gen_pred_features.py); the STATS build dumps all
 #if defined(FINAL_PREDICTOR) && !defined(STATS_NEEDED)
-#include "predict_features_gen.h"
 #define RANK_NEEDED(x) (predgen::x)
 #else
 #define RANK_NEEDED(x) true
@@ -438,6 +438,7 @@ void ReduceDB::print_reduce_stats() const
     #ifdef FINAL_PREDICTOR
     print_stats_line(p, "reduce pred below thresh", r.pred_below_thresh,
         stats_line_percent(r.pred_below_thresh, r.cands), "% of candidates");
+    print_out_of_range();
     #endif
     print_stats_line(p, "reduce kept locked", r.locked,
         stats_line_percent(r.locked, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
@@ -779,6 +780,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         assert(ret == step_size);
         at += step_size;
     }
+    count_out_of_range(data.data(), offs.size());
     predictors->predict_all(data.data(), offs.size());
     uint32_t i = 0;
     for(const ClOffset offset: offs) {
@@ -809,6 +811,48 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
     }
     verb_print(2, "[pred] features for " << all_learnt.size() << " cls"
         << solver->conf.print_times(cpu_time()-my_time));
+}
+
+//Every feature value outside its training range. 1% of the training rows
+//are outside by construction (the 1st and 99th percentiles), so a few
+//percent is normal; a run far longer or bigger than the training runs
+//drives the age-like and size-like features out, and the model's verdict
+//on it means little. Printed with the stats at the end
+void ReduceDB::count_out_of_range(const float* data, const uint32_t rows)
+{
+    if (feat_out_of_range.empty()) feat_out_of_range.resize(PRED_COLS, 0);
+    for(uint32_t r = 0; r < rows; r++) {
+        const float* at = data + (size_t)r * PRED_COLS;
+        for(uint32_t c = 0; c < (uint32_t)PRED_COLS; c++) {
+            const float v = at[c];
+            if (std::isnan(v)) continue; //missing
+            feat_values_seen++;
+            const double lo = predgen::feature_lo[c];
+            const double hi = predgen::feature_hi[c];
+            if (std::isnan(lo)) continue; //no training range known
+            if (v < lo || v > hi) feat_out_of_range[c]++;
+        }
+    }
+}
+
+void ReduceDB::print_out_of_range() const
+{
+    if (feat_values_seen == 0 || feat_out_of_range.empty()) return;
+    uint64_t tot = 0;
+    for(const auto& n: feat_out_of_range) tot += n;
+    const string p = solver->conf.prefix;
+    print_stats_line(p, "pred feats outside training range", tot,
+        stats_line_percent(tot, feat_values_seen), "% of values (1-2% is normal, see CLAUDE.md)");
+    //the three worst
+    vector<std::pair<uint64_t, uint32_t>> worst;
+    for(uint32_t c = 0; c < feat_out_of_range.size(); c++) worst.push_back({feat_out_of_range[c], c});
+    std::sort(worst.rbegin(), worst.rend());
+    const uint64_t per_feat = feat_values_seen / PRED_COLS;
+    for(uint32_t i = 0; i < 3 && i < worst.size() && worst[i].first > 0; i++) {
+        cout << p << "   " << std::setw(5) << std::fixed << std::setprecision(1)
+            << stats_line_percent(worst[i].first, per_feat) << "% outside: "
+            << predgen::feature_names[worst[i].second] << endl;
+    }
 }
 
 //The score a reduce ranks candidates by, see --predsortby

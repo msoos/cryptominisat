@@ -56,6 +56,12 @@ public:
     //at the last reduce
     double keep_t1 = 0;
     double keep_t2 = 0;
+    //feature values outside the 1st..99th percentile of the training data,
+    //per feature, and values seen: a run the model never saw looks like this
+    vector<uint64_t> feat_out_of_range;
+    uint64_t feat_values_seen = 0;
+    void count_out_of_range(const float* data, uint32_t rows);
+    void print_out_of_range() const;
     //CaDiCaL's likely_to_be_kept_clause: would this red cl survive the next reduce?
     bool likely_to_be_kept(const Clause& cl) const;
     void dump_sql_cl_data(const uint32_t cur_rst_type);

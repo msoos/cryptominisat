@@ -83,4 +83,10 @@ for tier in $TIERS; do
         grep -E "^ranking test" "$OUT/out-${table}-${tier}"
     done
 done
+# the training range of every feature, for the solver's out-of-range count
+first=$(ls "$OUT"/comb-used_later-*.dat 2>/dev/null | head -1)
+if [[ -n "$first" ]]; then
+    "$SCRIPTDIR/feature_ranges.py" -f "$bestf" -o "$OUT/feature_ranges.txt" "$first" > "$OUT/feature_ranges.out" 2>&1 \
+        && echo "Training ranges in $OUT/feature_ranges.txt: copy next to the feature list as <list>.ranges before building"
+fi
 echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predtype xgb --predloc $OUT --predtiers ${TIERS// /,} file.cnf"

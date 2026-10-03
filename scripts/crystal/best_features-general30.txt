@@ -1,6 +1,7 @@
-# best_features-trim.txt (no context, no age) with the raw idle time replaced by the share of the clause's life it has been idle: nothing in here scales with the run length or the instance size (gen_pred_features.py checks)
+# picked by pick_features.py from feats, 6 runs
 rdb0.discounted_props_made3
 (rdb0.discounted_props_made3/cl.branchDepthHistQueue_avg)
+(rdb0_common.backtrackLevelHistLT_avg/rdb0.discounted_props_made)
 rdb0.discounted_uip1_used3
 (rdb0.discounted_props_made3/rdb0.act_ranking_rel)
 rdb0.discounted_props_made
@@ -10,16 +11,21 @@ rdb0.props_made
 (rdb0.glue/rdb0.discounted_props_made3)
 cl.num_antecedents
 rdb0.used
+(rdb0.discounted_props_made/rdb0_common.backtrackLevelHistLT_avg)
 rdb0.discounted_uip1_used
 rdb0.size
 (rdb0.discounted_uip1_used3/cl.num_antecedents)
 cl.numResolutionsHistLT_avg
+(rdb0.last_touched_any_diff/cl.time_inside_solver)
+(rdb0.discounted_uip1_used/rdb0_common.median_sum_uip1_per_time)
 (rdb0.discounted_props_made3/cl.numResolutionsHistLT_avg)
 (rdb0.discounted_uip1_used3/rdb0.sum_props_per_time_ranking_rel)
+cl.time_inside_solver
 rdb0.act_ranking_rel
 rdb0.sum_props_per_time_ranking_rel
 cl.antecedents_longIrred
 (rdb0.discounted_props_made/cl.num_overlap_literals)
 cl.glueHistLT_avg
 cl.num_total_lits_antecedents
-(rdb0.last_touched_any_diff/cl.time_inside_solver)
+rdb0.last_touched_any_diff
+(rdb0_common.num_vars/(rdb0.sum_props_made/cl.time_inside_solver))

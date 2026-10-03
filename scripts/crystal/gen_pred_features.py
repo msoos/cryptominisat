@@ -31,6 +31,7 @@
 
 import argparse
 import ast
+import os
 import sys
 
 # raw column -> (C++ expression over `in`, condition under which it is missing)
@@ -236,8 +237,25 @@ def read_features(fname):
     return feats
 
 
-def generate(fname, out, allow_absolute=False):
+def read_ranges(fname, feats):
+    """<list>.ranges, from feature_ranges.py: the training range of each
+    feature; nan where unknown"""
+    lo = {f: float("nan") for f in feats}
+    hi = dict(lo)
+    if fname and os.path.exists(fname):
+        with open(fname) as f:
+            for l in f:
+                if l.startswith("#") or not l.strip():
+                    continue
+                name, a, b = l.rstrip("\n").split("\t")
+                if name in lo:
+                    lo[name], hi[name] = float(a), float(b)
+    return [lo[f] for f in feats], [hi[f] for f in feats]
+
+
+def generate(fname, out, allow_absolute=False, ranges=None):
     feats = read_features(fname)
+    feat_lo, feat_hi = read_ranges(ranges if ranges else fname + ".ranges", feats)
     used = set()
     body = []
     for i, feat in enumerate(feats):
@@ -328,10 +346,14 @@ static inline void fill_raw(const In& in, const float missing_val, float* at)
 }
 
 //the features of %s, in file order: the names a model must have been
-//trained on (checked at load), and the code that computes them
+//trained on (checked at load), their 1st/99th percentile in the training
+//data (nan = unknown; values outside are counted and reported), and the
+//code that computes them
 static const char* const feature_names[] = {
 %s
 };
+static const double feature_lo[] = { %s };
+static const double feature_hi[] = { %s };
 static inline void fill_features(const In& in, const float missing_val, float* at)
 {
 %s
@@ -340,7 +362,9 @@ static inline void fill_features(const In& in, const float missing_val, float* a
 }} //namespace
 """ % (fname, len(feats), "\n".join(raw_funcs), "\n".join(need_lines), len(RAW),
        "\n".join('    "%s",' % n for n in RAW), "\n".join(raw_fill),
-       fname, "\n".join('    "%s",' % f.replace('"', '\\"') for f in feats), "\n".join(body)))
+       fname, "\n".join('    "%s",' % f.replace('"', '\\"') for f in feats),
+       ", ".join("NAN" if v != v else repr(v) for v in feat_lo),
+       ", ".join("NAN" if v != v else repr(v) for v in feat_hi), "\n".join(body)))
     return feats, used
 
 
@@ -349,6 +373,7 @@ if __name__ == "__main__":
     parser.add_argument("features", nargs="?", help="best_features file")
     parser.add_argument("-o", "--out", default=None, help="output header, default stdout")
     parser.add_argument("--list-raw", action="store_true", help="print the raw columns the solver can compute")
+    parser.add_argument("--ranges", default=None, help="training ranges file, default <features>.ranges if it exists")
     parser.add_argument("--allow-absolute", action="store_true",
                         help="accept features that scale with the run length or the instance size (see SCALE)")
     opts = parser.parse_args()
@@ -361,8 +386,8 @@ if __name__ == "__main__":
         parser.error("need a best_features file")
     if opts.out:
         with open(opts.out, "w") as f:
-            feats, used = generate(opts.features, f, opts.allow_absolute)
+            feats, used = generate(opts.features, f, opts.allow_absolute, opts.ranges)
     else:
-        feats, used = generate(opts.features, sys.stdout, opts.allow_absolute)
+        feats, used = generate(opts.features, sys.stdout, opts.allow_absolute, opts.ranges)
     print("%d features over %d raw columns -> %s" % (len(feats), len(used), opts.out or "stdout"),
           file=sys.stderr)
