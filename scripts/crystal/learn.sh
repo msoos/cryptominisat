@@ -25,8 +25,6 @@
 #   <cnf-dir> are the <file.cnf>-dir directories ballofcrystal.sh made
 # Knobs, same as setparams_ballofcrystal.sh: cut1 cut2 FIXED bestf
 #   XGB_EST XGB_DEPTH XGB_MINCHILD XGB_SEED XGB_SUBSAMPLE TARGET XGB_OBJ
-#   ONLY_SURVIVORS=1: train only on clauses alive at the end of their run
-#   (the data-gen lock's, whose future the glue policy did not cut short)
 
 set -e
 set -o pipefail
@@ -79,7 +77,7 @@ for tier in $TIERS; do
             --tier "$tier" --table "$table" --features best_only --regressor xgb \
             --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
             --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
-            --basedir "$OUT" --bestfeatfile "$bestf" ${ONLY_SURVIVORS:+--onlysurvivors} \
+            --basedir "$OUT" --bestfeatfile "$bestf" \
             --gatheredby "$(awk '{print $1}' "$OUT/gathered_by" | sort -u | tr '\n' ' ' | sed 's/ $//')" \
             > "$OUT/out-${table}-${tier}" 2>&1
         grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}-${tier}" | head -3

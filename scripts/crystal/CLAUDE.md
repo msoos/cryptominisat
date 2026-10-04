@@ -279,11 +279,12 @@ instances (conflicts / time of the normal build):
   tracked clauses the data-gen lock makes immortal, plus what glue kept.
   Their future is the only one the glue policy did not cut short
   (the others are censored where glue deleted them, and the two
-  half-lives filter turns that into survivorship). `ONLY_SURVIVORS=1`
-  (`cldata_predict.py --onlysurvivors`, by `x.last_in_solver`) trains on
-  them alone: 119% / 107% with `--predkeep 2`, against 122% / 95% on all
-  rows. A wash: jkkk 1.12M -> 728k, schup 779k -> 1.09M. The 45% is the
-  thing to remember: the training set is half immortal clauses.
+  half-lives filter turns that into survivorship). Training on them
+  alone (a `--onlysurvivors` option, since removed): 119% / 107% with
+  `--predkeep 2`, against 122% / 95% on all rows. A wash: jkkk 1.12M ->
+  728k, schup 779k -> 1.09M. The 45% is the thing to remember: the
+  training set is half immortal clauses; `cldata_predict.py` prints the
+  share (from `x.last_in_solver`, the conflict the clause left at).
 - *Round 2.* Regathered the 8 training instances under the learnt
   policy (`build_stats_pred`, `--predloc models/sf --predkeep 2`,
   `cnf-r2/`, frames only kept; the runs took 97-161% of the glue
