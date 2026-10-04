@@ -292,7 +292,6 @@ class Learner:
             torem.extend([
                 "x.class",
                 "x.a_lifetime",
-                "x.last_in_solver",
                 "fname",
                 "sum_cl_use.",  # the future
                 "x.sum_cl_use",
@@ -307,12 +306,6 @@ class Learner:
             features = self.rem_features(features, torem)
         else:
             features = helper.get_features(options.best_features_fname)
-        # how much of the data is clauses alive at the end of their run (the
-        # data-gen lock's immortals, mostly): a clause's x.last_in_solver is
-        # then the largest of its instance
-        end = self.df.groupby("fname")["x.last_in_solver"].transform("max")
-        print("Rows of clauses alive at the end of their run: %.1f%%" % (
-            100.0 * (self.df["x.last_in_solver"] >= end).mean()))
         del self.df["fname"]
 
         to_predict = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
