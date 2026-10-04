@@ -64,5 +64,32 @@ int ClPredictorsAbst::set_up_input(
         act_ranking_rel, uip1_ranking_rel, prop_ranking_rel,
         sum_uip1_per_time_ranking_rel, sum_props_per_time_ranking_rel};
     predgen::fill_features(in, missing_val, at);
+    if (dump) {
+        dump_raw.resize(dump_raw.size() + predgen::NUM_RAW);
+        predgen::fill_raw(in, dump_raw.data() + dump_raw.size() - predgen::NUM_RAW);
+    }
     return PRED_COLS;
+}
+
+void ClPredictorsAbst::open_dump(const std::string& fname)
+{
+    dump = fopen(fname.c_str(), "wb");
+    if (dump == nullptr) {
+        std::cerr << "ERROR: cannot open --preddump file '" << fname << "'" << std::endl;
+        exit(-1);
+    }
+    const uint32_t head[3] = {(uint32_t)predgen::NUM_RAW, (uint32_t)PRED_COLS, num_models};
+    fwrite(head, sizeof(uint32_t), 3, dump);
+}
+
+//per reduce: num, then the raw columns, the features, the predictions
+void ClPredictorsAbst::write_dump(const float* feats, const vector<double>& preds, uint32_t num)
+{
+    assert(dump_raw.size() == (size_t)num * predgen::NUM_RAW);
+    assert(preds.size() == (size_t)num * num_models);
+    fwrite(&num, sizeof(uint32_t), 1, dump);
+    fwrite(dump_raw.data(), sizeof(double), dump_raw.size(), dump);
+    fwrite(feats, sizeof(float), (size_t)num * PRED_COLS, dump);
+    fwrite(preds.data(), sizeof(double), preds.size(), dump);
+    dump_raw.clear();
 }

@@ -275,7 +275,7 @@ class DLL_PUBLIC SolverConf
         std::string pred_tables = "000";
         std::string pred_tiers = "disc"; //one model each, comma separated, see --predtiers
         std::string predictor_type = "xgb";
-        std::string predict_best_feat_fname;
+        std::string pred_dump_fname;
         #endif
 
         //Var-replacement

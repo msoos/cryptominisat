@@ -58,8 +58,7 @@ The predictor build generates two things at build time:
 Solver options that matter (all must come BEFORE the CNF file name; anything
 after the CNF is taken as the proof file name, and the solver errors out):
 
-- predictor build: `--predtype xgb` (or `py`, the Python path through
-  `ml_module.py`, slow, for debugging), `--predtiers disc` (the models,
+- predictor build: `--predtype xgb`, `--predtiers disc` (the models,
   comma separated, at most three: `disc` = one model of the discounted
   future use, the default; `short,long,forever` = the three use-count
   horizons), `--predloc DIR` (models `DIR/predictor-<table>-<tier>-xgb.json`,
@@ -161,8 +160,9 @@ the label itself, whichever is learnt.
   features. 1-2% is what in-distribution instances give; much more means
   the model is extrapolating. A model without the attributes says so.
 - `test_small.sh` runs it all end to end and checks that the C++ feature
-  code and pandas compute the same features (`--predtype xgb` vs `py`
-  give the same run).
+  code and pandas compute the same features: the solver's `--preddump
+  FILE` writes the raw columns, features and predictions of every
+  reduce, `check_pred_features.py FILE model.json` recomputes them.
 
 ### The data tests (`check_frames.py`)
 
@@ -464,7 +464,8 @@ C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
 leave-instances-out), `model_report.py` (HTML report on a model: SHAP,
 importances, trees), `helper.py` (shared SQL and feature code),
 `ccg.py` (Python AST to source). Models: `embed_models.py` (the table of
-compiled-in models), `ml_module.py` (the `--predtype py` path). Tests:
+compiled-in models). Tests: `check_pred_features.py` (a `--preddump`
+file against pandas and the Python xgboost),
 `test_small.sh` (end to end on a random UNSAT instance, with the C++ vs
 Python feature check). Instances: `bivium_variants.py`.
 
@@ -721,7 +722,7 @@ and three models.
 - The runtime bookkeeping is still ~30 fields per learnt clause plus
   the learning-time snapshot; only the per-reduce sorts are trimmed.
   Compiling out the fields the feature list does not use would break
-  the Python predictor path, which needs every raw column.
+  `--preddump`, which writes every raw column.
 - SAT instances cannot be A/B tested one run at a time: the path to a
   model changes with every clause kept. Several seeds, or UNSAT only.
 - 14 UNSAT instances from 14 families is thin; the survey found 30

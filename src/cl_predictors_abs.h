@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <cassert>
 #include <string>
 #include <cmath>
+#include <cstdio>
 #include <xgboost/c_api.h>
 #include <cfenv>
 #include "clause.h"
@@ -101,10 +102,9 @@ class ClPredictorsAbst
 {
 public:
     ClPredictorsAbst() {missing_val = nanf("");}
-    virtual ~ClPredictorsAbst() {}
+    virtual ~ClPredictorsAbst() {if (dump) fclose(dump);}
     //one model per file/tier, in --predtiers order
-    virtual int load_models(const vector<std::string>& fnames,
-                     const std::string& best_feats_fname) = 0;
+    virtual int load_models(const vector<std::string>& fnames) = 0;
     virtual int load_models_from_buffers(const vector<std::string>& tiers) = 0;
     uint32_t num_models = 0;
     vector<std::string> get_hashes() const;
@@ -138,6 +138,15 @@ public:
     virtual void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at) = 0;
     virtual void finish_all_predict() = 0;
     float missing_val;
+
+    //--preddump, read by check_pred_features.py
+    void open_dump(const std::string& fname);
+    void write_dump(const float* feats, const vector<double>& preds, uint32_t num);
+    bool dumping() const {return dump != nullptr;}
+
+private:
+    FILE* dump = nullptr;
+    vector<double> dump_raw;
 };
 
 }

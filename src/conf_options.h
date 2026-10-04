@@ -84,10 +84,10 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--scc", "Find equivalent literals through SCC and replace them", true}, conf.do_find_and_replace_eq_lits);
     #ifdef FINAL_PREDICTOR
     f({"--predloc", "Directory with predictor-<table>-<tier>-<type>.json (see --predtables), empty = use built-in models"}, conf.pred_conf_location);
-    f({"--predtype", "Type of predictor. Supported: py, xgb"}, conf.predictor_type);
+    f({"--predtype", "Type of predictor. Supported: xgb"}, conf.predictor_type);
     f({"--predtables", "Per model of --predtiers: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all"}, conf.pred_tables);
     f({"--predtiers", "The models, comma separated, at most 3: 'disc' (the discounted future use, one model) or 'short,long,forever' (use counts over the next 10k/30k/120k conflicts). With --predloc the files are predictor-<table>-<tier>-<type>.json, without it the tiers must be compiled in (cmake PRED_TIERS)"}, conf.pred_tiers);
-    f({"--predbestfeats", "Best features file, only for --predtype py"}, conf.predict_best_feat_fname);
+    f({"--preddump", "Write the raw columns, features and predictions of every reduce to this file, for scripts/crystal/check_pred_features.py"}, conf.pred_dump_fname);
     f({"--predsortby", "Reduce removes the candidates with the lowest score: 0/1/2 = the first/second/third model of --predtiers alone, 3 = the sum of all models (near-term counts 3x with short,long,forever (near-term counts 3x, long-term still counts)"}, conf.pred_sort_by);
     f({"--predcands", "What the predictor ranks at reduce. 0 = the candidates of the normal build, 1 = also the clauses the normal build keeps for being used, 2 = also the ones it keeps forever. The number removed is that of the normal build"}, conf.pred_cands);
     f({"--predthresh", "If > 0, reduce removes the candidates whose predicted use (see --predsortby) is below this, but at least half and at most twice the number the normal build would remove. 0: the number of the normal build"}, conf.pred_thresh);

@@ -177,11 +177,10 @@ if(FINAL_PREDICTOR)
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
         cl_predictors_xgb.cpp
-        cl_predictors_py.cpp
         cl_predictors_abs.cpp
     )
     set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs}
-        xgboost_c rt ${Python3_LIBRARIES})
+        xgboost_c rt)
 endif()
 
 if(STATS_NEEDED)
@@ -229,13 +228,6 @@ if(ENABLE_TESTING)
     target_include_directories(cryptominisat5 PRIVATE
         ${gtest_SOURCE_DIR}/include
         ${gtest_SOURCE_DIR}
-    )
-endif()
-
-if(FINAL_PREDICTOR)
-    target_include_directories(cryptominisat5 PRIVATE
-        ${Python3_INCLUDE_DIRS}
-        ${Python3_NumPy_INCLUDE_DIRS}
     )
 endif()
 

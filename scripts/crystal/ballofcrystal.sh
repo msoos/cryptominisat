@@ -177,8 +177,6 @@ fi
 # 5. Run the predictor build with the learnt models
 ########################
 stage "running FINAL_PREDICTOR build"
-ln -fs "$SCRIPTDIR/ml_module.py" .
-ln -fs "$SCRIPTDIR/ccg.py" .
 function summary() {
     printf "%-16s" "$1:"
     grep -m1 "^s " "$2" | tr -d '\n'
@@ -187,7 +185,7 @@ function summary() {
         "$(grep -m1 'Total time (this thread)' "$2" | awk '{print $7}')"
 }
 for TODO in 000 111; do
-    $NOBUF "$PRED_BIN" --predtype xgb --predloc . --predbestfeats "$bestf" \
+    $NOBUF "$PRED_BIN" --predtype xgb --predloc . \
         --predtiers "${TIERS// /,}" --predtables $TODO --zero-exit-status "$FNAME" \
         > "cms-pred-run.out-${TODO}" 2>&1 || true
 done

@@ -115,8 +115,7 @@ ClPredictorsXGB::~ClPredictorsXGB()
     }
 }
 
-int ClPredictorsXGB::load_models(const vector<std::string>& fnames,
-                               const std::string& /*best_feats_fname*/)
+int ClPredictorsXGB::load_models(const vector<std::string>& fnames)
 {
     NoFPTraps no_traps;
     for(const auto& f: fnames) {
@@ -161,28 +160,6 @@ void ClPredictorsXGB::predict_all(
     if (num == 0) {
         return;
     }
-
-//For checking in python using check_against_binary_dat
-#if 0
-        std::stringstream s;
-        s << "bin_dump" << num_dumps << ".csv";
-        std::ofstream f;
-        f.open(s.str().c_str());
-        float* data_ptr = data;
-        for(uint32_t i = 0; i < num; i ++) {
-            std::stringstream line;
-            for(uint32_t i2 = 0; i2 < PRED_COLS; i2++) {
-                line << std::setprecision(30) << *data_ptr;
-                if (i2+1 < PRED_COLS) {
-                    line << ",";
-                }
-                data_ptr++;
-            }
-            f << line.str() << endl;
-        }
-        f.close();
-        num_dumps++;
-#endif
 
     bst_ulong out_len;
     for(uint32_t i = 0; i < num_models; i++) {

@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
-#include "cl_predictors_py.h"
 #include "predict_features_gen.h"
 #endif
 
@@ -708,14 +707,11 @@ void ReduceDB::dump_sql_cl_data(
 void ReduceDB::load_predictors()
 {
     if (predictors != nullptr) return;
-    if (solver->conf.predictor_type == "xgb") {
-        predictors = new ClPredictorsXGB;
-    } else if (solver->conf.predictor_type == "py") {
-        predictors = new ClPredictorsPy;
-    } else {
-        cout << "ERROR: --predtype must be py or xgb" << endl;
+    if (solver->conf.predictor_type != "xgb") {
+        cout << "ERROR: --predtype must be xgb" << endl;
         exit(-1);
     }
+    predictors = new ClPredictorsXGB;
 
     vector<string> tiers;
     {
@@ -748,7 +744,7 @@ void ReduceDB::load_predictors()
                 + (solver->conf.pred_tables[i] == '0' ? "used_later" : "used_later_anc")
                 + "-" + tiers[i] + "-" + solver->conf.predictor_type + ".json");
         }
-        const int ret = predictors->load_models(locations, solver->conf.predict_best_feat_fname);
+        const int ret = predictors->load_models(locations);
         if (ret == 0) {
             cout << "ERROR loading the predictors" << endl;
             exit(-1);
@@ -759,6 +755,7 @@ void ReduceDB::load_predictors()
             cout << endl;
         }
     }
+    if (!solver->conf.pred_dump_fname.empty()) predictors->open_dump(solver->conf.pred_dump_fname);
     if (solver->conf.verbosity && !predictors->provenance.empty()) {
         cout << solver->conf.prefix << "[pred] model trained on " << predictors->provenance << endl;
     }
@@ -799,10 +796,16 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
     count_out_of_range(data.data(), offs.size());
     predictors->predict_all(data.data(), offs.size());
     uint32_t i = 0;
+    vector<double> dump_preds;
     for(const ClOffset offset: offs) {
         Clause* cl = solver->cl_alloc.ptr(offset);
-        predictors->get_prediction_at(solver->red_stats_extra[cl->stats.extra_pos], i++);
+        auto& extra = solver->red_stats_extra[cl->stats.extra_pos];
+        predictors->get_prediction_at(extra, i++);
+        if (predictors->dumping()) {
+            dump_preds.insert(dump_preds.end(), extra.pred_use, extra.pred_use + predictors->num_models);
+        }
     }
+    if (predictors->dumping()) predictors->write_dump(data.data(), dump_preds, offs.size());
     predictors->finish_all_predict();
 }
 

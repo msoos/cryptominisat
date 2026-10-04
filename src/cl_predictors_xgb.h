@@ -42,8 +42,7 @@ class ClPredictorsXGB : public ClPredictorsAbst
 public:
     ClPredictorsXGB();
     virtual ~ClPredictorsXGB();
-    virtual int load_models(const vector<std::string>& fnames,
-                     const std::string& best_feats_fname) override;
+    virtual int load_models(const vector<std::string>& fnames) override;
     virtual int load_models_from_buffers(const vector<std::string>& tiers) override;
 
     virtual void predict_all(
