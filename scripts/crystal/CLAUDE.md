@@ -299,8 +299,9 @@ instances (conflicts / time of the normal build):
   and schup at 1.05M, the usual swing); paired with round 1 alone:
   122 -> 109, 106 -> 106, 114 -> 109, 123 -> 131. Two better, one
   equal, one worse: not a loss any more, not a demonstrated gain. Not
-  adopted for the embedded model; the round-2 frames stay in `cnf-r2/`
-  for the big test, where more instances could settle it.
+  adopted; the round-2 data was deleted, `chain_r2.sh` in
+  `cb_test/general/` is how to make it again (copy the CNFs, see
+  Practicalities). The big test, with more instances, could settle it.
 
 What the three say together: of the amount, the survivorship and the
 policy mismatch, only the amount moved every seed the same way, and by
