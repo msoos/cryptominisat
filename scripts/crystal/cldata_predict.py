@@ -308,8 +308,10 @@ class Learner:
         else:
             features = helper.get_features(options.best_features_fname)
         if options.only_survivors:
-            # the run's end, per instance: the last reduce it dumped
-            end = self.df.groupby("fname")["rdb0_common.conflicts"].transform("max")
+            # a clause alive at the end left the solver at the run's last
+            # conflict, the largest x.last_in_solver of its instance (the
+            # frame's own reduces stop two half-lives before the end)
+            end = self.df.groupby("fname")["x.last_in_solver"].transform("max")
             keep = self.df["x.last_in_solver"] >= end
             print("--onlysurvivors: keeping %d of %d rows (clauses alive at the end of their run)" % (
                 keep.sum(), len(self.df)))

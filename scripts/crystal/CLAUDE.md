@@ -65,11 +65,12 @@ after the CNF is taken as the proof file name, and the solver errors out):
   horizons), `--predloc DIR` (models `DIR/predictor-<table>-<tier>-xgb.json`,
   empty = the embedded ones), `--predtables 000|111` (per model: 0 =
   `used_later`, 1 = `used_later_anc`), `--predsortby 0..3` (one model's
-  score, or 3 = their sum, the default), `--predkeep 1` (the score
-  decides the tiers instead of glue: the `--predkeept1` % best-scored
-  learnt clauses are kept while used, up to `--predkeept2` % if used
-  since the last reduce; predicts for every learnt clause at every
-  reduce), `--predcands 0|1|2`
+  score, or 3 = their sum, the default), `--predkeep 2` (the default:
+  the score decides which learnt clauses are tier1/tier2 instead of
+  glue, but as many of each as the glue rule would make on this
+  instance; `--predkeep 1`: the `--predkeept1` % best-scored are tier1,
+  up to `--predkeept2` % tier2, on every instance; 0 = glue; predicts
+  for every learnt clause at every reduce), `--predcands 0|1|2`
   (what it ranks: 0 = the normal build's candidates, 1 = also the clauses
   the normal rules keep for being used, 2 = also the tier1-keep ones; the
   number removed stays the normal build's), `--predthresh T` (remove the
@@ -260,6 +261,40 @@ the raw idle time replaced by idle time / life, 24 features (the old
 0-3): 139, 108, 126, 124% of the normal build's conflicts, the 30-list
 measured the same way 106, 125, 111, 113%: within the seed spread.
 
+**Amount vs order, survivors, round 2 (2026-10-04).** Three structural
+suspects, each tested on the `sf` hold-out models and the six held-out
+instances (conflicts / time of the normal build):
+
+- *Amount.* `--predkeep 1` made tier1/tier2 the top 25% / 47% by score
+  on every instance, while glue's tier1 share of the live learnt clauses
+  on the six instances runs from 26% (jkkk) to 77% (hid): the A/B was
+  measuring how many clauses are protected more than which.
+  `--predkeep 2` keeps as many as glue would and lets the score pick
+  which. Same models, paired by seed: 139 -> 122%, 108 -> 106%,
+  126 -> 114%, 124 -> 123% conflicts (mean 124 -> 116), time 95, 82, 90,
+  101%. Four of four in the same direction, small; post 836k -> 501k and
+  schup 1.18M -> 779k are where the amount mattered. Now the default.
+- *Survivors.* 45% of the training rows (5% goldb to 85% f6bidw) come
+  from clauses alive at the end of their run: the `CLLOCK` 30% of
+  tracked clauses the data-gen lock makes immortal, plus what glue kept.
+  Their future is the only one the glue policy did not cut short
+  (the others are censored where glue deleted them, and the two
+  half-lives filter turns that into survivorship). `ONLY_SURVIVORS=1`
+  (`cldata_predict.py --onlysurvivors`, by `x.last_in_solver`) trains on
+  them alone: 119% / 107% with `--predkeep 2`, against 122% / 95% on all
+  rows. A wash: jkkk 1.12M -> 728k, schup 779k -> 1.09M. The 45% is the
+  thing to remember: the training set is half immortal clauses.
+- *Round 2.* Regathered the 8 training instances under the learnt
+  policy (`build_stats_pred`, `--predloc models/sf --predkeep 2`,
+  `cnf-r2/`, frames only kept; the runs took 97-161% of the glue
+  policy's conflicts). Models from round 2 alone: 115% / 90%; from both
+  rounds (16 dirs): 109% / 86%; round 1 alone 122% / 95%, all with
+  `--predkeep 2`, seed 0. Per instance, both rounds vs round 1: hid
+  2.49M vs 2.61M, jkkk 872k vs 1.12M, schup 558k vs 779k, the rest
+  equal. The same experiment under `--predkeep 1` had been a loss
+  (123% / 86%, below): the starved DB of the fixed 25% was what round 2
+  learnt from. Seeds of the 16-dir models: `variance-sf-r12-keep2/`.
+
 **Plain vs ancestor label, same models (2026-10-03).** The `_anc` models
 `learn.sh` trains alongside (`--predtables 111`) were run for the first
 time since September on the same six hold-out instances: seed 0 gave
@@ -421,6 +456,10 @@ compiled-in models), `ml_module.py` (the `--predtype py` path). Tests:
 Python feature check). Instances: `bivium_variants.py`.
 
 ## Practicalities
+
+- `ballofcrystal.sh` works in `<real path of the CNF>-dir`: give it a
+  copy of the CNF, not a symlink into the corpus, or the run dir (GBs of
+  proof) lands next to the corpus. 2026-10-04 this filled the disk.
 
 - Options before the CNF, always (see above).
 - Labels need conflicts beyond the horizon: instances under ~200k
@@ -611,9 +650,7 @@ solver one model does what three did at a third of the prediction cost.
 A second gathering round under the learnt policy (`chain_r2.sh`: the
 STATS+predictor build with the round-1 disc model and `--predkeep 1`,
 then training on both rounds' frames, 16 dirs) was a loss: 123% / 86%.
-The clauses the learnt policy keeps are a different population and
-mixing both rounds' rows confuses the ranks. Not adopted; `cnf-r2/`
-holds the data.
+Redone 2026-10-04 with `--predkeep 2`, see "Amount vs order".
 
 So the defaults are: `TIERS=disc`, `TARGET=rel`, `--predtiers disc`,
 `--predkeep 1`, `best_features.txt` = the general list (the old
