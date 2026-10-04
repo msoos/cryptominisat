@@ -293,7 +293,18 @@ instances (conflicts / time of the normal build):
   2.49M vs 2.61M, jkkk 872k vs 1.12M, schup 558k vs 779k, the rest
   equal. The same experiment under `--predkeep 1` had been a loss
   (123% / 86%, below): the starved DB of the fixed 25% was what round 2
-  learnt from. Seeds of the 16-dir models: `variance-sf-r12-keep2/`.
+  learnt from. Seeds 1-3 of the 16-dir models (`variance-sf-r12-keep2/`):
+  106, 109, 131% conflicts, 79, 78, 127% time (seed 3 has sv at 1.06M
+  and schup at 1.05M, the usual swing); paired with round 1 alone:
+  122 -> 109, 106 -> 106, 114 -> 109, 123 -> 131. Two better, one
+  equal, one worse: not a loss any more, not a demonstrated gain. Not
+  adopted for the embedded model; the round-2 frames stay in `cnf-r2/`
+  for the big test, where more instances could settle it.
+
+What the three say together: of the amount, the survivorship and the
+policy mismatch, only the amount moved every seed the same way, and by
+~8 points. The remaining 10-25% is somewhere else: what the features
+can express, or how a rank at one reduce maps onto a keep decision.
 
 **Plain vs ancestor label, same models (2026-10-03).** The `_anc` models
 `learn.sh` trains alongside (`--predtables 111`) were run for the first
