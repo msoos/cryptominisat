@@ -14,7 +14,7 @@ conflicts and 118% of its time on those nine, and +2.5 points over the
 glue sort offline.
 
 On the cluster: `eval_corpus.sh` runs one job after the other, so write
-`<cnf>.<normal|pred000>.s<seed>` files with one job per run and call
+`<cnf>.<normal|pred0>.s<seed>` files with one job per run and call
 `eval_summary.py` on the dir. Write a `FAMILIES` file (`family filename`
 per line): the family is otherwise guessed from the file name.
 
@@ -79,10 +79,8 @@ survives.
       learning rate. Never tuned.
 - [ ] Ranking objective: `rank:pairwise` / `rank:ndcg`, one group per
       (instance, reduce), on the fair frames.
-- [ ] Open question: age features or not (`best_features.txt` vs
-      `best_features-general30.txt`, see `README.md`). Watch `pred
-      feats outside training range` on the long runs.
-- [ ] Open question: plain or ancestor label (`--predtables 0` vs `1`).
+- [ ] Watch `pred feats outside training range` on the long runs.
+- [ ] Open question: plain or ancestor label (`--predanc 0` vs `1`).
       Delete the loser from the pipeline.
 - [ ] Round 2: regather train under the learnt policy
       (`build_stats_pred`), train on both rounds. Not settled on this

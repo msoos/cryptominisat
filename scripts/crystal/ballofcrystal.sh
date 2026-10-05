@@ -30,7 +30,7 @@
 #   --gather-only stop after step 3, the frames are for learn.sh
 # KEEP_FRAT=1 keeps data.frat (it is deleted once used, GBs on big CNFs)
 # STATS_OPTS: more options for the stats run. With a STATS=ON
-#   FINAL_PREDICTOR=ON build as STATS_BIN, "--predtype xgb --predloc DIR"
+#   FINAL_PREDICTOR=ON build as STATS_BIN, "--predloc DIR"
 #   gathers under the learnt policy (a second round, DAgger-style)
 
 set -e
@@ -65,7 +65,7 @@ echo "--> work dir:                 $DIR"
 echo "--> stats binary:             $STATS_BIN"
 echo "--> predictor binary:         $PRED_BIN"
 echo "--> dump ratio / lock ratio:  $DUMPRATIO / $CLLOCK"
-echo "--> tiers:                    $TIERS (halflife $HALFLIFE reduces)"
+echo "--> halflife:                 $HALFLIFE reduces"
 echo "--> rows per strata:          $FIXED"
 
 for f in "$STATS_BIN" "$PRED_BIN" "$bestf"; do
@@ -107,7 +107,7 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
     fi
 
     stage "check_rawdb"
-    "$SCRIPTDIR/check_rawdb.py" data.db-raw --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
+    "$SCRIPTDIR/check_rawdb.py" data.db-raw --halflife "$HALFLIFE" \
         --dumpratio "$DUMPRATIO" --proof data.frat | tee check_rawdb.out-stage
 
     # the solver's FRAT has full hint chains, no elaboration needed.
@@ -148,7 +148,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     stage "sample_data"
     cp data.db data-min.db
     "$SCRIPTDIR/sample_data.py" \
-        --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
+        --halflife "$HALFLIFE" \
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" \
         --evalreduces "$EVAL_REDUCES" --evalperreduce "$EVAL_PER_REDUCE" \
         data-min.db | tee sample_data.out-stage
@@ -157,7 +157,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
 
     stage "cldata_gen_pandas"
     "$SCRIPTDIR/cldata_gen_pandas.py" data-min.db \
-        --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
+        --halflife "$HALFLIFE" \
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} \
         | tee cldata_gen_pandas.out-stage
     if ! ls data-min.db-cldata-*.dat > /dev/null 2>&1; then
@@ -172,19 +172,17 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     fi
 
     stage "cldata_predict"
-    for tier in $TIERS; do
-        for table in used_later used_later_anc; do
-            f="data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat"
-            if [[ ! -f "$f" ]]; then echo "no frame for $table $tier (run shorter than two half-lives), no model"; continue; fi
-            $NOBUF "$SCRIPTDIR/cldata_predict.py" "$f" \
-                --tier "$tier" --table "$table" --features best_only --regressor xgb \
-                --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
-                --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
-                --weights "$XGB_WEIGHTS" --evalframe "data-min.db-evaldata-${table}-${tier}.dat" \
-                --basedir . --bestfeatfile "$bestf" \
-                > "cldata_predict_${tier}-${table}.out-stage" 2>&1
-            grep -E "Mean squared error|==> Saved" "cldata_predict_${tier}-${table}.out-stage" | head -2
-        done
+    for table in used_later used_later_anc; do
+        f="data-min.db-cldata-${table}-disc-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat"
+        if [[ ! -f "$f" ]]; then echo "no frame for $table (run shorter than two half-lives), no model"; continue; fi
+        $NOBUF "$SCRIPTDIR/cldata_predict.py" "$f" \
+            --table "$table" --features best_only --regressor xgb \
+            --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
+            --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
+            --weights "$XGB_WEIGHTS" --evalframe "data-min.db-evaldata-${table}-disc.dat" \
+            --basedir . --bestfeatfile "$bestf" \
+            > "cldata_predict_${table}.out-stage" 2>&1
+        grep -E "Mean squared error|==> Saved" "cldata_predict_${table}.out-stage" | head -2
     done
     ls -la predictor-*.json
 fi
@@ -200,18 +198,18 @@ function summary() {
         "$(grep -m1 '^c conflicts' "$2" | awk '{print $4}')" \
         "$(grep -m1 'Total time (this thread)' "$2" | awk '{print $7}')"
 }
-for TODO in 000 111; do
-    $NOBUF "$PRED_BIN" --predtype xgb --predloc . \
-        --predtiers "${TIERS// /,}" --predtables $TODO --zero-exit-status "$FNAME" \
-        > "cms-pred-run.out-${TODO}" 2>&1 || true
+for ANC in 0 1; do
+    $NOBUF "$PRED_BIN" --predloc . \
+        --predanc $ANC --zero-exit-status "$FNAME" \
+        > "cms-pred-run.out-anc${ANC}" 2>&1 || true
 done
 if [[ -x "$NORMAL_BIN" ]]; then
     $NOBUF "$NORMAL_BIN" --zero-exit-status "$FNAME" > cms-normal-run.out 2>&1 || true
 fi
 echo
 echo "predictor build vs the others (same reduce, only the candidate order differs):"
-summary "pred 000" cms-pred-run.out-000
-summary "pred 111" cms-pred-run.out-111
+summary "pred plain" cms-pred-run.out-anc0
+summary "pred ancestor" cms-pred-run.out-anc1
 [[ -f cms-normal-run.out ]] && summary "normal" cms-normal-run.out
 summary "stats" cms-stats-run.out
 echo "Done. Predictors are in $DIR/predictor-*.json"

@@ -42,8 +42,8 @@ class ClPredictorsXGB : public ClPredictorsAbst
 public:
     ClPredictorsXGB();
     virtual ~ClPredictorsXGB();
-    virtual int load_models(const vector<std::string>& fnames) override;
-    virtual int load_models_from_buffers(const vector<std::string>& tiers) override;
+    virtual void load_model(const std::string& fname) override;
+    virtual void load_embedded_model() override;
 
     virtual void predict_all(
         float* const data,
@@ -53,10 +53,10 @@ public:
     virtual void finish_all_predict() override;
 
 private:
-    vector<BoosterHandle> handles;
+    BoosterHandle handle = nullptr;
     DMatrixHandle dmat;
 
-    const float* out_result[PRED_MAX_MODELS];
+    const float* out_result = nullptr;
     void new_handle();
     void check_num_features(const std::string& what);
     void read_attrs();

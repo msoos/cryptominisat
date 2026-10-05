@@ -56,16 +56,16 @@ def check(cond, msg):
         fail(msg)
 
 
-def tier_of(fname):
-    m = re.search(r"(?:cl|eval)data-(used_later(?:_anc)?)-(disc)[-.]", fname)
-    return (m.group(1), m.group(2)) if m else (None, None)
+def table_of(fname):
+    m = re.search(r"(?:cl|eval)data-(used_later(?:_anc)?)-disc[-.]", fname)
+    return m.group(1) if m else None
 
 
 def check_frame(fname, df, feats):
     name = os.path.basename(fname)
-    table, tier = tier_of(fname)
-    check(table is not None, "%s: cannot tell table/tier from the name" % name)
-    label = "x.%s_%s" % (table, tier)
+    table = table_of(fname)
+    check(table is not None, "%s: cannot tell the table from the name" % name)
+    label = "x.%s_disc" % table
     print("== %s: %d rows, %d columns" % (name, df.shape[0], df.shape[1]))
     check(df.shape[0] > 100, "%s: only %d rows" % (name, df.shape[0]))
     fair = "evaldata-" in name
@@ -77,10 +77,9 @@ def check_frame(fname, df, feats):
     check(not missing, "%s: columns missing: %s" % (name, missing))
     if missing:
         return
-    # the other tiers' labels would be a leak in a feature list, and the
-    # rows differ per tier, so they must not be here
+    # the other table's label would be a leak in a feature list
     others = [c for c in df.columns if c.startswith("x.used_later") and not c.startswith(label)]
-    check(not others, "%s: other tiers' labels in the frame: %s" % (name, others))
+    check(not others, "%s: another label in the frame: %s" % (name, others))
 
     num = df.select_dtypes(include=[np.number])
     inf_cols = [c for c in num.columns if np.isinf(num[c].to_numpy(dtype=float)).any()]
@@ -89,8 +88,6 @@ def check_frame(fname, df, feats):
     y = df[label]
     check(y.notna().all(), "%s: NaN labels: %d" % (name, y.isna().sum()))
     check((y >= 0).all(), "%s: negative labels" % name)
-    if "_anc" not in table and tier != "disc":
-        check((y == y.round()).all(), "%s: non-integer use counts" % name)
     # the fair frame is a few reduces: they can all be before the first use
     if fair and y.sum() == 0:
         warn("%s: all labels zero" % name)

@@ -41,8 +41,8 @@ The predictor build generates at build time:
   (`gen_pred_features.py`): the C++ of every feature. The feature file
   is the single source of truth for training and solving
   (`-DPRED_FEATURES_FILE=` for another list).
-- the embedded model from `src/predict/predictor_disc.json`
-  (`embed_models.py`). `src/predict/` is its own git repo
+- the embedded model from `src/predict/predictor_disc.json`.
+  `src/predict/` is its own git repo
   (github.com/msoos/cryptominisat-predictors), ignored by the solver's:
   clone it there before building; after retraining copy the model in,
   rebuild, commit there (never push, the owner pushes). Model and binary
@@ -50,9 +50,10 @@ The predictor build generates at build time:
 
 Solver options (all BEFORE the CNF: anything after it is the proof file):
 
-- predictor build: `--predtype xgb`, `--predtiers disc`, `--predloc DIR`
-  (models `DIR/predictor-<table>-<tier>-xgb.json`; empty = the embedded
-  one), `--predtables 000|111` (0 = `used_later`, 1 = `used_later_anc`),
+- predictor build: `--predloc DIR` (the model
+  `DIR/predictor-<table>-disc-xgb.json`; empty = the embedded one),
+  `--predanc 0|1` (with `--predloc`: 0 = the `used_later` model, 1 =
+  `used_later_anc`),
   `--predkeep 2` (default: the score decides which learnt clauses are
   tier1/tier2, as many of each as glue would make; 1 = fixed
   `--predkeept1`/`--predkeept2` %; 0 = glue), `--predcands 0|1|2` (what
@@ -97,7 +98,7 @@ shrinks: compare against the normal build with `--reducekeepused 0` too.
    (training) and `data-min.db-evaldata-<table>-disc.dat` (fair), then
    `check_frames.py`.
 5. **learn** (`cldata_predict.py`): `predictor-<table>-disc-xgb.json`.
-6. **evaluate**: predictor build (`--predtables 000` and `111`) and the
+6. **evaluate**: predictor build (`--predanc 0` and `1`) and the
    normal build, side by side.
 
 Flags: `--gather-only` stops after 4, `--skip-solve` redoes 2-6 (needs
@@ -160,8 +161,7 @@ split is by instance; the saved model is refitted on all rows.
 - `gen_pred_features.py` refuses a feature that scales with the run
   length or the instance size (`SCALE` in it): such a column may only
   appear divided by one of the same class. A long run would otherwise
-  feed the trees values they never saw. `-DPRED_ALLOW_ABSOLUTE=ON`
-  overrides, for comparison builds.
+  feed the trees values they never saw.
 - The model carries the 1st..99th percentile of every feature of its
   training data and its provenance (xgboost attributes). The solver
   prints `[pred] model trained on ...` at load and `pred feats outside
@@ -181,9 +181,9 @@ split is by instance; the saved model is refitted on all rows.
 ./run_corpus.sh <outdir> a.cnf b.cnf ...     # gather + learn + eval
 ```
 
-`eval_corpus.sh` writes to `<preddir>/eval/<cnf>.<normal|predNNN>.s<seed>`
-and takes `PRED_OPTS`, `EVAL_OPTS` (e.g. `--xor 0`), `EVAL_TABLES`
-(`000 111`), `EVAL_SEEDS`, `EVAL_TIMEOUT`, `EVAL_NORMAL_CACHE`.
+`eval_corpus.sh` writes to `<preddir>/eval/<cnf>.<normal|pred0|pred1>.s<seed>`
+and takes `PRED_OPTS`, `EVAL_OPTS` (e.g. `--xor 0`), `EVAL_ANC` (which
+`--predanc`, `0 1`), `EVAL_SEEDS`, `EVAL_TIMEOUT`, `EVAL_NORMAL_CACHE`.
 `eval_summary.py <dir>` makes the table from such files: per instance,
 then per configuration against normal the geometric mean of the
 per-instance ratios with a 95% bootstrap interval, solved, PAR2, and
@@ -195,8 +195,7 @@ the noise (each seed against the first).
 `pick_features.py` make importance rankings and a list from them
 (memory: features x tree nodes, ~5 GB at 30% of the rows). After
 changing the list: rebuild `build_pred`, retrain, copy the model to
-`src/predict/`, rebuild. `best_features-general30.txt` is the list with
-the age features, for the open question in `README.md`.
+`src/predict/`, rebuild.
 
 `model_report.py <learn dir>/predictor-used_later-disc-xgb.json -o
 report.html`: one HTML page on a model (attributes, importances, SHAP,
@@ -212,8 +211,7 @@ Pipeline: `ballofcrystal.sh`, `setparams_ballofcrystal.sh`,
 `run_corpus.sh`, `helper.py` (shared SQL, features, weights, ranking).
 Features: `gen_pred_features.py`, `gen_best_feats.sh`,
 `pick_features.py`, `feature_groups.py` + `ablate_groups.sh` (group
-ablation in the solver), `ccg.py`. Models: `embed_models.py`,
-`model_report.py`, `model_variance.sh` (tree-seed spread of an A/B),
+ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh` (tree-seed spread of an A/B),
 `holdout_eval.py`. Tests: `test_small.sh`, `test_frat_uses.py`,
 `check_pred_features.py`. Instances: `bivium_variants.py`.
 
@@ -227,7 +225,7 @@ ablation in the solver), `ccg.py`. Models: `embed_models.py`,
   normal run (`EVAL_NORMAL_CACHE`) must have been made under the same
   load as what it is compared to.
 - `build_stats_pred/` (STATS=ON and FINAL_PREDICTOR=ON) with
-  `STATS_OPTS="--predtype xgb --predloc DIR"` gathers under the learnt
+  `STATS_OPTS="--predloc DIR"` gathers under the learnt
   policy.
 - Features are float32 on both sides; ratios beyond it are "missing".
 - Training is deterministic: the same frames give the same model.
@@ -284,7 +282,7 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
   conflict-analysis uses as a label, alone or mixed in, measured the
   same. In some runs nearly all proof uses fall in the last 10% of the
   run (ps_200_301_70: 99%), so early reduces say little there.
-- Plain vs ancestor label (`--predtables 000` vs `111`): within the
+- Plain vs ancestor label (`--predanc 0` vs `1`): within the
   seed noise of each other. Unsettled; deleting one would simplify
   everything.
 - A second gathering round under the learnt policy, trained with the
@@ -295,4 +293,9 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
 - SAT instances cannot be A/B tested one run at a time: the path to a
   model changes with every clause kept.
 - Differences under ~10% between single runs are not results.
-- Not tuned: trees, depth, `HALFLIFE`, `--predsortby`.
+- Features that grow with the run or the instance (clause age, raw
+  counters) measured the same as the 24 without them, and drift on long
+  runs. They are refused by the generator.
+- Three models of use counts over three horizons, summed, did what the
+  one discounted model does at three times the prediction cost.
+- Not tuned: trees, depth, `HALFLIFE`.

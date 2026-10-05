@@ -29,7 +29,7 @@
 # usage: holdout_eval.py --train a-dir b-dir --test c-dir d-dir
 #          [--target count|rel] [--objective squarederror|log|poisson]
 #          [--weights none|strata|instance|family]
-#          [-f best_features.txt] [--tier disc] [--table used_later]
+#          [-f best_features.txt] [--table used_later]
 
 import argparse
 import glob
@@ -46,12 +46,12 @@ import helper
 MISSING = np.nan
 
 
-def load(dirs, table, tier, what="cldata", suffix="-cut1-*.dat"):
+def load(dirs, table, what="cldata", suffix="-cut1-*.dat"):
     dfs = []
     for d in dirs:
-        fs = glob.glob(os.path.join(d, "data-min.db-%s-%s-%s%s" % (what, table, tier, suffix)))
+        fs = glob.glob(os.path.join(d, "data-min.db-%s-%s-disc%s" % (what, table, suffix)))
         if not fs:
-            print("no %s %s frame in %s, skipped" % (table, tier, d))
+            print("no %s frame in %s, skipped" % (table, d))
             continue
         df = pd.read_pickle(fs[0])
         df["fname"] = os.path.basename(d.rstrip("/"))
@@ -78,7 +78,6 @@ if __name__ == "__main__":
     parser.add_argument("--train", nargs="+", required=True)
     parser.add_argument("--test", nargs="+", required=True)
     parser.add_argument("--table", default="used_later")
-    parser.add_argument("--tier", default="disc")
     parser.add_argument("--weights", default="family", choices=["none", "strata", "instance", "family"])
     parser.add_argument("--target", default="rel", choices=["count", "rel"])
     parser.add_argument("--objective", default="squarederror", choices=["squarederror", "log", "poisson"])
@@ -90,11 +89,11 @@ if __name__ == "__main__":
     opts = parser.parse_args()
 
     feats = helper.get_features(opts.features)
-    count_label = "x.%s_%s" % (opts.table, opts.tier)
+    count_label = "x.%s_disc" % opts.table
     label = count_label + ("_rel" if opts.target == "rel" else "")
 
-    train = load(opts.train, opts.table, opts.tier)
-    test = load(opts.test, opts.table, opts.tier, "evaldata", ".dat")
+    train = load(opts.train, opts.table)
+    test = load(opts.test, opts.table, "evaldata", ".dat")
     if train is None or test is None:
         print("no data")
         exit(1)

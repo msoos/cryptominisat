@@ -49,7 +49,7 @@ done
 SCRIPTDIR="$(pwd)"
 PRED="${PRED_BIN:-$SCRIPTDIR/../../build_pred/cryptominisat5}"
 MODEL="$CNF-dir/predictor-used_later-disc-xgb.json"
-(cd "$CNF-dir" && "$PRED" --predtype xgb --predloc . --predtiers disc --preddump "$DIR/pred.dump" \
+(cd "$CNF-dir" && "$PRED" --predloc . --preddump "$DIR/pred.dump" \
     --maxconfl 30000 --zero-exit-status "$CNF" > "$DIR/pred-dump.out" 2>&1) || {
     echo "FAILED: the predictor run, see $DIR/pred-dump.out"; exit 1; }
 ./check_pred_features.py "$DIR/pred.dump" "$MODEL" || exit 1

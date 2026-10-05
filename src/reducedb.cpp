@@ -117,7 +117,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         scores.reserve(solver->long_red_cls[0].size());
         for (const ClOffset offs: solver->long_red_cls[0]) {
             const Clause* cl = solver->cl_alloc.ptr(offs);
-            scores.push_back(pred_score(solver->red_stats_extra[cl->stats.extra_pos]));
+            scores.push_back(solver->red_stats_extra[cl->stats.extra_pos].pred_use);
         }
         if (!scores.empty()) {
             //the score above which a clause is in the best t1% / t2%
@@ -176,7 +176,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         bool tier2 = glue <= solver->tier2_glue;
         #ifdef FINAL_PREDICTOR
         if (pred_keep) {
-            const double sc = pred_score(solver->red_stats_extra[cl->stats.extra_pos]);
+            const double sc = solver->red_stats_extra[cl->stats.extra_pos].pred_use;
             tier1 = sc >= keep_t1;
             tier2 = sc >= keep_t2;
         }
@@ -204,7 +204,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     }
     //worst first: least predicted future use, then glue/size as below
     const auto& ext = solver->red_stats_extra;
-    auto pred_of = [&](const Clause* c) { return pred_score(ext[c->stats.extra_pos]); };
+    auto pred_of = [&](const Clause* c) { return ext[c->stats.extra_pos].pred_use; };
     std::stable_sort(stack.begin(), stack.end(),
         [&](const ClOffset a, const ClOffset b) {
             const Clause* c = solver->cl_alloc.ptr(a);
@@ -707,52 +707,23 @@ void ReduceDB::dump_sql_cl_data(
 void ReduceDB::load_predictors()
 {
     if (predictors != nullptr) return;
-    if (solver->conf.predictor_type != "xgb") {
-        cout << "ERROR: --predtype must be xgb" << endl;
-        exit(-1);
-    }
     predictors = new ClPredictorsXGB;
 
-    vector<string> tiers;
-    {
-        std::stringstream ss(solver->conf.pred_tiers);
-        string t;
-        while (std::getline(ss, t, ',')) if (!t.empty()) tiers.push_back(t);
-    }
-    if (tiers.empty() || tiers.size() > PRED_MAX_MODELS) {
-        cout << "ERROR: --predtiers needs 1 to " << PRED_MAX_MODELS << " tiers" << endl;
-        exit(-1);
-    }
-    if (solver->conf.pred_tables.size() < tiers.size()) {
-        cout << "ERROR: --predtables needs one digit per tier of --predtiers" << endl;
-        exit(-1);
-    }
     if (solver->conf.pred_conf_location.empty()) {
-        if (predictors->load_models_from_buffers(tiers) != 0) {
-            cout << "ERROR: cannot load models from buffers" << endl;
+        if (solver->conf.pred_anc) {
+            cout << "ERROR: only the plain-label model is compiled in, --predanc 1 needs --predloc" << endl;
             exit(-1);
         }
+        predictors->load_embedded_model();
         if (solver->conf.verbosity) {
-            cout << solver->conf.prefix << "[pred] predictor hashes: ";
-            for(const auto& h: predictors->get_hashes()) cout << h << " ";
-            cout << endl;
+            cout << solver->conf.prefix << "[pred] compiled-in model, sha1 " << predictor_disc_json_hash << endl;
         }
     } else {
-        vector<string> locations;
-        for (uint32_t i = 0; i < tiers.size(); i ++) {
-            locations.push_back(solver->conf.pred_conf_location + "/predictor-"
-                + (solver->conf.pred_tables[i] == '0' ? "used_later" : "used_later_anc")
-                + "-" + tiers[i] + "-" + solver->conf.predictor_type + ".json");
-        }
-        const int ret = predictors->load_models(locations);
-        if (ret == 0) {
-            cout << "ERROR loading the predictors" << endl;
-            exit(-1);
-        }
+        const string fname = solver->conf.pred_conf_location + "/predictor-"
+            + (solver->conf.pred_anc ? "used_later_anc" : "used_later") + "-disc-xgb.json";
+        predictors->load_model(fname);
         if (solver->conf.verbosity) {
-            cout << solver->conf.prefix << "[pred] loaded predictors from: ";
-            for(const auto& l: locations) cout << l << " ";
-            cout << endl;
+            cout << solver->conf.prefix << "[pred] loaded the model " << fname << endl;
         }
     }
     if (!solver->conf.pred_dump_fname.empty()) predictors->open_dump(solver->conf.pred_dump_fname);
@@ -802,7 +773,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         auto& extra = solver->red_stats_extra[cl->stats.extra_pos];
         predictors->get_prediction_at(extra, i++);
         if (predictors->dumping()) {
-            dump_preds.insert(dump_preds.end(), extra.pred_use, extra.pred_use + predictors->num_models);
+            dump_preds.push_back(extra.pred_use);
         }
     }
     if (predictors->dumping()) predictors->write_dump(data.data(), dump_preds, offs.size());
@@ -881,24 +852,13 @@ void ReduceDB::print_out_of_range() const
     }
 }
 
-//The score a reduce ranks candidates by, see --predsortby
-double ReduceDB::pred_score(const ClauseStatsExtra& e) const
-{
-    switch (solver->conf.pred_sort_by) {
-        case 0: return e.pred_use[0];
-        case 1: return e.pred_use[1];
-        case 2: return e.pred_use[2];
-        default: return e.pred_use[0] + e.pred_use[1] + e.pred_use[2];
-    }
-}
-
 void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs)
 {
     if (!solver->conf.dump_pred_distrib) return;
     const bool first = num_reductions == 1;
     std::ofstream distrib_file("pred_distrib.csv", first ? std::ios::out : std::ios::app);
     if (first) {
-        distrib_file << "reduction,age,glue,used,pred_use0,pred_use1,pred_use2" << endl;
+        distrib_file << "reduction,age,glue,used,pred_use" << endl;
     }
     for(const ClOffset off: offs) {
         const Clause* cl = solver->cl_alloc.ptr(off);
@@ -907,9 +867,7 @@ void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs)
         << num_reductions << ","
         << (solver->sum_conflicts - stats_extra.introduced_at_conflict) << ","
         << cl->stats.glue << "," << cl->stats.used
-        << "," << stats_extra.pred_use[0]
-        << "," << stats_extra.pred_use[1]
-        << "," << stats_extra.pred_use[2]
+        << "," << stats_extra.pred_use
         << endl;
     }
 }

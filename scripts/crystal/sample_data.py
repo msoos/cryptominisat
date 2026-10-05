@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# Fills the used_later_<tier> label tables (with the rank among ALL the
+# Fills the used_later*_disc label tables (with the rank among ALL the
 # tracked clauses of the reduce) on the full DB, then picks the rows the
 # frames are made of and shrinks the DB to them:
 # - frame_rows: the training sample. Cells of label stratum (top cut1 %
@@ -28,7 +28,7 @@
 # - eval_rows: a fair sample, for measuring. Evenly spaced reduces, up to
 #   --evalperreduce rows of each, no strata
 #
-# usage: sample_data.py --tiers disc --halflife 4
+# usage: sample_data.py --halflife 4
 #           --cut1 3.0 --cut2 25.0 --limit 3000 data-min.db
 from __future__ import print_function
 import sqlite3
@@ -69,12 +69,12 @@ class QueryDatRem(helper.QueryHelper):
                 self.c.execute(q.format(table=table))
 
 
-    def get_all_percentile_X(self, tier):
+    def get_all_percentiles(self):
         t = time.time()
         for table in ["used_later", "used_later_anc"]:
-            print("Calculating percentiles now for table {table} and tier {tier} ...".format(
-                tier=tier, table=table))
-            self.c.execute("select count(*) from {table}_{tier}".format(tier=tier, table=table))
+            print("Calculating percentiles now for table {table} ...".format(
+                table=table))
+            self.c.execute("select count(*) from {table}_disc".format(table=table))
             if self.c.fetchone()[0] == 0:
                 print("   -> empty (run shorter than two half-lives), no percentiles")
                 continue
@@ -84,46 +84,46 @@ class QueryDatRem(helper.QueryHelper):
             {q}
             """
 
-            q = "select '{tier}', 'avg', NULL, avg(used_later) from {table}_{tier};".format(
-                tier=tier, table=table)
-            self.c.execute(q2.format(tier=tier, table=table, q=q))
+            q = "select 'disc', 'avg', NULL, avg(used_later) from {table}_disc;".format(
+                table=table)
+            self.c.execute(q2.format(table=table, q=q))
 
             q = """
             SELECT
-            '{tier}', 'top_non_zero', {perc}, used_later
-            FROM {table}_{tier}
+            'disc', 'top_non_zero', {perc}, used_later
+            FROM {table}_disc
             WHERE used_later>0
             ORDER BY used_later ASC
             LIMIT 1
             OFFSET round((SELECT
              COUNT(*)
-            FROM {table}_{tier}
+            FROM {table}_disc
             WHERE used_later>0) * ((100-{perc}) / 100.0)) - 1;
             """
             for perc in list(range(0,30,1))+list(range(30,100, 5)):
-                myq = q.format(tier=tier, table=table, perc=perc)
-                self.c.execute(q2.format(tier=tier, table=table, q=myq))
+                myq = q.format(table=table, perc=perc)
+                self.c.execute(q2.format(table=table, q=myq))
             # the 100% perecentile is not 0 (remember, this is "non-zero"), but let's cheat and add it in
             self.c.execute(q2.format(
-                tier=tier, table=table, q="select '{tier}', 'top_non_zero', 100.0, 0.0;".format(
-                    tier=tier, table=table)))
+                table=table, q="select 'disc', 'top_non_zero', 100.0, 0.0;".format(
+                    table=table)))
 
             q = """
             SELECT
-            '{tier}', 'top_also_zero', {perc}, used_later
-            FROM {table}_{tier}
+            'disc', 'top_also_zero', {perc}, used_later
+            FROM {table}_disc
             ORDER BY used_later ASC
             LIMIT 1
             OFFSET round((SELECT
              COUNT(*)
-            FROM {table}_{tier}) * ((100.0-{perc}) / 100.0)) - 1;
+            FROM {table}_disc) * ((100.0-{perc}) / 100.0)) - 1;
             """
             for perc in range(0,100, 10):
-                myq = q.format(tier=tier, table=table, perc=perc)
-                self.c.execute(q2.format(tier=tier, table=table, q=myq))
+                myq = q.format(table=table, perc=perc)
+                self.c.execute(q2.format(table=table, q=myq))
             self.c.execute(
-                q2.format(tier=tier, table=table,
-                          q="select '{tier}', 'top_also_zero', 100.0, 0.0;".format(tier=tier, table=table)))
+                q2.format(table=table,
+                          q="select 'disc', 'top_also_zero', 100.0, 0.0;".format(table=table)))
 
             print("Calculated percentiles/averages, T:", time.time()-t)
 
@@ -230,24 +230,23 @@ class QueryDatRem(helper.QueryHelper):
         for t in ["frame_rows", "eval_rows"]:
             self.c.execute("drop table if exists %s" % t)
             self.c.execute("""create table %s (
-                `tier` string NOT NULL,
                 `tbl` string NOT NULL,
                 `clauseID` bigint(20) NOT NULL,
                 `conflicts` bigint(20) NOT NULL,
                 `weight` float NOT NULL)""" % t)
         self.c.execute("create index `idxrdbsamp` on `reduceDB` (`clauseID`, `conflicts`)")
 
-    def get_cut(self, tier, table, perc):
-        self.c.execute("""select val from {table}_percentiles where type_of_dat = '{tier}'
+    def get_cut(self, table, perc):
+        self.c.execute("""select val from {table}_percentiles where type_of_dat = 'disc'
             and percentile_descr = 'top_non_zero' and percentile = {perc}""".format(
-                tier=tier, table=table, perc=perc))
+                table=table, perc=perc))
         row = self.c.fetchone()
         return None if row is None else row[0]
 
-    def pick_frame_rows(self, tier, table):
-        cuts = [self.get_cut(tier, table, p) for p in [0.0, options.cut1, options.cut2]]
+    def pick_frame_rows(self, table):
+        cuts = [self.get_cut(table, p) for p in [0.0, options.cut1, options.cut2]]
         if None in cuts:
-            print("WARNING: no clause is ever used in {table}_{tier}, no rows".format(tier=tier, table=table))
+            print("WARNING: no clause is ever used in {table}_disc, no rows".format(table=table))
             return
         # top cut1%, cut1..cut2%, the rest with the never-used
         stratas = [
@@ -258,28 +257,28 @@ class QueryDatRem(helper.QueryHelper):
                 "rdb0.dump_no > 1 and rdb0.dump_no <= 5", "rdb0.dump_no > 5"]
         limit = int(options.limit/4)
         q_from = """
-        from {table}_{tier} as ul join reduceDB as rdb0
+        from {table}_disc as ul join reduceDB as rdb0
         on rdb0.clauseID = ul.clauseID and rdb0.conflicts = ul.rdb0conflicts
         where {strata} and {age}"""
         for strata in stratas:
             for age in ages:
-                f = q_from.format(tier=tier, table=table, strata=strata, age=age)
+                f = q_from.format(table=table, strata=strata, age=age)
                 self.c.execute("select count(*) " + f)
                 num = self.c.fetchone()[0]
                 if num == 0:
                     continue
                 self.c.execute("""
                 insert into frame_rows
-                select '{tier}', '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
+                select '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
                 {f}
                 order by rowhash(ul.clauseID, ul.rdb0conflicts) limit {limit}""".format(
-                    tier=tier, table=table, f=f, limit=limit, weight=repr(max(1.0, num/float(limit)))))
-                print("%s %s: %-45s %-40s %8d rows, weight %.2f" % (
-                    table, tier, strata, age, num, max(1.0, num/float(limit))))
+                    table=table, f=f, limit=limit, weight=repr(max(1.0, num/float(limit)))))
+                print("%s: %-45s %-40s %8d rows, weight %.2f" % (
+                    table, strata, age, num, max(1.0, num/float(limit))))
 
-    def pick_eval_rows(self, tier, table):
-        self.c.execute("select rdb0conflicts, count(*) from {table}_{tier} group by rdb0conflicts order by rdb0conflicts".format(
-            tier=tier, table=table))
+    def pick_eval_rows(self, table):
+        self.c.execute("select rdb0conflicts, count(*) from {table}_disc group by rdb0conflicts order by rdb0conflicts".format(
+            table=table))
         reduces = self.c.fetchall()
         if not reduces:
             return
@@ -289,12 +288,12 @@ class QueryDatRem(helper.QueryHelper):
             confl, num = reduces[i]
             self.c.execute("""
             insert into eval_rows
-            select '{tier}', '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
-            from {table}_{tier} as ul where ul.rdb0conflicts = {confl}
+            select '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
+            from {table}_disc as ul where ul.rdb0conflicts = {confl}
             order by rowhash(ul.clauseID, ul.rdb0conflicts) limit {limit}""".format(
-                tier=tier, table=table, confl=confl, limit=options.eval_per_reduce,
+                table=table, confl=confl, limit=options.eval_per_reduce,
                 weight=repr(max(1.0, num/float(options.eval_per_reduce)))))
-        print("%s %s: eval rows from %d of %d reduces" % (table, tier, len(picked), len(reduces)))
+        print("%s: eval rows from %d of %d reduces" % (table, len(picked), len(reduces)))
 
     def filter_tables(self):
         t = time.time()
@@ -302,15 +301,14 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute("""create table keep_rows as
             select clauseID, conflicts from frame_rows union select clauseID, conflicts from eval_rows""")
         self.c.execute("create index `idxkeep1` on keep_rows (clauseID, conflicts)")
-        self.c.execute("create index `idxfr1` on frame_rows (tier, tbl, clauseID, conflicts)")
-        self.c.execute("create index `idxev1` on eval_rows (tier, tbl, clauseID, conflicts)")
+        self.c.execute("create index `idxfr1` on frame_rows (tbl, clauseID, conflicts)")
+        self.c.execute("create index `idxev1` on eval_rows (tbl, clauseID, conflicts)")
         self.c.execute("""delete from reduceDB where not exists
             (select 1 from keep_rows k where k.clauseID = reduceDB.clauseID and k.conflicts = reduceDB.conflicts)""")
-        for tier in options.tiers.split(","):
-            for table in TABLES:
-                self.c.execute("""delete from {table}_{tier} where not exists
-                    (select 1 from keep_rows k where k.clauseID = {table}_{tier}.clauseID
-                     and k.conflicts = {table}_{tier}.rdb0conflicts)""".format(tier=tier, table=table))
+        for table in TABLES:
+            self.c.execute("""delete from {table}_disc where not exists
+                (select 1 from keep_rows k where k.clauseID = {table}_disc.clauseID
+                 and k.conflicts = {table}_disc.rdb0conflicts)""".format(table=table))
         for table in ["clause_stats", "sum_cl_use", "cl_last_in_solver"]:
             self.c.execute("delete from %s where clauseID not in (select clauseID from keep_rows)" % table)
         # the labels are filled, the uses are not needed any more
@@ -347,7 +345,7 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("--limit", default=20000, type=int,
-                      dest="limit", help="Max number of rows from each label stratum, per tier and table")
+                      dest="limit", help="Max number of rows from each label stratum, per table")
     parser.add_option("--cut1", default=3.0, type=float,
                       dest="cut1", help="The top stratum: this %% of the used rows. Default: %default")
     parser.add_option("--cut2", default=25.0, type=float,
@@ -359,14 +357,13 @@ if __name__ == "__main__":
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
-    helper.add_tier_options(parser)
+    helper.add_label_options(parser)
 
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
         print("ERROR: You must give the sqlite file!")
         exit(-1)
-    tiers = options.tiers.split(",")
 
     with QueryDatRem(args[0]) as q:
         q.check_db_sanity()
@@ -381,29 +378,25 @@ if __name__ == "__main__":
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose)
         for table in TABLES:
-            for tier in tiers:
-                q.fill_used_later_X(tier, options.halflife, table=table)
+            q.fill_used_later(options.halflife, table=table)
 
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
-        for tier in tiers:
-            q.get_all_percentile_X(tier)
+        q.get_all_percentiles()
         q.print_percentiles()
     with helper.QueryFill(args[0]) as q:
         helper.dangerous(q.c)
-        for tier in tiers:
-            for table in TABLES:
-                q.fill_used_later_X_perc_fit(tier, table=table)
+        for table in TABLES:
+            q.fill_used_later_perc_fit(table=table)
     print("Labels and percentiles T: %-3.2f s" % (time.time() - t))
 
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_row_tables()
-        for tier in tiers:
-            for table in TABLES:
-                q.pick_frame_rows(tier, table)
-                q.pick_eval_rows(tier, table)
+        for table in TABLES:
+            q.pick_frame_rows(table)
+            q.pick_eval_rows(table)
         q.filter_tables()
         helper.drop_idxs(q.c)
         q.del_table_and_vacuum()

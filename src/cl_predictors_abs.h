@@ -35,20 +35,12 @@ THE SOFTWARE.
 
 using std::vector;
 
+//the model compiled in: xxd-alike.py on src/predict/predictor_disc.json
+extern unsigned char predictor_disc_json[];
+extern unsigned int predictor_disc_json_len;
+extern const char* predictor_disc_json_hash;
+
 namespace CMSat {
-
-//at most this many models (--predtiers), one prediction slot each
-#define PRED_MAX_MODELS 3
-
-//a model compiled in, see embed_models.py
-struct EmbeddedModel {
-    const char* tier;
-    const unsigned char* data;
-    unsigned int len;
-    const char* hash;
-};
-extern const EmbeddedModel embedded_models[];
-extern const unsigned embedded_models_num;
 
 class Clause;
 class Solver;
@@ -90,7 +82,7 @@ struct ReduceCommonData
     }
 };
 
-//main_exe.cpp traps FE_INVALID etc, but xgboost/numpy legitimately produce
+//main_exe.cpp traps FE_INVALID etc, but xgboost legitimately produces
 //NaN and inf internally: no traps while they run
 struct NoFPTraps {
     int saved;
@@ -103,14 +95,11 @@ class ClPredictorsAbst
 public:
     ClPredictorsAbst() {missing_val = nanf("");}
     virtual ~ClPredictorsAbst() {if (dump) fclose(dump);}
-    //one model per file/tier, in --predtiers order
-    virtual int load_models(const vector<std::string>& fnames) = 0;
-    virtual int load_models_from_buffers(const vector<std::string>& tiers) = 0;
-    uint32_t num_models = 0;
-    vector<std::string> get_hashes() const;
-    //from the first model, if it carries them (cldata_predict.py stores
-    //them): the 1st/99th percentile of every feature in its training data,
-    //and where that data came from
+    virtual void load_model(const std::string& fname) = 0;
+    virtual void load_embedded_model() = 0;
+    //if the model carries them (cldata_predict.py stores them): the
+    //1st/99th percentile of every feature in its training data, and where
+    //that data came from
     vector<double> feature_lo;
     vector<double> feature_hi;
     std::string provenance;

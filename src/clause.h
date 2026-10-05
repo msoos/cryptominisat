@@ -216,7 +216,7 @@ struct ClauseStatsExtra
     uint32_t uip1_ranking;
     uint32_t sum_uip1_per_time_ranking;
     uint32_t sum_props_per_time_ranking;
-    double pred_use[3]; //one per model (--predtiers), in that order
+    double pred_use; //the model's prediction at the last reduce
     double calc_sum_uip1_per_time(const uint64_t sum_conflicts) const {
         assert(introduced_at_conflict <= sum_conflicts);
         const uint64_t time = sum_conflicts - introduced_at_conflict;

@@ -35,20 +35,11 @@ elsewhere (`src/predict/`) give that frame as the second argument.
 
 The report is regenerated, not committed.
 
-## Open questions for a big test
+## Open question for a big test
 
-Two choices could not be settled on the short hold-out instances here
-(both are within the seed noise); a day-long test should run both sides:
-
-- **Age features or not.** The default `best_features.txt` (24) has
-  nothing that grows with the run length or the instance size;
-  `best_features-general30.txt` has the age features. Train each with
-  `bestf=$(realpath <list>) ./learn.sh <out> <dirs>` on the same gathered
-  data, build a predictor per list (the age list needs
-  `-DPRED_FEATURES_FILE=<list> -DPRED_ALLOW_ABSOLUTE=ON`), and compare
-  the `pred feats outside training range` line at the end of the runs.
-- **Plain or ancestor label.** `learn.sh` trains both; `--predtables 0`
-  (default) uses the plain one, `--predtables 1` the ancestor one, from
-  the same `--predloc`. Delete the loser from the pipeline afterwards.
+**Plain or ancestor label.** `learn.sh` trains both; `--predanc 0`
+(default) loads the plain one, `--predanc 1` the ancestor one, from the
+same `--predloc`. They are within the seed noise of each other on the
+hold-out instances here; delete the loser from the pipeline afterwards.
 
 Details and the numbers so far: `CLAUDE.md`.

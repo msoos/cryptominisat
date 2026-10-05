@@ -19,14 +19,14 @@
 # 02110-1301, USA.
 
 # Makes the training frames from the sampled DB (data-min.db): one
-# pandas pickle per (label table, tier), rows = (clause, reduce) with the
+# pandas pickle per label table, rows = (clause, reduce) with the
 # clause's state at the reduce, the DB-wide numbers of that reduce, what
 # was known when the clause was learnt, and the labels (count, rank).
 # The rows are the ones sample_data.py picked: frame_rows -> the training
 # frame (x.weight = rows of the full data a row stands for), eval_rows ->
 # the fair frame the ranking quality is measured on.
 #
-# usage: cldata_gen_pandas.py --tiers disc --halflife 4
+# usage: cldata_gen_pandas.py
 #            --cut1 3.0 --cut2 25.0 --limit 6000 data-min.db
 from __future__ import print_function
 import optparse
@@ -91,11 +91,11 @@ class QueryAddIdxes (helper.QueryHelper):
 
 
 class QueryCls (helper.QueryHelper):
-    def __init__(self, dbfname, tier, table):
+    def __init__(self, dbfname, table):
         super(QueryCls, self).__init__(dbfname)
-        self.fill_sql_query(tier, table=table)
+        self.fill_sql_query(table=table)
 
-    def fill_sql_query(self, tier, table):
+    def fill_sql_query(self, table):
         # sum_cl_use
         self.sum_cl_use = helper.query_fragment(
             "sum_cl_use", [], "sum_cl_use", options.verbose, self.c)
@@ -130,24 +130,24 @@ class QueryCls (helper.QueryHelper):
 
         # the rows sample_data.py picked, and how many each stands for
         q_time_base="""
-        join {table}_{tier} on
-            {table}_{tier}.clauseID = rdb0.clauseID
-            and {table}_{tier}.rdb0conflicts = rdb0.conflicts
+        join {table}_disc on
+            {table}_disc.clauseID = rdb0.clauseID
+            and {table}_disc.rdb0conflicts = rdb0.conflicts
         join {{rows}} as picked on
-            picked.tier = '{tier}' and picked.tbl = '{table}'
+            picked.tbl = '{table}'
             and picked.clauseID = rdb0.clauseID
             and picked.conflicts = rdb0.conflicts
         """
 
         q_columns_base="""
-            , {table}_{tier}.used_later as `x.{table}_{tier}`
-            , {table}_{tier}.percentile_fit as `x.{table}_{tier}_topperc`
-            , {table}_{tier}.rel as `x.{table}_{tier}_rel`
+            , {table}_disc.used_later as `x.{table}_disc`
+            , {table}_disc.percentile_fit as `x.{table}_disc_topperc`
+            , {table}_disc.rel as `x.{table}_disc_rel`
             , picked.weight as `x.weight`
             """
 
-        q_time = q_time_base.format(tier=tier, table=table)
-        q_columns = q_columns_base.format(tier=tier, table=table)
+        q_time = q_time_base.format(table=table)
+        q_columns = q_columns_base.format(table=table)
 
         # final big query
         self.q_select = """
@@ -200,12 +200,12 @@ class QueryCls (helper.QueryHelper):
             "q_columns": q_columns
         }
 
-    def get_one_data(self, tier, table, rows):
-        self.c.execute("select count(*) from {rows} where tier = '{tier}' and tbl = '{table}'".format(
-            rows=rows, tier=tier, table=table))
+    def get_one_data(self, table, rows):
+        self.c.execute("select count(*) from {rows} where tbl = '{table}'".format(
+            rows=rows, table=table))
         if self.c.fetchone()[0] == 0:
-            print("WARNING: no {rows} for {table}_{tier} (run shorter than two half-lives, or no clause ever used)".format(
-                rows=rows, tier=tier, table=table))
+            print("WARNING: no {rows} for {table}_disc (run shorter than two half-lives, or no clause ever used)".format(
+                rows=rows, table=table))
             return pd.DataFrame()
         t = time.time()
         q = self.q_select.format(**self.myformat).format(rows=rows)
@@ -237,53 +237,50 @@ def one_database(dbfname):
 
     with helper.QueryHelper(dbfname) as q:
         for t in ["frame_rows", "eval_rows"]:
-            q.c.execute("create index `idx%s` on %s (tier, tbl, clauseID, conflicts)" % (t, t))
-        for tier in options.tiers.split(","):
-            for table in ["used_later", "used_later_anc"]:
-                q.c.execute("create index `idxul_{table}_{tier}` on {table}_{tier} (clauseID, rdb0conflicts)".format(
-                    tier=tier, table=table))
+            q.c.execute("create index `idx%s` on %s (tbl, clauseID, conflicts)" % (t, t))
+        for table in ["used_later", "used_later_anc"]:
+            q.c.execute("create index `idxul_{table}_disc` on {table}_disc (clauseID, rdb0conflicts)".format(
+                table=table))
 
     print("Using sqlite3 DB file %s" % dbfname)
-    for tier in options.tiers.split(","):
-        for table in ["used_later", "used_later_anc"]:
-            print("------> Doing tier {tier} table {table}".format(
-                tier=tier,table=table))
+    for table in ["used_later", "used_later_anc"]:
+        print("------> Doing table {table}".format(
+            table=table))
 
-            with QueryCls(dbfname, tier, table) as q:
-                df = q.get_one_data(tier, table, "frame_rows")
-                df_eval = q.get_one_data(tier, table, "eval_rows")
-            if df.shape[0] < 100:
-                print("WARNING: only %d rows for tier %s table %s (run shorter than the "
-                      "horizon?), no frame written" % (df.shape[0], tier, table))
-                continue
+        with QueryCls(dbfname, table) as q:
+            df = q.get_one_data(table, "frame_rows")
+            df_eval = q.get_one_data(table, "eval_rows")
+        if df.shape[0] < 100:
+            print("WARNING: only %d rows for table %s (run shorter than two "
+                  "half-lives?), no frame written" % (df.shape[0], table))
+            continue
 
-            if options.verbose:
-                print("Describing----")
-                dat = df.describe()
-                print(dat)
-                print("Describe done.---")
-                print("Features: ", df.columns.values.flatten().tolist())
+        if options.verbose:
+            print("Describing----")
+            dat = df.describe()
+            print(dat)
+            print("Describe done.---")
+            print("Features: ", df.columns.values.flatten().tolist())
 
-            if options.verbose:
-                print("Describing post-transform ----")
-                print(df.describe())
-                print("Describe done.---")
-                print("Features: ", df.columns.values.flatten().tolist())
+        if options.verbose:
+            print("Describing post-transform ----")
+            print(df.describe())
+            print("Describe done.---")
+            print("Features: ", df.columns.values.flatten().tolist())
 
-            cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
-            cleanname = re.sub(r'\.db$', '', dbfname)
-            cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            dump_dataframe(df, "{cleanname}-cldata-{table}-{tier}-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
-                cleanname=cleanname,
-                cut1=options.cut1,
-                cut2=options.cut2,
-                limit=options.limit,
-                tier=tier,
-                table=table))
-            # the fair sample: what the ranking quality is measured on
-            if df_eval.shape[0] > 0:
-                dump_dataframe(df_eval, "{cleanname}-evaldata-{table}-{tier}".format(
-                    cleanname=cleanname, tier=tier, table=table))
+        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
+        cleanname = re.sub(r'\.db$', '', dbfname)
+        cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
+        dump_dataframe(df, "{cleanname}-cldata-{table}-disc-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
+            cleanname=cleanname,
+            cut1=options.cut1,
+            cut2=options.cut2,
+            limit=options.limit,
+            table=table))
+        # the fair sample: what the ranking quality is measured on
+        if df_eval.shape[0] > 0:
+            dump_dataframe(df_eval, "{cleanname}-evaldata-{table}-disc".format(
+                cleanname=cleanname, table=table))
 
 
 if __name__ == "__main__":
@@ -300,7 +297,7 @@ if __name__ == "__main__":
 
     # limits
     parser.add_option("--limit", default=20000, type=int,
-                      dest="limit", help="Max number of samples to take from each strata (for each table/tier)")
+                      dest="limit", help="Max number of samples to take from each strata (for each table)")
     parser.add_option("--cut1", default=5.0, type=float,
                       dest="cut1", help="Where to cut the distrib. Default: %default")
     parser.add_option("--cut2", default=30.0, type=float,
@@ -311,7 +308,7 @@ if __name__ == "__main__":
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    helper.add_tier_options(parser)
+    helper.add_label_options(parser)
 
     (options, args) = parser.parse_args()
 

@@ -26,16 +26,6 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-//tier and sha1 of every compiled-in model
-vector<std::string> ClPredictorsAbst::get_hashes() const
-{
-    vector<std::string> ret;
-    for(unsigned i = 0; i < embedded_models_num; i++) {
-        ret.push_back(string(embedded_models[i].tier) + ":" + embedded_models[i].hash);
-    }
-    return ret;
-}
-
 int ClPredictorsAbst::get_step_size()
 {
     return PRED_COLS;
@@ -78,15 +68,15 @@ void ClPredictorsAbst::open_dump(const std::string& fname)
         std::cerr << "ERROR: cannot open --preddump file '" << fname << "'" << std::endl;
         exit(-1);
     }
-    const uint32_t head[3] = {(uint32_t)predgen::NUM_RAW, (uint32_t)PRED_COLS, num_models};
-    fwrite(head, sizeof(uint32_t), 3, dump);
+    const uint32_t head[2] = {(uint32_t)predgen::NUM_RAW, (uint32_t)PRED_COLS};
+    fwrite(head, sizeof(uint32_t), 2, dump);
 }
 
-//per reduce: num, then the raw columns, the features, the predictions
+//per reduce: num, then the raw columns, the features, the prediction of each
 void ClPredictorsAbst::write_dump(const float* feats, const vector<double>& preds, uint32_t num)
 {
     assert(dump_raw.size() == (size_t)num * predgen::NUM_RAW);
-    assert(preds.size() == (size_t)num * num_models);
+    assert(preds.size() == (size_t)num);
     fwrite(&num, sizeof(uint32_t), 1, dump);
     fwrite(dump_raw.data(), sizeof(double), dump_raw.size(), dump);
     fwrite(feats, sizeof(float), (size_t)num * PRED_COLS, dump);

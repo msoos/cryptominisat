@@ -68,7 +68,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
         polarity_mode(PolarityMode::polarmode_automatic)
 
-        , pred_sort_by(3)
         , every_pred_reduce(10000)
         , dump_pred_distrib(0)
         , pred_cands(0)

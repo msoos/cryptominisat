@@ -64,29 +64,19 @@ if(FINAL_PREDICTOR)
     # the feature computation follows the best_features file
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py ${PRED_GEN_OPTS} ${PRED_FEATURES_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py ${PRED_FEATURES_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
         DEPENDS ${PRED_FEATURES_FILE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py
     )
     add_custom_target(pred_features ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h)
 
-    # the embedded models, one per tier of PRED_TIERS
-    string(REPLACE "," ";" PRED_TIERS_LIST "${PRED_TIERS}")
-    set(PRED_MODEL_FILES "")
-    foreach(tier ${PRED_TIERS_LIST})
-        add_custom_command(
-            OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_${tier}.cpp
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_${tier}.json ${CMAKE_CURRENT_BINARY_DIR}/pred_${tier}.cpp
-            DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_${tier}.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
-        )
-        list(APPEND PRED_MODEL_FILES ${CMAKE_CURRENT_BINARY_DIR}/pred_${tier}.cpp)
-    endforeach()
+    # the embedded model
+    set(PRED_MODEL_FILES ${CMAKE_CURRENT_BINARY_DIR}/pred_disc.cpp)
     add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_embedded_gen.cpp
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/embed_models.py -o ${CMAKE_CURRENT_BINARY_DIR}/pred_embedded_gen.cpp ${PRED_TIERS_LIST}
-        DEPENDS ${CRYPTOMS_SCRIPTS_DIR}/crystal/embed_models.py
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_disc.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_disc.json ${CMAKE_CURRENT_BINARY_DIR}/pred_disc.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_disc.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
-    list(APPEND PRED_MODEL_FILES ${CMAKE_CURRENT_BINARY_DIR}/pred_embedded_gen.cpp)
     add_custom_target(pred_models ALL DEPENDS ${PRED_MODEL_FILES})
 endif()
 

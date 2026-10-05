@@ -5,7 +5,7 @@
 # usage: run_corpus.sh <outdir> file1.cnf [file2.cnf ...]
 #   gathers <file>-dir for each (skipped if its frames exist), then
 #   learn.sh <outdir> <dirs>, then eval_corpus.sh <outdir> <files>
-# Knobs: those of setparams_ballofcrystal.sh (DUMPRATIO, tiers, FIXED...)
+# Knobs: those of setparams_ballofcrystal.sh (DUMPRATIO, FIXED...)
 
 set -e
 set -o pipefail

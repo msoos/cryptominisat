@@ -5,9 +5,9 @@
 # (eval_summary.py: geometric means with intervals, solved, PAR2, noise).
 #
 # usage: eval_corpus.sh <preddir> file1.cnf [file2.cnf ...]
-#   PRED_OPTS: extra options for the predictor runs, e.g. "--predsortby 0"
+#   PRED_OPTS: extra options for the predictor runs, e.g. "--predkeep 0"
 #   EVAL_OPTS: extra options for all runs, e.g. "--xor 0"
-#   EVAL_TABLES: which --predtables to run, default "000 111"
+#   EVAL_ANC: which --predanc to run (0 plain label, 1 ancestor), default "0 1"
 #   EVAL_SEEDS: solver seeds, every build runs with each. Default "0"
 #   EVAL_TIMEOUT: seconds (--maxtime), an unsolved run counts twice it in PAR2
 #   EVAL_NORMAL_CACHE: dir to keep the normal build's outputs in, reused
@@ -23,7 +23,7 @@ cd - > /dev/null
 mkdir -p "$PRED/eval"
 
 EVAL_SEEDS="${EVAL_SEEDS:-0}"
-EVAL_TABLES="${EVAL_TABLES:-000 111}"
+EVAL_ANC="${EVAL_ANC:-0 1}"
 TIMEOUT_OPT=""
 [[ -n "$EVAL_TIMEOUT" ]] && TIMEOUT_OPT="--maxtime $EVAL_TIMEOUT"
 
@@ -54,8 +54,8 @@ for f in "$@"; do
     echo "=== $(basename "$f")"
     for seed in $EVAL_SEEDS; do
         run normal "$seed" "$NORMAL_BIN" $EVAL_OPTS "$f"
-        for t in $EVAL_TABLES; do
-            run "pred$t" "$seed" "$PRED_BIN" --predtype xgb --predloc "$PRED" --predtiers "${TIERS// /,}" --predtables "$t" $EVAL_OPTS $PRED_OPTS "$f"
+        for t in $EVAL_ANC; do
+            run "pred$t" "$seed" "$PRED_BIN" --predloc "$PRED" --predanc "$t" $EVAL_OPTS $PRED_OPTS "$f"
         done
     done
 done

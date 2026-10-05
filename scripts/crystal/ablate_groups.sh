@@ -10,7 +10,7 @@
 #   train-dirs.txt / test-cnfs.txt: one path per line
 #   ABLATE_GROUPS="recency snapshot ..." limits the groups (default: all;
 #     not GROUPS, which is bash's own list of the user's group IDs)
-#   knobs of setparams_ballofcrystal.sh (TIERS, TARGET, FIXED ...) and of
+#   knobs of setparams_ballofcrystal.sh (TARGET, FIXED ...) and of
 #   eval_corpus.sh (EVAL_OPTS, EVAL_NORMAL_CACHE ...) apply
 # Needs build_pred/ configured: the xgboost paths are taken from its cache.
 # Each list costs a partial rebuild (2-3 min), the learning (minutes) and

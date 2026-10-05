@@ -7,7 +7,7 @@
 #
 # usage: gen_best_feats.sh <cldata-prefix> [outdir]
 #   e.g. gen_best_feats.sh mydir/data-min.db-cldata- feats-out
-#   reads <prefix><table>-<tier>-cut1-*-cut2-*-limit-*.dat
+#   reads <prefix><table>-disc-cut1-*-cut2-*-limit-*.dat
 #   ONLY=0.3 uses 30% of the rows
 #   XGB_DEPTH: tree depth, 5. xgboost's memory is features x tree nodes:
 #     depth 10 over the 4700 all_computed columns needs over 6GB
@@ -32,22 +32,20 @@ cd - > /dev/null
 mkdir -p "$OUT"
 git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
 
-for tier in ${TIERS:-disc}; do
-    for table in ${TABLES:-used_later used_later_anc}; do
-        for computed in ${COMPUTED:-no ratio all}; do
-            f=$(ls ${PREFIX}${table}-${tier}-cut1-*.dat | head -1)
-            if grep -q "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" 2>/dev/null; then
-                echo "Have $table $tier ${computed}_computed already"
-                continue
-            fi
-            echo "Doing $f ${computed}_computed"
-            "$SCRIPTDIR/cldata_predict.py" "$f" --tier "$tier" --table "$table" \
-                --regressor xgb --topfeats --features "${computed}_computed" --only "${ONLY:-1.0}" \
-                --objective "${XGB_OBJ:-squarederror}" --xboostmaxdepth "${XGB_DEPTH:-5}" \
-                --target "${TARGET:-count}" \
-                > "$OUT/output_${table}_${tier}_${computed}computed" 2>&1
-            grep -A 40 "impdf:" "$OUT/output_${table}_${tier}_${computed}computed" | head -42
-        done
+for table in ${TABLES:-used_later used_later_anc}; do
+    for computed in ${COMPUTED:-no ratio all}; do
+        f=$(ls ${PREFIX}${table}-disc-cut1-*.dat | head -1)
+        if grep -q "impdf:" "$OUT/output_${table}_${computed}computed" 2>/dev/null; then
+            echo "Have $table ${computed}_computed already"
+            continue
+        fi
+        echo "Doing $f ${computed}_computed"
+        "$SCRIPTDIR/cldata_predict.py" "$f" --table "$table" \
+            --regressor xgb --topfeats --features "${computed}_computed" --only "${ONLY:-1.0}" \
+            --objective "${XGB_OBJ:-squarederror}" --xboostmaxdepth "${XGB_DEPTH:-5}" \
+            --target "${TARGET:-count}" \
+            > "$OUT/output_${table}_${computed}computed" 2>&1
+        grep -A 40 "impdf:" "$OUT/output_${table}_${computed}computed" | head -42
     done
 done
 echo "Outputs in $OUT/"

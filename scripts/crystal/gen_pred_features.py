@@ -197,7 +197,7 @@ def check_scale_free(feat):
     deg = {c: d for c, d in scale_degree(ast.parse(feat, mode="eval")).items() if d != 0}
     if deg:
         raise ValueError("'%s' scales with the %s (%s): a tree model clamps it beyond the training "
-                         "runs. Divide it by another column of that scale, or --allow-absolute"
+                         "runs. Divide it by another column of that scale"
                          % (feat, " and ".join("%s %s" % (("run length" if c == "run" else "instance size"), "^%d" % d)
                                                for c, d in deg.items()), ", ".join(deg)))
 
@@ -237,13 +237,12 @@ def read_features(fname):
     return feats
 
 
-def generate(fname, out, allow_absolute=False):
+def generate(fname, out):
     feats = read_features(fname)
     used = set()
     body = []
     for i, feat in enumerate(feats):
-        if not allow_absolute:
-            check_scale_free(feat)
+        check_scale_free(feat)
         expr = to_cpp(ast.parse(feat, mode="eval"), used)
         body.append("    //%d: %s" % (i, feat))
         body.append("    { bool miss = false; const double v = %s;" % expr)
@@ -350,8 +349,6 @@ if __name__ == "__main__":
     parser.add_argument("features", nargs="?", help="best_features file")
     parser.add_argument("-o", "--out", default=None, help="output header, default stdout")
     parser.add_argument("--list-raw", action="store_true", help="print the raw columns the solver can compute")
-    parser.add_argument("--allow-absolute", action="store_true",
-                        help="accept features that scale with the run length or the instance size (see SCALE)")
     opts = parser.parse_args()
 
     if opts.list_raw:
@@ -362,8 +359,8 @@ if __name__ == "__main__":
         parser.error("need a best_features file")
     if opts.out:
         with open(opts.out, "w") as f:
-            feats, used = generate(opts.features, f, opts.allow_absolute)
+            feats, used = generate(opts.features, f)
     else:
-        feats, used = generate(opts.features, sys.stdout, opts.allow_absolute)
+        feats, used = generate(opts.features, sys.stdout)
     print("%d features over %d raw columns -> %s" % (len(feats), len(used), opts.out or "stdout"),
           file=sys.stderr)

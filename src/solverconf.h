@@ -91,7 +91,6 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
 
         //Predictor (FINAL_PREDICTOR) and data gathering (STATS_NEEDED)
-        uint32_t pred_sort_by; //reduce candidates sorted by: 0/1/2 one model's score, 3 their sum
         unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
         int      pred_cands; //0: reduce candidates as the normal build, 1: + the 'used' ones, 2: + tier1-keep
@@ -272,9 +271,7 @@ class DLL_PUBLIC SolverConf
         #ifdef FINAL_PREDICTOR
         //Predictor system
         std::string pred_conf_location;
-        std::string pred_tables = "000";
-        std::string pred_tiers = "disc"; //one model each, comma separated, see --predtiers
-        std::string predictor_type = "xgb";
+        int pred_anc = 0; //with --predloc: the model of the ancestor label
         std::string pred_dump_fname;
         #endif
 

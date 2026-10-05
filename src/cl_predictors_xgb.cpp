@@ -45,10 +45,9 @@ ClPredictorsXGB::ClPredictorsXGB()
 
 void ClPredictorsXGB::new_handle()
 {
-    assert(handles.size() < PRED_MAX_MODELS);
-    handles.push_back(nullptr);
-    safe_xgboost(XGBoosterCreate(0, 0, &handles.back()))
-    safe_xgboost(XGBoosterSetParam(handles.back(), "nthread", "1"))
+    assert(handle == nullptr);
+    safe_xgboost(XGBoosterCreate(0, 0, &handle))
+    safe_xgboost(XGBoosterSetParam(handle, "nthread", "1"))
 }
 
 //a model trained on another feature list would silently predict garbage:
@@ -56,7 +55,7 @@ void ClPredictorsXGB::new_handle()
 void ClPredictorsXGB::check_num_features(const std::string& what)
 {
     bst_ulong n = 0;
-    safe_xgboost(XGBoosterGetNumFeature(handles.back(), &n))
+    safe_xgboost(XGBoosterGetNumFeature(handle, &n))
     if (n != (bst_ulong)PRED_COLS) {
         std::cerr << "ERROR: the model " << what << " has " << n
             << " features, this binary computes " << PRED_COLS
@@ -65,7 +64,7 @@ void ClPredictorsXGB::check_num_features(const std::string& what)
     }
     bst_ulong len = 0;
     const char** names = nullptr;
-    safe_xgboost(XGBoosterGetStrFeatureInfo(handles.back(), "feature_name", &len, &names))
+    safe_xgboost(XGBoosterGetStrFeatureInfo(handle, "feature_name", &len, &names))
     if (len == 0) return; //trained without names, the count is all there is
     for(bst_ulong i = 0; i < len && i < (bst_ulong)PRED_COLS; i++) {
         if (std::string(names[i]) != predgen::feature_names[i]) {
@@ -81,11 +80,10 @@ void ClPredictorsXGB::check_num_features(const std::string& what)
 //the training ranges and provenance the model carries as attributes, if any
 void ClPredictorsXGB::read_attrs()
 {
-    if (!feature_lo.empty() || !provenance.empty()) return; //the first model's
     auto attr = [&](const char* name) -> std::string {
         const char* out = nullptr;
         int ok = 0;
-        safe_xgboost(XGBoosterGetAttr(handles.back(), name, &out, &ok))
+        safe_xgboost(XGBoosterGetAttr(handle, name, &out, &ok))
         return ok ? std::string(out) : std::string();
     };
     auto nums = [](const std::string& str) {
@@ -110,45 +108,25 @@ void ClPredictorsXGB::read_attrs()
 
 ClPredictorsXGB::~ClPredictorsXGB()
 {
-    for(auto& h: handles) {
-        XGBoosterFree(h);
-    }
+    if (handle) XGBoosterFree(handle);
 }
 
-int ClPredictorsXGB::load_models(const vector<std::string>& fnames)
+void ClPredictorsXGB::load_model(const std::string& fname)
 {
     NoFPTraps no_traps;
-    for(const auto& f: fnames) {
-        new_handle();
-        safe_xgboost(XGBoosterLoadModel(handles.back(), f.c_str()))
-        check_num_features(f);
-        read_attrs();
-    }
-    num_models = handles.size();
-    return 1;
+    new_handle();
+    safe_xgboost(XGBoosterLoadModel(handle, fname.c_str()))
+    check_num_features(fname);
+    read_attrs();
 }
 
-int ClPredictorsXGB::load_models_from_buffers(const vector<std::string>& tiers)
+void ClPredictorsXGB::load_embedded_model()
 {
     NoFPTraps no_traps;
-    for(const auto& t: tiers) {
-        const EmbeddedModel* m = nullptr;
-        for(unsigned i = 0; i < embedded_models_num; i++) {
-            if (t == embedded_models[i].tier) m = &embedded_models[i];
-        }
-        if (m == nullptr) {
-            std::cerr << "ERROR: no model for tier '" << t << "' is compiled in, only:";
-            for(unsigned i = 0; i < embedded_models_num; i++) std::cerr << " " << embedded_models[i].tier;
-            std::cerr << std::endl;
-            return 1;
-        }
-        new_handle();
-        safe_xgboost(XGBoosterLoadModelFromBuffer(handles.back(), m->data, m->len));
-        check_num_features("compiled in for tier " + t);
-        read_attrs();
-    }
-    num_models = handles.size();
-    return 0;
+    new_handle();
+    safe_xgboost(XGBoosterLoadModelFromBuffer(handle, predictor_disc_json, predictor_disc_json_len));
+    check_num_features("compiled in");
+    read_attrs();
 }
 
 void ClPredictorsXGB::predict_all(
@@ -162,25 +140,21 @@ void ClPredictorsXGB::predict_all(
     }
 
     bst_ulong out_len;
-    for(uint32_t i = 0; i < num_models; i++) {
-        safe_xgboost(XGBoosterPredict(
-            handles[i],
-            dmat,
-            0,  //0: normal prediction
-            0,  //use all trees
-            0,  //do not use for training
-            &out_len,
-            &out_result[i]
-        ))
-        assert(out_len == num);
-    }
+    safe_xgboost(XGBoosterPredict(
+        handle,
+        dmat,
+        0,  //0: normal prediction
+        0,  //use all trees
+        0,  //do not use for training
+        &out_len,
+        &out_result
+    ))
+    assert(out_len == num);
 }
 
 void ClPredictorsXGB::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
-    for(uint32_t i = 0; i < PRED_MAX_MODELS; i++) {
-        extdata.pred_use[i] = i < num_models ? (double)out_result[i][at] : 0;
-    }
+    extdata.pred_use = (double)out_result[at];
 }
 
 void CMSat::ClPredictorsXGB::finish_all_predict()

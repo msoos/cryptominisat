@@ -23,13 +23,12 @@ export MAXDUMPRATIO="${MAXDUMPRATIO:-0.03}"
 export CLLOCK="${CLLOCK:-1.0}"
 export EVERYPRED="${EVERYPRED:-10000}" # conflicts between data dumps
 
-# The label 'disc': the future uses discounted, halving every HALFLIFE
-# reduces, over two half-lives
-export TIERS="${TIERS:-disc}"
+# The label: the future uses discounted, halving every HALFLIFE reduces,
+# over two half-lives
 export HALFLIFE="${HALFLIFE:-4}"
 
 # Sampling and learning
-export FIXED="${FIXED:-3000}"          # max rows per strata per tier/table
+export FIXED="${FIXED:-3000}"          # max rows per strata per table
 export EVAL_REDUCES="${EVAL_REDUCES:-10}"       # the fair frame: this many reduces,
 export EVAL_PER_REDUCE="${EVAL_PER_REDUCE:-3000}" # at most this many clauses of each
 export cut1="${cut1:-3.0}"
@@ -45,6 +44,6 @@ export TARGET="${TARGET:-rel}"           # count, or rel: rank among the clauses
 export XGB_WEIGHTS="${XGB_WEIGHTS:-family}" # none, strata, instance, family (see cldata_predict.py)
 export EXTRA_GEN_PANDAS_OPTS="${EXTRA_GEN_PANDAS_OPTS:-}"
 
-export STATS_OPTS="${STATS_OPTS:-}"       # e.g. "--predtype xgb --predloc DIR" with a stats+predictor build
+export STATS_OPTS="${STATS_OPTS:-}"       # e.g. "--predloc DIR" with a stats+predictor build
 
 export NOBUF="stdbuf -oL -eL "

@@ -84,11 +84,8 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--scc", "Find equivalent literals through SCC and replace them", true}, conf.do_find_and_replace_eq_lits);
     #ifdef FINAL_PREDICTOR
     f({"--predloc", "Directory with predictor-<table>-<tier>-<type>.json (see --predtables), empty = use built-in models"}, conf.pred_conf_location);
-    f({"--predtype", "Type of predictor. Supported: xgb"}, conf.predictor_type);
-    f({"--predtables", "Per model of --predtiers: 0 = used_later, 1 = used_later_anc. 000 = normal for all, 111 = ancestor for all"}, conf.pred_tables);
-    f({"--predtiers", "The models, comma separated, at most 3. 'disc' = the discounted future use, the one model there is. With --predloc the files are predictor-<table>-<tier>-<type>.json, without it the tiers must be compiled in (cmake PRED_TIERS)"}, conf.pred_tiers);
+    f({"--predanc", "With --predloc: 0 = load predictor-used_later-disc-xgb.json (the plain label), 1 = predictor-used_later_anc-disc-xgb.json (the ancestor label)"}, conf.pred_anc);
     f({"--preddump", "Write the raw columns, features and predictions of every reduce to this file, for scripts/crystal/check_pred_features.py"}, conf.pred_dump_fname);
-    f({"--predsortby", "Reduce removes the candidates with the lowest score: 0/1/2 = the first/second/third model of --predtiers alone, 3 = the sum of all models"}, conf.pred_sort_by);
     f({"--predcands", "What the predictor ranks at reduce. 0 = the candidates of the normal build, 1 = also the clauses the normal build keeps for being used, 2 = also the ones it keeps forever. The number removed is that of the normal build"}, conf.pred_cands);
     f({"--predthresh", "If > 0, reduce removes the candidates whose predicted use (see --predsortby) is below this, but at least half and at most twice the number the normal build would remove. 0: the number of the normal build"}, conf.pred_thresh);
     f({"--predkeep", "1: the predicted score decides the tiers at reduce instead of glue: the --predkeept1 % best-scored learnt clauses are kept while 'used' lasts (tier1), the next ones up to --predkeept2 % only if used since the last reduce (tier2), the rest are candidates. 2: the same, but as many tier1/tier2 clauses as the glue rule would make on this instance, the score only picks which. Predicts for every learnt clause at every reduce. 0: kissat's glue tiers. Default 2"}, conf.pred_keep);

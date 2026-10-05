@@ -82,19 +82,17 @@ class QueryFill (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def delete_and_create_used_laters(self, tiers=None):
-        tiers = tiers or ALL_TIERS
+    def delete_and_create_used_laters(self):
         tables = ["used_later", "used_later_anc"]
-        for tier in tiers:
-            for table in tables:
-                q = """
-                    DROP TABLE IF EXISTS `{table}_{tier}`;
-                """
-                self.c.execute(q.format(tier=tier, table=table))
+        for table in tables:
+            q = """
+                DROP TABLE IF EXISTS `{table}_disc`;
+            """
+            self.c.execute(q.format(table=table))
 
         # Create and fill used_later_X tables
         q_create = """
-        create table `{table}_{tier}` (
+        create table `{table}_disc` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later` float,
@@ -105,20 +103,18 @@ class QueryFill (QueryHelper):
         # "rel": the share of the clauses at the same reduce that are used
         # less, 0..1. What reduce ranks by, and the same scale on every instance
 
-        for tier in tiers:
-            for table in tables:
-                self.c.execute(q_create.format(tier=tier, table=table))
+        for table in tables:
+            self.c.execute(q_create.format(table=table))
 
         idxs = """
-        create index `{table}_{tier}_idx3` on `{table}_{tier}` (`used_later`);
-        create index `{table}_{tier}_idx1` on `{table}_{tier}` (`clauseID`, `rdb0conflicts`);
-        create index `{table}_{tier}_idx2` on `{table}_{tier}` (`clauseID`, `rdb0conflicts`, `used_later`);"""
+        create index `{table}_disc_idx3` on `{table}_disc` (`used_later`);
+        create index `{table}_disc_idx1` on `{table}_disc` (`clauseID`, `rdb0conflicts`);
+        create index `{table}_disc_idx2` on `{table}_disc` (`clauseID`, `rdb0conflicts`, `used_later`);"""
 
         t = time.time()
-        for tier in tiers:
-            for table in tables:
-                for l in idxs.format(tier=tier, table=table).split('\n'):
-                    self.c.execute(l)
+        for table in tables:
+            for l in idxs.format(table=table).split('\n'):
+                self.c.execute(l)
 
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
@@ -149,12 +145,11 @@ class QueryFill (QueryHelper):
     # used_later_X is summed from used_clauses, used_later_anc_X from
     # used_clauses_anc (uses of the clause AND of its descendants).
     # A row counts only if the clause stayed in the solver for the horizon
-    def fill_used_later_X(self, tier, halflife, table="used_later"):
+    def fill_used_later(self, halflife, table="used_later"):
         used_clauses = "used_clauses" if table == "used_later" else "used_clauses_anc"
 
         # the use is discounted by how far away it is, halving every
         # HALFLIFE reduces, counted for two half-lives
-        assert tier == "disc"
         self.add_reduce_time(2*halflife)
         use = "sum(ucl.weight * pow(0.5, (ucl.used_at_rt - rr.idx)/%d.0))" % halflife
         horizon = "rr.horizon_confl"
@@ -163,7 +158,7 @@ class QueryFill (QueryHelper):
         #       discount is 0.5 (as per fix_up_frat), so a child is 0.5, a grand-child
         #       is 0.25 etc. Below 0.05 we don't care and it's a 0.
         q_fill = """
-        insert into {table}_{tier}
+        insert into {table}_disc
         (
         `clauseID`,
         `rdb0conflicts`,
@@ -199,12 +194,12 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = q_fill.format(
-            tier=tier, used_clauses=used_clauses, use=use,
+            used_clauses=used_clauses, use=use,
             horizon=horizon, table=table)
         self.c.execute(q)
 
-        q_fix_null = "update {table}_{tier} set used_later = 0 where used_later is NULL".format(
-            tier=tier, table=table)
+        q_fix_null = "update {table}_disc set used_later = 0 where used_later is NULL".format(
+            table=table)
         self.c.execute(q_fix_null)
 
         # percent_rank: ties all get the rank of their first row, so the
@@ -214,44 +209,44 @@ class QueryFill (QueryHelper):
         create temp table ranked as
             select rowid as rid,
             percent_rank() over (partition by rdb0conflicts order by used_later) as r
-            from {table}_{tier}""".format(tier=tier, table=table))
+            from {table}_disc""".format(table=table))
         self.c.execute("create index ranked_idx on ranked (rid)")
         self.c.execute("""
-        update {table}_{tier} set rel = (select r from ranked where ranked.rid = {table}_{tier}.rowid)
-        """.format(tier=tier, table=table))
+        update {table}_disc set rel = (select r from ranked where ranked.rid = {table}_disc.rowid)
+        """.format(table=table))
         self.c.execute("drop table ranked")
 
 
-        q_num = "select count(*) from {table}_{tier}".format(tier=tier, table=table)
+        q_num = "select count(*) from {table}_disc".format(table=table)
         self.c.execute(q_num)
         rows = self.c.fetchall()
         for row in rows:
             num = row[0]
 
         if table == "used_later" and num == 0:
-            print("WARNING: number of rows in {table}_{tier} is 0: the run is shorter than "
-                  "two half-lives, there will be no frame".format(tier=tier, table=table))
+            print("WARNING: number of rows in {table}_disc is 0: the run is shorter than "
+                  "two half-lives, there will be no frame".format(table=table))
 
 
-        print("%s_%s filled T: %-3.2f s -- num rows: %d" %
-              (table, tier, time.time() - t, num))
+        print("%s_disc filled T: %-3.2f s -- num rows: %d" %
+              (table, time.time() - t, num))
 
-    def fill_used_later_X_perc_fit(self, tier, table):
-        print("Filling percentile_fit for {table}_{tier}".format(tier=tier, table=table))
+    def fill_used_later_perc_fit(self, table):
+        print("Filling percentile_fit for {table}_disc".format(table=table))
 
         q = """
-        update {table}_{tier}
+        update {table}_disc
         set percentile_fit = (
             select max({table}_percentiles.percentile)
             from {table}_percentiles
             where
-            {table}_percentiles.type_of_dat="{tier}"
+            {table}_percentiles.type_of_dat="disc"
             and {table}_percentiles.percentile_descr="top_non_zero"
-            and {table}_percentiles.val >= {table}_{tier}.used_later);
+            and {table}_percentiles.val >= {table}_disc.used_later);
         """
         t = time.time()
-        self.c.execute(q.format(tier=tier, table=table))
-        print("used_later_%s percentile filled T: %-3.2f s" % (tier, time.time() - t))
+        self.c.execute(q.format(table=table))
+        print("%s_disc percentile filled T: %-3.2f s" % (table, time.time() - t))
 
 
 
@@ -299,15 +294,9 @@ def _flush_pending(df):
     _pending = None
     return df
 
-# the label: 'disc', the discounted sum of the future uses (see fill_used_later_X)
-ALL_TIERS = ["disc"]
-
-
-def add_tier_options(parser):
-    parser.add_option("--tiers", default="disc", type=str, dest="tiers",
-                      help="the labels to make. Default: %default")
+def add_label_options(parser):
     parser.add_option("--halflife", default=4, type=int, dest="halflife",
-                      help="disc: a use this many reduces away counts half. Default: %default")
+                      help="a use this many reduces away counts half. Default: %default")
 
 
 def helper_divide(dividend, divisor, df, features, verb, name=None):

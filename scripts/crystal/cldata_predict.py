@@ -19,11 +19,11 @@
 # 02110-1301, USA.
 
 # Trains one xgboost model on one frame and saves it as
-# predictor-<table>-<tier>-xgb.json; prints the squared error, the ranking
+# predictor-<table>-disc-xgb.json; prints the squared error, the ranking
 # quality against glue/size and the oracle, and (--topfeats) the feature
 # importance ranking that gen_best_feats.sh/pick_features.py use.
 #
-# usage: cldata_predict.py frame.dat --tier disc --table used_later --features best_only
+# usage: cldata_predict.py frame.dat --table used_later --features best_only
 #            --bestfeatfile best_features.txt --target rel --objective squarederror
 #            --xgboostestimators 40 --xboostmaxdepth 5 --basedir <where the model goes>
 # pylint: disable=invalid-name,line-too-long,too-many-locals,consider-using-sys-exit
@@ -113,7 +113,7 @@ class Learner:
         # these are needed for prediction/later checks, so let's add them in
         #       if they are not already in the features
         # the ranking quality is always on the use counts, whatever is learnt
-        count_label = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
+        count_label = "x.{table}_disc".format(table=options.table)
         extra_feats = [to_predict]
         for missing_needed in ["rdb0.glue", "rdb0.dump_no", "rdb0.size", "rdb0.used", count_label]:
             if missing_needed not in features and missing_needed not in extra_feats:
@@ -205,8 +205,8 @@ class Learner:
             if options.regressor == "tree":
                 helper.output_to_classical_dot(
                     clf, features,
-                    fname="{name}-{table}-{tier}.dot".format(
-                        name=options.dot, tier=options.tier, table=options.table))
+                    fname="{name}-{table}-disc.dot".format(
+                        name=options.dot, table=options.table))
 
             elif options.regressor == "xgb":
                 dot_data = xgb.to_graphviz(booster=clf, num_trees=9)
@@ -218,8 +218,8 @@ class Learner:
                 exit(-1)
 
         if options.basedir:
-            fname_pred_out = options.basedir + "/predictor-{table}-{tier}-{regr}.json".format(
-                tier=options.tier, table=options.table, regr=options.regressor)
+            fname_pred_out = options.basedir + "/predictor-{table}-disc-{regr}.json".format(
+                table=options.table, regr=options.regressor)
             if options.regressor == "xgb":
                 booster = clf_all.get_booster()
                 self.set_provenance(booster, df, features)
@@ -302,8 +302,7 @@ class Learner:
             # remove features that would be "cheating" or useless
             torem = []
             for table in ["used_later", "used_later_anc"]:
-                for tier in helper.ALL_TIERS:
-                    torem. append("x.{table}_{tier}".format(tier=tier, table=table))
+                torem. append("x.{table}_disc".format(table=table))
 
             torem.extend([
                 "x.class",
@@ -324,7 +323,7 @@ class Learner:
         else:
             features = helper.get_features(options.best_features_fname)
 
-        to_predict = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
+        to_predict = "x.{table}_disc".format(table=options.table)
         if options.target == "rel":
             to_predict += "_rel"
         self.one_regressor(features, to_predict)
@@ -387,8 +386,6 @@ if __name__ == "__main__":
                         dest="xgboost_subsample", help="Subsample xgboost on each iteration")
 
     # which one to generate
-    parser.add_argument("--tier", default=None, type=str,
-                        dest="tier", help="Tier to do")
     parser.add_argument("--table", default="used_later", type=str,
                         dest="table", help="Table to do")
     parser.add_argument("--weights", type=str, default="family", choices=["none", "strata", "instance", "family"],
@@ -408,10 +405,6 @@ if __name__ == "__main__":
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
     if not os.path.isfile(options.fname):
         print("ERROR: '%s' is not a file" % options.fname)
-        exit(-1)
-
-    if options.tier is None:
-        print("ERROR: you must set --tier, exiting")
         exit(-1)
 
     if options.table is None:

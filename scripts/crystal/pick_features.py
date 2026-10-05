@@ -20,7 +20,7 @@
 
 # Picks a best_features file from the importance rankings that
 # gen_best_feats.sh printed: sums each feature's importance over all
-# (table, tier) runs, keeps only features the solver can compute (see
+# table runs, keeps only features the solver can compute (see
 # gen_pred_features.py --list-raw), and writes the top N.
 #
 # usage: pick_features.py -n 30 -o best_features.txt <gen_best_feats outdir>
