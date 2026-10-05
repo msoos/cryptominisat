@@ -58,3 +58,5 @@ xnf-tests/
 *.cnf-dir/
 *.cnf.gz-dir/
 /*.cnf.gz
+# built by fix_up_frat.py
+scripts/crystal/frat_uses

@@ -21,7 +21,7 @@
 #   1. run the STATS build -> SQLite DB + FRAT proof
 #   2. trim the proof and mark which clauses were used, when
 #   3. clean, check, sample, denormalise the data
-#   4. learn the short/long/forever xgboost predictors
+#   4. learn the xgboost predictors
 #   5. run the FINAL_PREDICTOR build with them and print a comparison
 #
 # usage: ballofcrystal.sh [--skip-solve] [--skip-learn] [--gather-only] file.cnf
@@ -65,7 +65,7 @@ echo "--> work dir:                 $DIR"
 echo "--> stats binary:             $STATS_BIN"
 echo "--> predictor binary:         $PRED_BIN"
 echo "--> dump ratio / lock ratio:  $DUMPRATIO / $CLLOCK"
-echo "--> tiers:                    $TIERS (halflife $HALFLIFE, horizons $SHORT / $LONG / $FOREVER)"
+echo "--> tiers:                    $TIERS (halflife $HALFLIFE reduces)"
 echo "--> rows per strata:          $FIXED"
 
 for f in "$STATS_BIN" "$PRED_BIN" "$bestf"; do
@@ -82,6 +82,17 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
     mkdir -p "$DIR"
     cd "$DIR"
 
+    if [[ "$DUMPRATIO" == "auto" ]]; then
+        if [[ -z "$CONFL" ]]; then
+            stage "normal build, for the conflict count"
+            "$NORMAL_BIN" --xor 0 --zero-exit-status "$FNAME" > cms-count-run.out 2>&1 || true
+            CONFL=$(grep -m1 "^c conflicts" cms-count-run.out | awk '{print $4}')
+        fi
+        DUMPRATIO=$(awk -v c="${CONFL:-0}" -v t="$TRACKED" -v m="$MAXDUMPRATIO" \
+            'BEGIN { r = (c > 0) ? t/c : m; if (r > m) r = m; printf "%.4f", r }')
+        echo "--> conflicts $CONFL, dump ratio $DUMPRATIO"
+    fi
+
     stage "solving with STATS build"
     # --xor 0: no XOR reasoning, so the proof is plain resolution
     $NOBUF "$STATS_BIN" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
@@ -96,7 +107,8 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
     fi
 
     stage "check_rawdb"
-    "$SCRIPTDIR/check_rawdb.py" data.db-raw --horizon "$FOREVER" --dumpratio "$DUMPRATIO" --proof data.frat | tee check_rawdb.out-stage
+    "$SCRIPTDIR/check_rawdb.py" data.db-raw --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
+        --dumpratio "$DUMPRATIO" --proof data.frat | tee check_rawdb.out-stage
 
     # the solver's FRAT has full hint chains, no elaboration needed.
     # Optionally check the proof anyway.
@@ -115,7 +127,7 @@ fi
 # 2-4. Fill in used_clauses, clean, check, sample, learn
 ########################
 if [[ $SKIP_LEARN -eq 0 ]]; then
-    rm -f data.db data-min.db data-min.db-cldata-* predictor-*.json *.out-stage
+    rm -f data.db data-min.db data-min.db-cldata-* data-min.db-evaldata-* predictor-*.json *.out-stage
     if [[ ! -f data.frat ]]; then
         echo "ERROR: data.frat is gone (deleted once used unless KEEP_FRAT=1), re-run without --skip-solve"
         exit 255
@@ -135,13 +147,16 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
 
     stage "sample_data"
     cp data.db data-min.db
-    "$SCRIPTDIR/sample_data.py" --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
+    "$SCRIPTDIR/sample_data.py" \
         --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
+        --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" \
+        --evalreduces "$EVAL_REDUCES" --evalperreduce "$EVAL_PER_REDUCE" \
         data-min.db | tee sample_data.out-stage
+    # the full labelled DB is only needed for the sampling
+    [[ "$KEEP_FRAT" == "1" ]] || rm -f data.db
 
     stage "cldata_gen_pandas"
     "$SCRIPTDIR/cldata_gen_pandas.py" data-min.db \
-        --short "$SHORT" --long "$LONG" --forever "$FOREVER" \
         --tiers "${TIERS// /,}" --halflife "$HALFLIFE" \
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} \
         | tee cldata_gen_pandas.out-stage
@@ -150,7 +165,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
         exit 255
     fi
     stage "check_frames"
-    "$SCRIPTDIR/check_frames.py" -f "$bestf" data-min.db-cldata-*.dat | tee check_frames.out-stage | grep -E "FAIL|failed"
+    "$SCRIPTDIR/check_frames.py" -f "$bestf" data-min.db-cldata-*.dat data-min.db-evaldata-*.dat | tee check_frames.out-stage | grep -E "FAIL|failed"
     if [[ $GATHER_ONLY -eq 1 ]]; then
         echo "Done, --gather-only: frames are in $DIR/data-min.db-cldata-*.dat"
         exit 0
@@ -160,11 +175,12 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     for tier in $TIERS; do
         for table in used_later used_later_anc; do
             f="data-min.db-cldata-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}.dat"
-            if [[ ! -f "$f" ]]; then echo "no frame for $table $tier (run shorter than the horizon), no model"; continue; fi
+            if [[ ! -f "$f" ]]; then echo "no frame for $table $tier (run shorter than two half-lives), no model"; continue; fi
             $NOBUF "$SCRIPTDIR/cldata_predict.py" "$f" \
                 --tier "$tier" --table "$table" --features best_only --regressor xgb \
                 --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
                 --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
+                --weights "$XGB_WEIGHTS" --evalframe "data-min.db-evaldata-${table}-${tier}.dat" \
                 --basedir . --bestfeatfile "$bestf" \
                 > "cldata_predict_${tier}-${table}.out-stage" 2>&1
             grep -E "Mean squared error|==> Saved" "cldata_predict_${tier}-${table}.out-stage" | head -2

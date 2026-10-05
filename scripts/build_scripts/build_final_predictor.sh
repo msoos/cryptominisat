@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 # FINAL_PREDICTOR=ON build: the solver uses the crystalball xgboost models.
-# Needs xgboost/c_api.h and libxgboost.so (the pip package's lib works),
-# Python3 + NumPy dev for --predtype py. Defaults to an xgboost checkout next to
-# sat_solvers/; override with XGBOOST_INCLUDE_DIR=... XGBOOST_LIBRARY=...
-# src/predict/predictor_{short,long,forever}.json are embedded as defaults.
+# Needs xgboost/c_api.h and libxgboost.so (the pip package's lib works).
+# Defaults to an xgboost checkout next to sat_solvers/; override with XGBOOST_INCLUDE_DIR=... XGBOOST_LIBRARY=...
+# src/predict/predictor_disc.json is embedded as the default.
 
 set -euo pipefail
 

@@ -18,18 +18,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# Fills the used_later_<tier> label tables from used_clauses, computes
-# their percentiles (the strata cldata_gen_pandas.py samples by) and
-# shrinks the DB to the rows that will be sampled, so the frame queries
-# are fast.
+# Fills the used_later_<tier> label tables (with the rank among ALL the
+# tracked clauses of the reduce) on the full DB, then picks the rows the
+# frames are made of and shrinks the DB to them:
+# - frame_rows: the training sample. Cells of label stratum (top cut1 %
+#   of the used rows, up to cut2 %, the rest) x age (dump_no 0, 1, 2-5,
+#   more), at most limit/4 rows of each, picked in a fixed pseudo-random
+#   order. weight = rows in the cell / rows picked: what a row stands for
+# - eval_rows: a fair sample, for measuring. Evenly spaced reduces, up to
+#   --evalperreduce rows of each, no strata
 #
-# usage: sample_data.py --tiers disc --halflife 30000 [--short N --long N --forever N] data-min.db
+# usage: sample_data.py --tiers disc --halflife 4
+#           --cut1 3.0 --cut2 25.0 --limit 3000 data-min.db
 from __future__ import print_function
 import sqlite3
 import optparse
 import time
 import os.path
 import helper
+
+TABLES = ["used_later", "used_later_anc"]
 
 
 class QueryDatRem(helper.QueryHelper):
@@ -61,7 +69,6 @@ class QueryDatRem(helper.QueryHelper):
                 self.c.execute(q.format(table=table))
 
 
-    # "tier" here is "short", "long", or "forever"
     def get_all_percentile_X(self, tier):
         t = time.time()
         for table in ["used_later", "used_later_anc"]:
@@ -69,7 +76,7 @@ class QueryDatRem(helper.QueryHelper):
                 tier=tier, table=table))
             self.c.execute("select count(*) from {table}_{tier}".format(tier=tier, table=table))
             if self.c.fetchone()[0] == 0:
-                print("   -> empty (run shorter than the horizon), no percentiles")
+                print("   -> empty (run shorter than two half-lives), no percentiles")
                 continue
 
             q2 = """
@@ -129,154 +136,6 @@ class QueryDatRem(helper.QueryHelper):
         for row in rows:
             print(" -> %s %s -- %s : %s" %(row[0], row[1], row[2], row[3]))
 
-
-    def create_indexes1(self):
-        print("Recreating indexes...")
-        t = time.time()
-        queries = """
-        create index `idxclid31` on `clause_stats` (`clauseID`);
-        create index `idxclid32` on `reduceDB` (`clauseID`);
-        create index `idxclid33` on `sum_cl_use` (`clauseID`);
-        create index `idxclid34` on `used_clauses` (`clauseID`);
-        """
-
-        for q in queries.split("\n"):
-            self.c.execute(q)
-
-        print("Created indexes needed T: %-3.2f s"% (time.time() - t))
-
-    def recreate_used_ID_table(self):
-        q = """
-        DROP TABLE IF EXISTS `used_cl_ids`;
-        """
-        self.c.execute(q)
-
-        q = """
-        CREATE TABLE `used_cl_ids` (
-          `clauseID` int(20) NOT NULL
-        );
-        """
-        self.c.execute(q)
-
-        q = """
-        create index `idxclid30` on `used_cl_ids` (`clauseID`);
-        """
-        self.c.execute(q)
-
-    def insert_into_used_cls_ids_from_clstats(self, min_used, limit, table):
-        min_used = int(min_used)
-
-        t = time.time()
-        val = int()
-        q = """
-        insert into used_cl_ids
-        select
-        clauseID from {table}
-        where
-        num_used >= {min_used}
-        order by ((clauseID + {min_used}) * 2654435761) % 4294967296 limit {limit}
-        """.format(
-            min_used=min_used,
-            limit=int(limit),
-            table=table)
-
-        self.c.execute(q)
-        print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
-              % (min_used, time.time() - t))
-
-    # inserts ratio that's slanted towards >=1 use
-    def fill_used_cl_ids_table(self, fair, limit):
-        t = time.time()
-        for table in ["sum_cl_use"]:
-            if not fair:
-                self.insert_into_used_cls_ids_from_clstats(min_used=100000, limit=limit/20, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=50000, limit=limit/10, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=10000, limit=limit/10, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=1000, limit=limit/10, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=100, limit=limit/10, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=limit/5, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=limit/4, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=limit/3, table=table)
-                self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=limit/2, table=table)
-            self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit/2, table=table)
-
-        q = """
-        select count()
-        from used_cl_ids, sum_cl_use
-        where
-        used_cl_ids.clauseID = sum_cl_use.clauseID
-        and sum_cl_use.num_used > 0
-        """
-        ret = self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        good_ids = rows[0][0]
-
-        q = """
-        select count()
-        from used_cl_ids, sum_cl_use
-        where
-        used_cl_ids.clauseID = sum_cl_use.clauseID
-        and sum_cl_use.num_used = 0
-        """
-        ret = self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        bad_ids = rows[0][0]
-
-        print("IDs in used_cl_ids that are 'good' (sum_cl_use.num_used > 0) : %d" % good_ids)
-        print("IDs in used_cl_ids that are 'bad'  (sum_cl_use.num_used = 0) : %d" % bad_ids)
-        print("   T: %-3.2f s" % (time.time() - t))
-
-    def print_idxs(self):
-
-        q = """
-        SELECT * FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-
-        if options.verbose:
-            print("Using indexes: ")
-            for row in rows:
-                print("-> index:", row)
-
-    def create_used_clauses_red(self):
-        for table in ["used_clauses", "used_clauses_anc"]:
-            t = time.time()
-            q = """
-            CREATE TABLE {table}_red AS
-            SELECT * FROM {table} WHERE clauseID IN (SELECT clauseID from used_cl_ids );
-            """.format(table=table)
-            self.c.execute(q)
-            print("Filtered into %s_red T: %-3.2f s" % (table, time.time() - t))
-
-    def drop_used_clauses_red(self):
-        for table in ["used_clauses", "used_clauses_anc"]:
-            self.c.execute("drop TABLE if exists %s_red;" % table)
-
-    def filter_tables_of_ids(self):
-
-        queries = """
-        drop index if exists idxclid34;
-        drop index if exists idxclid32;
-        """
-        for q in queries.split("\n"):
-            self.c.execute(q)
-
-        self.print_idxs()
-
-        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses_anc",
-                  "used_clauses", "cl_last_in_solver"]
-        q = """
-        DELETE FROM {table} WHERE clauseID NOT IN
-        (SELECT clauseID from used_cl_ids );"""
-
-        for table in tables:
-            t = time.time()
-            self.c.execute(q.format(table=table))
-            print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
 
     def print_sum_cl_use_distrib(self):
         q = """
@@ -367,111 +226,105 @@ class QueryDatRem(helper.QueryHelper):
 
         print("Tables seem OK")
 
-    def insert_into_only_keep_rdb(self, min_used_later, limit, tier, table):
-        limit = int(limit)
+    def create_row_tables(self):
+        for t in ["frame_rows", "eval_rows"]:
+            self.c.execute("drop table if exists %s" % t)
+            self.c.execute("""create table %s (
+                `tier` string NOT NULL,
+                `tbl` string NOT NULL,
+                `clauseID` bigint(20) NOT NULL,
+                `conflicts` bigint(20) NOT NULL,
+                `weight` float NOT NULL)""" % t)
+        self.c.execute("create index `idxrdbsamp` on `reduceDB` (`clauseID`, `conflicts`)")
+
+    def get_cut(self, tier, table, perc):
+        self.c.execute("""select val from {table}_percentiles where type_of_dat = '{tier}'
+            and percentile_descr = 'top_non_zero' and percentile = {perc}""".format(
+                tier=tier, table=table, perc=perc))
+        row = self.c.fetchone()
+        return None if row is None else row[0]
+
+    def pick_frame_rows(self, tier, table):
+        cuts = [self.get_cut(tier, table, p) for p in [0.0, options.cut1, options.cut2]]
+        if None in cuts:
+            print("WARNING: no clause is ever used in {table}_{tier}, no rows".format(tier=tier, table=table))
+            return
+        # top cut1%, cut1..cut2%, the rest with the never-used
+        stratas = [
+            "ul.used_later > %r" % cuts[1],
+            "ul.used_later <= %r and ul.used_later > %r" % (cuts[1], cuts[2]),
+            "ul.used_later <= %r" % cuts[2]]
+        ages = ["rdb0.dump_no = 0", "rdb0.dump_no = 1",
+                "rdb0.dump_no > 1 and rdb0.dump_no <= 5", "rdb0.dump_no > 5"]
+        limit = int(options.limit/4)
+        q_from = """
+        from {table}_{tier} as ul join reduceDB as rdb0
+        on rdb0.clauseID = ul.clauseID and rdb0.conflicts = ul.rdb0conflicts
+        where {strata} and {age}"""
+        for strata in stratas:
+            for age in ages:
+                f = q_from.format(tier=tier, table=table, strata=strata, age=age)
+                self.c.execute("select count(*) " + f)
+                num = self.c.fetchone()[0]
+                if num == 0:
+                    continue
+                self.c.execute("""
+                insert into frame_rows
+                select '{tier}', '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
+                {f}
+                order by rowhash(ul.clauseID, ul.rdb0conflicts) limit {limit}""".format(
+                    tier=tier, table=table, f=f, limit=limit, weight=repr(max(1.0, num/float(limit)))))
+                print("%s %s: %-45s %-40s %8d rows, weight %.2f" % (
+                    table, tier, strata, age, num, max(1.0, num/float(limit))))
+
+    def pick_eval_rows(self, tier, table):
+        self.c.execute("select rdb0conflicts, count(*) from {table}_{tier} group by rdb0conflicts order by rdb0conflicts".format(
+            tier=tier, table=table))
+        reduces = self.c.fetchall()
+        if not reduces:
+            return
+        n = min(options.eval_reduces, len(reduces))
+        picked = sorted(set(int((i + 0.5) * len(reduces) / n) for i in range(n)))
+        for i in picked:
+            confl, num = reduces[i]
+            self.c.execute("""
+            insert into eval_rows
+            select '{tier}', '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
+            from {table}_{tier} as ul where ul.rdb0conflicts = {confl}
+            order by rowhash(ul.clauseID, ul.rdb0conflicts) limit {limit}""".format(
+                tier=tier, table=table, confl=confl, limit=options.eval_per_reduce,
+                weight=repr(max(1.0, num/float(options.eval_per_reduce)))))
+        print("%s %s: eval rows from %d of %d reduces" % (table, tier, len(picked), len(reduces)))
+
+    def filter_tables(self):
         t = time.time()
-        q = """
-        insert into only_keep_rdb (id)
-        select
-        rdb0.rowid
-
-        FROM
-        reduceDB as rdb0,
-        {table}_{tier}
-
-        WHERE
-        {table}_{tier}.clauseID=rdb0.clauseID
-        and {table}_{tier}.rdb0conflicts=rdb0.conflicts
-        and {table}_{tier}.used_later >= {min_used_later}
-        order by ((rdb0.rowid + {min_used_later} * 7919) * 2654435761) % 4294967296
-        limit {limit}""".format(min_used_later=min_used_later, limit=limit,
-                                tier=tier, table=table)
-        self.c.execute(q)
-
-        ret = self.c.execute("""select count() from only_keep_rdb""")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-
-        print("Insert only_keep_rdb where %s_%s >= %d T: %-3.2f s. Now size: %s" %
-              (table, tier, min_used_later, time.time() - t, rdb_rows))
-
-    def delete_too_many_rdb_rows(self):
-        t = time.time()
-        val = int(options.limit)
-        ret = self.c.execute("select count() from reduceDB")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("Have %d lines of RDB, let's do non-fair selection" % (rdb_rows))
-
-        q = """
-        drop table if exists only_keep_rdb;
-        """
-        self.c.execute(q)
-
-        t = time.time()
-        q = """create table only_keep_rdb (
-            id bigint(20) not null
-        );"""
-        self.c.execute(q)
-        print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
-
-        # the later tiers get 3x the rows of the one before: 8%, 23%, 70% for
-        # the three count horizons, everything for a single tier
-        tiers = options.tiers.split(",")
-        mygoal = options.goal_rdb / sum(3**i for i in range(len(tiers)))
-        table="used_later" # we could iterate with "used_later_anc", but not doing that
-        for tier in tiers:
-            mygoal*=3
-            if not options.fair:
-                self.insert_into_only_keep_rdb(100000, mygoal/20, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(10000, mygoal/20, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(1000, mygoal/20, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(100, mygoal/10, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(20, mygoal/5, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(10, mygoal/5, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(5, mygoal/3, tier=tier, table=table)
-                self.insert_into_only_keep_rdb(1, mygoal/2, tier=tier, table=table)
-            self.insert_into_only_keep_rdb(0, mygoal, tier=tier, table=table)
-
-        t = time.time()
-        ret = self.c.execute("select count() from only_keep_rdb")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("We now have %d lines only_keep_rdb" % (rdb_rows))
-
-
-        t = time.time()
-        q = """
-        drop index if exists `idxclid6-4`; -- the other index on reduceDB
-        create index `idx_bbb` on `only_keep_rdb` (`id`);
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("only_keep_rdb indexes added T: %-3.2f s" % (time.time() - t))
-
-        q = """
-        delete from reduceDB
-        where reduceDB.rowid not in (select id from only_keep_rdb)
-        """
-        self.c.execute(q)
-        print("Delete from reduceDB T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        val = int(options.limit)
-        ret = self.c.execute("select count() from reduceDB")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("Finally have %d lines of RDB" % (rdb_rows))
-
+        self.c.execute("drop table if exists keep_rows")
+        self.c.execute("""create table keep_rows as
+            select clauseID, conflicts from frame_rows union select clauseID, conflicts from eval_rows""")
+        self.c.execute("create index `idxkeep1` on keep_rows (clauseID, conflicts)")
+        self.c.execute("create index `idxfr1` on frame_rows (tier, tbl, clauseID, conflicts)")
+        self.c.execute("create index `idxev1` on eval_rows (tier, tbl, clauseID, conflicts)")
+        self.c.execute("""delete from reduceDB where not exists
+            (select 1 from keep_rows k where k.clauseID = reduceDB.clauseID and k.conflicts = reduceDB.conflicts)""")
+        for tier in options.tiers.split(","):
+            for table in TABLES:
+                self.c.execute("""delete from {table}_{tier} where not exists
+                    (select 1 from keep_rows k where k.clauseID = {table}_{tier}.clauseID
+                     and k.conflicts = {table}_{tier}.rdb0conflicts)""".format(tier=tier, table=table))
+        for table in ["clause_stats", "sum_cl_use", "cl_last_in_solver"]:
+            self.c.execute("delete from %s where clauseID not in (select clauseID from keep_rows)" % table)
+        # the labels are filled, the uses are not needed any more
+        for table in ["used_clauses_anc", "used_clauses"]:
+            self.c.execute("drop table if exists %s" % table)
+        self.c.execute("select count(*) from reduceDB")
+        print("Kept %d reduceDB rows T: %-3.2f s" % (self.c.fetchone()[0], time.time() - t))
 
     def del_table_and_vacuum(self):
         helper.drop_idxs(self.c)
 
         t = time.time()
         queries = """
-        DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `only_keep_rdb`;
-        DROP TABLE IF EXISTS `used_cl_ids`;
+        DROP TABLE IF EXISTS `keep_rows`;
         """
         for q in queries.split("\n"):
             self.c.execute(q)
@@ -494,107 +347,63 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("--limit", default=20000, type=int,
-                      dest="limit", help="Number of clauses to limit ourselves to")
-    parser.add_option("--goalrdb", default=200000, type=int,
-                      dest="goal_rdb", help="Number of RDB neeeded")
+                      dest="limit", help="Max number of rows from each label stratum, per tier and table")
+    parser.add_option("--cut1", default=3.0, type=float,
+                      dest="cut1", help="The top stratum: this %% of the used rows. Default: %default")
+    parser.add_option("--cut2", default=25.0, type=float,
+                      dest="cut2", help="The middle stratum ends at this %%. Default: %default")
+    parser.add_option("--evalreduces", default=10, type=int,
+                      dest="eval_reduces", help="Reduces in the fair evaluation sample. Default: %default")
+    parser.add_option("--evalperreduce", default=3000, type=int,
+                      dest="eval_per_reduce", help="Max rows per reduce in the fair evaluation sample. Default: %default")
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
-    parser.add_option("--noidx", action="store_true", default=False,
-                      dest="noidx", help="Don't recreate indexes")
-    parser.add_option("--fair", "-f", action="store_true", default=False,
-                      dest="fair", help="Fair sampling. NOT DEFAULT.")
 
-    # lengths of short/long
     helper.add_tier_options(parser)
-    parser.add_option("--short", default=10*1000, type=int,
-                      dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=30*1000, type=int,
-                      dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=120*1000, type=int,
-                      dest="forever", help="Forever duration. Default: %default")
 
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
         print("ERROR: You must give the sqlite file!")
         exit(-1)
-
-    if not options.fair:
-        print("NOTE: Sampling will NOT be fair.")
-        print("      This is because otherwise, DB will be huge")
-        print("      and we need lots of positive datapoints")
-        print("      most of which will be from clauses that are more used")
+    tiers = options.tiers.split(",")
 
     with QueryDatRem(args[0]) as q:
         q.check_db_sanity()
         helper.dangerous(q.c)
         helper.drop_idxs(q.c)
-        q.create_indexes1()
+        q.print_sum_cl_use_distrib()
 
-    # Percentile generation
+    # the labels, over every row of every tracked clause
     t = time.time()
-
-    # first, we create "used_clauses_red" that contains a reduced
-    # list of clauseIDs we want to do this over. Here we sample FAIRLY!!!!
-    with QueryDatRem(args[0]) as q:
-        helper.dangerous(q.c)
-        q.recreate_used_ID_table()
-        q.fill_used_cl_ids_table(True, limit=4*options.limit) # notice the FAIR sampling!
-        q.drop_used_clauses_red()
-        q.create_used_clauses_red()
-
-    # now we generate the used_later data
     with helper.QueryFill(args[0]) as q:
         helper.dangerous(q.c)
         q.delete_and_create_used_laters()
-        q.create_indexes(verbose=options.verbose, used_clauses_suffix="_red")
-        for table in ["used_later", "used_later_anc"]:
-            for tier in options.tiers.split(","):
-                q.fill_used_later_X(tier, duration=helper.tier_duration(options, tier),
-                                    used_clauses_suffix="_red",
-                                    table=table, halflife=options.halflife)
+        q.create_indexes(verbose=options.verbose)
+        for table in TABLES:
+            for tier in tiers:
+                q.fill_used_later_X(tier, options.halflife, table=table)
 
-    # now we calculate the distributions and save them
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
-        for tier in options.tiers.split(","):
-                q.get_all_percentile_X(tier)
+        for tier in tiers:
+            q.get_all_percentile_X(tier)
         q.print_percentiles()
-        q.drop_used_clauses_red()
-    with helper.QueryFill(args[0]) as q:
-        helper.drop_idxs(q.c)
-        q.delete_and_create_used_laters()
-    print("FASTER percentiles:", time.time()-t)
-
-    # Filtering for clauseIDs in tables:
-    # ["clause_stats", "reduceDB", "sum_cl_use",
-    #      "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
-    # here we sample NON-FAIRLY (options.fair) by default!
-    with QueryDatRem(args[0]) as q:
-        helper.dangerous(q.c)
-        q.recreate_used_ID_table()
-        q.fill_used_cl_ids_table(options.fair, limit=options.limit)
-        q.filter_tables_of_ids()
-        q.print_sum_cl_use_distrib()
-        print("-------------")
-
-    # RDB filtering
     with helper.QueryFill(args[0]) as q:
         helper.dangerous(q.c)
-        helper.drop_idxs(q.c)
-        q.delete_and_create_used_laters()
-        q.create_indexes(verbose=options.verbose)
-
-        # this is is needed for RDB row deletion below (since it's not fair)
-        table = "used_later" # we could also do used_later_anc (for RDB)
-        for tier in options.tiers.split(","):
-            q.fill_used_later_X(tier=tier, table=table, duration=helper.tier_duration(options, tier),
-                                halflife=options.halflife)
+        for tier in tiers:
+            for table in TABLES:
+                q.fill_used_later_X_perc_fit(tier, table=table)
+    print("Labels and percentiles T: %-3.2f s" % (time.time() - t))
 
     with QueryDatRem(args[0]) as q:
-        print("-------------")
-        q.delete_too_many_rdb_rows() # NOTE: NOT FAIR!!!
-
+        helper.dangerous(q.c)
+        q.create_row_tables()
+        for tier in tiers:
+            for table in TABLES:
+                q.pick_frame_rows(tier, table)
+                q.pick_eval_rows(tier, table)
+        q.filter_tables()
         helper.drop_idxs(q.c)
         q.del_table_and_vacuum()

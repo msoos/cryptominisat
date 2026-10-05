@@ -28,12 +28,34 @@
 # hint chain of such a step. used_clauses_anc also credits ancestors: a
 # clause derived from a tracked clause counts as its child with weight
 # 0.5, grandchildren 0.25, and so on, down to 0.05.
+#
+# The pass over the proof is frat_uses.cpp (built here on first use); the
+# same pass in Python is --python: the reference test_frat_uses.py
+# compares against, and what --verbose traces.
 
 import sqlite3
 import argparse
 import array
+import os
+import subprocess
+import sys
 import time
 import mmap
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+USE_DTYPE = np.dtype([("id", "<i8"), ("at", "<i8"), ("w", "<f8")])
+
+
+def build_frat_uses():
+    src = os.path.join(HERE, "frat_uses.cpp")
+    exe = os.path.join(HERE, "frat_uses")
+    if not os.path.exists(exe) or os.path.getmtime(exe) < os.path.getmtime(src):
+        tmp = "%s.%d" % (exe, os.getpid())
+        subprocess.check_call(["g++", "-O2", "-std=c++17", "-Wall", "-Wextra", "-o", tmp, src])
+        os.rename(tmp, exe)
+    return exe
 
 cl_to_conflict = {}
 new_id_to_old_id = {}
@@ -309,6 +331,36 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
             tracked_already = True
             self.children_set += 1
 
+    def fix_up_frat_fast(self, fratfile, dbfname):
+        """the proof pass in C++: IDs out, uses back"""
+        exe = build_frat_uses()
+        base = "%s.fratuses-%d" % (dbfname, os.getpid())
+        files = [base + x for x in (".confl", ".tracked", ".out")]
+        try:
+            self.c.execute("select id, conflicts from set_id_confl")
+            confl = np.array(self.c.fetchall(), dtype="<i8").reshape(-1, 2)
+            if len(np.unique(confl[:, 0])) != len(confl):
+                print("ERROR: an ID is in set_id_confl twice")
+                exit(-1)
+            confl.tofile(files[0])
+            print("Got ID-conflict data: %d IDs" % len(confl))
+            del confl
+            self.get_updates()
+            np.array([[k, v[0]] for k, v in new_id_to_old_id.items()], dtype="<i8").reshape(-1, 2).tofile(files[1])
+            sys.stdout.flush()
+            if subprocess.call([exe, fratfile] + files) != 0:
+                exit(-1)
+            uses = np.fromfile(files[2], dtype=USE_DTYPE)
+        finally:
+            for f in files:
+                if os.path.exists(f):
+                    os.unlink(f)
+        q = "INSERT INTO %s (`clauseID`, `used_at`, `weight`) VALUES (?, ?, ?)"
+        plain = uses[uses["w"] == 1.0]
+        for table, rows in (("used_clauses_anc", uses), ("used_clauses", plain)):
+            for i in range(0, len(rows), 500000):
+                self.c.executemany(q % table, rows[i:i + 500000].tolist())
+
     def fix_up_frat(self, frat):
         marked = frat.mark_proof()
         t = time.time()
@@ -343,7 +395,9 @@ Adds used_clauses and used_clauses_anc to the SQLite database"""
                         help="FRAT proof written by the solver (--xlrup 0), ascii or binary")
     parser.add_argument("sqlitedb", type=str, metavar='SQLITEDB')
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
-                      dest="verbose", help="Print more output")
+                      dest="verbose", help="Print more output (implies --python)")
+    parser.add_argument("--python", action="store_true", default=False,
+                        help="The slow reference pass in Python instead of frat_uses.cpp")
 
     opts = parser.parse_args()
 
@@ -351,6 +405,14 @@ Adds used_clauses and used_clauses_anc to the SQLite database"""
     print("Using sqlite3db file %s" % opts.sqlitedb)
 
     t = time.time()
+    if not (opts.python or opts.verbose):
+        with Query(opts.sqlitedb) as q:
+            q.delete_tbls("used_clauses")
+            q.delete_tbls("used_clauses_anc")
+            q.fix_up_frat_fast(opts.fratfile, opts.sqlitedb)
+        print("T: %-3.2f s" % (time.time() - t))
+        exit(0)
+
     frat = FratFile(opts.fratfile)
     with Query(opts.sqlitedb) as q:
         q.delete_tbls("used_clauses")

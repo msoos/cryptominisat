@@ -30,8 +30,17 @@ import math
 import time
 import os.path
 import sqlite3
+import bisect
 import functools
 from ccg import *
+
+
+def rowhash(a, b):
+    """order by this = a fixed pseudo-random order of the (clause, reduce) rows"""
+    x = (a * 0x9E3779B97F4A7C15 + b + 0x632BE59BD9B4E019) & 0xFFFFFFFFFFFFFFFF
+    x = ((x ^ (x >> 30)) * 0xBF58476D1CE4E5B9) & 0xFFFFFFFFFFFFFFFF
+    x = ((x ^ (x >> 27)) * 0x94D049BB133111EB) & 0xFFFFFFFFFFFFFFFF
+    return (x ^ (x >> 31)) >> 1
 
 
 class QueryHelper:
@@ -41,6 +50,7 @@ class QueryHelper:
             exit(-1)
 
         self.conn = sqlite3.connect(dbfname)
+        self.conn.create_function("rowhash", 2, rowhash, deterministic=True)
         self.c = self.conn.cursor()
 
     def __enter__(self):
@@ -112,25 +122,42 @@ class QueryFill (QueryHelper):
 
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
-    # The most expesive operation of all, when called with "forever"
+    # Reduce time: the k-th reduce is at k, linear in the conflicts in
+    # between. The reduce interval grows with the run, so a horizon in
+    # conflicts is many reduces early and less than one late
+    def add_reduce_time(self, horizon):
+        confls = [r[0] for r in self.c.execute(
+            "select distinct conflicts from reduceDB_common order by conflicts")]
+        assert len(confls) >= 2, "fewer than 2 reduces"
+        self.c.execute("drop table if exists reduce_time")
+        self.c.execute("create table reduce_time (conflicts bigint, idx int, horizon_confl bigint)")
+        self.c.execute("create index `idxrtime` on reduce_time (conflicts)")
+        for i, confl in enumerate(confls):
+            hor = confls[i+horizon] if i+horizon < len(confls) else None
+            self.c.execute("insert into reduce_time values (?, ?, ?)", (confl, i, hor))
+
+        def rt(x):
+            i = bisect.bisect_right(confls, x) - 1
+            i = min(max(i, 0), len(confls) - 2)
+            return i + (x - confls[i]) / float(confls[i+1] - confls[i])
+        self.conn.create_function("rt", 1, rt, deterministic=True)
+        for t in ["used_clauses", "used_clauses_anc"]:
+            if "used_at_rt" not in [r[1] for r in self.c.execute("pragma table_info(%s)" % t)]:
+                self.c.execute("alter table %s add column used_at_rt float" % t)
+                self.c.execute("update %s set used_at_rt = rt(used_at)" % t)
+
     # used_later_X is summed from used_clauses, used_later_anc_X from
-    # used_clauses_anc (uses of the clause AND of its descendants)
-    def fill_used_later_X(self, tier, duration, table="used_later",
-                          used_clauses_suffix="", halflife=None):
-        used_clauses = ("used_clauses" if table == "used_later" else "used_clauses_anc") \
-            + used_clauses_suffix
+    # used_clauses_anc (uses of the clause AND of its descendants).
+    # A row counts only if the clause stayed in the solver for the horizon
+    def fill_used_later_X(self, tier, halflife, table="used_later"):
+        used_clauses = "used_clauses" if table == "used_later" else "used_clauses_anc"
 
-        min_del_distance = duration
-        if min_del_distance > 2*1000*1000:
-            min_del_distance = 100*1000
-
-        # 'disc': the use is discounted by how far away it is, halving every
-        # HALFLIFE conflicts. One horizon-free label instead of three
-        if tier == "disc":
-            assert halflife
-            use = "sum(ucl.weight * pow(0.5, (ucl.used_at - rdb0.conflicts)/%d.0))" % halflife
-        else:
-            use = "sum(ucl.weight)"
+        # the use is discounted by how far away it is, halving every
+        # HALFLIFE reduces, counted for two half-lives
+        assert tier == "disc"
+        self.add_reduce_time(2*halflife)
+        use = "sum(ucl.weight * pow(0.5, (ucl.used_at_rt - rr.idx)/%d.0))" % halflife
+        horizon = "rr.horizon_confl"
 
         # Note: "weight" below is because a child has less weight than a parent
         #       discount is 0.5 (as per fix_up_frat), so a child is 0.5, a grand-child
@@ -149,28 +176,31 @@ class QueryFill (QueryHelper):
 
         FROM
         reduceDB as rdb0
-        left join {used_clauses} as ucl
-
-        -- reduceDB is always present, {used_clauses} may not be, hence left join
-        on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > (rdb0.conflicts)
-            and ucl.used_at <= (rdb0.conflicts+{duration}))
-
+        left join reduce_time as rr on rr.conflicts = rdb0.conflicts
         join cl_last_in_solver
         on cl_last_in_solver.clauseID = rdb0.clauseID
 
+        -- reduceDB is always present, {used_clauses} may not be, hence left join
+        left join {used_clauses} as ucl
+        on (ucl.clauseID = rdb0.clauseID
+            and ucl.used_at > (rdb0.conflicts)
+            and ucl.used_at <= {horizon})
+
         WHERE
         rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance})
+        and cl_last_in_solver.conflicts >= {horizon}
+        -- an eagerly subsumed clause (no glue) is deleted at the next
+        -- reduce: only a locked one lives on, and those rows are not real
+        and not (rdb0.glue is null and rdb0.is_ternary_resolvent = 0 and exists (
+            select 1 from reduceDB as p where p.clauseID = rdb0.clauseID
+            and p.conflicts < rdb0.conflicts and p.glue is null))
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
         t = time.time()
         q = q_fill.format(
             tier=tier, used_clauses=used_clauses, use=use,
-            duration=duration,
-            table=table,
-            min_del_distance=min_del_distance)
+            horizon=horizon, table=table)
         self.c.execute(q)
 
         q_fix_null = "update {table}_{tier} set used_later = 0 where used_later is NULL".format(
@@ -179,14 +209,17 @@ class QueryFill (QueryHelper):
 
         # percent_rank: ties all get the rank of their first row, so the
         # never-used clauses of a reduce are all 0
-        q_rel = """
-        with ranked as (
+        self.c.execute("drop table if exists ranked")
+        self.c.execute("""
+        create temp table ranked as
             select rowid as rid,
             percent_rank() over (partition by rdb0conflicts order by used_later) as r
-            from {table}_{tier})
-        update {table}_{tier} set rel = (select r from ranked where ranked.rid = {table}_{tier}.rowid);
-        """.format(tier=tier, table=table)
-        self.c.execute(q_rel)
+            from {table}_{tier}""".format(tier=tier, table=table))
+        self.c.execute("create index ranked_idx on ranked (rid)")
+        self.c.execute("""
+        update {table}_{tier} set rel = (select r from ranked where ranked.rid = {table}_{tier}.rowid)
+        """.format(tier=tier, table=table))
+        self.c.execute("drop table ranked")
 
 
         q_num = "select count(*) from {table}_{tier}".format(tier=tier, table=table)
@@ -197,7 +230,7 @@ class QueryFill (QueryHelper):
 
         if table == "used_later" and num == 0:
             print("WARNING: number of rows in {table}_{tier} is 0: the run is shorter than "
-                  "the horizon, this tier will have no frame".format(tier=tier, table=table))
+                  "two half-lives, there will be no frame".format(tier=tier, table=table))
 
 
         print("%s_%s filled T: %-3.2f s -- num rows: %d" %
@@ -266,25 +299,15 @@ def _flush_pending(df):
     _pending = None
     return df
 
-# the labels: uses in the next SHORT/LONG/FOREVER conflicts, or 'disc',
-# the discounted sum of all future uses (see fill_used_later_X)
-ALL_TIERS = ["short", "long", "forever", "disc"]
-COUNT_TIERS = ["short", "long", "forever"]
-
-
-def tier_duration(options, tier):
-    """how long a clause must stay in the solver after the row for the
-    row to count: the horizon, or two half-lives for disc"""
-    if tier == "disc":
-        return 2 * options.halflife
-    return getattr(options, tier)
+# the label: 'disc', the discounted sum of the future uses (see fill_used_later_X)
+ALL_TIERS = ["disc"]
 
 
 def add_tier_options(parser):
     parser.add_option("--tiers", default="disc", type=str, dest="tiers",
-                      help="comma separated: short,long,forever,disc. Default: %default")
-    parser.add_option("--halflife", default=30*1000, type=int, dest="halflife",
-                      help="disc: a use this many conflicts away counts half. Default: %default")
+                      help="the labels to make. Default: %default")
+    parser.add_option("--halflife", default=4, type=int, dest="halflife",
+                      help="disc: a use this many reduces away counts half. Default: %default")
 
 
 def helper_divide(dividend, divisor, df, features, verb, name=None):
@@ -483,6 +506,88 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
             x, y,  error_format(msqe), error_format(med_abs_err), error_format(mean_err)))
 
     return main_error
+
+
+def family(fname, families=None):
+    """the family of a CNF: from the 'family filename' lines of the file
+    in $FAMILIES if given, else the leading letters of the name"""
+    base = os.path.basename(str(fname))
+    if families is None:
+        families = read_families()
+    if base in families:
+        return families[base]
+    m = re.match(r"([A-Za-z]+)", base)
+    if m:
+        return m.group(1).lower()
+    return "num%d" % len(re.match(r"(\d*)", base).group(1))
+
+
+@functools.lru_cache(maxsize=None)
+def read_families():
+    ret = {}
+    if os.environ.get("FAMILIES"):
+        with open(os.environ["FAMILIES"]) as f:
+            for l in f:
+                l = l.split()
+                if len(l) >= 2:
+                    ret[os.path.basename(l[1])] = l[0]
+    return ret
+
+
+def sample_weights(df, how):
+    """none: 1; strata: undo the sampling (x.weight = rows the row stands
+    for); instance: also every instance counts the same; family: also
+    every family counts the same. Mean 1."""
+    w = pd.Series(1.0, index=df.index)
+    if how == "none":
+        return w
+    w = df["x.weight"].astype(float)
+    if how in ["instance", "family"]:
+        fname = df["fname"].astype(str)
+        w = w / w.groupby(fname).transform("sum")
+        if how == "family":
+            fam = fname.map(family)
+            w = w / fname.groupby(fam).transform("nunique")
+    return w / w.mean()
+
+
+def ranking_per_reduce(df, pred, label, cands=True, fracs=(0.25, 0.5), min_rows=20):
+    """What reduce does: at every reduce of every instance, keep the best
+    part of the clauses by the model, by glue then size, and by the
+    truth; the share of the future use kept. Mean over the reduces of an
+    instance. df must be a fair sample of the clauses at its reduces.
+    cands: only the clauses not used since the reduce before."""
+    df = df.reset_index(drop=True)
+    pred = np.asarray(pred)
+    rows = []
+    for fname, gi in df.groupby(df["fname"].astype(str)):
+        acc = []
+        for _, g in gi.groupby("rdb0_common.conflicts"):
+            if cands:
+                g = g[g["rdb0.used"] < 30]
+            truth = g[label].to_numpy(dtype=float)
+            if len(g) < min_rows or truth.sum() <= 0:
+                continue
+            orders = {
+                "model": np.argsort(-pred[g.index.to_numpy()], kind="stable"),
+                "glue": np.lexsort((g["rdb0.size"].to_numpy(), g["rdb0.glue"].fillna(1e9).to_numpy())),
+                "oracle": np.argsort(-truth, kind="stable"),
+            }
+            r = {}
+            for frac in fracs:
+                n = max(1, int(frac * len(truth)))
+                for k, o in orders.items():
+                    r["%s@%d" % (k, 100*frac)] = 100.0 * truth[o[:n]].sum() / truth.sum()
+            acc.append(r)
+        if acc:
+            r = pd.DataFrame(acc).mean().to_dict()
+            r["instance"] = os.path.basename(fname)[:34]
+            r["reduces"] = len(acc)
+            rows.append(r)
+    if not rows:
+        return None
+    res = pd.DataFrame(rows)
+    return res[["instance", "reduces"] + [c for c in res.columns if "@" in c]]
 
 
 def check_file_exists(fname):

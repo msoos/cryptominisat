@@ -91,7 +91,7 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
 
         //Predictor (FINAL_PREDICTOR) and data gathering (STATS_NEEDED)
-        uint32_t pred_sort_by; //reduce candidates sorted by predicted use: 0 short, 1 long, 2 forever, 3 sum
+        uint32_t pred_sort_by; //reduce candidates sorted by: 0/1/2 one model's score, 3 their sum
         unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
         int      pred_cands; //0: reduce candidates as the normal build, 1: + the 'used' ones, 2: + tier1-keep

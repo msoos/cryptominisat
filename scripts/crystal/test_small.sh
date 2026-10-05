@@ -15,7 +15,7 @@ cnfgen --seed "$SEED" randkcnf 3 230 1000 > "$CNF"
 echo "instance: $CNF"
 
 # KEEP_FRAT: the --skip-solve passes below need the proof
-SHORT=2000 LONG=6000 FOREVER=20000 HALFLIFE=5000 FIXED=3000 CAKE_XLRUP="" KEEP_FRAT=1 \
+DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" KEEP_FRAT=1 \
     ./ballofcrystal.sh "$CNF" > "$DIR/run.out" 2>&1 || {
     echo "FAILED, see $DIR/run.out"; tail -20 "$DIR/run.out"; exit 1; }
 tail -6 "$DIR/run.out"
@@ -25,13 +25,15 @@ if cmp -s "$CNF-dir/predictor-used_later-disc-xgb.json" "$CNF-dir/predictor-used
     echo "FAILED: used_later and used_later_anc predictors are identical"; exit 1
 fi
 # a second learning pass must give the same predictors
-SHORT=2000 LONG=6000 FOREVER=20000 HALFLIFE=5000 FIXED=3000 CAKE_XLRUP="" \
+DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" \
     KEEP_FRAT=1 ./ballofcrystal.sh --skip-solve "$CNF" > "$DIR/run2.out" 2>&1 || {
     echo "FAILED, see $DIR/run2.out"; tail -3 "$DIR/run2.out"; exit 1; }
+# the C++ proof pass against the Python one, hand-made and this proof
+./test_frat_uses.py --real "$CNF-dir/data.frat" "$CNF-dir/data.db-raw" || exit 1
 for f in "$CNF-dir"/predictor-*.json; do
     cp "$f" "$f.first"
 done
-SHORT=2000 LONG=6000 FOREVER=20000 HALFLIFE=5000 FIXED=3000 CAKE_XLRUP="" \
+DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" \
     ./ballofcrystal.sh --skip-solve "$CNF" > "$DIR/run3.out" 2>&1 || {
     echo "FAILED, see $DIR/run3.out"; tail -3 "$DIR/run3.out"; exit 1; }
 # (the model's train_date attribute may differ across midnight)

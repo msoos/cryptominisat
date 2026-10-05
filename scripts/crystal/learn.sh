@@ -25,6 +25,7 @@
 #   <cnf-dir> are the <file.cnf>-dir directories ballofcrystal.sh made
 # Knobs, same as setparams_ballofcrystal.sh: cut1 cut2 FIXED bestf
 #   XGB_EST XGB_DEPTH XGB_MINCHILD XGB_SEED XGB_SUBSAMPLE TARGET XGB_OBJ
+#   XGB_WEIGHTS, FAMILIES (a file of 'family filename' lines)
 
 set -e
 set -o pipefail
@@ -56,7 +57,7 @@ fi
 
 echo "=== checking the frames"
 for d in "$@"; do
-    "$SCRIPTDIR/check_frames.py" -f "$bestf" "$d"/data-min.db-cldata-*.dat > "$OUT/check_frames-$(basename "$d").out" 2>&1 \
+    "$SCRIPTDIR/check_frames.py" -f "$bestf" "$d"/data-min.db-cldata-*.dat "$d"/data-min.db-evaldata-*.dat > "$OUT/check_frames-$(basename "$d").out" 2>&1 \
         || { echo "FAILED: $d, see $OUT/check_frames-$(basename "$d").out"; grep FAIL "$OUT/check_frames-$(basename "$d").out"; exit 1; }
 done
 
@@ -64,24 +65,29 @@ for tier in $TIERS; do
     for table in used_later used_later_anc; do
         name="${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}"
         dats=()
+        evals=()
         for d in "$@"; do
             f="$d/data-min.db-cldata-${name}.dat"
-            # a run shorter than the horizon has no frame for that tier
+            # a run shorter than two half-lives has no frame
             if [[ ! -f "$f" ]]; then echo "WARNING: $f missing, skipped"; continue; fi
             dats+=("$f")
+            e="$d/data-min.db-evaldata-${table}-${tier}.dat"
+            [[ -f "$e" ]] && evals+=("$e")
         done
         if [[ ${#dats[@]} -eq 0 ]]; then echo "ERROR: no frames for $table $tier"; exit 255; fi
         echo "=== $table $tier: ${#dats[@]} frames"
         "$SCRIPTDIR/concat_pandas.py" -o "$OUT/comb-${name}.dat" "${dats[@]}" | tail -1
+        "$SCRIPTDIR/concat_pandas.py" -o "$OUT/comb-eval-${table}-${tier}.dat" "${evals[@]}" | tail -1
         $NOBUF "$SCRIPTDIR/cldata_predict.py" "$OUT/comb-${name}.dat" \
             --tier "$tier" --table "$table" --features best_only --regressor xgb \
             --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
             --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
+            --weights "$XGB_WEIGHTS" --evalframe "$OUT/comb-eval-${table}-${tier}.dat" \
             --basedir "$OUT" --bestfeatfile "$bestf" \
             --gatheredby "$(awk '{print $1}' "$OUT/gathered_by" | sort -u | tr '\n' ' ' | sed 's/ $//')" \
             > "$OUT/out-${table}-${tier}" 2>&1
         grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}-${tier}" | head -3
-        grep -E "^ranking test" "$OUT/out-${table}-${tier}"
+        grep -E "^ranking (test|train)" "$OUT/out-${table}-${tier}"
     done
 done
 echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predtype xgb --predloc $OUT --predtiers ${TIERS// /,} file.cnf"

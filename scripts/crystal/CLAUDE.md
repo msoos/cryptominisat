@@ -1,11 +1,10 @@
-# CrystalBall: how to run it (current status)
+# CrystalBall: how to run it
 
-Everything below is the state as of 2026-09-30. `README.md` says what it
-is; this says how to build, run and evaluate it, and what came out so far.
+`README.md` says what it is, `TRAIN_AND_EVALUATE.md` is the plan for the
+cluster run. This says how to build, run and evaluate it, and, at the
+end, what is known.
 
 ## Builds
-
-Three builds, each in its own dir under the repo root:
 
 | dir | cmake | what it is |
 |---|---|---|
@@ -13,7 +12,7 @@ Three builds, each in its own dir under the repo root:
 | `build_stats/` | `-DSTATS=ON` | dumps clause data to SQLite, writes the FRAT proof |
 | `build_pred/` | `-DFINAL_PREDICTOR=ON` | ranks reduce candidates by the xgboost prediction |
 
-Build with `-j4`. Scripts that do the cmake calls, run from an empty dir:
+Build with `-j4`. From an empty dir:
 
 ```
 cd build_stats && ../scripts/build_scripts/build_stats.sh
@@ -21,8 +20,8 @@ cd build_pred  && ../scripts/build_scripts/build_final_predictor.sh
 ```
 
 Both need `../cadical/build` and `../cadiback/build` next to the repo
-(cadiback at 0d92b68 or later).
-Dependencies on this box are under `../deps` (no sudo here):
+(cadiback at 0d92b68 or later). Dependencies on this box are under
+`../deps` (no sudo); export what a build needs before its script:
 
 ```
 SQLITE3_INCLUDE_DIR=$HOME/development/sat_solvers/deps/sqlite-amalgamation-3450100
@@ -31,706 +30,269 @@ XGBOOST_INCLUDE_DIR=$HOME/development/sat_solvers/deps/xgboost-headers
 XGBOOST_LIBRARY=$HOME/development/sat_solvers/deps/xgboost-pkg/xgboost/lib/libxgboost.so.3
 ```
 
-Export the ones a build needs before its build script. The xgboost
-library is the pip package's `.so` copied out: it has SONAME `.so.3` and an
-RPATH of `$ORIGIN/../../xgboost.libs` for its libgomp, so the copy keeps
-that layout. Python packages (xgboost 3.4, pandas 3, scikit-learn, numpy 2)
-are installed with `pip3 install --user --break-system-packages`; `cnfgen`
-too, for the smoke test.
+The xgboost library is the pip package's `.so` copied out (SONAME
+`.so.3`, RPATH `$ORIGIN/../../xgboost.libs` for its libgomp: keep that
+layout). Python: xgboost 3.4, pandas 3, scikit-learn, numpy 2, `cnfgen`
+(`pip3 install --user --break-system-packages`).
 
-The predictor build generates two things at build time:
+The predictor build generates at build time:
 
-- `predict_features_gen.h` from `best_features.txt` (`gen_pred_features.py`):
-  the C++ that computes every feature. The feature file is the single
-  source of truth for training and solving. Another list:
-  `cmake -DPRED_FEATURES_FILE=/path/to/list.txt`. The generator refuses a
-  feature that scales with the run length or the instance size (below);
-  `-DPRED_ALLOW_ABSOLUTE=ON` lets one through, for experiments only.
-- the embedded default models from `src/predict/predictor_<tier>.json`, one
-  per tier of cmake's `PRED_TIERS` (default `disc`; `embed_models.py`
-  writes the table the solver looks them up in by tier name).
-  `src/predict/` is its own git repo (github.com/msoos/cryptominisat-predictors),
-  ignored by the solver's repo: clone it there before building. After
-  retraining, copy the new models in and commit there (never push, the
-  owner pushes). The models must be trained on the same feature list
-  the binary was built with: the feature count and order must agree.
+- `predict_features_gen.h` from `best_features.txt`
+  (`gen_pred_features.py`): the C++ of every feature. The feature file
+  is the single source of truth for training and solving
+  (`-DPRED_FEATURES_FILE=` for another list).
+- the embedded model from `src/predict/predictor_disc.json`
+  (`embed_models.py`). `src/predict/` is its own git repo
+  (github.com/msoos/cryptominisat-predictors), ignored by the solver's:
+  clone it there before building; after retraining copy the model in,
+  rebuild, commit there (never push, the owner pushes). Model and binary
+  must come from the same feature list.
 
-Solver options that matter (all must come BEFORE the CNF file name; anything
-after the CNF is taken as the proof file name, and the solver errors out):
+Solver options (all BEFORE the CNF: anything after it is the proof file):
 
-- predictor build: `--predtype xgb`, `--predtiers disc` (the models,
-  comma separated, at most three: `disc` = one model of the discounted
-  future use, the default; `short,long,forever` = the three use-count
-  horizons), `--predloc DIR` (models `DIR/predictor-<table>-<tier>-xgb.json`,
-  empty = the embedded ones), `--predtables 000|111` (per model: 0 =
-  `used_later`, 1 = `used_later_anc`), `--predsortby 0..3` (one model's
-  score, or 3 = their sum, the default), `--predkeep 2` (the default:
-  the score decides which learnt clauses are tier1/tier2 instead of
-  glue, but as many of each as the glue rule would make on this
-  instance; `--predkeep 1`: the `--predkeept1` % best-scored are tier1,
-  up to `--predkeept2` % tier2, on every instance; 0 = glue; predicts
-  for every learnt clause at every reduce), `--predcands 0|1|2`
-  (what it ranks: 0 = the normal build's candidates, 1 = also the clauses
-  the normal rules keep for being used, 2 = also the tier1-keep ones; the
-  number removed stays the normal build's), `--predthresh T` (remove the
-  candidates predicted below T instead of the fixed number, bounded to
-  0.5x-2x of it), `--dumppreddistrib 1` (predictions of all clauses at
-  every reduce to `pred_distrib.csv`).
+- predictor build: `--predtype xgb`, `--predtiers disc`, `--predloc DIR`
+  (models `DIR/predictor-<table>-<tier>-xgb.json`; empty = the embedded
+  one), `--predtables 000|111` (0 = `used_later`, 1 = `used_later_anc`),
+  `--predkeep 2` (default: the score decides which learnt clauses are
+  tier1/tier2, as many of each as glue would make; 1 = fixed
+  `--predkeept1`/`--predkeept2` %; 0 = glue), `--predcands 0|1|2` (what
+  is ranked: 0 = the normal build's candidates, 1 = also the clauses
+  kept for being used, 2 = also tier1-keep), `--predthresh T`,
+  `--dumppreddistrib 1`, `--preddump FILE`.
 - stats build: `--sql 2 --sqlitedb F --sqlitedboverwrite 1 --clid
   --cldatadumpratio R --cllockdatagen R --everypred N`, all set by
   `ballofcrystal.sh`.
 
 With `--predcands 0` only WHICH candidates a reduce removes differs
-between the builds (same reduce schedule, same number removed), so a
-conflict-count A/B is clean. With `--predcands 1` the predictor may also
-drop clauses the normal build protects, and the DB gets smaller (25% on
-bivium): compare against the normal build with `--reducekeepused 0` too,
-which also shrinks the DB (on bivium: 102% conflicts, 78% time).
-The solver is deterministic: the same binary, options and CNF give the
-same conflict count, so one run per configuration is enough.
+between the builds, so a conflict-count A/B is clean. With 1 the DB also
+shrinks: compare against the normal build with `--reducekeepused 0` too.
 
 ## The pipeline
 
 `ballofcrystal.sh file.cnf` does all of it for one UNSAT instance, in
 `<file.cnf>-dir/`:
 
-1. **gather**: stats build with `--xor 0` (plain resolution proof), writes
-   `data.db-raw` and `data.frat`. Must be UNSAT (see below).
+1. **gather**: stats build with `--xor 0`, writes `data.db-raw` and
+   `data.frat`.
 2. **label** (`fix_up_frat.py`): trims the proof to the steps reachable
-   from the empty clause and fills `used_clauses` (tracked clause X was in
-   the hint chain of a kept step at conflict C) and `used_clauses_anc`
-   (also credits ancestors, weight 0.5 per generation, down to 0.05). The
-   proof is deleted afterwards (GBs on big instances); `KEEP_FRAT=1` keeps it.
+   from the empty clause and fills `used_clauses` (tracked clause X was
+   in the hint chain of a kept step at conflict C) and
+   `used_clauses_anc` (also credits ancestors, 0.5 per generation, down
+   to 0.05). The pass over the proof is `frat_uses.cpp` (built on first
+   use); `--python` is the same pass in Python, the reference of
+   `test_frat_uses.py`. The proof is deleted afterwards (`KEEP_FRAT=1`
+   keeps it and `data.db`).
 3. **clean/check/sample** (`clean_update_data.py`, `check_data_quality.py
-   --slow`, `sample_data.py`): computes the `used_later*` labels over the
-   SHORT/LONG/FOREVER horizons, sanity checks, then keeps a strata-balanced
-   sample in `data-min.db`.
-4. **frames** (`cldata_gen_pandas.py`): denormalises into six pandas
-   frames `data-min.db-cldata-<table>-<tier>-cut1-..-cut2-..-limit-N.dat`,
-   table in {used_later, used_later_anc}, tier in {short, long, forever}.
-   Then `check_frames.py` tests them (see below); a failed test stops
-   the pipeline, and `learn.sh` runs it on every input dir too.
-5. **learn** (`cldata_predict.py`): one xgboost regressor per frame,
-   `predictor-<table>-<tier>-xgb.json`.
-6. **evaluate**: predictor build with `--predtables 000` and `111`, the
-   normal build, conflicts side by side.
+   --slow`, `sample_data.py`): the labels and their rank within the
+   reduce over EVERY row of the full DB, then two samples, kept in
+   `data-min.db`:
+   - training: cells of label stratum (top `cut1` % of the used rows, up
+     to `cut2` %, the rest with the never-used) x age (`dump_no` 0, 1,
+     2-5, more), at most `FIXED`/4 rows of each. `x.weight` = rows of
+     the cell / rows picked.
+   - fair: `EVAL_REDUCES` (10) evenly spaced reduces, up to
+     `EVAL_PER_REDUCE` (3000) clauses of each, no strata. For measuring.
+4. **frames** (`cldata_gen_pandas.py`): per table in {used_later,
+   used_later_anc}: `data-min.db-cldata-<table>-disc-cut1-..-limit-N.dat`
+   (training) and `data-min.db-evaldata-<table>-disc.dat` (fair), then
+   `check_frames.py`.
+5. **learn** (`cldata_predict.py`): `predictor-<table>-disc-xgb.json`.
+6. **evaluate**: predictor build (`--predtables 000` and `111`) and the
+   normal build, side by side.
 
-Flags: `--gather-only` stops after 4 (for corpus learning), `--skip-solve`
-redoes 2-6 from the existing `data.db-raw` (needs the proof, so
-`KEEP_FRAT=1` on the first run), `--skip-learn` only reruns 6.
+Flags: `--gather-only` stops after 4, `--skip-solve` redoes 2-6 (needs
+the proof), `--skip-learn` only reruns 6.
+
 **Only UNSAT instances, ever.** A label is "took part in the trimmed
-UNSAT proof"; a SAT run has no empty clause, so no proof and no labels.
-"Took part in learning some clause" is a different, noisier quantity
-(most learnt clauses lead nowhere) and mixing the two in one training
-set is wrong. The pipeline refuses SAT runs and there is no switch.
+UNSAT proof"; a SAT run has no proof. The pipeline refuses SAT runs.
 
-Labels: one model per tier in `TIERS`. The default tier is `disc`: every
-future use of the clause, discounted by its distance, halving every
-`HALFLIFE` (30k) conflicts, one horizon-free label. The old tiers
-`short`, `long`, `forever` are use counts over the next `SHORT`/`LONG`/
-`FOREVER` conflicts (10k/30k/120k), three models whose sum the solver
-ranked by. A row counts only if the clause stayed in the solver for the
-horizon (two half-lives for `disc`). `x.<table>_<tier>` is the label
-itself; `x.<table>_<tier>_rel` (`TARGET=rel`, the default) is the share
-of the clauses at the same reduce that score less, 0..1, never-used = 0.
-Reduce only orders the clauses present at one reduce and use counts
-differ 100-fold between families, so `rel` is the instance-invariant
-target for a general model. The ranking quality report is always on
-the label itself, whichever is learnt.
+**The label** (`disc`): the future proof uses of the clause, each
+discounted by its distance, halving every `HALFLIFE` (4) reduces,
+counted for two half-lives. Distance is in reduce time (the k-th reduce
+is at k, linear in the conflicts in between), because the reduce
+interval grows with the run. A row counts only if the clause stayed in
+the solver for the two half-lives, so the last 8 reduces give no rows.
+`x.<table>_disc` is the label, `x.<table>_disc_rel` (`TARGET=rel`, the
+default) the share of the tracked clauses of the same reduce that score
+less (0..1, never-used = 0), computed on the full data. `rel` is what
+makes instances comparable: use counts differ 100-fold between families.
 
-### The gates, in pipeline order
+**Tracking.** Every tracked clause is locked (`CLLOCK=1`): never deleted
+by reduce, so its rows say what it does if kept. `DUMPRATIO=auto` tracks
+`TRACKED` (10k) clauses over the run, from the normal build's conflict
+count (run first, or give `CONFL`), at most `MAXDUMPRATIO` (0.03) of
+the learnt clauses. An eagerly subsumed clause (glue NULL) lives on only
+because of the lock: its rows after the first such reduce are dropped
+(`fill_used_later_X`), 14-32% of the rows otherwise.
 
-- `check_rawdb.py` on the stats DB before the proof is processed:
-  tables, rows, one row per (clause, reduce), dump_no 0/1/2 present, the
-  cost columns' invariants, tracked share vs dump ratio, proof present.
-- `check_data_quality.py --slow` after the labels are filled.
-- `check_frames.py` on the frames, below.
+Knobs (`setparams_ballofcrystal.sh`, all from the environment):
+`STATS_BIN PRED_BIN NORMAL_BIN`, `DUMPRATIO TRACKED MAXDUMPRATIO CONFL`,
+`CLLOCK`, `EVERYPRED`, `HALFLIFE`, `FIXED` (rows per stratum, 3000),
+`cut1 cut2`, `EVAL_REDUCES EVAL_PER_REDUCE`, `bestf` (feature file),
+`XGB_EST XGB_DEPTH XGB_MINCHILD` (40, 5, 10), `XGB_OBJ` (`squarederror`,
+`log`, `poisson`), `TARGET` (`rel`, `count`), `XGB_WEIGHTS` (`none`;
+`strata` = `x.weight`; `instance` = also every instance counts the same;
+`family`, the default = also every family: the leading letters of the
+file name, or the `FAMILIES` file of `family filename` lines),
+`CAKE_XLRUP=""` (skip the optional proof check).
+
+**Ranking quality**, in the learn output and `holdout_eval.py`: on the
+fair frame, per reduce, the share of the future use kept when keeping
+the best 25% / 50% of the clauses by the model, by glue then size, and
+by the truth; mean over the reduces of an instance, then over the
+instances (`helper.ranking_per_reduce`). "cands" = only clauses not used
+since the reduce before. With three or more instances the train/test
+split is by instance; the saved model is refitted on all rows.
+
+### The gates
+
+- `check_rawdb.py` on the stats DB: tables, one row per (clause,
+  reduce), enough reduces, tracked share vs dump ratio, proof present.
+- `check_data_quality.py --slow` after the labels.
+- `check_frames.py` on the frames, before any learning: columns, inf,
+  bad labels, `rel` in 0..1, weights >= 1, sizes, ages, per-reduce
+  values constant within a reduce, features that look into the future,
+  duplicate rows, labels lined up with the `used` counter (catches
+  off-by-one-reduce bugs).
 - `concat_pandas.py` refuses frames with different columns; `learn.sh`
-  records which solver gathered each dir (`gathered_by`) and warns when
-  they differ.
-- The solver refuses a model whose feature count or feature names do not
-  match the list it was built from.
-- `gen_pred_features.py` (so the build) refuses a feature that scales
-  with the run length or the instance size, see "Scale-free features".
-- The model carries the 1st..99th percentile of every feature in its
-  training data and where that data came from (xgboost attributes, set
-  by `cldata_predict.py`). The solver prints `[pred] model trained on
-  ...` at load and `pred feats outside training range` at the end: the
-  share of feature values outside the range and the three worst
-  features. 1-2% is what in-distribution instances give; much more means
-  the model is extrapolating. A model without the attributes says so.
-- `test_small.sh` runs it all end to end and checks that the C++ feature
-  code and pandas compute the same features: the solver's `--preddump
-  FILE` writes the raw columns, features and predictions of every
-  reduce, `check_pred_features.py FILE model.json` recomputes them.
-
-### The data tests (`check_frames.py`)
-
-Run before any learning. Fails on: missing columns, other tiers' labels
-in a frame, inf, NaN/negative/non-integer labels, all-zero labels, size
-< 3, `used` outside 0..31, negative ages, ternary resolvents with
-learning-time data or learnt clauses without it, a clause larger than
-when learnt, per-reduce (`rdb0_common.*`) values that differ within one
-reduce, rate columns that are always ~0, features that look into the
-future or need a column that is not there, duplicate (clause, reduce)
-rows, and labels not lined up with the `used` counter (a clause used
-since the last reduce must be used more later than a never-used one:
-the off-by-one-reduce bugs break this). With the three tiers given
-together, short <= long <= forever per clause and reduce. Warns on
-constant columns, glue > size (glue is not refreshed when a clause
-shrinks) and glue above orig_glue. It found the `avg_sum_*_per_time`
-bug (divided by the clause count twice, always ~1e-8).
-
-Knobs are in `setparams_ballofcrystal.sh`, all overridable from the
-environment: `STATS_BIN PRED_BIN NORMAL_BIN`, `DUMPRATIO` (fraction of
-learnt clauses tracked, 0.1), `CLLOCK` (fraction of tracked clauses never
-deleted, 0.3, so the labels see what a kept clause does), `EVERYPRED`,
-`SHORT LONG FOREVER` (10k/30k/120k conflicts), `FIXED` (rows per strata,
-3000), `cut1 cut2`, `bestf` (feature file), `XGB_EST XGB_DEPTH
-XGB_MINCHILD` (40 trees, depth 5, min child 10), `XGB_OBJ` (training
-objective: `squarederror`, `log` = squared error of log(1+use), `poisson`).
-`CAKE_XLRUP=""` skips the optional proof check (`../frat-xor` +
-cake_xlrup, pointless on big proofs).
-
-The learn output reports, next to the squared error, the **ranking
-quality**: the share of the future use kept when keeping the best 25% /
-50% of the test clauses by the model, by glue then size (the normal
-build's order) and by the truth. "cands" restricts it to clauses not used
-since the reduce before, which is what reduce picks from. Reduce only
-ranks, so this is the number to watch; it is on the strata-balanced
-sample, so only the comparison between the orders means something.
+  warns when the dirs were gathered by different solvers.
+- The solver refuses a model whose features do not match its list.
+- `gen_pred_features.py` refuses a feature that scales with the run
+  length or the instance size (`SCALE` in it): such a column may only
+  appear divided by one of the same class. A long run would otherwise
+  feed the trees values they never saw. `-DPRED_ALLOW_ABSOLUTE=ON`
+  overrides, for comparison builds.
+- The model carries the 1st..99th percentile of every feature of its
+  training data and its provenance (xgboost attributes). The solver
+  prints `[pred] model trained on ...` at load and `pred feats outside
+  training range` at the end; much more than 1-2% means extrapolation.
+- `test_small.sh [seed]` (~3 min): the whole pipeline on a random UNSAT
+  instance, models reproducible bit for bit, `test_frat_uses.py`, and
+  the C++ features against pandas (`--preddump` +
+  `check_pred_features.py`). Run it after touching any script, the
+  stats/predictor code or the schema.
 
 ### Many instances
 
-One instance is not enough: the models memorise it. Use a corpus:
-
 ```
-./run_corpus.sh <outdir> a.cnf b.cnf ...   # gather each (skips dirs that have frames), learn.sh, eval_corpus.sh
-./learn.sh <outdir> a.cnf-dir b.cnf-dir ...  # concat the frames (concat_pandas.py), train the six models
-./eval_corpus.sh <preddir> a.cnf b.cnf ...   # normal vs pred 000 vs pred 111 on each, and the totals
-```
-
-`eval_corpus.sh` writes the solver outputs to `<preddir>/eval/` and takes
-`PRED_OPTS` (extra predictor options), `EVAL_OPTS` (options for all runs,
-e.g. `--xor 0`), `EVAL_TABLES` (default `000 111`) and
-`EVAL_NORMAL_CACHE` (a dir where the normal build's runs are kept and
-reused). A hold-out test = `learn.sh` on all dirs but one,
-`eval_corpus.sh` on the one left out.
-
-### Choosing features
-
-```
-ONLY=0.2 ./gen_best_feats.sh <preddir>/comb- <outdir>     # importance rankings, 12 runs
-./pick_features.py -n 30 --no-context -o best_features.txt <outdir>
+./learn.sh <outdir> a.cnf-dir b.cnf-dir ...  # concat the frames, train (same FIXED as the gather)
+./eval_corpus.sh <preddir> a.cnf b.cnf ...   # normal vs predictor on each, and the totals
+./holdout_eval.py --train a-dir .. --test c-dir ..   # offline, on the fair frames
+./run_corpus.sh <outdir> a.cnf b.cnf ...     # gather + learn + eval
 ```
 
-`gen_best_feats.sh` trains on all raw columns and on all raw plus
-computed relative features (thousands of columns). xgboost's memory is
-features x tree nodes, so it uses the models' depth (`XGB_DEPTH`, 5):
-about 5 GB at 30% of the rows, and earlyoom kills anything much bigger
-on this box. `COMPUTED=no` does only the quick raw runs, `TABLES=used_later`
-only the plain label tables, `XGB_OBJ` the objective. It skips runs it
-already has, so it can be restarted. `pick_features.py` sums the
-importances over the runs, drops features the solver cannot compute (the
-raw column table is in `gen_pred_features.py`, `--list-raw` prints it)
-and, with `--no-context`, features made only of `rdb0_common.*` columns,
-which are the same for every clause at a reduce and only identify the
-instance. After changing the list: rebuild `build_pred`, retrain, copy the
-models to `src/predict/`, rebuild again for the embedded defaults.
+`eval_corpus.sh` writes to `<preddir>/eval/<cnf>.<normal|predNNN>.s<seed>`
+and takes `PRED_OPTS`, `EVAL_OPTS` (e.g. `--xor 0`), `EVAL_TABLES`
+(`000 111`), `EVAL_SEEDS`, `EVAL_TIMEOUT`, `EVAL_NORMAL_CACHE`.
+`eval_summary.py <dir>` makes the table from such files: per instance,
+then per configuration against normal the geometric mean of the
+per-instance ratios with a 95% bootstrap interval, solved, PAR2, and
+the noise (each seed against the first).
 
-### Scale-free features
+### Features
 
-The training runs are at most ~2.4M conflicts on instances that solve
-in 300 s; the model will run for a day on bigger ones. A raw column
-that grows with the run (`cl.time_inside_solver`,
-`rdb0.last_touched_any_diff`, `rdb0.introduced_at_conflict`,
-`rdb0.sum_props_made`, `rdb0.sum_uip1_used`, `rdb0.sum_visited`,
-`rdb0.dump_no`, the raw rankings) or with the instance (`num_vars`, the
-clause and literal counts) takes values in a long run the model never
-saw, and a tree model clamps at its last split: it extrapolates
-silently. So `gen_pred_features.py` classes those columns (`SCALE` in
-it) and refuses any feature where a class's exponent is not zero: a
-column of a class may only appear divided by another of the same class
-(a share of the clause's life, a rate per conflict, a rank over the
-reduce). `--allow-absolute` / cmake `PRED_ALLOW_ABSOLUTE` overrides,
-for comparison builds only.
+`best_features.txt`: 24 scale-free features. `gen_best_feats.sh` +
+`pick_features.py` make importance rankings and a list from them
+(memory: features x tree nodes, ~5 GB at 30% of the rows). After
+changing the list: rebuild `build_pred`, retrain, copy the model to
+`src/predict/`, rebuild. `best_features-general30.txt` is the list with
+the age features, for the open question in `README.md`.
 
-`best_features.txt` is scale-free since 2026-10-03: the trim list with
-the raw idle time replaced by idle time / life, 24 features (the old
-30 is `best_features-general30.txt`). Hold-out A/B (the six instances, seeds
-0-3): 139, 108, 126, 124% of the normal build's conflicts, the 30-list
-measured the same way 106, 125, 111, 113%: within the seed spread.
+`model_report.py <learn dir>/predictor-used_later-disc-xgb.json -o
+report.html`: one HTML page on a model (attributes, importances, SHAP,
+trees). `<learn dir>` holds the model next to its training frame.
 
-**Amount vs order, survivors, round 2 (2026-10-04).** Three structural
-suspects, each tested on the `sf` hold-out models and the six held-out
-instances (conflicts / time of the normal build):
+## The scripts
 
-- *Amount.* `--predkeep 1` made tier1/tier2 the top 25% / 47% by score
-  on every instance, while glue's tier1 share of the live learnt clauses
-  on the six instances runs from 26% (jkkk) to 77% (hid): the A/B was
-  measuring how many clauses are protected more than which.
-  `--predkeep 2` keeps as many as glue would and lets the score pick
-  which. Same models, paired by seed: 139 -> 122%, 108 -> 106%,
-  126 -> 114%, 124 -> 123% conflicts (mean 124 -> 116), time 95, 82, 90,
-  101%. Four of four in the same direction, small; post 836k -> 501k and
-  schup 1.18M -> 779k are where the amount mattered. Now the default.
-- *Survivors.* 45% of the training rows (5% goldb to 85% f6bidw) come
-  from clauses alive at the end of their run: the `CLLOCK` 30% of
-  tracked clauses the data-gen lock makes immortal, plus what glue kept.
-  Their future is the only one the glue policy did not cut short
-  (the others are censored where glue deleted them, and the two
-  half-lives filter turns that into survivorship). Training on them
-  alone: 119% / 107% with `--predkeep 2`, against 122% / 95% on all
-  rows. A wash: jkkk 1.12M -> 728k, schup 779k -> 1.09M. The code
-  (a frame column with the conflict the clause left at, an
-  `--onlysurvivors` option) was deleted. The 45% is the thing to
-  remember: the training set is half immortal clauses.
-- *Round 2.* Regathered the 8 training instances under the learnt
-  policy (`build_stats_pred`, `--predloc models/sf --predkeep 2`,
-  `cnf-r2/`, frames only kept; the runs took 97-161% of the glue
-  policy's conflicts). Models from round 2 alone: 115% / 90%; from both
-  rounds (16 dirs): 109% / 86%; round 1 alone 122% / 95%, all with
-  `--predkeep 2`, seed 0. Per instance, both rounds vs round 1: hid
-  2.49M vs 2.61M, jkkk 872k vs 1.12M, schup 558k vs 779k, the rest
-  equal. The same experiment under `--predkeep 1` had been a loss
-  (123% / 86%, below): the starved DB of the fixed 25% was what round 2
-  learnt from. Seeds 1-3 of the 16-dir models (`variance-sf-r12-keep2/`):
-  106, 109, 131% conflicts, 79, 78, 127% time (seed 3 has sv at 1.06M
-  and schup at 1.05M, the usual swing); paired with round 1 alone:
-  122 -> 109, 106 -> 106, 114 -> 109, 123 -> 131. Two better, one
-  equal, one worse: not a loss any more, not a demonstrated gain. Not
-  adopted; the round-2 data was deleted, `chain_r2.sh` in
-  `cb_test/general/` is how to make it again (copy the CNFs, see
-  Practicalities). The big test, with more instances, could settle it.
-
-What the three say together: of the amount, the survivorship and the
-policy mismatch, only the amount moved every seed the same way, and by
-~8 points. The remaining 10-25% is somewhere else: what the features
-can express, or how a rank at one reduce maps onto a keep decision.
-
-**Plain vs ancestor label, same models (2026-10-03).** The `_anc` models
-`learn.sh` trains alongside (`--predtables 111`) were run for the first
-time since September on the same six hold-out instances: seed 0 gave
-101% / 76%, which against the plain table's 139% / 105% looked like a
-38-point win, every instance better. Seeds 1-3 (`variance-sf-anc/`):
-124, 124, 124% conflicts, 83, 101, 92% time; the plain seeds 108, 126,
-124%. So the two labels are within the seed noise of each other (means
-118% vs 124%), seed 0 was the outlier, and the old note "ancestor
-generalises worse" (one UTI run, 109% vs 93%) was equally one run.
-Neither label is established as better; the plain one stays the default
-only because it is. Per instance the swing is the usual: schup 585k to
-1.17M conflicts across three ancestor seeds.
-
-The runtime check: `cldata_predict.py` stores in the model (xgboost
-attributes `feature_lo`/`feature_hi`, plus `train_rows`, `train_frame`,
-`train_date`, `gathered_by`) the 1st/99th percentile of every feature
-over the training frame. They travel with the model, embedded or
-`--predloc`, so they always describe the model actually loaded; a
-feature list has no ranges of its own. The solver counts the values
-outside the range and prints the share and the three worst features at
-the end (`pred feats outside training range`). In-distribution runs
-give 0.1-0.4% for the 24 and ~1% for the 30, whose worst feature is
-`num_vars / props per conflict`, an instance identifier.
-
-The check on a long run (`cb_test/general/longrun/`, homer17, 30 min,
-46M conflicts, 20x the longest training run, not a training instance):
-the 24 give 0.24% outside, the same as in distribution, worst
-`glue / discounted props` at 1.7%; the 30 give 0.37% with
-`cl.time_inside_solver` at 2.8% and `num_vars / props per conflict` at
-3.0%: the absolute features are the ones that drift, modestly here
-because most clauses at a reduce are young whatever the run length,
-and more the longer the run. Both ran 46.0M conflicts in the 1800 s.
-
-### A report on a model
-
-```
-pip install --user shap graphviz      # once; dot (system graphviz) draws the trees, else they are text
-./model_report.py <learn dir>/predictor-used_later-disc-xgb.json -o report.html
-./model_report.py src/predict/predictor_disc.json <learn dir>/comb-used_later-disc-*.dat -o report.html
-```
-
-`<learn dir>` = the first argument of `learn.sh`, where the model and
-its training frame (`comb-*.dat`, not in git) sit side by side; the
-embedded model's is `cb_test/general/models/sf-all/`. Without the frame
-argument the model's `train_frame` attribute is looked for next to it.
-One HTML page, ~2 min, 1.6 GB on the 358k-row frame (`--rows` is the
-SHAP sample, 3000): the model's attributes, the training ranges against
-the frame, xgboost's tree statistics and importances (gain, splits,
-cover, root splits, never-used features), SHAP mean |value| and direction
-per feature, the beeswarm, dependence plots of the top 8 with the
-strongest interacting feature, the exact interaction matrix's top pairs,
-the first trees, and the fit on the frame. Everything is xgboost's or
-shap's own; nothing is computed by hand. The depth is measured from the
-trees: the model file keeps no training parameters, `save_config()` on a
-loaded model returns defaults. Not committed, regenerated when wanted.
-
-### Smoke test
-
-```
-./test_small.sh [seed]     # cnfgen random 3-SAT, ~100k conflicts, scaled horizons, ~3 min
-```
-
-Runs the whole pipeline, checks the plain and ancestor models differ and
-that a second learning pass reproduces the models bit for bit. Run it
-after touching any script, the stats/predictor code, or the schema.
-
-## Measurements, feature families, and what the ablation says (2026-10-02)
-
-New per-clause measurements (solver commit 0616917e9, STATS build dumps
-them, predictor build computes them, `check_rawdb.py`/`check_frames.py`
-test their invariants): `visited` (propagation looked at the clause and
-its blocker failed: the cost of keeping it; per interval, lifetime,
-discounted), `lit_act_rel` / `lit_vmtf_rel` (mean VSIDS activity / VMTF
-bump stamp of its variables as a share of the largest: are its variables
-where the search is), `num_assigned`, `num_false_lev0`. Feature families
-for the rankings: `--features ratio_computed` (the clause over its
-reduce's aggregates, benefit over cost, the fast discount over the slow
-one; ~800 columns) next to `all_computed` (every pair, 4700).
-
-Group ablation in the solver (`ablate_groups.sh`, `feature_groups.py`;
-the current list plus the four cost features, 8 training families, the
-6 held-out UNSAT instances, `--predkeep 1`):
-
-| list | conflicts / time |
-|---|---|
-| full (34 features) | 116% / 84% |
-| without age | 114% / 89% |
-| without context ratios | 118% / 94% |
-| without the cost features (= the current list) | 120% / 98% |
-| without rankings | 125% / 95% |
-| without size/glue | 131% / 108% |
-| without the recency counters | 157% / 107% |
-| without the learning-time snapshot | 167% / 114% |
-
-So the recency counters, the learning-time snapshot and size/glue carry
-the model; rankings, context ratios, age and the cost features are
-inside the noise (see below). `visited` is not in any importance ranking's
-top 30 either: the cost of a clause does not predict its proof use, the
-label is benefit only. The list picked from the new rankings
-(`best_features-v2.txt`, ratio-heavy) was 121% / 98% as "full": the
-third time an importance pick lost to the list it was meant to replace.
-`best_features.txt` stays.
-
-**The noise floor, and a culprit.** "Without the cost features" is the
-current list on the same instances that gave 98% / 73% the day before,
-yet 120% / 98% here. Three causes were separated:
-- the trees' own seed (`model_variance.sh`, N seeds, `XGB_SUBSAMPLE 0.8`):
-  120%, 121%, 127% on the same data, per instance within 10% except
-  schup (529k to 1.17M conflicts). A few points.
-- the rows the sample holds: a regather with `FIXED=20000` (3x the rows,
-  `cnf/`; the 6000-row data is `cnf-f6k/`) gave 116% / 85%, so the
-  sample size was not it either.
-- the solver: between the two days, 84e5e3191 made the score steer
-  vivification and BVE candidates under `--predkeep` and was never
-  tested alone. Same models, same instances: 116% / 86% with it, 106% /
-  80% without. Removed: under `--predkeep` the score decides the reduce
-  tiers and nothing else, vivification and BVE go by glue as in the
-  normal build.
-
-**Dropping context and age** (`best_features-trim.txt`, 24 features;
-the coupling above already removed, 20000-row data, seed 0 plus three
-seeds with `XGB_SUBSAMPLE 0.8`): full list 106, 125, 111, 113% of the
-conflicts (mean 114%) and 80, 101, 96, 90% of the time; trimmed 118,
-129, 115, 121% (mean 121%) and 90, 96, 88, 92%. A wash: the gap is the
-seed spread, and two instances (schup, jkkk) swing both lists by 40%.
-The default became the 24 the next day, scale-free (above): no measured
-cost, and nothing in it the model has not seen the range of.
-
-So every table of this section was measured with that handicap; the
-comparisons within a table hold, the levels are ~10 points too high.
-What remains above the noise: the recency counters, the learning-time
-snapshot and size/glue carry the model; rankings, context, age and the
-cost features do not measurably help; importance-picked lists lose.
-Differences under ~10% between single runs are not results. The
-embedded model is `cb_test/general/models/sf-all/` (the scale-free 24,
-all 14 UNSAT instances, 20000 rows per stratum).
-
-## The scripts, one line each
-
-Pipeline, in order: `ballofcrystal.sh` (all of it for one CNF; knobs in
-`setparams_ballofcrystal.sh`), `check_rawdb.py` (pre-flight on the stats
-DB), `fix_up_frat.py` (labels from the proof), `clean_update_data.py`,
-`check_data_quality.py`, `sample_data.py`, `cldata_gen_pandas.py`
-(frames), `check_frames.py` (the data tests), `cldata_predict.py` (one
-model), `concat_pandas.py` + `learn.sh` (models from many dirs),
-`eval_corpus.sh` (the A/B), `run_corpus.sh` (gather + learn + A/B).
-Features: `best_features.txt` (the list; `best_features-general30.txt`
-is the old 30 for comparison builds, the other lists this file names
-are in git history), `gen_pred_features.py` (the
-C++ from a list, at build time), `gen_best_feats.sh` + `pick_features.py`
-(importance rankings and a list from them), `feature_groups.py` +
-`ablate_groups.sh` (group ablation in the solver), `model_variance.sh`
-(the A/B's noise floor), `holdout_eval.py` (offline
-leave-instances-out), `model_report.py` (HTML report on a model: SHAP,
-importances, trees), `helper.py` (shared SQL and feature code),
-`ccg.py` (Python AST to source). Models: `embed_models.py` (the table of
-compiled-in models). Tests: `check_pred_features.py` (a `--preddump`
-file against pandas and the Python xgboost),
-`test_small.sh` (end to end on a random UNSAT instance, with the C++ vs
-Python feature check). Instances: `bivium_variants.py`.
+Pipeline: `ballofcrystal.sh`, `setparams_ballofcrystal.sh`,
+`check_rawdb.py`, `fix_up_frat.py` + `frat_uses.cpp`,
+`clean_update_data.py`, `check_data_quality.py`, `sample_data.py`,
+`cldata_gen_pandas.py`, `check_frames.py`, `cldata_predict.py`,
+`concat_pandas.py`, `learn.sh`, `eval_corpus.sh`, `eval_summary.py`,
+`run_corpus.sh`, `helper.py` (shared SQL, features, weights, ranking).
+Features: `gen_pred_features.py`, `gen_best_feats.sh`,
+`pick_features.py`, `feature_groups.py` + `ablate_groups.sh` (group
+ablation in the solver), `ccg.py`. Models: `embed_models.py`,
+`model_report.py`, `model_variance.sh` (tree-seed spread of an A/B),
+`holdout_eval.py`. Tests: `test_small.sh`, `test_frat_uses.py`,
+`check_pred_features.py`. Instances: `bivium_variants.py`.
 
 ## Practicalities
 
-- `ballofcrystal.sh` works in `<real path of the CNF>-dir`: give it a
-  copy of the CNF, not a symlink into the corpus, or the run dir (GBs of
-  proof) lands next to the corpus. 2026-10-04 this filled the disk.
+- Give `ballofcrystal.sh` a COPY of the CNF: it works in `<real path of
+  the CNF>-dir`, and the proof is about 2 GB per million conflicts. With
+  the disk full the stats run dies with an SQLite "SQL logic error".
+- Never edit a script while a run uses it: write a temp file and rename.
+- This box: 1 physical core, 7 GB. Time runs one at a time, and a cached
+  normal run (`EVAL_NORMAL_CACHE`) must have been made under the same
+  load as what it is compared to.
+- `build_stats_pred/` (STATS=ON and FINAL_PREDICTOR=ON) with
+  `STATS_OPTS="--predtype xgb --predloc DIR"` gathers under the learnt
+  policy.
+- Features are float32 on both sides; ratios beyond it are "missing".
+- Training is deterministic: the same frames give the same model.
+- Fuzz the normal build after touching the solver:
+  `cd scripts/fuzz && ./fuzz.py --fuzzlim 30`.
+- `cb_test/` (not in git): `general/cnf/` and `sr19/cnf/` (the gathered
+  dirs), `general/models/n21/` (the embedded model's learn dir,
+  `train21.txt` its inputs), `general/ab.sh` (the hold-out A/B),
+  `general/lofo.py` (leave-one-family-out, offline), `sr19/survey*.sh`
+  and `gather.sh`.
 
-- Options before the CNF, always (see above).
-- Labels need conflicts beyond the horizon: instances under ~200k
-  conflicts need scaled-down `SHORT LONG FOREVER` (the smoke test uses
-  2000/6000/20000).
-- `DUMPRATIO=0.02` for instances of 1-2M conflicts, else the SQLite DB
-  and the proof get out of hand (UTI: 0.01, 4.9 GB proof, ~1 h). A corpus
-  dir is 0.2-1.2 GB after the proof is deleted. The proof is about 2 GB
-  per million conflicts: with the disk full the stats run dies with an
-  SQLite "SQL logic error" on an insert (schur-triples, 3.7M conflicts).
-- Never edit a script while a run uses it: bash reads scripts
-  incrementally and a truncated file gives a syntax error mid-run. Write
-  a temp file and rename it over the old one.
-- Gathering a mixed corpus: `STATS_BIN` with `STATS_OPTS="--predtype
-  xgb --predloc DIR"` and the `build_stats_pred/` build (STATS=ON and
-  FINAL_PREDICTOR=ON together) gathers under the learnt policy.
-- Features are float32 on both sides: ratios beyond float32 are "missing"
-  in training and in the solver (no FE_OVERFLOW trap). The solver's FP
-  traps are off while xgboost runs (`NoFPTraps`).
-- The training is deterministic (fixed seed, sorted sampling); the same
-  frames give the same models.
-- Fuzz the normal build after touching `clause.h`, `searcher.cpp`,
-  `reducedb.cpp` or the stats dumping: `cd scripts/fuzz && ./fuzz.py --fuzzlim 30`.
-- `cb_test/` in the repo root (not in git) holds the current runs:
-  `general/cnf/` (the training data), `general/models/sf-all/` (the
-  embedded model) and `sf/` (its hold-out), `general/ablate-cost/
-  models-without-cost/` (the 30-list baseline), `general/normal-cache/`,
-  `general/longrun/`, the survey and gather scripts, and the
-  `rand3-230-*.cnf` smoke instances. The run directories of the older
-  sections below were deleted on 2026-10-03; their numbers are here.
+## What is known (2026-10-05)
 
-## Results so far
+Data: 30 UNSAT instances, 25 families (14 of satcomp2020, 16 of
+satrace19: what the normal build solves with `--xor 0` in 100-300 s on
+this box, 18 of 400), `FIXED=20000`.
 
-Corpus of 10 UNSAT instances (was `cb_test/corpus/`; count14, php10,
-subsetcard20, six random 3-SAT of 460k-2.2M conflicts) plus UTI-20-10p0;
-130k training rows, 40 trees of depth 5, `FIXED=10000`. Conflicts of the
-predictor build relative to the normal build:
+The embedded model: 21 of them (all but the hold-out families: hid,
+jkkk, post-cbmc, schup, Steiner, sv-comp), `rel`, squared error, no
+weights, 40 trees of depth 5. On the 9 hold-out instances, 3 seeds,
+`--xor 0`, against the normal build: **conflicts 110% [105, 115], time
+118% [110, 125]**, all solved. Seed noise of the normal build: 3-9%.
+So the model loses to glue in the solver.
 
-| training | plain tables (000) | ancestor tables (111) |
-|---|---|---|
-| all 10, evaluated on the same 10 (in-sample) | 81% | 80% |
-| 9 without UTI, evaluated on UTI (hold-out) | 93% | 109% |
+Offline, leave-one-family-out over the 30, model minus the glue sort at
+25% / 50% kept: +2.5 [+0.4, +4.4] / +2.7 [+0.9, +4.8].
 
-UTI hold-out in numbers: normal 1,508,855 conflicts / 261 s, predictor
-1,416,778 / 244 s. Per-instance in-sample results range from 53% (php10)
-to 107% (r3-270-2). (Models `learn-all-newfeats`, `learn-noUTI-newfeats`,
-rankings `feats-corpus`: deleted.)
-
-With the previous hand-written 22-feature list the hold-out was 102%, so
-the gain on unseen instances comes from the corpus-picked features.
-
-## Bivium (2026-09-30)
-
-The two SAT Competition 2020 Bivium CNFs (`~/media/satcomp2020/bivium-*`)
-have their guessed state bits propagated into the clauses, so
-`bivium_variants.py base.cnf.gz -n 6 --seed S` makes UNSAT variants by
-guessing N more state bits at random; every bit halves the work (n=6:
-0.2-2M conflicts, n=8: 300k). Everything was in `cb_test/bivium/` (deleted):
-`pool/` the measured candidates, `train/` 10 instances (5 per base CNF,
-n=5/6, 220k-2.1M conflicts, gathered with `DUMPRATIO` 0.06 or 0.03 for
-the >1M ones, `FIXED=10000`), `test/` 4 others (1.3-1.8M), `models/<name>/`
-the models and `results-*.out` the A/B tables, all `--xor 0` (the stats
-run has no XOR reasoning). `exp.sh <name>` learns and evaluates one
-configuration, `chain*.sh` are the runs made. Conflicts / time of the
-predictor build relative to the normal build on the 4 held-out test
-instances (time is under load unless marked quiet, so indicative):
-
-| models | `--predcands 0` | `--predcands 1` |
-|---|---|---|
-| squared error (the default) | 90% / 90% | 82% / 65% |
-| log objective | 75% / 71% | 74% / 65% (quiet: 262 s vs 400 s) |
-| poisson | 88% / 117% | 85% / 72% |
-| log, features picked on bivium | 84% / 78% | 87% / 70% |
-| log, `--predthresh 1` | | 71% / 77% |
-| poisson, `--predthresh 3` | | 72% / 75% |
-| log, `--predcands 1`, default options (XOR reasoning on) | | 77% / 80% |
-
-In-sample on the 10 training instances: log + predcands 1 gives 70% /
-70%, squared error 83% / 88%. Offline, glue/size is already a strong order
-on bivium (93.5% of the future use kept at 25% for the short horizon, vs
-75% on the mixed corpus) and `rdb0.size` carries most of the importance.
-A normal build with `--reducekeepused 0` gets 102% / 78%, so about half
-of the time gain of `--predcands 1` is the smaller DB (25% smaller), the
-conflict gain is the ranking.
-
-**But not on the mixed corpus.** Same comparisons on the 10-instance
-corpus + UTI, with the solver of 2026-09-30
-(models `learn-all-log`, `learn-all-newfeats` =
-squared error, same frames):
-
-| models | in-sample, `--predcands 0` | in-sample, `--predcands 1` | UTI held out, 0 | UTI held out, 1 |
-|---|---|---|---|---|
-| squared error | 87% / 93% | 95% / 104% | | |
-| log | 91% / 113% | 88% / 103% | 98% / 107% | 160% / 154% |
-
-So the objective and the candidate set are family-dependent: the
-defaults stay squared error and `--predcands 0`, and `XGB_OBJ=log` with
-`--predcands 1` is what to use for a bivium-like family. Features picked
-on bivium rank better offline but do not help in the solver, so
-`best_features.txt` stays the shared list (`best_features-bivium.txt` is
-in git history).
-
-Prediction cost: the predictor build predicts only for the clauses
-reduce ranks (a third of the DB with `--predcands 0`; `--predkeep 1`
-needs all of them), with one model instead of three since `disc`, and
-sorts the learnt DB at reduce only for the ranking features the list
-uses (the generated header says which; two of five for the general
-list). On php10 the overhead went from 3 s of 11 to about 1.4 s of 9.8.
-
-## A general model from satcomp2020 (2026-09-30)
-
-`cb_test/general/`: `survey.txt` is the normal build on
-`~/media/satcomp2020` with `--xor 0` (`survey.sh`: 30 s on 100 files
-found 7 solvable; `survey2.sh`: the smallest file of each of 91
-families at 300 s found 30 solvable with 30k-2.5M conflicts, half of
-them SAT). `gather_all.sh` gathered them into `cnf/<file>-dir`
-(`FIXED=6000`, `DUMPRATIO` 0.1/0.05/0.03 by conflicts), 26 usable: 4
-have no rows in any horizon or no used clause at all, 1 filled the disk.
-12 of the 26 were SAT, gathered by a since-removed switch that counted
-every derivation as a use; they are parked in `cnf-sat/` and are not to
-be learnt from. `families.py` names the family, `run_general.sh <name>`
-learns on all families but `HOLDOUT` and evaluates on those (the normal
-build's runs come from the survey via `normal-cache/`).
-
-Offline (`holdout_eval.py`, 14 training and 6 held-out families, short
-horizon, share of the future use kept when keeping 25% of the reduce
-candidates): glue/size 81.3%; count target, shared list: 79.5%; rank
-target (`TARGET=rel`), shared list plus glue/used: 88.3%; rank target,
-`best_features-general.txt`: 90.1%. The count target is below glue/size
-across families, the rank target above it on 5 of the 6, sometimes by a
-lot (course: 92% vs 64%, post-cbmc-aes: 76% vs 67%).
-
-In the solver, on the same held-out families (`results-rel-*.out`): see
-the table below. SAT instances swing wildly either way (sgp: 20x more
-conflicts with the model, course: 60% of the time), so only the UNSAT
-ones say something.
-
-Models trained on 17 families (`models/rel-gen`), rank target,
-`best_features-general.txt`, `--xor 0`, conflicts / time of the predictor
-build relative to the normal build:
-
-| held-out instance | `--predcands 0` | `--predcands 1` |
-|---|---|---|
-| hid-uns-enc (UNSAT) | 97% / 82% | 100% / 91% |
-| jkkk-one-one (UNSAT) | 99% / 80% | 117% / 97% |
-| post-cbmc-aes (UNSAT) | 98% / 106% | 101% / 111% |
-| schup-l2s (UNSAT) | 131% / 95% | 97% / 76% |
-| Steiner-45 (UNSAT) | 101% / 121% | 120% / 178% |
-| sv-comp19 (UNSAT) | 109% / 91% | 125% / 97% |
-| the six UNSAT together | 102% / 90% | 105% / 90% |
-| combined-crypto (SAT) | 403% / 466% | 143% / 115% |
-| course0.2 (SAT) | 55% / 42% | 15% / 19% |
-| sgp_5-6-8 (SAT) | 310% / 210% | 2340% / 1650% |
-
-That model was trained with the 12 SAT instances in, which is now
-forbidden. Trained on the 8 UNSAT training instances only
-(`models/rel-unsat`), same held-out UNSAT instances, `--predcands 0`:
-
-| held-out instance | UNSAT-only model | (mixed model) |
-|---|---|---|
-| hid-uns-enc | 98% / 84% | 97% / 82% |
-| jkkk-one-one | 94% / 76% | 99% / 80% |
-| post-cbmc-aes | 104% / 111% | 98% / 106% |
-| schup-l2s | 85% / 72% | 131% / 95% |
-| Steiner-45 | 108% / 135% | 101% / 121% |
-| sv-comp19 | 104% / 85% | 109% / 91% |
-| the six together | 97% / 81% | 102% / 90% |
-
-Offline the UNSAT-only model looks weaker (73.6% vs 85.2% of the future
-use kept at 25%, short horizon: 8 training instances instead of 20), in
-the solver it is better. `--predcands 0` stays the default.
-
-**One discounted model, score-driven tiers (2026-10-01).** The 14 UNSAT
-instances regathered with all four tiers (`TIERS="disc short long
-forever"`), models trained on the 8 training families, same 6 held-out
-UNSAT families, `--xor 0`, conflicts / time relative to the normal build:
-
-| models | `--predkeep 0` | `--predkeep 1` (25% / 47%) | `--predkeep 1` (15% / 40%) |
-|---|---|---|---|
-| one `disc` model | 100% / 82% | 98% / 73% | 129% / 102% |
-| three horizons, same data | 108% / 81% | | |
-
-Per instance with `--predkeep 1`: time 68-75% on hid, jkkk, schup and
-sv, 106% on post-cbmc-aes, 130% on Steiner (6 s runs). Offline the disc
-label does not look better than the short one (the offline metric keeps
-disagreeing with the solver on anything but the target scale), in the
-solver one model does what three did at a third of the prediction cost.
-A second gathering round under the learnt policy (`chain_r2.sh`: the
-STATS+predictor build with the round-1 disc model and `--predkeep 1`,
-then training on both rounds' frames, 16 dirs) was a loss: 123% / 86%.
-Redone 2026-10-04 with `--predkeep 2`, see "Amount vs order".
-
-So the defaults are: `TIERS=disc`, `TARGET=rel`, `--predtiers disc`,
-`--predkeep 1`, `best_features.txt` = the general list (the old
-corpus-picked `best_features-mixed.txt` is in git history), `src/predict/predictor_disc.json`
-= `models/disc-all/` (all 14 UNSAT instances). The bivium and
-mixed-corpus tables above were made with the old list, the count target
-and three models.
-
-
-## Decisions not to revisit
-
-- **Only UNSAT instances are learnt from.** The label is a use in the
-  trimmed UNSAT proof; a SAT run has no proof. See above.
-- **The label is a use in the trimmed UNSAT proof, nothing else.** Tried
-  on 2026-10-03 (branch develop-crystal-actlabel, deleted): `act` = the
-  solver's own conflict-analysis uses (`reduceDB.uip1_used` per reduce
-  interval, no proof, i.e. untrimmed participation) and `mix` = act plus
-  the proof uses, each normalised by its mean at the reduce. Same six
-  held-out instances, conflicts / time of the normal build: proof label
-  139% / 105% (seeds 108, 126, 124%), act 138% / 104%, mix 122% / 98%
-  (seeds 134, 131, 138%). Indistinguishable, per instance too; the
-  labels are not what limits the predictor. One thing learnt on the
-  way: in ps_200_301_70's DB 99% of the proof uses fall in the last 10%
-  of the run while the solver's own uses are spread over it, so at an
-  early reduce the proof label mostly says which clauses survive to the
-  endgame. The trimmed proof is kept because it is the quantity that
-  makes sense for UNSAT (a use that the final derivation needed), and
-  nothing measured argues against it. The code (activity_label.py,
-  relabel.sh, the tiers) was removed; this paragraph is what remains.
-- **The score decides the reduce tiers and nothing else.** Under
-  `--predkeep` the model's score replaces glue in deciding which learnt
-  clauses are tier1/tier2 at reduce. It must NOT also replace glue in
-  `likely_to_be_kept()`, which vivification (`distillerlong.cpp`,
-  `distillerlongwithimpl.cpp`) and BVE (`occsimplifier.cpp`) use to pick
-  the learnt clauses worth working on. That coupling was added in
-  84e5e3191 as "one policy for everything", never measured on its own,
-  and when measured (same models, the six held-out UNSAT instances) it
-  cost 10 points: 116% / 86% of the normal build's conflicts / time with
-  it, 106% / 80% without. The likely reason: those routines want clauses
-  that stay in the DB for a long time, which the glue thresholds encode;
-  the score is a rank at one reduce, not a survival prediction. The code
-  was deleted (7b43312ff made it switchable, the commit after removed it);
-  do not add it back without an A/B that beats 106% / 80%.
-
-## Open
-
-- The offline ranking quality and the solver disagree on everything but
-  the target scale (rank beats count both ways). Which candidates reduce
-  drops matters less than what the deletions do to the later search:
-  `--predkeep 1`, which moves the model to the keep decision, is where
-  the time went from 82% to 73%.
-- A second gathering round under the learnt policy made the model worse
-  (above). Training on round 2 alone, or weighting the rounds, is
-  untried.
-- The runtime bookkeeping is still ~30 fields per learnt clause plus
-  the learning-time snapshot; only the per-reduce sorts are trimmed.
-  Compiling out the fields the feature list does not use would break
-  `--preddump`, which writes every raw column.
+- **Offline and solver disagree.** +2.5 offline is 10% worse in the
+  solver, and more instances (8 -> 21) moved the offline number (0 ->
+  +2.5) and not the solver's (108 -> 110%). Why is open: find out what
+  the normal reduce does that a glue/size sort does not.
+- **Glue is hard to beat.** `rdb0.glue` and `rdb0.size` are features,
+  yet a model of only those two is 2-3 points below the glue sort on
+  new families: raw glue means something else on every instance, the
+  sort only compares within a reduce. A within-reduce glue/size rank as
+  a feature reproduces the sort and adds nothing to the 24.
+- `TARGET=rel` beats `count`, offline (count: 10 points below glue on
+  new families) and in the solver.
+- Row weights do not help; `family` is the worst at 25%, `none` the
+  best, intervals overlapping. The default is still `family`.
+- Squared error vs log, training on the stratified vs the fair frame:
+  no difference seen.
+- What carries the model (group ablation in the solver): the recency
+  counters, the learning-time snapshot, size/glue. Rankings, context
+  ratios, age and the propagation-cost features are inside the noise.
+  Importance-picked feature lists lost to the hand-kept one three times.
+- Amount vs order: with a fixed share of tier1/tier2 clauses the A/B
+  measured how many clauses are protected, not which. `--predkeep 2`
+  (as many as glue would) is the default for that reason.
+- The score decides the reduce tiers and nothing else. Letting it also
+  replace glue in `likely_to_be_kept()` (vivification, BVE) cost 10
+  points. Do not add it back without an A/B.
+- The label is a use in the trimmed UNSAT proof. The solver's own
+  conflict-analysis uses as a label, alone or mixed in, measured the
+  same. In some runs nearly all proof uses fall in the last 10% of the
+  run (ps_200_301_70: 99%), so early reduces say little there.
+- Plain vs ancestor label (`--predtables 000` vs `111`): within the
+  seed noise of each other. Unsettled; deleting one would simplify
+  everything.
+- A second gathering round under the learnt policy, trained with the
+  first: not a loss, not a demonstrated gain. Unsettled.
+- The objective and `--predcands` are family-dependent: on bivium `log`
+  with `--predcands 1` gave 74% / 65% of the normal build, on a mixed
+  corpus the same was a loss. The defaults are the general ones.
 - SAT instances cannot be A/B tested one run at a time: the path to a
-  model changes with every clause kept. Several seeds, or UNSAT only.
-- 14 UNSAT instances from 14 families is thin; the survey found 30
-  solvable in 300 s on this box out of 370, and only UNSAT ones count. More families need more time or a
-  bigger machine (the proof is ~2 GB per million conflicts).
-- Plain vs ancestor label: within the seed noise of each other on the
-  six hold-out instances (above), as every label tried is; deleting one
-  would simplify every script, the frames and the solver's
-  `--predtables`, but the data does not say which. A big test should
-  run both.
-- `--predsortby` 0/1/2 vs 3 and tree count/depth were not tuned.
+  model changes with every clause kept.
+- Differences under ~10% between single runs are not results.
+- Not tuned: trees, depth, `HALFLIFE`, `--predsortby`.

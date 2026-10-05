@@ -64,17 +64,6 @@ using std::numeric_limits;
 //Tuning to
 //1713867 out-175744.wlm01-11-drat0 252 154 98 de15a43  _devel --printsol 0 --simdrat 1 --slsbumptype 6 --polarbestinvmult 9 --lucky 20
 
-//Predict setup that works for countbitswagner064:
-//--predlongchunkmult 0.8 --predlongmult 0.8 --predshortmult 1.4 --predforevertopperc 40
-
-//Tuning to
-//mybase="--printsol 0 --simdrat 1 --predforeverpow 0.1 --predforevermult 0.40 --predlongmult 0.5 --predshortmult 0.5 --preddontmovetime 1 --predadjustsize 0 --predforeverchunkmult 4"
-
-
-//tuning to
-//--base="--printsol 0 --simdrat 1 --predforeverpow 0.1 --predforevermult 0.40 --predlongmult 0.5 --predshortmult 0.5 --preddontmovetime 1 --predadjustsize 0 --predforeverchunkmult 4 --occredmax 50 --branchstr vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx --ternkeep 5 --distillmaxm 10"
-
-
 DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
         polarity_mode(PolarityMode::polarmode_automatic)

@@ -19,15 +19,17 @@
 # 02110-1301, USA.
 
 # Offline hold-out: train on the frames of some instance dirs, report the
-# ranking quality (share of the future use kept when keeping the best
-# 25%/50%, model vs glue/size vs oracle) on the frames of others, per
-# held-out instance. Minutes instead of the hours a solver A/B takes, so
-# targets, objectives and feature lists can be compared first; the
-# solver A/B is still the last word.
+# ranking quality on the FAIR frames (evaldata) of others: per reduce,
+# the share of the future use kept when keeping the best 25%/50% of the
+# reduce candidates, model vs glue/size vs oracle, mean over the reduces
+# of an instance, then over the instances. Minutes instead of the hours
+# a solver A/B takes, so targets, objectives and feature lists can be
+# compared first; the solver A/B is still the last word.
 #
 # usage: holdout_eval.py --train a-dir b-dir --test c-dir d-dir
 #          [--target count|rel] [--objective squarederror|log|poisson]
-#          [-f best_features.txt] [--tier short] [--table used_later]
+#          [--weights none|strata|instance|family]
+#          [-f best_features.txt] [--tier disc] [--table used_later]
 
 import argparse
 import glob
@@ -44,10 +46,10 @@ import helper
 MISSING = np.nan
 
 
-def load(dirs, table, tier):
+def load(dirs, table, tier, what="cldata", suffix="-cut1-*.dat"):
     dfs = []
     for d in dirs:
-        fs = glob.glob(os.path.join(d, "data-min.db-cldata-%s-%s-cut1-*.dat" % (table, tier)))
+        fs = glob.glob(os.path.join(d, "data-min.db-%s-%s-%s%s" % (what, table, tier, suffix)))
         if not fs:
             print("no %s %s frame in %s, skipped" % (table, tier, d))
             continue
@@ -76,14 +78,15 @@ if __name__ == "__main__":
     parser.add_argument("--train", nargs="+", required=True)
     parser.add_argument("--test", nargs="+", required=True)
     parser.add_argument("--table", default="used_later")
-    parser.add_argument("--tier", default="short")
-    parser.add_argument("--target", default="count", choices=["count", "rel"])
+    parser.add_argument("--tier", default="disc")
+    parser.add_argument("--weights", default="family", choices=["none", "strata", "instance", "family"])
+    parser.add_argument("--target", default="rel", choices=["count", "rel"])
     parser.add_argument("--objective", default="squarederror", choices=["squarederror", "log", "poisson"])
     parser.add_argument("-f", "--features", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_features.txt"))
     parser.add_argument("--estimators", type=int, default=40)
     parser.add_argument("--depth", type=int, default=5)
-    parser.add_argument("--cands", action="store_true", default=True,
-                        help="score only clauses not used since the reduce before (what reduce picks from)")
+    parser.add_argument("--all", action="store_true", default=False,
+                        help="score every clause, not only those not used since the reduce before (what reduce picks from)")
     opts = parser.parse_args()
 
     feats = helper.get_features(opts.features)
@@ -91,7 +94,7 @@ if __name__ == "__main__":
     label = count_label + ("_rel" if opts.target == "rel" else "")
 
     train = load(opts.train, opts.table, opts.tier)
-    test = load(opts.test, opts.table, opts.tier)
+    test = load(opts.test, opts.table, opts.tier, "evaldata", ".dat")
     if train is None or test is None:
         print("no data")
         exit(1)
@@ -105,32 +108,16 @@ if __name__ == "__main__":
         objective = "count:poisson"
     clf = xgb.XGBRegressor(objective=objective, n_estimators=opts.estimators, max_depth=opts.depth,
                            min_child_weight=10, random_state=0)
-    clf.fit(X, y)
-    print("trained on %d rows of %d instances, target %s, objective %s" % (
-        len(train), train["fname"].nunique(), label, opts.objective))
+    clf.fit(X, y, sample_weight=helper.sample_weights(train, opts.weights))
+    print("trained on %d rows of %d instances, target %s, objective %s, weights %s" % (
+        len(train), train["fname"].nunique(), label, opts.objective, opts.weights))
 
-    pred = clf.predict(Xt)
-    test["pred"] = pred
-    rows = []
-    for name, g in test.groupby("fname"):
-        if opts.cands:
-            g = g[g["rdb0.used"] < 30]
-        truth = g[count_label].to_numpy(dtype=float)
-        if len(truth) < 50 or truth.sum() <= 0:
-            continue
-        orders = {
-            "model": np.argsort(-g["pred"].to_numpy(), kind="stable"),
-            "glue": np.lexsort((g["rdb0.size"].to_numpy(), g["rdb0.glue"].fillna(1e9).to_numpy())),
-            "oracle": np.argsort(-truth, kind="stable"),
-        }
-        r = {"instance": name[:34], "rows": len(g)}
-        for frac in [0.25, 0.5]:
-            for k, o in orders.items():
-                r["%s@%d" % (k, 100*frac)] = kept(truth, o, frac)
-        rows.append(r)
-    res = pd.DataFrame(rows)
+    res = helper.ranking_per_reduce(test, clf.predict(Xt), count_label, cands=not opts.all)
+    if res is None:
+        print("no reduce with a used clause in the test frames")
+        exit(1)
     pd.set_option("display.width", 200)
     print(res.round(1).to_string(index=False))
-    m = res.drop(columns=["instance", "rows"]).mean()
+    m = res.drop(columns=["instance", "reduces"]).mean()
     print("mean over instances: " + "  ".join("%s %.1f" % (k, v) for k, v in m.items()))
     print("model-glue @25: %.1f  @50: %.1f" % (m["model@25"] - m["glue@25"], m["model@50"] - m["glue@50"]))

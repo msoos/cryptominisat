@@ -35,6 +35,7 @@ import pandas as pd
 import pickle
 import sklearn
 import sklearn.tree
+import sklearn.base
 import numpy as np
 import sklearn.metrics
 import helper
@@ -44,8 +45,9 @@ from sklearn.model_selection import GroupShuffleSplit
 MISSING=np.nan
 
 class Learner:
-    def __init__(self, df):
+    def __init__(self, df, df_eval=None):
         self.df = df
+        self.df_eval = df_eval
 
     def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf,
                                toprint, highlight=False):
@@ -84,24 +86,24 @@ class Learner:
 
     def ranking_quality(self, data, features, to_predict, clf, name):
         """Share of the future use that is kept when only the best-ranked
-        part of the clauses is kept: by the model, by glue then size (what
-        the normal build does), and by the truth. Reduce ranks, so this
-        says more than the squared error"""
-        if data.shape[0] < 10 or data[to_predict].sum() <= 0:
+        part of the clauses of a reduce is kept: by the model, by glue
+        then size (what the normal build does), and by the truth. On the
+        fair frame, per reduce. Reduce ranks, so this says more than the
+        squared error"""
+        if data is None or data.shape[0] < 10:
             return
-        data = data.reset_index(drop=True)
-        truth = data[to_predict].to_numpy(dtype=float)
-        orders = {
-            "model": np.argsort(-clf.predict(data[features]), kind="stable"),
-            "glue/size": np.lexsort((data["rdb0.size"].to_numpy(), data["rdb0.glue"].to_numpy())),
-            "oracle": np.argsort(-truth, kind="stable"),
-        }
-        for keep in [0.25, 0.5]:
-            n = int(keep * len(truth))
-            out = "ranking %s, keep %d%%:" % (name, 100*keep)
-            for what, order in orders.items():
-                out += "  %s %.1f%%" % (what, 100.0*truth[order[:n]].sum()/truth.sum())
-            print(out)
+        X = data[features].astype(np.float32).replace([np.inf, -np.inf], MISSING)
+        pred = clf.predict(X)
+        for cands in [False, True]:
+            res = helper.ranking_per_reduce(data, pred, to_predict, cands=cands)
+            if res is None:
+                continue
+            m = res.drop(columns=["instance", "reduces"]).mean()
+            if options.verbose or cands:
+                print(res.round(1).to_string(index=False))
+            print("ranking %s %s, %d instances: %s" % (
+                name, "cands" if cands else "all", len(res),
+                "  ".join("%s %.1f%%" % (k, v) for k, v in m.items())))
 
     def one_regressor(self, features, to_predict):
         print("-> Number of features  :", len(features))
@@ -116,6 +118,7 @@ class Learner:
         for missing_needed in ["rdb0.glue", "rdb0.dump_no", "rdb0.size", "rdb0.used", count_label]:
             if missing_needed not in features and missing_needed not in extra_feats:
                 extra_feats.append(missing_needed)
+        weights = helper.sample_weights(self.df, options.weights)
         df = self.df[features+extra_feats].copy()
         # xgboost and the solver work in float32: ratios beyond its range
         # are inf there, so make them missing here too
@@ -134,24 +137,31 @@ class Learner:
         print("Value distribution of 'rdb0.glue':\n%s" % df["rdb0.glue"].value_counts())
         print("Value distribution of to_predict:\n%s" % df[to_predict].value_counts())
 
-        # split by clause, not by row: a clause's rows from different dumps
-        # are near-duplicates, splitting them would make the test set
-        # look better than it is
-        groups = self.df["sum_cl_use.clauseID"]
+        # split by instance: the test set says how the model does on
+        # instances it has not seen. One or two instances: by clause (a
+        # clause's rows from different dumps are near-duplicates)
+        fnames = self.df["fname"].astype(str)
+        by_instance = fnames.nunique() >= 3
+        groups = fnames if by_instance else self.df["sum_cl_use.clauseID"]
         splitter = GroupShuffleSplit(n_splits=1, test_size=0.33, random_state=prng)
         train_idx, test_idx = next(splitter.split(df, groups=groups))
         train = df.iloc[train_idx]
         test = df.iloc[test_idx]
-        print("Train/test split by clause: %d/%d rows, %d/%d clauses" % (
+        print("Train/test split by %s: %d/%d rows, %d/%d %s" % (
+            "instance" if by_instance else "clause",
             train.shape[0], test.shape[0],
-            groups.iloc[train_idx].nunique(), groups.iloc[test_idx].nunique()))
+            groups.iloc[train_idx].nunique(), groups.iloc[test_idx].nunique(),
+            "instances" if by_instance else "clauses"))
+        test_fnames = set(fnames.iloc[test_idx]) if by_instance else set(fnames)
         X_train = train[features]
         y_train = train[to_predict]
+        y_all = df[to_predict]
         objective = "reg:squarederror"
         if options.objective == "log":
             # reduce only ranks: the few heavily used clauses need not
             # dominate the loss
             y_train = np.log1p(y_train)
+            y_all = np.log1p(y_all)
         elif options.objective == "poisson":
             objective = "count:poisson"
 
@@ -185,8 +195,11 @@ class Learner:
             print("ERROR: --regressor must be xgb or tree")
             exit(-1)
 
-        clf.fit(X_train, y_train)
+        clf.fit(X_train, y_train, sample_weight=weights.iloc[train_idx])
         print("Training finished. T: %-3.2f" % (time.time() - t))
+        # the model that is saved learns from every row
+        clf_all = sklearn.base.clone(clf)
+        clf_all.fit(df[features], y_all, sample_weight=weights)
 
         if options.dot is not None:
             if options.regressor == "tree":
@@ -208,7 +221,7 @@ class Learner:
             fname_pred_out = options.basedir + "/predictor-{table}-{tier}-{regr}.json".format(
                 tier=options.tier, table=options.table, regr=options.regressor)
             if options.regressor == "xgb":
-                booster = clf.get_booster()
+                booster = clf_all.get_booster()
                 self.set_provenance(booster, df, features)
                 booster.save_model(fname_pred_out)
                 print("==> Saved XGB model to: ", fname_pred_out)
@@ -219,10 +232,13 @@ class Learner:
         if options.regressor == "xgb":
             self.importance_XGB(clf, features=features)
 
-        self.ranking_quality(test, features, count_label, clf, "test all")
-        # used < 30: not used since the reduce before, what reduce picks from
-        self.ranking_quality(test[test["rdb0.used"] < 30], features, count_label, clf, "test cands")
-        self.ranking_quality(train, features, count_label, clf, "train all")
+        # cands = used < 30: not used since the reduce before, what reduce picks from
+        if self.df_eval is not None:
+            ev = self.df_eval
+            is_test = ev["fname"].astype(str).isin(test_fnames)
+            self.ranking_quality(ev[is_test], features, count_label, clf, "test")
+            if by_instance:
+                self.ranking_quality(ev[~is_test], features, count_label, clf, "train")
 
         # print distribution of error
         print("--------------------------")
@@ -291,6 +307,7 @@ class Learner:
 
             torem.extend([
                 "x.class",
+                "x.weight",
                 "x.a_lifetime",
                 "fname",
                 "sum_cl_use.",  # the future
@@ -306,7 +323,6 @@ class Learner:
             features = self.rem_features(features, torem)
         else:
             features = helper.get_features(options.best_features_fname)
-        del self.df["fname"]
 
         to_predict = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
         if options.target == "rel":
@@ -356,7 +372,7 @@ if __name__ == "__main__":
 
     # type of regressor
     parser.add_argument("--target", type=str, default="count",
-                        help="count: the use count over the horizon, rel: the share of the clauses at the same reduce used less (0..1)")
+                        help="count: the discounted use itself, rel: the share of the clauses at the same reduce used less (0..1)")
     parser.add_argument("--objective", type=str, default="squarederror",
                         help="squarederror, log (squared error of log(1+use)), or poisson")
     parser.add_argument("--regressor", type=str, default="xgb",
@@ -375,6 +391,10 @@ if __name__ == "__main__":
                         dest="tier", help="Tier to do")
     parser.add_argument("--table", default="used_later", type=str,
                         dest="table", help="Table to do")
+    parser.add_argument("--weights", type=str, default="family", choices=["none", "strata", "instance", "family"],
+                        help="row weights. strata: undo the strata sampling; instance: also every instance counts the same; family: also every family")
+    parser.add_argument("--evalframe", type=str, default=None,
+                        help="the fair frame (evaldata) the ranking quality is measured on")
     parser.add_argument("--gatheredby", default="unknown", type=str,
                         dest="gathered_by", help="solver commit(s) that gathered the data, stored in the model")
 
@@ -402,67 +422,64 @@ if __name__ == "__main__":
         print("You must give best features filename or we cannot add best features")
         exit(-1)
 
-    # Read in Pandas Dataframe
-    print("Reading dataframe....")
-    df = pd.read_pickle(options.fname)
+    def load_frame(fname, only):
+        print("Reading dataframe %s ..." % fname)
+        df = pd.read_pickle(fname)
+        df = pd.DataFrame(df.sample(frac=only, random_state=prng))
+        print("-> Number of datapoints after applying '--only':", df.shape)
 
-    print("Applying only...")
-    df_tmp = df.sample(frac=options.only_perc, random_state=prng)
-    df_before_dtype_conv = pd.DataFrame(df_tmp)
-    del df_tmp
-    del df
-    print("-> Number of datapoints after applying '--only':", df_before_dtype_conv.shape)
+        # We must convert these or we'll have trouble with inf, -inf, NaN for NULLs
+        df = df.convert_dtypes(
+            convert_integer=False, convert_string=False,
+            convert_floating=False)
+        if options.verbose:
+            helper.print_datatypes(df)
 
-    # We must convert these or we'll have trouble with inf, -inf, NaN for NULLs
-    print("Converting datatypes to those supporting np.NA ...")
-    if options.verbose:
-        print("Datatypes before:")
-        helper.print_datatypes(df_before_dtype_conv)
-    df = df_before_dtype_conv.convert_dtypes(
-        convert_integer=False, convert_string=False,
-        convert_floating=False)
-    del df_before_dtype_conv
-    if options.verbose:
-        print("Datatypes after:")
-        helper.print_datatypes(df)
+        # only "fname" is allowed to be an object (a string)
+        for name,ty in zip(list(df), df.dtypes):
+            if name == "fname":
+                assert ty == object or pd.api.types.is_string_dtype(ty)
+            else:
+                if ty == object:
+                    print("name: " , name, " is object!")
+                assert ty != object
 
-    # Check feature type sanity
-    # only "fname" is allowed to be an object (a string)
-    for name,ty in zip(list(df), df.dtypes):
-        if name == "fname":
-            assert ty == object or pd.api.types.is_string_dtype(ty)
+        # make missing (None) into NaN
+        helper.make_missing_into_nan(df)
+
+        # feature manipulation
+        if options.features =="all_computed":
+            df = helper.cldata_add_computed_features(df, options.verbose)
+        elif options.features == "ratio_computed":
+            df = helper.cldata_add_ratio_features(df, options.verbose)
+        elif options.features == "best_only" or options.features == "best_also":
+            helper.add_features_from_fname(df, options.best_features_fname)
+        elif options.features == "no_computed":
+            helper.cldata_add_minimum_computed_features(df, options.verbose)
         else:
-            if ty == object:
-                print("name: " , name, " is object!")
-            assert ty != object
+            print("ERROR: Unrecognized --features option!")
+            exit(-1)
 
+        for name, mytype in df.dtypes.items():
+            if str(mytype) == str("Int64") or str(mytype) == str("Float64"):
+                assert False
+
+        num = df.columns.drop("fname")
+        df[num] = df[num].replace([np.inf, -np.inf], MISSING)
+        return df.reset_index(drop=True)
+
+    df = load_frame(options.fname, options.only_perc)
     if options.print_features:
         for f in sorted(list(df)):
             print(f)
-
-    # make missing (None) into NaN
-    helper.make_missing_into_nan(df)
-
-    # feature manipulation
-    if options.features =="all_computed":
-        df = helper.cldata_add_computed_features(df, options.verbose)
-    elif options.features == "ratio_computed":
-        df = helper.cldata_add_ratio_features(df, options.verbose)
-    elif options.features == "best_only" or options.features == "best_also":
-        helper.add_features_from_fname(df, options.best_features_fname)
-    elif options.features == "no_computed":
-        helper.cldata_add_minimum_computed_features(df, options.verbose)
-    else:
-        print("ERROR: Unrecognized --features option!")
+    if options.weights != "none" and "x.weight" not in df.columns:
+        print("ERROR: no x.weight in the frame: regather, or --weights none")
         exit(-1)
-
-    # Check feature type sanity
-    for name, mytype in df.dtypes.items():
-        if str(mytype) == str("Int64") or str(mytype) == str("Float64"):
-            assert False
-
-    print("Filling NA with MISSING..")
-    df.replace([np.inf, -np.inf], MISSING, inplace=True)
+    df_eval = None
+    if options.evalframe is not None and not os.path.isfile(options.evalframe):
+        print("WARNING: no fair frame %s, no ranking quality" % options.evalframe)
+    elif options.evalframe is not None:
+        df_eval = load_frame(options.evalframe, 1.0)
 
     if options.dat_file is not None:
         cols = list(df)
@@ -473,5 +490,5 @@ if __name__ == "__main__":
         helper.check_too_large_or_nan_values(df, list(df))
 
     # do the heavy lifting
-    learner = Learner(df)
+    learner = Learner(df, df_eval)
     learner.learn()

@@ -761,7 +761,7 @@ void ReduceDB::load_predictors()
     }
 }
 
-//Fills pred_short/long/forever_use of every clause in offs
+//Fills the predicted use of every clause in offs
 void ReduceDB::update_preds(const vector<ClOffset>& offs)
 {
     if (offs.empty()) return;

@@ -119,6 +119,15 @@ class QueryFill (helper.QueryHelper):
         and clstats.clauseID != 0;
         """
         self.c.execute(q)
+        # ternary resolvents have no clause_stats row
+        q = """
+        insert into sum_cl_use (`clauseID`, `num_used`, `first_confl_used`, `last_confl_used`)
+        select distinct rdb.clauseID, 0, NULL, NULL
+        from reduceDB as rdb left join sum_cl_use
+        on rdb.clauseID = sum_cl_use.clauseID
+        where sum_cl_use.clauseID is NULL and rdb.clauseID != 0;
+        """
+        self.c.execute(q)
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))
 
 

@@ -22,7 +22,7 @@
 # processed (minutes to an hour on big instances): is the DB what the
 # rest of the pipeline expects? Exit 1 on a failed test.
 #
-# usage: check_rawdb.py data.db-raw [--horizon 120000] [--dumpratio 0.1] [--proof data.frat]
+# usage: check_rawdb.py data.db-raw [--tiers disc --halflife 4] [--dumpratio 0.1] [--proof data.frat]
 
 import argparse
 import os
@@ -49,7 +49,8 @@ def one(c, q):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("db")
-    parser.add_argument("--horizon", type=int, default=120000, help="the longest label horizon")
+    parser.add_argument("--tiers", default="disc")
+    parser.add_argument("--halflife", type=int, default=4, help="of the disc label, in reduces")
     parser.add_argument("--dumpratio", type=float, default=None, help="--cldatadumpratio of the run")
     parser.add_argument("--proof", default=None, help="the FRAT file the run wrote")
     opts = parser.parse_args()
@@ -71,8 +72,8 @@ if __name__ == "__main__":
     check(n_red >= 3, "fewer than 3 reduces: nothing to learn from")
     check(n_rdb > 1000, "only %d reduceDB rows" % n_rdb)
     check(n_cl > 100, "only %d tracked learnt clauses" % n_cl)
-    if confl < opts.horizon:
-        warn("the run ended at %d conflicts, the %d horizon will have no rows" % (confl, opts.horizon))
+    check(n_red > 2*opts.halflife + 2, "%d reduces: no row has two half-lives (%d reduces) ahead of it" % (
+        n_red, 2*opts.halflife))
 
     # one row per (clause, reduce)
     dup = one(c, "select count(*) from (select clauseID, conflicts, count(*) n from reduceDB group by 1,2 having n > 1)")

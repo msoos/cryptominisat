@@ -22,9 +22,11 @@
 # pandas pickle per (label table, tier), rows = (clause, reduce) with the
 # clause's state at the reduce, the DB-wide numbers of that reduce, what
 # was known when the clause was learnt, and the labels (count, rank).
-# Rows are sampled per use strata (--cut1/--cut2) up to --limit each.
+# The rows are the ones sample_data.py picked: frame_rows -> the training
+# frame (x.weight = rows of the full data a row stands for), eval_rows ->
+# the fair frame the ranking quality is measured on.
 #
-# usage: cldata_gen_pandas.py --tiers disc --halflife 30000 [--short N --long N --forever N]
+# usage: cldata_gen_pandas.py --tiers disc --halflife 4
 #            --cut1 3.0 --cut2 25.0 --limit 6000 data-min.db
 from __future__ import print_function
 import optparse
@@ -70,10 +72,6 @@ class QueryAddIdxes (helper.QueryHelper):
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
         ---
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
-        ---
-        create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
-        create index `idxclidUCLS-2` on `used_clauses` ( `used_at`);
-        create index `idxclidUCLS-3` on `used_clauses_anc` ( `clauseID`, `used_at`);
         ---
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
         ---
@@ -130,22 +128,22 @@ class QueryCls (helper.QueryHelper):
         self.clause_dat = helper.query_fragment(
             "clause_stats", not_cols, "cl", options.verbose, self.c)
 
-        # a hash order instead of random(): the same DB gives the same frame
-        self.common_limits = """
-        order by ((`sum_cl_use.clauseID` * 7919 + `rdb0.dump_no`) * 2654435761) % 4294967296
-        limit {limit}
-        """
-
+        # the rows sample_data.py picked, and how many each stands for
         q_time_base="""
         join {table}_{tier} on
             {table}_{tier}.clauseID = rdb0.clauseID
             and {table}_{tier}.rdb0conflicts = rdb0.conflicts
+        join {{rows}} as picked on
+            picked.tier = '{tier}' and picked.tbl = '{table}'
+            and picked.clauseID = rdb0.clauseID
+            and picked.conflicts = rdb0.conflicts
         """
 
         q_columns_base="""
             , {table}_{tier}.used_later as `x.{table}_{tier}`
             , {table}_{tier}.percentile_fit as `x.{table}_{tier}_topperc`
             , {table}_{tier}.rel as `x.{table}_{tier}_rel`
+            , picked.weight as `x.weight`
             """
 
         q_time = q_time_base.format(tier=tier, table=table)
@@ -190,13 +188,10 @@ class QueryCls (helper.QueryHelper):
         WHERE
         (cl.clauseID != 0 OR cl.clauseID is NULL)
         and tags.name = "filename"
-
-        -- to avoid missing clauses and their missing data to affect results
-        and rdb0.conflicts + {del_at_least} <= cl_last_in_solver.conflicts
+        order by rdb0.conflicts, rdb0.clauseID
         """
 
         self.myformat = {
-            "limit": 1000*1000*1000,
             "clause_dat": self.clause_dat,
             "rdb0_dat": self.rdb0_dat,
             "sum_cl_use": self.sum_cl_use,
@@ -205,140 +200,21 @@ class QueryCls (helper.QueryHelper):
             "q_columns": q_columns
         }
 
-    def get_used_later_percentiles(self, name, table):
-        cur = self.conn.cursor()
-        q = """
-        select
-            `type_of_dat`,
-            `percentile_descr`,
-            `percentile`,
-            `val`
-        from {table}_percentiles
-        where `type_of_dat` = '{name}'
-        """.format(name=name, table=table)
-        cur.execute(q)
-        rows = cur.fetchall()
-        lookup = {}
-        for row in rows:
-            mystr = "%s_%s_perc" % (row[1], row[2])
-            print("table: {table} type: {t}, perc_desc: {perc_desc}, perc: {perc}, val: {val}".format(
-                table=table,
-                t=row[0],
-                perc_desc=row[1],
-                perc=row[2],
-                val=row[3]))
-            lookup[mystr] = row[3]
-        #print("perc lookup:", lookup)
-
-        return lookup
-
-    def get_one_data(self, tier, table):
-        self.c.execute("select count(*) from {table}_{tier}".format(tier=tier, table=table))
+    def get_one_data(self, tier, table, rows):
+        self.c.execute("select count(*) from {rows} where tier = '{tier}' and tbl = '{table}'".format(
+            rows=rows, tier=tier, table=table))
         if self.c.fetchone()[0] == 0:
-            print("WARNING: {table}_{tier} is empty (run shorter than the horizon)".format(tier=tier, table=table))
+            print("WARNING: no {rows} for {table}_{tier} (run shorter than two half-lives, or no clause ever used)".format(
+                rows=rows, tier=tier, table=table))
             return pd.DataFrame()
-        perc = self.get_used_later_percentiles(tier, table)
-        if "top_non_zero_0.0_perc" not in perc:
-            print("WARNING: no clause is ever used in {table}_{tier}, no frame".format(tier=tier, table=table))
-            return pd.DataFrame()
-        self.myformat["del_at_least"] = helper.tier_duration(options, tier)
-
-        # when del_at_least is over 2 million, then we need to make this smaller
-        #    or we will delete all data
-        if self.myformat["del_at_least"] > 2*1000*1000:
-            self.myformat["del_at_least"] = 100*1000
-
-        # Make sure these stratas are equally represented
         t = time.time()
-        dfs = self.run_stratified_queries(
-            limit=options.limit, perc=perc, tier=tier, table=table)
-        data = pd.concat(dfs)
-        print("** Queries finished. Total size: %s  -- T: %-3.2f" % (
-            data.shape, time.time() - t))
-        return data
-
-    # perc == percentile distribution
-    # limit == MAX in total
-    # tier == forever/long/short
-    def run_stratified_queries(self, limit, perc, tier, table):
-        dfs = []
-        # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
-        for beg_perc, end_perc in [(0.0, options.cut1), (options.cut1, options.cut2), (options.cut2, 100.0)]:
-            beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
-            if end_perc == 100.0:
-                end = 0.0
-            else:
-                end = perc["top_non_zero_{perc}_perc".format(perc=end_perc)]
-            what_to_strata = "`x.{table}_{tier}`".format(tier=tier, table=table)
-
-            print("Limit is {limit} value strata perc: ({a}, {b}) translates to value strata ({beg}, {end})".format(
-                limit=limit, a=beg_perc, b=end_perc, beg=beg, end=end))
-
-            # create one query for (beg,end) with different dump numbers
-            df, weighted_sizes = self.query_strata_per_dumpno(
-                str(self.q_select),
-                limit,
-                what_to_strata=what_to_strata,
-                strata=(beg,end))
-            dfs.append(df)
-        return dfs
-
-    def query_strata_per_dumpno(self, q, limit, what_to_strata, strata):
-        print("* Getting one set of data with limit %s" % limit)
-        weighted_size = []
-        df_parts = []
-
-        def one_part(mult, dump_no_filter=""):
-            self.myformat["limit"] = int(limit*mult)
-            df_parts.append(self.one_query(q + dump_no_filter, what_to_strata, strata))
-            print("--> Num rows for strata %s -- '%s': %s" % (strata, dump_no_filter, df_parts[-1].shape[0]))
-
-            ws = df_parts[-1].shape[0]/mult
-            print("--> The weight was %f so weighted size is: %d" % (mult, int(ws)))
-            weighted_size.append(ws)
-
-        # every clause present at a reduce is ranked, the young ones too
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 0 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 1 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 1 and rdb0.dump_no <= 5 ")
-        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 5 ")
-
-        df = pd.concat(df_parts)
-        print("-> size of all dump_no-s, strata {strata} data: {size}".format(
-            strata=strata, size=df.shape))
-
-        return df, weighted_size
-
-    def one_query(self, q, what_to_strata, strata):
-        q = q.format(**self.myformat)
-
-        if strata[1] == 0.0:
-            my_less_equal = ">="
-        else:
-            my_less_equal = ">"
-
-        q = """
-        select * from ( {q} )
-        where
-        {what_to_strata} <= {beg}
-        and {what_to_strata} {my_less_equal} {end}""".format(
-            q=q,
-            what_to_strata=what_to_strata,
-            beg=strata[0],
-            end=strata[1],
-            my_less_equal=my_less_equal)
-
-        q += self.common_limits
-        q = q.format(**self.myformat)
-
-        t = time.time()
-        sys.stdout.write("-> Running query for {} stratas {}...".format(what_to_strata, strata))
-        sys.stdout.flush()
+        q = self.q_select.format(**self.myformat).format(rows=rows)
         if options.dump_sql:
             print("query:", q)
-        df = pd.read_sql_query(q, self.conn)
-        print("T: %-3.1f" % (time.time() - t))
-        return df
+        data = pd.read_sql_query(q, self.conn)
+        print("** %s query finished. Total size: %s  -- T: %-3.2f" % (
+            rows, data.shape, time.time() - t))
+        return data
 
 
 def dump_dataframe(df, name):
@@ -359,13 +235,13 @@ def one_database(dbfname):
         helper.drop_idxs(q.c)
         q.create_indexes()
 
-    with helper.QueryFill(dbfname) as q:
-        q.delete_and_create_used_laters()
+    with helper.QueryHelper(dbfname) as q:
+        for t in ["frame_rows", "eval_rows"]:
+            q.c.execute("create index `idx%s` on %s (tier, tbl, clauseID, conflicts)" % (t, t))
         for tier in options.tiers.split(","):
             for table in ["used_later", "used_later_anc"]:
-                q.fill_used_later_X(tier, duration=helper.tier_duration(options, tier), table=table,
-                                    halflife=options.halflife)
-                q.fill_used_later_X_perc_fit(tier, table=table)
+                q.c.execute("create index `idxul_{table}_{tier}` on {table}_{tier} (clauseID, rdb0conflicts)".format(
+                    tier=tier, table=table))
 
     print("Using sqlite3 DB file %s" % dbfname)
     for tier in options.tiers.split(","):
@@ -374,7 +250,8 @@ def one_database(dbfname):
                 tier=tier,table=table))
 
             with QueryCls(dbfname, tier, table) as q:
-                df = q.get_one_data(tier, table)
+                df = q.get_one_data(tier, table, "frame_rows")
+                df_eval = q.get_one_data(tier, table, "eval_rows")
             if df.shape[0] < 100:
                 print("WARNING: only %d rows for tier %s table %s (run shorter than the "
                       "horizon?), no frame written" % (df.shape[0], tier, table))
@@ -396,15 +273,17 @@ def one_database(dbfname):
             cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
             cleanname = re.sub(r'\.db$', '', dbfname)
             cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            cleanname = "{cleanname}-cldata-{table}-{tier}-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
+            dump_dataframe(df, "{cleanname}-cldata-{table}-{tier}-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
                 cleanname=cleanname,
                 cut1=options.cut1,
                 cut2=options.cut2,
                 limit=options.limit,
                 tier=tier,
-                table=table)
-
-            dump_dataframe(df, cleanname)
+                table=table))
+            # the fair sample: what the ranking quality is measured on
+            if df_eval.shape[0] > 0:
+                dump_dataframe(df_eval, "{cleanname}-evaldata-{table}-{tier}".format(
+                    cleanname=cleanname, tier=tier, table=table))
 
 
 if __name__ == "__main__":
@@ -432,14 +311,7 @@ if __name__ == "__main__":
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    # lengths of short/long
     helper.add_tier_options(parser)
-    parser.add_option("--short", default=10000, type=int,
-                      dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=30*1000, type=int,
-                      dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=120*1000, type=int,
-                      dest="forever", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()
 

@@ -24,8 +24,6 @@
 # failed test; warnings for what is suspicious but not surely wrong.
 #
 # usage: check_frames.py [-f best_features.txt] frame.dat [frame.dat ...]
-#   the frames of the three tiers of one table are cross-checked when
-#   given together (short <= long <= forever for the same clause and reduce)
 
 import argparse
 import os
@@ -59,7 +57,7 @@ def check(cond, msg):
 
 
 def tier_of(fname):
-    m = re.search(r"cldata-(used_later(?:_anc)?)-(short|long|forever|disc)-", fname)
+    m = re.search(r"(?:cl|eval)data-(used_later(?:_anc)?)-(disc)[-.]", fname)
     return (m.group(1), m.group(2)) if m else (None, None)
 
 
@@ -70,8 +68,9 @@ def check_frame(fname, df, feats):
     label = "x.%s_%s" % (table, tier)
     print("== %s: %d rows, %d columns" % (name, df.shape[0], df.shape[1]))
     check(df.shape[0] > 100, "%s: only %d rows" % (name, df.shape[0]))
+    fair = "evaldata-" in name
 
-    need = [label, "fname", "rdb0.glue", "rdb0.size", "rdb0.used", "rdb0.dump_no",
+    need = [label, label + "_rel", "x.weight", "fname", "rdb0.glue", "rdb0.size", "rdb0.used", "rdb0.dump_no",
             "rdb0_common.conflicts", "rdb0.introduced_at_conflict",
             "sum_cl_use.clauseID", "cl.orig_glue", "rdb0.is_ternary_resolvent"]
     missing = [c for c in need if c not in df.columns]
@@ -92,7 +91,17 @@ def check_frame(fname, df, feats):
     check((y >= 0).all(), "%s: negative labels" % name)
     if "_anc" not in table and tier != "disc":
         check((y == y.round()).all(), "%s: non-integer use counts" % name)
+    # the fair frame is a few reduces: they can all be before the first use
+    if fair and y.sum() == 0:
+        warn("%s: all labels zero" % name)
+        return df
     check(y.sum() > 0, "%s: all labels zero" % name)
+    # what a row stands for, and the rank among the clauses of the reduce
+    w = df["x.weight"]
+    check(w.notna().all() and (w >= 1).all() and np.isfinite(w).all(), "%s: x.weight below 1 or missing" % name)
+    rel = df[label + "_rel"]
+    check(rel.between(0, 1).all(), "%s: rank label outside 0..1" % name)
+    check((rel[y == 0] == 0).all(), "%s: never-used rows with a rank above 0" % name)
     frac_pos = (y > 0).mean()
     if frac_pos < 0.02 or frac_pos > 0.98:
         warn("%s: %.1f%% of the labels are nonzero" % (name, 100*frac_pos))
@@ -189,44 +198,6 @@ def check_frame(fname, df, feats):
     return df
 
 
-def cross_check(frames):
-    """short <= long <= forever for the same clause at the same reduce"""
-    by = {}
-    for fname, df in frames.items():
-        table, tier = tier_of(fname)
-        by.setdefault(table, {})[tier] = df
-    for table, tiers in by.items():
-        seq = [t for t in ["short", "long", "forever"] if t in tiers]
-        for a, b in zip(seq, seq[1:]):
-            key = ["fname", "sum_cl_use.clauseID", "rdb0_common.conflicts"]
-            la, lb = "x.%s_%s" % (table, a), "x.%s_%s" % (table, b)
-            m = tiers[a][key + [la]].merge(tiers[b][key + [lb]], on=key)
-            if len(m) < 50:
-                warn("%s: only %d rows shared between %s and %s" % (table, len(m), a, b))
-                continue
-            bad = (m[la] > m[lb]).sum()
-            check(bad == 0, "%s: %d rows where the %s use exceeds the %s use" % (table, bad, a, b))
-            print("   %s: %s <= %s holds on %d shared rows" % (table, a, b, len(m)))
-        # the discounted use weighs every use by at most 1 over two
-        # half-lives (60k), so it is at most the 120k count, and a clause
-        # used in the next 10k has a discounted use of at least 0.79 per use
-        if "disc" in tiers and "forever" in tiers:
-            key = ["fname", "sum_cl_use.clauseID", "rdb0_common.conflicts"]
-            ld, lf = "x.%s_disc" % table, "x.%s_forever" % table
-            m = tiers["disc"][key + [ld]].merge(tiers["forever"][key + [lf]], on=key)
-            if len(m) >= 50:
-                bad = (m[ld] > m[lf] + 1e-6).sum()
-                check(bad == 0, "%s: %d rows where the discounted use exceeds the forever count" % (table, bad))
-                print("   %s: disc <= forever holds on %d shared rows" % (table, len(m)))
-        if "disc" in tiers and "short" in tiers:
-            key = ["fname", "sum_cl_use.clauseID", "rdb0_common.conflicts"]
-            ld, ls = "x.%s_disc" % table, "x.%s_short" % table
-            m = tiers["disc"][key + [ld]].merge(tiers["short"][key + [ls]], on=key)
-            if len(m) >= 50:
-                bad = (m[ld] < 0.79 * m[ls] - 1e-6).sum()
-                check(bad == 0, "%s: %d rows where the discounted use is below 0.79 x the short count" % (table, bad))
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("frames", nargs="+")
@@ -240,6 +211,5 @@ if __name__ == "__main__":
     for fname in opts.frames:
         df = pd.read_pickle(fname)
         frames[fname] = check_frame(fname, df, feats)
-    cross_check({k: v for k, v in frames.items() if v is not None})
     print("%d failed, %d warnings" % (len(failed), len(warned)))
     sys.exit(1 if failed else 0)
