@@ -171,11 +171,12 @@ def check_frame(fname, df, feats):
 
     # the labels must line up with the state: a clause used since the last
     # reduce (used == CL_MAX_USED) is used more in the future than one never
-    # used. Off-by-one-reduce bugs break this
+    # used. Off-by-one-reduce bugs break this. Not on the fair frame: a
+    # never used clause that is still there is one the reduce picked
     recent = y[df["rdb0.used"] == CL_MAX_USED].mean()
     never = y[df["rdb0.used"] == 0].mean()
     msg = "%s: mean use of recently used clauses (%.2f) not above never used (%.2f)" % (name, recent, never)
-    if "_anc" in table:
+    if "_anc" in table or "evaldata" in name:
         # descendants' uses do not need the clause itself to be used
         if not recent > never:
             warn(msg)

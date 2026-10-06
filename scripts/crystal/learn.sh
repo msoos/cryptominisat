@@ -49,7 +49,7 @@ echo "$@" >> "$OUT/out_git"
 : > "$OUT/gathered_by"
 for d in "$@"; do
     sha=$(grep -m1 "^c CMS SHA1:" "$d/cms-stats-run.out" 2>/dev/null | awk '{print $4}')
-    drv=$(grep -m1 "^c \[pred\] \(loaded the\|compiled-in\) model" "$d/cms-stats-run.out" 2>/dev/null | sed 's/^c \[pred\] //')
+    drv=$(grep -m1 "^c \[pred\] \(loaded the\|compiled-in\) model" "$d/cms-stats-run.out" 2>/dev/null | sed 's/^c \[pred\] //' || true)
     echo "${sha:-unknown} $d ${drv:-glue}" >> "$OUT/gathered_by"
 done
 echo "the reduce of the gathering runs was driven by:"
