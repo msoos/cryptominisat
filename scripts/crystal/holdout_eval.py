@@ -18,16 +18,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# Offline hold-out: train on the frames of some instance dirs, report the
-# ranking quality on the FAIR frames (evaldata) of others: per reduce,
-# the share of the future use kept when keeping the best 25%/50% of the
-# reduce candidates, model vs glue/size vs oracle, mean over the reduces
-# of an instance, then over the instances. Minutes instead of the hours
-# a solver A/B takes, so targets, objectives and feature lists can be
-# compared first; the solver A/B is still the last word.
+# Offline hold-out: train on the frames of some instance dirs (or take
+# a saved model) and replay the solver's reduce on the FAIR frames
+# (evaldata) of others: the share of the future use the normal build
+# keeps and what the model would keep in its place
+# (helper.policy_per_reduce). Minutes instead of the hours a solver A/B
+# takes, so targets, objectives and feature lists can be compared first;
+# the solver A/B is still the last word.
 #
-# usage: holdout_eval.py --train a-dir b-dir --test c-dir d-dir
-#          [--target count|rel] [--objective squarederror|log|poisson]
+# usage: holdout_eval.py (--train a-dir b-dir | --model predictor.json) --test c-dir d-dir
+#          [--target count|rel] [--objective squarederror|log|poisson|rank]
 #          [--weights none|strata|instance|family]
 #          [-f best_features.txt] [--table used_later]
 
@@ -68,50 +68,65 @@ def prepare(df, feats):
     return df, X
 
 
-def kept(truth, order, frac):
-    n = int(frac * len(truth))
-    return 100.0 * truth[order[:n]].sum() / truth.sum() if truth.sum() > 0 else float("nan")
+def predict(model, X):
+    booster = xgb.Booster()
+    booster.load_model(model)
+    return booster.predict(xgb.DMatrix(X, missing=MISSING))
+
+
+def train(opts, feats, label, count_label):
+    df = load(opts.train, opts.table)
+    if df is None:
+        print("no training data")
+        exit(1)
+    df, X = prepare(df, feats)
+    params = dict(n_estimators=opts.estimators, max_depth=opts.depth, min_child_weight=10, random_state=0)
+    if opts.objective == "rank":
+        clf = helper.fit(xgb.XGBRanker(objective="rank:ndcg", **params), df, X, df[count_label])
+    else:
+        y = df[label].astype(float)
+        if opts.objective == "log":
+            y = np.log1p(y)
+        objective = "count:poisson" if opts.objective == "poisson" else "reg:squarederror"
+        clf = helper.fit(xgb.XGBRegressor(objective=objective, **params), df, X, y,
+                         helper.sample_weights(df, opts.weights))
+    print("trained on %d rows of %d instances, target %s, objective %s, weights %s" % (
+        len(df), df["fname"].nunique(), label, opts.objective, opts.weights))
+    return clf
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train", nargs="+", required=True)
+    parser.add_argument("--train", nargs="+")
+    parser.add_argument("--model", help="a saved model, instead of --train")
     parser.add_argument("--test", nargs="+", required=True)
     parser.add_argument("--table", default="used_later")
     parser.add_argument("--weights", default="family", choices=["none", "strata", "instance", "family"])
     parser.add_argument("--target", default="rel", choices=["count", "rel"])
-    parser.add_argument("--objective", default="squarederror", choices=["squarederror", "log", "poisson"])
+    parser.add_argument("--objective", default="squarederror", choices=["squarederror", "log", "poisson", "rank"])
     parser.add_argument("-f", "--features", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_features.txt"))
     parser.add_argument("--estimators", type=int, default=40)
     parser.add_argument("--depth", type=int, default=5)
-    parser.add_argument("--all", action="store_true", default=False,
-                        help="score every clause, not only those not used since the reduce before (what reduce picks from)")
     opts = parser.parse_args()
+    if (opts.train is None) == (opts.model is None):
+        print("ERROR: give --train or --model")
+        exit(1)
 
     feats = helper.get_features(opts.features)
     count_label = "x.%s_disc" % opts.table
     label = count_label + ("_rel" if opts.target == "rel" else "")
 
-    train = load(opts.train, opts.table)
     test = load(opts.test, opts.table, "evaldata", ".dat")
-    if train is None or test is None:
-        print("no data")
+    if test is None:
+        print("no test data")
         exit(1)
-    train, X = prepare(train, feats)
     test, Xt = prepare(test, feats)
-    y = train[label].astype(float)
-    objective = "reg:squarederror"
-    if opts.objective == "log":
-        y = np.log1p(y)
-    elif opts.objective == "poisson":
-        objective = "count:poisson"
-    clf = xgb.XGBRegressor(objective=objective, n_estimators=opts.estimators, max_depth=opts.depth,
-                           min_child_weight=10, random_state=0)
-    clf.fit(X, y, sample_weight=helper.sample_weights(train, opts.weights))
-    print("trained on %d rows of %d instances, target %s, objective %s, weights %s" % (
-        len(train), train["fname"].nunique(), label, opts.objective, opts.weights))
+    if opts.model is not None:
+        pred = predict(opts.model, Xt)
+    else:
+        pred = train(opts, feats, label, count_label).predict(Xt)
 
-    res = helper.ranking_per_reduce(test, clf.predict(Xt), count_label, cands=not opts.all)
+    res = helper.policy_per_reduce(test, pred, count_label)
     if res is None:
         print("no reduce with a used clause in the test frames")
         exit(1)
@@ -119,4 +134,5 @@ if __name__ == "__main__":
     print(res.round(1).to_string(index=False))
     m = res.drop(columns=["instance", "reduces"]).mean()
     print("mean over instances: " + "  ".join("%s %.1f" % (k, v) for k, v in m.items()))
-    print("model-glue @25: %.1f  @50: %.1f" % (m["model@25"] - m["glue@25"], m["model@50"] - m["glue@50"]))
+    print("model minus normal: " + "  ".join("%s %+.2f (better on %d of %d)" % (
+        k, m[k] - m["normal"], (res[k] > res["normal"]).sum(), len(res)) for k in ("order", "tiers", "all")))

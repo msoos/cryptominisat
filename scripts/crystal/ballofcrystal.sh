@@ -182,7 +182,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
             --weights "$XGB_WEIGHTS" --evalframe "data-min.db-evaldata-${table}-disc.dat" \
             --basedir . --bestfeatfile "$bestf" \
             > "cldata_predict_${table}.out-stage" 2>&1
-        grep -E "Mean squared error|==> Saved" "cldata_predict_${table}.out-stage" | head -2
+        grep -E "^use kept at reduce|==> Saved" "cldata_predict_${table}.out-stage" || true
     done
     ls -la predictor-*.json
 fi

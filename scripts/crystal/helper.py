@@ -540,33 +540,70 @@ def sample_weights(df, how):
     return w / w.mean()
 
 
-def ranking_per_reduce(df, pred, label, cands=True, fracs=(0.25, 0.5), min_rows=20):
-    """What reduce does: at every reduce of every instance, keep the best
-    part of the clauses by the model, by glue then size, and by the
-    truth; the share of the future use kept. Mean over the reduces of an
-    instance. df must be a fair sample of the clauses at its reduces.
-    cands: only the clauses not used since the reduce before."""
+# the solver's reduce: ReduceDB::mark_useless_redundant_clauses_as_garbage
+TIER1_GLUE = 2    # conf.reducetier1glue
+USED_SINCE = 30   # CL_MAX_USED-1: used since the reduce before
+REMOVE = 0.75     # conf.reducetarget, the share of the candidates removed
+
+
+def best_rows(score, n, glue, size):
+    """the n best rows: highest score, then the glue order"""
+    keep = np.zeros(len(score), dtype=bool)
+    keep[np.lexsort((size, glue, -score))[:n]] = True
+    return keep
+
+
+def rule_then_best(rule, score, glue, size):
+    """what a reduce keeps: the rows of the rule, the best of the rest"""
+    cands = np.flatnonzero(~rule)
+    n_keep = len(cands) - int(REMOVE * len(cands))
+    keep = rule.copy()
+    keep[cands[best_rows(score[cands], n_keep, glue[cands], size[cands])]] = True
+    return keep
+
+
+def policies_of_reduce(g, pred):
+    """policy -> the rows it keeps at one reduce, and the rows the normal
+    build keeps by rule"""
+    glue = g["rdb0.glue"].to_numpy(dtype=float)
+    size = g["rdb0.size"].to_numpy(dtype=float)
+    used = g["rdb0.used"].to_numpy(dtype=float)
+    tier1 = glue <= TIER1_GLUE
+    rule = (tier1 & (used > 0)) | (used >= USED_SINCE)
+    ret = {"normal": rule_then_best(rule, -glue, glue, size)}
+    ret["order"] = rule_then_best(rule, pred, glue, size)
+    tier1_model = best_rows(pred, int(tier1.sum()), glue, size)
+    ret["tiers"] = rule_then_best((tier1_model & (used > 0)) | (used >= USED_SINCE), pred, glue, size)
+    ret["all"] = best_rows(pred, int(ret["normal"].sum()), glue, size)
+    return ret, rule
+
+
+def policy_per_reduce(df, pred, label, min_rows=50):
+    """The solver's reduce replayed on a fair sample of the clauses at
+    some reduces: the share of the future use (label) that is kept by
+      normal  the normal build: by rule the tier1 clauses with 'used'
+              life left and the ones used since the reduce before, of
+              the rest (the candidates) the best quarter by glue, size
+      order   --predkeep 0: the same rule, the candidates by the model
+      tiers   --predkeep 2: as many tier1 clauses as glue makes, the
+              model picks which; the candidates by the model
+      all     as many clauses as the normal build keeps, all by the model
+    Mean over the reduces of an instance. 'rule cls' / 'rule use': the
+    share of the clauses the normal rule keeps, and of the use they hold."""
     df = df.reset_index(drop=True)
-    pred = np.asarray(pred)
+    pred = np.asarray(pred, dtype=float)
     rows = []
     for fname, gi in df.groupby(df["fname"].astype(str)):
         acc = []
         for _, g in gi.groupby("rdb0_common.conflicts"):
-            if cands:
-                g = g[g["rdb0.used"] < 30]
+            g = g[(g["rdb0.is_ternary_resolvent"] == 0) & g["rdb0.glue"].notna()]
             truth = g[label].to_numpy(dtype=float)
             if len(g) < min_rows or truth.sum() <= 0:
                 continue
-            orders = {
-                "model": np.argsort(-pred[g.index.to_numpy()], kind="stable"),
-                "glue": np.lexsort((g["rdb0.size"].to_numpy(), g["rdb0.glue"].fillna(1e9).to_numpy())),
-                "oracle": np.argsort(-truth, kind="stable"),
-            }
-            r = {}
-            for frac in fracs:
-                n = max(1, int(frac * len(truth)))
-                for k, o in orders.items():
-                    r["%s@%d" % (k, 100*frac)] = 100.0 * truth[o[:n]].sum() / truth.sum()
+            kept, rule = policies_of_reduce(g, pred[g.index.to_numpy()])
+            r = {"rule cls": 100.0 * rule.mean(), "rule use": 100.0 * truth[rule].sum() / truth.sum()}
+            for k, v in kept.items():
+                r[k] = 100.0 * truth[v].sum() / truth.sum()
             acc.append(r)
         if acc:
             r = pd.DataFrame(acc).mean().to_dict()
@@ -576,7 +613,28 @@ def ranking_per_reduce(df, pred, label, cands=True, fracs=(0.25, 0.5), min_rows=
     if not rows:
         return None
     res = pd.DataFrame(rows)
-    return res[["instance", "reduces"] + [c for c in res.columns if "@" in c]]
+    return res[["instance", "reduces"] + [c for c in res.columns if c not in ("instance", "reduces")]]
+
+
+def by_reduce(df):
+    """the row order that puts the rows of a reduce together, and the
+    reduce of every row in that order: what a ranking objective needs"""
+    key = (df["fname"].astype(str) + "/" + df["rdb0_common.conflicts"].astype(str)).to_numpy()
+    order = np.argsort(key, kind="stable")
+    return order, pd.factorize(key[order])[0]
+
+
+def fit(clf, df, X, y, weights=None):
+    """fits clf on the rows of df. A ranker (objective rank) learns the
+    order within each reduce: rows grouped by reduce, y = used at all, no
+    row weights (xgboost takes one per group only)"""
+    import xgboost
+    if not isinstance(clf, xgboost.XGBRanker):
+        clf.fit(X, y, sample_weight=weights)
+        return clf
+    order, qid = by_reduce(df)
+    clf.fit(X.iloc[order], (np.asarray(y, dtype=float)[order] > 0).astype(int), qid=qid)
+    return clf
 
 
 def check_file_exists(fname):

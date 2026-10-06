@@ -133,19 +133,25 @@ Knobs (`setparams_ballofcrystal.sh`, all from the environment):
 `CLLOCK`, `EVERYPRED`, `HALFLIFE`, `FIXED` (rows per stratum, 3000),
 `cut1 cut2`, `EVAL_REDUCES EVAL_PER_REDUCE`, `bestf` (feature file),
 `XGB_EST XGB_DEPTH XGB_MINCHILD` (40, 5, 10), `XGB_OBJ` (`squarederror`,
-`log`, `poisson`), `TARGET` (`rel`, `count`), `XGB_WEIGHTS` (`none`;
+`log`, `poisson`; `rank` = the order within a reduce, from used or not:
+no target, no weights), `TARGET` (`rel`, `count`), `XGB_WEIGHTS` (`none`;
 `strata` = `x.weight`; `instance` = also every instance counts the same;
 `family`, the default = also every family: the leading letters of the
 file name, or the `FAMILIES` file of `family filename` lines),
 `CAKE_XLRUP=""` (skip the optional proof check).
 
-**Ranking quality**, in the learn output and `holdout_eval.py`: on the
-fair frame, per reduce, the share of the future use kept when keeping
-the best 25% / 50% of the clauses by the model, by glue then size, and
-by the truth; mean over the reduces of an instance, then over the
-instances (`helper.ranking_per_reduce`). "cands" = only clauses not used
-since the reduce before. With three or more instances the train/test
-split is by instance; the saved model is refitted on all rows.
+**Use kept at reduce**, in the learn output and `holdout_eval.py`: the
+solver's reduce replayed on the fair frame (`helper.policy_per_reduce`).
+Per reduce, the share of the future use held by the clauses that are
+kept by `normal` (the normal build: by rule the tier1 clauses with
+`used` life left and the ones used since the reduce before, of the rest
+the best quarter by glue, size), by `order` (`--predkeep 0`: the same
+rule, the rest by the model), by `tiers` (`--predkeep 2`) and by `all`
+(as many clauses as normal keeps, all picked by the model). Mean over
+the reduces of an instance, then over the instances. `rule cls` / `rule
+use`: the share of the clauses the rule keeps and of the use they hold.
+With three or more instances the train/test split is by instance; the
+saved model is refitted on all rows.
 
 ### The gates
 
@@ -179,7 +185,7 @@ split is by instance; the saved model is refitted on all rows.
 ```
 ./learn.sh <outdir> a.cnf-dir b.cnf-dir ...  # concat the frames, train (same FIXED as the gather)
 ./eval_corpus.sh <preddir> a.cnf b.cnf ...   # normal vs predictor on each, and the totals
-./holdout_eval.py --train a-dir .. --test c-dir ..   # offline, on the fair frames
+./holdout_eval.py --train a-dir .. --test c-dir ..   # offline, on the fair frames (or --model m.json)
 ./run_corpus.sh <outdir> a.cnf b.cnf ...     # gather + learn + eval
 ```
 

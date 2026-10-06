@@ -85,25 +85,20 @@ class Learner:
         return impdf
 
     def ranking_quality(self, data, features, to_predict, clf, name):
-        """Share of the future use that is kept when only the best-ranked
-        part of the clauses of a reduce is kept: by the model, by glue
-        then size (what the normal build does), and by the truth. On the
-        fair frame, per reduce. Reduce ranks, so this says more than the
-        squared error"""
+        """The solver's reduce replayed on the fair frame: the share of
+        the future use the normal build keeps, and what the model would
+        (helper.policy_per_reduce). Reduce ranks, so this says more than
+        the squared error"""
         if data is None or data.shape[0] < 10:
             return
         X = data[features].astype(np.float32).replace([np.inf, -np.inf], MISSING)
-        pred = clf.predict(X)
-        for cands in [False, True]:
-            res = helper.ranking_per_reduce(data, pred, to_predict, cands=cands)
-            if res is None:
-                continue
-            m = res.drop(columns=["instance", "reduces"]).mean()
-            if options.verbose or cands:
-                print(res.round(1).to_string(index=False))
-            print("ranking %s %s, %d instances: %s" % (
-                name, "cands" if cands else "all", len(res),
-                "  ".join("%s %.1f%%" % (k, v) for k, v in m.items())))
+        res = helper.policy_per_reduce(data, clf.predict(X), to_predict)
+        if res is None:
+            return
+        m = res.drop(columns=["instance", "reduces"]).mean()
+        print(res.round(1).to_string(index=False))
+        print("use kept at reduce, %s, %d instances: %s" % (
+            name, len(res), "  ".join("%s %.1f%%" % (k, v) for k, v in m.items())))
 
     def one_regressor(self, features, to_predict):
         print("-> Number of features  :", len(features))
@@ -164,6 +159,12 @@ class Learner:
             y_all = np.log1p(y_all)
         elif options.objective == "poisson":
             objective = "count:poisson"
+        elif options.objective == "rank":
+            # the order within a reduce is all the solver takes from the
+            # model: learn that, from whether a clause is used at all
+            objective = "rank:ndcg"
+            y_train = train[count_label]
+            y_all = df[count_label]
 
         t = time.time()
         clf = None
@@ -176,30 +177,28 @@ class Learner:
                 random_state=prng)
         elif options.regressor == "xgb":
             print("Using xgboost no. estimators:", options.n_estimators_xgboost)
-            clf = xgb.XGBRegressor(
+            n_estimators = options.n_estimators_xgboost
+            if options.gen_topfeats:
+                # more trees, so the importance ranking is less noisy
+                print("--topfeats: 100 estimators, only for the feature ranking")
+                n_estimators = 100
+            model = xgb.XGBRanker if options.objective == "rank" else xgb.XGBRegressor
+            clf = model(
                 objective=objective,
                 min_child_weight=options.min_child_weight_xgboost, # from doc: "In linear regression task, this simply corresponds to minimum number of instances needed to be in each node."
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
                 random_state=options.seed,
-                n_estimators=options.n_estimators_xgboost)
-            if options.gen_topfeats:
-                # more trees, so the importance ranking is less noisy
-                print("--topfeats: 100 estimators, only for the feature ranking")
-                clf = xgb.XGBRegressor(
-                    objective=objective,
-                    min_child_weight=options.min_child_weight_xgboost,
-                    max_depth=options.xboost_max_depth,
-                    n_estimators=100)
+                n_estimators=n_estimators)
         else:
             print("ERROR: --regressor must be xgb or tree")
             exit(-1)
 
-        clf.fit(X_train, y_train, sample_weight=weights.iloc[train_idx])
+        helper.fit(clf, self.df.iloc[train_idx], X_train, y_train, weights.iloc[train_idx])
         print("Training finished. T: %-3.2f" % (time.time() - t))
         # the model that is saved learns from every row
         clf_all = sklearn.base.clone(clf)
-        clf_all.fit(df[features], y_all, sample_weight=weights)
+        helper.fit(clf_all, self.df, df[features], y_all, weights)
 
         if options.dot is not None:
             if options.regressor == "tree":
@@ -232,13 +231,16 @@ class Learner:
         if options.regressor == "xgb":
             self.importance_XGB(clf, features=features)
 
-        # cands = used < 30: not used since the reduce before, what reduce picks from
         if self.df_eval is not None:
             ev = self.df_eval
             is_test = ev["fname"].astype(str).isin(test_fnames)
             self.ranking_quality(ev[is_test], features, count_label, clf, "test")
             if by_instance:
                 self.ranking_quality(ev[~is_test], features, count_label, clf, "train")
+
+        if options.objective == "rank":
+            # a ranker's score has no scale: no error to print
+            return
 
         # print distribution of error
         print("--------------------------")
@@ -373,7 +375,7 @@ if __name__ == "__main__":
     parser.add_argument("--target", type=str, default="count",
                         help="count: the discounted use itself, rel: the share of the clauses at the same reduce used less (0..1)")
     parser.add_argument("--objective", type=str, default="squarederror",
-                        help="squarederror, log (squared error of log(1+use)), or poisson")
+                        help="squarederror, log (squared error of log(1+use)), poisson, or rank (the order of the clauses of a reduce, --target does not matter)")
     parser.add_argument("--regressor", type=str, default="xgb",
                         dest="regressor", help="xgb (default) or tree (a single tree, for --dot)")
     parser.add_argument("--xgboostestimators", default=10, type=int,
