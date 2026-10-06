@@ -43,6 +43,7 @@ THE SOFTWARE.
 
 #include <functional>
 #include <cmath>
+#include <limits>
 
 using namespace CMSat;
 
@@ -137,12 +138,17 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
                 at2 = n - n2;
                 verb_print(2, "[pred] keep as glue would: tier1 " << n1 << " tier2 " << n2 << " of " << n);
             }
-            at1 = std::min(at1, n-1); at2 = std::min(at2, n-1);
+            //at == n: no clause is in the tier
             vector<double> tmp(scores);
-            std::nth_element(tmp.begin(), tmp.begin()+at1, tmp.end());
-            keep_t1 = tmp[at1];
-            std::nth_element(tmp.begin(), tmp.begin()+at2, tmp.end());
-            keep_t2 = tmp[at2];
+            keep_t1 = keep_t2 = std::numeric_limits<double>::infinity();
+            if (at1 < n) {
+                std::nth_element(tmp.begin(), tmp.begin()+at1, tmp.end());
+                keep_t1 = tmp[at1];
+            }
+            if (at2 < n) {
+                std::nth_element(tmp.begin(), tmp.begin()+at2, tmp.end());
+                keep_t2 = tmp[at2];
+            }
         }
     }
     #endif
@@ -772,6 +778,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         Clause* cl = solver->cl_alloc.ptr(offset);
         auto& extra = solver->red_stats_extra[cl->stats.extra_pos];
         predictors->get_prediction_at(extra, i++);
+        if (solver->conf.pred_mimic) extra.pred_use = -((double)cl->stats.glue*1e7 + (double)cl->size());
         if (predictors->dumping()) {
             dump_preds.push_back(extra.pred_use);
         }

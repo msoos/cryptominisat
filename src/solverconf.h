@@ -96,6 +96,7 @@ class DLL_PUBLIC SolverConf
         int      pred_cands; //0: reduce candidates as the normal build, 1: + the 'used' ones, 2: + tier1-keep
         double   pred_thresh; //>0: remove the candidates predicted below this, within 0.5x-2x of the normal count
         int      pred_keep; //1: the score, not glue, decides which clauses are tier1/tier2 (kept while used); 2: as many as glue would make
+        int      pred_mimic = 0; //self-check: score = the normal build's order
         double   pred_keep_t1; //% of the learnt clauses with the best scores that count as tier1
         double   pred_keep_t2; //... and as tier1 or tier2
         double    clause_decay;

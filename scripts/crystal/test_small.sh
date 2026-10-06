@@ -54,4 +54,15 @@ MODEL="$CNF-dir/predictor-used_later-disc-xgb.json"
     echo "FAILED: the predictor run, see $DIR/pred-dump.out"; exit 1; }
 ./check_pred_features.py "$DIR/pred.dump" "$MODEL" || exit 1
 rm -f "$DIR/pred.dump"
+# with the normal build's order as its score the predictor build must BE
+# the normal build: the same conflicts, whatever picks the tiers
+NORMAL="${NORMAL_BIN:-$SCRIPTDIR/../../build/cryptominisat5}"
+function confl() { "$@" --zero-exit-status "$CNF" | grep -m1 "^c conflicts" | awk '{print $4}'; }
+want=$(confl "$NORMAL")
+for k in 0 2; do
+    got=$(confl "$PRED" --predmimic 1 --predkeep $k)
+    [[ -n "$want" && "$got" == "$want" ]] || {
+        echo "FAILED: --predmimic 1 --predkeep $k gives $got conflicts, the normal build $want"; exit 1; }
+done
+echo "OK: the predictor build with the glue order as score equals the normal build ($want conflicts)"
 echo "OK: pipeline ran, predictors differ per table and are reproducible. Output in $DIR"

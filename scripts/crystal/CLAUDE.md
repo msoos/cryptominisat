@@ -59,7 +59,9 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   `--predkeept1`/`--predkeept2` %; 0 = glue), `--predcands 0|1|2` (what
   is ranked: 0 = the normal build's candidates, 1 = also the clauses
   kept for being used, 2 = also tier1-keep), `--predthresh T`,
-  `--dumppreddistrib 1`, `--preddump FILE`.
+  `--dumppreddistrib 1`, `--preddump FILE`, `--predmimic 1`
+  (self-check: the score is the glue/size order, so the run must equal
+  the normal build's; `test_small.sh` checks it).
 - stats build: `--sql 2 --sqlitedb F --sqlitedboverwrite 1 --clid
   --cldatadumpratio R --cllockdatagen R --everypred N`, all set by
   `ballofcrystal.sh`.
