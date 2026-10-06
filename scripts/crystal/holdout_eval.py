@@ -54,7 +54,7 @@ def load(dirs, table, what="cldata", suffix="-cut1-*.dat"):
             print("no %s frame in %s, skipped" % (table, d))
             continue
         df = pd.read_pickle(fs[0])
-        df["fname"] = os.path.basename(d.rstrip("/"))
+        df["fname"] = os.path.realpath(d)
         dfs.append(df)
     return pd.concat(dfs, ignore_index=True) if dfs else None
 

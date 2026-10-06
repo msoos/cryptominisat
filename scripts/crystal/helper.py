@@ -574,7 +574,9 @@ def policies_of_reduce(g, pred):
     ret["order"] = rule_then_best(rule, pred, glue, size)
     tier1_model = best_rows(pred, int(tier1.sum()), glue, size)
     ret["tiers"] = rule_then_best((tier1_model & (used > 0)) | (used >= USED_SINCE), pred, glue, size)
-    ret["all"] = best_rows(pred, int(ret["normal"].sum()), glue, size)
+    n_kept = int(ret["normal"].sum())
+    ret["all"] = best_rows(pred, n_kept, glue, size)
+    ret["all glue"] = best_rows(-glue, n_kept, glue, size)
     return ret, rule
 
 
@@ -588,6 +590,7 @@ def policy_per_reduce(df, pred, label, min_rows=50):
       tiers   --predkeep 2: as many tier1 clauses as glue makes, the
               model picks which; the candidates by the model
       all     as many clauses as the normal build keeps, all by the model
+      all glue  the same, all by glue, size: what dropping the rule alone does
     Mean over the reduces of an instance. 'rule cls' / 'rule use': the
     share of the clauses the normal rule keeps, and of the use they hold."""
     df = df.reset_index(drop=True)

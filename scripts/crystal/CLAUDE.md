@@ -153,7 +153,8 @@ kept by `normal` (the normal build: by rule the tier1 clauses with
 `used` life left and the ones used since the reduce before, of the rest
 the best quarter by glue, size), by `order` (`--predkeep 0`: the same
 rule, the rest by the model), by `tiers` (`--predkeep 2`) and by `all`
-(as many clauses as normal keeps, all picked by the model). Mean over
+(as many clauses as normal keeps, all picked by the model; `all glue`:
+the same by glue, size, i.e. the rule dropped and no model). Mean over
 the reduces of an instance, then over the instances. `rule cls` / `rule
 use`: the share of the clauses the rule keeps and of the use they hold.
 With three or more instances the train/test split is by instance; the
