@@ -152,10 +152,11 @@ solver's reduce replayed on the fair frame (`helper.policy_per_reduce`).
 Per reduce, the share of the future use held by the clauses that are
 kept by `normal` (the normal build: by rule the tier1 clauses with
 `used` life left and the ones used since the reduce before, of the rest
-the best quarter by glue, size), by `order` (`--predkeep 0`: the same
-rule, the rest by the model), by `tiers` (`--predkeep 2`) and by `all`
-(as many clauses as normal keeps, all picked by the model; `all glue`:
-the same by glue, size, i.e. the rule dropped and no model). Mean over
+the best quarter by glue, size), by `order` (the predictor build: the
+same rule, the rest by the model) and by `oracle` (the same rule, the
+rest by their future use: the ceiling). Only the order of the
+candidates is replayed: a policy that changes the rule cannot be judged
+offline (see What is known). Mean over
 the reduces of an instance, then over the instances. `rule cls` / `rule
 use`: the share of the clauses the rule keeps and of the use they hold.
 With three or more instances the train/test split is by instance; the
@@ -292,6 +293,14 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
 - Amount vs order: with a fixed share of tier1/tier2 clauses the A/B
   measured how many clauses are protected, not which: `--predkeep 2`
   makes as many as glue would.
+- **Proof use cannot judge the rule.** Offline, keeping as many clauses
+  as the normal reduce but all picked by glue, size (no "used since the
+  last reduce" rule) holds 99.5% of the future proof use against 96.8%,
+  the model the same. In the solver exactly that (`--predmimic 1
+  --predcands 1`) is 118% [106, 130] of the normal build's conflicts,
+  with the model 116%. A recently used clause that is not in the final
+  proof still keeps the search out of where it has been. So the model
+  orders the candidates and nothing else, and only that is replayed.
 - **The score should not pick the tiers.** `--predkeep 2` against `0`,
   9 hold-outs, 3 seeds, conflicts vs the normal build: 108.3% [103, 115]
   against 103.5% [97, 110] (ranking model); 108.8% against 101.5% on 4

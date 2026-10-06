@@ -134,5 +134,5 @@ if __name__ == "__main__":
     print(res.round(1).to_string(index=False))
     m = res.drop(columns=["instance", "reduces"]).mean()
     print("mean over instances: " + "  ".join("%s %.1f" % (k, v) for k, v in m.items()))
-    print("model minus normal: " + "  ".join("%s %+.2f (better on %d of %d)" % (
-        k, m[k] - m["normal"], (res[k] > res["normal"]).sum(), len(res)) for k in ("order", "tiers", "all")))
+    print("model minus normal: %+.2f (better on %d of %d), oracle minus normal: %+.2f" % (
+        m["order"] - m["normal"], (res["order"] > res["normal"]).sum(), len(res), m["oracle"] - m["normal"]))

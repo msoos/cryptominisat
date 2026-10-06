@@ -562,7 +562,7 @@ def rule_then_best(rule, score, glue, size):
     return keep
 
 
-def policies_of_reduce(g, pred):
+def policies_of_reduce(g, pred, truth):
     """policy -> the rows it keeps at one reduce, and the rows the normal
     build keeps by rule"""
     glue = g["rdb0.glue"].to_numpy(dtype=float)
@@ -572,11 +572,7 @@ def policies_of_reduce(g, pred):
     rule = (tier1 & (used > 0)) | (used >= USED_SINCE)
     ret = {"normal": rule_then_best(rule, -glue, glue, size)}
     ret["order"] = rule_then_best(rule, pred, glue, size)
-    tier1_model = best_rows(pred, int(tier1.sum()), glue, size)
-    ret["tiers"] = rule_then_best((tier1_model & (used > 0)) | (used >= USED_SINCE), pred, glue, size)
-    n_kept = int(ret["normal"].sum())
-    ret["all"] = best_rows(pred, n_kept, glue, size)
-    ret["all glue"] = best_rows(-glue, n_kept, glue, size)
+    ret["oracle"] = rule_then_best(rule, truth, glue, size)
     return ret, rule
 
 
@@ -586,11 +582,9 @@ def policy_per_reduce(df, pred, label, min_rows=50):
       normal  the normal build: by rule the tier1 clauses with 'used'
               life left and the ones used since the reduce before, of
               the rest (the candidates) the best quarter by glue, size
-      order   --predkeep 0: the same rule, the candidates by the model
-      tiers   --predkeep 2: as many tier1 clauses as glue makes, the
-              model picks which; the candidates by the model
-      all     as many clauses as the normal build keeps, all by the model
-      all glue  the same, all by glue, size: what dropping the rule alone does
+      order   the predictor build: the same rule, the candidates by the model
+      oracle  the same rule, the candidates by their future use: the most
+              an order of the candidates can keep
     Mean over the reduces of an instance. 'rule cls' / 'rule use': the
     share of the clauses the normal rule keeps, and of the use they hold."""
     df = df.reset_index(drop=True)
@@ -603,7 +597,7 @@ def policy_per_reduce(df, pred, label, min_rows=50):
             truth = g[label].to_numpy(dtype=float)
             if len(g) < min_rows or truth.sum() <= 0:
                 continue
-            kept, rule = policies_of_reduce(g, pred[g.index.to_numpy()])
+            kept, rule = policies_of_reduce(g, pred[g.index.to_numpy()], truth)
             r = {"rule cls": 100.0 * rule.mean(), "rule use": 100.0 * truth[rule].sum() / truth.sum()}
             for k, v in kept.items():
                 r[k] = 100.0 * truth[v].sum() / truth.sum()
