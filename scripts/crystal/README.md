@@ -5,7 +5,7 @@ learnt clauses. Normally "least useful" means highest glue, then longest.
 CrystalBall replaces that with a prediction: an xgboost model, trained on
 the solver's own UNSAT runs, ranks each clause by how much it will still
 be used (every future use counted, discounted by how far away it is), and
-reduce removes the clauses ranked lowest. With `--predkeep` the rank also
+reduce removes the clauses ranked lowest. With `--predkeep 2` the rank also
 decides which clauses are protected as tier1/tier2, instead of glue.
 
 Three builds of the solver take part:

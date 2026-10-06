@@ -5,7 +5,7 @@ validate. `CLAUDE.md` says how the pipeline runs and what is known.
 
 Why a plan at all: on this box a comparison is 9 hold-out instances, and
 differences under ~10% are noise. The defaults (feature list, `--predkeep
-2`, the label) were chosen on six of those nine, so they are not a
+0`, the label) were chosen on six of those nine, so they are not a
 hold-out. The big run has to be able to see a 5-point difference, on
 instances nothing was tuned on.
 

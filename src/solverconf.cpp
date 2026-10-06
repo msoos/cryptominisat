@@ -72,7 +72,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , dump_pred_distrib(0)
         , pred_cands(0)
         , pred_thresh(0)
-        , pred_keep(2)
+        , pred_keep(0)
         , pred_keep_t1(25)
         , pred_keep_t2(47)
         , clause_decay(0.999)

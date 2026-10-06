@@ -54,9 +54,10 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   `DIR/predictor-<table>-disc-xgb.json`; empty = the embedded one),
   `--predanc 0|1` (with `--predloc`: 0 = the `used_later` model, 1 =
   `used_later_anc`),
-  `--predkeep 2` (default: the score decides which learnt clauses are
-  tier1/tier2, as many of each as glue would make; 1 = fixed
-  `--predkeept1`/`--predkeept2` %; 0 = glue), `--predcands 0|1|2` (what
+  `--predkeep 0` (default: glue tiers, the score orders the candidates;
+  2 = the score decides which learnt clauses are tier1/tier2, as many
+  of each as glue would make; 1 = fixed `--predkeept1`/`--predkeept2`
+  %), `--predcands 0|1|2` (what
   is ranked: 0 = the normal build's candidates, 1 = also the clauses
   kept for being used, 2 = also tier1-keep), `--predthresh T`,
   `--dumppreddistrib 1`, `--preddump FILE`, `--predmimic 1`
@@ -289,8 +290,13 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
   ratios, age and the propagation-cost features are inside the noise.
   Importance-picked feature lists lost to the hand-kept one three times.
 - Amount vs order: with a fixed share of tier1/tier2 clauses the A/B
-  measured how many clauses are protected, not which. `--predkeep 2`
-  (as many as glue would) is the default for that reason.
+  measured how many clauses are protected, not which: `--predkeep 2`
+  makes as many as glue would.
+- **The score should not pick the tiers.** `--predkeep 2` against `0`,
+  9 hold-outs, 3 seeds, conflicts vs the normal build: 108.3% [103, 115]
+  against 103.5% [97, 110] (ranking model); 108.8% against 101.5% on 4
+  (the squared-error one). Offline they look the same (`tiers` vs
+  `order`). 0 is the default.
 - The score decides the reduce tiers and nothing else. Letting it also
   replace glue in `likely_to_be_kept()` (vivification, BVE) cost 10
   points. Do not add it back without an A/B.
