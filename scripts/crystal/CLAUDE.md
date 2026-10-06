@@ -113,10 +113,11 @@ counted for two half-lives. Distance is in reduce time (the k-th reduce
 is at k, linear in the conflicts in between), because the reduce
 interval grows with the run. A row counts only if the clause stayed in
 the solver for the two half-lives, so the last 8 reduces give no rows.
-`x.<table>_disc` is the label, `x.<table>_disc_rel` (`TARGET=rel`, the
-default) the share of the tracked clauses of the same reduce that score
-less (0..1, never-used = 0), computed on the full data. `rel` is what
-makes instances comparable: use counts differ 100-fold between families.
+`x.<table>_disc` is the label. The ranker learns the order within a
+reduce from whether it is above 0. For the regressions there is
+`x.<table>_disc_rel` (`TARGET=rel`): the share of the tracked clauses of
+the same reduce that score less (0..1, never-used = 0), computed on the
+full data; use counts differ 100-fold between families.
 
 **Tracking.** Every tracked clause is locked (`CLLOCK=1`): never deleted
 by reduce, so its rows say what it does if kept. The reduce still
@@ -135,12 +136,13 @@ Knobs (`setparams_ballofcrystal.sh`, all from the environment):
 `STATS_BIN PRED_BIN NORMAL_BIN`, `DUMPRATIO TRACKED MAXDUMPRATIO CONFL`,
 `CLLOCK`, `EVERYPRED`, `HALFLIFE`, `FIXED` (rows per stratum, 3000),
 `cut1 cut2`, `EVAL_REDUCES EVAL_PER_REDUCE`, `bestf` (feature file),
-`XGB_EST XGB_DEPTH XGB_MINCHILD` (40, 5, 10), `XGB_OBJ` (`squarederror`,
-`log`, `poisson`; `rank` = the order within a reduce, from used or not:
-no target, no weights), `TARGET` (`rel`, `count`), `XGB_WEIGHTS` (`none`;
-`strata` = `x.weight`; `instance` = also every instance counts the same;
-`family`, the default = also every family: the leading letters of the
-file name, or the `FAMILIES` file of `family filename` lines),
+`XGB_EST XGB_DEPTH XGB_MINCHILD` (40, 5, 10), `XGB_OBJ` (`rank`, the
+default: the order within a reduce, learnt from used or not; or a
+regression, `squarederror`, `log`, `poisson`, which takes `TARGET`
+(`rel`, `count`) and `XGB_WEIGHTS` (`none`; `strata` = `x.weight`;
+`instance` = also every instance counts the same; `family` = also every
+family: the leading letters of the file name, or the `FAMILIES` file of
+`family filename` lines)),
 `CAKE_XLRUP=""` (skip the optional proof check).
 
 **Use kept at reduce**, in the learn output and `holdout_eval.py`: the

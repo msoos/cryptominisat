@@ -19,12 +19,12 @@
 # 02110-1301, USA.
 
 # Trains one xgboost model on one frame and saves it as
-# predictor-<table>-disc-xgb.json; prints the squared error, the ranking
-# quality against glue/size and the oracle, and (--topfeats) the feature
+# predictor-<table>-disc-xgb.json; prints the use kept at reduce against
+# the normal build and the oracle, and (--topfeats) the feature
 # importance ranking that gen_best_feats.sh/pick_features.py use.
 #
 # usage: cldata_predict.py frame.dat --table used_later --features best_only
-#            --bestfeatfile best_features.txt --target rel --objective squarederror
+#            --bestfeatfile best_features.txt --objective rank
 #            --xgboostestimators 40 --xboostmaxdepth 5 --basedir <where the model goes>
 # pylint: disable=invalid-name,line-too-long,too-many-locals,consider-using-sys-exit
 
@@ -375,8 +375,8 @@ if __name__ == "__main__":
     # type of regressor
     parser.add_argument("--target", type=str, default="count",
                         help="count: the discounted use itself, rel: the share of the clauses at the same reduce used less (0..1)")
-    parser.add_argument("--objective", type=str, default="squarederror",
-                        help="squarederror, log (squared error of log(1+use)), poisson, or rank (the order of the clauses of a reduce, --target does not matter)")
+    parser.add_argument("--objective", type=str, default="rank",
+                        help="rank (the order of the clauses of a reduce; --target and --weights do not matter), squarederror, log (squared error of log(1+use)) or poisson")
     parser.add_argument("--regressor", type=str, default="xgb",
                         dest="regressor", help="xgb (default) or tree (a single tree, for --dot)")
     parser.add_argument("--xgboostestimators", default=10, type=int,

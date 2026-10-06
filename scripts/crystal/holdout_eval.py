@@ -27,8 +27,8 @@
 # the solver A/B is still the last word.
 #
 # usage: holdout_eval.py (--train a-dir b-dir | --model predictor.json) --test c-dir d-dir
-#          [--target count|rel] [--objective squarederror|log|poisson|rank]
-#          [--weights none|strata|instance|family]
+#          [--objective rank|squarederror|log|poisson]
+#          [--target count|rel] [--weights none|strata|instance|family]   (not with rank)
 #          [-f best_features.txt] [--table used_later]
 
 import argparse
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     parser.add_argument("--table", default="used_later")
     parser.add_argument("--weights", default="family", choices=["none", "strata", "instance", "family"])
     parser.add_argument("--target", default="rel", choices=["count", "rel"])
-    parser.add_argument("--objective", default="squarederror", choices=["squarederror", "log", "poisson", "rank"])
+    parser.add_argument("--objective", default="rank", choices=["rank", "squarederror", "log", "poisson"])
     parser.add_argument("-f", "--features", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_features.txt"))
     parser.add_argument("--estimators", type=int, default=40)
     parser.add_argument("--depth", type=int, default=5)

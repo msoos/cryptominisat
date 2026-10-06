@@ -42,7 +42,7 @@ for table in ${TABLES:-used_later used_later_anc}; do
         echo "Doing $f ${computed}_computed"
         "$SCRIPTDIR/cldata_predict.py" "$f" --table "$table" \
             --regressor xgb --topfeats --features "${computed}_computed" --only "${ONLY:-1.0}" \
-            --objective "${XGB_OBJ:-squarederror}" --xboostmaxdepth "${XGB_DEPTH:-5}" \
+            --objective "${XGB_OBJ:-rank}" --xboostmaxdepth "${XGB_DEPTH:-5}" \
             --target "${TARGET:-count}" \
             > "$OUT/output_${table}_${computed}computed" 2>&1
         grep -A 40 "impdf:" "$OUT/output_${table}_${computed}computed" | head -42

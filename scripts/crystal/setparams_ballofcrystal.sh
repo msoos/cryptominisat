@@ -37,11 +37,11 @@ export bestf="${bestf:-$(pwd)/best_features.txt}"
 export XGB_EST="${XGB_EST:-40}"
 export XGB_DEPTH="${XGB_DEPTH:-5}"
 export XGB_MINCHILD="${XGB_MINCHILD:-10}"
-export XGB_OBJ="${XGB_OBJ:-squarederror}" # squarederror, log, poisson, rank
+export XGB_OBJ="${XGB_OBJ:-rank}"         # rank, squarederror, log, poisson
 export XGB_SEED="${XGB_SEED:-0}"           # train/test split and (with XGB_SUBSAMPLE < 1) the trees
 export XGB_SUBSAMPLE="${XGB_SUBSAMPLE:-1.0}"
-export TARGET="${TARGET:-rel}"           # count, or rel: rank among the clauses of the reduce
-export XGB_WEIGHTS="${XGB_WEIGHTS:-family}" # none, strata, instance, family (see cldata_predict.py)
+export TARGET="${TARGET:-rel}"           # not with rank. count, or rel: rank among the clauses of the reduce
+export XGB_WEIGHTS="${XGB_WEIGHTS:-family}" # not with rank. none, strata, instance, family
 export EXTRA_GEN_PANDAS_OPTS="${EXTRA_GEN_PANDAS_OPTS:-}"
 
 export STATS_OPTS="${STATS_OPTS:-}"       # e.g. "--predloc DIR" with a stats+predictor build
