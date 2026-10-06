@@ -5,7 +5,7 @@
 # (eval_summary.py: geometric means with intervals, solved, PAR2, noise).
 #
 # usage: eval_corpus.sh <preddir> file1.cnf [file2.cnf ...]
-#   PRED_OPTS: extra options for the predictor runs, e.g. "--predkeep 0"
+#   PRED_OPTS: extra options for the predictor runs, e.g. "--predthresh 0.1"
 #   EVAL_OPTS: extra options for all runs, e.g. "--xor 0"
 #   EVAL_ANC: which --predanc to run (0 plain label, 1 ancestor), default "0 1"
 #   EVAL_SEEDS: solver seeds, every build runs with each. Default "0"

@@ -4,8 +4,8 @@ What to do once there is a cluster: gather on many UNSAT instances, train,
 validate. `CLAUDE.md` says how the pipeline runs and what is known.
 
 Why a plan at all: on this box a comparison is 9 hold-out instances, and
-differences under ~10% are noise. The defaults (feature list, `--predkeep
-0`, the label) were chosen on six of those nine, so they are not a
+differences under ~10% are noise. The defaults (feature list, the label)
+were chosen on six of those nine, so they are not a
 hold-out. The big run has to be able to see a 5-point difference, on
 instances nothing was tuned on.
 
@@ -85,9 +85,6 @@ survives.
 - [ ] Round 2: regather train under the learnt policy
       (`build_stats_pred`), train on both rounds. Not settled on this
       box.
-- [ ] `--predcands 0` vs `1`, `--predkeep 0` vs `2`, with the final
-      model. `--predcands 1` shrinks the DB: compare against the normal
-      build with `--reducekeepused 0` too.
 - [ ] Feature importance / ablation only if something above moved:
       importance-picked lists lost three times.
 

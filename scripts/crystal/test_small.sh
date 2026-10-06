@@ -56,15 +56,13 @@ MODEL="$CNF-dir/predictor-used_later-disc-xgb.json"
 ./check_pred_features.py "$DIR/pred.dump" "$MODEL" || exit 1
 rm -f "$DIR/pred.dump"
 # with the normal build's order as its score the predictor build must BE
-# the normal build: the same conflicts, whatever picks the tiers
+# the normal build: the same conflicts
 NORMAL="${NORMAL_BIN:-$SCRIPTDIR/../../build/cryptominisat5}"
 function confl() { "$@" --zero-exit-status "$CNF" | grep -m1 "^c conflicts" | awk '{print $4}'; }
 want=$(confl "$NORMAL")
-for k in 0 2; do
-    got=$(confl "$PRED" --predmimic 1 --predkeep $k)
-    [[ -n "$want" && "$got" == "$want" ]] || {
-        echo "FAILED: --predmimic 1 --predkeep $k gives $got conflicts, the normal build $want"; exit 1; }
-done
+got=$(confl "$PRED" --predmimic 1)
+[[ -n "$want" && "$got" == "$want" ]] || {
+    echo "FAILED: --predmimic 1 gives $got conflicts, the normal build $want"; exit 1; }
 echo "OK: the predictor build with the glue order as score equals the normal build ($want conflicts)"
 # the same for the build that gathers under a model: with the glue order
 # as its score it must be the stats build, verdicts on the tracked included

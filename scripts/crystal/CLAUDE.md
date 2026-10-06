@@ -56,12 +56,7 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   `DIR/predictor-<table>-disc-xgb.json`; empty = the embedded one),
   `--predanc 0|1` (with `--predloc`: 0 = the `used_later` model, 1 =
   `used_later_anc`),
-  `--predkeep 0` (default: glue tiers, the score orders the candidates;
-  2 = the score decides which learnt clauses are tier1/tier2, as many
-  of each as glue would make; 1 = fixed `--predkeept1`/`--predkeept2`
-  %), `--predcands 0|1|2` (what
-  is ranked: 0 = the normal build's candidates, 1 = also the clauses
-  kept for being used, 2 = also tier1-keep), `--predthresh T`,
+  `--predthresh T`,
   `--dumppreddistrib 1`, `--preddump FILE`, `--predmimic 1`
   (self-check: the score is the glue/size order, so the run must equal
   the normal build's; `test_small.sh` checks it).
@@ -69,9 +64,8 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   --cldatadumpratio R --cllockdatagen R --everypred N`, all set by
   `ballofcrystal.sh`.
 
-With `--predcands 0` only WHICH candidates a reduce removes differs
-between the builds, so a conflict-count A/B is clean. With 1 the DB also
-shrinks: compare against the normal build with `--reducekeepused 0` too.
+Only WHICH candidates a reduce removes differs between the builds, so a
+conflict-count A/B is clean.
 
 ## The pipeline
 
@@ -293,25 +287,19 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
   counters, the learning-time snapshot, size/glue. Rankings, context
   ratios, age and the propagation-cost features are inside the noise.
   Importance-picked feature lists lost to the hand-kept one three times.
-- Amount vs order: with a fixed share of tier1/tier2 clauses the A/B
-  measured how many clauses are protected, not which: `--predkeep 2`
-  makes as many as glue would.
 - **Proof use cannot judge the rule.** Offline, keeping as many clauses
   as the normal reduce but all picked by glue, size (no "used since the
   last reduce" rule) holds 99.5% of the future proof use against 96.8%,
-  the model the same. In the solver exactly that (`--predmimic 1
-  --predcands 1`) is 118% [106, 130] of the normal build's conflicts,
+  the model the same. In the solver exactly that is 118% [106, 130] of the normal build's conflicts,
   with the model 116%. A recently used clause that is not in the final
   proof still keeps the search out of where it has been. So the model
   orders the candidates and nothing else, and only that is replayed.
-- **The score should not pick the tiers.** `--predkeep 2` against `0`,
-  9 hold-outs, 3 seeds, conflicts vs the normal build: 108.3% [103, 115]
-  against 103.5% [97, 110] (ranking model); 108.8% against 101.5% on 4
-  (the squared-error one). Offline they look the same (`tiers` vs
-  `order`). 0 is the default.
-- The score decides the reduce tiers and nothing else. Letting it also
-  replace glue in `likely_to_be_kept()` (vivification, BVE) cost 10
-  points. Do not add it back without an A/B.
+  The options that let the score do more are gone: ranking the
+  rule-kept clauses too (116%), picking which clauses are tier1/tier2
+  (as many as glue makes: 108% vs 104% with the ranking model, 105% vs
+  111% with the squared-error one, i.e. nothing, at 3.5 times the
+  predictions), replacing glue in `likely_to_be_kept()` (vivification,
+  BVE: 10 points lost).
 - The label is a use in the trimmed UNSAT proof. The solver's own
   conflict-analysis uses as a label, alone or mixed in, measured the
   same. In some runs nearly all proof uses fall in the last 10% of the
@@ -321,9 +309,6 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
   everything.
 - A second gathering round under the learnt policy, trained with the
   first: not a loss, not a demonstrated gain. Unsettled.
-- The objective and `--predcands` are family-dependent: on bivium `log`
-  with `--predcands 1` gave 74% / 65% of the normal build, on a mixed
-  corpus the same was a loss. The defaults are the general ones.
 - SAT instances cannot be A/B tested one run at a time: the path to a
   model changes with every clause kept.
 - Differences under ~10% between single runs are not results.

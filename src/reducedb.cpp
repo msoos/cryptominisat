@@ -101,63 +101,9 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
 {
     vector<ClOffset> stack;
     stack.reserve(solver->long_red_cls[0].size());
-    //predcands: the predictor also ranks what the rules below would keep
-    #ifdef FINAL_PREDICTOR
-    const int pred_cands = solver->conf.pred_cands;
-    #else
-    const int pred_cands = 0;
-    #endif
-    size_t normal_cands = 0;
     //data gen: a tracked clause is never removed. Whether the reduce would
     //remove it is decided as for any other clause, and kept in its 'gone' bit
     vector<ClOffset> tracked_cands;
-    #ifdef FINAL_PREDICTOR
-    vector<ClOffset> by_glue; //the candidates of the normal build
-    #endif
-    //predkeep: the score's rank replaces glue in the tier rules below
-    bool pred_keep = false;
-    #ifdef FINAL_PREDICTOR
-    pred_keep = solver->conf.pred_keep != 0;
-    if (pred_keep) {
-        update_preds(solver->long_red_cls[0]);
-        vector<double> scores;
-        scores.reserve(solver->long_red_cls[0].size());
-        for (const ClOffset offs: solver->long_red_cls[0]) {
-            const Clause* cl = solver->cl_alloc.ptr(offs);
-            scores.push_back(solver->red_stats_extra[cl->stats.extra_pos].pred_use);
-        }
-        if (!scores.empty()) {
-            //the score above which a clause is in the best t1% / t2%
-            const size_t n = scores.size();
-            size_t at1 = (size_t)((double)n * (1.0 - solver->conf.pred_keep_t1/100.0));
-            size_t at2 = (size_t)((double)n * (1.0 - solver->conf.pred_keep_t2/100.0));
-            if (solver->conf.pred_keep == 2) {
-                //as many tier1/tier2 clauses as glue would make: the score
-                //decides which, the glue rule how many, per instance
-                size_t n1 = 0, n2 = 0;
-                for (const ClOffset offs: solver->long_red_cls[0]) {
-                    const uint32_t g = solver->cl_alloc.ptr(offs)->stats.glue;
-                    n1 += g <= solver->tier1_glue;
-                    n2 += g <= solver->tier2_glue;
-                }
-                at1 = n - n1;
-                at2 = n - n2;
-                verb_print(2, "[pred] keep as glue would: tier1 " << n1 << " tier2 " << n2 << " of " << n);
-            }
-            //at == n: no clause is in the tier
-            vector<double> tmp(scores);
-            keep_t1 = keep_t2 = std::numeric_limits<double>::infinity();
-            if (at1 < n) {
-                std::nth_element(tmp.begin(), tmp.begin()+at1, tmp.end());
-                keep_t1 = tmp[at1];
-            }
-            if (at2 < n) {
-                std::nth_element(tmp.begin(), tmp.begin()+at2, tmp.end());
-                keep_t2 = tmp[at2];
-            }
-        }
-    }
-    #endif
     for (const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         SLOW_DEBUG_DO(assert(!cl->stats.marked_clause));
@@ -179,38 +125,24 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         vector<ClOffset>& cands = tracked ? tracked_cands : stack;
         if (cl->stats.keep) {
             rstats.kept_keep++;
-            if (pred_cands >= 2) cands.push_back(offs);
             continue;
         }
         //Kissat's collect_reducibles: tier1 lives while 'used' lasts, tier2
         //only if used since the last reduce. Kissat always reduces tier3,
         //CaDiCaL keeps it if used: see reducekeepused
         const uint32_t glue = cl->stats.glue;
-        bool tier1 = glue <= solver->tier1_glue;
-        bool tier2 = glue <= solver->tier2_glue;
-        #ifdef FINAL_PREDICTOR
-        if (pred_keep) {
-            const double sc = solver->red_stats_extra[cl->stats.extra_pos].pred_use;
-            tier1 = sc >= keep_t1;
-            tier2 = sc >= keep_t2;
-        }
-        #endif
+        const bool tier1 = glue <= solver->tier1_glue;
+        const bool tier2 = glue <= solver->tier2_glue;
         if ((tier1 && used)
             || ((tier2 || solver->conf.reduce_keep_used)
                 && used >= CL_MAX_USED-1)
         ) {
             if (!tracked) rstats.kept_used++;
-            if (pred_cands >= 1) cands.push_back(offs);
             continue;
         }
         cands.push_back(offs);
-        if (tracked) continue;
-        normal_cands++;
-        #ifdef FINAL_PREDICTOR
-        by_glue.push_back(offs);
-        #endif
     }
-    rstats.cands = normal_cands;
+    rstats.cands = stack.size();
     //worst first: larger glue, then larger size, as in CaDiCaL
     auto glue_order = [this](const ClOffset a, const ClOffset b) {
         const Clause* c = solver->cl_alloc.ptr(a);
@@ -219,9 +151,9 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         return c->size() > d->size();
     };
     #ifdef FINAL_PREDICTOR
-    //only what is ranked gets predicted: a third of the DB on a normal run.
+    //only the candidates get predicted: a third of the DB on a normal run.
     //The features must be what the STATS build dumped: before the decrement
-    if (!solver->conf.dump_pred_distrib && !pred_keep) {
+    if (!solver->conf.dump_pred_distrib) {
         const double my_time = cpu_time();
         update_preds(stack);
         update_preds(tracked_cands);
@@ -229,6 +161,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             << solver->conf.print_times(cpu_time()-my_time));
     }
     //what the normal build would keep, for the limits below
+    vector<ClOffset> by_glue(stack);
     std::stable_sort(by_glue.begin(), by_glue.end(), glue_order);
     //worst first: least predicted future use, then glue/size
     const auto& ext = solver->red_stats_extra;
@@ -261,7 +194,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         const double low = solver->conf.reducelow * 0.1;
         percent = high - (high - low) / std::log10((double)num_reductions + 9.0);
     }
-    size_t target = 1e-2 * percent * (double)normal_cands;
+    size_t target = 1e-2 * percent * (double)stack.size();
     const size_t normal_target = target;
     #ifdef FINAL_PREDICTOR
     if (solver->conf.pred_thresh > 0) {
@@ -434,8 +367,7 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
 bool ReduceDB::likely_to_be_kept(const Clause& cl) const
 {
     if (cl.stats.keep) return true;
-    //glue, also under --predkeep: the score steering this cost 10 points
-    //(116% vs 106% of the normal build's conflicts on the held-out set)
+    //glue also in the predictor build: the score here cost 10 points
     if (cl.stats.glue <= solver->tier1_glue && cl.stats.used) return true;
     if ((cl.stats.glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
         && cl.stats.used >= CL_MAX_USED-1) return true;

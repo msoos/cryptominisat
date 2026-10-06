@@ -52,10 +52,6 @@ public:
     //CaDiCaL's lim.keptglue/keptsize: largest glue/size kept at last reduce
     uint32_t lim_keptglue = 0;
     uint32_t lim_keptsize = 0;
-    //--predkeep: the score above which a clause counts as tier1 / tier2
-    //at the last reduce
-    double keep_t1 = 0;
-    double keep_t2 = 0;
     //feature values outside the 1st..99th percentile of the training data,
     //per feature, and values seen: a run the model never saw looks like this
     vector<uint64_t> feat_out_of_range;
