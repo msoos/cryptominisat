@@ -72,7 +72,7 @@ def check_frame(fname, df, feats):
 
     need = [label, label + "_rel", "x.weight", "fname", "rdb0.glue", "rdb0.size", "rdb0.used", "rdb0.dump_no",
             "rdb0_common.conflicts", "rdb0.introduced_at_conflict",
-            "sum_cl_use.clauseID", "cl.orig_glue", "rdb0.is_ternary_resolvent"]
+            "sum_cl_use.clauseID", "cl.orig_glue", "rdb0.is_ternary_resolvent", "rdb0.gone"]
     missing = [c for c in need if c not in df.columns]
     check(not missing, "%s: columns missing: %s" % (name, missing))
     if missing:
@@ -84,6 +84,12 @@ def check_frame(fname, df, feats):
     num = df.select_dtypes(include=[np.number])
     inf_cols = [c for c in num.columns if np.isinf(num[c].to_numpy(dtype=float)).any()]
     check(not inf_cols, "%s: inf in %s" % (name, inf_cols))
+
+    # the fair frame is what the solver has at the reduce
+    gone = df["rdb0.gone"]
+    check(gone.isin([0, 1]).all(), "%s: rdb0.gone not 0/1" % name)
+    check(not fair or (gone == 0).all(), "%s: gone clauses in the fair frame" % name)
+    check((gone[df["rdb0.dump_no"] == 0] == 0).all(), "%s: clauses gone before their first reduce" % name)
 
     y = df[label]
     check(y.notna().all(), "%s: NaN labels: %d" % (name, y.isna().sum()))
@@ -157,7 +163,7 @@ def check_frame(fname, df, feats):
     check(not varying, "%s: rdb0_common columns vary within a reduce: %s" % (name, varying))
 
     # features that carry nothing
-    const = [c for c in num.columns if num[c].nunique(dropna=True) <= 1 and not c.startswith("x.")]
+    const = [c for c in num.columns if num[c].nunique(dropna=True) <= 1 and not c.startswith("x.") and c != "rdb0.gone"]
     if const:
         warn("%s: constant columns: %s" % (name, const))
     tiny = [c for c in num.columns if "per_time" in c and num[c].abs().max() < 1e-6]

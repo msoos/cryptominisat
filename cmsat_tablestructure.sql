@@ -97,6 +97,7 @@ CREATE TABLE `reduceDB` (
   `last_touched_any_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
   `locked` int(20) NOT NULL,
+  `gone` int(20) NOT NULL, -- the reduce would have removed it by now: only the lock keeps it
   `glue` int(20) DEFAULT NULL, -- NULL for ternary resolvents and eagerly subsumed clauses
   `size` int(20) NOT NULL,
   `used` int(20) NOT NULL, -- kissat-style 'used' life, what reduce goes by

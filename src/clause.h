@@ -130,6 +130,7 @@ struct ClauseStats
         used = 0;
         which_red_array = 7; //intentionally breaking it so we catch bugs, 7 NEVER exists
         locked_for_data_gen = 0;
+        gone_for_data_gen = 0;
         is_ternary_resolvent = 0;
         activity = 0;
         is_tracked = false;
@@ -143,6 +144,7 @@ struct ClauseStats
     uint32_t used:5;   //set to CL_MAX_USED on learn/use, -1 per reduce, as kissat
     uint32_t which_red_array:3;
     uint32_t locked_for_data_gen:1;
+    uint32_t gone_for_data_gen:1; //tracked clause the reduce would have removed
     uint32_t is_ternary_resolvent:1;
     uint32_t is_tracked:1;
     float activity;

@@ -709,6 +709,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bind_at++, last_touched_any_diff);
     sqlite3_bind_double(stmtReduceDB, bind_at++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bind_at++, locked);
+    sqlite3_bind_int(stmtReduceDB, bind_at++, cl->stats.gone_for_data_gen);
     //eager subsume sets glue to CL_MAX_GLUE as a 'delete next' marker
     if (cl->stats.is_ternary_resolvent || cl->stats.glue == CL_MAX_GLUE) {
         sqlite3_bind_null(stmtReduceDB, bind_at++);

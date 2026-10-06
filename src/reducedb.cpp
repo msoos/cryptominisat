@@ -108,6 +108,9 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     const int pred_cands = 0;
     #endif
     size_t normal_cands = 0;
+    //data gen: a tracked clause is never removed. Whether the reduce would
+    //remove it is decided as for any other clause, and kept in its 'gone' bit
+    vector<ClOffset> tracked_cands;
     #ifdef FINAL_PREDICTOR
     vector<ClOffset> by_glue; //the candidates of the normal build
     #endif
@@ -171,12 +174,14 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             if (used < CL_MAX_USED) cl->stats.marked_clause = true;
             continue;
         }
+        const bool tracked = cl->stats.locked_for_data_gen;
+        if (tracked && cl->stats.gone_for_data_gen) continue;
+        vector<ClOffset>& cands = tracked ? tracked_cands : stack;
         if (cl->stats.keep) {
             rstats.kept_keep++;
-            if (pred_cands >= 2) stack.push_back(offs);
+            if (pred_cands >= 2) cands.push_back(offs);
             continue;
         }
-        if (cl->stats.locked_for_data_gen) continue;
         //Kissat's collect_reducibles: tier1 lives while 'used' lasts, tier2
         //only if used since the last reduce. Kissat always reduces tier3,
         //CaDiCaL keeps it if used: see reducekeepused
@@ -194,11 +199,12 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
             || ((tier2 || solver->conf.reduce_keep_used)
                 && used >= CL_MAX_USED-1)
         ) {
-            rstats.kept_used++;
-            if (pred_cands >= 1) stack.push_back(offs);
+            if (!tracked) rstats.kept_used++;
+            if (pred_cands >= 1) cands.push_back(offs);
             continue;
         }
-        stack.push_back(offs);
+        cands.push_back(offs);
+        if (tracked) continue;
         normal_cands++;
         #ifdef FINAL_PREDICTOR
         by_glue.push_back(offs);
@@ -218,6 +224,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     if (!solver->conf.dump_pred_distrib && !pred_keep) {
         const double my_time = cpu_time();
         update_preds(stack);
+        update_preds(tracked_cands);
         verb_print(2, "[pred] predicted for " << stack.size() << " cands"
             << solver->conf.print_times(cpu_time()-my_time));
     }
@@ -275,6 +282,14 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         rstats.removed_tier[g <= solver->tier1_glue ? 0 : (g <= solver->tier2_glue ? 1 : 2)]++;
     }
 
+    //a tracked clause no better than the best one removed is gone
+    if (target > 0) {
+        const ClOffset cut = stack[target-1];
+        for (const ClOffset offs: tracked_cands) {
+            if (!order(cut, offs)) solver->cl_alloc.ptr(offs)->stats.gone_for_data_gen = true;
+        }
+    }
+
     //CaDiCaL's lim.keptglue/keptsize, used to pick vivification candidates.
     //The normal build's also in the predictor build: what the model keeps
     //has no glue limit, and every learnt clause would count as likely kept
@@ -295,7 +310,10 @@ void ReduceDB::mark_clauses_to_be_flushed()
         const uint32_t used = cl->stats.used;
         if (used) cl->stats.used = used - 1;
         if (used >= CL_MAX_USED-1) continue;
-        if (cl->stats.locked_for_data_gen) continue;
+        if (cl->stats.locked_for_data_gen) {
+            cl->stats.gone_for_data_gen = true;
+            continue;
+        }
         cl->stats.marked_clause = true;
         cl_reduced++;
     }

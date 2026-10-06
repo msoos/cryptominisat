@@ -84,6 +84,19 @@ if __name__ == "__main__":
     # a tracked clause's rows do not come before it was learnt
     bad = one(c, "select count(*) from reduceDB where conflicts < introduced_at_conflict")
     check(bad == 0, "%d rows before the clause was learnt" % bad)
+    # gone: the reduce would have removed the clause, the lock keeps it.
+    # Not before its first reduce, and never back
+    cols = [r[1] for r in c.execute("pragma table_info(reduceDB)")]
+    check("gone" in cols, "no 'gone' column in reduceDB: gathered by an old solver")
+    if "gone" in cols:
+        bad = one(c, "select count(*) from reduceDB where dump_no = 0 and gone != 0")
+        check(bad == 0, "%d clauses gone before their first reduce" % bad)
+        bad = one(c, """select count(*) from reduceDB a join reduceDB b on a.clauseID = b.clauseID
+            and b.dump_no = a.dump_no + 1 where a.gone = 1 and b.gone = 0""")
+        check(bad == 0, "%d clauses came back after being gone" % bad)
+        gone = one(c, "select avg(gone) from reduceDB") or 0
+        print("rows of clauses only the lock keeps (gone): %.0f%%" % (100*gone))
+        check(gone < 0.95, "%.0f%% of the rows are of gone clauses" % (100*gone))
     # the per-reduce aggregates are one row per reduce
     dupc = one(c, "select count(*) from (select conflicts, count(*) n from reduceDB_common group by 1 having n > 1)")
     check(dupc == 0, "%d reduces dumped twice in reduceDB_common" % dupc)
@@ -91,7 +104,6 @@ if __name__ == "__main__":
     orphan = one(c, "select count(*) from reduceDB r where not exists (select 1 from reduceDB_common m where m.conflicts = r.conflicts)")
     check(orphan == 0, "%d reduceDB rows without a reduceDB_common row" % orphan)
     # the cost columns, if this solver has them
-    cols = [r[1] for r in c.execute("pragma table_info(reduceDB)")]
     if "visited" in cols:
         bad = one(c, "select count(*) from reduceDB where visited < props_made + conflicts_made")
         check(bad == 0, "%d rows with visited < props_made + conflicts_made" % bad)

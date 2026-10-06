@@ -314,6 +314,7 @@ class Learner:
                 "sum_cl_use.",  # the future
                 "x.sum_cl_use",
                 "rdb0.dump_no",
+                "rdb0.gone",  # not known to the solver
                 # IDs and absolute times only tell instances apart
                 "clauseID",
                 "restartID",

@@ -277,8 +277,13 @@ class QueryDatRem(helper.QueryHelper):
                     table, strata, age, num, max(1.0, num/float(limit))))
 
     def pick_eval_rows(self, table):
-        self.c.execute("select rdb0conflicts, count(*) from {table}_disc group by rdb0conflicts order by rdb0conflicts".format(
-            table=table))
+        # only what the solver would have at the reduce: not the clauses
+        # that live on because of the lock (gone)
+        q_from = """
+        from {table}_disc as ul join reduceDB as rdb0
+        on rdb0.clauseID = ul.clauseID and rdb0.conflicts = ul.rdb0conflicts
+        where rdb0.gone = 0""".format(table=table)
+        self.c.execute("select ul.rdb0conflicts, count(*) " + q_from + " group by ul.rdb0conflicts order by ul.rdb0conflicts")
         reduces = self.c.fetchall()
         if not reduces:
             return
@@ -289,9 +294,9 @@ class QueryDatRem(helper.QueryHelper):
             self.c.execute("""
             insert into eval_rows
             select '{table}', ul.clauseID, ul.rdb0conflicts, {weight}
-            from {table}_disc as ul where ul.rdb0conflicts = {confl}
+            {q_from} and ul.rdb0conflicts = {confl}
             order by rowhash(ul.clauseID, ul.rdb0conflicts) limit {limit}""".format(
-                table=table, confl=confl, limit=options.eval_per_reduce,
+                table=table, q_from=q_from, confl=confl, limit=options.eval_per_reduce,
                 weight=repr(max(1.0, num/float(options.eval_per_reduce)))))
         print("%s: eval rows from %d of %d reduces" % (table, len(picked), len(reduces)))
 

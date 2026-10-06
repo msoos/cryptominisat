@@ -94,7 +94,8 @@ shrinks: compare against the normal build with `--reducekeepused 0` too.
      2-5, more), at most `FIXED`/4 rows of each. `x.weight` = rows of
      the cell / rows picked.
    - fair: `EVAL_REDUCES` (10) evenly spaced reduces, up to
-     `EVAL_PER_REDUCE` (3000) clauses of each, no strata. For measuring.
+     `EVAL_PER_REDUCE` (3000) clauses of each that are not gone (see
+     Tracking), no strata. For measuring.
 4. **frames** (`cldata_gen_pandas.py`): per table in {used_later,
    used_later_anc}: `data-min.db-cldata-<table>-disc-cut1-..-limit-N.dat`
    (training) and `data-min.db-evaldata-<table>-disc.dat` (fair), then
@@ -121,7 +122,12 @@ less (0..1, never-used = 0), computed on the full data. `rel` is what
 makes instances comparable: use counts differ 100-fold between families.
 
 **Tracking.** Every tracked clause is locked (`CLLOCK=1`): never deleted
-by reduce, so its rows say what it does if kept. `DUMPRATIO=auto` tracks
+by reduce, so its rows say what it does if kept. The reduce still
+decides about it as about any other clause and remembers the verdict:
+`rdb0.gone` = 1 from the first reduce that would have removed it (in a
+`build_stats_pred` run: that the model would have). Most rows are of
+gone clauses (Steiner: 80%); the fair frame has none, it is what the
+solver holds at a reduce. `DUMPRATIO=auto` tracks
 `TRACKED` (10k) clauses over the run, from the normal build's conflict
 count (run first, or give `CONFL`), at most `MAXDUMPRATIO` (0.03) of
 the learnt clauses. An eagerly subsumed clause (glue NULL) lives on only
@@ -156,7 +162,8 @@ saved model is refitted on all rows.
 ### The gates
 
 - `check_rawdb.py` on the stats DB: tables, one row per (clause,
-  reduce), enough reduces, tracked share vs dump ratio, proof present.
+  reduce), enough reduces, tracked share vs dump ratio, proof present,
+  no clause gone before its first reduce or back after.
 - `check_data_quality.py --slow` after the labels.
 - `check_frames.py` on the frames, before any learning: columns, inf,
   bad labels, `rel` in 0..1, weights >= 1, sizes, ages, per-reduce
