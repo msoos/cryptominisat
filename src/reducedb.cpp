@@ -108,6 +108,9 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     const int pred_cands = 0;
     #endif
     size_t normal_cands = 0;
+    #ifdef FINAL_PREDICTOR
+    vector<ClOffset> by_glue; //the candidates of the normal build
+    #endif
     //predkeep: the score's rank replaces glue in the tier rules below
     bool pred_keep = false;
     #ifdef FINAL_PREDICTOR
@@ -197,8 +200,18 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         }
         stack.push_back(offs);
         normal_cands++;
+        #ifdef FINAL_PREDICTOR
+        by_glue.push_back(offs);
+        #endif
     }
     rstats.cands = normal_cands;
+    //worst first: larger glue, then larger size, as in CaDiCaL
+    auto glue_order = [this](const ClOffset a, const ClOffset b) {
+        const Clause* c = solver->cl_alloc.ptr(a);
+        const Clause* d = solver->cl_alloc.ptr(b);
+        if (c->stats.glue != d->stats.glue) return c->stats.glue > d->stats.glue;
+        return c->size() > d->size();
+    };
     #ifdef FINAL_PREDICTOR
     //only what is ranked gets predicted: a third of the DB on a normal run.
     //The features must be what the STATS build dumped: before the decrement
@@ -208,28 +221,23 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         verb_print(2, "[pred] predicted for " << stack.size() << " cands"
             << solver->conf.print_times(cpu_time()-my_time));
     }
-    //worst first: least predicted future use, then glue/size as below
+    //what the normal build would keep, for the limits below
+    std::stable_sort(by_glue.begin(), by_glue.end(), glue_order);
+    //worst first: least predicted future use, then glue/size
     const auto& ext = solver->red_stats_extra;
     auto pred_of = [&](const Clause* c) { return ext[c->stats.extra_pos].pred_use; };
-    std::stable_sort(stack.begin(), stack.end(),
-        [&](const ClOffset a, const ClOffset b) {
-            const Clause* c = solver->cl_alloc.ptr(a);
-            const Clause* d = solver->cl_alloc.ptr(b);
-            const double pc = pred_of(c);
-            const double pd = pred_of(d);
-            if (pc != pd) return pc < pd;
-            if (c->stats.glue != d->stats.glue) return c->stats.glue > d->stats.glue;
-            return c->size() > d->size();
-        });
+    auto order = [&](const ClOffset a, const ClOffset b) {
+        const double pc = pred_of(solver->cl_alloc.ptr(a));
+        const double pd = pred_of(solver->cl_alloc.ptr(b));
+        if (pc != pd) return pc < pd;
+        return glue_order(a, b);
+    };
     #else
-    //worst first: larger glue, then larger size, as in CaDiCaL
-    std::stable_sort(stack.begin(), stack.end(),
-        [this](const ClOffset a, const ClOffset b) {
-            const Clause* c = solver->cl_alloc.ptr(a);
-            const Clause* d = solver->cl_alloc.ptr(b);
-            if (c->stats.glue != d->stats.glue) return c->stats.glue > d->stats.glue;
-            return c->size() > d->size();
-        });
+    const auto& order = glue_order;
+    #endif
+    std::stable_sort(stack.begin(), stack.end(), order);
+    #ifndef FINAL_PREDICTOR
+    const vector<ClOffset>& by_glue = stack;
     #endif
 
     for (const ClOffset offs: solver->long_red_cls[0]) {
@@ -247,6 +255,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         percent = high - (high - low) / std::log10((double)num_reductions + 9.0);
     }
     size_t target = 1e-2 * percent * (double)normal_cands;
+    const size_t normal_target = target;
     #ifdef FINAL_PREDICTOR
     if (solver->conf.pred_thresh > 0) {
         size_t below = 0;
@@ -266,10 +275,12 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         rstats.removed_tier[g <= solver->tier1_glue ? 0 : (g <= solver->tier2_glue ? 1 : 2)]++;
     }
 
-    //CaDiCaL's lim.keptglue/keptsize, used to pick vivification candidates
+    //CaDiCaL's lim.keptglue/keptsize, used to pick vivification candidates.
+    //The normal build's also in the predictor build: what the model keeps
+    //has no glue limit, and every learnt clause would count as likely kept
     lim_keptglue = lim_keptsize = 0;
-    for (size_t i = target; i < stack.size(); i++) {
-        const Clause* cl = solver->cl_alloc.ptr(stack[i]);
+    for (size_t i = normal_target; i < by_glue.size(); i++) {
+        const Clause* cl = solver->cl_alloc.ptr(by_glue[i]);
         lim_keptglue = std::max(lim_keptglue, cl->stats.glue);
         lim_keptsize = std::max<uint32_t>(lim_keptsize, cl->size());
     }
@@ -382,7 +393,8 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     << " tiers: " << solver->tier1_glue << "/" << solver->tier2_glue);
     verb_print(1, "[reduce]   kept-used: " << rstats.kept_used
     << " kept-keep: " << rstats.kept_keep
-    << " locked: " << rstats.locked);
+    << " locked: " << rstats.locked
+    << " likely-kept lim glue/size: " << lim_keptglue << "/" << lim_keptsize);
     verb_print(2, "[reduce-used] life 0: " << rstats.used_hist[0]
     << " 1-10: " << rstats.used_hist[1] << " 11-29: " << rstats.used_hist[2]
     << " 30 (used before last reduce): " << rstats.used_hist[3]
@@ -778,10 +790,11 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         Clause* cl = solver->cl_alloc.ptr(offset);
         auto& extra = solver->red_stats_extra[cl->stats.extra_pos];
         predictors->get_prediction_at(extra, i++);
+        if (predictors->dumping()) dump_preds.push_back(extra.pred_use);
         if (solver->conf.pred_mimic) extra.pred_use = -((double)cl->stats.glue*1e7 + (double)cl->size());
-        if (predictors->dumping()) {
-            dump_preds.push_back(extra.pred_use);
-        }
+        //eagerly subsumed: goes first, as in the normal build. The model
+        //never saw such a clause
+        if (cl->stats.glue == CL_MAX_GLUE) extra.pred_use = -std::numeric_limits<double>::infinity();
     }
     if (predictors->dumping()) predictors->write_dump(data.data(), dump_preds, offs.size());
     predictors->finish_all_predict();
