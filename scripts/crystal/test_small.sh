@@ -2,7 +2,8 @@
 
 # Smoke test of the whole crystalball pipeline on a small random UNSAT
 # instance (about 100k conflicts), scaled label horizons. Needs cnfgen
-# (pip install cnfgen) and the stats + predictor builds.
+# (pip install cnfgen) and the stats + predictor builds; checks the
+# stats+predictor build too if it is there.
 #
 # usage: test_small.sh [seed]     (seeds 2, 3, 5, 6 of this generator are UNSAT)
 
@@ -65,4 +66,24 @@ for k in 0 2; do
         echo "FAILED: --predmimic 1 --predkeep $k gives $got conflicts, the normal build $want"; exit 1; }
 done
 echo "OK: the predictor build with the glue order as score equals the normal build ($want conflicts)"
+# the same for the build that gathers under a model: with the glue order
+# as its score it must be the stats build, verdicts on the tracked included
+STATSPRED="${STATSPRED_BIN:-$SCRIPTDIR/../../build_stats_pred/cryptominisat5}"
+if [[ -x "$STATSPRED" ]]; then
+    source ./setparams_ballofcrystal.sh > /dev/null
+    (cd "$DIR" && "$STATSPRED" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
+        --cldatadumpratio 0.1 --cllockdatagen "$CLLOCK" --everypred "$EVERYPRED" --clid --sql 2 \
+        --sqlitedb round2.db --xlrup 0 --predmimic 1 --zero-exit-status "$CNF" round2.frat > round2.out 2>&1)
+    rm -f "$DIR/round2.frat"
+    function gone() { python3 -c "
+import sqlite3, sys
+print(sqlite3.connect(sys.argv[1]).execute('select count(), sum(gone) from reduceDB').fetchone())" "$1"; }
+    want="$(grep -m1 "^c conflicts" "$CNF-dir/cms-stats-run.out" | awk '{print $4}') $(gone "$CNF-dir/data.db-raw")"
+    got="$(grep -m1 "^c conflicts" "$DIR/round2.out" | awk '{print $4}') $(gone "$DIR/round2.db")"
+    [[ "$got" == "$want" ]] || {
+        echo "FAILED: the stats+predictor build with --predmimic 1: conflicts (rows, gone) $got, the stats build $want"; exit 1; }
+    echo "OK: the stats+predictor build with the glue order as score equals the stats build: $want"
+else
+    echo "skipped: no stats+predictor build ($STATSPRED)"
+fi
 echo "OK: pipeline ran, predictors differ per table and are reproducible. Output in $DIR"

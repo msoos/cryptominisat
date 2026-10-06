@@ -11,12 +11,14 @@ end, what is known.
 | `build/` | default | normal solver, the baseline |
 | `build_stats/` | `-DSTATS=ON` | dumps clause data to SQLite, writes the FRAT proof |
 | `build_pred/` | `-DFINAL_PREDICTOR=ON` | ranks reduce candidates by the xgboost prediction |
+| `build_stats_pred/` | both | the stats build with the model driving the reduce: the second gathering round |
 
 Build with `-j4`. From an empty dir:
 
 ```
 cd build_stats && ../scripts/build_scripts/build_stats.sh
 cd build_pred  && ../scripts/build_scripts/build_final_predictor.sh
+cd build_stats_pred && ../scripts/build_scripts/build_stats_predictor.sh
 ```
 
 Both need `../cadical/build` and `../cadiback/build` next to the repo
@@ -242,9 +244,10 @@ ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh
 - This box: 1 physical core, 7 GB. Time runs one at a time, and a cached
   normal run (`EVAL_NORMAL_CACHE`) must have been made under the same
   load as what it is compared to.
-- `build_stats_pred/` (STATS=ON and FINAL_PREDICTOR=ON) with
-  `STATS_OPTS="--predloc DIR"` gathers under the learnt
-  policy.
+- The second round: `STATS_BIN=../../build_stats_pred/cryptominisat5
+  STATS_OPTS="--predloc DIR --predanc 0" ballofcrystal.sh --gather-only`
+  on a second copy of the CNFs, then `learn.sh` on the dirs of both
+  rounds (it says what drove each).
 - Features are float32 on both sides; ratios beyond it are "missing".
 - Training is deterministic: the same frames give the same model.
 - Fuzz the normal build after touching the solver:

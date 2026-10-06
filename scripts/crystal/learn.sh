@@ -19,7 +19,8 @@
 
 # Learn predictors from MANY instances: concatenates the per-instance
 # pandas frames (data-min.db-cldata-*.dat, made by ballofcrystal.sh) and
-# trains the 6 predictors on the union.
+# trains the predictors on the union. The dirs may come from several
+# gathering rounds (see STATS_OPTS in ballofcrystal.sh).
 #
 # usage: learn.sh <outdir> <cnf-dir> [<cnf-dir> ...]
 #   <cnf-dir> are the <file.cnf>-dir directories ballofcrystal.sh made
@@ -48,8 +49,11 @@ echo "$@" >> "$OUT/out_git"
 : > "$OUT/gathered_by"
 for d in "$@"; do
     sha=$(grep -m1 "^c CMS SHA1:" "$d/cms-stats-run.out" 2>/dev/null | awk '{print $4}')
-    echo "${sha:-unknown} $d" >> "$OUT/gathered_by"
+    drv=$(grep -m1 "^c \[pred\] \(loaded the\|compiled-in\) model" "$d/cms-stats-run.out" 2>/dev/null | sed 's/^c \[pred\] //')
+    echo "${sha:-unknown} $d ${drv:-glue}" >> "$OUT/gathered_by"
 done
+echo "the reduce of the gathering runs was driven by:"
+awk '{$1=""; $2=""; print}' "$OUT/gathered_by" | sort | uniq -c
 if [[ $(awk '{print $1}' "$OUT/gathered_by" | sort -u | wc -l) -gt 1 ]]; then
     echo "WARNING: the dirs were gathered by different solver versions, see $OUT/gathered_by"
     awk '{print $1}' "$OUT/gathered_by" | sort | uniq -c
