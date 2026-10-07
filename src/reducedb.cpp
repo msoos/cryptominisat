@@ -135,7 +135,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         const bool tier2 = glue <= solver->tier2_glue;
         if ((tier1 && used)
             || ((tier2 || solver->conf.reduce_keep_used)
-                && used >= CL_MAX_USED-1)
+                && used > CL_MAX_USED-solver->conf.reduce_rounds)
         ) {
             if (!tracked) rstats.kept_used++;
             continue;
@@ -242,7 +242,7 @@ void ReduceDB::mark_clauses_to_be_flushed()
         if (solver->clause_locked(*cl, offs)) continue;
         const uint32_t used = cl->stats.used;
         if (used) cl->stats.used = used - 1;
-        if (used >= CL_MAX_USED-1) continue;
+        if (used > CL_MAX_USED-solver->conf.reduce_rounds) continue;
         if (cl->stats.locked_for_data_gen) {
             cl->stats.gone_for_data_gen = true;
             continue;
@@ -370,7 +370,7 @@ bool ReduceDB::likely_to_be_kept(const Clause& cl) const
     //glue also in the predictor build: the score here cost 10 points
     if (cl.stats.glue <= solver->tier1_glue && cl.stats.used) return true;
     if ((cl.stats.glue <= solver->tier2_glue || solver->conf.reduce_keep_used)
-        && cl.stats.used >= CL_MAX_USED-1) return true;
+        && cl.stats.used > CL_MAX_USED-solver->conf.reduce_rounds) return true;
     if (cl.stats.glue > lim_keptglue) return false;
     if (cl.size() > lim_keptsize) return false;
     return true;

@@ -106,6 +106,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--reducetarget", "Percent of unused reduce candidates removed per reduce"}, conf.reducetarget);
     f({"--reducelow", "Fraction per mille of reduce candidates removed at the first reduce, rising towards --reducehigh as kissat. Set >= reducehigh to use --reducetarget"}, conf.reducelow);
     f({"--reducehigh", "Asymptotic fraction per mille of reduce candidates removed"}, conf.reducehigh);
+    f({"--reducerounds", "Number of reduces a learnt clause is kept for after it was learnt or last used"}, conf.reduce_rounds);
     f({"--reducekeepused", "Keep every learnt clause used since the last reduce, as CaDiCaL. 0: kissat, tier3 is always a candidate"}, conf.reduce_keep_used);
     f({"--eagersubsume", "Demote the last learnt clauses subsumed by a new one, as kissat"}, conf.eager_subsume);
     f({"--reducetier1glue", "Glue at/below which learnt clauses are kept forever"}, conf.reducetier1glue);
