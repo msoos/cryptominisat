@@ -42,6 +42,9 @@ struct VarData
         target_polarity_set = false;
         best_polarity = false;
         best_polarity_set = false;
+        observed = 0;
+        forced_polarity_set = 0;
+        forced_polarity = 0;
     }
 
     ///contains the decision level at which the assignment was made.
@@ -69,6 +72,13 @@ struct VarData
     ///removed or shrunk since BVE last tried this variable
     uint8_t elim_cand:1;
     uint8_t propagated:1 = false;
+
+    ///IPASIR-UP: observed by the external propagator, so frozen: never
+    ///eliminated, replaced, or used in a Gauss matrix
+    uint8_t observed:1;
+    ///IPASIR-UP: SATSolver::phase() pinned this variable's branching polarity.
+    uint8_t forced_polarity_set:1;
+    uint8_t forced_polarity:1;
 
     float weight = 0.5;
 

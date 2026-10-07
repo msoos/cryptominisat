@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "solvertypesmini.h"
 #include "vardata.h"
+#include "user_prop.h"
 #include "propby.h"
 #include "solverconf.h"
 #include "solvertypes.h"
@@ -161,6 +162,71 @@ public:
     vector<vector<Lit>> bnn_reasons;
     vector<Lit> bnn_confl_reason;
     vector<uint32_t> bnn_reasons_empty_slots;
+
+    ///////////////////
+    // IPASIR-UP (see user_prop.h)
+    ///////////////////
+    ExternalPropagator* ext_prop = nullptr;
+    /// Set once a propagator is connected, never cleared: from then on a
+    /// redundant clause may follow from its theory, not the irredundant ones.
+    bool ext_theory_seen = false;
+    /// What the propagator has done since it was connected
+    struct ExtPropStats {
+        uint64_t cb_calls = 0;           ///< every call into the propagator
+        uint64_t prop_calls = 0;         ///< cb_propagate()
+        uint64_t props = 0;              ///< literals it propagated
+        uint64_t props_lazy = 0;         ///< ...left unexplained for the time being
+        uint64_t explanations = 0;       ///< reason clauses asked for
+        uint64_t clause_calls = 0;       ///< cb_has_external_clause()
+        uint64_t clauses = 0;            ///< clauses taken from it
+        uint64_t clause_units = 0;       ///< ...that were units
+        uint64_t clause_confls = 0;      ///< ...that were falsified
+        uint64_t clause_ignored = 0;     ///< ...that were satisfied at the root
+        uint64_t decisions = 0;          ///< decisions it made
+        uint64_t model_checks = 0;       ///< cb_check_found_model()
+        uint64_t models_rejected = 0;
+        uint64_t forced_backtracks = 0;
+        [[nodiscard]] bool empty() const { return cb_calls == 0; }
+    };
+    ExtPropStats ext_stats;
+    /// Observed variables in observation order, OUTER numbering (stable across
+    /// renumbering). VarData::observed is the per-variable flag.
+    vector<uint32_t> ext_observed_vars;
+    /// Set while the solver makes assignments of its own (probing, distilling,
+    /// ...), which are not part of the search: the propagator is not notified.
+    bool ext_prop_private_steps = false;
+    /// Literals observed while already fixed at level 0, behind the
+    /// notification cursor, so handed over separately.
+    vector<Lit> ext_pending_fixed;
+    /// Trail prefix already notified. Lazy: only caught up before a callback.
+    uint32_t ext_notified = 0;
+    vector<Lit> ext_notify_lits; ///< scratch buffer for one notification batch
+    vector<Lit> ext_cl;          ///< scratch: an external clause, INTER numbering
+    vector<Lit> ext_cl_outer;    ///< scratch: the same clause as the user gave it
+    vector<Lit> ext_model;       ///< scratch: the model handed to cb_check_found_model
+    /// Conflict found while checking a model, for the search loop to pick up
+    PropBy ext_confl;
+    /// Reasons of external propagations, materialised on demand (see
+    /// PropEngine::get_ext_reason). Slots are recycled as for BNN reasons.
+    vector<vector<Lit>> ext_reasons;
+    vector<uint32_t> ext_reasons_empty_slots;
+    /// force_backtrack() request, only honoured inside cb_decide() and
+    /// cb_check_found_model(), applied once the callback returns
+    bool ext_forced_backtrack_allowed = false;
+    bool ext_forced_backtrack_set = false;
+    uint32_t ext_forced_backtrack_level = 0;
+    /// A reason clause is being read: observed variables cannot change. The
+    /// trail must not move under conflict analysis, and observing a
+    /// renumbered-out var could change the explained literal's INTER number.
+    bool ext_explaining = false;
+    [[nodiscard]] bool ext_prop_active() const {
+        return ext_prop != nullptr && !ext_prop_private_steps;
+    }
+    /// ...and wants to hear about the trail: a lazy propagator is never
+    /// notified, as in CaDiCaL
+    [[nodiscard]] bool ext_notify_active() const {
+        return ext_prop_active() && !ext_prop->is_lazy;
+    }
     BinTriStats bin_tri;
     LitStats lit_stats;
     int32_t clause_id = 0;
@@ -323,6 +389,25 @@ private:
     void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const uint32_t which, const int off_by = 0);
     size_t num_bva_vars = 0;
+};
+
+/**
+IPASIR-UP: hide from the propagator the solver's own assignments, e.g. probing
+and distillation, which are not part of the search
+*/
+struct ExtPropPrivateSteps
+{
+    explicit ExtPropPrivateSteps(CNF* _cnf) :
+        cnf(_cnf), saved(_cnf->ext_prop_private_steps)
+    {
+        cnf->ext_prop_private_steps = true;
+    }
+    ~ExtPropPrivateSteps() { cnf->ext_prop_private_steps = saved; }
+    ExtPropPrivateSteps(const ExtPropPrivateSteps&) = delete;
+    ExtPropPrivateSteps& operator=(const ExtPropPrivateSteps&) = delete;
+
+    CNF* cnf;
+    bool saved;
 };
 
 template<class Function>

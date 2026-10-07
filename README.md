@@ -280,6 +280,41 @@ cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "ma
 You can see an example project using CryptoMiniSat in Rust
 [here](https://github.com/msoos/caqe/).
 
+## User propagators (IPASIR-UP)
+
+An *external propagator* inspects and steers the CDCL search from outside the
+solver, following the IPASIR-UP interface of ["Satisfiability Modulo User
+Propagators"](https://doi.org/10.1613/jair.1.16163) (JAIR 81, 2024). It is told
+about assignments, new decision levels and backtracks over the variables it
+observes, and can propagate literals, add clauses during search, pick the next
+decision, force a backtrack, and accept or reject models. Typical uses are SMT
+theory solvers, symmetry breaking, and model enumeration.
+
+Derive from `CMSat::ExternalPropagator` (see `src/user_prop.h`), then:
+
+```cpp
+#include <cryptominisat5/cryptominisat.h>
+
+MyPropagator prop;
+SATSolver s;
+s.new_vars(100);
+s.connect_external_propagator(&prop);
+for(uint32_t v = 0; v < 100; v++) s.add_observed_var(v);
+s.solve();
+```
+
+Literals are `CMSat::Lit`, numbered as in `add_clause()` and `get_model()`;
+`lit_Undef` ends a stream of literals.
+
+While a propagator is connected the solver is single-threaded, and Gauss-Jordan
+elimination and chronological backtracking are off. Observed variables are
+frozen: simplification never eliminates or replaces them.
+
+With FRAT proof logging on, the propagator's clauses are logged as original
+(input) clauses, so the proof certifies the CNF together with those clauses, and
+checking it needs both. XLRUP numbers its inputs by their position in the CNF,
+so it cannot name them, and an XLRUP proof that uses them does not check.
+
 ## Preprocessing
 If you wish to use CryptoMiniSat as a preprocessor, we encourage you to try out
 our model counting preprocessor,
