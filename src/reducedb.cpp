@@ -197,7 +197,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     size_t target = 1e-2 * percent * (double)stack.size();
     const size_t normal_target = target;
     #ifdef FINAL_PREDICTOR
-    if (solver->conf.pred_thresh > 0) {
+    if (!std::isnan(solver->conf.pred_thresh)) {
         size_t below = 0;
         while (below < stack.size()
             && pred_of(solver->cl_alloc.ptr(stack[below])) < solver->conf.pred_thresh) below++;

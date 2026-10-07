@@ -86,7 +86,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--predloc", "Directory with the model, predictor-<used_later|used_later_anc>-disc-xgb.json (see --predanc). Empty = the compiled-in model"}, conf.pred_conf_location);
     f({"--predanc", "With --predloc: 0 = load predictor-used_later-disc-xgb.json (the plain label), 1 = predictor-used_later_anc-disc-xgb.json (the ancestor label)"}, conf.pred_anc);
     f({"--preddump", "Write the raw columns, features and predictions of every reduce to this file, for scripts/crystal/check_pred_features.py"}, conf.pred_dump_fname);
-    f({"--predthresh", "If > 0, reduce removes the candidates whose predicted use is below this, but at least half and at most twice the number the normal build would remove. 0: the number of the normal build"}, conf.pred_thresh);
+    f({"--predthresh", "Reduce removes the candidates the model scores below this, but at least half and at most twice the number the normal build would remove. Not given: the number of the normal build"}, conf.pred_thresh);
     f({"--predmimic", "Self-check: 1 = the score is the normal build's order (glue, then size) instead of the model's, so the run must equal the normal build's"}, conf.pred_mimic);
     f({"--dumppreddistrib", "Dump predictions of all clauses at every reduce to pred_distrib.csv"}, conf.dump_pred_distrib);
     #endif
