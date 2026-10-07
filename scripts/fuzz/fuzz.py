@@ -89,6 +89,9 @@ def set_up_parser():
     parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
                       help="Concentrate fuzzing sampling variables")
+    parser.add_option("--userprop", dest="only_userprop", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing on the external propagator interface")
     parser.add_option("--assumps", dest="only_assumps", default=False,
                       action="store_true",
                       help="Concentrate fuzzing solving under many assumptions")
@@ -225,6 +228,7 @@ class Tester:
         self.this_gauss_on = False
         self.num_threads = 1
         self.novalgrind = options.novalgrind
+        self.userprop = 0
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -580,6 +584,8 @@ class Tester:
         command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib %s " % fname
+        if self.userprop:
+            command += "--userprop %d " % self.userprop
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
         command += fixed_opts + " "
@@ -830,6 +836,8 @@ class Tester:
         else:
             self.num_threads = random.choice([1]+[random.randint(2,4)])
             self.num_threads = min(options.max_threads, self.num_threads)
+        if options.only_userprop:
+            self.num_threads = 1
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # limited runs: fuzz VERY short searches via --maxconfl/--maxtime
@@ -852,9 +860,19 @@ class Tester:
             self.frat = False
             self.only_sampling = True
 
+        # Part of the CNF reaches the solver through an external propagator
+        # (--userprop). It needs a single thread, and the clauses it hands over
+        # are not in the CNF the proof checker reads, so no proof either.
+        self.userprop = 0
+        if options.only_userprop:
+            self.frat = False
+        if self.num_threads == 1 and not self.frat \
+                and (options.only_userprop or random.randint(0, 3) == 0):
+            self.userprop = random.randint(1, 2**31-1)
+
         self.sqlitedbfname = None
 
-        if self.frat or options.only_assumps:
+        if self.frat or options.only_assumps or self.userprop:
             self.only_sampling = False
         else:
             self.only_sampling = random.choice([True, False, False, False, False])
@@ -1006,6 +1024,8 @@ if __name__ == "__main__":
             toexec += "--gauss "
         if options.only_sampling:
             toexec += "--sampling "
+        if options.only_userprop:
+            toexec += "--userprop "
         if options.force_threads is not None:
             toexec += "--threads %d " % options.force_threads
         toexec += "-m %d " % options.max_threads
