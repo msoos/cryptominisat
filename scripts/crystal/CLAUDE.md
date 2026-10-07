@@ -56,13 +56,18 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   `DIR/predictor-<table>-disc-xgb.json`; empty = the embedded one),
   `--predanc 0|1` (with `--predloc`: 0 = the `used_later` model, 1 =
   `used_later_anc`),
-  `--predthresh T`,
+  `--predthresh T` (candidates scored below T go, between half and
+  twice the normal count; off unless given),
   `--dumppreddistrib 1`, `--preddump FILE`, `--predmimic 1`
   (self-check: the score is the glue/size order, so the run must equal
   the normal build's; `test_small.sh` checks it).
 - stats build: `--sql 2 --sqlitedb F --sqlitedboverwrite 1 --clid
   --cldatadumpratio R --cllockdatagen R --everypred N`, all set by
   `ballofcrystal.sh`.
+
+- both: `--reducerounds N` (default 2: a clause is kept for N reduces
+  after it was learnt or last used), `--reducetarget P` (default 75:
+  the percent of the candidates removed).
 
 Only WHICH candidates a reduce removes differs between the builds, so a
 conflict-count A/B is clean.
@@ -321,6 +326,41 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   jkkk, post-cbmc and schup. On the four sv-comp ones the reduce is
   0.5% and the time per conflict goes from 85% to 114%: there it is
   what the kept clauses cost to propagate, either way.
+- **How many to keep: one round less, with the model.** At a reduce
+  the clauses learnt or used since the last one are 36% of the clauses
+  and 63% of the future proof use, those in their second round 24% and
+  16%, tier1 19% and 17%, the candidates 21% and 5%. So the count is in
+  `--reducerounds`, not in the candidates. Replayed on the hold-outs
+  (clauses kept, use kept by glue, by the model):
+
+  | rounds, removed | clauses | glue | model |
+  |---|---|---|---|
+  | 2, 75% (default) | 83.8% | 97.2% | 97.7% |
+  | 1, 75% | 69.3% | 96.7% | 97.0% |
+  | 1, 50% | 79.6% | 99.1% | 98.9% |
+  | 0, 75% | 51.7% | 92.8% | 94.7% |
+
+  In the solver, 9 x 3, against the normal build at its defaults
+  (conflicts, bogoprops):
+
+  | | conflicts | bogoprops |
+  |---|---|---|
+  | normal, 1 round | 107.7% [99, 116] | 100.8% [87, 116] |
+  | model, 2 rounds | 96.7% [86, 105] | 89.0% [71, 105] |
+  | model, 1 round | 96.4% [85, 108] | 82.4% [69, 98] |
+  | model, 1 round, 50% removed | 96.1% [87, 105] | 90.8% [76, 105] |
+  | model, 0 rounds | 121.4% [101, 142] | 95.9% [71, 125] |
+
+  Glue cannot drop the second round, the model can: model against
+  normal, both at 1 round, is 89.5% [81, 97] in conflicts and 81.7%
+  [71, 94] in bogoprops. Run alone, 2 seeds, the model at 1 round
+  against the normal build: conflicts 97.6% [88, 110], **time 92.6%
+  [83, 103]**, time per conflict 94.9% [90, 99]. No protected round at
+  all loses. Removing less at 1 round buys nothing: the same conflicts
+  for more propagation.
+- **Bogoprops are the cost when the box is shared.** They do not move
+  with the load, and correlate 0.93 with the time of a run made alone;
+  the predictor build pays about 8% more seconds per bogoprop.
 - **There is little to win in the order of the candidates.** The rule
   keeps 78% of the clauses with 93% of the future proof use; the normal
   reduce ends up with 97-98%, the oracle order of the candidates with

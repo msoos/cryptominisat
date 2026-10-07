@@ -85,9 +85,9 @@ survives.
       (`build_stats_pred`), train on all rounds, until the round-2 and
       round-3 numbers agree. One extra round was worth 2 points here,
       inside the noise.
-- [ ] How many candidates to remove (`--predthresh`): the order is
-      worth little, the amount was never tried with a model that is
-      level with glue.
+- [ ] How many to keep: `--reducerounds 1` with the model was 7% of
+      the time here, inside the interval. Run it on the dev set, and
+      `--predthresh` (printed by training) next to it.
 - [ ] Feature importance / ablation only if something above moved:
       importance-picked lists lost three times.
 
