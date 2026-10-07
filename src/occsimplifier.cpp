@@ -490,7 +490,8 @@ struct sort_smallest_first {
         const Clause& cl1 = *cl_alloc.ptr(a.get_offset());
         const Clause& cl2 = *cl_alloc.ptr(b.get_offset());
         if (cl1.size() != cl2.size()) return cl1.size() < cl2.size();
-        return a.get_offset() < b.get_offset();
+        //not the offset: where a clause lies depends on the build
+        return cl1.stats.id < cl2.stats.id;
     }
 
     ClauseAllocator& cl_alloc;
