@@ -268,13 +268,14 @@ ps_200_301_70 fails a frame check).
 
 The embedded model: a ranker on both rounds of the 21, 40 trees of
 depth 5. On the 9 hold-outs, 3 seeds, `--xor 0`, against the normal
-build: **conflicts 96.7% [87.0, 105.0]**, all solved (101.6% [92.5,
-111.3] before the BVE tie-break below, which moved the normal build by
-as much as the model does: 106.1% [95, 121], new vs old). Run one at a
-time, 2 seeds, before the tie-break: conflicts 102.9% [96, 111],
-**time 112.5% [101, 128]**, time per conflict 109% [102, 118]. Seed
-noise of the normal build: 3-9%. So the model is where glue is in
-conflicts, not past it, and behind in time.
+build: **conflicts 96.7% [87.0, 105.0]**, all solved. Run one at a
+time, 2 seeds: conflicts 99.8% [94, 106], **time 100.9% [90, 113]**,
+time per conflict 101% [94, 109]. Seed noise of the normal build:
+3-9%. So the model is where glue is, in conflicts and in time, not
+past it. (Before the BVE tie-break below the same model measured
+101.6% [93, 111] in conflicts and 112.5% [101, 128] in time: the
+tie-break moved the normal build by as much as the model does, 106.1%
+[95, 121] new vs old.)
 
 How it got there, same 9 x 3, conflicts vs the normal build:
 
@@ -315,11 +316,11 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   with the ranking model, 105% vs 111% with the squared-error one, i.e.
   nothing, at 3.5 times the predictions), replacing glue in
   `likely_to_be_kept()` (vivification, BVE: 10 points lost).
-- **A conflict costs 9% more in the predictor build.** The reduce is
-  0.4-6% of the run (normal: 0.1-0.9%), which explains it on Steiner
-  and hid and not on the sv-comp ones (0.5%, up to 38% slower per
-  conflict): there it is what the kept clauses cost to propagate.
-  Not looked into.
+- **What the model costs in time.** The reduce is 0.5-6.5% of the run
+  (normal: 0.1-0.8%), and a conflict costs 4-17% more on Steiner, hid,
+  jkkk, post-cbmc and schup. On the four sv-comp ones the reduce is
+  0.5% and the time per conflict goes from 85% to 114%: there it is
+  what the kept clauses cost to propagate, either way.
 - **There is little to win in the order of the candidates.** The rule
   keeps 78% of the clauses with 93% of the future proof use; the normal
   reduce ends up with 97-98%, the oracle order of the candidates with

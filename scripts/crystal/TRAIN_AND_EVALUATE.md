@@ -9,8 +9,8 @@ were chosen on six of those nine, so they are not a
 hold-out. The big run has to be able to see a 5-point difference, on
 instances nothing was tuned on.
 
-Where it starts from: the embedded model is 101.6% [93, 111] of the
-normal build's conflicts on those nine and 112% of its time. It orders the reduce candidates
+Where it starts from: the embedded model is 96.7% [87, 105] of the
+normal build's conflicts on those nine and 101% [90, 113] of its time. It orders the reduce candidates
 and nothing else, and offline the best possible order of those keeps 2
 points more of the future use than glue does: the cluster run has to
 show whether a model that is level with glue here gets past it with
