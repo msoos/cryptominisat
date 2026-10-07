@@ -1797,7 +1797,9 @@ lbool Solver::execute_inprocess_strategy(
             /*     sls.run(0); */
             /* } */
         } else if (token == "congruence") {
-            if (conf.do_congruence && !congruence->run()) return l_False;
+            //It replaces what it merges, like intree probing
+            if (conf.do_congruence && conf.do_find_and_replace_eq_lits
+                && !congruence->run()) return l_False;
         } else if (token == "intree-probe") {
             if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
             if (conf.do_intree_probe && conf.do_find_and_replace_eq_lits) intree->intree_probe();
