@@ -300,24 +300,6 @@ struct OccurClause {
         release_assert(false);
         return false;
     }
-
-    bool operator<(const OccurClause& other) const {
-        if (ws.is_bin() && !other.ws.is_bin()) {
-            return true;
-        }
-        if (!ws.is_bin() && other.ws.is_bin()) {
-            return false;
-        }
-
-        if (ws.is_bin()) {
-            assert(other.ws.is_bin());
-            return ws.get_id() < other.ws.get_id();
-        }
-
-        assert(!ws.is_bnn()); // no idea how this would work
-        assert(!other.ws.is_bnn()); // no idea how this would work
-        return ws.get_offset() < other.ws.get_offset();
-    }
 };
 
 struct WatchSorterBinTriLong {
