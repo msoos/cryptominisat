@@ -268,11 +268,13 @@ ps_200_301_70 fails a frame check).
 
 The embedded model: a ranker on both rounds of the 21, 40 trees of
 depth 5. On the 9 hold-outs, 3 seeds, `--xor 0`, against the normal
-build: **conflicts 101.6% [92.5, 111.3]**, all solved. Run one at a
-time, 2 seeds: conflicts 102.9% [96, 111], **time 112.5% [101, 128]**,
-time per conflict 109% [102, 118]. Seed noise of the normal build:
-3-9%. So the model is where glue is in conflicts, not past it, and
-behind in time.
+build: **conflicts 96.7% [87.0, 105.0]**, all solved (101.6% [92.5,
+111.3] before the BVE tie-break below, which moved the normal build by
+as much as the model does: 106.1% [95, 121], new vs old). Run one at a
+time, 2 seeds, before the tie-break: conflicts 102.9% [96, 111],
+**time 112.5% [101, 128]**, time per conflict 109% [102, 118]. Seed
+noise of the normal build: 3-9%. So the model is where glue is in
+conflicts, not past it, and behind in time.
 
 How it got there, same 9 x 3, conflicts vs the normal build:
 
@@ -283,12 +285,23 @@ How it got there, same 9 x 3, conflicts vs the normal build:
 | ranking model, glue tiers | 103.5% [97, 110] |
 | + trained on both rounds | 101.6% [93, 111] |
 
+(All four against the normal build of before the tie-break.)
+
 - **Two bugs made the predictor build lose.** An eagerly subsumed
   clause (glue = max) was ranked by the model instead of going first,
   and `lim_keptglue/lim_keptsize` (what vivification takes for likely
   kept) came from what the model kept, so every learnt clause counted.
   `--predmimic 1` now proves the plumbing: with the glue order as the
-  score the predictor build is the normal build, conflict for conflict.
+  score the predictor build is the normal build, conflict for conflict,
+  on all 9 hold-outs.
+- **The builds were not the same solver.** BVE sorted clauses of equal
+  size by memory offset, and where a clause lies depends on the size of
+  its header, so on the build: on post-cbmc and jkkk the predictor
+  build made its resolvents in another order and ran 11% and 44% more
+  conflicts with the very same reduce. Ties go by clause ID now. If
+  `--predmimic 1` differs from the normal build, have both write a
+  proof (`--xlrup 0 <cnf> <proof>`) and `cmp` them: the first differing
+  line names the place.
 - **Proof use cannot judge the rule.** Offline, keeping as many clauses
   as the normal reduce but all picked by glue, size (no "used since the
   last reduce" rule) holds 99.5% of the future proof use against 96.8%,
