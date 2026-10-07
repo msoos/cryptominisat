@@ -30,7 +30,7 @@
 #          [--objective rank|squarederror|log|poisson]
 #          [--target count|rel] [--weights none|strata|instance|family]   (not with rank)
 #          [-f best_features.txt] [--table used_later]
-#          [--rounds 2] [--remove 75]   the reduce that is replayed
+#          [--rounds 2] [--remove 75] [--thresh T]   the reduce that is replayed
 
 import argparse
 import glob
@@ -109,6 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("--estimators", type=int, default=40)
     parser.add_argument("--depth", type=int, default=5)
     parser.add_argument("--rounds", type=int, default=helper.ROUNDS, help="the replayed reduce: --reducerounds")
+    parser.add_argument("--thresh", type=float, help="the replayed reduce: --predthresh")
     parser.add_argument("--remove", type=float, default=100 * helper.REMOVE, help="the replayed reduce: --reducetarget")
     opts = parser.parse_args()
     if (opts.train is None) == (opts.model is None):
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     else:
         pred = train(opts, feats, label, count_label).predict(Xt)
 
-    res = helper.policy_per_reduce(test, pred, count_label, rounds=opts.rounds, remove=opts.remove / 100.0)
+    res = helper.policy_per_reduce(test, pred, count_label, rounds=opts.rounds, remove=opts.remove / 100.0, thresh=opts.thresh)
     if res is None:
         print("no reduce with a used clause in the test frames")
         exit(1)
@@ -139,5 +140,8 @@ if __name__ == "__main__":
     print("mean over instances: " + "  ".join("%s %.1f" % (k, v) for k, v in m.items()))
     print("model minus normal: %+.2f (better on %d of %d), oracle minus normal: %+.2f" % (
         m["order"] - m["normal"], (res["order"] > res["normal"]).sum(), len(res), m["oracle"] - m["normal"]))
+    if opts.thresh is not None:
+        print("count by --predthresh %g: %.1f%% of the clauses with %.1f%% of the use, the fixed share: %.1f%% with %.1f%%" % (
+            opts.thresh, m["count cls"], m["count"], m["cls"], m["order"]))
     print("clauses kept for the use the solver's own reduce holds, candidates by glue: %.1f%%, by the model: %.1f%%, by the oracle: %.1f%%" % (
         m["glue needs"], m["order needs"], m["oracle needs"]))

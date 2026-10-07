@@ -92,9 +92,14 @@ class Learner:
         if data is None or data.shape[0] < 10:
             return
         X = data[features].astype(np.float32).replace([np.inf, -np.inf], MISSING)
-        res = helper.policy_per_reduce(data, clf.predict(X), to_predict)
+        pred = clf.predict(X)
+        res = helper.policy_per_reduce(data, pred, to_predict)
         if res is None:
             return
+        for rounds in (2, 1):
+            t = helper.score_threshold(data, pred, rounds)
+            if t is not None:
+                print("--predthresh for --reducerounds %d, %s: %.3f" % (rounds, name, t))
         m = res.drop(columns=["instance", "reduces"]).mean()
         print(res.round(1).to_string(index=False))
         print("use kept at reduce, %s, %d instances: %s" % (
