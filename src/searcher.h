@@ -155,7 +155,8 @@ class Searcher : public HyperEngine
             if (max_vsids_act <= 0) return 0;
             double sum = 0;
             for(const Lit l: cl) sum += var_act_vsids[l.var()];
-            return sum / ((double)cl.size() * max_vsids_act);
+            //the sum rounds, so all variables at the largest can give 1+eps
+            return std::min(1.0, sum / ((double)cl.size() * max_vsids_act));
         }
         //mean VMTF bump stamp of its variables, as a share of the latest
         double cl_lit_vmtf_rel(const Clause& cl) const
@@ -163,7 +164,7 @@ class Searcher : public HyperEngine
             if (stats_bumped == 0) return 0;
             double sum = 0;
             for(const Lit l: cl) sum += (double)vmtf_btab[l.var()];
-            return sum / ((double)cl.size() * (double)stats_bumped);
+            return std::min(1.0, sum / ((double)cl.size() * (double)stats_bumped));
         }
         //literals assigned right now (reduce runs between a conflict and
         //the next decision, the trail is whatever it is then)
