@@ -249,59 +249,92 @@ ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh
 - Fuzz the normal build after touching the solver:
   `cd scripts/fuzz && ./fuzz.py --fuzzlim 30`.
 - `cb_test/` (not in git): `general/cnf/` and `sr19/cnf/` (the gathered
-  dirs), `general/models/n21/` (the embedded model's learn dir,
-  `train21.txt` its inputs), `general/ab.sh` (the hold-out A/B),
-  `general/lofo.py` (leave-one-family-out, offline), `sr19/survey*.sh`
-  and `gather.sh`.
+  round-1 dirs), `round2/cnf/` (round 2, `round2/gather.sh`),
+  `general/models/n21r2/` (the embedded model's learn dir,
+  `round2/train-both.txt` its inputs, `round2/learn-both.sh`),
+  `general/ladder.sh` + `lsum.py` (the hold-out A/B, 9 x 3, two at a
+  time: conflicts only), `general/timed.sh` (one at a time, for times),
+  `general/holdout9.txt`, `sr19/survey*.sh` and `gather.sh`.
 
-## What is known (2026-10-05)
+## What is known (2026-10-07)
 
 Data: 30 UNSAT instances, 25 families (14 of satcomp2020, 16 of
 satrace19: what the normal build solves with `--xor 0` in 100-300 s on
-this box, 18 of 400), `FIXED=20000`.
+this box, 18 of 400), `FIXED=20000`. 21 train, 9 hold out (the
+families hid, jkkk, post-cbmc, schup, Steiner, sv-comp). All 30 were
+gathered with glue driving the reduce (round 1), and 28 again with the
+round-1 ranking model driving it (round 2; UTI ran out of disk,
+ps_200_301_70 fails a frame check).
 
-The embedded model: 21 of them (all but the hold-out families: hid,
-jkkk, post-cbmc, schup, Steiner, sv-comp), `rel`, squared error, no
-weights, 40 trees of depth 5. On the 9 hold-out instances, 3 seeds,
-`--xor 0`, against the normal build: **conflicts 110% [105, 115], time
-118% [110, 125]**, all solved. Seed noise of the normal build: 3-9%.
-So the model loses to glue in the solver.
+The embedded model: a ranker on both rounds of the 21, 40 trees of
+depth 5. On the 9 hold-outs, 3 seeds, `--xor 0`, against the normal
+build: **conflicts 101.6% [92.5, 111.3]**, all solved. Run one at a
+time, 2 seeds: conflicts 102.9% [96, 111], **time 112.5% [101, 128]**,
+time per conflict 109% [102, 118]. Seed noise of the normal build:
+3-9%. So the model is where glue is in conflicts, not past it, and
+behind in time.
 
-Offline, leave-one-family-out over the 30, model minus the glue sort at
-25% / 50% kept: +2.5 [+0.4, +4.4] / +2.7 [+0.9, +4.8].
+How it got there, same 9 x 3, conflicts vs the normal build:
 
-- **Offline and solver disagree.** +2.5 offline is 10% worse in the
-  solver, and more instances (8 -> 21) moved the offline number (0 ->
-  +2.5) and not the solver's (108 -> 110%). Why is open: find out what
-  the normal reduce does that a glue/size sort does not.
+| | |
+|---|---|
+| squared-error model, the score also picking the tiers | 110.1% [106, 115] |
+| + two bugs fixed (below) | 105.4% [100, 111] |
+| ranking model, glue tiers | 103.5% [97, 110] |
+| + trained on both rounds | 101.6% [93, 111] |
+
+- **Two bugs made the predictor build lose.** An eagerly subsumed
+  clause (glue = max) was ranked by the model instead of going first,
+  and `lim_keptglue/lim_keptsize` (what vivification takes for likely
+  kept) came from what the model kept, so every learnt clause counted.
+  `--predmimic 1` now proves the plumbing: with the glue order as the
+  score the predictor build is the normal build, conflict for conflict.
+- **Proof use cannot judge the rule.** Offline, keeping as many clauses
+  as the normal reduce but all picked by glue, size (no "used since the
+  last reduce" rule) holds 99.5% of the future proof use against 96.8%,
+  the model the same. In the solver exactly that is 118% [106, 130] of
+  the normal build's conflicts, with the model 116%. A recently used
+  clause that is not in the final proof still keeps the search out of
+  where it has been. So the model orders the candidates and nothing
+  else, and only that is replayed. The options that let the score do
+  more are gone: ranking the rule-kept clauses too (116%), picking
+  which clauses are tier1/tier2 (as many as glue makes: 108% vs 104%
+  with the ranking model, 105% vs 111% with the squared-error one, i.e.
+  nothing, at 3.5 times the predictions), replacing glue in
+  `likely_to_be_kept()` (vivification, BVE: 10 points lost).
+- **A conflict costs 9% more in the predictor build.** The reduce is
+  0.4-6% of the run (normal: 0.1-0.9%), which explains it on Steiner
+  and hid and not on the sv-comp ones (0.5%, up to 38% slower per
+  conflict): there it is what the kept clauses cost to propagate.
+  Not looked into.
+- **There is little to win in the order of the candidates.** The rule
+  keeps 78% of the clauses with 93% of the future proof use; the normal
+  reduce ends up with 97-98%, the oracle order of the candidates with
+  99.9%. The whole prize is 2 points of use.
+- **The model's edge is on glue's data.** Use kept, model minus normal,
+  on the hold-outs: +0.5 (better on 8 of 9) on round 1, 0.0 (6 of 9) on
+  round 2, where the model itself chose what stays. Training on both
+  rounds does not change either number, the solver moved from 103.5%
+  to 101.6% (inside the noise).
+- Most rows are of clauses the solver would not have: 64-93% of the
+  rows of an instance are `gone`. The numbers measured before `gone`
+  (model +2.5 points over a glue sort) were about those.
+- Ranking beats regression: offline +0.47 against +0.10..+0.36 (the
+  regression moves with the row order of the frame, the ranker does
+  not), in the solver 103.5% against 110.9% [101, 124].
+- Training only on the candidates' rows, only on the rows not `gone`,
+  or both: no better than all rows.
 - **Glue is hard to beat.** `rdb0.glue` and `rdb0.size` are features,
   yet a model of only those two is 2-3 points below the glue sort on
   new families: raw glue means something else on every instance, the
   sort only compares within a reduce. A within-reduce glue/size rank as
   a feature reproduces the sort and adds nothing to the 24.
-- `TARGET=rel` beats `count`, offline (count: 10 points below glue on
-  new families) and in the solver.
-- Row weights do not help; `family` is the worst at 25%, `none` the
-  best, intervals overlapping. The default is still `family`.
-- Squared error vs log, training on the stratified vs the fair frame:
-  no difference seen.
+- For the regressions: `TARGET=rel` beats `count`, row weights do not
+  help, squared error vs log makes no difference.
 - What carries the model (group ablation in the solver): the recency
   counters, the learning-time snapshot, size/glue. Rankings, context
   ratios, age and the propagation-cost features are inside the noise.
   Importance-picked feature lists lost to the hand-kept one three times.
-- **Proof use cannot judge the rule.** Offline, keeping as many clauses
-  as the normal reduce but all picked by glue, size (no "used since the
-  last reduce" rule) holds 99.5% of the future proof use against 96.8%,
-  the model the same. In the solver exactly that is 118% [106, 130] of the normal build's conflicts,
-  with the model 116%. A recently used clause that is not in the final
-  proof still keeps the search out of where it has been. So the model
-  orders the candidates and nothing else, and only that is replayed.
-  The options that let the score do more are gone: ranking the
-  rule-kept clauses too (116%), picking which clauses are tier1/tier2
-  (as many as glue makes: 108% vs 104% with the ranking model, 105% vs
-  111% with the squared-error one, i.e. nothing, at 3.5 times the
-  predictions), replacing glue in `likely_to_be_kept()` (vivification,
-  BVE: 10 points lost).
 - The label is a use in the trimmed UNSAT proof. The solver's own
   conflict-analysis uses as a label, alone or mixed in, measured the
   same. In some runs nearly all proof uses fall in the last 10% of the
@@ -309,11 +342,10 @@ Offline, leave-one-family-out over the 30, model minus the glue sort at
 - Plain vs ancestor label (`--predanc 0` vs `1`): within the
   seed noise of each other. Unsettled; deleting one would simplify
   everything.
-- A second gathering round under the learnt policy, trained with the
-  first: not a loss, not a demonstrated gain. Unsettled.
 - SAT instances cannot be A/B tested one run at a time: the path to a
   model changes with every clause kept.
-- Differences under ~10% between single runs are not results.
+- Differences under ~10% between single runs are not results: the
+  interval of a 9 x 3 comparison is +-7 points.
 - Features that grow with the run or the instance (clause age, raw
   counters) measured the same as the 24 without them, and drift on long
   runs. They are refused by the generator.

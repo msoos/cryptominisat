@@ -9,9 +9,12 @@ were chosen on six of those nine, so they are not a
 hold-out. The big run has to be able to see a 5-point difference, on
 instances nothing was tuned on.
 
-Where it starts from: the embedded model is 110% of the normal build's
-conflicts and 118% of its time on those nine, and +2.5 points over the
-glue sort offline.
+Where it starts from: the embedded model is 101.6% [93, 111] of the
+normal build's conflicts on those nine and 112% of its time. It orders the reduce candidates
+and nothing else, and offline the best possible order of those keeps 2
+points more of the future use than glue does: the cluster run has to
+show whether a model that is level with glue here gets past it with
+more families, and nothing here says it will.
 
 On the cluster: `eval_corpus.sh` runs one job after the other, so write
 `<cnf>.<normal|pred0>.s<seed>` files with one job per run and call
@@ -64,27 +67,27 @@ One change at a time, each against the best so far, each with the seeds
 of section 3. Offline (the fair frame) first, solver A/B for what
 survives.
 
-- [ ] Baseline: the 24-feature list, `disc`, `rel`, 40 trees depth 5.
-- [ ] Does the fair offline metric agree with the solver now? If it
-      does, the rest of this list gets cheap. If not, write down where.
-      On this box it did not: +2.5 points over the glue sort offline,
-      110% of the normal build's conflicts. First find out why (what
-      the normal reduce does that a glue/size sort does not).
-- [ ] `XGB_WEIGHTS`: none / strata / instance / family. On this box
-      (30 instances, offline) `none` was the best and `family` the
-      worst at 25%, intervals overlapping.
+- [ ] Baseline: the 24-feature list, `disc`, the ranker, 40 trees
+      depth 5, both rounds.
+- [ ] Does "use kept at reduce" on round-2 hold-outs (the model's own
+      data) agree with the solver? On this box both say level with
+      glue. On round-1 data the model looks better than it is.
 - [ ] `HALFLIFE`: 2 / 4 / 8 reduces (needs relabelling: `KEEP_FRAT=1`
       and `--skip-solve`, or keep `data.db`).
 - [ ] Trees: early stopping on dev families; depth 4-8, min child,
       learning rate. Never tuned.
-- [ ] Ranking objective: `rank:pairwise` / `rank:ndcg`, one group per
-      (instance, reduce), on the fair frames.
+- [ ] Ranking variants: `rank:pairwise`, graded relevance instead of
+      used or not.
 - [ ] Watch `pred feats outside training range` on the long runs.
 - [ ] Open question: plain or ancestor label (`--predanc 0` vs `1`).
       Delete the loser from the pipeline.
-- [ ] Round 2: regather train under the learnt policy
-      (`build_stats_pred`), train on both rounds. Not settled on this
-      box.
+- [ ] Rounds: regather train under the learnt policy
+      (`build_stats_pred`), train on all rounds, until the round-2 and
+      round-3 numbers agree. One extra round was worth 2 points here,
+      inside the noise.
+- [ ] How many candidates to remove (`--predthresh`): the order is
+      worth little, the amount was never tried with a model that is
+      level with glue.
 - [ ] Feature importance / ablation only if something above moved:
       importance-picked lists lost three times.
 
