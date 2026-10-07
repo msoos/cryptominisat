@@ -60,6 +60,12 @@ public:
     /// during clause database reduction.
     bool are_reasons_forgettable = false;
 
+    /// Not part of IPASIR-UP: if true, every decision the solver's own
+    /// heuristic makes on an observed variable is first offered to
+    /// cb_decide_polarity(), which may flip its sign. Off by default, so a
+    /// propagator written for plain IPASIR-UP is never asked.
+    bool advises_polarity = false;
+
     virtual ~ExternalPropagator() = default;
 
     //////////////////////////////
@@ -97,6 +103,15 @@ public:
     /// still unassigned and every assumption is still on the trail; otherwise
     /// the decision is dropped and cb_decide() is asked again.
     virtual Lit cb_decide() { return lit_Undef; }
+
+    /// Not part of IPASIR-UP, and only asked under 'advises_polarity': the
+    /// solver's heuristic is about to decide 'lit'. Return 'lit' to keep it or
+    /// ~lit to decide the other way; the variable is not the propagator's to
+    /// choose. Not asked for assumptions, cb_decide() decisions or a lazy
+    /// propagator. The advice overrides a phase set with SATSolver::phase().
+    /// The callback must not change the solver: observed variables cannot be
+    /// added or removed, and force_backtrack() is ignored.
+    virtual Lit cb_decide_polarity(Lit lit) { return lit; }
 
     /// A literal implied by external knowledge under the current trail, or
     /// lit_Undef if there is nothing to propagate.

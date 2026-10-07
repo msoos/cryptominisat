@@ -134,6 +134,7 @@ class Searcher : public HyperEngine
         PropBy external_propagate();
         /// Algorithm 4: the propagator's decision (INTER), or lit_Undef
         Lit ext_decide();
+        Lit ext_advise_polarity(const Lit lit);
         /// Let the propagator approve a complete assignment: l_True if it does,
         /// l_Undef to keep searching (a conflict is left in ext_confl), l_False
         /// for UNSAT.

@@ -608,6 +608,121 @@ TEST(user_prop_phase, unphase_gives_control_back)
 // Observes v while the level for z is opened, backtracking over x -> v. The
 // pending z decision must be dropped, not installed at the root, where it used
 // to turn the external unit -z into a root conflict (UNSAT).
+// Sign advice (not part of IPASIR-UP): records what it is offered, and
+// decides every offered variable the same way.
+class PolarityAdvisor : public NoopPropagator
+{
+public:
+    SATSolver* s = nullptr;
+    bool positive = true;
+    Lit decide = lit_Undef;  // handed out once through cb_decide()
+    vector<uint32_t> offered;
+
+    PolarityAdvisor() { advises_polarity = true; }
+    Lit cb_decide() override {
+        const Lit l = decide;
+        decide = lit_Undef;
+        return l;
+    }
+    Lit cb_decide_polarity(Lit lit) override {
+        EXPECT_TRUE(s->is_observed_var(lit.var()));
+        offered.push_back(lit.var());
+        return Lit(lit.var(), !positive);
+    }
+};
+
+TEST(user_prop_polarity, advice_decides_the_model)
+{
+    // No constraints: every var is decided, so the advice fixes the model.
+    // It wins over a phase pinned the other way.
+    for(int positive = 0; positive < 2; positive++) {
+        SATSolver s;
+        PolarityAdvisor p;
+        p.s = &s;
+        p.positive = positive;
+        s.new_vars(8);
+        s.connect_external_propagator(&p);
+        for(uint32_t i = 0; i < 8; i++) {
+            s.add_observed_var(i);
+            s.phase(Lit(i, positive == 1));
+        }
+
+        EXPECT_EQ(s.solve(), l_True);
+        EXPECT_EQ(p.offered.size(), 8U);
+        for(uint32_t i = 0; i < 8; i++) {
+            EXPECT_EQ(s.get_model()[i], positive ? l_True : l_False);
+        }
+    }
+}
+
+TEST(user_prop_polarity, only_observed_heuristic_decisions_are_offered)
+{
+    SATSolver s;
+    PolarityAdvisor p;
+    p.s = &s;
+    s.new_vars(10);
+    s.connect_external_propagator(&p);
+    for(uint32_t i = 0; i < 6; i++) s.add_observed_var(i);
+    p.decide = Lit(2, false);
+    const vector<Lit> assumps = {Lit(0, false), Lit(1, true)};
+
+    EXPECT_EQ(s.solve(&assumps), l_True);
+    // vars 0 and 1 are assumptions, 2 is cb_decide()'s, 6..9 are unobserved
+    std::sort(p.offered.begin(), p.offered.end());
+    EXPECT_EQ(p.offered, vector<uint32_t>({3, 4, 5}));
+}
+
+TEST(user_prop_polarity, not_asked_unless_enabled_and_eager)
+{
+    for(int lazy = 0; lazy < 2; lazy++) {
+        SATSolver s;
+        PolarityAdvisor p;
+        p.s = &s;
+        p.advises_polarity = lazy;
+        p.is_lazy = lazy;
+        s.new_vars(8);
+        s.connect_external_propagator(&p);
+        for(uint32_t i = 0; i < 8; i++) s.add_observed_var(i);
+        EXPECT_EQ(s.solve(), l_True);
+        EXPECT_TRUE(p.offered.empty());
+    }
+}
+
+// Breaks the advice contract in one of two ways.
+class MisbehavingAdvisor : public PolarityAdvisor
+{
+public:
+    bool observe = false;
+    Lit cb_decide_polarity(Lit lit) override {
+        if (observe) s->add_observed_var(9);
+        return observe ? lit : Lit((lit.var()+1) % 8, false);
+    }
+};
+
+static void misbehave_while_advising(bool observe)
+{
+    SATSolver s;
+    MisbehavingAdvisor p;
+    p.s = &s;
+    p.observe = observe;
+    s.new_vars(10);
+    s.connect_external_propagator(&p);
+    for(uint32_t i = 0; i < 8; i++) s.add_observed_var(i);
+    s.solve();
+}
+
+TEST(user_prop_polarity, observing_while_advising_is_caught)
+{
+    EXPECT_DEATH(misbehave_while_advising(true),
+                 "while a reason clause or polarity advice is being asked for");
+}
+
+TEST(user_prop_polarity, advising_another_variable_is_caught)
+{
+    EXPECT_DEATH(misbehave_while_advising(false),
+                 "must return the literal it was given or its negation");
+}
+
 class ObservesDuringNewLevelPropagator : public NoopPropagator
 {
 public:
@@ -2341,14 +2456,14 @@ TEST_F(UserPropLazyTest, observing_while_a_reason_is_being_asked_for_is_caught)
     // only when asked lazily, from inside conflict analysis
     conf.ext_lazy_reasons = true;
     EXPECT_DEATH(observe_while_explaining(conf, true),
-                 "while a reason clause is being asked for");
+                 "while a reason clause or polarity advice is being asked for");
 }
 
 TEST_F(UserPropLazyTest, observing_while_a_reason_is_asked_for_eagerly_is_caught_too)
 {
     conf.ext_lazy_reasons = false;
     EXPECT_DEATH(observe_while_explaining(conf, false),
-                 "while a reason clause is being asked for");
+                 "while a reason clause or polarity advice is being asked for");
 }
 
 }

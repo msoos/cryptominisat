@@ -183,6 +183,8 @@ public:
         uint64_t clause_confls = 0;      ///< ...that were falsified
         uint64_t clause_ignored = 0;     ///< ...that were satisfied at the root
         uint64_t decisions = 0;          ///< decisions it made
+        uint64_t polarity_asked = 0;     ///< cb_decide_polarity()
+        uint64_t polarity_flips = 0;     ///< ...that flipped the sign
         uint64_t model_checks = 0;       ///< cb_check_found_model()
         uint64_t models_rejected = 0;
         uint64_t forced_backtracks = 0;
@@ -219,6 +221,9 @@ public:
     /// trail must not move under conflict analysis, and observing a
     /// renumbered-out var could change the explained literal's INTER number.
     bool ext_explaining = false;
+    /// Polarity advice is being asked for: the same freeze, as the callback
+    /// must not change the solver.
+    bool ext_advising = false;
     [[nodiscard]] bool ext_prop_active() const {
         return ext_prop != nullptr && !ext_prop_private_steps;
     }

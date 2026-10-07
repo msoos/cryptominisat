@@ -310,6 +310,13 @@ While a propagator is connected the solver is single-threaded, and Gauss-Jordan
 elimination and chronological backtracking are off. Observed variables are
 frozen: simplification never eliminates or replaces them.
 
+One addition goes beyond IPASIR-UP: a propagator that sets `advises_polarity` is
+offered every decision the solver's own heuristic makes on an observed variable,
+through `cb_decide_polarity()`, and may flip its sign. The solver still chooses
+the variable. An SMT theory can use this to decide an atom the way its current
+model already satisfies it. It is off by default, so a plain IPASIR-UP
+propagator never sees it.
+
 With FRAT proof logging on, the propagator's clauses are logged as original
 (input) clauses, so the proof certifies the CNF together with those clauses, and
 checking it needs both. XLRUP numbers its inputs by their position in the CNF,

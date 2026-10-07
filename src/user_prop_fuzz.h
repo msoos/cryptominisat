@@ -50,6 +50,8 @@ public:
         forget_pct   = next() % 80;
         decide_pct   = chance(50) ? next() % 20 : 0;
         backtracks_left = chance(50) ? next() % 50 : 0;
+        flip_pct     = next() % 100;
+        advises_polarity = chance(50);
         is_lazy = chance(10);
         s->set_lazy_external_reasons(chance(70));
         // A replaced variable cannot be observed any more, and a deferred one
@@ -155,6 +157,13 @@ public:
         return val[v] == l_Undef ? Lit(v, chance(50)) : lit_Undef;
     }
 
+    Lit cb_decide_polarity(Lit lit) override {
+        check(advises_polarity && !is_lazy, "polarity advice asked for unrequested");
+        check(observed_var(lit.var()), "polarity advice asked for an unobserved variable");
+        check(val[lit.var()] == l_Undef, "polarity advice asked for an assigned variable");
+        return chance(flip_pct) ? ~lit : lit;
+    }
+
     // Unit (or falsified) under the notified trail: propagate, and remember the
     // clause, which is the reason whenever it is asked for.
     Lit cb_propagate() override {
@@ -213,7 +222,7 @@ private:
     SATSolver* s;
     uint64_t rnd;
     uint32_t hold_pct, defer_pct, extra_pct, phase_pct, prop_pct;
-    uint32_t volunteer_pct, forget_pct, decide_pct, backtracks_left;
+    uint32_t volunteer_pct, forget_pct, decide_pct, backtracks_left, flip_pct;
     bool solved = false;
 
     std::vector<std::vector<Lit>> held;  // CNF clauses the solver is not given

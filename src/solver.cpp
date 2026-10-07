@@ -2069,6 +2069,10 @@ void Solver::print_ext_prop_stats() const
     print_stats_line(conf.prefix, "user-prop cl confl", ext_stats.clause_confls);
     print_stats_line(conf.prefix, "user-prop cl ignored", ext_stats.clause_ignored);
     print_stats_line(conf.prefix, "user-prop decisions", ext_stats.decisions);
+    print_stats_line(conf.prefix, "user-prop polarity flips"
+        , ext_stats.polarity_flips
+        , stats_line_percent(ext_stats.polarity_flips, ext_stats.polarity_asked)
+        , "% of cb_decide_polarity calls");
     print_stats_line(conf.prefix, "user-prop model checks", ext_stats.model_checks);
     print_stats_line(conf.prefix, "user-prop models rejected"
         , ext_stats.models_rejected

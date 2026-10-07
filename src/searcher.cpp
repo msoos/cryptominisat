@@ -1801,6 +1801,9 @@ lbool Searcher::new_decision() {
         //Update stats
         stats.decisions++;
         sumDecisions++;
+
+        //Not IPASIR-UP: the propagator may flip the sign of the heuristic's pick
+        if (ext_prop != nullptr) next = ext_advise_polarity(next);
     }
 
     // Increase decision level and enqueue 'next'. Opening the level notifies
