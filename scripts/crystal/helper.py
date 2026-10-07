@@ -542,7 +542,8 @@ def sample_weights(df, how):
 
 # the solver's reduce: ReduceDB::mark_useless_redundant_clauses_as_garbage
 TIER1_GLUE = 2    # conf.reducetier1glue
-USED_SINCE = 30   # CL_MAX_USED-1: used since the reduce before
+MAX_USED = 31     # CL_MAX_USED: 'used' of a clause learnt or used since the last reduce
+ROUNDS = 2        # conf.reduce_rounds: reduces a clause is kept for after that
 REMOVE = 0.75     # conf.reducetarget, the share of the candidates removed
 
 
@@ -553,40 +554,70 @@ def best_rows(score, n, glue, size):
     return keep
 
 
-def rule_then_best(rule, score, glue, size):
+def rule_then_best(rule, score, glue, size, remove=REMOVE):
     """what a reduce keeps: the rows of the rule, the best of the rest"""
     cands = np.flatnonzero(~rule)
-    n_keep = len(cands) - int(REMOVE * len(cands))
+    n_keep = len(cands) - int(remove * len(cands))
     keep = rule.copy()
     keep[cands[best_rows(score[cands], n_keep, glue[cands], size[cands])]] = True
     return keep
 
 
-def policies_of_reduce(g, pred, truth):
-    """policy -> the rows it keeps at one reduce, and the rows the normal
-    build keeps by rule"""
+def share_needed(score, truth, glue, size, use):
+    """the share of the rows that has to be kept, best score first, to
+    hold 'use' of the truth"""
+    if use <= 0:
+        return 0.0
+    got = np.cumsum(truth[np.lexsort((size, glue, -score))])
+    return min(1.0, (np.searchsorted(got, use - 1e-9) + 1) / len(score))
+
+
+def kept_by_rule(glue, used, rounds=ROUNDS):
+    """the rows a reduce does not look at: tier1 with 'used' life left,
+    and learnt or used in the last 'rounds' reduce intervals"""
+    return ((glue <= TIER1_GLUE) & (used > 0)) | (used > MAX_USED - rounds)
+
+
+def policies_of_reduce(g, pred, truth, rounds=ROUNDS, remove=REMOVE):
+    """policy -> the rows it keeps at one reduce, and the rows kept by rule"""
     glue = g["rdb0.glue"].to_numpy(dtype=float)
     size = g["rdb0.size"].to_numpy(dtype=float)
-    used = g["rdb0.used"].to_numpy(dtype=float)
-    tier1 = glue <= TIER1_GLUE
-    rule = (tier1 & (used > 0)) | (used >= USED_SINCE)
-    ret = {"normal": rule_then_best(rule, -glue, glue, size)}
-    ret["order"] = rule_then_best(rule, pred, glue, size)
-    ret["oracle"] = rule_then_best(rule, truth, glue, size)
+    rule = kept_by_rule(glue, g["rdb0.used"].to_numpy(dtype=float), rounds)
+    ret = {"normal": rule_then_best(rule, -glue, glue, size, remove)}
+    ret["order"] = rule_then_best(rule, pred, glue, size, remove)
+    ret["oracle"] = rule_then_best(rule, truth, glue, size, remove)
     return ret, rule
 
 
-def policy_per_reduce(df, pred, label, min_rows=50):
+def needed_of_reduce(g, pred, truth, rule, use):
+    """order -> the share of all the rows it has to keep, on top of the
+    rule's, to hold 'use' of the truth"""
+    glue = g["rdb0.glue"].to_numpy(dtype=float)
+    size = g["rdb0.size"].to_numpy(dtype=float)
+    c = ~rule
+    if not c.any():
+        return {k: 100.0 for k in ("glue", "order", "oracle")}
+    need = use - truth[rule].sum()
+    return {k: 100.0 * (rule.sum() + share_needed(sc[c], truth[c], glue[c], size[c], need) * c.sum()) / len(truth)
+            for k, sc in (("glue", -glue), ("order", pred), ("oracle", truth))}
+
+
+def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE):
     """The solver's reduce replayed on a fair sample of the clauses at
-    some reduces: the share of the future use (label) that is kept by
-      normal  the normal build: by rule the tier1 clauses with 'used'
-              life left and the ones used since the reduce before, of
-              the rest (the candidates) the best quarter by glue, size
-      order   the predictor build: the same rule, the candidates by the model
-      oracle  the same rule, the candidates by their future use: the most
-              an order of the candidates can keep
+    some reduces. By rule it keeps the tier1 clauses with 'used' life
+    left and the ones learnt or used in the last 'rounds' reduce
+    intervals; of the rest (the candidates) the share 'remove' goes.
+    The share of the future use (label) that is kept by
+      normal  the normal build: the best candidates by glue, size
+      order   the predictor build: the candidates by the model
+      oracle  the candidates by their future use: the most an order of
+              the candidates can keep
+    and for the use that the solver's own reduce (2 rounds, 75%) holds,
+    the share of the clauses that has to be kept when the candidates go by
+      glue needs, order needs, oracle needs
     Mean over the reduces of an instance. 'rule cls' / 'rule use': the
-    share of the clauses the normal rule keeps, and of the use they hold."""
+    share of the clauses the rule keeps, and of the use they hold; 'cls':
+    the share of the clauses kept."""
     df = df.reset_index(drop=True)
     pred = np.asarray(pred, dtype=float)
     rows = []
@@ -597,10 +628,15 @@ def policy_per_reduce(df, pred, label, min_rows=50):
             truth = g[label].to_numpy(dtype=float)
             if len(g) < min_rows or truth.sum() <= 0:
                 continue
-            kept, rule = policies_of_reduce(g, pred[g.index.to_numpy()], truth)
-            r = {"rule cls": 100.0 * rule.mean(), "rule use": 100.0 * truth[rule].sum() / truth.sum()}
+            p = pred[g.index.to_numpy()]
+            kept, rule = policies_of_reduce(g, p, truth, rounds, remove)
+            r = {"rule cls": 100.0 * rule.mean(), "rule use": 100.0 * truth[rule].sum() / truth.sum(),
+                 "cls": 100.0 * kept["normal"].mean()}
             for k, v in kept.items():
                 r[k] = 100.0 * truth[v].sum() / truth.sum()
+            solver = policies_of_reduce(g, p, truth)[0]["normal"]
+            for k, v in needed_of_reduce(g, p, truth, rule, truth[solver].sum()).items():
+                r[k + " needs"] = v
             acc.append(r)
         if acc:
             r = pd.DataFrame(acc).mean().to_dict()
