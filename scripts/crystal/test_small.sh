@@ -31,6 +31,8 @@ DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" \
     echo "FAILED, see $DIR/run2.out"; tail -3 "$DIR/run2.out"; exit 1; }
 # the C++ proof pass against the Python one, hand-made and this proof
 ./test_xlrup_uses.py --real "$CNF-dir/data.xlrup" "$CNF-dir/data.db-raw" || exit 1
+# the labels of the frames, summed a second time from the uses
+./check_labels.py "$CNF-dir/data.db" "$CNF-dir"/data-min.db-*data-*.dat || exit 1
 for f in "$CNF-dir"/predictor-*.json; do
     cp "$f" "$f.first"
 done

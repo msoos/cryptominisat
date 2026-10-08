@@ -178,6 +178,9 @@ saved model is refitted on all rows.
   values constant within a reduce, features that look into the future,
   duplicate rows, labels lined up with the `used` counter (catches
   off-by-one-reduce bugs).
+- `check_labels.py data.db frames..` (needs `KEEP_PROOF=1`): the label
+  of sampled rows summed a second time from `used_clauses`, with code
+  that shares nothing with the SQL. Part of `test_small.sh`.
 - `concat_pandas.py` refuses frames with different columns; `learn.sh`
   warns when the dirs were gathered by different solvers.
 - The solver refuses a model whose features do not match its list.
@@ -236,7 +239,7 @@ Features: `gen_pred_features.py`, `gen_best_feats.sh`,
 `pick_features.py`, `feature_groups.py` + `ablate_groups.sh` (group
 ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh` (tree-seed spread of an A/B),
 `holdout_eval.py`. Tests: `test_small.sh`, `test_xlrup_uses.py`,
-`check_pred_features.py`. Instances: `bivium_variants.py`.
+`check_pred_features.py`, `check_labels.py`. Instances: `bivium_variants.py`.
 
 ## Practicalities
 
