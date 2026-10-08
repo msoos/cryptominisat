@@ -592,7 +592,7 @@ class Tester:
         self.last_solver_base_cmd = command
         if fname_frat:
             # proofs are emitted in XLRUP, checked directly by cake_xlrup
-            command += " --xlrup %d " % (2 if self.xlrup_binary else 1)
+            command += " --xlrup %d " % (0 if self.userprop else (2 if self.xlrup_binary else 1))
         if fname is not None:
             command += " %s " % fname
         if fname_frat:
@@ -759,7 +759,7 @@ class Tester:
 
         # it's UNSAT, the solver emitted XLRUP: check it with the verified
         # checker directly
-        if fname_frat:
+        if fname_frat and not self.userprop:
             toexec = "./cake_xlrup {mode} {cnf} {proof}"
             toexec = toexec.format(mode=self.cake_mode(), cnf=fname, proof=fname_frat)
             print("Checking with cake_xlrup.. ", toexec)
@@ -788,7 +788,7 @@ class Tester:
                 return
 
         # check with other solver
-        if fname_frat == None:
+        if fname_frat is None or self.userprop:
             ret = self.sol_parser.check_unsat(checkAgainst)
             if ret is None:
                 print("Other solver time-outed, cannot check")
@@ -809,7 +809,9 @@ class Tester:
             f.write("#!/bin/bash\n")
             f.write("set -x\n")
             f.write('CNF="${1:-%s}"\n' % fname)
-            if fname_frat:
+            if fname_frat and self.userprop:
+                f.write('%s --xlrup 0 "$CNF" "$(mktemp --suffix=.frat)"\n' % base_cmd)
+            elif fname_frat:
                 f.write("XLRUP=$(mktemp --suffix=.xlrup)\n")
                 f.write("\n")
                 f.write('%s --xlrup %d "$CNF" "$XLRUP"\n' % (base_cmd, 2 if self.xlrup_binary else 1))
@@ -861,14 +863,16 @@ class Tester:
             self.only_sampling = True
 
         # Part of the CNF reaches the solver through an external propagator
-        # (--userprop). It needs a single thread, and the clauses it hands over
-        # are not in the CNF the proof checker reads, so no proof either.
+        # (--userprop). It needs a single thread. XLRUP cannot name the
+        # clauses it hands over, so its proof is written as FRAT and left
+        # unchecked, which still runs the proof logging of the interface; a
+        # proof also rules out the multipart test, so only half as often.
         self.userprop = 0
-        if options.only_userprop:
-            self.frat = False
-        if self.num_threads == 1 and not self.frat \
+        if self.num_threads == 1 \
                 and (options.only_userprop or random.randint(0, 3) == 0):
             self.userprop = random.randint(1, 2**31-1)
+            if self.frat:
+                self.frat = random.randint(0, 1) == 0
 
         self.sqlitedbfname = None
 
