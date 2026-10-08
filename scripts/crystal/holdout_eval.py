@@ -30,7 +30,7 @@
 #          [--objective rank|squarederror|log|poisson]
 #          [--target count|rel] [--weights none|strata|instance|family]   (not with rank)
 #          [-f best_features.txt] [--table used_later]
-#          [--rounds 2] [--remove 75]   the reduce that is replayed
+#          [--rounds 2] [--remove 75] [--tier1 2]   the reduce that is replayed
 
 import argparse
 import glob
@@ -109,6 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("--estimators", type=int, default=40)
     parser.add_argument("--depth", type=int, default=5)
     parser.add_argument("--rounds", type=int, default=helper.ROUNDS, help="the replayed reduce: --reducerounds")
+    parser.add_argument("--tier1", type=int, default=helper.TIER1_GLUE, help="the replayed reduce: --reducetier1glue")
     parser.add_argument("--remove", type=float, default=100 * helper.REMOVE, help="the replayed reduce: --reducetarget")
     opts = parser.parse_args()
     if (opts.train is None) == (opts.model is None):
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     else:
         pred = train(opts, feats, label, count_label).predict(Xt)
 
-    res = helper.policy_per_reduce(test, pred, count_label, rounds=opts.rounds, remove=opts.remove / 100.0)
+    res = helper.policy_per_reduce(test, pred, count_label, rounds=opts.rounds, remove=opts.remove / 100.0, tier1=opts.tier1)
     if res is None:
         print("no reduce with a used clause in the test frames")
         exit(1)

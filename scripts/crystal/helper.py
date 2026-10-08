@@ -572,17 +572,17 @@ def share_needed(score, truth, glue, size, use):
     return min(1.0, (np.searchsorted(got, use - 1e-9) + 1) / len(score))
 
 
-def kept_by_rule(glue, used, rounds=ROUNDS):
+def kept_by_rule(glue, used, rounds=ROUNDS, tier1=TIER1_GLUE):
     """the rows a reduce does not look at: tier1 with 'used' life left,
     and learnt or used in the last 'rounds' reduce intervals"""
-    return ((glue <= TIER1_GLUE) & (used > 0)) | (used > MAX_USED - rounds)
+    return ((glue <= tier1) & (used > 0)) | (used > MAX_USED - rounds)
 
 
-def policies_of_reduce(g, pred, truth, rounds=ROUNDS, remove=REMOVE):
+def policies_of_reduce(g, pred, truth, rounds=ROUNDS, remove=REMOVE, tier1=TIER1_GLUE):
     """policy -> the rows it keeps at one reduce, and the rows kept by rule"""
     glue = g["rdb0.glue"].to_numpy(dtype=float)
     size = g["rdb0.size"].to_numpy(dtype=float)
-    rule = kept_by_rule(glue, g["rdb0.used"].to_numpy(dtype=float), rounds)
+    rule = kept_by_rule(glue, g["rdb0.used"].to_numpy(dtype=float), rounds, tier1)
     ret = {"normal": rule_then_best(rule, -glue, glue, size, remove)}
     ret["order"] = rule_then_best(rule, pred, glue, size, remove)
     ret["oracle"] = rule_then_best(rule, truth, glue, size, remove)
@@ -602,7 +602,7 @@ def needed_of_reduce(g, pred, truth, rule, use):
             for k, sc in (("glue", -glue), ("order", pred), ("oracle", truth))}
 
 
-def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE):
+def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE, tier1=TIER1_GLUE):
     """The solver's reduce replayed on a fair sample of the clauses at
     some reduces. By rule it keeps the tier1 clauses with 'used' life
     left and the ones learnt or used in the last 'rounds' reduce
@@ -629,7 +629,7 @@ def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE
             if len(g) < min_rows or truth.sum() <= 0:
                 continue
             p = pred[g.index.to_numpy()]
-            kept, rule = policies_of_reduce(g, p, truth, rounds, remove)
+            kept, rule = policies_of_reduce(g, p, truth, rounds, remove, tier1)
             r = {"rule cls": 100.0 * rule.mean(), "rule use": 100.0 * truth[rule].sum() / truth.sum(),
                  "cls": 100.0 * kept["normal"].mean()}
             for k, v in kept.items():
