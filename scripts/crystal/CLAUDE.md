@@ -241,7 +241,9 @@ ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh
 ## Practicalities
 
 - Give `ballofcrystal.sh` a COPY of the CNF: it works in `<real path of
-  the CNF>-dir`, and the proof is about 2 GB per million conflicts. With
+  the CNF>-dir`, and the proof (binary XLRUP, 42% of the text FRAT it
+  replaced) is about 1 GB per million conflicts, 5 GB on sv-comp
+  (`fix_up_xlrup.py` prints the bytes per conflict). With
   the disk full the stats run dies with an SQLite "SQL logic error".
 - Never edit a script while a run uses it: write a temp file and rename.
 - This box: 1 physical core, 7 GB. Time runs one at a time, and a cached

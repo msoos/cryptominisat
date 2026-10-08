@@ -329,6 +329,9 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                 exit(-1)
             confl.tofile(files[0])
             print("Got ID-conflict data: %d IDs" % len(confl))
+            if len(confl):
+                sz = os.path.getsize(xlrupfile)
+                print("proof: %.1f MB, %.0f bytes per conflict" % (sz / 1e6, sz / max(confl[:, 1].max(), 1)))
             del confl
             self.get_updates()
             np.array([[k, v[0]] for k, v in new_id_to_old_id.items()], dtype="<i8").reshape(-1, 2).tofile(files[1])
