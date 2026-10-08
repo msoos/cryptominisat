@@ -140,6 +140,8 @@ class Searcher : public HyperEngine
         /// for UNSAT.
         lbool external_check_solution();
         void apply_ext_forced_backtrack();
+        /// SLOW_DEBUG: the propagator's bookkeeping between steps of the search
+        void ext_check_invariants(const bool confl_pending, const bool heap);
         PropBy ext_attach_clause(const int32_t ID, const bool red);
 
         //ChronoBT

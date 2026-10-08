@@ -1621,6 +1621,7 @@ lbool Searcher::search()
         //IPASIR-UP: a conflict found while checking a complete assignment
         confl = ext_confl;
         ext_confl = PropBy();
+        SLOW_DEBUG_DO(ext_check_invariants(!confl.isnullptr(), false));
         if (!solver->okay()) {
             assert(!frat->enabled() || unsat_cl_ID != 0);
             search_ret = l_False;
@@ -1635,6 +1636,7 @@ lbool Searcher::search()
                 search_ret = l_False;
                 goto end;
             }
+            SLOW_DEBUG_DO(ext_check_invariants(!confl.isnullptr(), false));
         }
         no_conflict_until = confl.isnullptr() ? trail.size() :
             (decision_level() == 0 ? 0 : trail_lim[decision_level()-1]);
@@ -1670,6 +1672,7 @@ lbool Searcher::search()
                 search_ret = dec_ret;
                 goto end;
             }
+            SLOW_DEBUG_DO(ext_check_invariants(!ext_confl.isnullptr(), false));
         }
     }
     rst.lim_restart = sum_conflicts + conf.restartint;
@@ -1794,6 +1797,9 @@ lbool Searcher::new_decision() {
             //IPASIR-UP: the propagator must approve the solution
             if (ext_prop != nullptr) {
                 const lbool ext_ret = external_check_solution();
+                if (ext_ret == l_Undef) {
+                    SLOW_DEBUG_DO(ext_check_invariants(!ext_confl.isnullptr(), true));
+                }
                 if (ext_ret != l_True) return ext_ret;
             }
             return l_True;
@@ -1825,6 +1831,7 @@ lbool Searcher::new_decision() {
         }
         //The heuristic took 'next' out of its queue: put it back
         if (value(next) == l_Undef) insert_var_order(next.var());
+        SLOW_DEBUG_DO(ext_check_invariants(!ext_confl.isnullptr(), true));
         return l_Undef;
     }
     enqueue<inprocess>(next);

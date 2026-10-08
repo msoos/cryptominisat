@@ -593,6 +593,66 @@ void Searcher::apply_ext_forced_backtrack()
         verb_print(6, "[user-prop] forced backtrack to level " << ext_forced_backtrack_level);
         cancel_until(ext_forced_backtrack_level);
     }
+    SLOW_DEBUG_DO(ext_check_invariants(false, true));
+}
+
+/**
+SLOW_DEBUG: what must hold between steps of the search, when no callback is
+running. 'confl_pending' is a conflict not yet analysed, which leaves qhead past
+the end of the trail. The branching heap is only checked when 'heap' is set, as
+it costs a pass over every variable.
+*/
+void Searcher::ext_check_invariants(const bool confl_pending, const bool heap)
+{
+    if (ext_prop == nullptr || !okay()) return;
+    assert(!ext_explaining && !ext_backtracking && !ext_advising);
+    assert(!ext_forced_backtrack_allowed && !ext_forced_backtrack_set);
+    assert(!ext_prop_private_steps);
+    assert(ext_notified <= trail.size());
+    assert(confl_pending || qhead <= trail.size());
+
+    //The observed variables: each listed once, flagged, and not removed
+    uint32_t flagged = 0;
+    for(const auto& vd: var_data) flagged += vd.observed;
+    assert(flagged == ext_observed_vars.size());
+    vector<uint32_t> observed(ext_observed_vars);
+    std::sort(observed.begin(), observed.end());
+    assert(std::adjacent_find(observed.begin(), observed.end()) == observed.end());
+    for(const uint32_t outer_var: observed) {
+        const uint32_t v = map_outer_to_inter(outer_var);
+        assert(var_data[v].observed);
+        assert(var_data[v].removed == Removed::none);
+    }
+
+    //Root notifications still owed are for observed root assignments
+    for(const Lit outer_lit: ext_pending_fixed) {
+        const Lit l = map_outer_to_inter(outer_lit);
+        assert(var_data[l.var()].observed);
+        assert(value(l) == l_True && var_data[l.var()].level == 0);
+    }
+
+    //An external propagation stays observed for as long as it holds, and an
+    //explained one has a reason slot of its own: propagated literal first,
+    //every other one false and assigned before it
+    size_t slots_used = 0;
+    for(const auto& t: trail) {
+        const Lit lit = t.lit;
+        if (lit == lit_Undef || !var_data[lit.var()].reason.is_ext()) continue;
+        assert(var_data[lit.var()].observed);
+        const PropBy& reason = var_data[lit.var()].reason;
+        if (!reason.ext_reason_set()) continue;
+        slots_used++;
+        assert(reason.get_ext_reason() < ext_reasons.size());
+        const vector<Lit>& cl = ext_reasons[reason.get_ext_reason()];
+        assert(!cl.empty() && cl[0] == lit);
+        for(size_t i = 1; i < cl.size(); i++) {
+            assert(value(cl[i]) == l_False);
+            assert(var_data[cl[i].var()].sublevel < var_data[lit.var()].sublevel);
+        }
+    }
+    assert(slots_used + ext_reasons_empty_slots.size() == ext_reasons.size());
+
+    if (heap) assert(check_order_heap_sanity());
 }
 
 /**
