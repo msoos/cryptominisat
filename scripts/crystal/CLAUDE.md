@@ -159,7 +159,11 @@ rest by their future use: the ceiling). Only the order of the
 candidates is replayed: a policy that changes the rule cannot be judged
 offline (see What is known). Mean over
 the reduces of an instance, then over the instances. `rule cls` / `rule
-use`: the share of the clauses the rule keeps and of the use they hold.
+use`: the share of the clauses the rule keeps and of the use they hold,
+`cls`: the share of the clauses kept. `holdout_eval.py --rounds N
+--remove P --tier1 G` replays the rule with other knobs
+(`--reducerounds`, `--reducetarget`, `--reducetier1glue`); the learn
+output is at 2 rounds.
 With three or more instances the train/test split is by instance; the
 saved model is refitted on all rows.
 
@@ -354,6 +358,8 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   | model, 1 round, 50% removed | 96.1% [87, 105] | 90.8% [76, 105] |
   | model, 1 round, 90% removed | 115.6% [105, 129] | 100.8% [85, 122] |
   | model, 0 rounds | 121.4% [101, 142] | 95.9% [71, 125] |
+  | model, 1 round, tier1 glue 3 | 98.0% [89, 108] | 93.0% [80, 107] |
+  | model, 1 round, tier1 glue 1 | 122.6% [106, 145] | 104.3% [81, 136] |
   | normal, 1 round, 50% removed | 102.7% [91, 118] | 91.1% [73, 110] |
   | normal, 0 rounds | 130.4% [112, 155] | 99.2% [81, 121] |
 
@@ -363,7 +369,10 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   against the normal build: conflicts 97.6% [88, 110], **time 92.6%
   [83, 103]**, time per conflict 94.9% [90, 99]. No protected round at
   all loses. Removing less at 1 round buys nothing (the same
-  conflicts for more propagation), removing more loses on both. So the predictor builds default to
+  conflicts for more propagation), removing more loses on both. The
+  tier1 glue is the same: 3 keeps 5 points more clauses for 113%
+  [102, 124] of the bogoprops of 2, and 1 is 127% [112, 146] of its
+  conflicts. One round, glue 2, 75% is a local best in all three. So the predictor builds default to
   `--reducerounds 1`; `--predmimic 1` needs `--reducerounds 2` to equal
   the normal build.
 - **A count from the score lost.** Removing the candidates scored
