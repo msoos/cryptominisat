@@ -291,10 +291,16 @@ verified checker `cake_xlrup` from
 [meelgroup/frat-xor](https://github.com/meelgroup/frat-xor):
 ```bash
 ./cryptominisat5 input.cnf proof.xlrup
-./cake_xlrup input.cnf proof.xlrup
+./cake_xlrup --no-binary input.cnf proof.xlrup
 ```
 
-`cake_xlrup` prints `s VERIFIED` on success.
+`cake_xlrup` prints `s VERIFIED` on success. With `--xlrup 2` the proof is
+written in the smaller, faster binary XLRUP encoding, which `cake_xlrup` reads
+by default:
+```bash
+./cryptominisat5 --xlrup 2 input.cnf proof.xlrupb
+./cake_xlrup input.cnf proof.xlrupb
+```
 
 ## CMake Arguments
 The following arguments to cmake configure the generated build artifacts. To

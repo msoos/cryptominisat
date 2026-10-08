@@ -22,7 +22,7 @@
 # processed (minutes to an hour on big instances): is the DB what the
 # rest of the pipeline expects? Exit 1 on a failed test.
 #
-# usage: check_rawdb.py data.db-raw [--halflife 4] [--dumpratio 0.1] [--proof data.frat]
+# usage: check_rawdb.py data.db-raw [--halflife 4] [--dumpratio 0.1] [--proof data.xlrup]
 
 import argparse
 import os
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("db")
     parser.add_argument("--halflife", type=int, default=4, help="of the disc label, in reduces")
     parser.add_argument("--dumpratio", type=float, default=None, help="--cldatadumpratio of the run")
-    parser.add_argument("--proof", default=None, help="the FRAT file the run wrote")
+    parser.add_argument("--proof", default=None, help="the proof the run wrote")
     opts = parser.parse_args()
 
     conn = sqlite3.connect(opts.db)

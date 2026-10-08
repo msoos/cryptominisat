@@ -9,7 +9,7 @@ end, what is known.
 | dir | cmake | what it is |
 |---|---|---|
 | `build/` | default | normal solver, the baseline |
-| `build_stats/` | `-DSTATS=ON` | dumps clause data to SQLite, writes the FRAT proof |
+| `build_stats/` | `-DSTATS=ON` | dumps clause data to SQLite, writes the XLRUP proof |
 | `build_pred/` | `-DFINAL_PREDICTOR=ON` | ranks reduce candidates by the xgboost prediction |
 | `build_stats_pred/` | both | the stats build with the model driving the reduce: the second gathering round |
 
@@ -76,14 +76,14 @@ conflict-count A/B is clean.
 `<file.cnf>-dir/`:
 
 1. **gather**: stats build with `--xor 0`, writes `data.db-raw` and
-   `data.frat`.
-2. **label** (`fix_up_frat.py`): trims the proof to the steps reachable
+   `data.xlrup` (binary, `--xlrup 2`).
+2. **label** (`fix_up_xlrup.py`): trims the proof to the steps reachable
    from the empty clause and fills `used_clauses` (tracked clause X was
    in the hint chain of a kept step at conflict C) and
    `used_clauses_anc` (also credits ancestors, 0.5 per generation, down
-   to 0.05). The pass over the proof is `frat_uses.cpp` (built on first
+   to 0.05). The pass over the proof is `xlrup_uses.cpp` (built on first
    use); `--python` is the same pass in Python, the reference of
-   `test_frat_uses.py`. The proof is deleted afterwards (`KEEP_FRAT=1`
+   `test_xlrup_uses.py`. The proof is deleted afterwards (`KEEP_PROOF=1`
    keeps it and `data.db`).
 3. **clean/check/sample** (`clean_update_data.py`, `check_data_quality.py
    --slow`, `sample_data.py`): the labels and their rank within the
@@ -190,7 +190,7 @@ saved model is refitted on all rows.
   prints `[pred] model trained on ...` at load and `pred feats outside
   training range` at the end; much more than 1-2% means extrapolation.
 - `test_small.sh [seed]` (~3 min): the whole pipeline on a random UNSAT
-  instance, models reproducible bit for bit, `test_frat_uses.py`, and
+  instance, models reproducible bit for bit, `test_xlrup_uses.py`, and
   the C++ features against pandas (`--preddump` +
   `check_pred_features.py`). Run it after touching any script, the
   stats/predictor code or the schema.
@@ -227,7 +227,7 @@ trees). `<learn dir>` holds the model next to its training frame.
 ## The scripts
 
 Pipeline: `ballofcrystal.sh`, `setparams_ballofcrystal.sh`,
-`check_rawdb.py`, `fix_up_frat.py` + `frat_uses.cpp`,
+`check_rawdb.py`, `fix_up_xlrup.py` + `xlrup_uses.cpp`,
 `clean_update_data.py`, `check_data_quality.py`, `sample_data.py`,
 `cldata_gen_pandas.py`, `check_frames.py`, `cldata_predict.py`,
 `concat_pandas.py`, `learn.sh`, `eval_corpus.sh`, `eval_summary.py`,
@@ -235,7 +235,7 @@ Pipeline: `ballofcrystal.sh`, `setparams_ballofcrystal.sh`,
 Features: `gen_pred_features.py`, `gen_best_feats.sh`,
 `pick_features.py`, `feature_groups.py` + `ablate_groups.sh` (group
 ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh` (tree-seed spread of an A/B),
-`holdout_eval.py`. Tests: `test_small.sh`, `test_frat_uses.py`,
+`holdout_eval.py`. Tests: `test_small.sh`, `test_xlrup_uses.py`,
 `check_pred_features.py`. Instances: `bivium_variants.py`.
 
 ## Practicalities
@@ -313,7 +313,7 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   build made its resolvents in another order and ran 11% and 44% more
   conflicts with the very same reduce. Ties go by clause ID now. If
   `--predmimic 1` differs from the normal build, have both write a
-  proof (`--xlrup 0 <cnf> <proof>`) and `cmp` them: the first differing
+  proof (`--xlrup 1 <cnf> <proof>`) and `cmp` them: the first differing
   line names the place.
 - **Proof use cannot judge the rule.** Offline, keeping as many clauses
   as the normal reduce but all picked by glue, size (no "used since the

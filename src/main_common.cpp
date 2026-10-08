@@ -33,7 +33,7 @@ void MainCommon::handle_frat_option() {
     FILE* fratfTmp = fopen(frat_fname.c_str(), "wb");
     if (fratfTmp == nullptr) {
         std::cerr
-        << "ERROR: Could not open FRAT file '" << frat_fname << "' for writing"
+        << "ERROR: Could not open proof file '" << frat_fname << "' for writing"
         << endl;
 
         std::exit(-1);

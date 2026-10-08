@@ -280,8 +280,8 @@ void Main::add_supported_options() {
         .flag()
         .help("Print version information");
     opt("--xlrup", xlrup_mode,
-        "Emit the proof in XLRUP format, checkable directly by cake_xlrup. Set to 0 to emit raw FRAT instead, for debugging proof generation with frat-rs [0..1]")
-        .metavar("{0,1}");
+        "Encoding of the XLRUP proof, checkable directly by cake_xlrup. 1 = text (cake_xlrup --no-binary), 2 = binary [1..2]")
+        .metavar("{1,2}");
     program.add_argument("--maxtime")
         .help("Stop solving after this much time (s)")
         .scan<'g', double>();
@@ -299,7 +299,7 @@ void Main::add_supported_options() {
     program.add_argument("--clid")
         .flag()
         .action([&](const auto&) {clause_ID_needed = true;})
-        .help("Add clause IDs to FRAT output");
+        .help("Add clause IDs to proof output");
     #endif
     program.add_argument("--nobansol")
         .flag()
@@ -437,7 +437,7 @@ void Main::manually_parse_some_options()
         }
         if (files.size() > 2) {
             cerr << "ERROR: you can only have at most two files as positional options:"
-                "the input file and the output FRAT file" << endl;
+                "the input file and the output proof file" << endl;
             exit(-1);
         }
 
@@ -471,6 +471,10 @@ void Main::parseCommandLine() {
 
     add_supported_options();
     check_options_correctness();
+    if (xlrup_mode != 1 && xlrup_mode != 2) {
+        cerr << "ERROR: --xlrup must be 1 (text) or 2 (binary)" << endl;
+        exit(-1);
+    }
 
     try {
         manually_parse_some_options();
@@ -503,8 +507,7 @@ int Main::solve()
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (fratf) {
-        if (xlrup_mode) solver->set_xlrup(fratf);
-        else solver->set_frat(fratf);
+        solver->set_xlrup(fratf, xlrup_mode == 2);
     }
     if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
     if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));

@@ -18,17 +18,17 @@
 # 02110-1301, USA.
 
 # The whole crystalball pipeline on one UNSAT CNF:
-#   1. run the STATS build -> SQLite DB + FRAT proof
+#   1. run the STATS build -> SQLite DB + XLRUP proof
 #   2. trim the proof and mark which clauses were used, when
 #   3. clean, check, sample, denormalise the data
 #   4. learn the xgboost predictors
 #   5. run the FINAL_PREDICTOR build with them and print a comparison
 #
 # usage: ballofcrystal.sh [--skip-solve] [--skip-learn] [--gather-only] file.cnf
-#   --skip-solve  reuse <file>-dir/data.db-raw and data.frat from an earlier run
+#   --skip-solve  reuse <file>-dir/data.db-raw and data.xlrup from an earlier run
 #   --skip-learn  reuse the predictors from an earlier run, only run step 5
 #   --gather-only stop after step 3, the frames are for learn.sh
-# KEEP_FRAT=1 keeps data.frat (it is deleted once used, GBs on big CNFs)
+# KEEP_PROOF=1 keeps data.xlrup (it is deleted once used, GBs on big CNFs)
 # STATS_OPTS: more options for the stats run. With a STATS=ON
 #   FINAL_PREDICTOR=ON build as STATS_BIN, "--predloc DIR"
 #   gathers under the learnt policy (a second round, DAgger-style)
@@ -94,11 +94,11 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
     fi
 
     stage "solving with STATS build"
-    # --xor 0: no XOR reasoning, so the proof is plain resolution
+    # --xor 0: no XOR reasoning, so the proof is plain resolution. --xlrup 2: binary
     $NOBUF "$STATS_BIN" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
         --cldatadumpratio "$DUMPRATIO" --cllockdatagen "$CLLOCK" \
         --everypred "$EVERYPRED" --clid --sql 2 --sqlitedb data.db-raw \
-        --xlrup 0 $STATS_OPTS --zero-exit-status "$FNAME" data.frat | tee cms-stats-run.out
+        --xlrup 2 $STATS_OPTS --zero-exit-status "$FNAME" data.xlrup | tee cms-stats-run.out
     grep -m1 "^c conflicts" cms-stats-run.out
     # the labels are uses in the trimmed UNSAT proof: a SAT run has none
     if ! grep -q "^s UNSATISFIABLE" cms-stats-run.out; then
@@ -108,16 +108,13 @@ if [[ $SKIP_SOLVE -eq 0 ]]; then
 
     stage "check_rawdb"
     "$SCRIPTDIR/check_rawdb.py" data.db-raw --halflife "$HALFLIFE" \
-        --dumpratio "$DUMPRATIO" --proof data.frat | tee check_rawdb.out-stage
+        --dumpratio "$DUMPRATIO" --proof data.xlrup | tee check_rawdb.out-stage
 
-    # the solver's FRAT has full hint chains, no elaboration needed.
-    # Optionally check the proof anyway.
-    if [[ -x "$FRAT_XOR" && -x "$CAKE_XLRUP" ]]; then
+    # optionally check the proof
+    if [[ -x "$CAKE_XLRUP" ]]; then
         stage "checking proof"
-        "$FRAT_XOR" elab data.frat "$FNAME" data.xlrup
         "$CAKE_XLRUP" "$FNAME" data.xlrup | tee cake.out
         grep -q "^s VERIFIED UNSAT" cake.out
-        rm -f data.xlrup data.frat.temp
     fi
 else
     cd "$DIR"
@@ -128,16 +125,16 @@ fi
 ########################
 if [[ $SKIP_LEARN -eq 0 ]]; then
     rm -f data.db data-min.db data-min.db-cldata-* data-min.db-evaldata-* predictor-*.json *.out-stage
-    if [[ ! -f data.frat ]]; then
-        echo "ERROR: data.frat is gone (deleted once used unless KEEP_FRAT=1), re-run without --skip-solve"
+    if [[ ! -f data.xlrup ]]; then
+        echo "ERROR: data.xlrup is gone (deleted once used unless KEEP_PROOF=1), re-run without --skip-solve"
         exit 255
     fi
 
-    stage "fix_up_frat: which clause was used when"
+    stage "fix_up_xlrup: which clause was used when"
     cp data.db-raw data.db
-    "$SCRIPTDIR/fix_up_frat.py" data.frat data.db | tee fix_up_frat.out-stage
+    "$SCRIPTDIR/fix_up_xlrup.py" data.xlrup data.db | tee fix_up_xlrup.out-stage
     # the proof is GBs on big instances and not needed any more
-    [[ "$KEEP_FRAT" == "1" ]] || rm -f data.frat
+    [[ "$KEEP_PROOF" == "1" ]] || rm -f data.xlrup
 
     stage "clean_update_data"
     "$SCRIPTDIR/clean_update_data.py" data.db | tee clean_update_data.out-stage
@@ -153,7 +150,7 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
         --evalreduces "$EVAL_REDUCES" --evalperreduce "$EVAL_PER_REDUCE" \
         data-min.db | tee sample_data.out-stage
     # the full labelled DB is only needed for the sampling
-    [[ "$KEEP_FRAT" == "1" ]] || rm -f data.db
+    [[ "$KEEP_PROOF" == "1" ]] || rm -f data.db
 
     stage "cldata_gen_pandas"
     "$SCRIPTDIR/cldata_gen_pandas.py" data-min.db \

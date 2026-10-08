@@ -72,7 +72,7 @@ survives.
 - [ ] Does "use kept at reduce" on round-2 hold-outs (the model's own
       data) agree with the solver? On this box both say level with
       glue. On round-1 data the model looks better than it is.
-- [ ] `HALFLIFE`: 2 / 4 / 8 reduces (needs relabelling: `KEEP_FRAT=1`
+- [ ] `HALFLIFE`: 2 / 4 / 8 reduces (needs relabelling: `KEEP_PROOF=1`
       and `--skip-solve`, or keep `data.db`).
 - [ ] Trees: early stopping on dev families; depth 4-8, min child,
       learning rate. Never tuned.

@@ -637,18 +637,12 @@ bool CNF::no_marked_clauses() const
     return true;
 }
 
-void CNF::add_frat(FILE* os) {
+void CNF::add_xlrup(FILE* os, const bool binary) {
     if (frat) delete frat;
-    frat = new FratFile<false>(inter_to_outerMain);
+    frat = new XLRUPFile(inter_to_outerMain, binary);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sum_conflicts);
     frat->set_sqlstats_ptr(sql_stats);
-}
-
-void CNF::add_xlrup(FILE* os) {
-    if (frat) delete frat;
-    frat = new XLRUPFile(inter_to_outerMain);
-    frat->setFile(os);
 }
 
 

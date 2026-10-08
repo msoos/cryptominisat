@@ -357,7 +357,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     }
 
     if (data->solvers[0]->frat->enabled()) {
-        const char err[] = "ERROR: FRAT cannot be used in multi-threaded mode";
+        const char err[] = "ERROR: XLRUP cannot be used in multi-threaded mode";
         std::cerr << err << endl;
         throw std::runtime_error(err);
     }
@@ -395,7 +395,7 @@ DLL_PUBLIC void SATSolver::set_option(const std::string& name, const std::string
     if (nVars() > 0 || data->cls > 0 || !data->okay || data->num_solve_simplify_calls > 0)
         throw std::runtime_error("set_option() must be called before adding variables or clauses, and before solving");
     if (data->solvers[0]->frat->enabled() || data->sql)
-        throw std::runtime_error("set_option() must be called before enabling FRAT or SQL");
+        throw std::runtime_error("set_option() must be called before enabling XLRUP or SQL");
 
     SolverConf conf = data->solvers[0]->get_conf();
     bool found = false;
@@ -1168,22 +1168,7 @@ DLL_PUBLIC void SATSolver::set_find_xors(bool do_find_xors)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_frat(FILE* os)
-{
-    if (data->solvers.size() > 1) {
-        std::cerr << "ERROR: FRAT cannot be used in multi-threaded mode" << endl;
-        exit(-1);
-    }
-    if (nVars() > 0) {
-        std::cerr << "ERROR: FRAT cannot be set after variables have been added" << endl;
-        exit(-1);
-    }
-
-    data->solvers[0]->add_frat(os);
-    data->solvers[0]->conf.do_hyperbin_and_transred = true;
-}
-
-DLL_PUBLIC void SATSolver::set_xlrup(FILE* os)
+DLL_PUBLIC void SATSolver::set_xlrup(FILE* os, const bool binary)
 {
     if (data->solvers.size() > 1) {
         std::cerr << "ERROR: XLRUP cannot be used in multi-threaded mode" << endl;
@@ -1194,7 +1179,7 @@ DLL_PUBLIC void SATSolver::set_xlrup(FILE* os)
         exit(-1);
     }
 
-    data->solvers[0]->add_xlrup(os);
+    data->solvers[0]->add_xlrup(os, binary);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 

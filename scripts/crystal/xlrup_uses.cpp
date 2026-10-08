@@ -15,11 +15,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 
-// The proof pass of fix_up_frat.py: trims the FRAT proof from the empty
+// The proof pass of fix_up_xlrup.py: trims the XLRUP proof from the empty
 // clause and writes every use of a tracked clause (or of a descendant of
 // one) by a step of the trimmed proof.
 //
-// usage: frat_uses FRAT CONFL TRACKED OUT
+// usage: xlrup_uses XLRUP CONFL TRACKED OUT
 //   CONFL:   int64 pairs (ID, conflicts), set_id_confl
 //   TRACKED: int64 pairs (ID, tracked clause it counts as)
 //   OUT:     records (int64 clauseID, int64 used_at, double weight)
@@ -41,7 +41,7 @@ using std::vector;
 static const uint8_t* dat;
 static size_t len;
 static bool binary;
-static vector<int64_t> offsets; // of each 'a' step, in proof order
+static vector<int64_t> offsets; // of each clause addition, in proof order
 static vector<int64_t> ids;
 static vector<int64_t> pos_of_id;
 static int64_t max_id = 0;
@@ -67,7 +67,7 @@ static inline uint64_t unum(size_t& pos) {
     uint64_t res = 0;
     int mul = 0;
     while (true) {
-        if (pos >= len) die("truncated FRAT file");
+        if (pos >= len) die("truncated XLRUP file");
         const uint8_t c = dat[pos++];
         res |= (uint64_t)(c & 0x7f) << mul;
         mul += 7;
@@ -75,61 +75,58 @@ static inline uint64_t unum(size_t& pos) {
     }
 }
 
-static inline void skip_ivec(size_t& pos) {
-    while (true) {
-        if (pos >= len) die("truncated FRAT file");
-        if (dat[pos++] == 0) return;
-    }
+// no 00 byte inside a number, so a list ends at its first 00
+static inline void skip_list(size_t& pos) {
+    const uint8_t* z = (const uint8_t*)memchr(dat + pos, 0, len - pos);
+    if (!z) die("truncated XLRUP file");
+    pos = (size_t)(z - dat) + 1;
+}
+
+[[noreturn]] static void die_xor(size_t pos) {
+    printf("ERROR: XOR step at byte %zu. Use --xor 0\n", pos);
+    exit(255);
 }
 
 static void index_binary() {
     size_t pos = 0;
     while (pos < len) {
-        const uint8_t k = dat[pos++];
-        if (k == 'a' || k == 'o' || k == 'd' || k == 'f' || k == 'i') {
-            const size_t start = pos - 1;
-            const int64_t cid = unum(pos);
-            if (cid == 0) continue; // step header, e.g. 'i 0' before 'x'
-            if (k == 'a') {
-                offsets.push_back(start);
-                ids.push_back(cid);
-                if (pos < len && dat[pos] == 0) empty_cl = cid;
-            }
-            skip_ivec(pos);
-        } else if (k == 'l') {
-            skip_ivec(pos);
-        } else if (k == 'r') {
-            while (true) {
-                if (unum(pos) == 0) break;
-                unum(pos);
-            }
-        } else if (k == 't') {
-            unum(pos);
-            unum(pos);
+        const uint8_t k = dat[pos];
+        if (k == 'a') {
+            offsets.push_back(pos++);
+            const int64_t cid = unum(pos) >> 1;
+            ids.push_back(cid);
+            if (pos < len && dat[pos] == 0) empty_cl = cid;
+            skip_list(pos);
+            skip_list(pos);
+        } else if (k == 'd') {
+            pos++;
+            skip_list(pos);
         } else if (k == 'x') {
-            unum(pos);
-            skip_ivec(pos);
-        } else if (k == 'c') {
-            skip_ivec(pos);
+            die_xor(pos);
         } else {
-            printf("ERROR: unknown FRAT step '%c' at byte %zu. Use --xor 0 (no XOR/BNN steps)\n", k, pos - 1);
+            printf("ERROR: unknown XLRUP record at byte %zu\n", pos);
             exit(255);
         }
     }
 }
 
-static void index_ascii() {
+static void index_text() {
     size_t pos = 0;
     while (pos < len) {
         const uint8_t* nl = (const uint8_t*)memchr(dat + pos, '\n', len - pos);
         const size_t end = nl ? (size_t)(nl - dat) : len;
-        if (dat[pos] == 'a') {
-            size_t p = pos + 2;
+        if (dat[pos] >= '0' && dat[pos] <= '9') {
+            // 'ID lits 0 hints 0', but not the deletion 'ID d ids 0'
+            size_t p = pos;
             int64_t cid = 0;
             while (p < end && dat[p] != ' ') cid = cid * 10 + (dat[p++] - '0');
-            offsets.push_back(pos);
-            ids.push_back(cid);
-            if (p + 2 < len && dat[p + 1] == '0' && dat[p + 2] == ' ') empty_cl = cid;
+            if (p + 1 < end && dat[p + 1] != 'd') {
+                offsets.push_back(pos);
+                ids.push_back(cid);
+                if (p + 2 < end && dat[p + 1] == '0' && dat[p + 2] == ' ') empty_cl = cid;
+            }
+        } else if (end > pos) {
+            die_xor(pos);
         }
         pos = end + 1;
     }
@@ -142,32 +139,31 @@ static void hints(size_t i, vector<int64_t>& ret) {
     if (binary) {
         pos++;
         unum(pos);
-        skip_ivec(pos);
-        if (pos >= len || dat[pos] != 'l') die("add step without hints, need a FRAT with full chains");
-        pos++;
+        skip_list(pos);
         while (true) {
             const uint64_t u = unum(pos);
             if (u == 0) return;
-            ret.push_back((u & 1) ? -(int64_t)(u >> 1) : (int64_t)(u >> 1));
+            ret.push_back((int64_t)(u >> 1));
         }
     }
     const uint8_t* nl = (const uint8_t*)memchr(dat + pos, '\n', len - pos);
     const size_t end = nl ? (size_t)(nl - dat) : len;
+    // past the ID, then past the 0 that ends the literals
     size_t p = pos;
+    while (p < end && dat[p] != ' ') p++;
     bool found = false;
-    for (; p + 2 < end; p++) {
-        if (dat[p] == ' ' && dat[p + 1] == 'l' && dat[p + 2] == ' ') { found = true; break; }
+    for (; p + 1 < end; p++) {
+        if (dat[p] == ' ' && dat[p + 1] == '0' && (p + 2 == end || dat[p + 2] == ' ')) { found = true; break; }
     }
-    if (!found) die("add step without hints, need a FRAT with full chains");
-    p += 3;
+    if (!found) die("add step without a literal list");
+    p += 2;
     while (p < end) {
         while (p < end && dat[p] == ' ') p++;
         if (p >= end) break;
-        bool neg = false;
-        if (dat[p] == '-') { neg = true; p++; }
         int64_t v = 0;
         while (p < end && dat[p] >= '0' && dat[p] <= '9') v = v * 10 + (dat[p++] - '0');
-        ret.push_back(neg ? -v : v);
+        if (p < end && dat[p] != ' ') die("bad hint");
+        ret.push_back(v);
     }
     if (ret.empty() || ret.back() != 0) die("hint chain does not end in 0");
     ret.pop_back();
@@ -188,22 +184,23 @@ static vector<int64_t> read_pairs(const char* fname) {
 
 int main(int argc, char** argv) {
     if (argc != 5) {
-        printf("usage: %s FRAT CONFL TRACKED OUT\n", argv[0]);
+        printf("usage: %s XLRUP CONFL TRACKED OUT\n", argv[0]);
         return 255;
     }
     const int fd = open(argv[1], O_RDONLY);
-    if (fd < 0) die("cannot open the FRAT file");
+    if (fd < 0) die("cannot open the XLRUP file");
     struct stat st;
     fstat(fd, &st);
     len = st.st_size;
-    if (len < 2) die("empty FRAT file");
+    if (len < 2) die("empty XLRUP file");
     dat = (const uint8_t*)mmap(nullptr, len, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (dat == MAP_FAILED) die("cannot mmap the FRAT file");
-    binary = dat[1] != ' ' && dat[1] != '\n';
-    printf("FRAT file is %s\n", binary ? "binary" : "ascii");
+    if (dat == MAP_FAILED) die("cannot mmap the XLRUP file");
+    // text starts with an ID, or with 'o x', 'i x', 'x '
+    binary = !(dat[0] >= '0' && dat[0] <= '9') && (dat[0] == 'a' || dat[0] == 'd' || dat[1] != ' ');
+    printf("XLRUP file is %s\n", binary ? "binary" : "text");
 
     double t = now();
-    if (binary) index_binary(); else index_ascii();
+    if (binary) index_binary(); else index_text();
     printf("Indexed %zu add steps T: %-3.2f s\n", offsets.size(), now() - t);
     if (empty_cl == -1) die("no empty clause in the proof. Was the instance UNSAT?");
     for (const int64_t id : ids) if (id > max_id) max_id = id;
@@ -222,7 +219,7 @@ int main(int argc, char** argv) {
         todo.pop_back();
         hints(i, h);
         for (const int64_t x : h) {
-            if (x < 0 || x > max_id) continue; // RAT hints are negative
+            if (x > max_id) continue;
             const int64_t j = pos_of_id[x];
             if (j >= 0 && !marked[j]) { // original clauses are not add steps
                 marked[j] = 1;

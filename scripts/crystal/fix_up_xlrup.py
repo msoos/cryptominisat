@@ -18,8 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# Reads the FRAT proof the solver wrote (every 'a' step carries its full
-# hint chain, ascii or binary) and fills `used_clauses` and
+# Reads the XLRUP proof the solver wrote (every clause addition carries its full
+# hint chain, text or binary) and fills `used_clauses` and
 # `used_clauses_anc`: which tracked clause was used at which conflict to
 # derive a clause that is part of the final UNSAT proof.
 #
@@ -29,8 +29,8 @@
 # clause derived from a tracked clause counts as its child with weight
 # 0.5, grandchildren 0.25, and so on, down to 0.05.
 #
-# The pass over the proof is frat_uses.cpp (built here on first use); the
-# same pass in Python is --python: the reference test_frat_uses.py
+# The pass over the proof is xlrup_uses.cpp (built here on first use); the
+# same pass in Python is --python: the reference test_xlrup_uses.py
 # compares against, and what --verbose traces.
 
 import sqlite3
@@ -48,9 +48,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 USE_DTYPE = np.dtype([("id", "<i8"), ("at", "<i8"), ("w", "<f8")])
 
 
-def build_frat_uses():
-    src = os.path.join(HERE, "frat_uses.cpp")
-    exe = os.path.join(HERE, "frat_uses")
+def build_xlrup_uses():
+    src = os.path.join(HERE, "xlrup_uses.cpp")
+    exe = os.path.join(HERE, "xlrup_uses")
     if not os.path.exists(exe) or os.path.getmtime(exe) < os.path.getmtime(src):
         tmp = "%s.%d" % (exe, os.getpid())
         subprocess.check_call(["g++", "-O2", "-std=c++17", "-Wall", "-Wextra", "-o", tmp, src])
@@ -61,20 +61,26 @@ cl_to_conflict = {}
 new_id_to_old_id = {}
 
 
-class FratFile:
-    """Random access to the 'a' steps of a FRAT file, ascii or binary."""
+class XLRUPFile:
+    """Random access to the clause addition steps of an XLRUP file, text or binary."""
 
     def __init__(self, fname):
         self.f = open(fname, "rb")
         self.data = mmap.mmap(self.f.fileno(), 0, access=mmap.ACCESS_READ)
-        self.binary = self.data[1:2] not in (b' ', b'\n')
-        print("FRAT file is %s" % ("binary" if self.binary else "ascii"))
-        self.offsets = array.array('q') # offset of each 'a' step, in proof order
+        first = self.data[0:1]
+        if first.isdigit():
+            self.binary = False
+        elif first in (b'a', b'd'):
+            self.binary = True
+        else:
+            self.binary = self.data[1:2] != b' '
+        print("XLRUP file is %s" % ("binary" if self.binary else "text"))
+        self.offsets = array.array('q') # offset of each clause addition, in proof order
         self.ids = array.array('q')     # its ID
         self.empty_cl = None
         self.index()
 
-    # ---- binary encoding, as frat-rs: LEB128 unsigned, lits as 2*|l|+sign
+    # ---- binary encoding: LEB128 unsigned, ids as 2*id, lits as 2*|l|+sign
     def unum(self, pos):
         res = 0
         mul = 0
@@ -86,63 +92,44 @@ class FratFile:
             if c & 0x80 == 0:
                 return res, pos
 
-    def ivec(self, pos):
+    def id_list(self, pos):
         ret = []
         while True:
             u, pos = self.unum(pos)
             if u == 0:
                 return ret, pos
-            ret.append(-(u >> 1) if u & 1 else (u >> 1))
+            ret.append(u >> 1)
 
-    def skip_ivec(self, pos):
-        while True:
-            c = self.data[pos]
-            pos += 1
-            if c == 0:
-                return pos
+    def skip_lists(self, pos, num):
+        # no 00 byte inside a number, so a list ends at its first 00
+        for _ in range(num):
+            pos = self.data.find(b'\x00', pos) + 1
+        return pos
 
     def index_binary(self):
         data = self.data
         pos = 0
         n = len(data)
+        # lists following the tag, the record's own id being part of the first
+        xkinds = {0x6f: 1, 0x61: 3, 0x64: 1, 0x63: 2, 0x69: 2} # o a d c i
         while pos < n:
             k = data[pos]
-            pos += 1
-            if k in (0x61, 0x6f, 0x64, 0x66, 0x69): # a o d f i
-                start = pos - 1
-                cid, pos = self.unum(pos)
-                if cid == 0: # step header, e.g. 'i 0' before 'x'
-                    continue
-                if k == 0x61:
-                    self.offsets.append(start)
-                    self.ids.append(cid)
-                    if data[pos] == 0:
-                        self.empty_cl = cid
-                pos = self.skip_ivec(pos)
-            elif k == 0x6c: # l
-                pos = self.skip_ivec(pos)
-            elif k == 0x72: # r: pairs until 0
-                while True:
-                    u, pos = self.unum(pos)
-                    if u == 0:
-                        break
-                    u, pos = self.unum(pos)
-            elif k == 0x74: # t
-                u, pos = self.unum(pos)
-                u, pos = self.unum(pos)
-            elif k == 0x78: # x
-                u, pos = self.unum(pos)
-                pos = self.skip_ivec(pos)
-            elif k == 0x63: # c
-                while data[pos] != 0:
-                    pos += 1
-                pos += 1
+            if k == 0x61: # a
+                cid, p = self.unum(pos + 1)
+                self.offsets.append(pos)
+                self.ids.append(cid >> 1)
+                if data[p] == 0:
+                    self.empty_cl = cid >> 1
+                pos = self.skip_lists(p, 2)
+            elif k == 0x64: # d
+                pos = self.skip_lists(pos + 1, 1)
+            elif k == 0x78 and data[pos + 1] in xkinds: # x
+                pos = self.skip_lists(pos + 2, xkinds[data[pos + 1]])
             else:
-                print("ERROR: unknown FRAT step '%s' at byte %d. Use --xor 0 (no XOR/BNN steps)"
-                      % (chr(k), pos - 1))
+                print("ERROR: unknown XLRUP record at byte %d" % pos)
                 exit(-1)
 
-    def index_ascii(self):
+    def index_text(self):
         data = self.data
         pos = 0
         n = len(data)
@@ -150,13 +137,15 @@ class FratFile:
             end = data.find(b'\n', pos)
             if end == -1:
                 end = n
-            if data[pos] == 0x61: # 'a'
-                sp = data.find(b' ', pos + 2, end)
-                cid = int(data[pos + 2:sp])
-                self.offsets.append(pos)
-                self.ids.append(cid)
-                if data[sp + 1:sp + 3] == b'0 ':
-                    self.empty_cl = cid
+            # 'ID lits 0 hints 0', but not the deletion 'ID d ids 0'
+            if 0x30 <= data[pos] <= 0x39:
+                sp = data.find(b' ', pos, end)
+                if data[sp + 1] != 0x64:
+                    cid = int(data[pos:sp])
+                    self.offsets.append(pos)
+                    self.ids.append(cid)
+                    if data[sp + 1:sp + 3] == b'0 ':
+                        self.empty_cl = cid
             pos = end + 1
 
     def index(self):
@@ -164,10 +153,10 @@ class FratFile:
         if self.binary:
             self.index_binary()
         else:
-            self.index_ascii()
+            self.index_text()
         print("Indexed %d add steps T: %-3.2f s" % (len(self.offsets), time.time() - t))
         if self.empty_cl is None:
-            print("ERROR: no empty clause in the proof. Was the instance UNSAT?")
+            print("ERROR: no empty clause in the proof. Was the instance UNSAT? Use --xor 0")
             exit(-1)
         # ID -> position in offsets/ids (IDs are assigned increasingly)
         self.max_id = max(self.ids) if len(self.ids) else 0
@@ -180,17 +169,13 @@ class FratFile:
         pos = self.offsets[i]
         if self.binary:
             u, pos = self.unum(pos + 1)
-            pos = self.skip_ivec(pos)
-            assert self.data[pos] == 0x6c, "add step without hints, need a FRAT with full chains"
-            ret, pos = self.ivec(pos + 1)
+            ret, pos = self.id_list(self.skip_lists(pos, 1))
             return ret
         else:
             end = self.data.find(b'\n', pos)
-            line = self.data[pos:end].split(b' l ')
-            assert len(line) == 2, "add step without hints, need a FRAT with full chains"
-            ret = [int(x) for x in line[1].split()]
-            assert ret[-1] == 0
-            return ret[:-1]
+            toks = self.data[pos:end].split()
+            assert toks[-1] == b'0'
+            return [int(x) for x in toks[toks.index(b'0', 1) + 1:-1]]
 
     def mark_proof(self):
         """Backward pass: which add steps derive the empty clause."""
@@ -201,7 +186,7 @@ class FratFile:
         while todo:
             i = todo.pop()
             for h in self.hints(i):
-                if h < 0 or h > self.max_id: # RAT hints are negative
+                if h > self.max_id:
                     continue
                 j = self.pos_of_id[h]
                 if j >= 0 and not marked[j]: # original clauses are not add steps
@@ -331,10 +316,10 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
             tracked_already = True
             self.children_set += 1
 
-    def fix_up_frat_fast(self, fratfile, dbfname):
+    def fix_up_xlrup_fast(self, xlrupfile, dbfname):
         """the proof pass in C++: IDs out, uses back"""
-        exe = build_frat_uses()
-        base = "%s.fratuses-%d" % (dbfname, os.getpid())
+        exe = build_xlrup_uses()
+        base = "%s.xlrupuses-%d" % (dbfname, os.getpid())
         files = [base + x for x in (".confl", ".tracked", ".out")]
         try:
             self.c.execute("select id, conflicts from set_id_confl")
@@ -348,7 +333,7 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
             self.get_updates()
             np.array([[k, v[0]] for k, v in new_id_to_old_id.items()], dtype="<i8").reshape(-1, 2).tofile(files[1])
             sys.stdout.flush()
-            if subprocess.call([exe, fratfile] + files) != 0:
+            if subprocess.call([exe, xlrupfile] + files) != 0:
                 exit(-1)
             uses = np.fromfile(files[2], dtype=USE_DTYPE)
         finally:
@@ -361,13 +346,13 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
             for i in range(0, len(rows), 500000):
                 self.c.executemany(q % table, rows[i:i + 500000].tolist())
 
-    def fix_up_frat(self, frat):
-        marked = frat.mark_proof()
+    def fix_up_xlrup(self, xlrup):
+        marked = xlrup.mark_proof()
         t = time.time()
-        for i in range(len(frat.offsets)):
+        for i in range(len(xlrup.offsets)):
             if not marked[i]:
                 continue
-            final_resolvent_ID = frat.ids[i]
+            final_resolvent_ID = xlrup.ids[i]
             self.num_steps += 1
             tracked_already = final_resolvent_ID in new_id_to_old_id
             if opts.verbose:
@@ -381,27 +366,27 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                 continue
 
             confl = cl_to_conflict[final_resolvent_ID]
-            self.deal_with_chain(frat.hints(i), final_resolvent_ID, tracked_already, confl)
+            self.deal_with_chain(xlrup.hints(i), final_resolvent_ID, tracked_already, confl)
         print("Forward pass T: %-3.2f s" % (time.time() - t))
 
 
 if __name__ == "__main__":
-    usage = """usage: %(prog)s [opts] FRAT SQLITEDB
+    usage = """usage: %(prog)s [opts] XLRUP SQLITEDB
 
 Adds used_clauses and used_clauses_anc to the SQLite database"""
 
     parser = argparse.ArgumentParser(usage=usage)
-    parser.add_argument("fratfile", type=str, metavar='FRAT',
-                        help="FRAT proof written by the solver (--xlrup 0), ascii or binary")
+    parser.add_argument("xlrupfile", type=str, metavar='XLRUP',
+                        help="XLRUP proof written by the solver, text (--xlrup 1) or binary (--xlrup 2)")
     parser.add_argument("sqlitedb", type=str, metavar='SQLITEDB')
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output (implies --python)")
     parser.add_argument("--python", action="store_true", default=False,
-                        help="The slow reference pass in Python instead of frat_uses.cpp")
+                        help="The slow reference pass in Python instead of xlrup_uses.cpp")
 
     opts = parser.parse_args()
 
-    print("Using FRAT file %s" % opts.fratfile)
+    print("Using XLRUP file %s" % opts.xlrupfile)
     print("Using sqlite3db file %s" % opts.sqlitedb)
 
     t = time.time()
@@ -409,17 +394,17 @@ Adds used_clauses and used_clauses_anc to the SQLite database"""
         with Query(opts.sqlitedb) as q:
             q.delete_tbls("used_clauses")
             q.delete_tbls("used_clauses_anc")
-            q.fix_up_frat_fast(opts.fratfile, opts.sqlitedb)
+            q.fix_up_xlrup_fast(opts.xlrupfile, opts.sqlitedb)
         print("T: %-3.2f s" % (time.time() - t))
         exit(0)
 
-    frat = FratFile(opts.fratfile)
+    xlrup = XLRUPFile(opts.xlrupfile)
     with Query(opts.sqlitedb) as q:
         q.delete_tbls("used_clauses")
         q.delete_tbls("used_clauses_anc")
         q.get_conflicts()
         q.get_updates()
-        q.fix_up_frat(frat)
+        q.fix_up_xlrup(xlrup)
         q.dump_used_clauses()
 
         print("Proof steps in proof:   %10d" % q.num_steps)

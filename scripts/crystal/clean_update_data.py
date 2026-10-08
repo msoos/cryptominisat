@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# After fix_up_frat.py filled used_clauses: builds sum_cl_use (per
+# After fix_up_xlrup.py filled used_clauses: builds sum_cl_use (per
 # clause: how often, first and last use) and the indexes the later
 # queries need.
 #

@@ -8,8 +8,7 @@ export PRED_BIN="${PRED_BIN:-$(pwd)/../../build_pred/cryptominisat5}"
 # Optional: the normal build, run at the end for the comparison ("" to skip)
 export NORMAL_BIN="${NORMAL_BIN-$(pwd)/../../build/cryptominisat5}"
 
-# Optional: frat-xor + cake_xlrup to check the proof. Set either to "" to skip.
-export FRAT_XOR="${FRAT_XOR-$(pwd)/../fuzz/frat-rs}"
+# Optional: cake_xlrup to check the proof. Set to "" to skip.
 export CAKE_XLRUP="${CAKE_XLRUP-$(pwd)/../fuzz/cake_xlrup}"
 
 # Data gathering

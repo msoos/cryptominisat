@@ -586,7 +586,7 @@ class Tester:
         self.last_solver_base_cmd = command
         if fname_frat:
             # proofs are emitted in XLRUP, checked directly by cake_xlrup
-            command += " --xlrup 1 "
+            command += " --xlrup %d " % (2 if self.xlrup_binary else 1)
         if fname is not None:
             command += " %s " % fname
         if fname_frat:
@@ -752,10 +752,10 @@ class Tester:
             return
 
         # it's UNSAT, the solver emitted XLRUP: check it with the verified
-        # checker directly, NO elaboration (frat-rs) involved
+        # checker directly
         if fname_frat:
-            toexec = "./cake_xlrup {cnf} {proof}"
-            toexec = toexec.format(cnf=fname, proof=fname_frat)
+            toexec = "./cake_xlrup {mode} {cnf} {proof}"
+            toexec = toexec.format(mode=self.cake_mode(), cnf=fname, proof=fname_frat)
             print("Checking with cake_xlrup.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput3 = p.communicate()[0]
@@ -793,6 +793,9 @@ class Tester:
                 self.write_repro_script(fname)
                 exit()
 
+    def cake_mode(self):
+        return "--binary" if self.xlrup_binary else "--no-binary"
+
     def write_repro_script(self, fname, fname_frat=None):
         script_path = unique_file("repro", ".sh")
         base_cmd = self.last_solver_base_cmd.strip()
@@ -803,8 +806,8 @@ class Tester:
             if fname_frat:
                 f.write("XLRUP=$(mktemp --suffix=.xlrup)\n")
                 f.write("\n")
-                f.write('%s --xlrup 1 "$CNF" "$XLRUP"\n' % base_cmd)
-                f.write('./cake_xlrup "$CNF" "$XLRUP"\n')
+                f.write('%s --xlrup %d "$CNF" "$XLRUP"\n' % (base_cmd, 2 if self.xlrup_binary else 1))
+                f.write('./cake_xlrup %s "$CNF" "$XLRUP"\n' % self.cake_mode())
                 f.write("\n")
                 f.write('rm -f "$XLRUP"\n')
             else:
@@ -859,6 +862,7 @@ class Tester:
         fname = unique_file("fuzzTest")
         fname_frat = None
         if self.frat:
+            self.xlrup_binary = random.choice([True, False])
             fname_frat = unique_file("fuzzTest-frat")
 
         # create the fuzz file

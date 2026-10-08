@@ -18,11 +18,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# Tests fix_up_frat.py: a hand-made proof with the expected uses written
-# out, then random proofs (ascii and binary) on which frat_uses.cpp and
+# Tests fix_up_xlrup.py: a hand-made proof with the expected uses written
+# out, then random proofs (text and binary) on which xlrup_uses.cpp and
 # the Python reference pass (--python) must fill the same tables.
 #
-# usage: test_frat_uses.py [--rounds N] [--real FRAT RAWDB]
+# usage: test_xlrup_uses.py [--rounds N] [--real XLRUP RAWDB]
 #   --real: also compare the two passes on a proof the solver wrote
 
 import argparse
@@ -35,7 +35,7 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIX = os.path.join(HERE, "fix_up_frat.py")
+FIX = os.path.join(HERE, "fix_up_xlrup.py")
 
 
 def leb(u):
@@ -54,19 +54,22 @@ def ivec(xs):
     return b"".join(leb(2 * abs(x) + (1 if x < 0 else 0)) for x in xs) + b"\0"
 
 
-def write_frat(fname, steps, binary):
-    """steps: (kind, id, lits, hints or None)"""
+def idvec(xs):
+    return b"".join(leb(2 * x) for x in xs) + b"\0"
+
+
+def write_xlrup(fname, steps, binary):
+    """steps: (kind, id, lits, hints or None); XLRUP has no 'o' or 'f' steps"""
     with open(fname, "wb") as f:
         for kind, cid, lits, hints in steps:
-            if binary:
-                f.write(kind.encode() + leb(cid) + ivec(lits))
-                if hints is not None:
-                    f.write(b"l" + ivec(hints))
-            else:
-                l = "%s %d %s0" % (kind, cid, "".join("%d " % x for x in lits))
-                if hints is not None:
-                    l += " l %s0" % "".join("%d " % x for x in hints)
-                f.write((l + "\n").encode())
+            if kind == "a":
+                if binary:
+                    f.write(b"a" + leb(2 * cid) + ivec(lits) + idvec(hints))
+                else:
+                    f.write(("%d %s0 %s0\n" % (cid, "".join("%d " % x for x in lits),
+                                               "".join("%d " % x for x in hints))).encode())
+            elif kind == "d":
+                f.write(b"d" + idvec([cid]) if binary else ("%d d %d 0\n" % (cid, cid)).encode())
 
 
 def write_db(fname, confl, updates):
@@ -81,9 +84,9 @@ def write_db(fname, confl, updates):
     conn.close()
 
 
-def run(frat, db, python):
+def run(proof, db, python):
     """returns (exit code, used_clauses rows, used_clauses_anc rows)"""
-    cmd = [FIX, frat, db] + (["--python"] if python else [])
+    cmd = [FIX, proof, db] + (["--python"] if python else [])
     p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if p.returncode != 0:
         return p.returncode, None, None
@@ -98,12 +101,12 @@ def both(d, steps, confl, updates, expect=None, expect_fail=False):
     """every encoding and pass must agree (and match expect, if given)"""
     res = []
     for binary in (False, True):
-        frat = os.path.join(d, "p.frat")
-        write_frat(frat, steps, binary)
+        proof = os.path.join(d, "p.xlrup")
+        write_xlrup(proof, steps, binary)
         for python in (False, True):
             db = os.path.join(d, "t.db")
             write_db(db, confl, updates)
-            res.append(run(frat, db, python))
+            res.append(run(proof, db, python))
     if expect_fail:
         assert all(r[0] != 0 for r in res), "expected a failure, got %s" % [r[0] for r in res]
         return 0
@@ -138,7 +141,7 @@ def test_hand(d):
         ("o", 1, [1], None),
         ("a", 3, [2, 5], [1]),
         ("a", 4, [2], [3, 1]),
-        ("a", 5, [], [4, -1, 999]),
+        ("a", 5, [], [4, 999]),
     ]
     both(d, steps, [(3, 10), (4, 20), (5, 30)], [(3, 3), (3, 4)],
          expect=([(3, 20, 1.0), (3, 30, 1.0)], [(3, 20, 1.0), (3, 30, 1.0)]))
@@ -172,8 +175,6 @@ def random_proof(rng):
     for _ in range(n_add):
         nid += rng.randint(1, 3)
         hints = [rng.choice(ids[-40:]) for _ in range(rng.randint(1, 6))]
-        if rng.random() < 0.05:
-            hints.append(-rng.choice(ids))
         if rng.random() < 0.03:
             hints.append(nid + 1000000)
         steps.append(("a", nid, [rng.randint(1, 50) * rng.choice([-1, 1]) for _ in range(rng.randint(1, 5))], hints))
@@ -196,25 +197,25 @@ def random_proof(rng):
     return steps, confl, updates
 
 
-def test_real(d, frat, rawdb):
+def test_real(d, proof, rawdb):
     res = []
     for python in (False, True):
         db = os.path.join(d, "real.db")
         shutil.copy(rawdb, db)
-        res.append(run(frat, db, python))
+        res.append(run(proof, db, python))
     assert res[0][0] == 0 and res[1][0] == 0, "a run failed: %s %s" % (res[0][0], res[1][0])
-    assert res[0] == res[1], "the passes disagree on %s" % frat
-    print("OK: %s, %d uses, %d with ancestors" % (frat, len(res[0][1]), len(res[0][2])))
+    assert res[0] == res[1], "the passes disagree on %s" % proof
+    print("OK: %s, %d uses, %d with ancestors" % (proof, len(res[0][1]), len(res[0][2])))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--rounds", type=int, default=40)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--real", nargs=2, metavar=("FRAT", "RAWDB"))
+    parser.add_argument("--real", nargs=2, metavar=("XLRUP", "RAWDB"))
     opts = parser.parse_args()
 
-    d = tempfile.mkdtemp(prefix="test-frat-uses-")
+    d = tempfile.mkdtemp(prefix="test-xlrup-uses-")
     try:
         test_hand(d)
         rng = random.Random(opts.seed)

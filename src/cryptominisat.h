@@ -112,7 +112,7 @@ namespace CMSat {
         // Set a command-line option by name, without the leading "--", e.g.
         // set_option("maxmatrixrows", "5000"). Only the options marked lib in
         // conf_options.h, plus "polar". Must be called before any variable or
-        // clause is added and before solve()/simplify(), FRAT or SQL. Throws
+        // clause is added and before solve()/simplify(), XLRUP or SQL. Throws
         // std::invalid_argument on an unknown option or bad value,
         // std::runtime_error if called too late.
         void set_option(const std::string& name, const std::string& value);
@@ -231,8 +231,7 @@ namespace CMSat {
         uint64_t get_sum_decisions() const; //!< Returns sum of all decisions since construction across all the threads
 
         void print_stats(double wallclock_time_started = 0) const; //print solving stats. Call after solve()/simplify()
-        void set_frat(FILE* os); //set frat to ostream, e.g. stdout or a file
-        void set_xlrup(FILE* os); //emit XLRUP directly, checkable by cake_xlrup
+        void set_xlrup(FILE* os, bool binary = false); //emit XLRUP directly, checkable by cake_xlrup (text: --no-binary)
         void reserve_input_clause_ids(uint32_t num_cls); //XLRUP position-numbering
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.

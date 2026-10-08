@@ -15,8 +15,8 @@ CNF="$DIR/rand3-230-$SEED.cnf"
 cnfgen --seed "$SEED" randkcnf 3 230 1000 > "$CNF"
 echo "instance: $CNF"
 
-# KEEP_FRAT: the --skip-solve passes below need the proof
-DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" KEEP_FRAT=1 \
+# KEEP_PROOF: the --skip-solve passes below need the proof
+DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" KEEP_PROOF=1 \
     ./ballofcrystal.sh "$CNF" > "$DIR/run.out" 2>&1 || {
     echo "FAILED, see $DIR/run.out"; tail -20 "$DIR/run.out"; exit 1; }
 tail -6 "$DIR/run.out"
@@ -27,10 +27,10 @@ if cmp -s "$CNF-dir/predictor-used_later-disc-xgb.json" "$CNF-dir/predictor-used
 fi
 # a second learning pass must give the same predictors
 DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" \
-    KEEP_FRAT=1 ./ballofcrystal.sh --skip-solve "$CNF" > "$DIR/run2.out" 2>&1 || {
+    KEEP_PROOF=1 ./ballofcrystal.sh --skip-solve "$CNF" > "$DIR/run2.out" 2>&1 || {
     echo "FAILED, see $DIR/run2.out"; tail -3 "$DIR/run2.out"; exit 1; }
 # the C++ proof pass against the Python one, hand-made and this proof
-./test_frat_uses.py --real "$CNF-dir/data.frat" "$CNF-dir/data.db-raw" || exit 1
+./test_xlrup_uses.py --real "$CNF-dir/data.xlrup" "$CNF-dir/data.db-raw" || exit 1
 for f in "$CNF-dir"/predictor-*.json; do
     cp "$f" "$f.first"
 done
@@ -71,8 +71,8 @@ if [[ -x "$STATSPRED" ]]; then
     source ./setparams_ballofcrystal.sh > /dev/null
     (cd "$DIR" && "$STATSPRED" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
         --cldatadumpratio 0.1 --cllockdatagen "$CLLOCK" --everypred "$EVERYPRED" --clid --sql 2 \
-        --sqlitedb round2.db --xlrup 0 --predmimic 1 --reducerounds 2 --zero-exit-status "$CNF" round2.frat > round2.out 2>&1)
-    rm -f "$DIR/round2.frat"
+        --sqlitedb round2.db --xlrup 2 --predmimic 1 --reducerounds 2 --zero-exit-status "$CNF" round2.xlrup > round2.out 2>&1)
+    rm -f "$DIR/round2.xlrup"
     function gone() { python3 -c "
 import sqlite3, sys
 print(sqlite3.connect(sys.argv[1]).execute('select count(), sum(gone) from reduceDB').fetchone())" "$1"; }
