@@ -93,7 +93,6 @@ class DLL_PUBLIC SolverConf
         //Predictor (FINAL_PREDICTOR) and data gathering (STATS_NEEDED)
         unsigned every_pred_reduce; //satzilla features every N conflicts
         int      dump_pred_distrib;
-        double   pred_thresh; //set: remove the candidates scored below this, within 0.5x-2x of the normal count
         int      pred_mimic = 0; //self-check: score = the normal build's order
         double    clause_decay;
 

@@ -195,16 +195,6 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
         percent = high - (high - low) / std::log10((double)num_reductions + 9.0);
     }
     size_t target = 1e-2 * percent * (double)stack.size();
-    const size_t normal_target = target;
-    #ifdef FINAL_PREDICTOR
-    if (!std::isnan(solver->conf.pred_thresh)) {
-        size_t below = 0;
-        while (below < stack.size()
-            && pred_of(solver->cl_alloc.ptr(stack[below])) < solver->conf.pred_thresh) below++;
-        rstats.pred_below_thresh += below;
-        target = std::min(std::max(below, target/2), target*2);
-    }
-    #endif
     if (target > stack.size()) target = stack.size();
     cl_reduced = target;
     for (size_t i = 0; i < target; i++) {
@@ -227,7 +217,7 @@ void ReduceDB::mark_useless_redundant_clauses_as_garbage()
     //The normal build's also in the predictor build: what the model keeps
     //has no glue limit, and every learnt clause would count as likely kept
     lim_keptglue = lim_keptsize = 0;
-    for (size_t i = normal_target; i < by_glue.size(); i++) {
+    for (size_t i = target; i < by_glue.size(); i++) {
         const Clause* cl = solver->cl_alloc.ptr(by_glue[i]);
         lim_keptglue = std::max(lim_keptglue, cl->stats.glue);
         lim_keptsize = std::max<uint32_t>(lim_keptsize, cl->size());
@@ -416,8 +406,6 @@ void ReduceDB::print_reduce_stats() const
     print_stats_line(p, "reduce kept tier1-keep", r.kept_keep,
         stats_line_percent(r.kept_keep, r.cands + r.kept_used + r.kept_keep + r.locked), "% of red cls seen");
     #ifdef FINAL_PREDICTOR
-    print_stats_line(p, "reduce pred below thresh", r.pred_below_thresh,
-        stats_line_percent(r.pred_below_thresh, r.cands), "% of candidates");
     print_out_of_range();
     #endif
     print_stats_line(p, "reduce kept locked", r.locked,

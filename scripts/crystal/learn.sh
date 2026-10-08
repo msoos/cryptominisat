@@ -90,6 +90,6 @@ for table in used_later used_later_anc; do
         --gatheredby "$(awk '{print $1}' "$OUT/gathered_by" | sort -u | tr '\n' ' ' | sed 's/ $//')" \
         > "$OUT/out-${table}" 2>&1
     grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}" | head -3
-    grep -E "^use kept at reduce|^--predthresh" "$OUT/out-${table}" || true
+    grep -E "^use kept at reduce" "$OUT/out-${table}" || true
 done
 echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predloc $OUT file.cnf"

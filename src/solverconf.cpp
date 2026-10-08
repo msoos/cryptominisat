@@ -70,7 +70,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         , every_pred_reduce(10000)
         , dump_pred_distrib(0)
-        , pred_thresh(std::numeric_limits<double>::quiet_NaN())
         , clause_decay(0.999)
 
         //Learnt clause DB reduction, as in CaDiCaL

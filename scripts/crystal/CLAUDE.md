@@ -56,8 +56,6 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   `DIR/predictor-<table>-disc-xgb.json`; empty = the embedded one),
   `--predanc 0|1` (with `--predloc`: 0 = the `used_later` model, 1 =
   `used_later_anc`),
-  `--predthresh T` (candidates scored below T go, between half and
-  twice the normal count; off unless given),
   `--dumppreddistrib 1`, `--preddump FILE`, `--predmimic 1`
   (self-check: the score is the glue/size order, so the run must equal
   the normal build's; `test_small.sh` checks it).

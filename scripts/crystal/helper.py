@@ -578,14 +578,7 @@ def kept_by_rule(glue, used, rounds=ROUNDS):
     return ((glue <= TIER1_GLUE) & (used > 0)) | (used > MAX_USED - rounds)
 
 
-def removed_by_thresh(score, thresh, remove=REMOVE):
-    """--predthresh: the share of the candidates scored below it goes,
-    at least half and at most twice the share 'remove'"""
-    n = int(remove * len(score))
-    return min(max(int((score < thresh).sum()), n // 2), 2 * n, len(score)) / max(len(score), 1)
-
-
-def policies_of_reduce(g, pred, truth, rounds=ROUNDS, remove=REMOVE, thresh=None):
+def policies_of_reduce(g, pred, truth, rounds=ROUNDS, remove=REMOVE):
     """policy -> the rows it keeps at one reduce, and the rows kept by rule"""
     glue = g["rdb0.glue"].to_numpy(dtype=float)
     size = g["rdb0.size"].to_numpy(dtype=float)
@@ -593,23 +586,7 @@ def policies_of_reduce(g, pred, truth, rounds=ROUNDS, remove=REMOVE, thresh=None
     ret = {"normal": rule_then_best(rule, -glue, glue, size, remove)}
     ret["order"] = rule_then_best(rule, pred, glue, size, remove)
     ret["oracle"] = rule_then_best(rule, truth, glue, size, remove)
-    if thresh is not None:
-        ret["count"] = rule_then_best(rule, pred, glue, size, removed_by_thresh(pred[~rule], thresh, remove))
     return ret, rule
-
-
-def score_threshold(df, pred, rounds=ROUNDS, remove=REMOVE, min_rows=50):
-    """the --predthresh that removes the share 'remove' of the candidates
-    at the median reduce of df"""
-    df = df.reset_index(drop=True)
-    pred = np.asarray(pred, dtype=float)
-    qs = []
-    for _, g in df.groupby([df["fname"].astype(str), df["rdb0_common.conflicts"]]):
-        g = g[(g["rdb0.is_ternary_resolvent"] == 0) & g["rdb0.glue"].notna()]
-        rule = kept_by_rule(g["rdb0.glue"].to_numpy(dtype=float), g["rdb0.used"].to_numpy(dtype=float), rounds)
-        if len(g) >= min_rows and (~rule).sum() >= 10:
-            qs.append(np.quantile(pred[g.index.to_numpy()][~rule], remove))
-    return float(np.median(qs)) if qs else None
 
 
 def needed_of_reduce(g, pred, truth, rule, use):
@@ -625,7 +602,7 @@ def needed_of_reduce(g, pred, truth, rule, use):
             for k, sc in (("glue", -glue), ("order", pred), ("oracle", truth))}
 
 
-def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE, thresh=None):
+def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE):
     """The solver's reduce replayed on a fair sample of the clauses at
     some reduces. By rule it keeps the tier1 clauses with 'used' life
     left and the ones learnt or used in the last 'rounds' reduce
@@ -635,8 +612,6 @@ def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE
       order   the predictor build: the candidates by the model
       oracle  the candidates by their future use: the most an order of
               the candidates can keep
-      count   with 'thresh': as order, but the candidates scored below
-              it go (--predthresh); 'count cls': the clauses it keeps
     and for the use that the solver's own reduce (2 rounds, 75%) holds,
     the share of the clauses that has to be kept when the candidates go by
       glue needs, order needs, oracle needs
@@ -654,11 +629,9 @@ def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE
             if len(g) < min_rows or truth.sum() <= 0:
                 continue
             p = pred[g.index.to_numpy()]
-            kept, rule = policies_of_reduce(g, p, truth, rounds, remove, thresh)
+            kept, rule = policies_of_reduce(g, p, truth, rounds, remove)
             r = {"rule cls": 100.0 * rule.mean(), "rule use": 100.0 * truth[rule].sum() / truth.sum(),
                  "cls": 100.0 * kept["normal"].mean()}
-            if thresh is not None:
-                r["count cls"] = 100.0 * kept["count"].mean()
             for k, v in kept.items():
                 r[k] = 100.0 * truth[v].sum() / truth.sum()
             solver = policies_of_reduce(g, p, truth)[0]["normal"]
