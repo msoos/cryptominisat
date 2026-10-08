@@ -106,7 +106,12 @@ class DLL_PUBLIC SolverConf
         unsigned reducetier1glue;  ///<Glue at/below which learnt clauses are kept forever
         unsigned reducetier2glue;  ///<Glue at/below which learnt clauses get a double life
         int reduce_keep_used = 1;  ///<Keep any learnt used since the last reduce, as CaDiCaL. Kissat always reduces tier3: 2.7x slower on approxmc's incremental XOR workload
-        unsigned reduce_rounds = 2; ///<Reduces a clause is kept for after it was learnt or used
+        ///Reduces a clause is kept for after it was learnt or used
+        #ifdef FINAL_PREDICTOR
+        unsigned reduce_rounds = 1;
+        #else
+        unsigned reduce_rounds = 2;
+        #endif
         int dynamic_tiers = 0;     ///<Recompute tier2 from glue usage, as kissat. Off: +14% time on UTI-20-10p0
         int      flush;            ///<Enable full flushing of unused redundant clauses
         unsigned flushfactor;      ///<Flush interval multiplier

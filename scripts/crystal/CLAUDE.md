@@ -63,8 +63,8 @@ Solver options (all BEFORE the CNF: anything after it is the proof file):
   --cldatadumpratio R --cllockdatagen R --everypred N`, all set by
   `ballofcrystal.sh`.
 
-- both: `--reducerounds N` (default 2: a clause is kept for N reduces
-  after it was learnt or last used), `--reducetarget P` (default 75:
+- both: `--reducerounds N` (a clause is kept for N reduces after it
+  was learnt or last used; default 2, predictor builds 1), `--reducetarget P` (default 75:
   the percent of the candidates removed).
 
 Only WHICH candidates a reduce removes differs between the builds, so a
@@ -274,8 +274,9 @@ depth 5. On the 9 hold-outs, 3 seeds, `--xor 0`, against the normal
 build: **conflicts 96.7% [87.0, 105.0]**, all solved. Run one at a
 time, 2 seeds: conflicts 99.8% [94, 106], **time 100.9% [90, 113]**,
 time per conflict 101% [94, 109]. Seed noise of the normal build:
-3-9%. So the model is where glue is, in conflicts and in time, not
-past it. (Before the BVE tie-break below the same model measured
+3-9%. So at two protected rounds the model is where glue is, in
+conflicts and in time; at one round, its default now, the time is 92.6%
+[83, 103] (below). (Before the BVE tie-break below the same model measured
 101.6% [93, 111] in conflicts and 112.5% [101, 128] in time: the
 tie-break moved the normal build by as much as the model does, 106.1%
 [95, 121] new vs old.)
@@ -348,6 +349,8 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   | model, 1 round | 96.4% [85, 108] | 82.4% [69, 98] |
   | model, 1 round, 50% removed | 96.1% [87, 105] | 90.8% [76, 105] |
   | model, 0 rounds | 121.4% [101, 142] | 95.9% [71, 125] |
+  | normal, 1 round, 50% removed | 102.7% [91, 118] | 91.1% [73, 110] |
+  | normal, 0 rounds | 130.4% [112, 155] | 99.2% [81, 121] |
 
   Glue cannot drop the second round, the model can: model against
   normal, both at 1 round, is 89.5% [81, 97] in conflicts and 81.7%
@@ -355,7 +358,15 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   against the normal build: conflicts 97.6% [88, 110], **time 92.6%
   [83, 103]**, time per conflict 94.9% [90, 99]. No protected round at
   all loses. Removing less at 1 round buys nothing: the same conflicts
-  for more propagation.
+  for more propagation. So the predictor builds default to
+  `--reducerounds 1`; `--predmimic 1` needs `--reducerounds 2` to equal
+  the normal build.
+- **A count from the score lost.** Removing the candidates scored
+  below a threshold (set so that the median training reduce removes
+  75%, clamped to half and twice that) kept 98.5% of the use against
+  96.2% offline, for 3.6 points more clauses. In the solver: 104.5%
+  [98, 111] of the conflicts and 115.8% [104, 128] of the bogoprops of
+  the fixed 75%. `--predthresh` is gone.
 - **Bogoprops are the cost when the box is shared.** They do not move
   with the load, and correlate 0.93 with the time of a run made alone;
   the predictor build pays about 8% more seconds per bogoprop.

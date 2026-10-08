@@ -56,11 +56,11 @@ MODEL="$CNF-dir/predictor-used_later-disc-xgb.json"
 ./check_pred_features.py "$DIR/pred.dump" "$MODEL" || exit 1
 rm -f "$DIR/pred.dump"
 # with the normal build's order as its score the predictor build must BE
-# the normal build: the same conflicts
+# the normal build: the same conflicts (its default is one round less)
 NORMAL="${NORMAL_BIN:-$SCRIPTDIR/../../build/cryptominisat5}"
 function confl() { "$@" --zero-exit-status "$CNF" | grep -m1 "^c conflicts" | awk '{print $4}'; }
 want=$(confl "$NORMAL")
-got=$(confl "$PRED" --predmimic 1)
+got=$(confl "$PRED" --predmimic 1 --reducerounds 2)
 [[ -n "$want" && "$got" == "$want" ]] || {
     echo "FAILED: --predmimic 1 gives $got conflicts, the normal build $want"; exit 1; }
 echo "OK: the predictor build with the glue order as score equals the normal build ($want conflicts)"
@@ -71,7 +71,7 @@ if [[ -x "$STATSPRED" ]]; then
     source ./setparams_ballofcrystal.sh > /dev/null
     (cd "$DIR" && "$STATSPRED" --xor 0 --presimp 1 --sqlitedboverwrite 1 \
         --cldatadumpratio 0.1 --cllockdatagen "$CLLOCK" --everypred "$EVERYPRED" --clid --sql 2 \
-        --sqlitedb round2.db --xlrup 0 --predmimic 1 --zero-exit-status "$CNF" round2.frat > round2.out 2>&1)
+        --sqlitedb round2.db --xlrup 0 --predmimic 1 --reducerounds 2 --zero-exit-status "$CNF" round2.frat > round2.out 2>&1)
     rm -f "$DIR/round2.frat"
     function gone() { python3 -c "
 import sqlite3, sys
