@@ -348,6 +348,7 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   | model, 2 rounds | 96.7% [86, 105] | 89.0% [71, 105] |
   | model, 1 round | 96.4% [85, 108] | 82.4% [69, 98] |
   | model, 1 round, 50% removed | 96.1% [87, 105] | 90.8% [76, 105] |
+  | model, 1 round, 90% removed | 115.6% [105, 129] | 100.8% [85, 122] |
   | model, 0 rounds | 121.4% [101, 142] | 95.9% [71, 125] |
   | normal, 1 round, 50% removed | 102.7% [91, 118] | 91.1% [73, 110] |
   | normal, 0 rounds | 130.4% [112, 155] | 99.2% [81, 121] |
@@ -357,8 +358,8 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   [71, 94] in bogoprops. Run alone, 2 seeds, the model at 1 round
   against the normal build: conflicts 97.6% [88, 110], **time 92.6%
   [83, 103]**, time per conflict 94.9% [90, 99]. No protected round at
-  all loses. Removing less at 1 round buys nothing: the same conflicts
-  for more propagation. So the predictor builds default to
+  all loses. Removing less at 1 round buys nothing (the same
+  conflicts for more propagation), removing more loses on both. So the predictor builds default to
   `--reducerounds 1`; `--predmimic 1` needs `--reducerounds 2` to equal
   the normal build.
 - **A count from the score lost.** Removing the candidates scored
