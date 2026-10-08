@@ -243,10 +243,11 @@ ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh
 - This box: 1 physical core, 7 GB. Time runs one at a time, and a cached
   normal run (`EVAL_NORMAL_CACHE`) must have been made under the same
   load as what it is compared to.
-- The second round: `STATS_BIN=../../build_stats_pred/cryptominisat5
+- A further round: `STATS_BIN=../../build_stats_pred/cryptominisat5
   STATS_OPTS="--predloc DIR --predanc 0" ballofcrystal.sh --gather-only`
-  on a second copy of the CNFs, then `learn.sh` on the dirs of both
-  rounds (it says what drove each).
+  on another copy of the CNFs, then `learn.sh` on the dirs of all the
+  rounds (it says what drove each). The build keeps a clause for one
+  round, as the predictor build does.
 - Features are float32 on both sides; ratios beyond it are "missing".
 - Training is deterministic: the same frames give the same model.
 - Fuzz the normal build after touching the solver:
@@ -255,6 +256,7 @@ ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh
   round-1 dirs), `round2/cnf/` (round 2, `round2/gather.sh`),
   `general/models/n21r2/` (the embedded model's learn dir,
   `round2/train-both.txt` its inputs, `round2/learn-both.sh`),
+  `round3/` (round 3, `learn3.sh`, its model `general/models/n21r3/`),
   `general/ladder.sh` + `lsum.py` (the hold-out A/B, 9 x 3, two at a
   time: conflicts only), `general/timed.sh` (one at a time, for times),
   `general/holdout9.txt`, `sr19/survey*.sh` and `gather.sh`.
@@ -267,7 +269,9 @@ this box, 18 of 400), `FIXED=20000`. 21 train, 9 hold out (the
 families hid, jkkk, post-cbmc, schup, Steiner, sv-comp). All 30 were
 gathered with glue driving the reduce (round 1), and 28 again with the
 round-1 ranking model driving it (round 2; UTI ran out of disk,
-ps_200_301_70 fails a frame check).
+ps_200_301_70 fails a frame check), and 27 with the embedded model
+driving it at one protected round (round 3; SGI is 95% `gone` rows,
+f6bidw and ps_200_301_70 fail a frame check).
 
 The embedded model: a ranker on both rounds of the 21, 40 trees of
 depth 5. On the 9 hold-outs, 3 seeds, `--xor 0`, against the normal
@@ -380,6 +384,14 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   round 2, where the model itself chose what stays. Training on both
   rounds does not change either number, the solver moved from 103.5%
   to 101.6% (inside the noise).
+- **A third round, at one protected round, did not move the solver.**
+  There the rule keeps 70% of the clauses with 90.5% of the use, the
+  embedded model is at glue (-0.10, better on 6 of 9), and the model
+  trained on all three rounds is ahead on every hold-out (+0.56, 9 of
+  9; unchanged on rounds 1 and 2). In the solver it is 106.5% [99,
+  117] of the embedded model's conflicts and 106.1% [94, 122] of its
+  bogoprops. Not embedded. Half a point of use offline is below what a
+  9 x 3 ladder can see, in either direction.
 - Most rows are of clauses the solver would not have: 64-93% of the
   rows of an instance are `gone`. The numbers measured before `gone`
   (model +2.5 points over a glue sort) were about those.

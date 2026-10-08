@@ -83,8 +83,8 @@ survives.
       Delete the loser from the pipeline.
 - [ ] Rounds: regather train under the learnt policy
       (`build_stats_pred`), train on all rounds, until the round-2 and
-      round-3 numbers agree. One extra round was worth 2 points here,
-      inside the noise.
+      round-3 numbers agree. Here round 2 was worth 2 points and
+      round 3 cost 6, both inside the noise.
 - [ ] How many to keep: the predictor build's `--reducerounds 1`
       was 7% of the time here, inside the interval. Run 1 against 2 on
       the dev set.
