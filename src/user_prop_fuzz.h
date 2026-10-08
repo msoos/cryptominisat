@@ -67,6 +67,15 @@ public:
         between_pct   = chance(50) ? 10 + next() % 50 : 0;
         budget_pct    = chance(30) ? 20 + next() % 60 : 0;
         interrupt_pct = chance(30) ? 1 + next() % 3 : 0;
+        // Interactions need a particular sequence of actions, which uniform
+        // choices rarely make. So a seed may come back to a few variables
+        // again and again, act several times in a row, take up again what it
+        // dropped, and aim at what it has just done.
+        focus_pct     = chance(40) ? 30 + next() % 61 : 0;
+        focus_size    = 1 + next() % 8;
+        burst_pct     = chance(40) ? 10 + next() % 50 : 0;
+        recall_pct    = chance(50) ? 20 + next() % 60 : 0;
+        target_pct    = chance(50) ? 20 + next() % 60 : 0;
         roll_flags();
         s->set_lazy_external_reasons(chance(70));
         // A replaced variable cannot be observed any more: keep every
@@ -203,11 +212,22 @@ public:
         if (interruptible && chance(interrupt_pct)) s->interrupt_asap();
         if (backtracks_left > 0 && trail.size() > 2 && chance(5)) {
             backtracks_left--;
-            s->force_backtrack(next() % (trail.size()-1));
+            const uint32_t level = next() % (trail.size()-1);
+            s->force_backtrack(level);
+            // Decide what the backtrack unassigns: the decision is made on the
+            // trail after it
+            if (chance(target_pct)) {
+                const auto& lev = trail[level + 1 + next() % (trail.size()-1-level)];
+                if (!lev.empty()) return chance(50) ? lev[next() % lev.size()] : ~lev[next() % lev.size()];
+            }
         }
         perturb();
         if (order.empty() || !chance(decide_pct)) return lit_Undef;
-        const uint32_t v = order[next() % order.size()];
+        uint32_t v = order[next() % order.size()];
+        if (!focus.empty() && chance(focus_pct)) {
+            const uint32_t f = focus[next() % focus.size()];
+            if (observed_var(f)) v = f;
+        }
         // An assigned literal is ignored
         if (val[v] != l_Undef && !chance(stale_pct)) return lit_Undef;
         return Lit(v, chance(50));
@@ -303,7 +323,7 @@ private:
     uint32_t volunteer_pct, forget_pct, decide_pct, backtracks_left, flip_pct;
     uint32_t perturb_pct, unobserve_pct, reset_pct, new_var_pct, new_vars_left, stale_pct;
     uint32_t model_bt_left, ignored_pct, shape_pct, between_pct, budget_pct;
-    uint32_t interrupt_pct;
+    uint32_t interrupt_pct, focus_pct, focus_size, burst_pct, recall_pct, target_pct;
     bool solved = false;
     bool interruptible = false;
     bool perturbing = false;
@@ -317,6 +337,8 @@ private:
     std::vector<lbool> val;              // by var, from notifications alone
     std::vector<std::vector<Lit>> trail = std::vector<std::vector<Lit>>(1);
     std::vector<Lit> clause_out, reason_out;  // as they are handed over
+    std::vector<uint32_t> focus;         // the few variables a seed comes back to
+    std::vector<uint32_t> dropped;       // no longer observed, to take up again
     size_t reason_at = 0, clause_at = 0;
 
     uint32_t next() {
@@ -397,11 +419,12 @@ private:
         val[v] = l_Undef;
         order.erase(std::find(order.begin(), order.end(), v));
         drop_unobserved();
+        remember_dropped(v);
     }
 
     void reset() {
         s->reset_observed_vars();
-        for(const uint32_t v: order) { is_observed[v] = 0; val[v] = l_Undef; }
+        for(const uint32_t v: order) { is_observed[v] = 0; val[v] = l_Undef; remember_dropped(v); }
         order.clear();
         drop_unobserved();
     }
@@ -415,26 +438,74 @@ private:
         }
     }
 
+    void remember_dropped(uint32_t v) {
+        if (dropped.size() < 64) dropped.push_back(v);
+        else dropped[next() % dropped.size()] = v;
+    }
+
+    // Often one of the seed's few variables, picked from the clauses it holds
+    uint32_t pick_var() {
+        if (focus.empty() && focus_pct > 0 && !held.empty()) {
+            for(uint32_t i = 0; i < focus_size; i++) {
+                const auto& cl = held[next() % held.size()];
+                focus.push_back(cl[next() % cl.size()].var());
+            }
+        }
+        if (!focus.empty() && chance(focus_pct)) return focus[next() % focus.size()];
+        return next() % s->nVars();
+    }
+
+    // Often one dropped before, which may be fixed at the root by now and is
+    // then owed a notification again
     void observe_some() {
         if (s->nVars() == 0) return;
-        const uint32_t v = next() % s->nVars();
+        uint32_t v = pick_var();
+        if (!dropped.empty() && chance(recall_pct)) {
+            const size_t i = next() % dropped.size();
+            v = dropped[i];
+            dropped[i] = dropped.back();
+            dropped.pop_back();
+        }
         if (!observed_var(v)) observe(v);
     }
 
+    // Sometimes the variable of a literal it propagated, while that holds:
+    // the solver can no longer explain it, so must backtrack over it
     void unobserve_some(const std::vector<Lit>* keep = nullptr) {
         if (order.empty()) return;
-        const uint32_t v = order[next() % order.size()];
+        uint32_t v = order[next() % order.size()];
+        if (chance(target_pct)) {
+            const Lit p = own_propagation();
+            if (p != lit_Undef) v = p.var();
+        } else if (!focus.empty() && chance(focus_pct)) {
+            const uint32_t f = focus[next() % focus.size()];
+            if (observed_var(f)) v = f;
+        }
         if (keep != nullptr) for(const Lit l: *keep) if (l.var() == v) return;
         unobserve(v);
     }
 
+    // A literal true above the root that this propagated at some point
+    Lit own_propagation() {
+        if (trail.size() < 2) return lit_Undef;
+        const auto& lev = trail[1 + next() % (trail.size()-1)];
+        for(const Lit l: lev) if (reason[l.toInt()] != 0) return l;
+        return lit_Undef;
+    }
+
     // What a callback may do, except those that must not change the solver:
     // change what is observed, which may backtrack, add a variable, or pin a
-    // phase, which notify_backtrack() may do too. Not again from a callback
-    // this one caused.
+    // phase, which notify_backtrack() may do too. Sometimes several in a row,
+    // but not again from a callback this one caused.
     void perturb(const std::vector<Lit>* keep = nullptr, const bool phase_only = false) {
         if (perturbing || !chance(perturb_pct)) return;
         perturbing = true;
+        const uint32_t actions = chance(burst_pct) ? 2 + next() % 4 : 1;
+        for(uint32_t a = 0; a < actions; a++) perturb_once(keep, phase_only);
+        perturbing = false;
+    }
+
+    void perturb_once(const std::vector<Lit>* keep, const bool phase_only) {
         if (phase_only) {
             if (s->nVars() > 0) s->phase(Lit(next() % s->nVars(), chance(50)));
         } else if (keep == nullptr && chance(reset_pct)) reset();
@@ -446,11 +517,10 @@ private:
             s->new_var();
             if (chance(50)) observe(s->nVars()-1);
         } else if (chance(phase_pct) && s->nVars() > 0) {
-            const uint32_t v = next() % s->nVars();
+            const uint32_t v = pick_var();
             if (chance(50)) s->phase(Lit(v, chance(50)));
             else s->unphase(v);
         } else observe_some();
-        perturbing = false;
     }
 
     // Only cb_decide() and cb_check_found_model() may backtrack
@@ -484,6 +554,7 @@ private:
         switch(next() % 6) {
             case 0:
                 s->disconnect_external_propagator();
+                for(const uint32_t v: order) remember_dropped(v);
                 order.clear();
                 std::fill(is_observed.begin(), is_observed.end(), 0);
                 std::fill(val.begin(), val.end(), l_Undef);
