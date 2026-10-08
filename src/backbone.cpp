@@ -275,7 +275,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     // ccnr and cadiback are both only given the clauses, so they cannot see an
     // XOR and would compute the backbone of a formula that is not ours
     if (!xorclauses.empty() || !gmatrices.empty()) {
-        verb_print(0, COLRED << "WARNING: BACKBONE SKIPPED, THE SYSTEM CONTAINS XORS"
+        verb_print(1, COLRED << "WARNING: BACKBONE SKIPPED, THE SYSTEM CONTAINS XORS"
                 << " (" << xorclauses.size() << " xor clauses, "
                 << gmatrices.size() << " matrices)" << COLDEF);
         return okay();
