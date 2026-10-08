@@ -1616,6 +1616,7 @@ lbool Searcher::search()
     ext_confl = PropBy();
     while (!params.must_stop
         || !confl.isnullptr() //always finish the last conflict
+        || !ext_confl.isnullptr() //...including one left by a model check
     ) {
         //IPASIR-UP: a conflict found while checking a complete assignment
         confl = ext_confl;
