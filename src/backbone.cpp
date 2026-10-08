@@ -27,7 +27,9 @@ THE SOFTWARE.
 #include "solvertypesmini.h"
 #include <cstdint>
 #include "varreplacer.h"
+#ifdef USE_CADIBACK
 #include "cadiback.h"
+#endif
 
 using namespace CMSat;
 
@@ -41,6 +43,7 @@ inline Lit orc_to_lit(int x) {
     return Lit(var, neg);
 }
 
+#ifdef USE_CADIBACK
 // The irredundant clauses in cadiback's format: each clause 0-terminated.
 static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) {
     cnf.clear();
@@ -325,6 +328,14 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
             << " T: " << cpu_time() - my_time);
     return okay();
 }
+#else
+bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
+        bool& /*backbone_done*/)
+{
+    verb_print(1, "[backbone-simpl] built with NOCADICAL, skipping");
+    return okay();
+}
+#endif
 
 size_t Solver::num_long_irred_cls_anywhere() const
 {

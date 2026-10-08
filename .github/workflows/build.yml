@@ -17,6 +17,12 @@ jobs:
         os: [ubuntu-latest, macos-14, ubuntu-24.04-arm, macos-15-intel, windows-latest]
         build_type: [Release]
         shared_libs: [OFF, ON]
+        nocadical: [OFF]
+        include:
+          - os: ubuntu-latest
+            build_type: Release
+            shared_libs: OFF
+            nocadical: ON
 
     steps:
     - name: Set up MSYS2
@@ -39,14 +45,7 @@ jobs:
 
     - name: Install gmp for Mac
       if: contains(matrix.os, 'macos')
-      run: |
-        wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
-        tar xf gmp-6.3.0.tar.xz
-        cd gmp-6.3.0
-        ./configure --enable-static --enable-cxx --enable-shared --with-pic
-        make -j8
-        sudo make install
-        cd ..
+      run: brew install gmp
 
     - name: Install zlib for Mac dynamic
       if: contains(matrix.os, 'macos') && matrix.shared_libs == 'ON'
@@ -80,7 +79,7 @@ jobs:
       if: "!contains(matrix.os, 'windows')"
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.shared_libs }}
+        key: ${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.shared_libs }}-${{ matrix.nocadical }}
 
     - name: Configure & build (Windows)
       if: contains(matrix.os, 'windows')
@@ -107,6 +106,7 @@ jobs:
         -DENABLE_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
         -DIPASIR=ON \
+        -DNOCADICAL=${{ matrix.nocadical }} \
         -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
         -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
         -S ..
@@ -143,7 +143,7 @@ jobs:
       run: ctest -C ${{matrix.build_type}} --verbose
 
     - name: Upload Artifact - Linux
-      if: contains(matrix.os, 'ubuntu') && matrix.shared_libs == 'OFF' && !contains(matrix.os, 'arm')
+      if: contains(matrix.os, 'ubuntu') && matrix.shared_libs == 'OFF' && !contains(matrix.os, 'arm') && matrix.nocadical == 'OFF'
       uses: actions/upload-artifact@v4
       with:
         name: cryptominisat5-linux-amd64

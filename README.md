@@ -313,6 +313,8 @@ use, specify options prior to running make in a clean subdirectory: `cmake
   interface support
 - `-DNOZLIB=<ON/OFF>` -- build without zlib, i.e. without gzipped CNF support
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
+- `-DNOCADICAL=ON` -- build without CaDiCaL and CaDiBack. Backbone
+  simplification becomes a no-op.
 
 ## C usage
 See src/cryptominisat_c.h for details. This is an experimental feature.

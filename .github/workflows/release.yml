@@ -38,14 +38,7 @@ jobs:
 
     - name: Install gmp for Mac
       if: contains(matrix.os, 'macos')
-      run: |
-        wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
-        tar xf gmp-6.3.0.tar.xz
-        cd gmp-6.3.0
-        ./configure --enable-static --enable-cxx --enable-shared --with-pic
-        make -j8
-        sudo make install
-        cd ..
+      run: brew install gmp
 
     - name: Install zlib for Mac static
       if: contains(matrix.os, 'macos')

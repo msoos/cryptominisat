@@ -27,8 +27,10 @@ THE SOFTWARE.
 #include "frat.h"
 #include "shareddata.h"
 #include "solvertypesmini.h"
+#ifdef USE_CADIBACK
 #include "cadiback.h"
 #include "cadical_gitsha1.hpp"
+#endif
 
 #include <fstream>
 #include <cstdint>
@@ -1089,12 +1091,20 @@ DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::strin
 
 DLL_PUBLIC const char* SATSolver::get_cadical_version_sha1()
 {
+    #ifdef USE_CADIBACK
     return CaDiCaL::get_version_sha1();
+    #else
+    return "not compiled in";
+    #endif
 }
 
 DLL_PUBLIC const char* SATSolver::get_cadiback_version_sha1()
 {
+    #ifdef USE_CADIBACK
     return CadiBack::get_version_sha1();
+    #else
+    return "not compiled in";
+    #endif
 }
 
 DLL_PUBLIC const char* SATSolver::get_version_sha1()

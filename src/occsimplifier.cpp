@@ -1954,6 +1954,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
     limit_to_decrease = &gate_based_litrem_time_limit;
 
     uint64_t removed = 0;
+    vector<Lit> lits1; //what cl1 set in 'seen', as cl1 may be removed below
 
     for(auto const&g: gates) {
         if (g.lits.size() != 2) continue;
@@ -1967,9 +1968,11 @@ bool OccSimplifier::cl_rem_with_or_gates()
             if (cl1->stats.id == g.id) continue;
 
             [[maybe_unused]] bool found = false;
+            lits1.clear();
             for(auto const&l: *cl1) {
                 if (l == ~g.lits[0]) {found = true; continue;}
                 seen[l.toInt()] = 1;
+                lits1.push_back(l);
             }
             assert(found);
 
@@ -2011,11 +2014,14 @@ bool OccSimplifier::cl_rem_with_or_gates()
                     removed++;
                     verb_print(2,"[cl-rem-gates] We could remove clauses: "
                         << *cl1 << " -- " << *cl2 << " based on gate: " << g);
-                    if (!solver->okay()) goto end;
+                    if (!solver->okay()) {
+                        for(auto const&l: lits1) seen[l.toInt()] = 0;
+                        goto end;
+                    }
                     break;
                 }
             }
-            for(auto const&l: *cl1) seen[l.toInt()] = 0;
+            for(auto const&l: lits1) seen[l.toInt()] = 0;
         }
     }
 
