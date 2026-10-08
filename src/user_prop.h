@@ -84,7 +84,9 @@ public:
     virtual void notify_new_decision_level() = 0;
 
     /// Every assignment above 'new_level' is undone. 'new_level' is always
-    /// below the number of decision levels notified so far.
+    /// below the number of decision levels notified so far. Observed variables
+    /// cannot be added or removed from inside this callback: the solver counts
+    /// on staying at 'new_level'.
     virtual void notify_backtrack(size_t new_level) = 0;
 
     //////////////////////////////

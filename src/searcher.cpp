@@ -3561,7 +3561,11 @@ void Searcher::cancel_until(uint32_t blevel)
 
         //IPASIR-UP: pop the propagator's stack too
         if (ext_notified > trail.size()) ext_notified = trail.size();
-        if (!inprocess && ext_notify_active()) ext_prop->notify_backtrack(blevel);
+        if (!inprocess && ext_notify_active()) {
+            ext_backtracking = true;
+            ext_prop->notify_backtrack(blevel);
+            ext_backtracking = false;
+        }
     }
 
 }

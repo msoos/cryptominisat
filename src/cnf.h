@@ -221,9 +221,16 @@ public:
     /// trail must not move under conflict analysis, and observing a
     /// renumbered-out var could change the explained literal's INTER number.
     bool ext_explaining = false;
+    /// A backtrack is being notified: the same freeze, as whoever backtracked
+    /// counts on the level it asked for
+    bool ext_backtracking = false;
     /// Polarity advice is being asked for: the same freeze, as the callback
     /// must not change the solver.
     bool ext_advising = false;
+    /// No variable can be created, and observed ones cannot change
+    [[nodiscard]] bool ext_frozen() const {
+        return ext_explaining || ext_backtracking || ext_advising;
+    }
     [[nodiscard]] bool ext_prop_active() const {
         return ext_prop != nullptr && !ext_prop_private_steps;
     }

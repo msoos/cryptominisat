@@ -714,7 +714,7 @@ static void misbehave_while_advising(bool observe)
 TEST(user_prop_polarity, observing_while_advising_is_caught)
 {
     EXPECT_DEATH(misbehave_while_advising(true),
-                 "while a reason clause or polarity advice is being asked for");
+                 "observed variables cannot change from");
 }
 
 TEST(user_prop_polarity, advising_another_variable_is_caught)
@@ -2477,14 +2477,39 @@ TEST_F(UserPropLazyTest, observing_while_a_reason_is_being_asked_for_is_caught)
     // only when asked lazily, from inside conflict analysis
     conf.ext_lazy_reasons = true;
     EXPECT_DEATH(observe_while_explaining(conf, true),
-                 "while a reason clause or polarity advice is being asked for");
+                 "observed variables cannot change from");
 }
 
 TEST_F(UserPropLazyTest, observing_while_a_reason_is_asked_for_eagerly_is_caught_too)
 {
     conf.ext_lazy_reasons = false;
     EXPECT_DEATH(observe_while_explaining(conf, false),
-                 "while a reason clause or polarity advice is being asked for");
+                 "observed variables cannot change from");
+}
+
+// Whoever backtracked counts on the level it asked for
+class ObservesOnBacktrackPropagator : public NoopPropagator
+{
+public:
+    SATSolver* s = nullptr;
+    void notify_backtrack(size_t) override { s->add_observed_var(30); }
+};
+
+static void observe_on_backtrack()
+{
+    SATSolver s;
+    ObservesOnBacktrackPropagator p;
+    p.s = &s;
+    s.new_vars(31);
+    s.connect_external_propagator(&p);
+    for(uint32_t v = 0; v < 30; v++) s.add_observed_var(v);
+    for(const auto& cl: gen_3sat(30, 128, 5)) s.add_clause(cl);
+    s.solve();
+}
+
+TEST(user_prop_observe, observing_while_a_backtrack_is_notified_is_caught)
+{
+    EXPECT_DEATH(observe_on_backtrack(), "observed variables cannot change from");
 }
 
 }

@@ -80,13 +80,13 @@ void Solver::add_observed_var(const uint32_t outer_var)
         "Cannot observe a variable that does not exist yet -- call new_vars() first");
     //var_data is never shrunk by renumbering, so this is safe to ask first
     if (var_data[map_outer_to_inter(outer_var)].observed) return;
-    release_assert(!ext_explaining && !ext_advising &&
-        "The set of observed variables cannot change while a reason clause or polarity advice is being asked for");
+    release_assert(!ext_frozen() && "The set of observed variables cannot change from"
+        " cb_add_reason_clause_lit(), cb_decide_polarity() or notify_backtrack()");
 
     //Once the clauses are UNSAT there is no more search, and a variable that
     //was renumbered or eliminated away cannot be put back: only record it
     if (!okay()) {
-        varData[map_outer_to_inter(outer_var)].observed = 1;
+        var_data[map_outer_to_inter(outer_var)].observed = 1;
         ext_observed_vars.push_back(outer_var);
         return;
     }
@@ -153,8 +153,8 @@ void Solver::remove_observed_var(const uint32_t outer_var)
     release_assert(outer_var < nVarsOuter());
     const uint32_t inter_var = map_outer_to_inter(outer_var);
     if (!var_data[inter_var].observed) return;
-    release_assert(!ext_explaining && !ext_advising &&
-        "The set of observed variables cannot change while a reason clause or polarity advice is being asked for");
+    release_assert(!ext_frozen() && "The set of observed variables cannot change from"
+        " cb_add_reason_clause_lit(), cb_decide_polarity() or notify_backtrack()");
 
     //Unassign it first: an external propagation over it could no longer be
     //explained once it is un-observed
@@ -177,8 +177,8 @@ void Solver::remove_observed_var(const uint32_t outer_var)
 
 void Solver::reset_observed_vars()
 {
-    release_assert(!ext_explaining && !ext_advising &&
-        "The set of observed variables cannot change while a reason clause or polarity advice is being asked for");
+    release_assert(!ext_frozen() && "The set of observed variables cannot change from"
+        " cb_add_reason_clause_lit(), cb_decide_polarity() or notify_backtrack()");
     //Backtrack once, below the earliest non-root observed assignment, so every
     //lazy external propagation is undone while its reason can still be asked
     //for. Root external propagations are always explained eagerly.

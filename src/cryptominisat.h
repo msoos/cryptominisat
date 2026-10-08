@@ -109,7 +109,8 @@ namespace CMSat {
         // Declare a variable relevant to the propagator; all IPASIR-UP calls
         // are over observed variables only. The variable must already exist.
         // Callable during solve() from any callback but
-        // cb_add_reason_clause_lit(). Observing an assigned variable backtracks
+        // cb_add_reason_clause_lit(), cb_decide_polarity() and
+        // notify_backtrack(). Observing an assigned variable backtracks
         // over it, so it is re-assigned and notified normally: the callback
         // cannot rely on the trail it saw. An eliminated variable is put back,
         // which during solve() backtracks to the root. A replaced one cannot be
