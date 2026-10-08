@@ -138,7 +138,9 @@ because of the lock: its rows after the first such reduce are dropped
 
 Knobs (`setparams_ballofcrystal.sh`, all from the environment):
 `STATS_BIN PRED_BIN NORMAL_BIN`, `DUMPRATIO TRACKED MAXDUMPRATIO CONFL`,
-`CLLOCK`, `EVERYPRED`, `HALFLIFE`, `FIXED` (rows per stratum, 3000),
+`CLLOCK`, `EVERYPRED`, `HALFLIFE`, `EXTRA_HALFLIVES` (e.g. `"2 8"`: the
+same run labelled with these too, frames in `<file.cnf>-dir/h2/`,
+`h8/`, dirs `learn.sh` and `holdout_eval.py` take), `FIXED` (rows per stratum, 3000),
 `cut1 cut2`, `EVAL_REDUCES EVAL_PER_REDUCE`, `bestf` (feature file),
 `XGB_EST XGB_DEPTH XGB_MINCHILD` (40, 5, 10), `XGB_OBJ` (`rank`, the
 default: the order within a reduce, learnt from used or not; or a

@@ -29,6 +29,7 @@
 #   --skip-learn  reuse the predictors from an earlier run, only run step 5
 #   --gather-only stop after step 3, the frames are for learn.sh
 # KEEP_PROOF=1 keeps data.xlrup (it is deleted once used, GBs on big CNFs)
+# EXTRA_HALFLIVES="2 8": also label the run with these half-lives, into h2/ h8/
 # STATS_OPTS: more options for the stats run. With a STATS=ON
 #   FINAL_PREDICTOR=ON build as STATS_BIN, "--predloc DIR"
 #   gathers under the learnt policy (a second round, DAgger-style)
@@ -152,6 +153,19 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
         --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" \
         --evalreduces "$EVAL_REDUCES" --evalperreduce "$EVAL_PER_REDUCE" \
         data-min.db | tee sample_data.out-stage
+    # the same run labelled with other half-lives, frames in h<N>/ (a dir learn.sh takes)
+    for h in $EXTRA_HALFLIVES; do
+        stage "half-life $h"
+        rm -rf "h$h"; mkdir "h$h"
+        cp data.db "h$h/data-min.db"
+        cp cms-stats-run.out "h$h/"
+        "$SCRIPTDIR/sample_data.py" --halflife "$h" --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" \
+            --evalreduces "$EVAL_REDUCES" --evalperreduce "$EVAL_PER_REDUCE" "h$h/data-min.db" > "h$h/sample_data.out-stage"
+        "$SCRIPTDIR/cldata_gen_pandas.py" "h$h/data-min.db" --halflife "$h" \
+            --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} > "h$h/cldata_gen_pandas.out-stage"
+        "$SCRIPTDIR/check_frames.py" -f "$bestf" "h$h"/data-min.db-cldata-*.dat "h$h"/data-min.db-evaldata-*.dat \
+            | tee "h$h/check_frames.out-stage" | grep -E "FAIL|failed"
+    done
     # the full labelled DB is only needed for the sampling
     [[ "$KEEP_PROOF" == "1" ]] || rm -f data.db
 
