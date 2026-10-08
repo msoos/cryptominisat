@@ -107,14 +107,16 @@ namespace CMSat {
         void disconnect_external_propagator(); //also un-observes every variable
 
         // Declare a variable relevant to the propagator; all IPASIR-UP calls
-        // are over observed variables only. The variable must already exist.
-        // Callable during solve() from any callback but
-        // cb_add_reason_clause_lit(), cb_decide_polarity() and
-        // notify_backtrack(). Observing an assigned variable backtracks
-        // over it, so it is re-assigned and notified normally: the callback
-        // cannot rely on the trail it saw. An eliminated variable is put back,
-        // which during solve() backtracks to the root. A replaced one cannot be
-        // observed: observe it before the first solve(), or call
+        // are over observed variables only. The variable must already exist,
+        // but a callback may create it with new_var(). Both are callable during
+        // solve() from any callback but cb_add_reason_clause_lit(),
+        // cb_decide_polarity() and notify_backtrack(), and a variable created
+        // during solve(), observed or not, is assigned before a model is
+        // returned. Observing an assigned variable backtracks over it, so it is
+        // re-assigned and notified normally: the callback cannot rely on the
+        // trail it saw. An eliminated variable is put back, which during
+        // solve() backtracks to the root. A replaced one cannot be observed:
+        // observe it before the first solve(), or call
         // set_no_equivalent_lit_replacement().
         void add_observed_var(uint32_t var);
         // A variable assigned above the root is backtracked over first, so no

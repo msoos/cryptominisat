@@ -1062,6 +1062,8 @@ DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
     return data->solvers[data->which_solved]->get_final_conflict();
 }
 
+namespace { void ext_flush_vars(CMSatPrivateData* data); }
+
 DLL_PUBLIC uint32_t SATSolver::nVars() const
 {
     return data->solvers[0]->nVarsOuter() + data->vars_to_add;
@@ -1086,6 +1088,9 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 
     data->vars_to_add += n;
     data->total_num_vars += n;
+    //A propagator's callback may add variables in the middle of the search,
+    //which must assign them before it returns a model
+    if (data->solvers[0]->ext_prop != nullptr) ext_flush_vars(data);
 }
 
 DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::string& val)
@@ -1957,6 +1962,8 @@ void ext_flush_vars(CMSatPrivateData* data)
         throw std::runtime_error(err);
     }
     if (data->vars_to_add == 0) return;
+    release_assert(!data->solvers[0]->ext_frozen() && "Variables cannot be created from"
+        " cb_add_reason_clause_lit(), cb_decide_polarity() or notify_backtrack()");
     data->solvers[0]->new_vars(data->vars_to_add);
     data->vars_to_add = 0;
 }

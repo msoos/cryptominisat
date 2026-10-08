@@ -84,9 +84,9 @@ public:
     virtual void notify_new_decision_level() = 0;
 
     /// Every assignment above 'new_level' is undone. 'new_level' is always
-    /// below the number of decision levels notified so far. Observed variables
-    /// cannot be added or removed from inside this callback: the solver counts
-    /// on staying at 'new_level'.
+    /// below the number of decision levels notified so far. Variables cannot
+    /// be created, nor observed ones added or removed, from inside this
+    /// callback: the solver counts on staying at 'new_level'.
     virtual void notify_backtrack(size_t new_level) = 0;
 
     //////////////////////////////
@@ -111,8 +111,8 @@ public:
     /// ~lit to decide the other way; the variable is not the propagator's to
     /// choose. Not asked for assumptions, cb_decide() decisions or a lazy
     /// propagator. The advice overrides a phase set with SATSolver::phase().
-    /// The callback must not change the solver: observed variables cannot be
-    /// added or removed, and force_backtrack() is ignored.
+    /// The callback must not change the solver: variables cannot be created,
+    /// nor observed ones added or removed, and force_backtrack() is ignored.
     virtual Lit cb_decide_polarity(Lit lit) { return lit; }
 
     /// A literal implied by external knowledge under the current trail, or
@@ -125,8 +125,9 @@ public:
     /// other literal must have been false *when the propagation was made*. By
     /// default this is asked much later, in conflict analysis (see
     /// SATSolver::set_lazy_external_reasons()), so record the reason when
-    /// propagating rather than derive it from the trail on demand. Observed
-    /// variables cannot be added or removed from inside this callback.
+    /// propagating rather than derive it from the trail on demand. Variables
+    /// cannot be created, nor observed ones added or removed, from inside this
+    /// callback.
     virtual Lit cb_add_reason_clause_lit(Lit propagated_lit) {
         (void)propagated_lit;
         return lit_Undef;

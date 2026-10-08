@@ -819,6 +819,37 @@ TEST(user_prop_observe, model_callback_cannot_return_an_incomplete_grown_model)
     EXPECT_NE(s.get_model()[1], l_Undef);
 }
 
+// Adds a fresh var from the model callback without observing it: the search
+// must still assign it before returning the model.
+class AddsUnobservedVarAtModelPropagator : public NoopPropagator
+{
+public:
+    SATSolver* raw = nullptr;
+    uint32_t model_checks = 0;
+
+    bool cb_check_found_model(const vector<Lit>&) override {
+        if (++model_checks == 1) raw->new_var();
+        return true;
+    }
+};
+
+TEST(user_prop_observe, model_covers_a_var_added_unobserved_by_the_model_callback)
+{
+    SATSolver s;
+    AddsUnobservedVarAtModelPropagator p;
+    p.raw = &s;
+    s.set_no_simplify();
+    s.new_var();
+    s.connect_external_propagator(&p);
+    s.add_observed_var(0);
+
+    ASSERT_EQ(s.solve(), l_True);
+    EXPECT_GE(p.model_checks, 2U);
+    ASSERT_EQ(s.nVars(), 2U);
+    ASSERT_EQ(s.get_model().size(), 2U);
+    EXPECT_NE(s.get_model()[1], l_Undef);
+}
+
 TEST(user_prop_is_decision, unassigned_is_not_a_decision)
 {
     SATSolver s;
