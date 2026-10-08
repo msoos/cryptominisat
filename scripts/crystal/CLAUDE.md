@@ -394,6 +394,20 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   keeps 78% of the clauses with 93% of the future proof use; the normal
   reduce ends up with 97-98%, the oracle order of the candidates with
   99.9%. The whole prize is 2 points of use.
+- **The score means what it seems to, and so does glue.** The
+  candidates of a reduce in quarters, best first, on the hold-outs
+  (`holdout_eval.py` prints it): % used later, % of the candidates'
+  future use.
+
+  | | model, round 1 | glue, round 1 | model, round 3 | glue, round 3 |
+  |---|---|---|---|---|
+  | quarter 1 (kept) | 36.8, 73.6 | 33.2, 71.5 | 43.7, 64.9 | 42.8, 64.7 |
+  | quarter 2 | 15.6, 19.3 | 17.9, 20.6 | 24.7, 27.7 | 24.9, 26.8 |
+  | quarter 3 | 5.9, 5.7 | 6.4, 5.7 | 8.8, 6.2 | 8.2, 6.5 |
+  | quarter 4 | 2.5, 1.4 | 3.4, 2.1 | 2.4, 1.2 | 3.7, 2.0 |
+
+  Both orders are monotone. What a reduce loses is in the second
+  quarter: a fifth to a quarter of the candidates' use.
 - **The model's edge is on glue's data.** Use kept, model minus normal,
   on the hold-outs: +0.5 (better on 8 of 9) on round 1, 0.0 (6 of 9) on
   round 2, where the model itself chose what stays. Training on both

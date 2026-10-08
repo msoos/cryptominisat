@@ -602,6 +602,43 @@ def needed_of_reduce(g, pred, truth, rule, use):
             for k, sc in (("glue", -glue), ("order", pred), ("oracle", truth))}
 
 
+def candidate_quarters(df, pred, label, min_cands=40, rounds=ROUNDS, tier1=TIER1_GLUE):
+    """Does the score mean what it seems to? The candidates of a reduce in
+    quarters, best first, by the model and by glue, size: the share of the
+    quarter's clauses that are used later and the share of the candidates'
+    future use it holds. Mean over the reduces of an instance, then over
+    the instances. The reduce keeps the first quarter."""
+    df = df.reset_index(drop=True)
+    pred = np.asarray(pred, dtype=float)
+    per_inst = []
+    for _, gi in df.groupby(df["fname"].astype(str)):
+        acc = []
+        for _, g in gi.groupby("rdb0_common.conflicts"):
+            g = g[(g["rdb0.is_ternary_resolvent"] == 0) & g["rdb0.glue"].notna()]
+            glue = g["rdb0.glue"].to_numpy(dtype=float)
+            size = g["rdb0.size"].to_numpy(dtype=float)
+            cand = ~kept_by_rule(glue, g["rdb0.used"].to_numpy(dtype=float), rounds, tier1)
+            truth = g[label].to_numpy(dtype=float)[cand]
+            if cand.sum() < min_cands or truth.sum() <= 0:
+                continue
+            p = pred[g.index.to_numpy()][cand]
+            r = {}
+            for name, order in (("model", np.lexsort((size[cand], glue[cand], -p))),
+                                ("glue", np.lexsort((size[cand], glue[cand])))):
+                for q, part in enumerate(np.array_split(truth[order], 4)):
+                    r["%s used %d" % (name, q + 1)] = 100.0 * (part > 0).mean()
+                    r["%s use %d" % (name, q + 1)] = 100.0 * part.sum() / truth.sum()
+            acc.append(r)
+        if acc:
+            per_inst.append(pd.DataFrame(acc).mean())
+    if not per_inst:
+        return None
+    m = pd.DataFrame(per_inst).mean()
+    return pd.DataFrame({"%s %s" % (name, what): [m["%s %s %d" % (name, what, q)] for q in range(1, 5)]
+                         for name in ("model", "glue") for what in ("used", "use")},
+                        index=["quarter %d" % q for q in range(1, 5)])
+
+
 def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE, tier1=TIER1_GLUE):
     """The solver's reduce replayed on a fair sample of the clauses at
     some reduces. By rule it keeps the tier1 clauses with 'used' life
