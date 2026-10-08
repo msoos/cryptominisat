@@ -1823,6 +1823,8 @@ lbool Searcher::new_decision() {
         if (decision_level() > 0 && trail_lim.back() == trail.size()) {
             cancel_until(decision_level() - 1);
         }
+        //The heuristic took 'next' out of its queue: put it back
+        if (value(next) == l_Undef) insert_var_order(next.var());
         return l_Undef;
     }
     enqueue<inprocess>(next);
