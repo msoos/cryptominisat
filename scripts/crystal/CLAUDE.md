@@ -283,8 +283,8 @@ build: **conflicts 96.7% [87.0, 105.0]**, all solved. Run one at a
 time, 2 seeds: conflicts 99.8% [94, 106], **time 100.9% [90, 113]**,
 time per conflict 101% [94, 109]. Seed noise of the normal build:
 3-9%. So at two protected rounds the model is where glue is, in
-conflicts and in time; at one round, its default now, the time is 92.6%
-[83, 103] (below). (Before the BVE tie-break below the same model measured
+conflicts and in time; at one round, its default now, the time is 96.2%
+[87, 107] (below). (Before the BVE tie-break below the same model measured
 101.6% [93, 111] in conflicts and 112.5% [101, 128] in time: the
 tie-break moved the normal build by as much as the model does, 106.1%
 [95, 121] new vs old.)
@@ -365,9 +365,10 @@ How it got there, same 9 x 3, conflicts vs the normal build:
 
   Glue cannot drop the second round, the model can: model against
   normal, both at 1 round, is 89.5% [81, 97] in conflicts and 81.7%
-  [71, 94] in bogoprops. Run alone, 2 seeds, the model at 1 round
-  against the normal build: conflicts 97.6% [88, 110], **time 92.6%
-  [83, 103]**, time per conflict 94.9% [90, 99]. No protected round at
+  [71, 94] in bogoprops. Run alone, 4 seeds, the model at 1 round
+  against the normal build: conflicts 100.1% [92, 109], **time 96.2%
+  [87, 107]**, time per conflict 96.2% [93, 99] (the first 2 seeds
+  alone said 92.6% [83, 103]: two seeds are not enough). No protected round at
   all loses. Removing less at 1 round buys nothing (the same
   conflicts for more propagation), removing more loses on both. The
   tier1 glue is the same: 3 keeps 5 points more clauses for 113%

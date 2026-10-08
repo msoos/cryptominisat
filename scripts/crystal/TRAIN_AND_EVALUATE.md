@@ -86,7 +86,7 @@ survives.
       round-3 numbers agree. Here round 2 was worth 2 points and
       round 3 cost 6, both inside the noise.
 - [ ] How many to keep: the predictor build's `--reducerounds 1`
-      was 7% of the time here, inside the interval. Run 1 against 2 on
+      was 4% of the time here, inside the interval. Run 1 against 2 on
       the dev set.
 - [ ] Feature importance / ablation only if something above moved:
       importance-picked lists lost three times.
