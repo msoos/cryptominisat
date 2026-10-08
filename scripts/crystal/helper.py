@@ -602,6 +602,63 @@ def needed_of_reduce(g, pred, truth, rule, use):
             for k, sc in (("glue", -glue), ("order", pred), ("oracle", truth))}
 
 
+def best_split(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE, tier1=TIER1_GLUE, steps=20):
+    """What a per-reduce count could win: the candidates in the model's
+    order, and the budget of a run (the share 1-'remove' of the candidates
+    of every sampled reduce) split over its reduces with hindsight, greedy
+    over blocks of 1/steps of a reduce's candidates. Returns the use kept
+    (as policy_per_reduce) by the same share everywhere and by that
+    split, mean over the instances."""
+    df = df.reset_index(drop=True)
+    pred = np.asarray(pred, dtype=float)
+    res = []
+    for _, gi in df.groupby(df["fname"].astype(str)):
+        curves = []
+        ruleuse = 0.0
+        for _, g in gi.groupby("rdb0_common.conflicts"):
+            g = g[(g["rdb0.is_ternary_resolvent"] == 0) & g["rdb0.glue"].notna()]
+            truth = g[label].to_numpy(dtype=float)
+            if len(g) < min_rows or truth.sum() <= 0:
+                continue
+            glue = g["rdb0.glue"].to_numpy(dtype=float)
+            size = g["rdb0.size"].to_numpy(dtype=float)
+            cand = ~kept_by_rule(glue, g["rdb0.used"].to_numpy(dtype=float), rounds, tier1)
+            w = truth / truth.sum()
+            order = np.lexsort((size[cand], glue[cand], -pred[g.index.to_numpy()][cand]))
+            cum = np.concatenate([[0.0], np.cumsum(w[cand][order])])
+            n = int(cand.sum())
+            curves.append((n, [cum[int(round(n * k / float(steps)))] for k in range(steps + 1)],
+                           cum[n - int(remove * n)]))
+            ruleuse += w[~cand].sum()
+        if len(curves) < 3:
+            continue
+        budget = sum(n - int(remove * n) for n, _, _ in curves)
+        at = [0] * len(curves)
+        spent = 0.0
+        got = 0.0
+        while True:
+            best = None
+            for i, (n, cv, _) in enumerate(curves):
+                for j in range(at[i] + 1, steps + 1):
+                    cost = n * (j - at[i]) / float(steps)
+                    if cost <= 0 or spent + cost > budget + 1e-9:
+                        continue
+                    gain = (cv[j] - cv[at[i]]) / cost
+                    if best is None or gain > best[0]:
+                        best = (gain, i, j, cost)
+            if best is None:
+                break
+            _, i, j, cost = best
+            got += curves[i][1][j] - curves[i][1][at[i]]
+            spent += cost
+            at[i] = j
+        res.append((100.0 * (ruleuse + sum(f for _, _, f in curves)) / len(curves),
+                    100.0 * (ruleuse + got) / len(curves)))
+    if not res:
+        return None
+    return tuple(np.mean(np.array(res), axis=0))
+
+
 def candidate_quarters(df, pred, label, min_cands=40, rounds=ROUNDS, tier1=TIER1_GLUE):
     """Does the score mean what it seems to? The candidates of a reduce in
     quarters, best first, by the model and by glue, size: the share of the

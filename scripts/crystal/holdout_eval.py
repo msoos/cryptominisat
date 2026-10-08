@@ -142,6 +142,9 @@ if __name__ == "__main__":
         m["order"] - m["normal"], (res["order"] > res["normal"]).sum(), len(res), m["oracle"] - m["normal"]))
     print("clauses kept for the use the solver's own reduce holds, candidates by glue: %.1f%%, by the model: %.1f%%, by the oracle: %.1f%%" % (
         m["glue needs"], m["order needs"], m["oracle needs"]))
+    sp = helper.best_split(test, pred, count_label, rounds=opts.rounds, remove=opts.remove / 100.0, tier1=opts.tier1)
+    if sp is not None:
+        print("the same number of candidates kept per run, split over its reduces with hindsight: %.1f%% of the use, the same share at every reduce: %.1f%%" % (sp[1], sp[0]))
     q = helper.candidate_quarters(test, pred, count_label, rounds=opts.rounds, tier1=opts.tier1)
     if q is not None:
         print("the candidates in quarters, best first: % used later, % of the candidates' use")

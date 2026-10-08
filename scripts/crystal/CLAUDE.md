@@ -387,6 +387,31 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   96.2% offline, for 3.6 points more clauses. In the solver: 104.5%
   [98, 111] of the conflicts and 115.8% [104, 128] of the bogoprops of
   the fixed 75%. `--predthresh` is gone.
+- **A count per reduce: 2 points to win, and nothing that predicts
+  them.** With the candidates in the model's order and the number kept
+  per run fixed, the best split over the reduces (hindsight;
+  `holdout_eval.py` prints it) holds 98.7% of the use against 97.0% on
+  the round-1 hold-outs, 98.4% against 96.6% on round 3, the shares
+  running from 0 to 60-95% of a reduce's candidates. That is as much
+  as the whole order of the candidates is worth. Tried as the judge of
+  how much a reduce gets, same number kept per run, on the round-3
+  hold-outs (fixed share: 96.3-96.6%):
+  - one ranker-score threshold for the whole run: 96.3%;
+  - a regressor of the best share from what the reduce shows (the
+    score quantiles of the candidates, their share, the mean of each of
+    the 24 features over them; 510 training reduces): 96.3%, its
+    prediction correlates 0.2 with the target;
+  - the same for the candidates' share of the use: 96.8%, 95.8% when
+    normalised only by the reduces so far, correlation 0.0;
+  - a classifier of "used later" (the probability is calibrated on the
+    pooled hold-outs), one threshold per run 95.0%, a reduce's share
+    from its expected number of used candidates 95.6-96.3%;
+  - the candidates' true share of the use at the sampled reduce before
+    (what a feedback loop would know): 95.7%. It does not persist: lag-1
+    autocorrelation -0.1.
+  Even the true share of the use at the reduce itself gets only 97.3%.
+  Where the unused-looking candidates will be needed is not in the
+  clause features.
 - **Bogoprops are the cost when the box is shared.** They do not move
   with the load, and correlate 0.93 with the time of a run made alone;
   the predictor build pays about 8% more seconds per bogoprop.
