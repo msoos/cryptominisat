@@ -82,11 +82,6 @@ static inline void skip_list(size_t& pos) {
     pos = (size_t)(z - dat) + 1;
 }
 
-[[noreturn]] static void die_xor(size_t pos) {
-    printf("ERROR: XOR step at byte %zu. Use --xor 0\n", pos);
-    exit(255);
-}
-
 static void index_binary() {
     size_t pos = 0;
     while (pos < len) {
@@ -101,8 +96,13 @@ static void index_binary() {
         } else if (k == 'd') {
             pos++;
             skip_list(pos);
-        } else if (k == 'x') {
-            die_xor(pos);
+        } else if (k == 'x' && pos + 1 < len) {
+            // XOR steps: a clause they imply is like an original one here
+            const uint8_t kind = dat[pos + 1];
+            const int lists = kind == 'a' ? 3 : (kind == 'c' || kind == 'i') ? 2 : (kind == 'o' || kind == 'd') ? 1 : 0;
+            if (lists == 0) die("unknown XLRUP XOR record");
+            pos += 2;
+            for (int i = 0; i < lists; i++) skip_list(pos);
         } else {
             printf("ERROR: unknown XLRUP record at byte %zu\n", pos);
             exit(255);
@@ -125,8 +125,6 @@ static void index_text() {
                 ids.push_back(cid);
                 if (p + 2 < end && dat[p + 1] == '0' && dat[p + 2] == ' ') empty_cl = cid;
             }
-        } else if (end > pos) {
-            die_xor(pos);
         }
         pos = end + 1;
     }

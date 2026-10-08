@@ -68,6 +68,11 @@ def write_xlrup(fname, steps, binary):
                 else:
                     f.write(("%d %s0 %s0\n" % (cid, "".join("%d " % x for x in lits),
                                                "".join("%d " % x for x in hints))).encode())
+            elif kind == "x":
+                # XOR steps are skipped: an XOR from clauses, then its deletion
+                f.write(b"xi" + leb(2 * cid) + ivec(lits) + idvec(hints) + b"xd" + idvec([cid]) if binary
+                        else ("i x %d %s0 %s0\nx d %d 0\n" % (cid, "".join("%d " % x for x in lits),
+                                                            "".join("%d " % x for x in hints), cid)).encode())
             elif kind == "d":
                 f.write(b"d" + idvec([cid]) if binary else ("%d d %d 0\n" % (cid, cid)).encode())
 
@@ -189,6 +194,8 @@ def random_proof(rng):
             tracked.append(nid)
         if rng.random() < 0.1:
             steps.append(("d", rng.choice(ids), [1], None))
+        if rng.random() < 0.05:
+            steps.append(("x", rng.randint(1, 50), [1, 2, 120], [rng.choice(ids), rng.choice(ids)]))
         ids.append(nid)
     nid += 1
     steps.append(("a", nid, [], [rng.choice(ids[-20:]) for _ in range(rng.randint(1, 8))]))
