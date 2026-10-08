@@ -22,7 +22,8 @@
 # (<cnf>.<config>.s<seed>): per instance and config the conflicts and
 # time (geometric mean over the seeds), then per config against the
 # base: the geometric mean of the per-instance ratios with a bootstrap
-# interval over the instances, solved runs, PAR2, and the noise floor
+# interval over the instances (conflicts, time, and bogoprops: the cost
+# that does not move with the load of the box), solved runs, PAR2, and the noise floor
 # (every seed of a config against its first seed: what a difference
 # between two single runs is worth).
 #
@@ -37,7 +38,7 @@ import numpy as np
 
 
 def parse(fname):
-    res = {"solved": False, "confl": None, "time": None}
+    res = {"solved": False, "confl": None, "time": None, "bogo": None}
     with open(fname, errors="replace") as f:
         for l in f:
             if l.startswith("s SATISFIABLE") or l.startswith("s UNSATISFIABLE"):
@@ -46,6 +47,8 @@ def parse(fname):
                 res["confl"] = float(l.split()[3])
             elif "Total time (this thread)" in l and res["time"] is None:
                 res["time"] = float(l.split()[6])
+            elif l.startswith("c Mbogo-props") and res["bogo"] is None:
+                res["bogo"] = float(l.split()[3])
     if res["confl"] is None or res["time"] is None:
         res["solved"] = False
     return res
@@ -114,7 +117,7 @@ if __name__ == "__main__":
                 pairs = [(rc[s], rb[s]) for s in rc if s in rb]
             else:
                 pairs = [(rc[a], rb[b]) for a, b in zip(seeds_c, seeds_b) if a in rc and b in rb]
-            pairs = [(a, b) for a, b in pairs if a["solved"] and b["solved"]]
+            pairs = [(a, b) for a, b in pairs if a["solved"] and b["solved"] and a[what] and b[what]]
             if pairs:
                 ratios.append(gmean([a[what] for a, b in pairs]) / gmean([b[what] for a, b in pairs]))
         return ratios
@@ -136,8 +139,9 @@ if __name__ == "__main__":
         print(out)
     for c in configs[1:]:
         rc = paired(c, opts.base, "confl")
-        print("total: %s vs %s, %d instances: conflicts %s  time %s" % (
-            c, opts.base, len(rc), fmt_ci(ratio_ci(rc, rng)), fmt_ci(ratio_ci(paired(c, opts.base, "time"), rng))))
+        print("total: %s vs %s, %d instances: conflicts %s  time %s  bogoprops %s" % (
+            c, opts.base, len(rc), fmt_ci(ratio_ci(rc, rng)), fmt_ci(ratio_ci(paired(c, opts.base, "time"), rng)),
+            fmt_ci(ratio_ci(paired(c, opts.base, "bogo"), rng))))
 
     # the noise floor
     for c in configs:

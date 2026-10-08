@@ -214,8 +214,10 @@ and takes `PRED_OPTS`, `EVAL_OPTS` (e.g. `--xor 0`), `EVAL_ANC` (which
 `--predanc`, `0 1`), `EVAL_SEEDS`, `EVAL_TIMEOUT`, `EVAL_NORMAL_CACHE`.
 `eval_summary.py <dir>` makes the table from such files: per instance,
 then per configuration against normal the geometric mean of the
-per-instance ratios with a 95% bootstrap interval, solved, PAR2, and
-the noise (each seed against the first).
+per-instance ratios with a 95% bootstrap interval (conflicts, time,
+bogoprops), solved, PAR2, and the noise (each seed against the first).
+It reads any dir of `<cnf>.<config>.s<seed>` outputs (`--base` names
+the config to compare against).
 
 ### Features
 
