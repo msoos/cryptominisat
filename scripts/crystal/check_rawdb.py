@@ -27,6 +27,7 @@
 import argparse
 import os
 import sqlite3
+import helper
 import sys
 
 failed = []
@@ -94,6 +95,26 @@ if __name__ == "__main__":
         bad = one(c, """select count(*) from reduceDB a join reduceDB b on a.clauseID = b.clauseID
             and b.dump_no = a.dump_no + 1 where a.gone = 1 and b.gone = 0""")
         check(bad == 0, "%d clauses came back after being gone" % bad)
+        # the rule the replay of the reduce assumes (helper.kept_by_rule),
+        # against what the solver did: a clause the rule keeps is not removed
+        c.execute("""select sum(k1), sum(1-k1), sum((1-k1)*g), sum(1-k2), sum((1-k2)*g) from (
+            select b.gone as g,
+            (a.used > {mx}-1 or (a.glue <= {t1} and a.used > 0)) as k1,
+            (a.used > {mx}-2 or (a.glue <= {t1} and a.used > 0)) as k2
+            from reduceDB a join reduceDB b on b.clauseID = a.clauseID and b.dump_no = a.dump_no + 1
+            where a.gone = 0 and a.is_ternary_resolvent = 0 and a.glue is not null)
+            """.format(mx=helper.MAX_USED, t1=helper.TIER1_GLUE))
+        r = [x or 0 for x in c.fetchone()]
+        bad = one(c, """select count(*) from reduceDB a join reduceDB b on b.clauseID = a.clauseID
+            and b.dump_no = a.dump_no + 1 where a.gone = 0 and b.gone = 1 and a.is_ternary_resolvent = 0
+            and a.glue is not null and (a.used > {mx}-1 or (a.glue <= {t1} and a.used > 0))
+            """.format(mx=helper.MAX_USED, t1=helper.TIER1_GLUE))
+        check(bad == 0, "%d clauses removed that the rule keeps (tier1 glue %d, 1 round)" % (bad, helper.TIER1_GLUE))
+        if r[1] and r[3]:
+            print("candidates removed at their reduce: %.0f%% under a 1-round rule, %.0f%% under a 2-round one" % (
+                100.0*r[2]/r[1], 100.0*r[4]/r[3]))
+            if not any(0.55 <= x <= 0.8 for x in (r[2]/r[1], r[4]/r[3])):
+                warn("neither rule has about 75% of its candidates removed")
         gone = one(c, "select avg(gone) from reduceDB") or 0
         print("rows of clauses only the lock keeps (gone): %.0f%%" % (100*gone))
         check(gone < 0.95, "%.0f%% of the rows are of gone clauses" % (100*gone))
