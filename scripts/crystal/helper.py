@@ -543,7 +543,7 @@ def sample_weights(df, how):
 # the solver's reduce: ReduceDB::mark_useless_redundant_clauses_as_garbage
 TIER1_GLUE = 2    # conf.reducetier1glue
 MAX_USED = 31     # CL_MAX_USED: 'used' of a clause learnt or used since the last reduce
-ROUNDS = 2        # conf.reduce_rounds: reduces a clause is kept for after that
+ROUNDS = 1        # conf.reduce_rounds of the predictor builds: reduces it is kept for after that
 REMOVE = 0.75     # conf.reducetarget, the share of the candidates removed
 
 
@@ -612,7 +612,7 @@ def policy_per_reduce(df, pred, label, min_rows=50, rounds=ROUNDS, remove=REMOVE
       order   the predictor build: the candidates by the model
       oracle  the candidates by their future use: the most an order of
               the candidates can keep
-    and for the use that the solver's own reduce (2 rounds, 75%) holds,
+    and for the use that the normal order holds at the default knobs,
     the share of the clauses that has to be kept when the candidates go by
       glue needs, order needs, oracle needs
     Mean over the reduces of an instance. 'rule cls' / 'rule use': the

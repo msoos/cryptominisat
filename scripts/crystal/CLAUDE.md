@@ -162,8 +162,8 @@ the reduces of an instance, then over the instances. `rule cls` / `rule
 use`: the share of the clauses the rule keeps and of the use they hold,
 `cls`: the share of the clauses kept. `holdout_eval.py --rounds N
 --remove P --tier1 G` replays the rule with other knobs
-(`--reducerounds`, `--reducetarget`, `--reducetier1glue`); the learn
-output is at 2 rounds.
+(`--reducerounds`, `--reducetarget`, `--reducetier1glue`; the defaults
+are the predictor build's).
 With three or more instances the train/test split is by instance; the
 saved model is refitted on all rows.
 

@@ -30,7 +30,7 @@
 #          [--objective rank|squarederror|log|poisson]
 #          [--target count|rel] [--weights none|strata|instance|family]   (not with rank)
 #          [-f best_features.txt] [--table used_later]
-#          [--rounds 2] [--remove 75] [--tier1 2]   the reduce that is replayed
+#          [--rounds 1] [--remove 75] [--tier1 2]   the reduce that is replayed
 
 import argparse
 import glob
