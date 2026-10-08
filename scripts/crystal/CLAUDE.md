@@ -85,7 +85,8 @@ conflict-count A/B is clean.
    use); `--python` is the same pass in Python, the reference of
    `test_xlrup_uses.py`. The proof is deleted afterwards (`KEEP_PROOF=1`
    keeps it and `data.db`).
-3. **clean/check/sample** (`clean_update_data.py`, `check_data_quality.py
+3. **clean/check/sample** (`clean_update_data.py`, `use_stats.py` (how
+   far ahead of a reduce the uses lie, where in the run), `check_data_quality.py
    --slow`, `sample_data.py`): the labels and their rank within the
    reduce over EVERY row of the full DB, then two samples, kept in
    `data-min.db`:
@@ -171,7 +172,8 @@ saved model is refitted on all rows.
 
 - `check_rawdb.py` on the stats DB: tables, one row per (clause,
   reduce), enough reduces, tracked share vs dump ratio, proof present,
-  no clause gone before its first reduce or back after.
+  no clause gone before its first reduce or back after, no clause
+  removed that the replayed rule (`helper.kept_by_rule`) keeps.
 - `check_data_quality.py --slow` after the labels.
 - `check_frames.py` on the frames, before any learning: columns, inf,
   bad labels, `rel` in 0..1, weights >= 1, sizes, ages, per-reduce
@@ -231,7 +233,7 @@ trees). `<learn dir>` holds the model next to its training frame.
 
 Pipeline: `ballofcrystal.sh`, `setparams_ballofcrystal.sh`,
 `check_rawdb.py`, `fix_up_xlrup.py` + `xlrup_uses.cpp`,
-`clean_update_data.py`, `check_data_quality.py`, `sample_data.py`,
+`clean_update_data.py`, `use_stats.py`, `check_data_quality.py`, `sample_data.py`,
 `cldata_gen_pandas.py`, `check_frames.py`, `cldata_predict.py`,
 `concat_pandas.py`, `learn.sh`, `eval_corpus.sh`, `eval_summary.py`,
 `run_corpus.sh`, `helper.py` (shared SQL, features, weights, ranking).

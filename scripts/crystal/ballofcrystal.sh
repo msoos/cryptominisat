@@ -139,6 +139,9 @@ if [[ $SKIP_LEARN -eq 0 ]]; then
     stage "clean_update_data"
     "$SCRIPTDIR/clean_update_data.py" data.db | tee clean_update_data.out-stage
 
+    stage "use_stats"
+    "$SCRIPTDIR/use_stats.py" data.db --halflife "$HALFLIFE" | tee use_stats.out-stage
+
     stage "check_data_quality"
     "$SCRIPTDIR/check_data_quality.py" --slow data.db | tee check_data_quality.out-stage
 
