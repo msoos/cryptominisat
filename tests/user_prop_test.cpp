@@ -909,6 +909,27 @@ TEST(user_prop_freeze, eliminated_var_is_uneliminated_when_observed)
     EXPECT_EQ(s.solve(), l_True);
 }
 
+// Once UNSAT there is no search to put an eliminated var back into
+TEST(user_prop_freeze, eliminated_var_can_be_observed_once_unsat)
+{
+    SATSolver s;
+    NoopPropagator p;
+    s.new_vars(10);
+    s.add_clause(str_to_cl("1, 3"));
+    s.add_clause(str_to_cl("2, -3"));
+    s.add_clause(str_to_cl("4, 5"));
+    std::string strategy = "occ-bve";
+    EXPECT_EQ(s.simplify(nullptr, &strategy), l_Undef);
+    ASSERT_TRUE(s.removed_var(2));
+
+    s.connect_external_propagator(&p);
+    s.add_clause(str_to_cl("6"));
+    EXPECT_FALSE(s.add_clause(str_to_cl("-6")));
+    s.add_observed_var(2);
+    EXPECT_TRUE(s.is_observed_var(2));
+    EXPECT_EQ(s.solve(), l_False);
+}
+
 // Deterministic random 3-SAT.
 static void add_random_3sat(Solver* s, uint32_t nvars, uint32_t ncls, uint32_t seed)
 {

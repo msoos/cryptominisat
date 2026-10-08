@@ -83,6 +83,14 @@ void Solver::add_observed_var(const uint32_t outer_var)
     release_assert(!ext_explaining && !ext_advising &&
         "The set of observed variables cannot change while a reason clause or polarity advice is being asked for");
 
+    //Once the clauses are UNSAT there is no more search, and a variable that
+    //was renumbered or eliminated away cannot be put back: only record it
+    if (!okay()) {
+        varData[map_outer_to_inter(outer_var)].observed = 1;
+        ext_observed_vars.push_back(outer_var);
+        return;
+    }
+
     //Renumbering may have moved the variable past nVars(): put it back, as
     //add_clause_helper() does
     if (map_outer_to_inter(outer_var) >= nVars()) {
