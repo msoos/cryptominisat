@@ -115,9 +115,12 @@ if __name__ == "__main__":
                 100.0*r[2]/r[1], 100.0*r[4]/r[3]))
             if not any(0.55 <= x <= 0.8 for x in (r[2]/r[1], r[4]/r[3])):
                 warn("neither rule has about 75% of its candidates removed")
+        # a gone clause is dumped until the end: the share over all rows
+        # grows with the run, at a clause's fourth reduce it does not
         gone = one(c, "select avg(gone) from reduceDB") or 0
-        print("rows of clauses only the lock keeps (gone): %.0f%%" % (100*gone))
-        check(gone < 0.95, "%.0f%% of the rows are of gone clauses" % (100*gone))
+        gone1 = one(c, "select avg(gone) from reduceDB where dump_no = 3") or 0
+        print("rows of clauses only the lock keeps (gone): %.0f%%, at a clause's fourth reduce: %.0f%%" % (100*gone, 100*gone1))
+        check(gone1 < 0.95, "%.0f%% of the clauses are gone at their fourth reduce" % (100*gone1))
     # the per-reduce aggregates are one row per reduce
     dupc = one(c, "select count(*) from (select conflicts, count(*) n from reduceDB_common group by 1 having n > 1)")
     check(dupc == 0, "%d reduces dumped twice in reduceDB_common" % dupc)
