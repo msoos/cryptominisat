@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789248055,
-        "narHash": "sha256-UIJhXYwTq3orU9hhR4KbMd2Jb7dp7n3ZX141xOBzolU=",
+        "lastModified": 1790711306,
+        "narHash": "sha256-tJiK0ZPDRzttVVYOs28F1xcKiDj/fcos7BkG1hpy6mk=",
         "owner": "meelgroup",
         "repo": "cadiback",
-        "rev": "47a6d821085ef8cb033241659824beafeb798cff",
+        "rev": "445ddc2f2b5e54421af64e0652c2eb8444175322",
         "type": "github"
       },
       "original": {
