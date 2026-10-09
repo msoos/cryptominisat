@@ -417,6 +417,19 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   8 reduces at 160-360 reduces a run (`use_stats.py`; 59% on a run of
   20). `gone` rows are 92-99% of the raw rows there, 48% of the sampled
   frame.
+- **Round 4, the first one the model really drove** (25 of the 30,
+  labelled with half-lives 2, 4 and 8). Offline, model minus normal on
+  the hold-outs of round 1 / round 4: embedded +0.24 / +0.10, trained
+  on round 4's 16 training instances with half-life 4 +0.45 / +0.42,
+  half-life 2 +0.24 / +0.30, half-life 8 +0.18 / +0.31, on rounds 1 and
+  4 +0.27 / +0.26. In the solver, against the embedded model: the
+  round-4 model 106.8% [98, 115] of the conflicts and 114.2% [101, 128]
+  of the bogoprops, rounds 1 and 4 103.9% [97, 111] and 111.2% [100,
+  127]. Not embedded. `HALFLIFE` 4 stays. For the second time a model
+  ahead by a few tenths offline is behind in the solver: the offline
+  number does not rank models this close.
+- **A removal share that rises over the run lost**: `--reducelow 650
+  --reducehigh 850` is 107.6% [100, 119] of the fixed 75%'s conflicts.
 - **A count from the score lost.** Removing the candidates scored
   below a threshold (set so that the median training reduce removes
   75%, clamped to half and twice that) kept 98.5% of the use against
@@ -517,4 +530,4 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   runs. They are refused by the generator.
 - Three models of use counts over three horizons, summed, did what the
   one discounted model does at three times the prediction cost.
-- Not tuned: trees, depth, `HALFLIFE`.
+- Not tuned: trees, depth.
