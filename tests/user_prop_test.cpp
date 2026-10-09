@@ -449,6 +449,55 @@ TEST(user_prop_connect, connect_and_disconnect)
     EXPECT_EQ(s.solve(), l_True);
 }
 
+TEST(user_prop_connect, xlrup_before_connect_is_refused)
+{
+    for(const bool binary : {false, true}) {
+        FILE* proof = tmpfile();
+        ASSERT_NE(proof, nullptr);
+        {
+            NoopPropagator p;
+            SATSolver s;
+            s.set_xlrup(proof, binary);
+            EXPECT_DEATH(s.connect_external_propagator(&p),
+                "cannot be combined with XLRUP proof logging");
+        }
+        fclose(proof);
+    }
+}
+
+TEST(user_prop_connect, xlrup_after_connect_is_refused)
+{
+    for(const bool binary : {false, true}) {
+        FILE* proof = tmpfile();
+        ASSERT_NE(proof, nullptr);
+        {
+            NoopPropagator p;
+            SATSolver s;
+            s.connect_external_propagator(&p);
+            EXPECT_DEATH(s.set_xlrup(proof, binary),
+                "XLRUP proof logging cannot be enabled after an external propagator");
+        }
+        fclose(proof);
+    }
+}
+
+TEST(user_prop_connect, disconnect_does_not_allow_xlrup)
+{
+    for(const bool binary : {false, true}) {
+        FILE* proof = tmpfile();
+        ASSERT_NE(proof, nullptr);
+        {
+            NoopPropagator p;
+            SATSolver s;
+            s.connect_external_propagator(&p);
+            s.disconnect_external_propagator();
+            EXPECT_DEATH(s.set_xlrup(proof, binary),
+                "XLRUP proof logging cannot be enabled after an external propagator");
+        }
+        fclose(proof);
+    }
+}
+
 TEST(user_prop_connect, multi_threading_is_refused)
 {
     // Connecting before any variable exists used to slip past the check.
@@ -1413,75 +1462,6 @@ TEST_F(UserPropClauseTest, unit_and_empty_clauses_from_the_propagator)
     EXPECT_FALSE(s->okay());
 }
 
-TEST_F(UserPropClauseTest, frat_proof_is_written_without_tripping_anything)
-{
-    // Verifying the proof needs the toolchain in README_VERIFIER.md; this only
-    // checks the FRAT path runs, writes output and gets the right answer.
-    const uint32_t nvars = 24;
-    auto cls = gen_3sat(nvars, 180, 5);
-    const lbool expected = solve_plain(cls, nvars);
-    ASSERT_EQ(expected, l_False);
-
-    const char* fname = "user_prop_test.frat";
-    FILE* f = fopen(fname, "wb");
-    ASSERT_NE(f, nullptr);
-
-    s = new Solver(&conf, &must_inter);
-    s->add_frat(f);
-    s->connect_external_propagator(&p);
-    s->new_vars(nvars);
-    for(size_t i = 0; i < 90; i++) {
-        vector<Lit> tmp = cls[i];
-        s->add_clause_outside(tmp);
-    }
-    for(uint32_t v = 0; v < nvars; v++) s->add_observed_var(v);
-    for(size_t i = 90; i < cls.size(); i++) p.to_hand_over.push_back(cls[i]);
-    p.start(s, nvars);
-
-    must_inter.store(false, std::memory_order_relaxed);
-    EXPECT_EQ(s->solve_with_assumptions(), l_False);
-    delete s; s = nullptr;
-    fclose(f);
-
-    FILE* check = fopen(fname, "rb");
-    ASSERT_NE(check, nullptr);
-    fseek(check, 0, SEEK_END);
-    EXPECT_GT(ftell(check), 0);
-    fclose(check);
-    std::remove(fname);
-}
-
-TEST_F(UserPropClauseTest, forgettable_is_ignored_under_frat)
-{
-    // FRAT cannot express a redundant input clause, so the clauses are kept.
-    const uint32_t nvars = 30;
-    auto cls = gen_3sat(nvars, 125, 4);
-    const lbool expected = solve_plain(cls, nvars);
-
-    const char* fname = "user_prop_test_forget.frat";
-    FILE* f = fopen(fname, "wb");
-    ASSERT_NE(f, nullptr);
-
-    s = new Solver(&conf, &must_inter);
-    s->add_frat(f);
-    s->connect_external_propagator(&p);
-    s->new_vars(nvars);
-    for(size_t i = 0; i < 60; i++) {
-        vector<Lit> tmp = cls[i];
-        s->add_clause_outside(tmp);
-    }
-    for(uint32_t v = 0; v < nvars; v++) s->add_observed_var(v);
-    p.forgettable = true;
-    for(size_t i = 60; i < cls.size(); i++) p.to_hand_over.push_back(cls[i]);
-    p.start(s, nvars);
-
-    must_inter.store(false, std::memory_order_relaxed);
-    EXPECT_EQ(s->solve_with_assumptions(), expected);
-    delete s; s = nullptr;
-    fclose(f);
-    std::remove(fname);
-}
-
 TEST_F(UserPropClauseTest, propagator_forces_a_specific_model)
 {
     s = new Solver(&conf, &must_inter);
@@ -1543,68 +1523,6 @@ public:
         return clause[next_lit++];
     }
 };
-
-// Every 'o' (original clause) line of a text FRAT proof, literals only.
-static vector<vector<Lit>> read_frat_original_clauses(const char* fname)
-{
-    vector<vector<Lit>> ret;
-    FILE* f = fopen(fname, "rb");
-    if (f == nullptr) return ret;
-    char line[8192];
-    while (fgets(line, sizeof(line), f) != nullptr) {
-        if (line[0] != 'o' || line[1] != ' ') continue;
-        vector<Lit> cl;
-        const char* at = line+2;
-        bool first = true; // the ID
-        while (true) {
-            char* end = nullptr;
-            const long v = strtol(at, &end, 10);
-            if (end == at) break;
-            at = end;
-            if (first) { first = false; continue; }
-            if (v == 0) break;
-            cl.push_back(Lit((uint32_t)std::labs(v)-1, v < 0));
-        }
-        std::sort(cl.begin(), cl.end());
-        ret.push_back(cl);
-    }
-    fclose(f);
-    return ret;
-}
-
-TEST_F(UserPropClauseTest, external_clauses_are_original_clauses_in_the_proof)
-{
-    // External clauses enter the proof as input clauses, over the user's
-    // variables: their literals are already outer and must not be renumbered.
-    const char* fname = "user_prop_test_orig.frat";
-    FILE* f = fopen(fname, "wb");
-    ASSERT_NE(f, nullptr);
-
-    DeepHandoverPropagator dp;
-    dp.chain = 6;
-    dp.hand_over_at = 6;
-    dp.clause = str_to_cl("7, -8, 9");
-
-    s = new Solver(&conf, &must_inter);
-    s->add_frat(f);
-    s->connect_external_propagator(&dp);
-    s->new_vars(12);
-    for(uint32_t v = 0; v < 12; v++) s->add_observed_var(v);
-    dp.start(s, 12);
-
-    must_inter.store(false, std::memory_order_relaxed);
-    ASSERT_EQ(s->solve_with_assumptions(), l_True);
-    ASSERT_TRUE(dp.handed);
-    delete s; s = nullptr;
-    fclose(f);
-
-    vector<Lit> want = dp.clause;
-    std::sort(want.begin(), want.end());
-    const vector<vector<Lit>> got = read_frat_original_clauses(fname);
-    EXPECT_NE(std::find(got.begin(), got.end(), want), got.end())
-        << "the external clause is not in the proof as an original clause";
-    std::remove(fname);
-}
 
 TEST_F(UserPropClauseTest, a_satisfied_clause_does_not_move_the_trail)
 {
@@ -2231,40 +2149,6 @@ TEST_F(UserPropLazyTest, duplicate_pivot_is_removed_from_lazy_reason)
     EXPECT_EQ(s->get_model()[0], l_False);
 }
 
-TEST_F(UserPropLazyTest, lazy_is_ignored_under_frat)
-{
-    // Reason clauses have to be in the proof, so they are asked for eagerly.
-    const uint32_t nvars = 24;
-    auto cls = gen_3sat(nvars, 180, 5);
-    const lbool expected = solve_plain(cls, nvars);
-    ASSERT_EQ(expected, l_False);
-
-    const char* fname = "user_prop_test_lazy.frat";
-    FILE* f = fopen(fname, "wb");
-    ASSERT_NE(f, nullptr);
-
-    conf.ext_lazy_reasons = true;
-    delete s;
-    s = new Solver(&conf, &must_inter);
-    s->add_frat(f);
-    s->connect_external_propagator(&p);
-    s->new_vars(nvars);
-    for(size_t i = 0; i < 90; i++) {
-        vector<Lit> tmp = cls[i];
-        s->add_clause_outside(tmp);
-    }
-    for(uint32_t v = 0; v < nvars; v++) s->add_observed_var(v);
-    for(size_t i = 90; i < cls.size(); i++) p.theory.push_back(cls[i]);
-    p.start_theory(s, nvars);
-
-    must_inter.store(false, std::memory_order_relaxed);
-    EXPECT_EQ(s->solve_with_assumptions(), l_False);
-    EXPECT_EQ(p.num_explanations, p.num_propagations);
-    delete s; s = nullptr;
-    fclose(f);
-    std::remove(fname);
-}
-
 TEST_F(UserPropLazyTest, lazy_reason_in_a_failed_assumption_core)
 {
     // Assume 1 and -2 with 1 -> 2 in the propagator: -2 is contradicted by a
@@ -2592,38 +2476,6 @@ struct UserPropAdversaryTest : public ::testing::Test {
     AdversarialPropagator p;
     std::atomic<bool> must_inter;
 };
-
-TEST_F(UserPropAdversaryTest, everything_at_once_under_frat)
-{
-    for(uint32_t seed = 200; seed <= 204; seed++) {
-        const uint32_t nvars = 26;
-        auto cls = gen_3sat(nvars, 108, seed);
-        const lbool expected = solve_plain(cls, nvars);
-
-        const char* fname = "user_prop_adversary.frat";
-        FILE* f = fopen(fname, "wb");
-        ASSERT_NE(f, nullptr);
-
-        delete s;
-        s = new Solver(&conf, &must_inter);
-        s->add_frat(f);
-        s->connect_external_propagator(&p);
-        s->new_vars(nvars);
-        const size_t split = cls.size()*2/3;
-        for(size_t i = 0; i < split; i++) { vector<Lit> tmp = cls[i]; s->add_clause_outside(tmp); }
-        for(uint32_t v = 0; v < nvars; v++) if ((v + seed) % 3 != 0) s->add_observed_var(v);
-        p = AdversarialPropagator();
-        for(size_t i = split; i < cls.size(); i++) p.theory.push_back(cls[i]);
-        p.start_adversary(s, nvars, seed);
-        p.backtrack_budget = 40;
-
-        must_inter.store(false, std::memory_order_relaxed);
-        EXPECT_EQ(s->solve_with_assumptions(), expected) << "seed " << seed;
-        delete s; s = nullptr;
-        fclose(f);
-        std::remove(fname);
-    }
-}
 
 }
 

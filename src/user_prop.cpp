@@ -44,6 +44,8 @@ void Solver::connect_external_propagator(ExternalPropagator* p)
         "At most one external propagator can be connected at a time");
     release_assert(decision_level() == 0 &&
         "An external propagator can only be connected outside of solving");
+    release_assert(!frat->enabled() &&
+        "An external propagator cannot be combined with XLRUP proof logging");
 
     release_assert(!fast_backw.fast_backw_on &&
         "An external propagator cannot be combined with fast backward subsumption");

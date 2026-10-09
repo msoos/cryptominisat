@@ -97,10 +97,10 @@ namespace CMSat {
         // observed variables are frozen: simplification never eliminates or
         // replaces them.
         //
-        // With FRAT on, the propagator's clauses are logged as original (input)
-        // clauses, so the proof certifies the CNF together with them, and
-        // checking it needs both. XLRUP numbers its inputs by their position
-        // in the CNF, so it cannot name them, and such a proof does not check.
+        // Incompatible with XLRUP proof logging: its position-numbered inputs
+        // cannot represent additional theory clauses. Once a propagator has
+        // been connected, proof logging cannot be enabled, even after
+        // disconnecting it, since theory-derived clauses may remain.
         ////////////////////////////
 
         void connect_external_propagator(ExternalPropagator* p);
@@ -144,8 +144,7 @@ namespace CMSat {
 
         // Explain external propagations lazily, asking for the reason only when
         // conflict analysis needs it (the default, as in the paper and
-        // CaDiCaL: unused reasons are never learnt), or eagerly. With FRAT on,
-        // reasons are always asked for eagerly, as every step must be logged.
+        // CaDiCaL: unused reasons are never learnt), or eagerly.
         // An eager reason is added as a clause, so a propagation whose
         // antecedents all sit below the current level backtracks to where it
         // belongs: propagate as soon as the antecedent is complete, not in

@@ -41,6 +41,7 @@ SATSolver::add_observed_var().
 At most one propagator can be connected. Connecting one restricts the solver to
 a single thread and disables Gauss-Jordan elimination and chronological
 backtracking.
+XLRUP proof logging cannot be combined with an external propagator.
 
 SATSolver::is_decision() counts any literal assigned above the root with no
 reason, including the current assumptions. It is only meaningful during
