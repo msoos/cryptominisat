@@ -185,6 +185,10 @@ saved model is refitted on all rows.
 - `check_labels.py data.db frames..` (needs `KEEP_PROOF=1`): the label
   of sampled rows summed a second time from `used_clauses`, with code
   that shares nothing with the SQL. Part of `test_small.sh`.
+- `check_train_serve.py dump frames..`: a stats+predictor run with
+  `--preddump` writes what its predictor was fed; every frame row of
+  the same run must have the same 24 features there. Part of
+  `test_small.sh`.
 - `concat_pandas.py` refuses frames with different columns; `learn.sh`
   warns when the dirs were gathered by different solvers.
 - The solver refuses a model whose features do not match its list.
@@ -245,7 +249,8 @@ Features: `gen_pred_features.py`, `gen_best_feats.sh`,
 `pick_features.py`, `feature_groups.py` + `ablate_groups.sh` (group
 ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh` (tree-seed spread of an A/B),
 `holdout_eval.py`. Tests: `test_small.sh`, `test_xlrup_uses.py`,
-`check_pred_features.py`, `check_labels.py`. Instances: `bivium_variants.py`.
+`check_pred_features.py`, `check_labels.py`, `check_train_serve.py`.
+Instances: `bivium_variants.py`.
 
 ## Practicalities
 
@@ -276,7 +281,7 @@ ablation in the solver), `ccg.py`. Models: `model_report.py`, `model_variance.sh
   time: conflicts only), `general/timed.sh` (one at a time, for times),
   `general/holdout9.txt`, `sr19/survey*.sh` and `gather.sh`.
 
-## What is known (2026-10-07)
+## What is known (2026-10-09)
 
 Data: 30 UNSAT instances, 25 families (14 of satcomp2020, 16 of
 satrace19: what the normal build solves with `--xor 0` in 100-300 s on
@@ -311,6 +316,19 @@ How it got there, same 9 x 3, conflicts vs the normal build:
 
 (All four against the normal build of before the tie-break.)
 
+- **Rounds 2 and 3 were not gathered under the model as the predictor
+  build runs it** (found 2026-10-09 by `check_train_serve.py`). In the
+  stats+predictor build the SQL dump of a reduce prepared the features
+  and reset the per-interval counters, and the predictor then prepared
+  them a second time: `props_made` and `uip1_used` zero, every
+  discounted counter one step further (x0.8, x0.9), the rankings of
+  both over zeros. 14 of the 24 features differed from the frames of
+  the same run. The frames were right and the predictor build was never
+  affected, so every solver number here stands. But the data of rounds
+  2 and 3 is from a policy that is neither glue nor the model, and what
+  is said below about the model "on its own data" is about that
+  policy. Fixed; round 4 (`cb_test/round4`) is the first gathered under
+  the model itself.
 - **Two bugs made the predictor build lose.** An eagerly subsumed
   clause (glue = max) was ranked by the model instead of going first,
   and `lim_keptglue/lim_keptsize` (what vivification takes for likely
