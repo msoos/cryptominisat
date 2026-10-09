@@ -113,8 +113,8 @@ bool OracleLS::local_search(int64_t mems_limit) {
         }
         initialize();
     }
-    cout << "restart&steps limit reached, try: " << t << " step: " << setw(8) << step
-        << " unsat cls: " <<  unsat_cls.size() << endl;
+    verb_print(3, "[ccnr] restart&steps limit reached, try: " << t << " step: " << setw(8) << step
+        << " unsat cls: " <<  unsat_cls.size());
     return false;
 }
 
