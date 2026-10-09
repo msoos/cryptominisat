@@ -28,49 +28,21 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 
-//#define VERBOSE_DEBUG_MPI_SENDRCV
 
 using namespace CMSat;
 
 DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
     solver(_solver)
-    , sharedData(_sharedData)
+    , shared_data(_sharedData)
     , seen(solver->seen)
-    , toClear(solver->toClear)
+    , to_clear(solver->to_clear)
 {
-}
-
-void DataSync::finish_up_mpi()
-{
-    #ifdef USE_MPI
-    if (mpiSendData) {
-        //mpiSendData is only non-nullptr when MPI is on and it's the 0 thread
-        assert(solver->conf.is_mpi);
-        assert(solver->conf.thread_num == 0);
-
-        /*MPI_Status status;
-        int op_completed = false;
-        int err;
-
-        err = MPI_Test(&sendReq, &op_completed, &status);
-        assert(err == MPI_SUCCESS);
-        if (!op_completed) {
-            err = MPI_Cancel(&sendReq);
-            assert(err == MPI_SUCCESS);
-        }*/
-        delete[] mpiSendData;
-        mpiSendData = nullptr;
-    }
-    #endif
 }
 
 void DataSync::set_shared_data(SharedData* _sharedData)
 {
-    sharedData = _sharedData;
+    shared_data = _sharedData;
     thread_id = _sharedData->cur_thread_id++;
-    #ifdef USE_MPI
-    set_up_for_mpi();
-    #endif
 }
 
 void DataSync::new_var(const bool bva)
@@ -79,10 +51,10 @@ void DataSync::new_var(const bool bva)
         return;
 
     if (!bva) {
-        syncFinish.push_back(0);
-        syncFinish.push_back(0);
+        sync_finish.push_back(0);
+        sync_finish.push_back(0);
     }
-    assert(solver->nVarsOuter()*2 == syncFinish.size());
+    assert(solver->nVarsOuter()*2 == sync_finish.size());
 }
 
 void DataSync::new_vars(size_t n)
@@ -90,15 +62,15 @@ void DataSync::new_vars(size_t n)
     if (!enabled())
         return;
 
-    syncFinish.insert(syncFinish.end(), 2*n, 0);
-    assert(solver->nVarsOuter()*2 == syncFinish.size());
+    sync_finish.insert(sync_finish.end(), 2*n, 0);
+    assert(solver->nVarsOuter()*2 == sync_finish.size());
 }
 
 void DataSync::save_on_var_memory()
 {
 }
 
-void DataSync::updateVars(
+void DataSync::update_vars(
     [[maybe_unused]] const vector<uint32_t>&  outer_to_inter
     , [[maybe_unused]] const vector<uint32_t>& inter_to_outer
 ) {
@@ -107,20 +79,19 @@ void DataSync::updateVars(
 bool DataSync::syncData()
 {
     if (!enabled()
-        || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts
+        || lastSyncConf + solver->conf.sync_every_confl >= solver->sum_conflicts
     ) {
         return true;
     }
-    numCalls++;
 
-    assert(sharedData != nullptr);
-    assert(solver->decisionLevel() == 0);
+    assert(shared_data != nullptr);
+    assert(solver->decision_level() == 0);
 
     //SEND data
     bool ok;
-    sharedData->unit_mutex.lock();
+    shared_data->unit_mutex.lock();
     ok = shareUnitData();
-    sharedData->unit_mutex.unlock();
+    shared_data->unit_mutex.unlock();
     if (!ok) {
         return false;
     }
@@ -130,43 +101,16 @@ bool DataSync::syncData()
     }
 
     //RECEIVE data
-    sharedData->bin_mutex.lock();
+    shared_data->bin_mutex.lock();
     extend_bins_if_needed();
     clear_set_binary_values();
     ok = shareBinData();
-    sharedData->bin_mutex.unlock();
+    shared_data->bin_mutex.unlock();
     if (!ok) {
         return false;
     }
 
-    #ifdef USE_MPI
-    if (solver->conf.is_mpi
-        && solver->conf.thread_num == 0)
-    {
-        if (syncMPIFinish.size() < solver->nVarsOutside()*2) {
-            syncMPIFinish.resize(solver->nVarsOutside()*2, 0);
-        }
-
-        if (!mpi_get_interrupt()) {
-            sharedData->unit_mutex.lock();
-            sharedData->bin_mutex.lock();
-            ok = mpi_recv_from_others();
-            assert(solver->conf.every_n_mpi_sync > 0);
-            if (ok &&
-                numCalls % solver->conf.every_n_mpi_sync == solver->conf.every_n_mpi_sync-1
-            ) {
-                mpi_send_to_others();
-            }
-            sharedData->unit_mutex.unlock();
-            sharedData->bin_mutex.unlock();
-            if (!ok) {
-                return false;
-            }
-        }
-    }
-    #endif
-
-    lastSyncConf = solver->sumConflicts;
+    lastSyncConf = solver->sum_conflicts;
 
     return true;
 }
@@ -179,7 +123,7 @@ bool DataSync::shareUnitData()
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;
 
-    SharedData& shared = *sharedData;
+    SharedData& shared = *shared_data;
     if (shared.value.size() < solver->nVarsOuter()) {
         shared.value.insert(
             shared.value.end(),
@@ -187,17 +131,17 @@ bool DataSync::shareUnitData()
     }
     for (uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         Lit thisLit = Lit(var, false);
-        thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
+        thisLit = solver->var_replacer->get_lit_replaced_with_outer(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
-        const lbool thisVal = solver->value(thisLit);
-        const lbool otherVal = shared.value[var];
+        const lbool this_val = solver->value(thisLit);
+        const lbool other_val = shared.value[var];
 
-        if (thisVal == l_Undef && otherVal == l_Undef) {
+        if (this_val == l_Undef && other_val == l_Undef) {
             continue;
         }
 
-        if (thisVal != l_Undef && otherVal != l_Undef) {
-            if (thisVal != otherVal) {
+        if (this_val != l_Undef && other_val != l_Undef) {
+            if (this_val != other_val) {
                 solver->ok = false;
                 return false;
             } else {
@@ -205,10 +149,10 @@ bool DataSync::shareUnitData()
             }
         }
 
-        if (otherVal != l_Undef) {
-            assert(thisVal == l_Undef);
-            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
-            if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
+        if (other_val != l_Undef) {
+            assert(this_val == l_Undef);
+            Lit litToEnqueue = thisLit ^ (other_val == l_False);
+            if (solver->var_data[litToEnqueue.var()].removed != Removed::none) {
                 continue;
             }
 
@@ -218,9 +162,9 @@ bool DataSync::shareUnitData()
             continue;
         }
 
-        if (thisVal != l_Undef) {
-            assert(otherVal == l_Undef);
-            shared.value[var] = thisVal;
+        if (this_val != l_Undef) {
+            assert(other_val == l_Undef);
+            shared.value[var] = this_val;
             thisSentUnitData++;
             continue;
         }
@@ -230,7 +174,7 @@ bool DataSync::shareUnitData()
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [sync " << thread_id << "  ]"
+        << solver->conf.prefix << "[sync " << thread_id << "  ]"
         << " got units " << thisGotUnitData
         << " (total: " << stats.recvUnitData << ")"
         << " sent units " << thisSentUnitData
@@ -250,26 +194,26 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 
 bool DataSync::syncBinFromOthers()
 {
-    for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
-        if (sharedData->bins[wsLit].data == nullptr) {
+    for (uint32_t ws_lit = 0; ws_lit < shared_data->bins.size(); ws_lit++) {
+        if (shared_data->bins[ws_lit].data == nullptr) {
             continue;
         }
 
-        Lit lit1 = Lit::toLit(wsLit);
-        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
+        Lit lit1 = Lit::toLit(ws_lit);
+        lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
-        if (solver->varData[lit1.var()].removed != Removed::none
+        if (solver->var_data[lit1.var()].removed != Removed::none
             || solver->value(lit1.var()) != l_Undef
         ) {
             continue;
         }
 
-        vector<Lit>& bins = *sharedData->bins[wsLit].data;
+        vector<Lit>& bins = *shared_data->bins[ws_lit].data;
         watch_subarray ws = solver->watches[lit1];
 
-        assert(syncFinish.size() > wsLit);
-        if (bins.size() > syncFinish[wsLit]
-            && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)
+        assert(sync_finish.size() > ws_lit);
+        if (bins.size() > sync_finish[ws_lit]
+            && !syncBinFromOthers(lit1, bins, sync_finish[ws_lit], ws)
         ) {
             return false;
         }
@@ -284,13 +228,13 @@ bool DataSync::syncBinFromOthers(
     , uint32_t& finished
     , watch_subarray ws
 ) {
-    assert(solver->varReplacer->get_lit_replaced_with(lit) == lit);
-    assert(solver->varData[lit.var()].removed == Removed::none);
+    assert(solver->var_replacer->get_lit_replaced_with(lit) == lit);
+    assert(solver->var_data[lit.var()].removed == Removed::none);
 
-    assert(toClear.empty());
+    assert(to_clear.empty());
     for (const Watched& w: ws) {
-        if (w.isBin()) {
-            toClear.push_back(w.lit2());
+        if (w.is_bin()) {
+            to_clear.push_back(w.lit2());
             assert(seen.size() > w.lit2().toInt());
             seen[w.lit2().toInt()] = true;
         }
@@ -298,19 +242,19 @@ bool DataSync::syncBinFromOthers(
 
     vector<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
-        Lit otherLit = bins[i];
-        otherLit = solver->varReplacer->get_lit_replaced_with_outer(otherLit);
-        otherLit = solver->map_outer_to_inter(otherLit);
-        if (solver->varData[otherLit.var()].removed != Removed::none
-            || solver->value(otherLit) != l_Undef
+        Lit other_lit = bins[i];
+        other_lit = solver->var_replacer->get_lit_replaced_with_outer(other_lit);
+        other_lit = solver->map_outer_to_inter(other_lit);
+        if (solver->var_data[other_lit.var()].removed != Removed::none
+            || solver->value(other_lit) != l_Undef
         ) {
             continue;
         }
-        assert(seen.size() > otherLit.toInt());
-        if (!seen[otherLit.toInt()]) {
+        assert(seen.size() > other_lit.toInt());
+        if (!seen[other_lit.toInt()]) {
             stats.recvBinData++;
             lits[0] = lit;
-            lits[1] = otherLit;
+            lits[1] = other_lit;
 
             //Don't add FRAT: it would add to the thread data, too
             solver->add_clause_int(lits, true, nullptr, true, nullptr, false);
@@ -322,10 +266,10 @@ bool DataSync::syncBinFromOthers(
     finished = bins.size();
 
     end:
-    for (const Lit l: toClear) {
+    for (const Lit l: to_clear) {
         seen[l.toInt()] = false;
     }
-    toClear.clear();
+    to_clear.clear();
 
     return solver->okay();
 }
@@ -342,11 +286,11 @@ void DataSync::syncBinToOthers()
 bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 {
     assert(lit1 < lit2);
-    if (sharedData->bins[lit1.toInt()].data == nullptr) {
+    if (shared_data->bins[lit1.toInt()].data == nullptr) {
         return false;
     }
 
-    vector<Lit>& bins = *sharedData->bins[lit1.toInt()].data;
+    vector<Lit>& bins = *shared_data->bins[lit1.toInt()].data;
     for (const Lit lit : bins) {
         if (lit == lit2)
             return false;
@@ -361,21 +305,21 @@ void DataSync::clear_set_binary_values()
 {
     for(size_t i = 0; i < solver->nVarsOuter()*2; i++) {
         Lit lit1 = Lit::toLit(i);
-        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
+        lit1 = solver->var_replacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->value(lit1) != l_Undef) {
-            sharedData->bins[i].clear();
+            shared_data->bins[i].clear();
         }
     }
 }
 
 void DataSync::extend_bins_if_needed()
 {
-    assert(sharedData->bins.size() <= (solver->nVarsOuter())*2);
-    if (sharedData->bins.size() == (solver->nVarsOuter())*2)
+    assert(shared_data->bins.size() <= (solver->nVarsOuter())*2);
+    if (shared_data->bins.size() == (solver->nVarsOuter())*2)
         return;
 
-    sharedData->bins.resize(solver->nVarsOuter()*2);
+    shared_data->bins.resize(solver->nVarsOuter()*2);
 }
 
 bool DataSync::shareBinData()
@@ -386,11 +330,11 @@ bool DataSync::shareBinData()
 
     bool ok = syncBinFromOthers();
     syncBinToOthers();
-    size_t mem = sharedData->calc_memory_use_bins();
+    size_t mem = shared_data->calc_memory_use_bins();
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [sync " << thread_id << "  ]"
+        << solver->conf.prefix << "[sync " << thread_id << "  ]"
         << " got bins " << (stats.recvBinData - oldRecvBinData)
         << " (total: " << stats.recvBinData << ")"
         << " sent bins " << (stats.sentBinData - oldSentBinData)
@@ -405,8 +349,8 @@ bool DataSync::shareBinData()
 void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
 {
     if (!enabled()) return;
-    if (solver->varData[lit1.var()].is_bva) return;
-    if (solver->varData[lit2.var()].is_bva) return;
+    if (solver->var_data[lit1.var()].is_bva) return;
+    if (solver->var_data[lit2.var()].is_bva) return;
 
     lit1 = solver->map_inter_to_outer(lit1);
     lit2 = solver->map_inter_to_outer(lit2);
@@ -414,271 +358,3 @@ void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
-
-#ifdef USE_MPI
-void DataSync::set_up_for_mpi()
-{
-    if (solver->conf.is_mpi) {
-        int err;
-        err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-        assert(err == MPI_SUCCESS);
-
-        err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-        assert(err == MPI_SUCCESS);
-        release_assert(mpiRank != 0);
-        assert(sharedData != nullptr);
-    }
-}
-
-//Interrupts are tag 1, coming from master (i.e. rank 0)
-bool DataSync::mpi_get_interrupt()
-{
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " trying to get interrupt" << endl;
-    #endif
-
-    int flag;
-    MPI_Status status;
-    int err = MPI_Iprobe(
-        0, //master source
-        1, //tag "1" for finish interrupt
-        MPI_COMM_WORLD, &flag, &status);
-    assert(err == MPI_SUCCESS);
-    if (flag == false) {
-        return false;
-    }
-
-
-    //Receive the tag 1 message
-    unsigned buf;
-    err = MPI_Recv(
-        &buf,
-        0, //data is empty
-        MPI_UNSIGNED,
-        0, //source is master
-        1, //tag is "1"
-        MPI_COMM_WORLD, &status);
-    assert(err == MPI_SUCCESS);
-
-    //TODO should we cancel the potentially running SEND request?
-
-    solver->set_must_interrupt_asap();
-
-    return true;
-}
-
-bool DataSync::mpi_recv_from_others()
-{
-    int err;
-    MPI_Status status;
-    int flag;
-    int count;
-    uint32_t thisMpiRecvUnitData = 0;
-    uint32_t thisMpiRecvBinData = 0;
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " syncing from MPI..." << std::endl;
-    #endif
-
-
-    //Check if there is data, tagged 0, from source 0 (root)
-    err = MPI_Iprobe(0, 0, MPI_COMM_WORLD, &flag, &status);
-    assert(err == MPI_SUCCESS);
-    if (flag == false) {
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-        " No data to receive." << std::endl;
-        #endif
-
-        //no data
-        return true;
-    }
-
-    //Get data size
-    err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
-    assert(err == MPI_SUCCESS);
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Receiving " << count << " uint32_t ..." << std::endl;
-    #endif
-
-    //Receive data
-    uint32_t* buf = new uint32_t[count];
-    err = MPI_Recv((unsigned*)buf, count, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status);
-    assert(err == MPI_SUCCESS);
-
-    //Unit clauses
-    int at = 0;
-    assert(solver->nVarsOutside() == buf[at]);
-    at++;
-    for (uint32_t var = 0; var < solver->nVarsOutside(); var++, at++) {
-        const lbool otherVal = toLbool(buf[at]);
-        if (!mpi_get_unit(otherVal, var, thisMpiRecvUnitData)) {
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-            " solver FALSE" << std::endl;
-            #endif
-            goto end;
-        }
-    }
-    solver->ok = solver->propagate<false>().isnullptr();
-    if (!solver->ok) {
-        goto end;
-    }
-    mpiRecvUnitData += thisMpiRecvUnitData;
-
-    //Binary clauses
-    assert(buf[at] == solver->nVarsOutside()*2);
-    at++;
-    for (uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
-        uint32_t num = buf[at];
-        at++;
-        for (uint32_t i = 0; i < num; i++, at++) {
-            Lit otherLit = Lit::toLit(buf[at]);
-            thisMpiRecvBinData += add_bin_to_threads(lit, otherLit);
-        }
-    }
-    mpiRecvBinData += thisMpiRecvBinData;
-
-    end:
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Received " << thisMpiRecvUnitData << " units (total: " << mpiRecvUnitData << ")" << std::endl;
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Received " << thisMpiRecvBinData << " bins (total: " << mpiRecvBinData << ")" << std::endl;
-    #endif
-
-    delete[] buf;
-    return solver->okay();
-}
-
-void DataSync::mpi_send_to_others()
-{
-    int err;
-
-    //We still are sending data, let's do that first
-    if (mpiSendData != nullptr) {
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-        " Still sending data, waiting now." << std::endl;
-        #endif
-
-        /*MPI_Status status;
-        int op_completed;
-        err = MPI_Request_get_status(sendReq, &op_completed, &status);
-        assert(err == MPI_SUCCESS);
-        if (op_completed) {
-            err = MPI_Wait(&sendReq, &status);
-            assert(err == MPI_SUCCESS);*/
-            delete[] mpiSendData;
-            mpiSendData = nullptr;
-        /*} else {
-            return;
-        }*/
-    }
-
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Building data to send via MPI..." << std::endl;
-    #endif
-
-    //Set up units
-    assert(solver->nVarsOutside() == sharedData->value.size());
-    vector<uint32_t> data;
-    data.push_back(solver->nVarsOutside());
-    for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
-        data.push_back(toInt(sharedData->value[var]));
-    }
-
-    //Set up binaries
-    assert(sharedData->bins.size() == solver->nVarsOutside()*2);
-    uint32_t thisMpiSentBinData = 0;
-    data.push_back(solver->nVarsOutside()*2);
-
-    for(uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
-        //Lit lit1 = ~Lit::toLit(wsLit);
-        assert(syncMPIFinish.size() > wsLit);
-        if (sharedData->bins[wsLit].data == nullptr) {
-            data.push_back(0);
-            continue;
-        }
-        uint32_t size = sharedData->bins[wsLit].data->size();
-        assert(size >= syncMPIFinish[wsLit]);
-        uint32_t sizeToSend = size - syncMPIFinish[wsLit];
-        data.push_back(sizeToSend);
-        for (uint32_t i = syncMPIFinish[wsLit]; i < size; i++) {
-            data.push_back(sharedData->bins[wsLit].data->at(i).toInt());
-            thisMpiSentBinData++;
-        }
-        syncMPIFinish[wsLit] = size;
-    }
-    mpiSentBinData += thisMpiSentBinData;
-
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Sending " << data.size() << " uint32_t -s" << std::endl;
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " and " << thisMpiSentBinData << " bins.." << std::endl;
-    #endif
-
-    //Send the data
-    mpiSendData = new uint32_t[data.size()];
-    std::copy(data.begin(), data.end(), mpiSendData);
-    //err = MPI_Isend(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
-    err = MPI_Send(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
-    assert(err == MPI_SUCCESS);
-
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Sent MPI sync data" << std::endl;
-    #endif
-}
-
-bool DataSync::mpi_get_unit(
-    const lbool otherVal,
-    const uint32_t var,
-    uint32_t& thisGotUnitData
-) {
-    Lit l = Lit(var, false);
-    Lit lit1 = solver->map_to_with_bva(l);
-    lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
-    lit1 = solver->map_outer_to_inter(lit1);
-    const lbool thisVal = solver->value(lit1);
-
-    if (thisVal == otherVal) {
-        return true;
-    }
-
-    if (otherVal == l_Undef) {
-        return true;
-    }
-
-    if (thisVal != l_Undef) {
-        if (thisVal != otherVal) {
-            solver->ok = false;
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    assert(otherVal != l_Undef);
-    assert(thisVal == l_Undef);
-    Lit litToEnqueue = lit1 ^ (otherVal == l_False);
-    if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
-        return true;
-    }
-
-    solver->enqueue<false>(litToEnqueue);
-    solver->ok = solver->propagate<false>().isnullptr();
-    if (!solver->ok) {
-        return false;
-    }
-
-    thisGotUnitData++;
-
-    return true;
-}
-#endif

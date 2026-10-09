@@ -48,7 +48,7 @@ public:
     void print(uint64_t props, bool do_print_times, const string& prefix) const;
 
     //Restart stats
-    uint64_t numRestarts = 0;
+    uint64_t num_restarts = 0;
 
     //Decisions
     uint64_t  decisions = 0;
@@ -57,10 +57,10 @@ public:
     uint64_t  decisionFlippedPolar = 0;
 
     //Clause shrinking
-    uint64_t litsRedNonMin = 0;
+    uint64_t lits_red_non_min = 0;
     uint64_t litsRedFinal = 0;
     uint64_t recMinCl = 0;
-    uint64_t recMinLitRem = 0;
+    uint64_t rec_min_lit_rem = 0;
     uint64_t shrinkCl = 0;
     uint64_t shrinkLitRem = 0;
     uint64_t otfsStr = 0;
@@ -79,7 +79,7 @@ public:
 
     //Learnt clause stats
     uint64_t learntUnits = 0;
-    uint64_t learntBins = 0;
+    uint64_t learnt_bins = 0;
     uint64_t learntLongs = 0;
     uint64_t otfSubsumed = 0;
     uint64_t otfSubsumedImplicit = 0;
@@ -93,9 +93,6 @@ public:
     uint64_t transReduRemIrred = 0;
     uint64_t transReduRemRed = 0;
 
-    //SatZillaFeatures
-    uint64_t num_xors_found_last = 0;
-    uint64_t num_gates_found_last = 0;
 
     //Resolution Stats
     AtecedentData<uint64_t> resolvs;

@@ -1,0 +1,45 @@
+# CrystalBall: learning which learnt clauses to keep
+
+At every clause-database reduce the solver throws away the least useful
+learnt clauses. Normally "least useful" means highest glue, then longest.
+CrystalBall replaces that with a prediction: an xgboost model, trained on
+the solver's own UNSAT runs, ranks each clause by how much it will still
+be used (every future use counted, discounted by how far away it is), and
+reduce removes the clauses ranked lowest. Which clauses are
+protected as tier1/tier2 stays with glue.
+
+Three builds of the solver take part:
+
+- **normal**: reduce sorts by glue, then size (the baseline)
+- **stats** (`-DSTATS=ON`): dumps the state of tracked clauses to SQLite
+  at every reduce and writes a proof, from which the training labels come.
+  Only UNSAT instances: a label is "took part in the UNSAT proof", and a
+  SAT run has no proof
+- **predictor** (`-DFINAL_PREDICTOR=ON`): sorts by the predicted use
+
+The scripts here run the whole loop: gather data, label it from the
+proof, train, embed the models in the solver, compare. See `CLAUDE.md`
+for how to run it.
+
+To see what a trained model does, `model_report.py` writes one HTML page
+about it (its provenance, xgboost's tree statistics and importances, and
+SHAP values: the direction and size of every feature's effect, dependence
+plots, interactions, the first trees drawn):
+
+    pip install --user shap graphviz    # once; the dot binary for drawn trees
+    ./model_report.py <learn dir>/predictor-used_later-disc-xgb.json -o report.html
+
+`<learn dir>` is the output directory of `learn.sh`, which holds the
+model next to the training frame (`comb-*.dat`) SHAP needs; for a model
+elsewhere (`src/predict/`) give that frame as the second argument.
+
+The report is regenerated, not committed.
+
+## Open question for a big test
+
+**Plain or ancestor label.** `learn.sh` trains both; `--predanc 0`
+(default) loads the plain one, `--predanc 1` the ancestor one, from the
+same `--predloc`. They are within the seed noise of each other on the
+hold-out instances here; delete the loser from the pipeline afterwards.
+
+Details and the numbers so far: `CLAUDE.md`.

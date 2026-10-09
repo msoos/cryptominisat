@@ -57,13 +57,22 @@ the same columns."""
         exit(-1)
 
     dfs = []
+    cols = None
     for fname in args:
         print("----- Reading file %s -------" % fname)
         df = pd.read_pickle(fname)
         print("Read {num} datapoints from {file}".format(num=df.shape[0], file=fname))
         df["fname"] = df["fname"].astype("str")
-        #df["cl.cur_restart_type"] = df["cl.cur_restart_type"].astype("str")
-        #df["rdb0.cur_restart_type"] = df["rdb0.cur_restart_type"].astype("str")
+        # frames gathered by solvers with different schemas must not be
+        # mixed: pandas would fill the missing columns with NaN and the
+        # model would learn 'missing' as a signal of the instance
+        if cols is None:
+            cols = set(df.columns)
+        elif set(df.columns) != cols:
+            print("ERROR: %s has different columns than %s:\n  only here: %s\n  only there: %s" % (
+                fname, args[0], sorted(set(df.columns) - cols), sorted(cols - set(df.columns))))
+            print("Gathered by different solver versions? Regather, or leave the odd one out")
+            exit(-1)
         dfs.append(df)
 
     print("Concatenating dataframes...")

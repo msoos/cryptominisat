@@ -46,7 +46,7 @@ struct SearcherTest : public ::testing::Test {
         s->new_decision_level();
         //it must be inverted to set
         s->enqueue<false>(Lit(var, !polarity));
-        s->cancelUntil(0);
+        s->cancel_until(0);
     }
 
     SolverConf conf;

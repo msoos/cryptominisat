@@ -66,7 +66,6 @@ public:
                 + andBasedTime + erTime;
         }
         Stats& operator+=(const Stats& other);
-        void print(const size_t nVars, const string& pre) const;
 
         //Time
         double findGateTime = 0.0;
@@ -122,15 +121,15 @@ private:
     vector<ClOffset> subs; //to reduce overhead of allocation
 
     //Indexes, gate data
-    vector<OrGate> orGates; //List of OR gates
+    vector<OrGate> or_gates; //List of OR gates
 
     //For temporaries
     vector<uint32_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
     set<ClOffset> clToUnlink;
 
     //Stats
-    Stats runStats;
-    Stats globalStats;
+    Stats run_stats;
+    Stats global_stats;
 
     //Limits
     int64_t  numMaxGateFinder;
@@ -145,17 +144,17 @@ private:
     Solver *solver;
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
-    vector<Lit>& toClear;
+    vector<Lit>& to_clear;
 };
 
 inline const GateFinder::Stats& GateFinder::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 inline const vector<OrGate>& GateFinder::get_gates() const
 {
-    return orGates;
+    return or_gates;
 }
 
 } //end namespace

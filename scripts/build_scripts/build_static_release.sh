@@ -20,7 +20,6 @@ rm -rf _deps
 cmake -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_TESTING=OFF \
     -DBUILD_SHARED_LIBS=OFF \
-    -DNOBREAKID=ON \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -Dcadical_DIR="${SAT_DIR}/cadical/build" \
     -Dcadiback_DIR="${SAT_DIR}/cadiback/build" \

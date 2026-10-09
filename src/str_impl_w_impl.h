@@ -81,13 +81,13 @@ private:
         void print(
             const size_t trail_diff
             , const double time_used
-            , const int64_t timeAvailable
+            , const int64_t time_available
             , const int64_t orig_time
             , Solver* solver
         ) const;
     };
     StrImplicitData str_impl_data;
-    int64_t timeAvailable;
+    int64_t time_available;
     vector<Lit> lits;
 };
 

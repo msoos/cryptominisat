@@ -35,7 +35,6 @@ node_modules
 ml-data
 pycryptosat.egg-info
 compile_commands.json
-tests/breakid*
 web
 src/predict
 scripts/linpb*
@@ -53,3 +52,11 @@ html/cryptominisat5.wasm
 /build*
 xnf-tests/
 /scripts/fuzz/fuzzrun
+# crystalball runs: training data, models, A/B outputs (scripts/crystal/CLAUDE.md)
+/cb_test/
+# ballofcrystal.sh output next to a CNF
+*.cnf-dir/
+*.cnf.gz-dir/
+/*.cnf.gz
+# built by fix_up_xlrup.py
+scripts/crystal/xlrup_uses

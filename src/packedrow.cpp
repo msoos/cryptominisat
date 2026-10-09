@@ -28,7 +28,6 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "packedrow.h"
-// #define VERBOSE_DEBUG
 // #define SLOW_DEBUG
 
 using namespace CMSat;

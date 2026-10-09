@@ -366,35 +366,29 @@ message(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 if(FINAL_PREDICTOR)
-    message(STATUS "You HAVE to build xgboost and LightGBM with 'cmake -DBUILD_STATIC_LIB=ON -DUSE_OPENMP=OFF ..' for static linking")
-    find_package(dmlc REQUIRED)
-    find_package(rabit REQUIRED)
-    find_package(xgboost REQUIRED)
-    find_library(lightgbm
-    NAMES _lightgbm lightgbm LightGBM
-    REQUIRED)
+    # only the xgboost C API is needed: xgboost/c_api.h + libxgboost.so
+    # (the one shipped in the xgboost pip package works: -DXGBOOST_LIBRARY=...)
+    find_path(XGBOOST_INCLUDE_DIR NAMES xgboost/c_api.h REQUIRED)
+    find_library(XGBOOST_LIBRARY NAMES xgboost REQUIRED)
+    message(STATUS "xgboost include: ${XGBOOST_INCLUDE_DIR} lib: ${XGBOOST_LIBRARY}")
+    add_library(xgboost_c SHARED IMPORTED)
+    set_target_properties(xgboost_c PROPERTIES
+        IMPORTED_LOCATION "${XGBOOST_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${XGBOOST_INCLUDE_DIR}")
     add_compile_definitions(FINAL_PREDICTOR)
+    set(PRED_FEATURES_FILE "${CMAKE_SOURCE_DIR}/scripts/crystal/best_features.txt" CACHE FILEPATH
+        "The predictor's feature list; its C++ is generated from it")
+    message(STATUS "predictor features: ${PRED_FEATURES_FILE}")
 endif()
 
 option(STATS "Don't use statistics at all" OFF)
 if(STATS)
-    if(FINAL_PREDICTOR)
-        message(FATAL_ERROR "Cannot have stats and final predictor on both")
-    endif()
+    #both: gathers data while the predictor decides the reduce, see scripts/crystal
     find_package(SQLITE3 REQUIRED)
     message(STATUS "OK, Found SQLITE3!")
     add_compile_definitions(USE_SQLITE3)
     set(STATS_NEEDED ON)
     add_compile_definitions(STATS_NEEDED)
-
-    find_package(louvain_communities CONFIG REQUIRED)
-    if(louvain_communities_FOUND)
-        message(STATUS "Found Community Louvain library")
-        message(STATUS "Community Louvain dynamic lib: ${COMMLOUVAIN_LIBRARIES}")
-        message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
-    else()
-        message(FATAL_ERROR "For STATS we must have louvain communities installed!")
-    endif()
 else()
     message(STATUS "Not compiling detailed statistics. The system is faster without them")
 endif()
@@ -449,7 +443,6 @@ if(NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     endif()
 endif()
 
-set(breakid_DIR  "" CACHE PATH "breakid install/build prefix (contains lib/cmake/breakid/). Auto-resolved if empty.")
 set(cadical_DIR  "" CACHE PATH "cadical install/build prefix (contains lib/cmake/cadical/). Auto-resolved if empty.")
 set(cadiback_DIR "" CACHE PATH "cadiback install/build prefix (contains lib/cmake/cadiback/). Auto-resolved if empty.")
 
@@ -493,47 +486,6 @@ endif()
 # -----------------------------------------------------------------------------
 option(MIT "Build with only MIT licensed components" OFF)
 
-# -----------------------------------------------------------------------------
-# Look for BreakID
-# -----------------------------------------------------------------------------
-option(NOBREAKID "Disable BreakID" ON)
-option(NOMPI "Disable MPI" ON)
-if(NOT NOMPI)
-    find_package(MPI)
-    if(MPI_FOUND)
-        add_compile_definitions(USE_MPI)
-        set(NOBREAKID ON)
-        #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
-    else()
-         message(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
-    endif()
-endif()
-
-if(NOT NOBREAKID)
-    if(NOT TARGET breakid)
-        if(breakid_DIR)
-            find_package(breakid CONFIG REQUIRED HINTS "${breakid_DIR}")
-            message(STATUS "BreakID: using pre-built at ${breakid_DIR}")
-        else()
-            FetchContent_Declare(breakid
-                GIT_REPOSITORY https://github.com/meelgroup/breakid
-                GIT_TAG        master
-                GIT_SHALLOW    TRUE)
-            FetchContent_MakeAvailable(breakid)
-            message(STATUS "BreakID: fetched from GitHub")
-        endif()
-    endif()
-    # find_package() exports BREAKID_LIBRARIES/BREAKID_INCLUDE_DIRS; the
-    # FetchContent path instead exposes the `breakid` target directly, carrying
-    # its include dirs as usage requirements. src/CMakeLists.txt gates on
-    # BREAKID_LIBRARIES, so set it to the target name in the FetchContent case.
-    if(NOT BREAKID_LIBRARIES)
-        set(BREAKID_LIBRARIES breakid)
-    endif()
-    message(STATUS "BreakID -- libraries: ${BREAKID_LIBRARIES}")
-    message(STATUS "BreakID -- include dirs: ${BREAKID_INCLUDE_DIRS}")
-    add_compile_definitions(USE_BREAKID)
-endif()
 find_package(PkgConfig REQUIRED)
 if(APPLE)
     execute_process(COMMAND brew --prefix OUTPUT_VARIABLE _homebrew_prefix OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
@@ -588,15 +540,9 @@ macro(cmsat_add_public_header LIBTARGET HEADER)
 endmacro()
 
 if(FINAL_PREDICTOR OR STATS OR ENABLE_TESTING)
-    find_package(Python3 COMPONENTS NumPy Interpreter Development REQUIRED)
-    if(Python3_FOUND AND Python3_Interpreter_FOUND AND Python3_NumPy_FOUND)
-        message(STATUS "Python 3 -- Python3_EXECUTABLE=${Python3_EXECUTABLE}")
-        message(STATUS "Python 3 -- Python3_LIBRARIES=${Python3_LIBRARIES}")
-        message(STATUS "Python 3 -- Python3_INCLUDE_DIRS=${Python3_INCLUDE_DIRS}")
-        message(STATUS "Python 3 -- Python3_VERSION=${Python3_VERSION}")
-        message(STATUS "Python 3 -- Python3_NumPy_INCLUDE_DIRS=${Python3_NumPy_INCLUDE_DIRS}")
-        message(STATUS "Python 3 -- Python3_NumPy_VERSION=${Python3_NumPy_VERSION}")
-    endif()
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    message(STATUS "Python 3 -- Python3_EXECUTABLE=${Python3_EXECUTABLE}")
+    message(STATUS "Python 3 -- Python3_VERSION=${Python3_VERSION}")
 endif()
 
 # -----------------------------------------------------------------------------

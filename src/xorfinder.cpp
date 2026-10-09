@@ -41,7 +41,7 @@ using std::endl;
 XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     occsimplifier(_occsimplifier)
     , solver(_solver)
-    , toClear(_solver->toClear)
+    , to_clear(_solver->to_clear)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
 {
@@ -63,7 +63,7 @@ void XorFinder::find_xors_based_on_long_clauses() {
         if (cl->freed() || cl->get_removed() || cl->red()) continue;
 
         //Too large -> too expensive
-        if (cl->size() > solver->conf.maxXorToFind) continue;
+        if (cl->size() > solver->conf.max_xor_to_find) continue;
 
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
@@ -125,8 +125,8 @@ bool XorFinder::find_xors() {
     assert(solver->gmatrices.empty());
     const auto orig_num_xors = solver->xorclauses.size();
 
-    runStats.clear();
-    runStats.numCalls = 1;
+    run_stats.clear();
+    run_stats.num_calls = 1;
     grab_mem();
 
     for(auto& gw: solver->gwatches) gw.clear();
@@ -144,7 +144,7 @@ bool XorFinder::find_xors() {
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
-    assert(orig_num_xors + runStats.foundXors == solver->xorclauses.size());
+    assert(orig_num_xors + run_stats.found_xors == solver->xorclauses.size());
     // TODO FRAT
     /* clean_equivalent_xors(solver->xorclauses); */
 
@@ -157,15 +157,14 @@ bool XorFinder::find_xors() {
     //Print stats
     const bool time_out = (xor_find_time_limit < 0);
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
-    runStats.findTime = cpu_time() - my_time;
-    runStats.time_outs += time_out;
-    solver->print_xors(solver->xorclauses);
+    run_stats.findTime = cpu_time() - my_time;
+    run_stats.time_outs += time_out;
 
-    if (solver->conf.verbosity) runStats.print_short(solver, time_remain);
-    globalStats += runStats;
+    if (solver->conf.verbosity) run_stats.print_short(solver, time_remain);
+    global_stats += run_stats;
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed(
             solver
             , "xor-find"
             , cpu_time() - my_time
@@ -206,7 +205,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     findXorMatch(solver->watches[slit], slit);
     findXorMatch(solver->watches[~slit], ~slit);
 
-    if (!solver->frat->enabled() && lits.size() <= solver->conf.maxXorToFindSlow) {
+    if (!solver->frat->enabled() && lits.size() <= solver->conf.max_xor_to_find_slow) {
         findXorMatch(solver->watches[slit2], slit2);
         findXorMatch(solver->watches[~slit2], ~slit2);
     }
@@ -215,7 +214,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         std::sort(lits.begin(), lits.end());
         for(auto& l: lits) l = l.unsign();
         Xor found_xor(lits, poss_xor.getRHS());
-        SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->varData[lit.var()].removed == Removed::none));
+        SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->var_data[lit.var()].removed == Removed::none));
 
         add_found_xor(found_xor);
         assert(poss_xor.get_fully_used().size() == poss_xor.get_offsets().size());
@@ -233,10 +232,10 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     frat_func_start();
     solver->xorclauses.push_back(found_xor);
     Xor& added = solver->xorclauses.back();
-    runStats.foundXors++;
-    runStats.sumSizeXors += found_xor.size();
-    runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
-    runStats.minsize = std::min<uint32_t>(runStats.minsize, found_xor.size());
+    run_stats.found_xors++;
+    run_stats.sumSizeXors += found_xor.size();
+    run_stats.maxsize = std::max<uint32_t>(run_stats.maxsize, found_xor.size());
+    run_stats.minsize = std::min<uint32_t>(run_stats.minsize, found_xor.size());
     solver->xorclauses_updated = true;
     if (solver->frat->enabled()) {
         solver->chain.clear();
@@ -256,10 +255,10 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 {
     xor_find_time_limit -= (int64_t)occ.size()/8+1;
     for (const Watched& w: occ) {
-        if (w.isIdx()) continue;
+        if (w.is_idx()) continue;
         assert(poss_xor.getSize() > 2);
 
-        if (w.isBin()) {
+        if (w.is_bin()) {
             // FRAT-XOR cannot have different sized clauses for the moment
             if (solver->frat->enabled()) continue;
 
@@ -276,19 +275,19 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             }
 
             xor_find_time_limit -= 1;
-            poss_xor.add(binvec, numeric_limits<ClOffset>::max(), varsMissing);
+            poss_xor.add(binvec, numeric_limits<ClOffset>::max(), vars_missing);
             if (poss_xor.foundAll())
                 break;
         } else {
-            if (w.getBlockedLit().toInt() == lit_Undef.toInt())
-                //Clauses are ordered, lit_Undef means it's larger than maxXorToFind
+            if (w.get_blocked_lit().toInt() == lit_Undef.toInt())
+                //Clauses are ordered, lit_Undef means it's larger than max_xor_to_find
                 break;
 
-            if (w.getBlockedLit().toInt() == lit_Error.toInt())
+            if (w.get_blocked_lit().toInt() == lit_Error.toInt())
                 //lit_Error means it's freed or removed, and it's ordered so no more
                 break;
 
-            if ((w.getBlockedLit().toInt() | poss_xor.getAbst()) != poss_xor.getAbst())
+            if ((w.get_blocked_lit().toInt() | poss_xor.get_abst()) != poss_xor.get_abst())
                 continue;
 
             xor_find_time_limit -= 3;
@@ -314,14 +313,14 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             //For longer clauses, don't the the fancy algo that can
             //deal with incomplete XORs
             if (cl.size() != poss_xor.getSize()
-                && poss_xor.getSize() > solver->conf.maxXorToFindSlow
+                && poss_xor.getSize() > solver->conf.max_xor_to_find_slow
             ) {
                 break;
             }
 
             //Doesn't contain variables not in the original clause
             SLOW_DEBUG_DO(assert(cl.abst == calcAbstraction(cl)));
-            if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
+            if ((cl.abst | poss_xor.get_abst()) != poss_xor.get_abst())
                 continue;
 
             //Check RHS, vars inside
@@ -345,7 +344,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             }
 
             xor_find_time_limit -= cl.size()/4+1;
-            poss_xor.add(cl, offset, varsMissing);
+            poss_xor.add(cl, offset, vars_missing);
             if (poss_xor.foundAll())
                 break;
         }
@@ -402,7 +401,7 @@ size_t XorFinder::mem_used() const
 
     //Temporary
     mem += tmpClause.capacity()*sizeof(Lit);
-    mem += varsMissing.capacity()*sizeof(uint32_t);
+    mem += vars_missing.capacity()*sizeof(uint32_t);
 
     return mem;
 }
@@ -415,11 +414,11 @@ void XorFinder::grab_mem()
 
 void XorFinder::Stats::print_short(const Solver* solver, double time_remain) const
 {
-    cout << solver->conf.prefix << "[occ-xor] found " << std::setw(6) << foundXors;
-    if (foundXors > 0) {
+    cout << solver->conf.prefix << "[occ-xor] found " << std::setw(6) << found_xors;
+    if (found_xors > 0) {
         cout
         << " avg sz " << std::setw(3) << std::fixed << std::setprecision(1)
-        << float_div(sumSizeXors, foundXors)
+        << float_div(sumSizeXors, found_xors)
         << " min sz " << std::setw(2) << std::fixed << std::setprecision(1)
         << minsize
         << " max sz " << std::setw(2) << std::fixed << std::setprecision(1)
@@ -436,7 +435,7 @@ XorFinder::Stats& XorFinder::Stats::operator+=(const XorFinder::Stats& other)
     findTime += other.findTime;
 
     //XOR
-    foundXors += other.foundXors;
+    found_xors += other.found_xors;
     sumSizeXors += other.sumSizeXors;
 
     //Usefulness

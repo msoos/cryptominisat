@@ -49,7 +49,7 @@ struct Dat {
     float    branchDepthHistQueue_avg;
     double   act_ranking_rel;
     uint32_t size;
-    uint64_t sumConflicts; //time_inside_the_solver
+    uint64_t sum_conflicts; //time_inside_the_solver
     float    correct_val;
 
     void print()
@@ -68,7 +68,7 @@ struct Dat {
         cout << "branchDepthHistQueue_avg: "  << branchDepthHistQueue_avg << endl;
         cout << "act_ranking_rel: "  << act_ranking_rel << endl;
         cout << "size: "  << size << endl;
-        cout << "sumConflicts: " << sumConflicts << endl;
+        cout << "sumConflicts: " << sum_conflicts << endl;
         cout << "correct_val: "  << correct_val << endl;
     }
 };
@@ -100,7 +100,7 @@ bool get_val(Dat& dat)
         >> dat.branchDepthHistQueue_avg
         >> dat.act_ranking_rel
         >> dat.size
-        >> dat.sumConflicts
+        >> dat.sum_conflicts
         >> dat.correct_val
     )) {
         assert(false);
@@ -129,7 +129,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
     float val = pred->predict(
         pred_type,
         cl,
-        dat.sumConflicts, //this is the age
+        dat.sum_conflicts, //this is the age
         dat.act_ranking_rel,
         0,
         0,

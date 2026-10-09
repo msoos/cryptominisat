@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #pragma once
 
-// #define VERBOSE_DEBUG
 #include <cstdio>
 #include <string.h>
 #include <stack>
@@ -51,17 +50,6 @@ namespace CMSat {
 class Solver;
 class SQLStats;
 class DataSync;
-
-//#define VERBOSE_DEBUG_FULLPROP
-//#define VERBOSE_DEBUG
-
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_DEBUG_FULLPROP
-#define ENQUEUE_DEBUG
-#define DEBUG_ENQUEUE_LEVEL0
-#endif
-
-class Solver;
 class ClauseAllocator;
 class Gaussian;
 class EGaussian;
@@ -90,28 +78,28 @@ struct Trail {
 
 struct RandHeap
 {
-    vector<unsigned char> in_heap;
+    vector<unsigned char> in_heap_flag;
     vector<uint32_t> vars;
 
-    bool inHeap(uint32_t x) const {
-        if (in_heap.size() <= x) {
+    bool in_heap(uint32_t x) const {
+        if (in_heap_flag.size() <= x) {
             return false;
         }
-        return in_heap[x];
+        return in_heap_flag[x];
     }
 
     void clear() {
-        in_heap.clear();
+        in_heap_flag.clear();
         vars.clear();
     }
 
     void insert(uint32_t x) {
-        assert(!inHeap(x));
-        if (in_heap.size() <= x) {
-            uint32_t n = x - in_heap.size() + 1;
-            in_heap.insert(in_heap.end(), n, false);
+        assert(!in_heap(x));
+        if (in_heap_flag.size() <= x) {
+            uint32_t n = x - in_heap_flag.size() + 1;
+            in_heap_flag.insert(in_heap_flag.end(), n, false);
         }
-        in_heap[x] = true;
+        in_heap_flag[x] = true;
         vars.push_back(x);
     }
 
@@ -128,32 +116,32 @@ struct RandHeap
 
     uint32_t mem_used() const {
         uint32_t ret = 0;
-        ret += in_heap.capacity() * sizeof(unsigned char);
+        ret += in_heap_flag.capacity() * sizeof(unsigned char);
         //ret += vars.capacity() * sizeof(uint32_t);
         return ret;
     }
 
     void build(const vector<uint32_t>& vs) {
-        in_heap.clear();
+        in_heap_flag.clear();
         uint32_t max = 0;
         for(const auto x: vs) {
             max = std::max(x, max);
         }
-        in_heap.resize(max+1, false);
+        in_heap_flag.resize(max+1, false);
         vars.clear();
         std::copy(
             vs.begin(),
             vs.end(),
             std::inserter(vars, vars.end()));
         for(const auto& x: vars) {
-            in_heap[x] = true;
+            in_heap_flag[x] = true;
         }
     }
 
     bool heap_property() const
     {
         for(const auto& x: vars) {
-            if (!in_heap[x]) {
+            if (!in_heap_flag[x]) {
                 return false;
             }
         }
@@ -171,8 +159,8 @@ struct RandHeap
         uint32_t picked = vars[which];
         std::swap(vars[which], vars[vars.size()-1]);
         vars.pop_back();
-        assert(inHeap(picked));
-        in_heap[picked] = false;
+        assert(in_heap(picked));
+        in_heap_flag[picked] = false;
 
         return picked;
     }
@@ -202,7 +190,7 @@ public:
     [[nodiscard]] uint32_t nAssigns() const;         ///<The current number of assigned literals.
 
     //Get state
-    [[nodiscard]] uint32_t decisionLevel() const;      ///<Returns current decision level
+    [[nodiscard]] uint32_t decision_level() const;      ///<Returns current decision level
     [[nodiscard]] size_t getTrailSize() const; //number of variables set at decision level 0
     [[nodiscard]] size_t trail_size() const {
         return trail.size();
@@ -214,7 +202,7 @@ public:
     template<bool inprocess> bool propagate_occur(int64_t* limit_to_decrease);
     void reverse_prop(const Lit l);
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
-    PropStats propStats;
+    PropStats prop_stats;
     template<bool inprocess>
     void enqueue(const Lit p, const uint32_t level,
                  const PropBy from = PropBy(), const bool do_unit_frat = true);
@@ -230,7 +218,7 @@ public:
     Lit trail_at(const uint32_t at) const { return trail[at].lit; }
     int32_t last_occ_confl_id = 0; ///< FRAT: clause that failed occur-prop
     vector<int32_t> last_occ_confl_units;
-    Lit get_fail_bin_lit() const { return failBinLit; }
+    Lit get_fail_bin_lit() const { return fail_bin_lit; }
     int32_t get_confl_id(const PropBy confl, vector<int32_t>& units);
     int32_t get_reason_id(const PropBy r, vector<int32_t>& units);
     //register clause `id` (already in the proof) as THE unit clause of p's
@@ -286,6 +274,12 @@ public:
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
     vector<GaussQData> gqueuedata;
+    // Indexed by VAR and shared by all gmatrices, which are variable-disjoint.
+    // Per-matrix nVars-sized copies took 35GB on 4M vars x 1600 matrices.
+    // Entries of vars a matrix doesn't own may be stale, see EGaussian.
+    vector<uint32_t> gauss_var_to_col;
+    vector<uint32_t> gauss_var_to_dcol;
+    vector<char> gauss_var_has_resp_row;
     // Scratch list of matrix indices touched during a single gauss_jordan_elim
     // call. Allows per-call bookkeeping to skip the many untouched matrices.
     vec<uint32_t> touched_matrices_gje;
@@ -306,7 +300,7 @@ protected:
     vector<Trail>  trail; ///< Assignment stack; stores all assignments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
-    Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
+    Lit                 fail_bin_lit;       ///< Used to store which watches[lit] we were looking through when conflict occurred
     vector<int32_t>     tmp_unit_hints;   ///< FRAT hints for level-0 units
 
     friend class EGaussian;
@@ -320,7 +314,7 @@ protected:
     lbool bnn_prop(
         const uint32_t bnn_idx, uint32_t level,
         Lit l, BNNPropType prop_t);
-    void attachClause(
+    void attach_clause(
         const Clause& c
         , const bool checkAttach = true
     );
@@ -369,7 +363,7 @@ protected:
     void     print_trail();
 
     //Var selection, activity, etc.
-    void updateVars(
+    void update_vars(
         const vector<uint32_t>& outer_to_inter
         , const vector<uint32_t>& inter_to_outer
     );
@@ -380,23 +374,23 @@ protected:
         mem += CNF::mem_used();
         mem += trail.capacity()*sizeof(Lit);
         mem += trail_lim.capacity()*sizeof(uint32_t);
-        mem += toClear.capacity()*sizeof(Lit);
+        mem += to_clear.capacity()*sizeof(Lit);
         return mem;
     }
 
 protected:
     template<bool inprocess, bool red_also = true, bool distill_use = false>
-    PropBy propagate_any_order();
+    PropBy propagate_core();
     template<bool bin_only=true> PropBy propagate_light();
     template<bool inprocess>
-    PropResult prop_normal_helper(
+    PropResult find_new_watch(
         Clause& c
         , ClOffset offset
         , Watched*& j
         , const Lit p
     );
     template<bool inprocess>
-    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
+    PropResult handle_long_cl_conflict(Clause& c, ClOffset offset, PropBy& confl);
 
 private:
     Solver* solver;
@@ -410,30 +404,27 @@ private:
         const Watched* i
         , const Lit p
         , PropBy& confl
-        , uint32_t currLevel
+        , uint32_t curr_level
     );
-    template<bool inprocess, bool red_also, bool use_disable>
-    bool prop_long_cl_any_order(
+    template<bool inprocess, bool red_also, bool distill_use>
+    bool prop_long_cl(
         Watched* i
         , Watched*& j
         , const Lit p
         , PropBy& confl
-        , uint32_t currLevel
+        , uint32_t curr_level
     );
-    void sql_dump_vardata_picktime(uint32_t v, PropBy from);
+    void enqueue_level0_frat(const Lit p, const PropBy from, const bool do_unit_frat);
 
-    PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
+    PropBy gauss_jordan_elim(const Lit p, const uint32_t curr_level);
 };
 
 inline void PropEngine::new_decision_level()
 {
     trail_lim.push_back(trail.size());
-    #ifdef VERBOSE_DEBUG
-    cout << "New decision level: " << trail_lim.size() << endl;
-    #endif
 }
 
-inline uint32_t PropEngine::decisionLevel() const
+inline uint32_t PropEngine::decision_level() const
 {
     return trail_lim.size();
 }
@@ -445,7 +436,7 @@ inline uint32_t PropEngine::nAssigns() const
 
 inline size_t PropEngine::getTrailSize() const
 {
-    return decisionLevel() == 0 ? trail.size() : trail_lim[0];
+    return decision_level() == 0 ? trail.size() : trail_lim[0];
 }
 
 template<class T> inline
@@ -454,7 +445,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
     MYFLAG++;
     uint32_t nblevels = 0;
     for (Lit lit: ps) {
-        int l = varData[lit.var()].level;
+        int l = var_data[lit.var()].level;
         if (l != 0 && permDiff[l] != MYFLAG) {
             permDiff[l] = MYFLAG;
             nblevels++;
@@ -467,7 +458,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
 }
 
 template<bool inprocess>
-inline PropResult PropEngine::prop_normal_helper(
+inline PropResult PropEngine::find_new_watch(
     Clause& c
     , ClOffset offset
     , Watched*& j
@@ -520,7 +511,7 @@ inline PropResult PropEngine::prop_normal_helper(
 
 
 template<bool inprocess>
-inline PropResult PropEngine::handle_normal_prop_fail(
+inline PropResult PropEngine::handle_long_cl_conflict(
     Clause&
     #ifdef STATS_NEEDED
     c
@@ -529,10 +520,6 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     , PropBy& confl
 ) {
     confl = PropBy(offset);
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    Clause& c = *cl_alloc.ptr(offset);
-    cout << "Conflict from cl: " << c << endl;
-    #endif
 
     STATS_DO(if (!inprocess && c.red()) red_stats_extra[c.stats.extra_pos].conflicts_made++);
 
@@ -543,137 +530,38 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 template<bool inprocess>
 void PropEngine::enqueue(const Lit p)
 {
-    enqueue<inprocess>(p, decisionLevel(), PropBy());
+    enqueue<inprocess>(p, decision_level(), PropBy());
 }
 
 template<bool inprocess>
 void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, bool do_unit_frat)
 {
-    #ifdef VERBOSE_DEBUG
-    if (level == 0) {
-        cout << "enqueue var " << p.var()+1
-        << " to val " << !p.sign()
-        << " level: " << level
-        << " decisonLevel(): " << decisionLevel()
-        << " sublevel: " << trail.size()
-        << " by: " << from << endl;
-        cout << "trail at level 0: ";
-        for(auto const& x: trail) {
-            cout << "(lit: " << x.lit << " lev: " << x.lev << ")";
-        }
-        cout << endl;
-    }
-    #endif //DEBUG_ENQUEUE_LEVEL0
-
-    #ifdef ENQUEUE_DEBUG
-    assert(trail.size() <= nVarsOuter());
-    #endif
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    SLOW_DEBUG_DO(assert(trail.size() <= nVarsOuter()));
+    SLOW_DEBUG_DO(assert(var_data[v].removed == Removed::none));
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
-
-    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    if (!inprocess) {
-        varData[v].set++;
-        if (from == PropBy()) {
-            #ifdef STATS_NEEDED_BRANCH
-            sql_dump_vardata_picktime(v, from);
-            varData[v].num_decided++;
-            varData[v].last_decided_on = sumConflicts;
-            if (!p.sign()) varData[v].num_decided_pos++;
-            #endif
-        } else {
-            sumPropagations++;
-            #ifdef STATS_NEEDED_BRANCH
-            bool flipped = (varData[v].polarity != !p.sign());
-            if (flipped) {
-                varData[v].last_flipped = sumConflicts;
-            }
-            varData[v].num_propagated++;
-            varData[v].last_propagated = sumConflicts;
-            if (!p.sign()) varData[v].num_propagated_pos++;
-            #endif
-        }
-    }
-    #endif
+    STATS_DO(if (!inprocess) { if (p.sign()) prop_stats.var_set_neg++; else prop_stats.var_set_pos++; });
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
-    if (!inprocess) varData[v].saved_polarity = !sign; //phase saving during search
-    varData[v].reason = from;
-    varData[v].level = level;
-    varData[v].sublevel = trail.size();
+    if (!inprocess) var_data[v].saved_polarity = !sign; //phase saving during search
+    var_data[v].reason = from;
+    var_data[v].level = level;
+    var_data[v].sublevel = trail.size();
 
-    if (level == 0 && frat->enabled())
-    {   if (do_unit_frat) {
-            //hints: unit IDs of the reason's other lits first, reason ID last
-            int32_t reason_id = 0;
-            tmp_unit_hints.clear();
-            switch (from.getType()) {
-                case PropByType::binary_t:
-                    reason_id = from.get_id();
-                    tmp_unit_hints.push_back(unit_cl_IDs[from.lit2().var()]);
-                    break;
-                case PropByType::clause_t: {
-                    Clause* cl = cl_alloc.ptr(from.get_offset());
-                    reason_id = cl->stats.id;
-                    for(auto const& l: *cl)
-                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
-                    break;
-                }
-                case PropByType::xor_t: {
-                    auto cl = get_xor_reason(from, reason_id);
-                    for(auto const& l: *cl)
-                        if (l != p) tmp_unit_hints.push_back(unit_cl_IDs[l.var()]);
-                    break;
-                }
-                default: break; //null/BNN: no hints
-            }
+    if (level == 0 && frat->enabled()) enqueue_level0_frat(p, from, do_unit_frat);
 
-            const auto id = ++clauseID;
-            const auto xid = ++clauseXID;
-            *frat << add << id << p;
-            if (reason_id != 0) {
-                *frat << fratchain << tmp_unit_hints << reason_id;
-            }
-            *frat << fin;
-            if (frat && !frat->incremental())
-              *frat << implyxfromcls << xid << p << fratchain << id << fin;
-
-            assert(unit_cl_IDs[v] == 0);
-            assert(unit_cl_XIDs[v] == 0);
-            unit_cl_IDs[v] = id;
-            unit_cl_XIDs[v] = xid;
-        } else {
-            assert(unit_cl_IDs[v] != 0);
-            assert(unit_cl_XIDs[v] != 0);
-        }
-    }
-
-    if (!inprocess) {
-        #ifdef STATS_NEEDED
-        if (sign) {
-            propStats.varSetNeg++;
-        } else {
-            propStats.varSetPos++;
-        }
-        #endif
-    }
     trail.push_back(Trail(p, level));
-
-    if (inprocess) {
-        propStats.bogoProps += 1;
-    }
+    if (inprocess) prop_stats.bogo_props += 1;
 }
 
 template<bool bin_only>
 PropBy PropEngine::propagate_light()
 {
     PropBy confl;
-    VERBOSE_PRINT("propagate_light started");
 
     while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;
@@ -682,12 +570,12 @@ PropBy PropEngine::propagate_light()
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        propStats.bogoProps += ws.size()/4 + 1;
+        prop_stats.bogo_props += ws.size()/4 + 1;
         for (; i != end; i++) {
             if (!confl.isnullptr()) break;
 
             // propagate binary clause
-            if (i->isBin()) {
+            if (i->is_bin()) {
                 if (!bin_only) *j++ = *i;
                 const lbool val = value(i->lit2());
                 if (val == l_Undef) enqueue_light(i->lit2());
@@ -695,12 +583,12 @@ PropBy PropEngine::propagate_light()
                 continue;
             }
 
-            if (!bin_only && i->isClause()) {
-                if (value(i->getBlockedLit()) == l_True) {
+            if (!bin_only && i->is_clause()) {
+                if (value(i->get_blocked_lit()) == l_True) {
                     *j++ = *i;
                     continue;
                 }
-                propStats.bogoProps += 4;
+                prop_stats.bogo_props += 4;
                 const ClOffset offset = i->get_offset();
                 Clause& c = *cl_alloc.ptr(offset);
 
@@ -750,10 +638,8 @@ PropBy PropEngine::propagate_light()
             ws.shrink_(end-j);
         }
 
-        VERBOSE_PRINT("propagate_light went through watchlist of " << p);
         qhead++;
     }
-    VERBOSE_PRINT("propagate_light ended.");
     return confl;
 }
 
@@ -761,13 +647,13 @@ inline void PropEngine::enqueue_light(const Lit p)
 {
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    SLOW_DEBUG_DO(assert(var_data[v].removed == Removed::none));
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     trail.push_back(Trail(p, 1));
-    propStats.bogoProps += 1;
+    prop_stats.bogo_props += 1;
 }
 
 inline void PropEngine::attach_bin_clause(
@@ -784,8 +670,8 @@ inline void PropEngine::attach_bin_clause(
         assert(value(lit2) == l_Undef || value(lit2) == l_False);
     }
 
-    assert(varData[lit1.var()].removed == Removed::none);
-    assert(varData[lit2.var()].removed == Removed::none);
+    assert(var_data[lit1.var()].removed == Removed::none);
+    assert(var_data[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
     watches[lit1].push(Watched(lit2, red, ID));

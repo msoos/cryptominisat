@@ -27,13 +27,30 @@ THE SOFTWARE.
 
 namespace CMSat {
 
+//Totals over all matrices ever created, they are rebuilt at every matrix init
+struct GaussTotals {
+    uint32_t inits = 0;
+    uint64_t matrices = 0;
+    uint64_t rows = 0;
+    uint64_t cols = 0;
+    uint64_t find_calls = 0;
+    uint64_t find_prop = 0;
+    uint64_t find_confl = 0;
+    uint64_t elim_calls = 0;
+    uint64_t elim_prop = 0;
+    uint64_t elim_confl = 0;
+    uint64_t props = 0;
+    uint64_t confls = 0;
+    uint64_t disabled = 0;
+};
+
 struct GaussQData {
     bool do_eliminate; // we do elimination when basic variable is invoked
     uint32_t new_resp_var;                     // do elimination variable
     uint32_t new_resp_row ;         // do elimination row
     PropBy confl;              // returning conflict
     gauss_res ret = gauss_res::none; //final return value to Searcher
-    uint32_t currLevel; //level at which the variable was decided on
+    uint32_t curr_level; //level at which the variable was decided on
 
 
     uint32_t num_props = 0;  // total gauss propogation time for DPLL

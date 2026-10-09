@@ -251,7 +251,6 @@ enum class PolarityMode {
     , polarmode_weighted
 };
 
-enum class rst_dat_type {norm, var, cl};
 
 struct FastBackwData {
     std::vector<Lit>* _assumptions = nullptr;
@@ -291,27 +290,27 @@ public:
         undefs = _in.size();
         ts = 0;
         sz = _in.size();
-        std::copy(_in.begin(), _in.end(), getData());
+        std::copy(_in.begin(), _in.end(), get_data());
     }
 
-    Lit* getData()
+    Lit* get_data()
     {
         return reinterpret_cast<Lit*>(reinterpret_cast<char*>(this) + sizeof(BNN));
     }
 
-    const Lit* getData() const
+    const Lit* get_data() const
     {
         return reinterpret_cast<const Lit*>(reinterpret_cast<const char*>(this) + sizeof(BNN));
     }
 
     const Lit& operator[](const uint32_t at) const
     {
-        return getData()[at];
+        return get_data()[at];
     }
 
     Lit& operator[](const uint32_t at)
     {
-        return getData()[at];
+        return get_data()[at];
     }
 
     const Lit& get_out() const
@@ -321,22 +320,22 @@ public:
 
     const Lit* begin() const
     {
-        return getData();
+        return get_data();
     }
 
     Lit* begin()
     {
-        return getData();
+        return get_data();
     }
 
     const Lit* end() const
     {
-        return getData()+size();
+        return get_data()+size();
     }
 
     Lit* end()
     {
-        return getData()+size();
+        return get_data()+size();
     }
 
     bool empty() const

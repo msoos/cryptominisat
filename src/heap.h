@@ -110,7 +110,7 @@ public:
     {
         return heap.empty();
     }
-    [[nodiscard]] bool inHeap(int n) const
+    [[nodiscard]] bool in_heap(int n) const
     {
         return n < static_cast<int>(indices.size()) && indices[n] >= 0;
     }
@@ -122,12 +122,12 @@ public:
 
     void decrease  (int n)
     {
-        assert(inHeap(n));
+        assert(in_heap(n));
         percolateUp  (indices[n]);
     }
     void increase  (int n)
     {
-        assert(inHeap(n));
+        assert(in_heap(n));
         percolateDown(indices[n]);
     }
 
@@ -135,7 +135,7 @@ public:
     // Safe variant of insert/decrease/increase:
     void update(int n)
     {
-        if (!inHeap(n)) {
+        if (!in_heap(n)) {
             insert(n);
         } else {
             percolateUp(indices[n]);
@@ -147,7 +147,7 @@ public:
     void insert(int n)
     {
         indices.growTo(n + 1, -1);
-        assert(!inHeap(n));
+        assert(!in_heap(n));
 
         indices[n] = heap.size();
         heap.push(n);

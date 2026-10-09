@@ -73,20 +73,20 @@ void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
 vector<uint32_t> GetClauseQuery::translate_sampl_set(
     const vector<uint32_t>& sampl_set)
 {
-    assert(solver->toClear.empty());
+    assert(solver->to_clear.empty());
     set<uint32_t> ret_set;
     if (simplified) {
         assert(solver->get_num_bva_vars() == 0);
         for(uint32_t v: sampl_set) {
-            v = solver->varReplacer->get_var_replaced_with_outer(v);
+            v = solver->var_replacer->get_var_replaced_with_outer(v);
             v = solver->map_outer_to_inter(v);
             if (solver->value(v) != l_Undef) continue;
-            if (solver->varData[v].removed != Removed::none) continue;
+            if (solver->var_data[v].removed != Removed::none) continue;
             ret_set.insert(v);
         }
     } else {
         for(uint32_t v: sampl_set) {
-            v = solver->varReplacer->get_var_replaced_with_outer(v);
+            v = solver->var_replacer->get_var_replaced_with_outer(v);
             ret_set.insert(v);
         }
     }
@@ -130,7 +130,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
         watch_subarray_const ws = solver->watches[l];
         while(watched_at_sub < ws.size()) {
             const Watched& w = ws[watched_at_sub];
-            if (w.isBin() &&
+            if (w.is_bin() &&
                 w.lit2() < l &&
                 (w.red() == red)
             ) {
@@ -154,7 +154,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     //These are already in OUTER notation
     while (varreplace_at < solver->nVarsOuter()*2 && !simplified) {
         Lit l = Lit::toLit(varreplace_at);
-        Lit l2 = solver->varReplacer->get_lit_replaced_with_outer(l);
+        Lit l2 = solver->var_replacer->get_lit_replaced_with_outer(l);
         if (l2 != l) {
             out.clear();
             out.push_back(l);
@@ -169,8 +169,8 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
 
     if (red) {
         for(uint32_t lev = 0; lev < 3; lev++)
-            while(at_lev[lev] < solver->longRedCls[lev].size()) {
-                const ClOffset offs = solver->longRedCls[lev][at_lev[lev]];
+            while(at_lev[lev] < solver->long_red_cls[lev].size()) {
+                const ClOffset offs = solver->long_red_cls[lev][at_lev[lev]];
                 const Clause* cl = solver->cl_alloc.ptr(offs);
                 if (cl->size() <= max_len
                     && cl->stats.glue <= max_glue
@@ -188,8 +188,8 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     }
 
     //Irred long clauses
-    while(!red && at < solver->longIrredCls.size()) {
-        const ClOffset offs = solver->longIrredCls[at];
+    while(!red && at < solver->long_irred_cls.size()) {
+        const ClOffset offs = solver->long_irred_cls[at];
         const Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->size() <= max_len) {
             if (!simplified) out = solver->clause_outer_numbered(*cl);
@@ -256,7 +256,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
 }
 
 bool GetClauseQuery::all_vars_outside(const vector<Lit>& cl) const {
-    for(const auto& l: cl) if (solver->varData[solver->map_outer_to_inter(l.var())].is_bva)
+    for(const auto& l: cl) if (solver->var_data[solver->map_outer_to_inter(l.var())].is_bva)
         return false;
 
     return true;

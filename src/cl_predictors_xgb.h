@@ -42,21 +42,8 @@ class ClPredictorsXGB : public ClPredictorsAbst
 public:
     ClPredictorsXGB();
     virtual ~ClPredictorsXGB();
-    virtual int load_models(const std::string& short_fname,
-                     const std::string& long_fname,
-                     const std::string& forever_fname,
-                     const std::string& best_feats_fname) override;
-    virtual int load_models_from_buffers() override;
-
-    float predict(
-        predict_type pred_type,
-        const CMSat::Clause* cl,
-        const uint64_t sumConflicts,
-        const double   act_ranking_rel,
-        const double   uip1_ranking_rel,
-        const double   prop_ranking_rel,
-        const ReduceCommonData& commdata
-    );
+    virtual void load_model(const std::string& fname) override;
+    virtual void load_embedded_model() override;
 
     virtual void predict_all(
         float* const data,
@@ -66,12 +53,13 @@ public:
     virtual void finish_all_predict() override;
 
 private:
-    vector<BoosterHandle> handles;
+    BoosterHandle handle = nullptr;
     DMatrixHandle dmat;
 
-    const float *out_result_short;
-    const float *out_result_long;
-    const float *out_result_forever;
+    const float* out_result = nullptr;
+    void new_handle();
+    void check_num_features(const std::string& what);
+    void read_attrs();
 
     //debugging
     int num_dumps = 0;

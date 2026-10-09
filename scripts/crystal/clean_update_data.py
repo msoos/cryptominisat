@@ -18,6 +18,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+# After fix_up_xlrup.py filled used_clauses: builds sum_cl_use (per
+# clause: how often, first and last use) and the indexes the later
+# queries need.
+#
+# usage: clean_update_data.py data.db
 from __future__ import print_function
 import optparse
 import time
@@ -112,6 +117,15 @@ class QueryFill (helper.QueryHelper):
         where
         sum_cl_use.clauseID is NULL
         and clstats.clauseID != 0;
+        """
+        self.c.execute(q)
+        # ternary resolvents have no clause_stats row
+        q = """
+        insert into sum_cl_use (`clauseID`, `num_used`, `first_confl_used`, `last_confl_used`)
+        select distinct rdb.clauseID, 0, NULL, NULL
+        from reduceDB as rdb left join sum_cl_use
+        on rdb.clauseID = sum_cl_use.clauseID
+        where sum_cl_use.clauseID is NULL and rdb.clauseID != 0;
         """
         self.c.execute(q)
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))

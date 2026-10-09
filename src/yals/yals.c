@@ -91,8 +91,9 @@ do { \
   size_t OS = SIZE (S); \
   size_t NS = COUNT (S); \
   RSZ ((S).start, OS, NS); \
-  (S).top = (S).start + NS; \
-  (S).end = (S).start + NS; \
+  /* NULL + 0 is UB, avoid it for empty stacks */ \
+  (S).top = NS ? (S).start + NS : (S).start; \
+  (S).end = (S).top; \
 } while (0)
 
 #define RESET(S,N) \

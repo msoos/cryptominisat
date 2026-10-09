@@ -162,10 +162,6 @@ public:
         watches.shrink_to_fit();
     }
 
-    void print_stat()
-    {
-    }
-
     size_t mem_used_alloc() const
     {
         size_t mem = 0;

@@ -55,6 +55,7 @@ class DimacsParser
             const bool strict_header,
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
+        std::string prefix = "c ";
         map<int32_t, std::unique_ptr<Field>> weights;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
@@ -257,7 +258,12 @@ bool DimacsParser<C, S>::parse_header(C& in)
     in.parseString(str);
     if (str == "cnf") {
         if (header_found && strict_header) {
-            std::cerr << "ERROR: CNF header ('p cnf vars cls') found twice in file! Exiting." << endl;
+            // Some benchmarks repeat the exact same header; only reject a conflicting one
+            int vars2 = 0;
+            int cls2 = 0;
+            if (!in.parseInt(vars2, lineNum) || !in.parseInt(cls2, lineNum)) return false;
+            if (vars2 + offset_vars == num_header_vars && cls2 == num_header_cls) return true;
+            std::cerr << "ERROR: CNF header ('p cnf vars cls') found twice in file with different values! Exiting." << endl;
             exit(-1);
         }
         header_found = true;
@@ -268,8 +274,8 @@ bool DimacsParser<C, S>::parse_header(C& in)
             return false;
         }
         if (verbosity) {
-            cout << "c o -- header says num vars:   " << std::setw(12) << num_header_vars << endl;
-            cout << "c o -- header says num clauses:" <<  std::setw(12) << num_header_cls << endl;
+            cout << prefix << "-- header says num vars:   " << std::setw(12) << num_header_vars << endl;
+            cout << prefix << "-- header says num clauses:" <<  std::setw(12) << num_header_cls << endl;
         }
         if (num_header_vars < 0) {
             std::cerr << "ERROR: Number of variables in header cannot be less than 0" << endl;
@@ -331,7 +337,7 @@ bool DimacsParser<C, S>::parse_solve_simp_comment(C& in, const bool solve)
 
     if (verbosity) {
         cout
-        << "c -----------> Solver::"
+        << prefix << "-----------> Solver::"
         << (solve ? "solve" : "simplify")
         <<" called (number: "
         << std::setw(3) << debugLibPart << ") with assumps :";
@@ -344,7 +350,7 @@ bool DimacsParser<C, S>::parse_solve_simp_comment(C& in, const bool solve)
     lbool ret;
     if (solve) {
         if (verbosity) {
-            cout << "c Solution will be written to: "
+            cout << prefix << "Solution will be written to: "
             << get_debuglib_fname() << endl;
         }
         ret = solver->solve(&assumps);
@@ -355,7 +361,7 @@ bool DimacsParser<C, S>::parse_solve_simp_comment(C& in, const bool solve)
     }
 
     if (verbosity >= 6) {
-        cout << "c Parsed Solver::"
+        cout << prefix << "Parsed Solver::"
         << (solve ? "solve" : "simplify")
         << endl;
     }
@@ -367,38 +373,38 @@ void DimacsParser<C, S>::write_solution_to_debuglib_file(const lbool ret) const
 {
     //Open file for writing
     std::string s = get_debuglib_fname();
-    std::ofstream partFile;
-    partFile.open(s.c_str());
-    if (!partFile) {
+    std::ofstream part_file;
+    part_file.open(s.c_str());
+    if (!part_file) {
         std::cerr << "ERROR: Cannot open part file '" << s << "'";
         std::exit(-1);
     }
 
     //Output to part file the result
     if (ret == l_True) {
-        partFile << "s SATISFIABLE\n";
-        partFile << "v ";
+        part_file << "s SATISFIABLE\n";
+        part_file << "v ";
         for (uint32_t i = 0; i != solver->nVars(); i++) {
             if (solver->get_model()[i] != l_Undef)
-                partFile
+                part_file
                 << ((solver->get_model()[i]==l_True) ? "" : "-")
                 << (i+1) <<  " ";
         }
-        partFile << "0\n";
+        part_file << "0\n";
     } else if (ret == l_False) {
-        partFile << "conflict ";
+        part_file << "conflict ";
         for (Lit lit: solver->get_conflict()) {
-            partFile << lit << " ";
+            part_file << lit << " ";
         }
-        partFile
+        part_file
         << "\ns UNSAT\n";
     } else if (ret == l_Undef) {
-        cout << "c timeout, exiting" << endl;
+        cout << prefix << "timeout, exiting" << endl;
         std::exit(15);
     } else {
         assert(false);
     }
-    partFile.close();
+    part_file.close();
 }
 #endif
 
@@ -445,7 +451,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
-        if (verbosity >= 6) cout << "c o Parsed Solver::new_var()" << endl;
+        if (verbosity >= 6) cout << prefix << "Parsed Solver::new_var()" << endl;
     } else if (!debugLib.empty() && str == "Solver::new_vars(") {
         in.skipWhitespace();
         int n;
@@ -453,7 +459,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         solver->new_vars(n);
 
         if (verbosity >= 6)
-            cout << "c o Parsed Solver::new_vars( " << n << " )" << endl;
+            cout << prefix << "Parsed Solver::new_vars( " << n << " )" << endl;
     } else if (str == "ind") {
         if (!parseIndependentSet(in, ind_vars)) return false;
         ind_vars_set = true;
@@ -517,7 +523,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
     } else {
         if (verbosity >= 30) {
             cout
-            << "didn't understand in CNF file comment line:"
+            << prefix << "didn't understand in CNF file comment line:"
             << "'c " << str << "'"
             << endl;
         }
@@ -671,7 +677,7 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
         case '\n':
             if (verbosity) {
                 cout
-                << "c WARNING: Empty line at line number " << lineNum
+                << prefix << "WARNING: Empty line at line number " << lineNum
                 << " -- this is not part of the DIMACS specifications ("
                 << dimacs_spec << "). Ignoring."
                 << endl;
@@ -707,7 +713,7 @@ bool DimacsParser<C, S>::parse_DIMACS(
 
     if (verbosity) {
         cout
-        << "c -- added: " << norm_clauses_added << " clauses"
+        << prefix << "-- added: " << norm_clauses_added << " clauses"
         << ", " << xor_clauses_added << " xor clauses"
         #ifdef ENABLE_BNN
         << ", " << bnn_clauses_added << " bnn clauses"

@@ -63,7 +63,7 @@ private:
     Solver* solver;
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
-    vector<Lit>& toClear;
+    vector<Lit>& to_clear;
 
     //internal data
     vector<vector<Lit>> cards;

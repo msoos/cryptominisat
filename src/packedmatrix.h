@@ -43,8 +43,8 @@ class PackedMatrix
 public:
     PackedMatrix() :
         mp(nullptr)
-        , numRows(0)
-        , numCols(0)
+        , n_rows(0)
+        , n_cols(0)
     {
     }
 
@@ -60,7 +60,7 @@ public:
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
-        if (numRows*(numCols+1) < (int)num_rows*((int)num_cols+1)) {
+        if (n_rows*(n_cols+1) < (int)num_rows*((int)num_cols+1)) {
             size_t size = sizeof(int64_t) * num_rows*(num_cols+1);
             #ifdef _WIN32
             _aligned_free((void*)mp);
@@ -72,20 +72,20 @@ public:
             #endif
         }
 
-        numRows = num_rows;
-        numCols = num_cols;
+        n_rows = num_rows;
+        n_cols = num_cols;
     }
 
     void resizeNumRows(const uint32_t num_rows)
     {
-        assert((int)num_rows <= numRows);
-        numRows = num_rows;
+        assert((int)num_rows <= n_rows);
+        n_rows = num_rows;
     }
 
     PackedMatrix& operator=(const PackedMatrix& b)
     {
-        if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
-            size_t size = sizeof(int64_t) * b.numRows*(b.numCols+1);
+        if (n_rows*(n_cols+1) < b.n_rows*(b.n_cols+1)) {
+            size_t size = sizeof(int64_t) * b.n_rows*(b.n_cols+1);
             #ifdef _WIN32
             _aligned_free((void*)mp);
             mp =  (int64_t*)_aligned_malloc(size, 16);
@@ -95,9 +95,9 @@ public:
             release_assert(ret == 0);
             #endif
         }
-        numRows = b.numRows;
-        numCols = b.numCols;
-        memcpy(mp, b.mp, sizeof(int64_t)*numRows*(numCols+1));
+        n_rows = b.n_rows;
+        n_cols = b.n_cols;
+        memcpy(mp, b.mp, sizeof(int64_t)*n_rows*(n_cols+1));
 
         return *this;
     }
@@ -105,27 +105,27 @@ public:
     void swap(PackedMatrix& b)
     {
         std::swap(mp, b.mp);
-        std::swap(numRows, b.numRows);
-        std::swap(numCols, b.numCols);
+        std::swap(n_rows, b.n_rows);
+        std::swap(n_cols, b.n_cols);
     }
 
     inline PackedRow operator[](const uint32_t i)
     {
         #ifdef DEBUG_MATRIX
-        assert(i <= numRows);
+        assert(i <= n_rows);
         #endif
 
-        return PackedRow(numCols, mp+i*(numCols+1));
+        return PackedRow(n_cols, mp+i*(n_cols+1));
 
     }
 
     inline PackedRow operator[](const uint32_t i) const
     {
         #ifdef DEBUG_MATRIX
-        assert(i <= numRows);
+        assert(i <= n_rows);
         #endif
 
-        return PackedRow(numCols, mp+i*(numCols+1));
+        return PackedRow(n_cols, mp+i*(n_cols+1));
     }
 
     class iterator
@@ -135,30 +135,30 @@ public:
 
         PackedRow operator*()
         {
-            return PackedRow(numCols, mp);
+            return PackedRow(n_cols, mp);
         }
 
         iterator& operator++()
         {
-            mp += (numCols+1);
+            mp += (n_cols+1);
             return *this;
         }
 
         iterator operator+(const uint32_t num) const
         {
             iterator ret(*this);
-            ret.mp += (numCols+1)*num;
+            ret.mp += (n_cols+1)*num;
             return ret;
         }
 
         uint32_t operator-(const iterator& b) const
         {
-            return (mp - b.mp)/((numCols+1));
+            return (mp - b.mp)/((n_cols+1));
         }
 
         void operator+=(const uint32_t num)
         {
-            mp += (numCols+1)*num;  // add by f4
+            mp += (n_cols+1)*num;  // add by f4
         }
 
         bool operator!=(const iterator& it) const
@@ -174,33 +174,33 @@ public:
     private:
         iterator(int64_t* _mp, const uint32_t _numCols) :
             mp(_mp)
-            , numCols(_numCols)
+            , n_cols(_numCols)
         {}
 
         int64_t *mp;
-        const uint32_t numCols;
+        const uint32_t n_cols;
     };
 
     inline iterator begin()
     {
-        return iterator(mp, numCols);
+        return iterator(mp, n_cols);
     }
 
     inline iterator end()
     {
-        return iterator(mp+numRows*(numCols+1), numCols);
+        return iterator(mp+n_rows*(n_cols+1), n_cols);
     }
 
     inline uint32_t getSize() const
     {
-        return numRows;
+        return n_rows;
     }
 
 private:
 
     int64_t *mp;
-    int numRows;
-    int numCols;
+    int n_rows;
+    int n_cols;
 };
 
 }

@@ -48,7 +48,7 @@ inline Lit orc_to_lit(int x) {
 static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) {
     cnf.clear();
     num_lits = 0;
-    for(auto const& off: s->longIrredCls) {
+    for(auto const& off: s->long_irred_cls) {
         Clause* cl = s->cl_alloc.ptr(off);
         for(auto const& l1: *cl) {
             num_lits++;
@@ -59,7 +59,7 @@ static void build_cadiback_cnf(Solver* s, vector<int>& cnf, uint64_t& num_lits) 
     for(uint32_t i = 0; i < s->nVars()*2; i++) {
         Lit l1 = Lit::toLit(i);
         for(auto const& w: s->watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2) continue;
 
@@ -84,7 +84,7 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
 
     vector<vector<sspp::Lit>> cls;
     vector<sspp::Lit> tmp;
-    for(auto const& off: s->longIrredCls) {
+    for(auto const& off: s->long_irred_cls) {
         tmp.clear();
         Clause* cl = s->cl_alloc.ptr(off);
         for(auto const& l1: *cl) tmp.push_back(orclit(l1));
@@ -93,7 +93,7 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
     for(uint32_t i = 0; i < s->nVars()*2; i++) {
         Lit l1 = Lit::toLit(i);
         for(auto const& w: s->watches[l1]) {
-            if (!w.isBin() || w.red()) continue;
+            if (!w.is_bin() || w.red()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2) continue;
             cls.push_back({orclit(l1), orclit(l2)});
@@ -114,7 +114,7 @@ static vector<vector<sspp::Lit>> build_ccnr_cls(Solver* s) {
 // does not follow from the irredundant set, or that we fed ccnr the wrong thing.
 static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
     assert(sol.size() == solver->nVars()+1);
-    auto live = [&](const uint32_t v) { return solver->varData[v].removed == Removed::none; };
+    auto live = [&](const uint32_t v) { return solver->var_data[v].removed == Removed::none; };
     auto sat = [&](const Lit l) { return sol[l.var()+1] == (l.sign() ? 0 : 1); };
 
     for(uint32_t v = 0; v < solver->nVars(); v++) {
@@ -137,14 +137,14 @@ static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
             assert(false);
         }
     };
-    check_long(solver->longIrredCls, "irred");
-    for(const auto& tier: solver->longRedCls) check_long(tier, "red");
+    check_long(solver->long_irred_cls, "irred");
+    for(const auto& tier: solver->long_red_cls) check_long(tier, "red");
 
     for(uint32_t i = 0; i < solver->nVars()*2; i++) {
         const Lit l1 = Lit::toLit(i);
         if (!live(l1.var())) continue;
         for(const auto& w: solver->watches[l1]) {
-            if (!w.isBin()) continue;
+            if (!w.is_bin()) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2 || !live(l2.var())) continue;
             if (sat(l1) || sat(l2)) continue;
@@ -214,7 +214,7 @@ static bool add_backbone_units(Solver* solver, const vector<int>& learned_units)
         if (l == 0) continue;
         const Lit lit = Lit(abs(l)-1, l < 0);
         if (solver->value(lit.var()) != l_Undef) continue;
-        if (solver->varData[lit.var()].removed != Removed::none) continue;
+        if (solver->var_data[lit.var()].removed != Removed::none) continue;
         tmp.clear();
         tmp.push_back(lit);
         solver->add_clause_int(tmp);
@@ -260,7 +260,7 @@ static uint32_t add_backbone_bins(Solver* solver, const vector<int>& learned_bin
             continue;
         }
         const Lit lit = Lit(abs(l)-1, l < 0);
-        if (solver->varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
+        if (solver->var_data[lit.var()].removed != Removed::none) {ignore = true; continue;}
         if (solver->value(lit.var()) != l_Undef) {ignore = true; continue;}
         tmp.push_back(lit);
     }
@@ -275,7 +275,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     // ccnr and cadiback are both only given the clauses, so they cannot see an
     // XOR and would compute the backbone of a formula that is not ours
     if (!xorclauses.empty() || !gmatrices.empty()) {
-        verb_print(0, COLRED << "WARNING: BACKBONE SKIPPED, THE SYSTEM CONTAINS XORS"
+        verb_print(1, COLRED << "WARNING: BACKBONE SKIPPED, THE SYSTEM CONTAINS XORS"
                 << " (" << xorclauses.size() << " xor clauses, "
                 << gmatrices.size() << " matrices)" << COLDEF);
         return okay();
@@ -301,7 +301,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool /*cmsgen*/,
     bool backbone_limit_hit = false;
     const double cadiback_start_time = cpu_time();
     int res = CadiBack::doit(cnf, std::max(0, conf.verbosity-1), drop_cands, learned_units, learned_bins, eqLits,
-        orig_max_confl, &backbone_limit_hit);
+        orig_max_confl, &backbone_limit_hit, conf.prefix);
     const double cadiback_time = cpu_time() - cadiback_start_time;
     uint32_t num_units = trail_size();
     uint32_t num_bins_added = 0;
@@ -339,7 +339,7 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/,
 
 size_t Solver::num_long_irred_cls_anywhere() const
 {
-    size_t n = longIrredCls.size();
+    size_t n = long_irred_cls.size();
     if (occsimplifier != nullptr) n += occsimplifier->num_long_irred_linked_in();
     return n;
 }
@@ -349,20 +349,20 @@ void Solver::detach_and_free_all_irred_cls()
     for(auto& ws: watches) {
         uint32_t j = 0;
         for(uint32_t i = 0; i < ws.size(); i++) {
-            if (ws[i].isBin()) {
+            if (ws[i].is_bin()) {
                 if (ws[i].red()) ws[j++] = ws[i];
                 continue;
             }
-            assert(!ws[i].isBNN());
-            assert(ws[i].isClause());
+            assert(!ws[i].is_bnn());
+            assert(ws[i].is_clause());
             Clause* cl = cl_alloc.ptr(ws[i].get_offset());
             if (cl->red()) ws[j++] = ws[i];
         }
         ws.resize(j);
     }
-    binTri.irredBins = 0;
-    for(auto& c: longIrredCls) free_cl(c);
-    longIrredCls.clear();
-    litStats.irredLits = 0;
+    bin_tri.irred_bins = 0;
+    for(auto& c: long_irred_cls) free_cl(c);
+    long_irred_cls.clear();
+    lit_stats.irred_lits = 0;
     cl_alloc.consolidate(this, true);
 }

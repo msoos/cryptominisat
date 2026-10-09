@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <signal.h>
 #include <structmember.h>
 #include <limits>
+#include <stdexcept>
 #include <cassert>
 #include <algorithm>
 #include "../../src/cryptominisat.h"
@@ -55,7 +56,7 @@ typedef struct {
 typedef void (*sighandler_t)(int);
 
 static const char solver_create_docstring[] = \
-"Solver(verbose=0, time_limit=max_numeric_limits, confl_limit=max_numeric_limits, threads=1)\n\
+"Solver(verbose=0, time_limit=max_numeric_limits, confl_limit=max_numeric_limits, threads=1, options=None)\n\
 Create Solver object.\n\
 \n\
 :param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
@@ -63,23 +64,49 @@ Create Solver object.\n\
 :param confl_limit: Propagation limit: abort after this many conflicts.\n\
     Default: never abort.\n\
 :param threads: Number of threads to use.\n\
+:param options: Solver options as strings, named as the cryptominisat5\n\
+    command-line options without the leading '--', e.g.\n\
+    {\"maxmatrixrows\": \"5000\", \"polar\": \"rnd\"}. See set_option().\n\
 :type verbose: <int>\n\
 :type time_limit: <double>\n\
 :type confl_limit: <long>\n\
-:type threads: <int>";
+:type threads: <int>\n\
+:type options: <dict>";
+
+static bool apply_option(SATSolver* cmsat, PyObject* name, PyObject* value)
+{
+    if (!PyUnicode_Check(name) || !PyUnicode_Check(value)) {
+        PyErr_SetString(PyExc_TypeError, "option names and values must be strings");
+        return false;
+    }
+    const char* n = PyUnicode_AsUTF8(name);
+    const char* v = PyUnicode_AsUTF8(value);
+    if (!n || !v) return false;
+    try {
+        cmsat->set_option(n, v);
+    } catch (const std::invalid_argument& e) {
+        PyErr_SetString(PyExc_ValueError, e.what());
+        return false;
+    } catch (const std::runtime_error& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return false;
+    }
+    return true;
+}
 
 static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char const* kwlist[] = {"verbose", "time_limit", "confl_limit", "threads", NULL};
+    static char const* kwlist[] = {"verbose", "time_limit", "confl_limit", "threads", "options", NULL};
 
     int num_threads = 1;
+    PyObject* options = NULL;
     self->cmsat = NULL;
     self->verbose = 0;
     self->time_limit = std::numeric_limits<double>::max();
     self->confl_limit = std::numeric_limits<long>::max();
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli",  const_cast<char**>(kwlist),
-        &self->verbose, &self->time_limit, &self->confl_limit, &num_threads))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idliO",  const_cast<char**>(kwlist),
+        &self->verbose, &self->time_limit, &self->confl_limit, &num_threads, &options))
     {
         return;
     }
@@ -101,7 +128,24 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
         return;
     }
 
+    if (options == Py_None) options = NULL;
+    if (options && !PyDict_Check(options)) {
+        PyErr_SetString(PyExc_TypeError, "options must be a dict");
+        return;
+    }
+
     self->cmsat = new SATSolver;
+    if (options) {
+        PyObject *name, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(options, &pos, &name, &value)) {
+            if (!apply_option(self->cmsat, name, value)) {
+                delete self->cmsat;
+                self->cmsat = NULL;
+                return;
+            }
+        }
+    }
     self->cmsat->set_verbosity(self->verbose);
     self->cmsat->set_max_time(self->time_limit);
     self->cmsat->set_max_confl(self->confl_limit);
@@ -699,13 +743,64 @@ static PyObject* get_conflict(Solver *self)
     return result;
 }
 
+PyDoc_STRVAR(set_option_doc,
+"set_option(name, value)\n\
+Set a solver option. Both name and value are strings, the option named as the\n\
+cryptominisat5 command-line option without the leading '--', e.g.\n\
+set_option(\"maxmatrixrows\", \"5000\").\n\
+Must be called before any clause is added and before solve().\n\
+\n\
+:raises ValueError: unknown option or invalid value\n\
+:raises RuntimeError: called after a clause was added or solve() was called"
+);
+
+static PyObject* set_option(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char const* kwlist[] = {"name", "value", NULL};
+    PyObject *name, *value;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", const_cast<char**>(kwlist), &name, &value)) {
+        return NULL;
+    }
+    if (!apply_option(self->cmsat, name, value)) return NULL;
+    Py_RETURN_NONE;
+}
+
 /*************************** Method definitions *************************/
+
+PyDoc_STRVAR(get_option_names_doc,
+"get_option_names()\n\
+Names of the options accepted by Solver(options=...) and Solver.set_option().\n\
+\n\
+:rtype: <list <str>>"
+);
+
+static PyObject* get_option_names(PyObject*, PyObject*)
+{
+    const std::vector<std::string> names = SATSolver::get_option_names();
+    PyObject* result = PyList_New(names.size());
+    if (!result) return NULL;
+    for (size_t i = 0; i < names.size(); i++) {
+        PyObject* name = PyUnicode_FromString(names[i].c_str());
+        if (!name) {
+            Py_DECREF(result);
+            return NULL;
+        }
+        PyList_SET_ITEM(result, i, name);
+    }
+    return result;
+}
+
+static PyMethodDef module_methods[] = {
+    {"get_option_names", get_option_names, METH_NOARGS, get_option_names_doc},
+    {NULL, NULL, 0, NULL}
+};
 
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, solve_doc},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
     {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
+    {"set_option", (PyCFunction) set_option, METH_VARARGS | METH_KEYWORDS, set_option_doc},
     {"nb_vars", (PyCFunction) nb_vars, METH_NOARGS, nb_vars_doc},
     //{"nb_clauses", (PyCFunction) nb_clauses, METH_NOARGS, "returns number of clauses"},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_NOARGS, is_satisfiable_doc},
@@ -798,7 +893,7 @@ MODULE_INIT_FUNC(pycryptosat)
         MODULE_NAME,            /* m_name */
         MODULE_DOC,             /* m_doc */
         -1,                     /* m_size */
-        NULL,                   /* m_methods */
+        module_methods,         /* m_methods */
         NULL,                   /* m_reload */
         NULL,                   /* m_traverse */
         NULL,                   /* m_clear */

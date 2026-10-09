@@ -45,7 +45,6 @@ static size_t text_read(void* buf, size_t num, size_t count, MyText& f)
         toread = f.size-f.at;
     }
     memcpy(buf, f.txt + f.at, toread);
-    //cout << "read in" << toread << endl;
     f.at += toread;
 
     return toread;
@@ -66,6 +65,5 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {
         return 0;
     }
     S.solve();
-    //cout << "Ret is sat: " << (ret == l_True) << endl;
     return 0;
 }

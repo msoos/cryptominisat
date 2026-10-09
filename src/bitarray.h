@@ -71,7 +71,7 @@ public:
             size = _size;
         }
         if (fill) setOne();
-        else setZero();
+        else set_zero();
     }
 
     inline bool isZero() const
@@ -82,7 +82,7 @@ public:
         return true;
     }
 
-    inline void setZero()
+    inline void set_zero()
     {
         if (size != 0) {
             memset(mp, 0, size*sizeof(uint64_t));

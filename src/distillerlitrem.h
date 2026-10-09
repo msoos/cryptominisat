@@ -52,17 +52,16 @@ class DistillerLitRem {
 
             Stats& operator+=(const Stats& other);
             void print_short(const Solver* solver) const;
-            void print(const size_t nVars, const string& pre) const;
 
             double time_used = 0.0;
-            uint64_t timeOut = 0;
-            uint64_t zeroDepthAssigns = 0;
-            uint64_t numLitsRem = 0;
-            uint64_t checkedClauses = 0;
-            uint64_t potentialClauses = 0;
+            uint64_t time_out = 0;
+            uint64_t zero_depth_assigns = 0;
+            uint64_t num_lits_rem = 0;
+            uint64_t checked_clauses = 0;
+            uint64_t potential_clauses = 0;
             uint64_t cls_tried = 0;
-            uint64_t numCalled = 0;
-            uint64_t numClShorten = 0;
+            uint64_t num_called = 0;
+            uint64_t num_cl_shorten = 0;
         };
 
         const Stats& get_stats() const;
@@ -80,20 +79,20 @@ class DistillerLitRem {
 
         //For distill
         vector<Lit> lits;
-        uint64_t oldBogoProps;
-        int64_t maxNumProps;
+        uint64_t old_bogo_props;
+        int64_t max_num_props;
         int64_t orig_maxNumProps;
 
         //Global status
-        Stats runStats;
-        Stats globalStats;
-        size_t numCalls = 0;
+        Stats run_stats;
+        Stats global_stats;
+        size_t num_calls = 0;
 
 };
 
 inline const DistillerLitRem::Stats& DistillerLitRem::get_stats() const
 {
-    return globalStats;
+    return global_stats;
 }
 
 } //end namespace

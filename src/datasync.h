@@ -27,9 +27,6 @@ THE SOFTWARE.
 #include "watched.h"
 #include "propby.h"
 #include "watcharray.h"
-#ifdef USE_MPI
-#include "mpi.h"
-#endif //USE_MPI
 
 namespace CMSat {
 
@@ -39,15 +36,14 @@ class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData);
-        void finish_up_mpi();
+        DataSync(Solver* solver, SharedData* shared_data);
         bool enabled();
-        void set_shared_data(SharedData* sharedData);
+        void set_shared_data(SharedData* shared_data);
         void new_var(const bool bva);
         void new_vars(const size_t n);
         bool syncData();
         void save_on_var_memory();
-        void updateVars(
+        void update_vars(
            const vector<uint32_t>& outer_to_inter
             , const vector<uint32_t>& inter_to_outer
         );
@@ -79,38 +75,16 @@ class DataSync
 
         //stats
         uint64_t lastSyncConf = 0;
-        vector<uint32_t> syncFinish;
+        vector<uint32_t> sync_finish;
         Stats stats;
 
         //Other systems
         Solver* solver = nullptr;
-        SharedData* sharedData = nullptr;
-
-        #ifdef USE_MPI
-        void set_up_for_mpi();
-        bool mpi_recv_from_others();
-        void mpi_send_to_others();
-        bool mpi_get_interrupt();
-        bool mpi_get_unit(
-            const lbool otherVal,
-            const uint32_t var,
-            uint32_t& thisGotUnitData
-        );
-        vector<uint32_t> syncMPIFinish;
-        MPI_Request   sendReq;
-        uint32_t*     mpiSendData = nullptr;
-
-        int           mpiRank = 0;
-        int           mpiSize = 0;
-        uint32_t      mpiRecvUnitData = 0;
-        uint32_t      mpiRecvBinData = 0;
-        uint32_t      mpiSentBinData = 0;
-        #endif
+        SharedData* shared_data = nullptr;
 
         //misc
-        uint32_t numCalls = 0;
         vector<uint32_t>& seen;
-        vector<Lit>& toClear;
+        vector<Lit>& to_clear;
 };
 
 inline const DataSync::Stats& DataSync::get_stats() const
@@ -120,7 +94,7 @@ inline const DataSync::Stats& DataSync::get_stats() const
 
 inline bool DataSync::enabled()
 {
-    return sharedData != nullptr;
+    return shared_data != nullptr;
 }
 
 }

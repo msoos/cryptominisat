@@ -190,7 +190,7 @@ public:
         return true;
     }
 
-    inline void setZero()
+    inline void set_zero()
     {
         memset(mp, 0, sizeof(int64_t)*size);
     }
@@ -266,7 +266,7 @@ public:
     {
         assert(size == ((int)num_cols/64) + ((bool)(num_cols % 64)));
 
-        setZero();
+        set_zero();
         for (uint32_t i = 0; i != v.size(); i++) {
             const uint32_t toset_var = var_to_col[v[i]];
             assert(toset_var != numeric_limits<uint32_t>::max());

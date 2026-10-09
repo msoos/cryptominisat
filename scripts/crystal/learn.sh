@@ -17,110 +17,79 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# This file wraps CMake invocation for TravisCI
-# so we can set different configurations via environment variables.
+# Learn predictors from MANY instances: concatenates the per-instance
+# pandas frames (data-min.db-cldata-*.dat, made by ballofcrystal.sh) and
+# trains the predictors on the union. The dirs may come from several
+# gathering rounds (see STATS_OPTS in ballofcrystal.sh).
+#
+# usage: learn.sh <outdir> <cnf-dir> [<cnf-dir> ...]
+#   <cnf-dir> are the <file.cnf>-dir directories ballofcrystal.sh made
+# Knobs, same as setparams_ballofcrystal.sh: cut1 cut2 FIXED bestf
+#   XGB_EST XGB_DEPTH XGB_MINCHILD XGB_SEED XGB_SUBSAMPLE TARGET XGB_OBJ
+#   XGB_WEIGHTS, FAMILIES (a file of 'family filename' lines)
 
-#set -x
 set -e
+set -o pipefail
 
-function generate() {
-    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}-subs${xgboostsubsample}"
+OUT="$1"; shift
+if [[ -z "$OUT" || -z "$1" ]]; then
+    echo "usage: $0 <outdir> <cnf-dir> [<cnf-dir> ...]"
+    exit 255
+fi
+cd "$(dirname "$0")"
+source ./setparams_ballofcrystal.sh
+SCRIPTDIR="$(pwd)"
+cd - > /dev/null
+mkdir -p "$OUT"
+git -C "$SCRIPTDIR" rev-parse HEAD > "$OUT/out_git"
+echo "$@" >> "$OUT/out_git"
 
-    mkdir -p ${dirname}
-    rm -f ${dirname}/out_*
-    rm -f ${dirname}/predictor*.json
-    rm -f dirname.tar.gz
-    git rev-parse HEAD > ${dirname}/out_git
-    cat learn.sh >> ${dirname}/out_git
-    md5sum *.dat >> ${dirname}/out_git
-
-    tiers=("short" "long" "forever")
-    tables=("used_later" "used_later_anc")
-    for tier in "${tiers[@]}"; do
-        mypids=()
-        for table in "${tables[@]}"; do
-            # check if DAT file exists
-            INFILE="comb-${table}-${tier}-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat"
-            if test -f "$INFILE"; then
-                echo "$INFILE exists, OK"
-            else
-                echo "ERROR: $INFILE does not exist!!"
-                exit -1
-            fi
-
-            /usr/bin/time --verbose -o "${dirname}/out_${tier}.timeout" \
-            ../cldata_predict.py \
-            $INFILE \
-            --tier ${tier} --regressor $regressor \
-            --xgboostest ${est} \
-            --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
-            --basedir "${dirname}" \
-            --features "best_only" \
-            --table ${table} \
-            --xgboostsubsample "$xgboostsubsample" \
-            --bestfeatfile ${bestf} 2>&1 | tee "${dirname}/out-${table}-${tier}" &
-            pid=$!
-            echo "PID here is $pid"
-            mypids+=("$pid")
-        done
-
-        # wait for PIDs now
-        echo "PIDS to wait for are: ${mypids[*]}"
-        for pid2 in "${mypids[@]}"
-        do
-            echo "Waiting for $pid2 ..."
-            wait $pid2
-        done
-    done
-
-    tar czvf ${dirname}.tar.gz ${dirname}
-}
-
-
-# best was: 8march-2020-3acd81dc55df3-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin300-xbmd4
-
-#xboostmaxdepth=4
-#xboostminchild=300
-#est=10
-
-bestf="../../scripts/crystal/best_features-correlation2.txt"
-w=0
-xgboostsubsample="1.0"
-basename="15-dec-b1bd8f74bc2b42"
-#basename="14-april-2021-69bad529f962c"
-#basename="8march-2020-3acd81dc55df3-36feats"
-#basename="aes-30-march-2020-a1e0e19be0c1"
-#basename="orig"
-limit=1000
-cut1="3.0"
-cut2="25.0"
-xboostmaxdepth=4
-xgboostminchild=300
-est=10
-
-for xgboostsubsample in 1.0
-do
-for limit in 10000 #1000
-do
-    for regressor in "xgb" #"lgbm"
-    do
-        for xboostmaxdepth in 4 6 #8 10 12
-        do
-            for xgboostminchild in 10 #300
-            do
-                for est in 10
-                do
-                    generate
-                done
-            done
-        done
-    done
+# provenance: which solver gathered each dir (frames of different
+# schemas are refused by concat_pandas.py, this says why)
+: > "$OUT/gathered_by"
+for d in "$@"; do
+    sha=$(grep -m1 "^c CMS SHA1:" "$d/cms-stats-run.out" 2>/dev/null | awk '{print $4}')
+    drv=$(grep -m1 "^c \[pred\] \(loaded the\|compiled-in\) model" "$d/cms-stats-run.out" 2>/dev/null | sed 's/^c \[pred\] //' || true)
+    echo "${sha:-unknown} $d ${drv:-glue}" >> "$OUT/gathered_by"
 done
+echo "the reduce of the gathering runs was driven by:"
+awk '{$1=""; $2=""; print}' "$OUT/gathered_by" | sort | uniq -c
+if [[ $(awk '{print $1}' "$OUT/gathered_by" | sort -u | wc -l) -gt 1 ]]; then
+    echo "WARNING: the dirs were gathered by different solver versions, see $OUT/gathered_by"
+    awk '{print $1}' "$OUT/gathered_by" | sort | uniq -c
+fi
+
+echo "=== checking the frames"
+for d in "$@"; do
+    "$SCRIPTDIR/check_frames.py" -f "$bestf" "$d"/data-min.db-cldata-*.dat "$d"/data-min.db-evaldata-*.dat > "$OUT/check_frames-$(basename "$d").out" 2>&1 \
+        || { echo "FAILED: $d, see $OUT/check_frames-$(basename "$d").out"; grep FAIL "$OUT/check_frames-$(basename "$d").out"; exit 1; }
 done
 
-exit 0
-
-
-# simple run:
-
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/15-dec-b1bd8f74bc2b42-cut1-3.0-cut2-25.0-limit-10000-est10-xbmin10-xbmd4-regxgb-subs1.0/ --predtype py --predbestfeats ../scripts/crystal/best_features-correlation2.txt --predtables 000
+for table in used_later used_later_anc; do
+    name="${table}-disc-cut1-${cut1}-cut2-${cut2}-limit-${FIXED}"
+    dats=()
+    evals=()
+    for d in "$@"; do
+        f="$d/data-min.db-cldata-${name}.dat"
+        # a run shorter than two half-lives has no frame
+        if [[ ! -f "$f" ]]; then echo "WARNING: $f missing, skipped"; continue; fi
+        dats+=("$f")
+        e="$d/data-min.db-evaldata-${table}-disc.dat"
+        [[ -f "$e" ]] && evals+=("$e")
+    done
+    if [[ ${#dats[@]} -eq 0 ]]; then echo "ERROR: no frames for $table"; exit 255; fi
+    echo "=== $table: ${#dats[@]} frames"
+    "$SCRIPTDIR/concat_pandas.py" -o "$OUT/comb-${name}.dat" "${dats[@]}" | tail -1
+    "$SCRIPTDIR/concat_pandas.py" -o "$OUT/comb-eval-${table}-disc.dat" "${evals[@]}" | tail -1
+    $NOBUF "$SCRIPTDIR/cldata_predict.py" "$OUT/comb-${name}.dat" \
+        --table "$table" --features best_only --regressor xgb \
+        --xgboostestimators "$XGB_EST" --xboostmaxdepth "$XGB_DEPTH" \
+        --xgboostminchild "$XGB_MINCHILD" --objective "$XGB_OBJ" --target "$TARGET" --seed "$XGB_SEED" --xgboostsubsample "$XGB_SUBSAMPLE" \
+        --weights "$XGB_WEIGHTS" --evalframe "$OUT/comb-eval-${table}-disc.dat" \
+        --basedir "$OUT" --bestfeatfile "$bestf" \
+        --gatheredby "$(awk '{print $1}' "$OUT/gathered_by" | sort -u | tr '\n' ' ' | sed 's/ $//')" \
+        > "$OUT/out-${table}" 2>&1
+    grep -E "Train/test split|Mean squared error|==> Saved" "$OUT/out-${table}" | head -3
+    grep -E "^use kept at reduce" "$OUT/out-${table}" || true
+done
+echo "Predictors in $OUT/predictor-*.json. Use: cryptominisat5 --predloc $OUT file.cnf"

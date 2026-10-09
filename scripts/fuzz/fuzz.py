@@ -28,6 +28,8 @@ import random
 from random import choice
 import optparse
 import glob
+import shlex
+import string
 import resource
 from verifier import *
 from functools import partial
@@ -210,13 +212,15 @@ class Tester:
 
     def __init__(self):
         self.ignoreNoSolution = False
+        self.prefix = "c "
         self.extra_opts_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss", "sql", "breakid", "predshort"])
+            ["xor", "autodisablegauss", "sql", "predshort"])
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.only_sampling = False
         self.assumps_from_model = False
         self.limited_run = False
+        self.miter = False
         self.sampling_vars = []
         self.this_gauss_on = False
         self.num_threads = 1
@@ -300,12 +304,13 @@ class Tester:
         sched_opts += "distill-litrem, distill-bins, clean-cls,"
 
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
-        sched_opts += "occ-bve-empty, occ-ternary-res,"
+        sched_opts += "occ-bve-empty, occ-ternary-res, occ-sweep,"
         sched_opts += "occ-del-elimed,"
         sched_opts += "occ-cl-rem-with-orgates, occ-bva,"
-        sched_opts += "renumber, must-renumber, louvain-comms,"
-        sched_opts += "card-find, breakid, cl-consolidate,"
-        sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates"
+        sched_opts += "renumber, must-renumber,"
+        sched_opts += "card-find, cl-consolidate,"
+        sched_opts += "occ-lit-rem, occ-resolv-subs, occ-rem-with-orgates,"
+        sched_opts += "congruence, congruence"
 
         # type of schedule
         cmd = ""
@@ -327,16 +332,27 @@ class Tester:
         #   --printsol 0: the verifier needs the 'v' lines
         #   --maxsol/--nobansol: changes output contract, verifier cannot check
         #   --assump/--debuglib/--sampling/--threads: handled elsewhere
-        #   --breakid*: BreakID is not compiled into normal builds
         #   'sls' schedule token: assert(false) in solver
         self.sqlitedbfname = None
         cmd = " --zero-exit-status "
+
+        self.prefix = "c "
+        if random.randint(0, 2) == 0:
+            chars = string.ascii_letters + string.digits + " []-_:"
+            self.prefix += "".join(random.choice(chars) for _ in range(random.randint(1, 5)))
+            cmd += "--prefix %s " % shlex.quote(self.prefix)
 
         # disable gauss when gauss is compiled in but asked not to be used
         #if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
             #cmd += "--gauss 0 "
 
-        cmd += "--presimp %d " % random.choice([1]*10+[0])
+        # miters: sometimes run the chain that lets congruence find and merge their gates
+        miter_sched = self.miter and random.randint(0, 1) == 0
+        if miter_sched:
+            sched = "scc-vrepl,congruence,sub-impl,occ-bve,congruence,distill-cls,must-scc-vrepl,congruence"
+            cmd += "--presimp 1 --preschedule %s --schedule %s " % (sched, sched)
+        else:
+            cmd += "--presimp %d " % random.choice([1]*10+[0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
         cmd += "--reduce %d " % random.choice([0, 1, 1, 1])
@@ -346,12 +362,6 @@ class Tester:
         cmd += "--flushint %d " % random.choice([1000, 100000])
         cmd += "--xor %d " % random.choice([0, 0, 1])
         cmd += "--maxxormat %d " % random.choice([0, 1, 10])
-
-        # if "breakid" in self.extra_opts_supported:
-        #     cmd += "--breakid %d " % random.choice([1]*10+[0])
-        #     cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
-        #     cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
-        #     cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
 
         if options.gauss:
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
@@ -379,7 +389,6 @@ class Tester:
         cmd += "--bumpreasondepth %d " % random.choice([0, 1, 1, 2])
         cmd += "--shrink %d " % random.choice([0, 1, 1, 1])
         cmd += "--otfs %d " % random.choice([0, 1, 1, 1])
-        cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         # VERY short runs -- solver stops with INDETERMINATE, no checks possible
         if self.limited_run:
@@ -389,7 +398,7 @@ class Tester:
                 cmd += "--maxtime %d " % random.choice([0, 1, 2, 5])
 
         # restarts & branching
-        cmd += "--random %d " % random.choice([0, 1, random.randint(0, 1000000)])
+        cmd += "--seed %d " % random.choice([0, 1, random.randint(0, 1000000)])
         cmd += "--branchstr %s " % random.choice(
             ["vmtf", "vsids", "vmtf+vsids", "vsids+vmtf",
              "vmtf+vsids+rand", "rand+vsids", "vmtf+rand"])
@@ -415,6 +424,9 @@ class Tester:
         cmd += "--fullwatchconseveryn %d " % random.choice([100, 4000000])
         cmd += "--transred %d " % random.choice([0, 1])
         cmd += "--intreemaxm %d " % random.choice([0, 1, 400])
+        cmd += "--intreeeff %s " % random.choice([0, 0.01, 0.3, 5])
+        cmd += "--fullprobe %d " % random.choice([0, 1, 1])
+        cmd += "--fullprobemaxm %d " % random.choice([0, 1, 20])
         cmd += "--cardfind %d " % random.choice([0, 0, 1])
 
         # SLS details
@@ -428,6 +440,7 @@ class Tester:
 
         # distill details
         cmd += "--distillbin %d " % random.choice([0, 1])
+        cmd += "--distillbineff %s " % random.choice([0, 0.02, 1])
         cmd += "--distillmaxm %d " % random.choice([0, 1, 200])
         cmd += "--distillincconf %s " % random.choice([0, 0.1, 10])
         cmd += "--distillminconf %d " % random.choice([1, 10000])
@@ -445,9 +458,6 @@ class Tester:
 
         # occ / varelim / bva limits
         cmd += "--bva %d " % random.choice([0, 0, 1])
-        cmd += "--bvalim %d " % random.choice([0, 5, 250000])
-        cmd += "--bva2lit %d " % random.choice([0, 1])
-        cmd += "--bvato %d " % random.choice([0, 2, 50])
         cmd += "--emptyelim %d " % random.choice([0, 1])
         cmd += "--eratio %s " % random.choice([0, 0.3, 1.6, 10])
         cmd += "--varelimto %d " % random.choice([0, 10, 750])
@@ -545,7 +555,7 @@ class Tester:
                 cmd += "--%s %d " % (opt, random.choice([0, 1, 1, 1, 1]))
 
         # fuzz schedules independently of the option block above
-        if random.choice([True, True, False]):
+        if not miter_sched and random.choice([True, True, False]):
             cmd += self.rnd_schedule_all()
 
         return cmd
@@ -576,7 +586,7 @@ class Tester:
         self.last_solver_base_cmd = command
         if fname_frat:
             # proofs are emitted in XLRUP, checked directly by cake_xlrup
-            command += " --xlrup 1 "
+            command += " --xlrup %d " % (2 if self.xlrup_binary else 1)
         if fname is not None:
             command += " %s " % fname
         if fname_frat:
@@ -710,6 +720,12 @@ class Tester:
             self.write_repro_script(fname, fname_frat)
             exit(-1)
 
+        for line in consoleOutput.splitlines():
+            if not line.startswith((self.prefix, "s ", "v ")):
+                print("Output line does not start with prefix '%s': '%s'" % (self.prefix, line))
+                self.write_repro_script(fname, fname_frat)
+                exit(-1)
+
         # if library debug is set, check it
         if (self.needDebugLib):
             must_check_unsat = True
@@ -736,10 +752,10 @@ class Tester:
             return
 
         # it's UNSAT, the solver emitted XLRUP: check it with the verified
-        # checker directly, NO elaboration (frat-rs) involved
+        # checker directly
         if fname_frat:
-            toexec = "./cake_xlrup {cnf} {proof}"
-            toexec = toexec.format(cnf=fname, proof=fname_frat)
+            toexec = "./cake_xlrup {mode} {cnf} {proof}"
+            toexec = toexec.format(mode=self.cake_mode(), cnf=fname, proof=fname_frat)
             print("Checking with cake_xlrup.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput3 = p.communicate()[0]
@@ -777,6 +793,9 @@ class Tester:
                 self.write_repro_script(fname)
                 exit()
 
+    def cake_mode(self):
+        return "--binary" if self.xlrup_binary else "--no-binary"
+
     def write_repro_script(self, fname, fname_frat=None):
         script_path = unique_file("repro", ".sh")
         base_cmd = self.last_solver_base_cmd.strip()
@@ -787,8 +806,8 @@ class Tester:
             if fname_frat:
                 f.write("XLRUP=$(mktemp --suffix=.xlrup)\n")
                 f.write("\n")
-                f.write('%s --xlrup 1 "$CNF" "$XLRUP"\n' % base_cmd)
-                f.write('./cake_xlrup "$CNF" "$XLRUP"\n')
+                f.write('%s --xlrup %d "$CNF" "$XLRUP"\n' % (base_cmd, 2 if self.xlrup_binary else 1))
+                f.write('./cake_xlrup %s "$CNF" "$XLRUP"\n' % self.cake_mode())
                 f.write("\n")
                 f.write('rm -f "$XLRUP"\n')
             else:
@@ -804,6 +823,7 @@ class Tester:
         fuzzers = list(fuzzers_noxor)
         fuzzers.extend(fuzzers_xor)
         fuzzer = random.choice(fuzzers)
+        self.miter = "mitergen" in fuzzer[0]
 
         if options.force_threads is not None:
             self.num_threads = options.force_threads
@@ -842,6 +862,7 @@ class Tester:
         fname = unique_file("fuzzTest")
         fname_frat = None
         if self.frat:
+            self.xlrup_binary = random.choice([True, False])
             fname_frat = unique_file("fuzzTest-frat")
 
         # create the fuzz file
@@ -940,6 +961,10 @@ fuzzers_noxor = [
 ]
 
 fuzzers_xor = [
+    ["../../utils/cnf-utils/mitergen.py"],
+    ["../../utils/cnf-utils/mitergen.py"],
+    ["../../utils/cnf-utils/mitergen.py --mutate"],
+    ["../../utils/cnf-utils/mitergen.py --mutate"],
     ["../../utils/cnf-utils/xortester.py --varsmin 40", "--seed"],
     ["../../utils/cnf-utils/xortester.py --varsmin 60", "--seed"],
     ["../../utils/cnf-utils/xortester.py --varsmin 80", "--seed"],

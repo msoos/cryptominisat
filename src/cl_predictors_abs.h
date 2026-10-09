@@ -28,68 +28,91 @@ THE SOFTWARE.
 #include <cassert>
 #include <string>
 #include <cmath>
+#include <cstdio>
 #include <xgboost/c_api.h>
+#include <cfenv>
 #include "clause.h"
-
-#define PRED_COLS 22
 
 using std::vector;
 
-namespace CMSat {
+//the model compiled in: xxd-alike.py on src/predict/predictor_disc.json
+extern unsigned char predictor_disc_json[];
+extern unsigned int predictor_disc_json_len;
+extern const char* predictor_disc_json_hash;
 
-enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
+namespace CMSat {
 
 class Clause;
 class Solver;
 
+//The DB-wide numbers of reduceDB_common, as the STATS build dumps them
 struct ReduceCommonData
 {
-    double   avg_props;
-    //double   avg_glue; CANNOT COUNT, ternary has no glue!
-    double   avg_uip;
-    double   avg_sum_uip1_used;
+    double   avg_props = 0;
+    //no avg_glue: ternary resolvents have no glue
+    double   avg_uip = 0;
+    double   avg_sum_uip1_per_time = 0;
+    double   avg_sum_props_per_time = 0;
     MedianCommonDataRDB  median_data;
-    uint32_t all_learnt_size;
+    uint32_t all_learnt_size = 0;
+    uint32_t cur_rst_type = 0;
 
     ReduceCommonData() {}
     ReduceCommonData(
-        uint32_t total_props,
-//         uint32_t total_glue,
-        uint32_t total_uip1_used,
-        uint32_t total_sum_uip1_used,
+        uint64_t total_props,
+        uint64_t total_uip1_used,
+        uint64_t total_sum_uip1_used,
+        uint64_t total_sum_props_used,
+        uint64_t total_time_in_solver,
         uint32_t size,
+        uint32_t _cur_rst_type,
         const MedianCommonDataRDB& _median_data) :
             median_data(_median_data)
     {
         all_learnt_size = size;
+        cur_rst_type = _cur_rst_type;
         avg_props = safe_div(total_props, size);
-        //avg_glue = safe_div(total_glue, size);
         avg_uip = safe_div(total_uip1_used, size);
-        avg_sum_uip1_used = safe_div(total_sum_uip1_used, size);
+        //as the STATS build dumps it: uses per conflict of life over all
+        //learnt clauses (it was also divided by size, ~1e-8, on this side too)
+        if (total_time_in_solver > 0) {
+            avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)total_time_in_solver;
+            avg_sum_props_per_time = (double)total_sum_props_used/(double)total_time_in_solver;
+        }
     }
+};
+
+//main_exe.cpp traps FE_INVALID etc, but xgboost legitimately produces
+//NaN and inf internally: no traps while they run
+struct NoFPTraps {
+    int saved;
+    NoFPTraps() { saved = fegetexcept(); fedisableexcept(FE_ALL_EXCEPT); }
+    ~NoFPTraps() { feclearexcept(FE_ALL_EXCEPT); feenableexcept(saved); }
 };
 
 class ClPredictorsAbst
 {
 public:
     ClPredictorsAbst() {missing_val = nanf("");}
-    virtual ~ClPredictorsAbst() {}
-    virtual int load_models(const std::string& short_fname,
-                     const std::string& long_fname,
-                     const std::string& forever_fname,
-                     const std::string& best_feats_fname) = 0;
-    virtual int load_models_from_buffers() = 0;
-    vector<std::string> get_hashes() const;
+    virtual ~ClPredictorsAbst() {if (dump) fclose(dump);}
+    virtual void load_model(const std::string& fname) = 0;
+    virtual void load_embedded_model() = 0;
+    //if the model carries them (cldata_predict.py stores them): the
+    //1st/99th percentile of every feature in its training data, and where
+    //that data came from
+    vector<double> feature_lo;
+    vector<double> feature_hi;
+    std::string provenance;
 
     virtual void predict_all(
         float* const data,
         const uint32_t num) = 0;
 
-    virtual int get_step_size() {return PRED_COLS;}
+    virtual int get_step_size();
 
     virtual int set_up_input(
         const CMSat::Clause* const cl,
-        const uint64_t sumConflicts,
+        const uint64_t sum_conflicts,
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
@@ -104,6 +127,15 @@ public:
     virtual void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at) = 0;
     virtual void finish_all_predict() = 0;
     float missing_val;
+
+    //--preddump, read by check_pred_features.py
+    void open_dump(const std::string& fname);
+    void write_dump(const float* feats, const vector<double>& preds, const vector<int64_t>& ids, uint64_t conflicts);
+    bool dumping() const {return dump != nullptr;}
+
+private:
+    FILE* dump = nullptr;
+    vector<double> dump_raw;
 };
 
 }

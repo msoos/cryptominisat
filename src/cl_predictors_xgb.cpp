@@ -21,19 +21,13 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "cl_predictors_xgb.h"
+#include <iostream>
 #include "clause.h"
 #include "solver.h"
+#include "predict_features_gen.h"
 #include <cmath>
 #include <sstream>
 #include <fstream>
-extern char predictor_short_json[];
-extern unsigned int predictor_short_json_len;
-
-extern char predictor_long_json[];
-extern unsigned int predictor_long_json_len;
-
-extern char predictor_forever_json[];
-extern unsigned int predictor_forever_json_len;
 
 #define safe_xgboost(call) {  \
   int err = (call); \
@@ -47,120 +41,124 @@ using namespace CMSat;
 
 ClPredictorsXGB::ClPredictorsXGB()
 {
-    handles.resize(3);
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::short_pred])))
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::long_pred])))
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::forever_pred])))
+}
 
-    for(int i = 0; i < 3; i++) {
-        safe_xgboost(XGBoosterSetParam(handles[i], "nthread", "1"))
-        //safe_xgboost(XGBoosterSetParam(handles[i], "verbosity", "3"))
+void ClPredictorsXGB::new_handle()
+{
+    assert(handle == nullptr);
+    safe_xgboost(XGBoosterCreate(0, 0, &handle))
+    safe_xgboost(XGBoosterSetParam(handle, "nthread", "1"))
+}
+
+//a model trained on another feature list would silently predict garbage:
+//the count must match, and the names when the model carries them
+void ClPredictorsXGB::check_num_features(const std::string& what)
+{
+    bst_ulong n = 0;
+    safe_xgboost(XGBoosterGetNumFeature(handle, &n))
+    if (n != (bst_ulong)PRED_COLS) {
+        std::cerr << "ERROR: the model " << what << " has " << n
+            << " features, this binary computes " << PRED_COLS
+            << " (its best_features.txt). Retrain, or rebuild with the list the model was trained on" << std::endl;
+        exit(-1);
+    }
+    bst_ulong len = 0;
+    const char** names = nullptr;
+    safe_xgboost(XGBoosterGetStrFeatureInfo(handle, "feature_name", &len, &names))
+    if (len == 0) return; //trained without names, the count is all there is
+    for(bst_ulong i = 0; i < len && i < (bst_ulong)PRED_COLS; i++) {
+        if (std::string(names[i]) != predgen::feature_names[i]) {
+            std::cerr << "ERROR: the model " << what << " was trained on feature " << i
+                << " = '" << names[i] << "', this binary computes '" << predgen::feature_names[i]
+                << "' there (its best_features.txt). Retrain, or rebuild with the list the model was trained on"
+                << std::endl;
+            exit(-1);
+        }
+    }
+}
+
+//the training ranges and provenance the model carries as attributes, if any
+void ClPredictorsXGB::read_attrs()
+{
+    auto attr = [&](const char* name) -> std::string {
+        const char* out = nullptr;
+        int ok = 0;
+        safe_xgboost(XGBoosterGetAttr(handle, name, &out, &ok))
+        return ok ? std::string(out) : std::string();
+    };
+    auto nums = [](const std::string& str) {
+        vector<double> ret;
+        std::stringstream ss(str);
+        std::string tok;
+        while (ss >> tok) ret.push_back(tok == "nan" ? NAN : std::stod(tok));
+        return ret;
+    };
+    feature_lo = nums(attr("feature_lo"));
+    feature_hi = nums(attr("feature_hi"));
+    if (feature_lo.size() != (size_t)PRED_COLS || feature_hi.size() != (size_t)PRED_COLS) {
+        feature_lo.clear();
+        feature_hi.clear();
+    }
+    const std::string frame = attr("train_frame");
+    if (!frame.empty()) {
+        provenance = attr("train_rows") + " rows of " + frame + ", " + attr("train_date")
+            + ", gathered by " + attr("gathered_by");
     }
 }
 
 ClPredictorsXGB::~ClPredictorsXGB()
 {
-    for(auto& h: handles) {
-        XGBoosterFree(h);
-    }
+    if (handle) XGBoosterFree(handle);
 }
 
-int ClPredictorsXGB::load_models(const std::string& short_fname,
-                               const std::string& long_fname,
-                               const std::string& forever_fname,
-                               const std::string& best_feats_fname)
+void ClPredictorsXGB::load_model(const std::string& fname)
 {
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
-    return 1;
+    NoFPTraps no_traps;
+    new_handle();
+    safe_xgboost(XGBoosterLoadModel(handle, fname.c_str()))
+    check_num_features(fname);
+    read_attrs();
 }
 
-int ClPredictorsXGB::load_models_from_buffers()
+void ClPredictorsXGB::load_embedded_model()
 {
-    safe_xgboost(XGBoosterLoadModelFromBuffer(
-        handles[predict_type::short_pred], predictor_short_json, predictor_short_json_len));
-    safe_xgboost(XGBoosterLoadModelFromBuffer(
-        handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
-    safe_xgboost(XGBoosterLoadModelFromBuffer(
-        handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
-    return 0;
+    NoFPTraps no_traps;
+    new_handle();
+    safe_xgboost(XGBoosterLoadModelFromBuffer(handle, predictor_disc_json, predictor_disc_json_len));
+    check_num_features("compiled in");
+    read_attrs();
 }
 
 void ClPredictorsXGB::predict_all(
     float* const data,
     const uint32_t num)
 {
+    NoFPTraps no_traps;
     safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, missing_val, &dmat))
     if (num == 0) {
         return;
     }
 
-//For checking in python using check_against_binary_dat
-#if 0
-        std::stringstream s;
-        s << "bin_dump" << num_dumps << ".csv";
-        std::ofstream f;
-        f.open(s.str().c_str());
-        float* data_ptr = data;
-        for(uint32_t i = 0; i < num; i ++) {
-            std::stringstream line;
-            for(uint32_t i2 = 0; i2 < PRED_COLS; i2++) {
-                line << std::setprecision(30) << *data_ptr;
-                if (i2+1 < PRED_COLS) {
-                    line << ",";
-                }
-                data_ptr++;
-            }
-            f << line.str() << endl;
-        }
-        f.close();
-        num_dumps++;
-#endif
-
     bst_ulong out_len;
     safe_xgboost(XGBoosterPredict(
-        handles[short_pred],
+        handle,
         dmat,
         0,  //0: normal prediction
         0,  //use all trees
         0,  //do not use for training
         &out_len,
-        &out_result_short
-    ))
-    assert(out_len == num);
-
-    safe_xgboost(XGBoosterPredict(
-        handles[long_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_result_long
-    ))
-    assert(out_len == num);
-
-    safe_xgboost(XGBoosterPredict(
-        handles[forever_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_result_forever
+        &out_result
     ))
     assert(out_len == num);
 }
 
 void ClPredictorsXGB::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
-    extdata.pred_short_use = (double)out_result_short[at];
-    extdata.pred_long_use = (double)out_result_long[at];
-    extdata.pred_forever_use = (double)out_result_forever[at];
+    extdata.pred_use = (double)out_result[at];
 }
 
 void CMSat::ClPredictorsXGB::finish_all_predict()
 {
+    NoFPTraps no_traps;
     safe_xgboost(XGDMatrixFree(dmat))
 }

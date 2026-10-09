@@ -61,29 +61,23 @@ if(STATS OR FINAL_PREDICTOR)
 endif()
 
 if(FINAL_PREDICTOR)
+    # the feature computation follows the best_features file
     add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py ${PRED_FEATURES_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h
+        DEPENDS ${PRED_FEATURES_FILE} ${CRYPTOMS_SCRIPTS_DIR}/crystal/gen_pred_features.py
     )
-    add_custom_target(pred_short ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp)
+    add_custom_target(pred_features ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/predict_features_gen.h)
 
+    # the embedded model
+    set(PRED_MODEL_FILES ${CMAKE_CURRENT_BINARY_DIR}/pred_disc.cpp)
     add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_disc.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_disc.json ${CMAKE_CURRENT_BINARY_DIR}/pred_disc.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_disc.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
-    add_custom_target(pred_long ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp)
-
-    add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
-    )
-    add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
+    add_custom_target(pred_models ALL DEPENDS ${PRED_MODEL_FILES})
 endif()
 
 # Needed for PicoSAT trace generation
@@ -117,6 +111,7 @@ set(cryptoms_lib_files
     datasync.cpp
     reducedb.cpp
     intree.cpp
+    congruence.cpp
     searchstats.cpp
     xorfinder.cpp
     cardfinder.cpp
@@ -125,7 +120,6 @@ set(cryptoms_lib_files
     yalsat_cms.cpp
     yals/yals.c
     sqlstats.cpp
-    vardistgen.cpp
     ccnr_oracle.cpp
     ccnr_oracle_pre.cpp
     lucky.cpp
@@ -135,9 +129,18 @@ set(cryptoms_lib_files
     matrixfinder.cpp
     mpicosat/mpicosat.c
     mpicosat/version.c
+    kitten.c
+    sweeper.cpp
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
+
+# vendored yals does NULL+0 pointer arithmetic on empty stacks all over;
+# harmless in practice, so keep UBSAN quiet about it
+if(SANITIZE)
+    set_source_files_properties(yals/yals.c PROPERTIES
+        COMPILE_OPTIONS "-fno-sanitize=pointer-overflow")
+endif()
 
 if(GPU)
     set(cryptoms_lib_files
@@ -164,30 +167,18 @@ if(FINAL_PREDICTOR)
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
         cl_predictors_xgb.cpp
-        cl_predictors_py.cpp
-        cl_predictors_lgbm.cpp
         cl_predictors_abs.cpp
     )
     set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs}
-        _lightgbm xgboost dmlc rabit rt ${Python3_LIBRARIES})
+        xgboost_c rt)
 endif()
 
 if(STATS_NEEDED)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
-        community_finder.cpp
         satzilla_features_calc.cpp
         satzilla_features.cpp
     )
-endif()
-
-if(MPI_FOUND)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
-endif()
-
-if(BREAKID_LIBRARIES)
-    set(cryptoms_lib_files ${cryptoms_lib_files} cms_breakid.cpp)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
 endif()
 
 if(NOT NOCADICAL)
@@ -203,11 +194,7 @@ if(STATS)
 endif()
 
 if(FINAL_PREDICTOR)
-    set(cryptoms_lib_files ${cryptoms_lib_files}
-        ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-    )
+    set(cryptoms_lib_files ${cryptoms_lib_files} ${PRED_MODEL_FILES})
 endif()
 
 add_library(cryptominisat5
@@ -220,10 +207,7 @@ set(CRYPTOMINISAT_COMMON_PRIVATE_INCLUDES
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS}
-    ${MPI_INCLUDE_PATH}
     $<INSTALL_INTERFACE:include>
-    ${BREAKID_INCLUDE_DIRS}
 )
 set(CRYPTOMINISAT_COMMON_PUBLIC_INCLUDES
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -238,13 +222,6 @@ if(ENABLE_TESTING)
     target_include_directories(cryptominisat5 PRIVATE
         ${gtest_SOURCE_DIR}/include
         ${gtest_SOURCE_DIR}
-    )
-endif()
-
-if(FINAL_PREDICTOR)
-    target_include_directories(cryptominisat5 PRIVATE
-        ${Python3_INCLUDE_DIRS}
-        ${Python3_NumPy_INCLUDE_DIRS}
     )
 endif()
 
@@ -266,9 +243,8 @@ endif()
 
 if(FINAL_PREDICTOR)
     add_dependencies(cryptominisat5
-        pred_short
-        pred_long
-        pred_forever
+        pred_features
+        pred_models
     )
 endif()
 
@@ -276,7 +252,6 @@ endif()
 target_link_libraries(cryptominisat5
     PRIVATE
         ${cryptoms_lib_link_libs}
-        ${LOUVAIN_COMMUNITIES_LIBRARIES}
         Threads::Threads
     PUBLIC
         PkgConfig::GMP
@@ -309,7 +284,6 @@ if(IPASIR)
         PRIVATE
             Threads::Threads
             ${cryptoms_lib_link_libs}
-            ${LOUVAIN_COMMUNITIES_LIBRARIES}
         PUBLIC
             PkgConfig::GMP
     )
@@ -466,13 +440,6 @@ if(NOT NOCADICAL)
     target_compile_features(assump_fuzz_oracle PRIVATE cxx_std_17)
 endif()
 
-if(MPI_FOUND)
-    add_executable(cryptominisat5_mpi-bin
-        main_mpi.cpp
-        datasyncserver.cpp
-    )
-endif()
-
 target_link_libraries(cryptominisat5-bin
     PRIVATE
         cryptominisat5
@@ -491,22 +458,6 @@ endif()
 ##########################
 ### Deal with binaries
 ##########################
-if(MPI_FOUND)
-    set_target_properties(cryptominisat5_mpi-bin PROPERTIES
-        OUTPUT_NAME cryptominisat5_mpi
-        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-        INSTALL_RPATH_USE_LINK_PATH TRUE
-    )
-    target_link_libraries(cryptominisat5_mpi-bin
-        cryptominisat5
-        ${MPI_C_LIBRARIES}
-    )
-    install(TARGETS cryptominisat5_mpi-bin
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-    set(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     set_target_properties(cryptominisat5-bin PROPERTIES
         OUTPUT_NAME cryptominisat5

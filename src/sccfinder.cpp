@@ -42,8 +42,8 @@ SCCFinder::SCCFinder(Solver* _solver) :
 bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 {
     assert(binxors.empty());
-    runStats.clear();
-    runStats.numCalls = 1;
+    run_stats.clear();
+    run_stats.num_calls = 1;
     depth_warning_issued = false;
     const double my_time = cpu_time();
 
@@ -71,18 +71,13 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     }
 
     //Update & print stats
-    runStats.cpu_time = cpu_time() - my_time;
-    runStats.foundXorsNew = binxors.size();
-    if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->conf.prefix);
-        else
-            runStats.print_short(solver);
-    }
-    globalStats += runStats;
+    run_stats.cpu_time = cpu_time() - my_time;
+    run_stats.foundXorsNew = binxors.size();
+    if (solver->conf.verbosity) run_stats.print_short(solver);
+    global_stats += run_stats;
 
     if (bogoprops_given) {
-        *bogoprops_given += runStats.bogoprops;
+        *bogoprops_given += run_stats.bogoprops;
     }
 
     return solver->okay();
@@ -100,11 +95,11 @@ void SCCFinder::tarjan(const uint32_t vertex)
     }
 
     const Lit vertLit = Lit::toLit(vertex);
-    if (solver->varData[vertLit.var()].removed != Removed::none) {
+    if (solver->var_data[vertLit.var()].removed != Removed::none) {
         return;
     }
 
-    runStats.bogoprops += 1;
+    run_stats.bogoprops += 1;
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;
@@ -113,10 +108,10 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
     //Go through the watch
     watch_subarray_const ws = solver->watches[~vertLit];
-    runStats.bogoprops += ws.size()/4;
+    run_stats.bogoprops += ws.size()/4;
     for (const Watched& w: ws) {
         //Only binary clauses matter
-        if (!w.isBin())
+        if (!w.is_bin())
             continue;
 
         const Lit lit = w.lit2();
@@ -138,7 +133,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             tmp.push_back(vprime);
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
-            runStats.bogoprops += 3;
+            run_stats.bogoprops += 3;
             add_bin_xor_in_tmp();
         }
     }
@@ -158,15 +153,7 @@ void SCCFinder::add_bin_xor_in_tmp()
         if (solver->value(binxor.vars[0]) == l_Undef
             && solver->value(binxor.vars[1]) == l_Undef
         ) {
-            runStats.foundXors++;
-            #ifdef VERBOSE_DEBUG
-            cout << "SCC says: "
-            << binxor.vars[0] +1
-            << " XOR "
-            << binxor.vars[1] +1
-            << " = " << binxor.rhs
-            << endl;
-            #endif
+            run_stats.found_xors++;
         }
     }
 }
@@ -179,8 +166,8 @@ void SCCFinder::Stats::print_short(const Solver* solver) const
     << " BP " << bogoprops/(1000*1000) << "M"
     << solver->conf.print_times(cpu_time));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (solver->sql_stats) {
+        solver->sql_stats->time_passed_min(
             solver
             , "scc"
             , cpu_time
