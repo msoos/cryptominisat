@@ -405,6 +405,18 @@ How it got there, same 9 x 3, conflicts vs the normal build:
   conflicts. One round, glue 2, 75% is a local best in all three. So the predictor builds default to
   `--reducerounds 1`; `--predmimic 1` needs `--reducerounds 2` to equal
   the normal build.
+- **Longer runs, new families: the same conflicts for less work.**
+  19 UNSAT instances the 30 do not have (5 families, 1-14M conflicts,
+  100-1100 s), 2 seeds: the predictor build is at 100% [95, 105] of the
+  normal build's conflicts, 83% [77, 89] of its bogoprops and 93% [86,
+  99] of its time (not timed alone). Offline, on the 5 of them
+  gathered, the model is at glue (+0.06 of use kept, 97.7%); the
+  hindsight split of the kept candidates over the reduces is 99.1%.
+- **On long runs the label sees little of the use.** Of the proof uses
+  ahead of a reduce, of clauses the solver has there, 7-15% lie within
+  8 reduces at 160-360 reduces a run (`use_stats.py`; 59% on a run of
+  20). `gone` rows are 92-99% of the raw rows there, 48% of the sampled
+  frame.
 - **A count from the score lost.** Removing the candidates scored
   below a threshold (set so that the median training reduce removes
   75%, clamped to half and twice that) kept 98.5% of the use against
