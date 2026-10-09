@@ -130,6 +130,10 @@ Simplification:
 | `bva` | Bounded variable addition |
 | `distill` | Clause distillation |
 | `sweep` | SAT sweeping |
+| `congruence` | Congruence closure over AND/XOR gates |
+| `congruenceandsz` | Largest AND-gate clause congruence closure considers |
+| `congruencexorsz` | Largest XOR-gate clause congruence closure considers |
+| `absbudget` | Intree and distill budgets are absolute, not relative to search effort |
 | `scc` | Find and replace equivalent literals |
 | `intree` | Intree probing |
 | `transred` | Transitive reduction of binary clauses |

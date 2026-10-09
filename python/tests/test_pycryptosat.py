@@ -615,6 +615,10 @@ EXPOSED_OPTIONS = {
     "bva": ["0"],
     "distill": ["0"],
     "sweep": ["0"],
+    "congruence": ["0"],
+    "congruenceandsz": ["3", "8"],
+    "congruencexorsz": ["3", "6"],
+    "absbudget": ["0", "1"],
     "scc": ["0"],
     "intree": ["0"],
     "transred": ["0"],
@@ -638,11 +642,12 @@ EXPOSED_OPTIONS = {
 
 UNSIGNED_OPTIONS = ["seed", "confbtwsimp", "maxxorsize", "xorfindtout",
     "maxxormat", "xorgatemaxsize", "maxmatrixrows", "maxmatrixcols",
-    "minmatrixrows", "maxnummatrices", "gaussmincalls", "gausscheckevery"]
+    "minmatrixrows", "maxnummatrices", "gaussmincalls", "gausscheckevery",
+    "congruenceandsz", "congruencexorsz"]
 SIGNED_OPTIONS = ["restart", "stabilize", "reduce", "lucky", "sls", "rephase",
     "target", "nonstop", "schedsimp", "presimp", "occsimp", "varelim", "bva",
-    "distill", "sweep", "scc", "intree", "transred", "xor"]
-BOOL_OPTIONS = ["autodisablegauss"]
+    "distill", "sweep", "congruence", "scc", "intree", "transred", "xor"]
+BOOL_OPTIONS = ["autodisablegauss", "absbudget"]
 DOUBLE_OPTIONS = ["mult", "gaussusefulcutoff"]
 
 # Command-line options that must NOT be settable from the library
