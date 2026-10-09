@@ -167,6 +167,11 @@ def check_frame(fname, df, feats):
     if const:
         warn("%s: constant columns: %s" % (name, const))
     tiny = [c for c in num.columns if "per_time" in c and num[c].abs().max() < 1e-6]
+    # the median clause may never propagate (f6bidw), the average one does
+    med = [c for c in tiny if "median" in c]
+    if med:
+        warn("%s: median rates that are always 0: %s" % (name, med))
+    tiny = [c for c in tiny if c not in med]
     check(not tiny, "%s: rate columns that are always ~0: %s" % (name, tiny))
 
     # the labels must line up with the state: a clause used since the last
