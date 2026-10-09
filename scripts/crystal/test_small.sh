@@ -83,6 +83,16 @@ print(sqlite3.connect(sys.argv[1]).execute('select count(), sum(gone) from reduc
     [[ "$got" == "$want" ]] || {
         echo "FAILED: the stats+predictor build with --predmimic 1: conflicts (rows, gone) $got, the stats build $want"; exit 1; }
     echo "OK: the stats+predictor build with the glue order as score equals the stats build: $want"
+    # and with the model as score it must be fed what the frames of the same
+    # run hold: the features it predicts from against the ones it is trained on
+    mkdir -p "$DIR/sp" && cp "$CNF" "$DIR/sp/"
+    DUMPRATIO=0.1 FIXED=3000 CAKE_XLRUP="" STATS_BIN="$STATSPRED" STATS_OPTS="--preddump $DIR/sp/pred.dump" \
+        ./ballofcrystal.sh --gather-only "$DIR/sp/$(basename "$CNF")" > "$DIR/sp/run.out" 2>&1 || {
+        echo "FAILED, see $DIR/sp/run.out"; exit 1; }
+    ./check_train_serve.py "$DIR/sp/pred.dump" "$DIR/sp/$(basename "$CNF")-dir"/data-min.db-*data-used_later-disc*.dat \
+        > "$DIR/sp/check.out" 2>&1 || { grep FAIL "$DIR/sp/check.out"; echo "FAILED: see $DIR/sp/check.out"; exit 1; }
+    grep agree "$DIR/sp/check.out"
+    rm -f "$DIR/sp/pred.dump"
 else
     echo "skipped: no stats+predictor build ($STATSPRED)"
 fi
