@@ -209,6 +209,7 @@ public:
     template<bool inprocess> void enqueue(const Lit p);
     void enqueue_light(const Lit p);
     void new_decision_level();
+    void notify_assignments();
     vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
     vector<Lit> tmp_xor_reason;
     void collect_trail_seg_hints(uint32_t start, vector<int32_t>& units, vector<int32_t>& rsns,
@@ -236,6 +237,11 @@ public:
         unit_cl_XIDs[v] = xid;
         enqueue<inprocess>(p, 0, PropBy(), false);
     }
+    /// IPASIR-UP: the reason of an external propagation of 'lit', propagated
+    /// literal first, asked for the first time conflict analysis needs it.
+    /// Valid only until the next call, as ext_reasons may grow (same rule as
+    /// get_bnn_reason() and get_xor_reason()).
+    vector<Lit>* get_ext_reason(const Lit lit);
 
     /////////////////////
     // Branching
@@ -421,7 +427,11 @@ private:
 
 inline void PropEngine::new_decision_level()
 {
+    //IPASIR-UP: flush notifications before opening the level, or they would be
+    //popped with the wrong level. CaDiCaL's notify_decision() does the same.
+    if (ext_prop != nullptr) notify_assignments();
     trail_lim.push_back(trail.size());
+    if (ext_notify_active()) ext_prop->notify_new_decision_level();
 }
 
 inline uint32_t PropEngine::decision_level() const
@@ -544,6 +554,10 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
     STATS_DO(if (!inprocess) { if (p.sign()) prop_stats.var_set_neg++; else prop_stats.var_set_pos++; });
+
+    //IPASIR-UP: the propagator's stack view cannot express an assignment below
+    //the current level, so chrono BT and Gauss-Jordan are off
+    assert(!ext_prop_active() || level == decision_level());
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);

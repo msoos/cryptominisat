@@ -182,6 +182,11 @@ class DLL_PUBLIC SolverConf
         int do_chrono_reuse_trail;
         int do_restart_reuse_trail;
 
+        //IPASIR-UP: ask for the reason of an external propagation only when
+        //conflict analysis needs it. Ignored with FRAT, which needs every
+        //reason up front. See Searcher::external_propagate().
+        bool ext_lazy_reasons;
+
         //decision-based conflict clause generation
         int       do_decision_based_cl;
         uint32_t  decision_based_cl_max_levels;

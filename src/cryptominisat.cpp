@@ -362,6 +362,12 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         throw std::runtime_error(err);
     }
 
+    if (data->solvers[0]->ext_prop != nullptr) {
+        const char err[] = "ERROR: An external propagator cannot be used in multi-threaded mode";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
+    }
+
     if (data->cls > 0 || nVars() > 0) {
         const char err[] = "ERROR: You must first call set_num_threads() and only then add clauses and variables";
         std::cerr << err << endl;
@@ -1056,6 +1062,8 @@ DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
     return data->solvers[data->which_solved]->get_final_conflict();
 }
 
+namespace { void ext_flush_vars(CMSatPrivateData* data); }
+
 DLL_PUBLIC uint32_t SATSolver::nVars() const
 {
     return data->solvers[0]->nVarsOuter() + data->vars_to_add;
@@ -1080,6 +1088,9 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 
     data->vars_to_add += n;
     data->total_num_vars += n;
+    //A propagator's callback may add variables in the middle of the search,
+    //which must assign them before it returns a model
+    if (data->solvers[0]->ext_prop != nullptr) ext_flush_vars(data);
 }
 
 DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::string& val)
@@ -1394,6 +1405,13 @@ DLL_PUBLIC std::vector<std::vector<Lit>> SATSolver::get_cls_defining_var(uint32_
 }
 
 DLL_PUBLIC void SATSolver::reverse_bce() {
+    //Blocked clauses can discard models, and were not checked against the
+    //propagator's constraints
+    if (data->solvers[0]->ext_prop != nullptr) {
+        const char err[] = "ERROR: reverse_bce() cannot be used with an external propagator";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
+    }
     return data->solvers[0]->reverse_bce();
 
 }
@@ -1558,6 +1576,11 @@ DLL_PUBLIC void SATSolver::clean_sampl_get_empties(
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);
+    if (data->solvers[0]->ext_prop != nullptr) {
+        const char err[] = "ERROR: find_fast_backw() cannot be used with an external propagator";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
+    }
     data->solvers[0]->fast_backw = fast_backw;
     bool backup_doVarElim = data->solvers[0]->conf.do_var_elim;
     data->solvers[0]->conf.do_var_elim = true;
@@ -1920,4 +1943,94 @@ DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_opt_sampl_vars() const {
 DLL_PUBLIC bool SATSolver::get_opt_sampl_vars_set() const {
     Solver& s = *data->solvers[0];
     return s.conf.opt_sampling_vars_set;
+}
+
+////////////////////////////
+// IPASIR-UP: external (user) propagator. See user_prop.h.
+////////////////////////////
+
+namespace {
+//Create pending variables before the propagator refers to them. Unlike other
+//flushes of vars_to_add this is not inside a solvers.size() == 1 branch, so it
+//checks that itself: otherwise the other threads would lose the variables.
+void ext_flush_vars(CMSatPrivateData* data)
+{
+    if (data->solvers.size() > 1) {
+        const char err[] = "ERROR: The external propagator interface cannot be used"
+            " in multi-threaded mode";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
+    }
+    if (data->vars_to_add == 0) return;
+    release_assert(!data->solvers[0]->ext_frozen() && "Variables cannot be created from"
+        " cb_add_reason_clause_lit(), cb_decide_polarity() or notify_backtrack()");
+    data->solvers[0]->new_vars(data->vars_to_add);
+    data->vars_to_add = 0;
+}
+}
+
+DLL_PUBLIC void SATSolver::connect_external_propagator(ExternalPropagator* p)
+{
+    if (data->log) (*data->log) << "c Solver::connect_external_propagator()" << endl;
+
+    ext_flush_vars(data);
+    data->solvers[0]->connect_external_propagator(p);
+}
+
+DLL_PUBLIC void SATSolver::disconnect_external_propagator()
+{
+    if (data->log) (*data->log) << "c Solver::disconnect_external_propagator()" << endl;
+    data->solvers[0]->disconnect_external_propagator();
+}
+
+DLL_PUBLIC void SATSolver::add_observed_var(uint32_t var)
+{
+    if (data->log) (*data->log) << "c Solver::add_observed_var( " << var << " )" << endl;
+    ext_flush_vars(data);
+    data->solvers[0]->add_observed_var(var);
+}
+
+DLL_PUBLIC void SATSolver::remove_observed_var(uint32_t var)
+{
+    if (data->log) (*data->log) << "c Solver::remove_observed_var( " << var << " )" << endl;
+    ext_flush_vars(data);
+    data->solvers[0]->remove_observed_var(var);
+}
+
+DLL_PUBLIC void SATSolver::reset_observed_vars()
+{
+    if (data->log) (*data->log) << "c Solver::reset_observed_vars()" << endl;
+    data->solvers[0]->reset_observed_vars();
+}
+
+DLL_PUBLIC bool SATSolver::is_observed_var(uint32_t var) const
+{
+    return data->solvers[0]->is_observed_var(var);
+}
+
+DLL_PUBLIC bool SATSolver::is_decision(Lit lit) const
+{
+    return data->solvers[0]->ext_is_decision(lit);
+}
+
+DLL_PUBLIC void SATSolver::force_backtrack(uint32_t new_level)
+{
+    data->solvers[0]->ext_force_backtrack(new_level);
+}
+
+DLL_PUBLIC void SATSolver::phase(Lit lit)
+{
+    ext_flush_vars(data);
+    data->solvers[0]->ext_phase(lit);
+}
+
+DLL_PUBLIC void SATSolver::unphase(uint32_t var)
+{
+    ext_flush_vars(data);
+    data->solvers[0]->ext_unphase(var);
+}
+
+DLL_PUBLIC void SATSolver::set_lazy_external_reasons(bool lazy)
+{
+    for (Solver* s : data->solvers) s->conf.ext_lazy_reasons = lazy;
 }
