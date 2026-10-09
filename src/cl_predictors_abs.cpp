@@ -72,12 +72,16 @@ void ClPredictorsAbst::open_dump(const std::string& fname)
     fwrite(head, sizeof(uint32_t), 2, dump);
 }
 
-//per reduce: num, then the raw columns, the features, the prediction of each
-void ClPredictorsAbst::write_dump(const float* feats, const vector<double>& preds, uint32_t num)
+//per reduce: num, the conflicts so far, then of each clause the ID it is
+//tracked by (0: not tracked), the raw columns, the features, the prediction
+void ClPredictorsAbst::write_dump(const float* feats, const vector<double>& preds, const vector<int64_t>& ids, uint64_t conflicts)
 {
+    const uint32_t num = preds.size();
     assert(dump_raw.size() == (size_t)num * predgen::NUM_RAW);
-    assert(preds.size() == (size_t)num);
+    assert(ids.size() == (size_t)num);
     fwrite(&num, sizeof(uint32_t), 1, dump);
+    fwrite(&conflicts, sizeof(uint64_t), 1, dump);
+    fwrite(ids.data(), sizeof(int64_t), ids.size(), dump);
     fwrite(dump_raw.data(), sizeof(double), dump_raw.size(), dump);
     fwrite(feats, sizeof(float), (size_t)num * PRED_COLS, dump);
     fwrite(preds.data(), sizeof(double), preds.size(), dump);

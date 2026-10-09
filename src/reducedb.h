@@ -62,6 +62,7 @@ public:
     bool likely_to_be_kept(const Clause& cl) const;
     void dump_sql_cl_data(const uint32_t cur_rst_type);
     uint32_t reduceDB_called = 0;
+    bool feats_prepared = false; //by the SQL dump of this reduce: the predictor takes them as they are
 
     #ifdef STATS_NEEDED
     uint64_t locked_for_data_gen_total = 0;

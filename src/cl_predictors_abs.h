@@ -130,7 +130,7 @@ public:
 
     //--preddump, read by check_pred_features.py
     void open_dump(const std::string& fname);
-    void write_dump(const float* feats, const vector<double>& preds, uint32_t num);
+    void write_dump(const float* feats, const vector<double>& preds, const vector<int64_t>& ids, uint64_t conflicts);
     bool dumping() const {return dump != nullptr;}
 
 private:

@@ -293,9 +293,9 @@ void ReduceDB::handle_reduce([[maybe_unused]] const uint32_t cur_rst_type)
     if (flush) mark_clauses_to_be_flushed();
     else mark_useless_redundant_clauses_as_garbage();
     remove_marked_clauses();
-    #if defined(FINAL_PREDICTOR) && !defined(STATS_NEEDED)
-    //per-interval stats restart, as the STATS build does at its dump (a
-    //build with both resets once, at the dump: twice would skip dump_no 1)
+    #ifdef FINAL_PREDICTOR
+    //per-interval stats restart, as the STATS build does at its dump
+    feats_prepared = false;
     for(const ClOffset offs: solver->long_red_cls[0]) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         solver->red_stats_extra[cl->stats.extra_pos].reset_rdb_stats(cl->stats);
@@ -643,9 +643,13 @@ void ReduceDB::dump_sql_cl_data(
         }
         //ALL clauses' per-interval stats restart here, as in the predictor
         //build: otherwise untracked clauses accumulate props/uip1 forever
-        //and the rankings/averages the tracked ones are dumped with are off
+        //and the rankings/averages the tracked ones are dumped with are off.
+        //With a predictor too: after it has seen them, in handle_reduce
+        #ifndef FINAL_PREDICTOR
         stats_extra.reset_rdb_stats(cl->stats);
+        #endif
     }
+    feats_prepared = true;
     solver->sql_stats->end_transaction();
 
     verb_print(1, "[sql] added to DB " << added_to_db
@@ -724,17 +728,25 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
     predictors->predict_all(data.data(), offs.size());
     uint32_t i = 0;
     vector<double> dump_preds;
+    vector<int64_t> dump_ids;
     for(const ClOffset offset: offs) {
         Clause* cl = solver->cl_alloc.ptr(offset);
         auto& extra = solver->red_stats_extra[cl->stats.extra_pos];
         predictors->get_prediction_at(extra, i++);
-        if (predictors->dumping()) dump_preds.push_back(extra.pred_use);
+        if (predictors->dumping()) {
+            dump_preds.push_back(extra.pred_use);
+            #ifdef STATS_NEEDED
+            dump_ids.push_back(extra.orig_ID);
+            #else
+            dump_ids.push_back(0);
+            #endif
+        }
         if (solver->conf.pred_mimic) extra.pred_use = -((double)cl->stats.glue*1e7 + (double)cl->size());
         //eagerly subsumed: goes first, as in the normal build. The model
         //never saw such a clause
         if (cl->stats.glue == CL_MAX_GLUE) extra.pred_use = -std::numeric_limits<double>::infinity();
     }
-    if (predictors->dumping()) predictors->write_dump(data.data(), dump_preds, offs.size());
+    if (predictors->dumping()) predictors->write_dump(data.data(), dump_preds, dump_ids, solver->sum_conflicts);
     predictors->finish_all_predict();
 }
 
@@ -743,7 +755,9 @@ void ReduceDB::predict_all_learnt(const uint32_t cur_rst_type)
     load_predictors();
     const double my_time = cpu_time();
     vector<ClOffset> all_learnt = solver->long_red_cls[0];
-    prepare_features(all_learnt); //sorts all_learnt, compacts red_stats_extra
+    //what the SQL dump of this reduce prepared is what the frames hold: a
+    //second pass would discount every counter once more
+    if (!feats_prepared) prepare_features(all_learnt); //sorts all_learnt, compacts red_stats_extra
     commdata = ReduceCommonData(
         total_props,
         total_uip1_used,

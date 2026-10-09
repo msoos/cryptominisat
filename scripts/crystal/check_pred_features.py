@@ -85,6 +85,8 @@ def main():
             if len(head) == 0:
                 break
             num = int(head[0])
+            read_exact(f, np.uint64, 1)       # conflicts, for check_train_serve.py
+            read_exact(f, np.int64, num)      # tracked IDs, likewise
             raw = read_exact(f, np.float64, num * num_raw).reshape(num, num_raw)
             got = read_exact(f, np.float32, num * num_feat).reshape(num, num_feat)
             preds = read_exact(f, np.float64, num)
