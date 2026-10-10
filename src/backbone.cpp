@@ -181,6 +181,9 @@ static vector<int> ccnr_drop_cands(Solver* solver, uint64_t& num_cls) {
     vector<int> sols_found(solver->nVars()+1, -1);
     uint32_t ccnr_sols_found = 0;
     for(uint32_t nsols = 0; nsols < 10; nsols++) {
+        // Local search is bimodal: over mccomp23/24 it finds all 10 models on
+        // 83% of the instances and none on 13%, the latter burning ~23s each
+        if (nsols == 2 && ccnr_sols_found == 0) break;
         ccnr.reinit();
         bool ret = ccnr.run(solver->conf.backbone_ccnr_mems_limitM*1000LL*1000LL);
         verb_print(3, "[backbone-ccnr] sol found: " << ret);
