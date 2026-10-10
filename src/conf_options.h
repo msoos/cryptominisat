@@ -177,6 +177,7 @@ template<class F> void for_each_conf_opt(SolverConf& conf, F&& f) {
     f({"--varelimocclim", "Don't try to eliminate a variable whose more frequent polarity occurs more than this many times. 0 = no limit"}, conf.varelim_occ_cutoff);
     f({"--varelimprodlim", "Don't try to eliminate a variable whose pos*neg occurrence product is over this"}, conf.varelim_occ_prod_cutoff);
     f({"--varelimschedtouched", "Only schedule for elimination the vars whose clauses changed since BVE last looked (CaDiCaL's Flags::elim). 0 = schedule every eligible var"}, conf.varelim_sched_only_touched);
+    f({"--varelimtieminocc", "BVE: among equal-size clauses, take first the one whose rarest var occurs the least. 0 = order them by clause ID"}, conf.varelim_tie_min_occ);
     f({"--weakenclsmaxsz", "Don't weaken a clause longer than this during BVE. 0 = no limit"}, conf.weaken_max_cls_size);
     f({"--varelimclsmaxsz", "Don't try to eliminate a variable that occurs in a clause longer than this. 0 = no limit"}, conf.varelim_max_cls_size);
     f({"--varelimclslim", "Maximum resolvent size during BVE, -1 = no limit"}, conf.velim_resolvent_too_large);

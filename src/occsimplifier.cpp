@@ -473,8 +473,18 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 }
 
 struct sort_smallest_first {
-    explicit sort_smallest_first(ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc) {}
+    explicit sort_smallest_first(ClauseAllocator& _cl_alloc,
+            const vector<uint32_t>* _n_occurs = nullptr) :
+        cl_alloc(_cl_alloc), n_occurs(_n_occurs) {}
+
+    uint32_t min_var_occ(const Clause& cl) const
+    {
+        uint32_t m = numeric_limits<uint32_t>::max();
+        for (const Lit l: cl) {
+            m = std::min(m, (*n_occurs)[l.toInt()] + (*n_occurs)[(~l).toInt()]);
+        }
+        return m;
+    }
 
     bool operator()(const Watched& a, const Watched& b) const
     {
@@ -490,12 +500,23 @@ struct sort_smallest_first {
         const Clause& cl1 = *cl_alloc.ptr(a.get_offset());
         const Clause& cl2 = *cl_alloc.ptr(b.get_offset());
         if (cl1.size() != cl2.size()) return cl1.size() < cl2.size();
+        if (n_occurs) {
+            const uint32_t m1 = min_var_occ(cl1);
+            const uint32_t m2 = min_var_occ(cl2);
+            if (m1 != m2) return m1 < m2;
+        }
         //not the offset: where a clause lies depends on the build
         return cl1.stats.id < cl2.stats.id;
     }
 
     ClauseAllocator& cl_alloc;
+    const vector<uint32_t>* n_occurs;
 };
+
+const vector<uint32_t>* OccSimplifier::tie_occ() const
+{
+    return solver->conf.varelim_tie_min_occ ? &n_occurs : nullptr;
+}
 
 uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const
 {
@@ -3714,8 +3735,8 @@ bool OccSimplifier::find_ite_gate(
     if (found && out_a_all == nullptr) {
         assert(out_a.size() == 2);
         assert(out_b.size() == 2);
-        std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
-        std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc));
+        std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
+        std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
     }
 
     if (found) resolve_gate = true;
@@ -3937,8 +3958,8 @@ bool OccSimplifier::find_xor_gate(
     if (found) {
         assert(out_a.size() == tofind/2);
         assert(out_b.size() == tofind/2);
-        std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
-        std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc));
+        std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
+        std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
     } else {
         out_a.clear();
         out_b.clear();
@@ -4451,8 +4472,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents_inner(const uint32_t var)
     // 1 * 44 + 6* 49 =  338
     // So must sort smallest first to find the short gate first!
 
-    std::sort(poss.begin(), poss.end(), sort_smallest_first(solver->cl_alloc));
-    std::sort(negs.begin(), negs.end(), sort_smallest_first(solver->cl_alloc));
+    std::sort(poss.begin(), poss.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
+    std::sort(negs.begin(), negs.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
 
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
@@ -4495,8 +4516,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents_inner(const uint32_t var)
         cout << endl;
     }
 
-    std::sort(gates_poss.begin(), gates_poss.end(), sort_smallest_first(solver->cl_alloc));
-    std::sort(gates_negs.begin(), gates_negs.end(), sort_smallest_first(solver->cl_alloc));
+    std::sort(gates_poss.begin(), gates_poss.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
+    std::sort(gates_negs.begin(), gates_negs.end(), sort_smallest_first(solver->cl_alloc, tie_occ()));
     //TODO We could just filter negs, poss below
     get_antecedents(gates_negs, negs, antec_negs);
     get_antecedents(gates_poss, poss, antec_poss);

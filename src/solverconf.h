@@ -199,6 +199,7 @@ class DLL_PUBLIC SolverConf
         uint64_t varelim_occ_prod_cutoff; ///<Cap on pos*neg, i.e. on the number of resolutions we would attempt
         uint32_t varelim_max_cls_size; ///<Refuse a var occurring in a clause longer than this, 0 = off (default)
         int      varelim_sched_only_touched; ///<CaDiCaL's Flags::elim: only schedule vars whose cls changed. Off: goes stale across simplify() calls
+        int      varelim_tie_min_occ; ///<Among equal-size clauses, BVE takes first the one whose rarest var occurs the least
         int      do_empty_varelim;
         int      do_full_varelim;
         int      do_xor_varelim;

@@ -1694,6 +1694,14 @@ DLL_PUBLIC void SATSolver::set_varelim_sched_only_touched(int val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_varelim_tie_min_occ(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varelim_tie_min_occ = val;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_backbone_ccnr_mems_limitM(int64_t val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {

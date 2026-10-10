@@ -269,6 +269,7 @@ public:
                                // contains a list of literals that have been added as part of
                                // the clauses that have been added as resolvents
     vector<uint32_t> n_occurs;
+    const vector<uint32_t>* tie_occ() const;
     TouchList removed_cl_with_var;
     struct AddedBin {
         Lit lit1;
