@@ -60,3 +60,4 @@ xnf-tests/
 /*.cnf.gz
 # built by fix_up_xlrup.py
 scripts/crystal/xlrup_uses
+/scripts/crystal/report.html
