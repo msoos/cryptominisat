@@ -2689,7 +2689,7 @@ void Solver::check_implicit_propagated() const
         watch_subarray_const ws = watches[lit];
         for(const auto& w : ws) {
             //Satisfied, or not implicit, skip
-            if (value(lit) == l_True || w.is_clause()) continue;
+            if (value(lit) == l_True || !w.is_bin()) continue;
 
             const lbool val1 = value(lit);
             const lbool val2 = value(w.lit2());
