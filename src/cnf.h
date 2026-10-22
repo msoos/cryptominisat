@@ -506,7 +506,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
     for(watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
             assert(!w.is_idx());
-            if (w.is_bin()) {
+            if (w.is_bin() || w.is_bnn()) {
                 continue;
             }
             assert(w.is_clause());
