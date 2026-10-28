@@ -260,6 +260,26 @@ class Solver : public Searcher
         void prop_hints_for_unit(const Lit a, vector<int32_t>& hints);
         void collect_seg_chain(uint32_t start, const PropBy confl, vector<int32_t>& out);
 
+        ///////////////////
+        // IPASIR-UP (see user_prop.h and user_prop.cpp)
+        // All variables/literals below are in OUTER numbering.
+        ///////////////////
+        void connect_external_propagator(ExternalPropagator* p);
+        void disconnect_external_propagator();
+        void add_observed_var(const uint32_t outer_var);
+        void remove_observed_var(const uint32_t outer_var);
+        void reset_observed_vars();
+        bool is_observed_var(const uint32_t outer_var) const;
+        bool ext_is_decision(const Lit outer_lit) const;
+        void ext_force_backtrack(const uint32_t new_level);
+        void ext_phase(const Lit outer_lit);
+        void ext_unphase(const uint32_t outer_var);
+        /// Debugging aid: the observed trail by level, OUTER numbering, as a
+        /// correct propagator must have rebuilt it. False while notifications
+        /// are owed, i.e. when the two may differ.
+        bool ext_get_observed_trail(vector<vector<Lit>>& out) const;
+        void print_ext_prop_stats() const;
+
         //State load/unload
         string serialize_solution_reconstruction_data() const;
         void create_from_solution_reconstruction_data(const string& str);

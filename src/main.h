@@ -25,11 +25,13 @@ THE SOFTWARE.
 #include <string>
 #include <vector>
 #include <fstream>
+#include <memory>
 
 #include "argparse.hpp"
 #include "main_common.h"
 #include "solverconf.h"
 #include "cryptominisat.h"
+#include "user_prop_fuzz.h"
 
 using std::string;
 using std::vector;
@@ -79,6 +81,8 @@ class Main: public MainCommon
         void readInAFile(SATSolver* solver2, const string& filename);
         void readInStandardInput(SATSolver* solver2);
         void parseInAllFiles(SATSolver* solver2);
+        template<class C, class In>
+        bool parse_dimacs(In in, SATSolver* solver2, const bool strict_header);
         void readInAssumptions();
 
         //Helper functions
@@ -94,6 +98,8 @@ class Main: public MainCommon
 
         //Config
         std::string debugLib;
+        int userprop_seed = 0;
+        std::unique_ptr<UserPropFuzzer> userprop;
         int printResult = true;
         string commandLine;
         uint32_t max_nr_of_solutions = 1;

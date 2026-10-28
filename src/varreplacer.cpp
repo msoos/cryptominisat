@@ -997,6 +997,12 @@ bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_tru
 
     replaceChecks(var1, var2);
 
+    //IPASIR-UP: observed variables are frozen. The caller still adds the
+    //equivalence as two binary clauses, so this only costs some speed.
+    if (solver->var_data[var1].observed || solver->var_data[var2].observed) {
+        return solver->okay();
+    }
+
     //Move forward
     const Lit lit1 = get_lit_replaced_with(Lit(var1, false));
     const Lit lit2 = get_lit_replaced_with(Lit(var2, false)) ^ xor_is_true;

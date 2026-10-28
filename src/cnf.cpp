@@ -638,6 +638,8 @@ bool CNF::no_marked_clauses() const
 }
 
 void CNF::add_xlrup(FILE* os, const bool binary) {
+    release_assert(!ext_theory_seen &&
+        "XLRUP proof logging cannot be enabled after an external propagator has been connected");
     if (frat) delete frat;
     frat = new XLRUPFile(inter_to_outerMain, binary);
     frat->setFile(os);

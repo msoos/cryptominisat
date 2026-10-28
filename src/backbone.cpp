@@ -138,13 +138,15 @@ static void check_ccnr_sol(Solver* solver, const vector<int8_t>& sol) {
         }
     };
     check_long(solver->long_irred_cls, "irred");
-    for(const auto& tier: solver->long_red_cls) check_long(tier, "red");
+    // With a propagator, red clauses may follow from its theory, not the CNF
+    const bool check_red = !solver->ext_theory_seen;
+    if (check_red) for(const auto& tier: solver->long_red_cls) check_long(tier, "red");
 
     for(uint32_t i = 0; i < solver->nVars()*2; i++) {
         const Lit l1 = Lit::toLit(i);
         if (!live(l1.var())) continue;
         for(const auto& w: solver->watches[l1]) {
-            if (!w.is_bin()) continue;
+            if (!w.is_bin() || (w.red() && !check_red)) continue;
             const Lit l2 = w.lit2();
             if (l1 > l2 || !live(l2.var())) continue;
             if (sat(l1) || sat(l2)) continue;

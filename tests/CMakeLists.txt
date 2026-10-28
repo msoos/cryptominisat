@@ -151,6 +151,7 @@ set (MY_TESTS
     definability_test
     gatefinder_test
     matrixfinder_test
+    user_prop_test
     # gauss_test
 #    undefine_test
 )

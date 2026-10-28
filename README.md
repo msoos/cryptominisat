@@ -280,6 +280,48 @@ cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "ma
 You can see an example project using CryptoMiniSat in Rust
 [here](https://github.com/msoos/caqe/).
 
+## User propagators (IPASIR-UP)
+
+An *external propagator* inspects and steers the CDCL search from outside the
+solver, following the IPASIR-UP interface of ["Satisfiability Modulo User
+Propagators"](https://doi.org/10.1613/jair.1.16163) (JAIR 81, 2024). It is told
+about assignments, new decision levels and backtracks over the variables it
+observes, and can propagate literals, add clauses during search, pick the next
+decision, force a backtrack, and accept or reject models. Typical uses are SMT
+theory solvers, symmetry breaking, and model enumeration.
+
+Derive from `CMSat::ExternalPropagator` (see `src/user_prop.h`), then:
+
+```cpp
+#include <cryptominisat5/cryptominisat.h>
+
+MyPropagator prop;
+SATSolver s;
+s.new_vars(100);
+s.connect_external_propagator(&prop);
+for(uint32_t v = 0; v < 100; v++) s.add_observed_var(v);
+s.solve();
+```
+
+Literals are `CMSat::Lit`, numbered as in `add_clause()` and `get_model()`;
+`lit_Undef` ends a stream of literals.
+
+While a propagator is connected the solver is single-threaded, and Gauss-Jordan
+elimination and chronological backtracking are off. Observed variables are
+frozen: simplification never eliminates or replaces them.
+
+One addition goes beyond IPASIR-UP: a propagator that sets `advises_polarity` is
+offered every decision the solver's own heuristic makes on an observed variable,
+through `cb_decide_polarity()`, and may flip its sign. The solver still chooses
+the variable. An SMT theory can use this to decide an atom the way its current
+model already satisfies it. It is off by default, so a plain IPASIR-UP
+propagator never sees it.
+
+XLRUP proof logging cannot be combined with an external propagator: it numbers
+input clauses by their position in the CNF and cannot represent the additional
+theory clauses. Proof logging cannot be enabled even after disconnecting a
+propagator, since clauses derived from its theory may remain in the solver.
+
 ## Preprocessing
 If you wish to use CryptoMiniSat as a preprocessor, we encourage you to try out
 our model counting preprocessor,
