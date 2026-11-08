@@ -351,7 +351,7 @@ vector<vector<uint16_t>> Solver::compute_edge_weights() const
         for (auto const& l1 : cl) { for (auto const& l2 : cl) {
             uint32_t v1 = l1.var();
             uint32_t v2 = l2.var();
-            if (v1 < v2) edgew[v1][v2]++;
+            if (v1 < v2 && edgew[v1][v2] != UINT16_MAX) edgew[v1][v2]++;
         } }
     }
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -360,7 +360,7 @@ vector<vector<uint16_t>> Solver::compute_edge_weights() const
             if (!ws.is_bin() || ws.red())  continue;
             uint32_t v1 = l.var();
             uint32_t v2 = ws.lit2().var();
-            if (v1 < v2) edgew[v1][v2]++;
+            if (v1 < v2 && edgew[v1][v2] != UINT16_MAX) edgew[v1][v2]++;
         }
     }
     return edgew;

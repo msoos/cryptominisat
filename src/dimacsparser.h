@@ -77,6 +77,9 @@ class DimacsParser
         bool parseWeight(C& in);
         vector<uint32_t> ind_vars;
         bool ind_vars_set = false;
+        // QDIMACS 'a' blocks: several in a row are one
+        vector<uint32_t> forall_vars;
+        bool forall_vars_set = false;
 
         #ifdef DEBUG_DIMACSPARSER_CMS
         bool parse_solve_simp_comment(C& in, const bool solve);
@@ -634,6 +637,7 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
         in.skipWhitespace();
         switch (*in) {
         case EOF:
+            if (forall_vars_set) solver->set_sampl_vars(forall_vars);
             if (ind_vars_set) solver->set_sampl_vars(ind_vars);
             return true;
         case 'p':
@@ -645,13 +649,22 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
             break;
         case 'e':
             ++in;
-            in.skipLine();
+            if constexpr (requires { solver->add_quant_block(false, vector<uint32_t>()); }) {
+                vector<uint32_t> exist_vars;
+                if (!parseIndependentSet(in, exist_vars)) return false;
+                solver->add_quant_block(false, exist_vars);
+            } else {
+                in.skipLine();
+            }
             break;
         case 'a': {
             ++in;
             vector<uint32_t> sampl_vars;
             if (!parseIndependentSet(in, sampl_vars)) return false;
-            solver->set_sampl_vars(sampl_vars);
+            forall_vars.insert(forall_vars.end(), sampl_vars.begin(), sampl_vars.end());
+            forall_vars_set = true;
+            if constexpr (requires { solver->add_quant_block(true, sampl_vars); })
+                solver->add_quant_block(true, sampl_vars);
             break;
         }
         case 'c':
