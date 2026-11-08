@@ -18,7 +18,7 @@ jobs:
       matrix:
         # Each runner builds for its native architecture.
         # Linux aarch64 uses a native ARM GitHub-hosted runner.
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-14, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15, macos-15-intel, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
         # The only per-runner override needed is the arch selector:
         env:
           CIBW_ARCHS_LINUX: native   # x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm
-          CIBW_ARCHS_MACOS: native   # arm64 on macos-14, x86_64 on macos-15-intel
+          CIBW_ARCHS_MACOS: native   # arm64 on macos-15, x86_64 on macos-15-intel
           CIBW_ARCHS_WINDOWS: AMD64
 
       - uses: actions/upload-artifact@v4
