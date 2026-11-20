@@ -721,8 +721,24 @@ bool DimacsParser<C, S>::parse_DIMACS(
     offset_vars = _offset_vars;
     const uint32_t origNumVars = solver->nVars();
 
+    const size_t cls_before = norm_clauses_added + xor_clauses_added
+        #ifdef ENABLE_BNN
+        + bnn_clauses_added
+        #endif
+        ;
     C in(input_stream);
     if ( !parse_DIMACS_main(in)) return false;
+    const size_t cls_read = norm_clauses_added + xor_clauses_added
+        #ifdef ENABLE_BNN
+        + bnn_clauses_added
+        #endif
+        - cls_before;
+    if (strict_header && header_found && cls_read != (size_t)num_header_cls) {
+        std::cerr
+        << "ERROR: header says " << num_header_cls << " clauses, but the file has "
+        << cls_read << endl;
+        return false;
+    }
 
     if (verbosity) {
         cout
