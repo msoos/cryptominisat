@@ -107,6 +107,9 @@ bool Solver::full_probe(const bool bin_only)
 
 template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_props)
 {
+    //IPASIR-UP: probing is not part of the search, hide it from the propagator
+    ExtPropPrivateSteps priv(this);
+
     prop_stats.bogo_props+=2;
     const bool fr = frat->enabled();
 

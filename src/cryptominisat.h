@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <limits>
 #include <cstdio>
 #include "solvertypesmini.h"
+#include "user_prop.h"
 
 namespace CMSat {
     struct CMSatPrivateData;
@@ -87,6 +88,68 @@ namespace CMSat {
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
+
+        ////////////////////////////
+        // IPASIR-UP: external (user) propagator, see user_prop.h
+        //
+        // At most one propagator, single-threaded only. While one is connected,
+        // Gauss-Jordan elimination and chronological backtracking are off, and
+        // observed variables are frozen: simplification never eliminates or
+        // replaces them.
+        //
+        // Incompatible with XLRUP proof logging: its position-numbered inputs
+        // cannot represent additional theory clauses. Once a propagator has
+        // been connected, proof logging cannot be enabled, even after
+        // disconnecting it, since theory-derived clauses may remain.
+        ////////////////////////////
+
+        void connect_external_propagator(ExternalPropagator* p);
+        void disconnect_external_propagator(); //also un-observes every variable
+
+        // Declare a variable relevant to the propagator; all IPASIR-UP calls
+        // are over observed variables only. The variable must already exist,
+        // but a callback may create it with new_var(). Both are callable during
+        // solve() from any callback but cb_add_reason_clause_lit(),
+        // cb_decide_polarity() and notify_backtrack(), and a variable created
+        // during solve(), observed or not, is assigned before a model is
+        // returned. Observing an assigned variable backtracks over it, so it is
+        // re-assigned and notified normally: the callback cannot rely on the
+        // trail it saw. An eliminated variable is put back, which during
+        // solve() backtracks to the root. A replaced one cannot be observed:
+        // observe it before the first solve(), or call
+        // set_no_equivalent_lit_replacement().
+        void add_observed_var(uint32_t var);
+        // A variable assigned above the root is backtracked over first, so no
+        // propagation the solver can no longer explain is left behind.
+        void remove_observed_var(uint32_t var);
+        // Stop observing every variable. Like remove_observed_var(), this may
+        // backtrack during solving.
+        void reset_observed_vars();
+        bool is_observed_var(uint32_t var) const;
+
+        // True if the (observed, assigned) literal was assigned by a decision.
+        bool is_decision(Lit lit) const;
+
+        // Backtrack to new_level. Only honoured from inside cb_decide() or
+        // cb_check_found_model(), and only if new_level is below the current
+        // decision level. Takes effect once the callback returns; a decision
+        // returned by the same cb_decide() is then made on the backtracked
+        // trail (see ExternalPropagator::cb_decide).
+        void force_backtrack(uint32_t new_level);
+
+        // Force the branching polarity of a variable, or hand it back to the
+        // solver's own polarity heuristic.
+        void phase(Lit lit);
+        void unphase(uint32_t var);
+
+        // Explain external propagations lazily, asking for the reason only when
+        // conflict analysis needs it (the default, as in the paper and
+        // CaDiCaL: unused reasons are never learnt), or eagerly.
+        // An eager reason is added as a clause, so a propagation whose
+        // antecedents all sit below the current level backtracks to where it
+        // belongs: propagate as soon as the antecedent is complete, not in
+        // batches.
+        void set_lazy_external_reasons(bool lazy);
 
         ////////////////////////////
         // Debug all calls for later replay with --debuglit FILENAME

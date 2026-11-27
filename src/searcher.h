@@ -122,6 +122,28 @@ class Searcher : public HyperEngine
             }
         }
 
+        ///////////////////
+        // IPASIR-UP (see user_prop.cpp)
+        ///////////////////
+        /// Read a clause from the propagator and add it at the current level.
+        /// 'reason_for' is lit_Undef, or the OUTER literal it explains. Returns
+        /// the conflict, if any; sets ok=false on the empty clause.
+        PropBy add_external_clause(bool forgettable, Lit reason_for = lit_Undef);
+        /// One round with the propagator, once unit propagation is at a fixed
+        /// point. Returns the conflict, if any.
+        PropBy external_propagate();
+        /// Algorithm 4: the propagator's decision (INTER), or lit_Undef
+        Lit ext_decide();
+        Lit ext_advise_polarity(const Lit lit);
+        /// Let the propagator approve a complete assignment: l_True if it does,
+        /// l_Undef to keep searching (a conflict is left in ext_confl), l_False
+        /// for UNSAT.
+        lbool external_check_solution();
+        void apply_ext_forced_backtrack();
+        /// SLOW_DEBUG: the propagator's bookkeeping between steps of the search
+        void ext_check_invariants(const bool confl_pending, const bool heap);
+        PropBy ext_attach_clause(const int32_t ID, const bool red);
+
         //ChronoBT
         template<bool do_insert_var_order = true, bool inprocess = false>
         void cancel_until(uint32_t level); ///<Backtrack until a certain level.
@@ -688,6 +710,9 @@ inline bool Searcher::decide_phase(const uint32_t var, const bool target) const
 
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
+    //IPASIR-UP: SATSolver::phase() overrides the polarity mode
+    if (var_data[var].forced_polarity_set) return var_data[var].forced_polarity;
+
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;

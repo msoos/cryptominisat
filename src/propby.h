@@ -37,8 +37,11 @@ namespace CMSat {
 
 enum PropByType {
     null_clause_t = 0, clause_t = 1, binary_t = 2,
-    xor_t = 3, bnn_t = 4
+    xor_t = 3, bnn_t = 4, ext_t = 5
 };
+
+///Tag for an external (IPASIR-UP) propagation not explained yet
+struct ExtPropTag {};
 
 class PropBy
 {
@@ -58,6 +61,7 @@ class PropBy
         //2: binary
         //3: xor
         //4: bnn
+        //5: external (IPASIR-UP)
         uint32_t data2:bitsize_data2;
         int32_t ID;
 
@@ -139,6 +143,17 @@ class PropBy
         {
         }
 
+        //IPASIR-UP: external propagation. The reason is asked for only when
+        //conflict analysis needs it, then cached in CNF::ext_reasons.
+        explicit PropBy(ExtPropTag):
+            red_step(0)
+            , data1(0xfffffff)
+            , type(ext_t)
+            , data2(0)
+            , ID(0)
+        {
+        }
+
         //Binary prop
         PropBy(const Lit lit, const bool _red_step, int32_t _ID) :
             red_step(_red_step)
@@ -173,6 +188,29 @@ class PropBy
 
             data2 = (static_cast<uint32_t>(hyperBin) << 1)
                 | (static_cast<uint32_t>(hyperBinNotAdded) << 2);
+        }
+
+        [[nodiscard]] bool is_ext() const
+        {
+            return type == ext_t;
+        }
+
+        void set_ext_reason(uint32_t idx)
+        {
+            assert(is_ext());
+            data1 = idx;
+        }
+
+        [[nodiscard]] bool ext_reason_set() const
+        {
+            assert(is_ext());
+            return data1 != 0xfffffff;
+        }
+
+        [[nodiscard]] uint32_t get_ext_reason() const
+        {
+            assert(ext_reason_set());
+            return data1;
         }
 
         void set_bnn_reason(uint32_t idx)
@@ -326,6 +364,11 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 
         case null_clause_t:
             os << " nullptr";
+            break;
+
+        case ext_t:
+            os << " external reason"
+               << (pb.ext_reason_set() ? " (explained)" : " (not yet explained)");
             break;
 
         case bnn_t:

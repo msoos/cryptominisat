@@ -56,18 +56,29 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-void Main::readInAFile(SATSolver* solver2, const string& filename) {
+//With --userprop the fuzzing propagator gets the clauses first
+template<class C, class In>
+bool Main::parse_dimacs(In in, SATSolver* solver2, const bool strict_header)
+{
     std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
+    if (userprop) {
+        DimacsParser<C, UserPropFuzzer> parser(userprop.get(), &debugLib, conf.verbosity, fg);
+        parser.prefix = conf.prefix;
+        return parser.parse_DIMACS(in, strict_header);
+    }
+    DimacsParser<C, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
+    parser.prefix = conf.prefix;
+    return parser.parse_DIMACS(in, strict_header);
+}
+
+void Main::readInAFile(SATSolver* solver2, const string& filename) {
     solver2->add_sql_tag("filename", filename);
     if (conf.verbosity) cout << conf.prefix << "Reading file '" << filename << "'" << endl;
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
     #endif
-    parser.prefix = conf.prefix;
 
     if (in == nullptr) {
         std::cerr
@@ -79,9 +90,11 @@ void Main::readInAFile(SATSolver* solver2, const string& filename) {
     }
 
     bool strict_header = false;
-    if (!parser.parse_DIMACS(in, strict_header)) {
-        exit(-1);
-    }
+    #ifndef USE_ZLIB
+    if (!parse_dimacs<StreamBuffer<FILE*, FN>>(in, solver2, strict_header)) exit(-1);
+    #else
+    if (!parse_dimacs<StreamBuffer<gzFile, GZ>>(in, solver2, strict_header)) exit(-1);
+    #endif
 
     #ifndef USE_ZLIB
         fclose(in);
@@ -93,7 +106,6 @@ void Main::readInAFile(SATSolver* solver2, const string& filename) {
 void Main::readInStandardInput(SATSolver* solver2)
 {
     if (conf.verbosity) cout << conf.prefix << "Reading from standard input... Use '-h' or '--help' for help." << endl;
-    std::unique_ptr<FieldGen> fg = std::make_unique<FGenDouble>();
 
     #ifndef USE_ZLIB
     FILE * in = stdin;
@@ -107,13 +119,10 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
+    if (!parse_dimacs<StreamBuffer<FILE*, FN>>(in, solver2, false)) exit(-1);
     #else
-    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity, fg);
+    if (!parse_dimacs<StreamBuffer<gzFile, GZ>>(in, solver2, false)) exit(-1);
     #endif
-    parser.prefix = conf.prefix;
-
-    if (!parser.parse_DIMACS(in, false)) exit(-1);
     #ifdef USE_ZLIB
         gzclose(in);
     #endif
@@ -308,6 +317,8 @@ void Main::add_supported_options() {
     program.add_argument("--debuglib")
         .action([&](const auto& a) {debugLib = a;})
         .help("Parse special comments to run solve/simplify during parsing of CNF");
+    opt("--userprop", userprop_seed,
+        "Testing only: hand a random share of the clauses to the solver through an external propagator seeded with this value. 0 = off");
     #ifdef USE_SQLITE3
     opt("--sql", sql,
         "Write to SQL. 0 = no SQL, 1 or 2 = sqlite");
@@ -515,6 +526,13 @@ int Main::solve()
     parse_sampling_vars();
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
+    if (userprop_seed != 0) {
+        if (num_threads != 1) {
+            std::cerr << "ERROR: --userprop needs a single thread" << endl;
+            exit(-1);
+        }
+        userprop = std::make_unique<UserPropFuzzer>(solver, userprop_seed);
+    }
     if (sql != 0) solver->set_sqlite(sqlite_filename);
 
     //Print command line used to execute the solver: for options and inputs
